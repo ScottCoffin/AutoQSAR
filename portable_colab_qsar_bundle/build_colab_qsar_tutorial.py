@@ -310,6 +310,30 @@ cells += [
                 progress_message(package_label, "already available")
                 return
 
+            def try_load_tdc_from_path(candidate_path, status_label):
+                candidate_path = Path(candidate_path)
+                possible_roots = []
+                if (candidate_path / "tdc" / "__init__.py").exists():
+                    possible_roots.append(candidate_path)
+                possible_roots.extend(
+                    sorted(
+                        {
+                            p.parent.parent
+                            for p in candidate_path.rglob("__init__.py")
+                            if p.parent.name == "tdc"
+                        },
+                        key=lambda path: len(str(path)),
+                    )
+                )
+                for root_path in possible_roots:
+                    if str(root_path) not in sys.path:
+                        sys.path.insert(0, str(root_path))
+                    importlib.invalidate_caches()
+                    if importlib.util.find_spec("tdc") is not None:
+                        progress_message(package_label, status_label, str(root_path))
+                        return True
+                return False
+
             search_roots = [
                 Path.cwd(),
                 Path.cwd().parent,
@@ -334,13 +358,8 @@ cells += [
                 )
 
             for candidate in source_dir_candidates:
-                if (candidate / "tdc" / "__init__.py").exists():
-                    if str(candidate) not in sys.path:
-                        sys.path.insert(0, str(candidate))
-                    importlib.invalidate_caches()
-                    if importlib.util.find_spec("tdc") is not None:
-                        progress_message(package_label, "loaded from local source directory", str(candidate))
-                        return
+                if try_load_tdc_from_path(candidate, "loaded from local source directory"):
+                    return
 
             for candidate in archive_candidates:
                 if candidate.exists():
@@ -348,37 +367,41 @@ cells += [
                     extract_root = Path(tempfile.mkdtemp(prefix="pytdc_src_"))
                     with tarfile.open(candidate, "r:gz") as tf:
                         tf.extractall(extract_root)
-                    extracted_dirs = [p for p in extract_root.iterdir() if p.is_dir()]
-                    if extracted_dirs:
-                        sys.path.insert(0, str(extracted_dirs[0]))
-                        importlib.invalidate_caches()
-                        if importlib.util.find_spec("tdc") is not None:
-                            progress_message(package_label, "loaded from extracted tar.gz", str(candidate))
-                            return
-
-            if RUNNING_IN_COLAB:
-                download_target = Path("/content") / "pytdc-1.1.15.tar.gz"
-                if not download_target.exists():
-                    print(f"[downloading] {package_label} source archive from: {PYTDC_SOURCE_URL}", flush=True)
-                    urllib.request.urlretrieve(PYTDC_SOURCE_URL, download_target)
-                else:
-                    print(f"[loading] {package_label} from downloaded source archive: {download_target}", flush=True)
-
-                extract_root = Path(tempfile.mkdtemp(prefix="pytdc_src_"))
-                with tarfile.open(download_target, "r:gz") as tf:
-                    tf.extractall(extract_root)
-                extracted_dirs = [p for p in extract_root.iterdir() if p.is_dir()]
-                if extracted_dirs:
-                    sys.path.insert(0, str(extracted_dirs[0]))
-                    importlib.invalidate_caches()
-                    if importlib.util.find_spec("tdc") is not None:
-                        progress_message(package_label, "loaded from downloaded tar.gz", str(download_target))
+                    if try_load_tdc_from_path(extract_root, "loaded from extracted tar.gz"):
                         return
+
+            download_dir = Path("/content") if RUNNING_IN_COLAB else (Path.cwd() / ".cache")
+            download_dir.mkdir(parents=True, exist_ok=True)
+            download_target = download_dir / "pytdc-1.1.15.tar.gz"
+            if not download_target.exists():
+                print(f"[downloading] {package_label} source archive from: {PYTDC_SOURCE_URL}", flush=True)
+                urllib.request.urlretrieve(PYTDC_SOURCE_URL, download_target)
+            else:
+                print(f"[loading] {package_label} from downloaded source archive: {download_target}", flush=True)
+
+            extract_root = Path(tempfile.mkdtemp(prefix="pytdc_src_"))
+            with tarfile.open(download_target, "r:gz") as tf:
+                tf.extractall(extract_root)
+            if try_load_tdc_from_path(extract_root, "loaded from downloaded tar.gz"):
+                return
+
+            try:
+                print(f"[installing] {package_label} from source archive: {download_target}", flush=True)
+                start = time.perf_counter()
+                subprocess.check_call([sys.executable, "-m", "pip", "install", "-q", str(download_target)])
+                elapsed = time.perf_counter() - start
+                importlib.invalidate_caches()
+                if importlib.util.find_spec("tdc") is not None:
+                    RESTART_REQUIRED_PACKAGES.append(package_label)
+                    progress_message(package_label, "installed from source archive", f"{elapsed:.1f}s")
+                    return
+            except subprocess.CalledProcessError:
+                pass
 
             raise RuntimeError(
                 "Could not load the TDC source package. Expected one of: "
                 "'TDC/pytdc-1.1.15.tar.gz', a local 'TDC/' directory containing the 'tdc' package, "
-                "or, in Colab, a downloadable source archive from PyPI."
+                "or a downloadable source archive from PyPI."
             )
 
         def ensure_chemml_from_source():
@@ -494,6 +517,7 @@ cells += [
         print("Starting post-package imports and initialization...", flush=True)
 
         setup_start("core python packages")
+        import os
         import numpy as np
         import pandas as pd
         from tqdm.auto import tqdm as tqdm_auto
@@ -505,7 +529,14 @@ cells += [
         def tqdm(*args, **kwargs):
             kwargs.setdefault("dynamic_ncols", True)
             kwargs.setdefault("mininterval", 0.2)
-            if tqdm_notebook is not None:
+            prefer_notebook_tqdm = (
+                tqdm_notebook is not None
+                and (
+                    RUNNING_IN_COLAB
+                    or os.environ.get("COLAB_RELEASE_TAG")
+                )
+            )
+            if prefer_notebook_tqdm:
                 try:
                     return tqdm_notebook(*args, **kwargs)
                 except Exception:
@@ -657,6 +688,35 @@ cells += [
                 if str(metadata.get(key)) != str(expected_value):
                     return False
             return True
+
+        def write_ga_state(path, population, fitness_dict):
+            import json
+
+            serialized = {
+                "population": [list(individual) for individual in (population or [])],
+                "fitness_dict": [
+                    {
+                        "individual": list(individual),
+                        "fitness": list(fitness),
+                    }
+                    for individual, fitness in (fitness_dict or {}).items()
+                ],
+            }
+            Path(path).write_text(json.dumps(serialized, indent=2), encoding="utf-8")
+
+        def read_ga_state(path):
+            import json
+
+            payload = json.loads(Path(path).read_text(encoding="utf-8"))
+            population = [tuple(individual) for individual in payload.get("population", [])]
+            fitness_dict = {
+                tuple(item["individual"]): tuple(item["fitness"])
+                for item in payload.get("fitness_dict", [])
+            }
+            return {
+                "population": population,
+                "fitness_dict": fitness_dict,
+            }
 
         def load_prediction_splits(prediction_path, train_smiles, test_smiles):
             prediction_df = pd.read_csv(prediction_path)
@@ -1678,6 +1738,9 @@ cells += [
         perplexity = 30 # @param {type:"slider", min:5, max:50, step:1}
         max_points_for_map = 1000 # @param {type:"slider", min:100, max:2000, step:100}
         embedding_random_seed = 42 # @param {type:"integer"}
+        enable_similarity_map_cache = True # @param {type:"boolean"}
+        reuse_similarity_map_cache = True # @param {type:"boolean"}
+        similarity_map_cache_run_name = "AUTO" # @param {type:"string"}
 
         if "feature_matrix" not in STATE:
             raise RuntimeError("Please build the fingerprint representation first.")
@@ -1696,23 +1759,117 @@ cells += [
             plot_df = curated_df.reset_index(drop=True)
         progress.update(1)
 
-        n_pca = min(50, feature_df.shape[1], max(2, feature_df.shape[0] - 1))
-        progress.set_postfix_str("Running PCA")
-        pca_scores = PCA(n_components=n_pca, random_state=int(embedding_random_seed)).fit_transform(feature_df)
-        progress.update(1)
+        similarity_map_cache_dir = None
+        similarity_map_cache_paths = None
+        sampled_smiles = plot_df["canonical_smiles"].astype(str).reset_index(drop=True)
         tsne_perplexity = min(int(perplexity), max(2, len(feature_df) - 1))
-        progress.set_postfix_str("Running t-SNE")
-        tsne_scores = TSNE(n_components=2, perplexity=tsne_perplexity, init="pca", learning_rate="auto", random_state=int(embedding_random_seed)).fit_transform(pca_scores)
-        progress.update(1)
+        n_pca = min(50, feature_df.shape[1], max(2, feature_df.shape[0] - 1))
+        map_df = None
+        if enable_similarity_map_cache:
+            similarity_map_cache_dir = resolve_model_cache_dir(
+                "similarity_map",
+                similarity_map_cache_run_name,
+                prefer_existing=bool(reuse_similarity_map_cache),
+            )
+            print(f"Similarity map cache directory: {similarity_map_cache_dir}")
+            if reuse_similarity_map_cache:
+                metadata_candidates = sorted(
+                    similarity_map_cache_dir.glob(f"*_{current_dataset_cache_label()}_similarity_map_metadata.json"),
+                    key=lambda path: path.name,
+                    reverse=True,
+                )
+                for metadata_path in metadata_candidates:
+                    try:
+                        metadata = read_cache_metadata(metadata_path)
+                        expected_metadata = {
+                            "workflow": "Similarity map",
+                            "dataset_label": current_dataset_cache_label(),
+                            "representation_label": STATE.get("representation_label"),
+                            "n_rows": len(feature_df),
+                            "n_features": feature_df.shape[1],
+                            "perplexity": tsne_perplexity,
+                            "max_points_for_map": int(max_points_for_map),
+                            "embedding_random_seed": int(embedding_random_seed),
+                            "n_pca": int(n_pca),
+                        }
+                        if not cache_metadata_matches(metadata, expected_metadata):
+                            continue
+                        map_path = Path(metadata["map_path"])
+                        if not map_path.exists():
+                            continue
+                        cached_map_df = pd.read_csv(map_path)
+                        if len(cached_map_df) != len(sampled_smiles):
+                            continue
+                        if not cached_map_df["canonical_smiles"].astype(str).reset_index(drop=True).equals(sampled_smiles):
+                            continue
+                        map_df = cached_map_df.copy()
+                        similarity_map_cache_paths = {
+                            "map_path": str(map_path),
+                            "metadata_path": str(metadata_path),
+                        }
+                        progress.set_postfix_str("Loaded from cache")
+                        progress.update(3)
+                        print(f"Loaded cached similarity map from {map_path.parent}", flush=True)
+                        break
+                    except Exception:
+                        continue
 
-        map_df = plot_df[["canonical_smiles", "target"]].copy()
-        map_df["PCA_tSNE_1"] = tsne_scores[:, 0]
-        map_df["PCA_tSNE_2"] = tsne_scores[:, 1]
+        if map_df is None:
+            progress.set_postfix_str("Running PCA")
+            pca_scores = PCA(n_components=n_pca, random_state=int(embedding_random_seed)).fit_transform(feature_df)
+            progress.update(1)
+            progress.set_postfix_str("Running t-SNE")
+            tsne_scores = TSNE(
+                n_components=2,
+                perplexity=tsne_perplexity,
+                init="pca",
+                learning_rate="auto",
+                random_state=int(embedding_random_seed),
+            ).fit_transform(pca_scores)
+            progress.update(1)
+
+            map_df = plot_df[["canonical_smiles", "target"]].copy()
+            map_df["PCA_tSNE_1"] = tsne_scores[:, 0]
+            map_df["PCA_tSNE_2"] = tsne_scores[:, 1]
+            progress.update(1)
+
+            if enable_similarity_map_cache and similarity_map_cache_dir is not None:
+                artifact_base = f"{STATE['cache_session_stamp']}_{current_dataset_cache_label()}_similarity_map"
+                map_path = similarity_map_cache_dir / f"{artifact_base}.csv"
+                metadata_path = similarity_map_cache_dir / f"{artifact_base}_metadata.json"
+                map_df.to_csv(map_path, index=False)
+                write_cache_metadata(
+                    metadata_path,
+                    {
+                        "workflow": "Similarity map",
+                        "dataset_label": current_dataset_cache_label(),
+                        "representation_label": STATE.get("representation_label"),
+                        "n_rows": len(feature_df),
+                        "n_features": feature_df.shape[1],
+                        "perplexity": tsne_perplexity,
+                        "max_points_for_map": int(max_points_for_map),
+                        "embedding_random_seed": int(embedding_random_seed),
+                        "n_pca": int(n_pca),
+                        "cache_run_name": similarity_map_cache_dir.name,
+                        "map_path": str(map_path),
+                    },
+                )
+                similarity_map_cache_paths = {
+                    "map_path": str(map_path),
+                    "metadata_path": str(metadata_path),
+                }
+        else:
+            progress.update(0)
+
         fig = px.scatter(map_df, x="PCA_tSNE_1", y="PCA_tSNE_2", color="target", hover_data={"canonical_smiles": True, "target": ":.4f"}, title="Chemical similarity map (Morgan fingerprints -> PCA -> t-SNE)", color_continuous_scale="Viridis")
         fig.update_layout(height=600)
         show_plotly(fig)
+        STATE["similarity_map_df"] = map_df.copy()
+        if similarity_map_cache_paths is not None:
+            STATE["similarity_map_cache_paths"] = similarity_map_cache_paths
+        if similarity_map_cache_dir is not None:
+            STATE["similarity_map_cache_dir"] = str(similarity_map_cache_dir)
         progress.set_postfix_str("Done")
-        progress.update(1)
         progress.close()
         """
     ),
@@ -2325,6 +2482,11 @@ cells += [
             message=r"`sklearn\\.utils\\.parallel\\.delayed` should be used with `sklearn\\.utils\\.parallel\\.Parallel`.*",
             category=UserWarning,
         )
+        warnings.filterwarnings(
+            "ignore",
+            category=UserWarning,
+            module=r"sklearn\\.utils\\.parallel",
+        )
 
         split_payload = apply_qsar_split(
             split_strategy=str(tuning_split_strategy),
@@ -2420,7 +2582,7 @@ cells += [
                     min_samples_leaf=int(params["min_samples_leaf"]),
                     max_features=params["max_features"],
                     random_state=42,
-                    n_jobs=-1,
+                    n_jobs=1,
                 ),
                 (
                     {"n_estimators": {"int": [200, 600]}},
@@ -2563,6 +2725,9 @@ cells += [
             build_estimator, search_space, decode_params = ga_models[model_name]
             model_slug = slugify_cache_text(model_name)
             cached_model_loaded = False
+            resume_state = None
+            resume_history_prefix = None
+            resume_generation_offset = 0
             if enable_tuned_model_cache and reuse_tuned_cached_models:
                 metadata_candidates = sorted(
                     tuned_cache_dir.glob(f"*_{tuned_dataset_label}_{model_slug}_ga_tuned_metadata.json"),
@@ -2587,7 +2752,46 @@ cells += [
                         model_path = Path(metadata["model_path"])
                         prediction_path = Path(metadata["prediction_path"])
                         history_path = Path(metadata["ga_history_path"])
+                        state_path_text = metadata.get("ga_state_path")
+                        state_path = Path(state_path_text) if state_path_text else None
                         if not model_path.exists() or not prediction_path.exists() or not history_path.exists():
+                            continue
+                        best_history = pd.read_csv(history_path)
+                        completed_generations = int(metadata.get("ga_generations_completed", len(best_history)))
+                        ga_resume_compatible = (
+                            completed_generations < int(ga_generations)
+                            and state_path is not None
+                            and state_path.exists()
+                            and cache_metadata_matches(
+                                metadata,
+                                {
+                                    "ga_population_size": int(ga_population_size),
+                                    "ga_crossover_size": int(ga_crossover_size),
+                                    "ga_mutation_size": int(ga_mutation_size),
+                                    "ga_mutation_probability": float(ga_mutation_probability),
+                                },
+                            )
+                        )
+                        if ga_resume_compatible:
+                            ga_state = read_ga_state(state_path)
+                            if ga_state["population"] and ga_state["fitness_dict"]:
+                                resume_state = ga_state
+                                resume_history_prefix = best_history.copy()
+                                resume_generation_offset = completed_generations
+                                tuned_cache_paths[model_name] = {
+                                    "model_path": str(model_path),
+                                    "prediction_path": str(prediction_path),
+                                    "ga_history_path": str(history_path),
+                                    "ga_state_path": str(state_path),
+                                    "metadata_path": str(metadata_path),
+                                }
+                                print(
+                                    f"Resuming cached GA search for {model_name} from generation "
+                                    f"{completed_generations}/{int(ga_generations)} using {state_path.parent}",
+                                    flush=True,
+                                )
+                                break
+                        if completed_generations < int(ga_generations):
                             continue
                         loaded_splits = load_prediction_splits(
                             prediction_path,
@@ -2597,7 +2801,6 @@ cells += [
                         best_model = joblib_load(model_path)
                         pred_train = loaded_splits["train"]["predicted"].to_numpy(dtype=float)
                         pred_test = loaded_splits["test"]["predicted"].to_numpy(dtype=float)
-                        best_history = pd.read_csv(history_path)
                         best_fitness = float(best_history.iloc[-1]["Fitness_values"][0]) if len(best_history) else np.nan
                         best_params = metadata.get("best_params", "{}")
                         row = {
@@ -2617,6 +2820,7 @@ cells += [
                             "model_path": str(model_path),
                             "prediction_path": str(prediction_path),
                             "ga_history_path": str(history_path),
+                            "ga_state_path": str(state_path) if state_path is not None else "",
                             "metadata_path": str(metadata_path),
                         }
                         cached_model_loaded = True
@@ -2670,11 +2874,32 @@ cells += [
                 algorithm=1,
                 n_jobs=1,
             )
+            if resume_state is not None:
+                ga.population = list(resume_state["population"])
+                ga.fitness_dict = dict(resume_state["fitness_dict"])
+                resumed_model_work = min(
+                    per_model_expected_work,
+                    per_model_init_work + resume_generation_offset * per_model_generation_work,
+                )
+                if resumed_model_work > 0:
+                    tuning_progress.update(resumed_model_work)
+                    progress_state["overall_completed_work"] += resumed_model_work
+                    progress_state["model_completed_work"] += resumed_model_work
+                    overall_completed_work = progress_state["overall_completed_work"]
+                    model_completed_work = progress_state["model_completed_work"]
+                if resume_generation_offset > 0:
+                    generation_progress.update(resume_generation_offset)
+                generation_progress.set_postfix_str(f"resuming from {resume_generation_offset}/{int(ga_generations)}")
+                evaluation_progress.set_postfix_str("resume pending")
+                tuning_progress.set_postfix_str(
+                    f"{model_name} (resuming from gen {resume_generation_offset}/{int(ga_generations)}) | "
+                    f"overall {progress_state['overall_completed_work']}/{total_expected_work} work"
+                )
 
             def ga_progress_callback(payload, _model_name=model_name):
                 event = payload.get("event", "generation_complete")
-                completed = int(payload.get("generation", 0))
-                total = int(payload.get("generations_total", int(ga_generations)))
+                completed = resume_generation_offset + int(payload.get("generation", 0))
+                total = int(ga_generations)
                 if generation_progress.total != total:
                     generation_progress.total = total
 
@@ -2752,13 +2977,16 @@ cells += [
                             flush=True,
                         )
 
+            remaining_generations = max(0, int(ga_generations) - resume_generation_offset)
             best_history, best_raw_params = ga.search(
-                n_generations=int(ga_generations),
+                n_generations=remaining_generations,
                 early_stopping=int(ga_early_stopping),
                 progress_callback=ga_progress_callback,
                 progress_desc=f"{model_name} generations",
                 show_progress_bar=False,
             )
+            if resume_history_prefix is not None:
+                best_history = pd.concat([resume_history_prefix, best_history], ignore_index=True)
             if generation_progress.n < len(best_history):
                 generation_progress.update(len(best_history) - generation_progress.n)
             generation_progress.set_postfix_str(f"done in {len(best_history)} gen")
@@ -2798,6 +3026,7 @@ cells += [
                 model_path = tuned_cache_dir / f"{artifact_base}.joblib"
                 prediction_path = tuned_cache_dir / f"{artifact_base}_predictions.csv"
                 history_path = tuned_cache_dir / f"{artifact_base}_ga_history.csv"
+                state_path = tuned_cache_dir / f"{artifact_base}_ga_state.json"
                 metadata_path = tuned_cache_dir / f"{artifact_base}_metadata.json"
                 joblib_dump(best_model, model_path)
                 pd.DataFrame(
@@ -2809,6 +3038,7 @@ cells += [
                     }
                 ).to_csv(prediction_path, index=False)
                 best_history.to_csv(history_path, index=False)
+                write_ga_state(state_path, ga.population, ga.fitness_dict)
                 write_cache_metadata(
                     metadata_path,
                     {
@@ -2822,8 +3052,14 @@ cells += [
                         "model_path": model_path,
                         "prediction_path": prediction_path,
                         "ga_history_path": history_path,
+                        "ga_state_path": state_path,
                         "ga_objective": ga_objective,
                         "ga_cv_folds": int(effective_search_folds),
+                        "ga_generations_completed": int(len(best_history)),
+                        "ga_population_size": int(ga_population_size),
+                        "ga_crossover_size": int(ga_crossover_size),
+                        "ga_mutation_size": int(ga_mutation_size),
+                        "ga_mutation_probability": float(ga_mutation_probability),
                         "best_params": best_params,
                     },
                 )
@@ -2831,6 +3067,7 @@ cells += [
                     "model_path": str(model_path),
                     "prediction_path": str(prediction_path),
                     "ga_history_path": str(history_path),
+                    "ga_state_path": str(state_path),
                     "metadata_path": str(metadata_path),
                 }
             print(
@@ -3353,7 +3590,7 @@ cells += [
             )
             restored_model = None
             try:
-                from chemml.models import MLP
+                from chemml.models.mlp import MLP
 
                 init_kwargs = dict(
                     engine=str(metadata["engine"]),
@@ -3402,11 +3639,12 @@ cells += [
 
         if run_chemml_pytorch or run_chemml_tensorflow:
             try:
-                from chemml.models import MLP
+                from chemml.models.mlp import MLP
             except Exception as exc:
                 raise RuntimeError(
                     "ChemML deep-learning models are unavailable in this environment. "
-                    "Install the required backend dependencies, then rerun the setup cell."
+                    "For CPU fallback, the PyTorch backend only requires PyTorch; "
+                    "the TensorFlow backend requires TensorFlow."
                 ) from exc
 
             if run_chemml_pytorch and torch is None:
