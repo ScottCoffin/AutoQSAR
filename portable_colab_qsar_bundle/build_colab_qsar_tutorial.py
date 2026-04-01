@@ -91,6 +91,7 @@ def _inject_local_widget_read(text: str, form_id: str):
     override_lines = [
         "",
         f"{param_indent}if not IN_COLAB:",
+        f"{param_indent}    _local_form_id = {form_id!r}",
         f"{param_indent}    _local_form_values = read_local_form_values({form_id!r}, {repr(schema)})",
     ]
     for item in schema:
@@ -507,6 +508,7 @@ cells += [
         ensure_package("seaborn", "seaborn")
         ensure_package("fuzzywuzzy", "fuzzywuzzy")
         ensure_package("ipywidgets", "ipywidgets")
+        ensure_package("umap", "umap-learn", label="umap-learn")
         ensure_package("huggingface_hub", "huggingface_hub", label="huggingface_hub")
         ensure_tdc_from_source()
         ensure_chemml_from_source()
@@ -549,7 +551,7 @@ cells += [
         import plotly.io as pio
         from IPython.display import HTML, Markdown, display
         from rdkit import Chem, DataStructs
-        from rdkit.Chem import AllChem
+        from rdkit.Chem import AllChem, Descriptors, MACCSkeys
         from rdkit.Chem.Scaffolds import MurckoScaffold
         setup_done("visualization and chemistry packages")
 
@@ -559,7 +561,7 @@ cells += [
         from sklearn.ensemble import RandomForestRegressor
         from sklearn.impute import SimpleImputer
         from sklearn.inspection import permutation_importance
-        from sklearn.linear_model import ElasticNet
+        from sklearn.linear_model import ElasticNet, Lasso
         from sklearn.manifold import TSNE
         from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
         from sklearn.model_selection import KFold, cross_validate, train_test_split
@@ -680,6 +682,19 @@ cells += [
             import json
 
             return json.loads(Path(path).read_text(encoding="utf-8"))
+
+        def resolve_cached_artifact_path(path_value, metadata_path):
+            candidate = Path(str(path_value))
+            metadata_dir = Path(metadata_path).parent
+            if candidate.exists():
+                return candidate
+            sibling_candidate = metadata_dir / candidate.name
+            if sibling_candidate.exists():
+                return sibling_candidate
+            recursive_matches = sorted(metadata_dir.rglob(candidate.name), key=lambda path: len(str(path)))
+            if recursive_matches:
+                return recursive_matches[0]
+            return candidate
 
         def cache_metadata_matches(metadata, expected):
             for key, expected_value in expected.items():
@@ -803,7 +818,7 @@ cells += [
 
         def apply_qsar_split(split_strategy="random", test_fraction=0.2, random_seed=42, announce=True):
             if "feature_matrix" not in STATE:
-                raise RuntimeError("Please build the fingerprint representation first.")
+                raise RuntimeError("Please build the molecular feature matrix first.")
 
             X = STATE["feature_matrix"].copy()
             y = STATE["curated_df"]["target"].astype(float).reset_index(drop=True)
@@ -1099,6 +1114,18 @@ cells += [
                 for name in widget_map
             }
 
+        def set_local_form_values(form_id, values):
+            if IN_COLAB or widgets is None or form_id not in LOCAL_FORM_STATE:
+                return
+            widget_map = LOCAL_FORM_STATE[form_id]["widget_map"]
+            for name, value in values.items():
+                if name not in widget_map:
+                    continue
+                try:
+                    widget_map[name].value = value
+                except Exception:
+                    continue
+
         setup_done("Local widget helper")
 
         setup_start("Plotly display helper")
@@ -1192,6 +1219,30 @@ cells += [
                 raise ValueError("Please upload a .csv or Excel file.")
             STATE["uploaded_filename"] = filename
             return df
+
+        def upload_support_file(extract_zip=False, destination_dir="./.cache/uploaded_support_files"):
+            if not IN_COLAB:
+                raise RuntimeError(
+                    "This upload helper uses `google.colab.files.upload()` and is only available in Colab. "
+                    "In local Jupyter, provide a file or directory path instead."
+                )
+            uploaded = files.upload()
+            if not uploaded:
+                raise ValueError("No file was uploaded.")
+            filename = next(iter(uploaded))
+            destination = Path(destination_dir)
+            destination.mkdir(parents=True, exist_ok=True)
+            saved_path = destination / Path(filename).name
+            saved_path.write_bytes(uploaded[filename])
+            if extract_zip and saved_path.suffix.lower() == ".zip":
+                import zipfile
+
+                extract_root = destination / saved_path.stem
+                extract_root.mkdir(parents=True, exist_ok=True)
+                with zipfile.ZipFile(saved_path, "r") as zip_file:
+                    zip_file.extractall(extract_root)
+                return extract_root
+            return saved_path
         setup_done("file upload helper")
 
         setup_start("File path helper")
@@ -1336,7 +1387,7 @@ cells += [
             return temp.reset_index(drop=True), stats
         setup_done("SMILES curation helper")
 
-        setup_start("fingerprint helper")
+        setup_start("feature builder helper")
         def make_morgan_matrix(smiles_list, radius=2, n_bits=1024):
             generator = AllChem.GetMorganGenerator(radius=int(radius), fpSize=int(n_bits))
             rows = []
@@ -1346,8 +1397,194 @@ cells += [
                 arr = np.zeros((int(n_bits),), dtype=np.float32)
                 DataStructs.ConvertToNumpyArray(fp, arr)
                 rows.append(arr)
-            return pd.DataFrame(rows, columns=[f"bit_{i:04d}" for i in range(n_bits)])
-        setup_done("fingerprint helper")
+            return pd.DataFrame(rows, columns=[f"morgan_bit_{i:04d}" for i in range(n_bits)])
+
+        def make_circular_fingerprint_matrix(smiles_list, radius=3, n_bits=1024, use_features=False, prefix="ecfp6"):
+            generator = AllChem.GetMorganGenerator(radius=int(radius), fpSize=int(n_bits), atomInvariantsGenerator=(AllChem.GetMorganFeatureAtomInvGen() if bool(use_features) else None))
+            rows = []
+            for smi in smiles_list:
+                mol = Chem.MolFromSmiles(smi)
+                fp = generator.GetFingerprint(mol)
+                arr = np.zeros((int(n_bits),), dtype=np.float32)
+                DataStructs.ConvertToNumpyArray(fp, arr)
+                rows.append(arr)
+            return pd.DataFrame(rows, columns=[f"{prefix}_bit_{i:04d}" for i in range(n_bits)])
+
+        def make_ecfp6_matrix(smiles_list, n_bits=1024):
+            return make_circular_fingerprint_matrix(smiles_list, radius=3, n_bits=int(n_bits), use_features=False, prefix="ecfp6")
+
+        def make_fcfp6_matrix(smiles_list, n_bits=1024):
+            return make_circular_fingerprint_matrix(smiles_list, radius=3, n_bits=int(n_bits), use_features=True, prefix="fcfp6")
+
+        def make_maccs_matrix(smiles_list):
+            rows = []
+            for smi in smiles_list:
+                mol = Chem.MolFromSmiles(smi)
+                fp = MACCSkeys.GenMACCSKeys(mol)
+                arr = np.zeros((fp.GetNumBits(),), dtype=np.float32)
+                DataStructs.ConvertToNumpyArray(fp, arr)
+                rows.append(arr)
+            return pd.DataFrame(rows, columns=[f"maccs_bit_{i:03d}" for i in range(fp.GetNumBits())])
+
+        RDKit_DESCRIPTOR_NAMES = [name for name, _ in Descriptors._descList]
+
+        def make_rdkit_descriptor_matrix(smiles_list):
+            rows = []
+            for smi in smiles_list:
+                mol = Chem.MolFromSmiles(smi)
+                rows.append({f"rdkit_{name}": func(mol) for name, func in Descriptors._descList})
+            return pd.DataFrame(rows)
+
+        def finalize_feature_matrix(feature_df):
+            feature_df = feature_df.copy()
+            feature_df = feature_df.replace([np.inf, -np.inf], np.nan)
+            feature_df = feature_df.apply(pd.to_numeric, errors="coerce")
+            all_nan_columns = [column for column in feature_df.columns if feature_df[column].isna().all()]
+            if all_nan_columns:
+                feature_df = feature_df.drop(columns=all_nan_columns)
+            feature_df = feature_df.fillna(feature_df.median(numeric_only=True))
+            feature_df = feature_df.fillna(0.0)
+            return feature_df.astype(np.float32)
+
+        FEATURE_FAMILY_LABELS = {
+            "morgan": "Morgan fingerprints",
+            "ecfp6": "ECFP6 fingerprints",
+            "fcfp6": "FCFP6 fingerprints",
+            "maccs": "MACCS keys",
+            "rdkit": "RDKit descriptors",
+        }
+
+        def normalize_selected_feature_families(selected_feature_families=None, **feature_flags):
+            selected = []
+            if selected_feature_families is not None:
+                for family in selected_feature_families:
+                    family_key = str(family).strip().lower()
+                    if family_key in FEATURE_FAMILY_LABELS and family_key not in selected:
+                        selected.append(family_key)
+            flag_mapping = {
+                "use_morgan_features": "morgan",
+                "use_ecfp6_features": "ecfp6",
+                "use_fcfp6_features": "fcfp6",
+                "use_maccs_keys": "maccs",
+                "use_rdkit_descriptors": "rdkit",
+            }
+            for flag_name, family_key in flag_mapping.items():
+                if bool(feature_flags.get(flag_name)) and family_key not in selected:
+                    selected.append(family_key)
+            return selected
+
+        def feature_family_label(family_key, radius=2, n_bits=1024):
+            family_key = str(family_key).strip().lower()
+            if family_key == "morgan":
+                return f"Morgan(radius={int(radius)}, bits={int(n_bits)})"
+            if family_key == "ecfp6":
+                return f"ECFP6(bits={int(n_bits)})"
+            if family_key == "fcfp6":
+                return f"FCFP6(bits={int(n_bits)})"
+            return FEATURE_FAMILY_LABELS[family_key]
+
+        def build_feature_matrix_from_smiles(smiles_list, selected_feature_families=None, radius=2, n_bits=1024, **feature_flags):
+            selected_families = normalize_selected_feature_families(
+                selected_feature_families=selected_feature_families,
+                **feature_flags,
+            )
+            if not selected_families:
+                raise ValueError("Please select at least one molecular feature family.")
+            frames = []
+            labels = []
+            built_families = []
+            skipped_families = []
+            warnings_list = []
+
+            for family_key in selected_families:
+                if family_key == "morgan":
+                    frames.append(make_morgan_matrix(smiles_list, radius=int(radius), n_bits=int(n_bits)))
+                    labels.append(feature_family_label(family_key, radius=radius, n_bits=n_bits))
+                    built_families.append(family_key)
+                elif family_key == "ecfp6":
+                    frames.append(make_ecfp6_matrix(smiles_list, n_bits=int(n_bits)))
+                    labels.append(feature_family_label(family_key, radius=radius, n_bits=n_bits))
+                    built_families.append(family_key)
+                elif family_key == "fcfp6":
+                    frames.append(make_fcfp6_matrix(smiles_list, n_bits=int(n_bits)))
+                    labels.append(feature_family_label(family_key, radius=radius, n_bits=n_bits))
+                    built_families.append(family_key)
+                elif family_key == "maccs":
+                    frames.append(make_maccs_matrix(smiles_list))
+                    labels.append(feature_family_label(family_key))
+                    built_families.append(family_key)
+                elif family_key == "rdkit":
+                    frames.append(make_rdkit_descriptor_matrix(smiles_list))
+                    labels.append(feature_family_label(family_key))
+                    built_families.append(family_key)
+                else:
+                    raise ValueError(f"Unsupported feature family: {family_key}")
+
+            if not frames:
+                raise RuntimeError(
+                    "None of the requested molecular feature families could be built."
+                )
+            combined = pd.concat(frames, axis=1)
+            build_info = {
+                "selected_feature_families": list(selected_families),
+                "built_feature_families": list(built_families),
+                "skipped_feature_families": list(skipped_families),
+                "warnings": list(warnings_list),
+                "representation_label": " + ".join(labels),
+            }
+            return finalize_feature_matrix(combined), build_info
+
+        def align_feature_matrix_to_training_columns(feature_df, expected_columns):
+            aligned = feature_df.copy()
+            for column in expected_columns:
+                if column not in aligned.columns:
+                    aligned[column] = 0.0
+            aligned = aligned.loc[:, list(expected_columns)].copy()
+            return aligned.astype(np.float32)
+
+        def apply_lasso_feature_selection(feature_df, target_values, alpha=0.001, random_seed=42):
+            working_df = feature_df.copy()
+            y = np.asarray(target_values, dtype=float).reshape(-1)
+            if working_df.empty:
+                raise ValueError("Cannot run LASSO feature selection on an empty feature matrix.")
+            scaler = StandardScaler()
+            X_scaled = scaler.fit_transform(working_df.to_numpy(dtype=np.float32))
+            selector = Lasso(alpha=float(alpha), max_iter=20000, random_state=int(random_seed))
+            selector.fit(X_scaled, y)
+            coefficients = np.asarray(selector.coef_, dtype=float)
+            selected_mask = np.abs(coefficients) > 1e-10
+            if not np.any(selected_mask):
+                strongest_index = int(np.argmax(np.abs(coefficients)))
+                if not np.isfinite(coefficients[strongest_index]):
+                    raise RuntimeError("LASSO feature selection did not produce any finite coefficients.")
+                selected_mask[strongest_index] = True
+            selected_columns = working_df.columns[selected_mask].tolist()
+            trimmed_df = working_df.loc[:, selected_columns].copy()
+            summary = {
+                "selected_columns": list(selected_columns),
+                "selected_feature_count": int(len(selected_columns)),
+                "original_feature_count": int(working_df.shape[1]),
+                "alpha": float(alpha),
+            }
+            return trimmed_df.astype(np.float32), summary
+
+        def current_feature_metadata():
+            builder_config = dict(STATE.get("feature_builder_config", {}))
+            return {
+                "representation_label": STATE.get("representation_label", ""),
+                "selected_feature_families": list(builder_config.get("selected_feature_families", STATE.get("selected_feature_families", []))),
+                "built_feature_families": list(builder_config.get("built_feature_families", STATE.get("built_feature_families", []))),
+                "fingerprint_radius": int(builder_config.get("fingerprint_radius", STATE.get("fingerprint_radius", 2))),
+                "fingerprint_bits": int(builder_config.get("fingerprint_bits", STATE.get("fingerprint_bits", 1024))),
+                "lasso_feature_selection_enabled": bool(builder_config.get("lasso_feature_selection_enabled", False)),
+                "lasso_alpha": (
+                    float(builder_config.get("lasso_alpha"))
+                    if builder_config.get("lasso_alpha") not in [None, ""]
+                    else None
+                ),
+                "lasso_selected_feature_count": int(builder_config.get("lasso_selected_feature_count", len(STATE.get("feature_names", [])) or 0)),
+            }
+        setup_done("feature builder helper")
 
         setup_start("regression summary helper")
         def summarize_regression(y_true, y_pred, prefix):
@@ -1684,7 +1921,15 @@ cells += [
         """
         ## 2. Molecular Representation
 
-        We use **Morgan fingerprints** as a fast, Colab-friendly baseline representation and show a 2D molecule preview.
+        This section now separates **molecule preview** from **feature generation**.
+
+        You can build any combination of:
+
+        - **Morgan fingerprints**
+        - **ECFP6 fingerprints**
+        - **FCFP6 fingerprints**
+        - **MACCS keys**
+        - **RDKit descriptors**
 
         Before modeling, the notebook now does a small amount of **preprocessing and SMILES curation under the hood**:
 
@@ -1700,41 +1945,157 @@ cells += [
     ),
     code(
         """
-        # @title 2A. Preview molecules and generate fingerprints { display-mode: "form" }
+        # @title 2A. Preview curated molecules { display-mode: "form" }
         preview_molecules = 12 # @param {type:"slider", min:4, max:20, step:1}
-        fingerprint_radius = 2 # @param {type:"slider", min:1, max:4, step:1}
-        fingerprint_bits = "1024" # @param ["256", "512", "1024", "2048"]
+        preview_selection_mode = "Highest target values" # @param ["Highest target values", "Lowest target values", "Random sample", "Dataset order"]
 
         if "curated_df" not in STATE:
             raise RuntimeError("Please run the curation cell first.")
 
         curated_df = STATE["curated_df"].copy()
-        legends = [f"target={value:.3f}" for value in curated_df["target"].head(preview_molecules)]
+        preview_count = min(int(preview_molecules), len(curated_df))
+        if preview_selection_mode == "Highest target values":
+            preview_df = curated_df.sort_values("target", ascending=False).head(preview_count).reset_index(drop=True)
+        elif preview_selection_mode == "Lowest target values":
+            preview_df = curated_df.sort_values("target", ascending=True).head(preview_count).reset_index(drop=True)
+        elif preview_selection_mode == "Random sample":
+            preview_df = curated_df.sample(preview_count, random_state=42).reset_index(drop=True)
+        else:
+            preview_df = curated_df.head(preview_count).reset_index(drop=True)
+        legends = [f"target={value:.3f}" for value in preview_df["target"]]
         try:
             from rdkit.Chem import Draw
-            display(Draw.MolsToGridImage(curated_df["rdkit_mol"].tolist()[:preview_molecules], legends=legends, molsPerRow=4, subImgSize=(250, 250), useSVG=False))
+            display(Draw.MolsToGridImage(preview_df["rdkit_mol"].tolist(), legends=legends, molsPerRow=4, subImgSize=(250, 250), useSVG=False))
         except Exception as exc:
             print(f"Molecule preview skipped because RDKit drawing support is unavailable: {exc}")
+        display(preview_df[["canonical_smiles", "target"]])
+        """
+    ),
+    md(
+        """
+        ### 2B. Generate Molecular Features
 
-        X = make_morgan_matrix(curated_df["canonical_smiles"].tolist(), radius=int(fingerprint_radius), n_bits=int(fingerprint_bits))
+        Select one or more molecular feature families below. Checking every box is the equivalent of an "all descriptors" representation.
+        """
+    ),
+    code(
+        """
+        # @title 2B. Generate molecular features { display-mode: "form" }
+        use_morgan_features = False # @param {type:"boolean"}
+        use_ecfp6_features = True # @param {type:"boolean"}
+        use_fcfp6_features = False # @param {type:"boolean"}
+        use_maccs_keys = False # @param {type:"boolean"}
+        use_rdkit_descriptors = False # @param {type:"boolean"}
+        morgan_radius = 2 # @param {type:"slider", min:1, max:4, step:1}
+        fingerprint_bits = "1024" # @param ["256", "512", "1024", "2048"]
+        enable_lasso_feature_selection = False # @param {type:"boolean"}
+        lasso_feature_selection_alpha = 0.001 # @param {type:"number"}
+
+        if "curated_df" not in STATE:
+            raise RuntimeError("Please run the curation cell first.")
+
+        selected_feature_families = normalize_selected_feature_families(
+            use_morgan_features=use_morgan_features,
+            use_ecfp6_features=use_ecfp6_features,
+            use_fcfp6_features=use_fcfp6_features,
+            use_maccs_keys=use_maccs_keys,
+            use_rdkit_descriptors=use_rdkit_descriptors,
+        )
+        if not selected_feature_families:
+            raise ValueError("Please select at least one molecular feature family.")
+
+        try:
+            X, build_info = build_feature_matrix_from_smiles(
+                curated_df["canonical_smiles"].tolist(),
+                selected_feature_families=selected_feature_families,
+                radius=int(morgan_radius),
+                n_bits=int(fingerprint_bits),
+            )
+        except Exception as exc:
+            raise RuntimeError(
+                "Could not build the selected molecular representation. "
+                f"{exc}"
+            ) from exc
+
+        for warning_text in build_info["warnings"]:
+            print(f"Warning: {warning_text}")
+
+        lasso_summary = None
+        if enable_lasso_feature_selection:
+            X, lasso_summary = apply_lasso_feature_selection(
+                X,
+                curated_df["target"].to_numpy(dtype=float),
+                alpha=float(lasso_feature_selection_alpha),
+                random_seed=42,
+            )
+
         STATE["feature_matrix"] = X.copy()
         STATE["feature_names"] = list(X.columns)
-        STATE["representation_label"] = f"Morgan fingerprint (radius={fingerprint_radius}, bits={fingerprint_bits})"
+        STATE["fingerprint_radius"] = int(morgan_radius)
+        STATE["fingerprint_bits"] = int(fingerprint_bits)
+        STATE["selected_feature_families"] = list(build_info["selected_feature_families"])
+        STATE["built_feature_families"] = list(build_info["built_feature_families"])
+        STATE["skipped_feature_families"] = list(build_info["skipped_feature_families"])
+        STATE["lasso_feature_selection_summary"] = dict(lasso_summary) if lasso_summary is not None else {}
+        STATE["feature_builder_config"] = {
+            "selected_feature_families": list(build_info["selected_feature_families"]),
+            "built_feature_families": list(build_info["built_feature_families"]),
+            "skipped_feature_families": list(build_info["skipped_feature_families"]),
+            "fingerprint_radius": int(morgan_radius),
+            "fingerprint_bits": int(fingerprint_bits),
+            "lasso_feature_selection_enabled": bool(enable_lasso_feature_selection),
+            "lasso_alpha": float(lasso_feature_selection_alpha) if enable_lasso_feature_selection else None,
+            "lasso_selected_feature_count": int(X.shape[1]),
+        }
+        STATE["representation_label"] = build_info["representation_label"]
         print(f"Representation built: {STATE['representation_label']}")
-        print(f"Feature matrix shape: {X.shape[0]:,} molecules x {X.shape[1]:,} fingerprint bits")
+        print(f"Selected feature families: {', '.join(build_info['selected_feature_families'])}")
+        print(f"Built feature families: {', '.join(build_info['built_feature_families'])}")
+        if build_info["skipped_feature_families"]:
+            print(f"Skipped feature families: {', '.join(build_info['skipped_feature_families'])}")
+        if lasso_summary is not None:
+            print(
+                "LASSO feature selection kept "
+                f"{lasso_summary['selected_feature_count']:,} of {lasso_summary['original_feature_count']:,} features "
+                f"(alpha={lasso_summary['alpha']})."
+            )
+        print(f"Feature matrix shape: {X.shape[0]:,} molecules x {X.shape[1]:,} features")
         display(X.head(3))
+        """
+    ),
+    md(
+        """
+        ### 2C. Representation Note
+
+        `Morgan`, `ECFP6`, and `FCFP6` are all circular fingerprints:
+
+        - **Morgan** uses the user-selected radius and bit length
+        - **ECFP6** uses atom-identity style invariants
+        - **FCFP6** uses feature-based invariants
+        - **MACCS** provides a compact fixed key set
+        - **RDKit descriptors** provide continuous physicochemical summary features
+
+        If the descriptor count becomes large relative to the number of molecules, you can enable the optional **LASSO feature-selection** step in `2B` to trim the matrix before downstream modeling.
         """
     ),
     md(
         """
         ## 3. Chemical Similarity Map
 
-        Molecules that cluster together in this plot usually have more similar fingerprints.
+        Molecules that cluster together in this plot usually have more similar molecular feature profiles.
         """
     ),
     code(
         """
         # @title 3A. Build an interactive PCA -> t-SNE map { display-mode: "form" }
+        tsne_use_morgan_features = False # @param {type:"boolean"}
+        tsne_use_rdkit_descriptors = True # @param {type:"boolean"}
+        tsne_use_ecfp6_features = True # @param {type:"boolean"}
+        tsne_use_fcfp6_features = False # @param {type:"boolean"}
+        tsne_use_maccs_keys = False # @param {type:"boolean"}
+        tsne_use_all_descriptors = False # @param {type:"boolean"}
+        tsne_morgan_radius = 2 # @param {type:"slider", min:1, max:4, step:1}
+        tsne_fingerprint_bits = "1024" # @param ["256", "512", "1024", "2048"]
         perplexity = 30 # @param {type:"slider", min:5, max:50, step:1}
         max_points_for_map = 1000 # @param {type:"slider", min:100, max:2000, step:100}
         embedding_random_seed = 42 # @param {type:"integer"}
@@ -1742,29 +2103,39 @@ cells += [
         reuse_similarity_map_cache = True # @param {type:"boolean"}
         similarity_map_cache_run_name = "AUTO" # @param {type:"string"}
 
-        if "feature_matrix" not in STATE:
-            raise RuntimeError("Please build the fingerprint representation first.")
+        if "curated_df" not in STATE:
+            raise RuntimeError("Please run the curation cell first.")
 
-        progress = tqdm(total=4, desc="Similarity map", leave=False)
-
-        feature_df = STATE["feature_matrix"].copy()
         curated_df = STATE["curated_df"].copy()
-        if len(feature_df) < 6:
+        if len(curated_df) < 6:
             raise ValueError("Please provide at least 6 valid molecules before building the similarity map.")
-        if len(feature_df) > max_points_for_map:
+        if len(curated_df) > max_points_for_map:
             sampled = curated_df.sample(max_points_for_map, random_state=int(embedding_random_seed)).index
-            feature_df = feature_df.loc[sampled].reset_index(drop=True)
             plot_df = curated_df.loc[sampled].reset_index(drop=True)
         else:
             plot_df = curated_df.reset_index(drop=True)
-        progress.update(1)
+        sampled_smiles = plot_df["canonical_smiles"].astype(str).reset_index(drop=True)
+        selected_map_options = []
+        if tsne_use_morgan_features:
+            selected_map_options.append(("Morgan fingerprints", ["morgan"]))
+        if tsne_use_rdkit_descriptors:
+            selected_map_options.append(("RDKit descriptors", ["rdkit"]))
+        if tsne_use_ecfp6_features:
+            selected_map_options.append(("ECFP6 fingerprints", ["ecfp6"]))
+        if tsne_use_fcfp6_features:
+            selected_map_options.append(("FCFP6 fingerprints", ["fcfp6"]))
+        if tsne_use_maccs_keys:
+            selected_map_options.append(("MACCS keys", ["maccs"]))
+        if tsne_use_all_descriptors:
+            selected_map_options.append(("All descriptors", ["morgan", "rdkit", "ecfp6", "fcfp6", "maccs"]))
+        if not selected_map_options:
+            raise ValueError("Please select at least one descriptor option for the similarity map.")
 
         similarity_map_cache_dir = None
-        similarity_map_cache_paths = None
-        sampled_smiles = plot_df["canonical_smiles"].astype(str).reset_index(drop=True)
-        tsne_perplexity = min(int(perplexity), max(2, len(feature_df) - 1))
-        n_pca = min(50, feature_df.shape[1], max(2, feature_df.shape[0] - 1))
-        map_df = None
+        similarity_map_results = {}
+        similarity_map_cache_paths = {}
+        total_steps = max(1, len(selected_map_options) * 4)
+        progress = tqdm(total=total_steps, desc="Similarity map", leave=False)
         if enable_similarity_map_cache:
             similarity_map_cache_dir = resolve_model_cache_dir(
                 "similarity_map",
@@ -1772,9 +2143,25 @@ cells += [
                 prefer_existing=bool(reuse_similarity_map_cache),
             )
             print(f"Similarity map cache directory: {similarity_map_cache_dir}")
-            if reuse_similarity_map_cache:
+
+        for map_label, map_families in selected_map_options:
+            progress.set_postfix_str(f"Building features: {map_label}")
+            feature_df, build_info = build_feature_matrix_from_smiles(
+                sampled_smiles.tolist(),
+                selected_feature_families=map_families,
+                radius=int(tsne_morgan_radius),
+                n_bits=int(tsne_fingerprint_bits),
+            )
+            progress.update(1)
+
+            tsne_perplexity = min(int(perplexity), max(2, len(feature_df) - 1))
+            n_pca = min(50, feature_df.shape[1], max(2, feature_df.shape[0] - 1))
+            map_df = None
+            cache_key = slugify_cache_text(map_label)
+
+            if enable_similarity_map_cache and reuse_similarity_map_cache and similarity_map_cache_dir is not None:
                 metadata_candidates = sorted(
-                    similarity_map_cache_dir.glob(f"*_{current_dataset_cache_label()}_similarity_map_metadata.json"),
+                    similarity_map_cache_dir.glob(f"*_{cache_key}_similarity_map_metadata.json"),
                     key=lambda path: path.name,
                     reverse=True,
                 )
@@ -1784,13 +2171,16 @@ cells += [
                         expected_metadata = {
                             "workflow": "Similarity map",
                             "dataset_label": current_dataset_cache_label(),
-                            "representation_label": STATE.get("representation_label"),
+                            "representation_label": build_info["representation_label"],
+                            "feature_families": list(map_families),
+                            "morgan_radius": int(tsne_morgan_radius),
                             "n_rows": len(feature_df),
                             "n_features": feature_df.shape[1],
                             "perplexity": tsne_perplexity,
                             "max_points_for_map": int(max_points_for_map),
                             "embedding_random_seed": int(embedding_random_seed),
                             "n_pca": int(n_pca),
+                            "fingerprint_bits": int(tsne_fingerprint_bits),
                         }
                         if not cache_metadata_matches(metadata, expected_metadata):
                             continue
@@ -1803,69 +2193,85 @@ cells += [
                         if not cached_map_df["canonical_smiles"].astype(str).reset_index(drop=True).equals(sampled_smiles):
                             continue
                         map_df = cached_map_df.copy()
-                        similarity_map_cache_paths = {
+                        similarity_map_cache_paths[map_label] = {
                             "map_path": str(map_path),
                             "metadata_path": str(metadata_path),
                         }
-                        progress.set_postfix_str("Loaded from cache")
-                        progress.update(3)
-                        print(f"Loaded cached similarity map from {map_path.parent}", flush=True)
+                        print(f"Loaded cached similarity map for {map_label} from {map_path.parent}", flush=True)
                         break
                     except Exception:
                         continue
-
-        if map_df is None:
-            progress.set_postfix_str("Running PCA")
-            pca_scores = PCA(n_components=n_pca, random_state=int(embedding_random_seed)).fit_transform(feature_df)
-            progress.update(1)
-            progress.set_postfix_str("Running t-SNE")
-            tsne_scores = TSNE(
-                n_components=2,
-                perplexity=tsne_perplexity,
-                init="pca",
-                learning_rate="auto",
-                random_state=int(embedding_random_seed),
-            ).fit_transform(pca_scores)
             progress.update(1)
 
-            map_df = plot_df[["canonical_smiles", "target"]].copy()
-            map_df["PCA_tSNE_1"] = tsne_scores[:, 0]
-            map_df["PCA_tSNE_2"] = tsne_scores[:, 1]
-            progress.update(1)
+            if map_df is None:
+                progress.set_postfix_str(f"Running PCA/t-SNE: {map_label}")
+                pca_scores = PCA(n_components=n_pca, random_state=int(embedding_random_seed)).fit_transform(feature_df)
+                tsne_scores = TSNE(
+                    n_components=2,
+                    perplexity=tsne_perplexity,
+                    init="pca",
+                    learning_rate="auto",
+                    random_state=int(embedding_random_seed),
+                ).fit_transform(pca_scores)
+                map_df = plot_df[["canonical_smiles", "target"]].copy()
+                map_df["PCA_tSNE_1"] = tsne_scores[:, 0]
+                map_df["PCA_tSNE_2"] = tsne_scores[:, 1]
+                progress.update(1)
 
-            if enable_similarity_map_cache and similarity_map_cache_dir is not None:
-                artifact_base = f"{STATE['cache_session_stamp']}_{current_dataset_cache_label()}_similarity_map"
-                map_path = similarity_map_cache_dir / f"{artifact_base}.csv"
-                metadata_path = similarity_map_cache_dir / f"{artifact_base}_metadata.json"
-                map_df.to_csv(map_path, index=False)
-                write_cache_metadata(
-                    metadata_path,
-                    {
-                        "workflow": "Similarity map",
-                        "dataset_label": current_dataset_cache_label(),
-                        "representation_label": STATE.get("representation_label"),
-                        "n_rows": len(feature_df),
-                        "n_features": feature_df.shape[1],
-                        "perplexity": tsne_perplexity,
-                        "max_points_for_map": int(max_points_for_map),
-                        "embedding_random_seed": int(embedding_random_seed),
-                        "n_pca": int(n_pca),
-                        "cache_run_name": similarity_map_cache_dir.name,
+                if enable_similarity_map_cache and similarity_map_cache_dir is not None:
+                    artifact_base = f"{STATE['cache_session_stamp']}_{current_dataset_cache_label()}_{cache_key}_similarity_map"
+                    map_path = similarity_map_cache_dir / f"{artifact_base}.csv"
+                    metadata_path = similarity_map_cache_dir / f"{artifact_base}_metadata.json"
+                    map_df.to_csv(map_path, index=False)
+                    write_cache_metadata(
+                        metadata_path,
+                        {
+                            "workflow": "Similarity map",
+                            "dataset_label": current_dataset_cache_label(),
+                            "representation_label": build_info["representation_label"],
+                            "feature_families": list(map_families),
+                            "morgan_radius": int(tsne_morgan_radius),
+                            "n_rows": len(feature_df),
+                            "n_features": feature_df.shape[1],
+                            "perplexity": tsne_perplexity,
+                            "max_points_for_map": int(max_points_for_map),
+                            "embedding_random_seed": int(embedding_random_seed),
+                            "n_pca": int(n_pca),
+                            "fingerprint_bits": int(tsne_fingerprint_bits),
+                            "cache_run_name": similarity_map_cache_dir.name,
+                            "map_path": str(map_path),
+                        },
+                    )
+                    similarity_map_cache_paths[map_label] = {
                         "map_path": str(map_path),
-                    },
-                )
-                similarity_map_cache_paths = {
-                    "map_path": str(map_path),
-                    "metadata_path": str(metadata_path),
-                }
-        else:
-            progress.update(0)
+                        "metadata_path": str(metadata_path),
+                    }
+            else:
+                progress.update(1)
 
-        fig = px.scatter(map_df, x="PCA_tSNE_1", y="PCA_tSNE_2", color="target", hover_data={"canonical_smiles": True, "target": ":.4f"}, title="Chemical similarity map (Morgan fingerprints -> PCA -> t-SNE)", color_continuous_scale="Viridis")
-        fig.update_layout(height=600)
-        show_plotly(fig)
-        STATE["similarity_map_df"] = map_df.copy()
-        if similarity_map_cache_paths is not None:
+            fig = px.scatter(
+                map_df,
+                x="PCA_tSNE_1",
+                y="PCA_tSNE_2",
+                color="target",
+                hover_data={"canonical_smiles": True, "target": ":.4f"},
+                title=f"Chemical similarity map ({map_label} -> PCA -> t-SNE)",
+                color_continuous_scale="Viridis",
+            )
+            fig.update_layout(height=600)
+            show_plotly(fig)
+            similarity_map_results[map_label] = {
+                "map_df": map_df.copy(),
+                "feature_families": list(map_families),
+                "representation_label": build_info["representation_label"],
+            }
+            progress.update(1)
+
+        STATE["similarity_map_results"] = similarity_map_results
+        if similarity_map_results:
+            first_label = next(iter(similarity_map_results))
+            STATE["similarity_map_df"] = similarity_map_results[first_label]["map_df"].copy()
+        if similarity_map_cache_paths:
             STATE["similarity_map_cache_paths"] = similarity_map_cache_paths
         if similarity_map_cache_dir is not None:
             STATE["similarity_map_cache_dir"] = str(similarity_map_cache_dir)
@@ -1906,7 +2312,7 @@ cells += [
         run_catboost = True # @param {type:"boolean"}
 
         if "feature_matrix" not in STATE:
-            raise RuntimeError("Please build the fingerprint representation first.")
+            raise RuntimeError("Please build the molecular feature matrix first.")
 
         split_payload = apply_qsar_split(
             split_strategy=str(data_split_strategy),
@@ -1925,6 +2331,7 @@ cells += [
             effective_cv_folds = min(int(cv_folds), len(X_train))
             if effective_cv_folds < 2:
                 raise ValueError("At least 2 cross-validation folds are required when cross-validation is enabled.")
+        feature_metadata = current_feature_metadata()
 
         available_models = {
             "ElasticNet": Pipeline(
@@ -2032,6 +2439,13 @@ cells += [
                             "cross_validation_enabled": bool(use_cross_validation),
                             "cv_folds": int(effective_cv_folds) if effective_cv_folds is not None else None,
                             "random_seed": int(model_random_seed),
+                            "selected_feature_families": list(feature_metadata["selected_feature_families"]),
+                            "built_feature_families": list(feature_metadata["built_feature_families"]),
+                            "fingerprint_radius": int(feature_metadata["fingerprint_radius"]),
+                            "fingerprint_bits": int(feature_metadata["fingerprint_bits"]),
+                            "lasso_feature_selection_enabled": bool(feature_metadata["lasso_feature_selection_enabled"]),
+                            "lasso_alpha": feature_metadata["lasso_alpha"],
+                            "lasso_selected_feature_count": int(feature_metadata["lasso_selected_feature_count"]),
                         }
                         if not cache_metadata_matches(metadata, expected_metadata):
                             continue
@@ -2117,6 +2531,14 @@ cells += [
                         "model_name": name,
                         "workflow": "Conventional ML",
                         "dataset_label": conventional_dataset_label,
+                        "representation_label": feature_metadata["representation_label"],
+                        "selected_feature_families": list(feature_metadata["selected_feature_families"]),
+                        "built_feature_families": list(feature_metadata["built_feature_families"]),
+                        "fingerprint_radius": int(feature_metadata["fingerprint_radius"]),
+                        "fingerprint_bits": int(feature_metadata["fingerprint_bits"]),
+                        "lasso_feature_selection_enabled": bool(feature_metadata["lasso_feature_selection_enabled"]),
+                        "lasso_alpha": feature_metadata["lasso_alpha"],
+                        "lasso_selected_feature_count": int(feature_metadata["lasso_selected_feature_count"]),
                         "cache_run_name": conventional_cache_dir.name,
                         "model_path": model_path,
                         "prediction_path": prediction_path,
@@ -2459,6 +2881,8 @@ cells += [
         enable_tuned_model_cache = True # @param {type:"boolean"}
         reuse_tuned_cached_models = True # @param {type:"boolean"}
         tuned_cache_run_name = "AUTO" # @param {type:"string"}
+        previous_ga_run_source = "" # @param {type:"string"}
+        upload_previous_ga_run_source = False # @param {type:"boolean"}
         tune_elasticnet = False # @param {type:"boolean"}
         tune_svr = False # @param {type:"boolean"}
         tune_random_forest = True # @param {type:"boolean"}
@@ -2466,7 +2890,7 @@ cells += [
         tune_catboost = True # @param {type:"boolean"}
 
         if "feature_matrix" not in STATE:
-            raise RuntimeError("Please build the fingerprint representation first.")
+            raise RuntimeError("Please build the molecular feature matrix first.")
 
         from chemml.optimization import GeneticAlgorithm
         import warnings
@@ -2488,6 +2912,107 @@ cells += [
             module=r"sklearn\\.utils\\.parallel",
         )
 
+        explicit_ga_metadata_candidates = []
+        explicit_ga_metadata_bundle = None
+        previous_ga_run_source = str(previous_ga_run_source).strip()
+        if upload_previous_ga_run_source:
+            uploaded_ga_source = upload_support_file(
+                extract_zip=True,
+                destination_dir="./.cache/uploaded_ga_runs",
+            )
+            previous_ga_run_source = str(uploaded_ga_source)
+            print(f"Uploaded previous GA source to: {previous_ga_run_source}", flush=True)
+
+        if previous_ga_run_source:
+            previous_source_path = Path(previous_ga_run_source)
+            if not previous_source_path.exists():
+                raise FileNotFoundError(
+                    f"Previous GA source was provided but does not exist: {previous_source_path}"
+                )
+            if previous_source_path.is_dir():
+                explicit_ga_metadata_candidates.extend(
+                    sorted(
+                        previous_source_path.rglob("*_ga_tuned_metadata.json"),
+                        key=lambda path: len(str(path)),
+                    )
+                )
+            elif previous_source_path.suffix.lower() == ".json":
+                explicit_ga_metadata_candidates.append(previous_source_path)
+            else:
+                raise ValueError(
+                    "Previous GA source must be a directory containing GA cache artifacts or a "
+                    "`*_ga_tuned_metadata.json` file. In Colab you can also upload a `.zip` archive."
+                )
+            if not explicit_ga_metadata_candidates:
+                raise FileNotFoundError(
+                    "No `*_ga_tuned_metadata.json` files were found in the supplied previous GA source."
+                )
+            representative_metadata_path = sorted(
+                explicit_ga_metadata_candidates,
+                key=lambda path: path.name,
+                reverse=True,
+            )[0]
+            representative_metadata = read_cache_metadata(representative_metadata_path)
+            discovered_model_names = sorted(
+                {
+                    str(read_cache_metadata(path).get("model_name", "")).strip()
+                    for path in explicit_ga_metadata_candidates
+                }
+            )
+            discovered_model_names = [name for name in discovered_model_names if name]
+            metadata_override_values = {
+                "tuning_split_strategy": str(representative_metadata.get("split_strategy", tuning_split_strategy)),
+                "tuning_test_fraction": float(representative_metadata.get("test_fraction", tuning_test_fraction)),
+                "tuning_random_seed": int(representative_metadata.get("random_seed", tuning_random_seed)),
+                "ga_cv_folds": int(representative_metadata.get("ga_cv_folds", ga_cv_folds)),
+                "ga_objective": str(representative_metadata.get("ga_objective", ga_objective)),
+                "ga_generations": int(representative_metadata.get("ga_generations_requested", representative_metadata.get("ga_generations_completed", ga_generations))),
+                "ga_population_size": int(representative_metadata.get("ga_population_size", ga_population_size)),
+                "ga_crossover_size": int(representative_metadata.get("ga_crossover_size", ga_crossover_size)),
+                "ga_mutation_size": int(representative_metadata.get("ga_mutation_size", ga_mutation_size)),
+                "ga_mutation_probability": float(representative_metadata.get("ga_mutation_probability", ga_mutation_probability)),
+                "ga_early_stopping": int(representative_metadata.get("ga_early_stopping", ga_early_stopping)),
+                "tuned_cache_run_name": str(representative_metadata.get("cache_run_name", tuned_cache_run_name)),
+                "tune_elasticnet": "ElasticNet" in discovered_model_names,
+                "tune_svr": "SVR" in discovered_model_names,
+                "tune_random_forest": "Random forest" in discovered_model_names,
+                "tune_xgboost": "XGBoost" in discovered_model_names,
+                "tune_catboost": "CatBoost" in discovered_model_names,
+            }
+            tuning_split_strategy = metadata_override_values["tuning_split_strategy"]
+            tuning_test_fraction = metadata_override_values["tuning_test_fraction"]
+            tuning_random_seed = metadata_override_values["tuning_random_seed"]
+            ga_cv_folds = metadata_override_values["ga_cv_folds"]
+            ga_objective = metadata_override_values["ga_objective"]
+            ga_generations = metadata_override_values["ga_generations"]
+            ga_population_size = metadata_override_values["ga_population_size"]
+            ga_crossover_size = metadata_override_values["ga_crossover_size"]
+            ga_mutation_size = metadata_override_values["ga_mutation_size"]
+            ga_mutation_probability = metadata_override_values["ga_mutation_probability"]
+            ga_early_stopping = metadata_override_values["ga_early_stopping"]
+            tuned_cache_run_name = metadata_override_values["tuned_cache_run_name"]
+            tune_elasticnet = metadata_override_values["tune_elasticnet"]
+            tune_svr = metadata_override_values["tune_svr"]
+            tune_random_forest = metadata_override_values["tune_random_forest"]
+            tune_xgboost = metadata_override_values["tune_xgboost"]
+            tune_catboost = metadata_override_values["tune_catboost"]
+            explicit_ga_metadata_bundle = {
+                "representative_metadata_path": str(representative_metadata_path),
+                "representative_metadata": representative_metadata,
+                "discovered_model_names": discovered_model_names,
+            }
+            if not IN_COLAB and "_local_form_id" in locals():
+                set_local_form_values(_local_form_id, metadata_override_values)
+            print(
+                f"Previous GA source supplied: {previous_source_path} "
+                f"({len(explicit_ga_metadata_candidates)} metadata file(s) found)",
+                flush=True,
+            )
+            display_note(
+                "Previous GA metadata was supplied, so the `4C` tuning controls were updated to match "
+                "that run before executing the block."
+            )
+
         split_payload = apply_qsar_split(
             split_strategy=str(tuning_split_strategy),
             test_fraction=float(tuning_test_fraction),
@@ -2498,6 +3023,7 @@ cells += [
         X_test = split_payload["X_test"].copy()
         y_train = np.asarray(split_payload["y_train"], dtype=float)
         y_test = np.asarray(split_payload["y_test"], dtype=float)
+        feature_metadata = current_feature_metadata()
 
         def _rounded_float(value, digits=6):
             return float(np.round(float(value), digits))
@@ -2728,12 +3254,32 @@ cells += [
             resume_state = None
             resume_history_prefix = None
             resume_generation_offset = 0
-            if enable_tuned_model_cache and reuse_tuned_cached_models:
-                metadata_candidates = sorted(
-                    tuned_cache_dir.glob(f"*_{tuned_dataset_label}_{model_slug}_ga_tuned_metadata.json"),
-                    key=lambda path: path.name,
-                    reverse=True,
+            if explicit_ga_metadata_candidates or (enable_tuned_model_cache and reuse_tuned_cached_models):
+                metadata_candidates = []
+                metadata_candidates.extend(
+                    [
+                        path
+                        for path in explicit_ga_metadata_candidates
+                        if path.name.endswith(f"_{model_slug}_ga_tuned_metadata.json")
+                    ]
                 )
+                if tuned_cache_dir is not None:
+                    metadata_candidates.extend(
+                        sorted(
+                            tuned_cache_dir.glob(f"*_{tuned_dataset_label}_{model_slug}_ga_tuned_metadata.json"),
+                            key=lambda path: path.name,
+                            reverse=True,
+                        )
+                    )
+                seen_metadata_paths = set()
+                deduped_candidates = []
+                for candidate in metadata_candidates:
+                    candidate_key = str(candidate.resolve()) if candidate.exists() else str(candidate)
+                    if candidate_key in seen_metadata_paths:
+                        continue
+                    seen_metadata_paths.add(candidate_key)
+                    deduped_candidates.append(candidate)
+                metadata_candidates = deduped_candidates
                 for metadata_path in metadata_candidates:
                     try:
                         metadata = read_cache_metadata(metadata_path)
@@ -2746,17 +3292,31 @@ cells += [
                             "random_seed": int(tuning_random_seed),
                             "ga_objective": ga_objective,
                             "ga_cv_folds": int(effective_search_folds),
+                            "selected_feature_families": list(feature_metadata["selected_feature_families"]),
+                            "built_feature_families": list(feature_metadata["built_feature_families"]),
+                            "fingerprint_radius": int(feature_metadata["fingerprint_radius"]),
+                            "fingerprint_bits": int(feature_metadata["fingerprint_bits"]),
+                            "lasso_feature_selection_enabled": bool(feature_metadata["lasso_feature_selection_enabled"]),
+                            "lasso_alpha": feature_metadata["lasso_alpha"],
+                            "lasso_selected_feature_count": int(feature_metadata["lasso_selected_feature_count"]),
                         }
                         if not cache_metadata_matches(metadata, expected_metadata):
                             continue
-                        model_path = Path(metadata["model_path"])
-                        prediction_path = Path(metadata["prediction_path"])
-                        history_path = Path(metadata["ga_history_path"])
+                        model_path = resolve_cached_artifact_path(metadata["model_path"], metadata_path)
+                        prediction_path = resolve_cached_artifact_path(metadata["prediction_path"], metadata_path)
+                        history_path = resolve_cached_artifact_path(metadata["ga_history_path"], metadata_path)
                         state_path_text = metadata.get("ga_state_path")
-                        state_path = Path(state_path_text) if state_path_text else None
-                        if not model_path.exists() or not prediction_path.exists() or not history_path.exists():
-                            continue
-                        best_history = pd.read_csv(history_path)
+                        state_path = (
+                            resolve_cached_artifact_path(state_path_text, metadata_path)
+                            if state_path_text
+                            else None
+                        )
+                        history_exists = history_path.exists()
+                        best_history = (
+                            pd.read_csv(history_path)
+                            if history_exists
+                            else pd.DataFrame(columns=["Best_individual", "Fitness_values", "Time (hours)"])
+                        )
                         completed_generations = int(metadata.get("ga_generations_completed", len(best_history)))
                         ga_resume_compatible = (
                             completed_generations < int(ga_generations)
@@ -2792,6 +3352,8 @@ cells += [
                                 )
                                 break
                         if completed_generations < int(ga_generations):
+                            continue
+                        if not model_path.exists() or not prediction_path.exists() or not history_exists:
                             continue
                         loaded_splits = load_prediction_splits(
                             prediction_path,
@@ -2862,6 +3424,87 @@ cells += [
                     fold_scores.append(_score_predictions(y_fold_valid, pred_valid, _objective))
                 return (float(np.mean(fold_scores)),)
 
+            active_model_path = None
+            active_prediction_path = None
+            active_history_path = None
+            active_state_path = None
+            active_metadata_path = None
+            active_cache_run_name = None
+            if enable_tuned_model_cache:
+                if resume_state is not None and model_name in tuned_cache_paths:
+                    active_model_path = Path(tuned_cache_paths[model_name]["model_path"])
+                    active_prediction_path = Path(tuned_cache_paths[model_name]["prediction_path"])
+                    active_history_path = Path(tuned_cache_paths[model_name]["ga_history_path"])
+                    active_state_path = Path(tuned_cache_paths[model_name]["ga_state_path"])
+                    active_metadata_path = Path(tuned_cache_paths[model_name]["metadata_path"])
+                    active_cache_run_name = active_metadata_path.parent.name
+                else:
+                    artifact_base = f"{STATE['cache_session_stamp']}_{tuned_dataset_label}_{model_slug}_ga_tuned"
+                    active_model_path = tuned_cache_dir / f"{artifact_base}.joblib"
+                    active_prediction_path = tuned_cache_dir / f"{artifact_base}_predictions.csv"
+                    active_history_path = tuned_cache_dir / f"{artifact_base}_ga_history.csv"
+                    active_state_path = tuned_cache_dir / f"{artifact_base}_ga_state.json"
+                    active_metadata_path = tuned_cache_dir / f"{artifact_base}_metadata.json"
+                    active_cache_run_name = tuned_cache_dir.name
+
+            def persist_ga_checkpoint(
+                run_status,
+                completed_generations,
+                history_df=None,
+                best_params_value=None,
+                best_fitness_value=None,
+            ):
+                if not enable_tuned_model_cache or active_metadata_path is None:
+                    return
+                if history_df is not None:
+                    history_df.to_csv(active_history_path, index=False)
+                if ga.population is not None and ga.fitness_dict is not None:
+                    write_ga_state(active_state_path, ga.population, ga.fitness_dict)
+                metadata_payload = {
+                    "model_name": model_name,
+                    "selected_models": ", ".join(selected_search_models),
+                    "workflow": "Tuned conventional ML",
+                    "dataset_label": tuned_dataset_label,
+                    "representation_label": feature_metadata["representation_label"],
+                    "selected_feature_families": list(feature_metadata["selected_feature_families"]),
+                    "built_feature_families": list(feature_metadata["built_feature_families"]),
+                    "fingerprint_radius": int(feature_metadata["fingerprint_radius"]),
+                    "fingerprint_bits": int(feature_metadata["fingerprint_bits"]),
+                    "lasso_feature_selection_enabled": bool(feature_metadata["lasso_feature_selection_enabled"]),
+                    "lasso_alpha": feature_metadata["lasso_alpha"],
+                    "lasso_selected_feature_count": int(feature_metadata["lasso_selected_feature_count"]),
+                    "cache_run_name": active_cache_run_name,
+                    "split_strategy": str(tuning_split_strategy),
+                    "test_fraction": float(tuning_test_fraction),
+                    "random_seed": int(tuning_random_seed),
+                    "train_rows": int(len(X_train)),
+                    "test_rows": int(len(X_test)),
+                    "feature_count": int(X_train.shape[1]),
+                    "model_path": active_model_path,
+                    "prediction_path": active_prediction_path,
+                    "ga_history_path": active_history_path,
+                    "ga_state_path": active_state_path,
+                    "ga_objective": ga_objective,
+                    "ga_cv_folds": int(effective_search_folds),
+                    "ga_generations_requested": int(ga_generations),
+                    "ga_generations_completed": int(completed_generations),
+                    "ga_population_size": int(ga_population_size),
+                    "ga_crossover_size": int(ga_crossover_size),
+                    "ga_mutation_size": int(ga_mutation_size),
+                    "ga_mutation_probability": float(ga_mutation_probability),
+                    "ga_early_stopping": int(ga_early_stopping),
+                    "tune_elasticnet": bool(tune_elasticnet),
+                    "tune_svr": bool(tune_svr),
+                    "tune_random_forest": bool(tune_random_forest),
+                    "tune_xgboost": bool(tune_xgboost),
+                    "tune_catboost": bool(tune_catboost),
+                    "run_status": str(run_status),
+                    "last_updated": time.strftime("%Y-%m-%d %H:%M:%S"),
+                    "best_params": best_params_value if best_params_value is not None else "",
+                    "best_fitness": "" if best_fitness_value is None else float(best_fitness_value),
+                }
+                write_cache_metadata(active_metadata_path, metadata_payload)
+
             ga = GeneticAlgorithm(
                 evaluate=evaluate,
                 space=search_space,
@@ -2873,6 +3516,11 @@ cells += [
                 mutation_prob=float(ga_mutation_probability),
                 algorithm=1,
                 n_jobs=1,
+            )
+            checkpoint_history_df = (
+                resume_history_prefix.copy()
+                if resume_history_prefix is not None
+                else pd.DataFrame(columns=["Best_individual", "Fitness_values", "Time (hours)"])
             )
             if resume_state is not None:
                 ga.population = list(resume_state["population"])
@@ -2894,6 +3542,46 @@ cells += [
                 tuning_progress.set_postfix_str(
                     f"{model_name} (resuming from gen {resume_generation_offset}/{int(ga_generations)}) | "
                     f"overall {progress_state['overall_completed_work']}/{total_expected_work} work"
+                )
+                persist_ga_checkpoint(
+                    "running",
+                    resume_generation_offset,
+                    history_df=resume_history_prefix,
+                )
+            else:
+                initial_population = ga.pop_generator(n=ga.pop_size)
+                initial_fitness_dict = {}
+                persist_ga_checkpoint(
+                    "initialized",
+                    0,
+                    history_df=checkpoint_history_df,
+                )
+                for init_index, individual in enumerate(initial_population, start=1):
+                    initial_fitness_dict[tuple(individual)] = evaluate(individual)
+                    if evaluation_progress.total != int(ga_population_size):
+                        evaluation_progress.reset(total=int(ga_population_size))
+                        evaluation_progress.set_description(f"{model_name} initialization")
+                    evaluation_progress.set_postfix_str("initial population")
+                    delta = init_index - evaluation_progress.n
+                    if delta > 0:
+                        evaluation_progress.update(delta)
+                    delta_work = init_index - progress_state["model_completed_work"]
+                    if delta_work > 0:
+                        tuning_progress.update(delta_work)
+                        progress_state["overall_completed_work"] += delta_work
+                        progress_state["model_completed_work"] += delta_work
+                        overall_completed_work = progress_state["overall_completed_work"]
+                        model_completed_work = progress_state["model_completed_work"]
+                    tuning_progress.set_postfix_str(
+                        f"{model_name} (init, eval {init_index}/{int(ga_population_size)}) | "
+                        f"overall {progress_state['overall_completed_work']}/{total_expected_work} work"
+                    )
+                ga.population = list(initial_population)
+                ga.fitness_dict = dict(initial_fitness_dict)
+                persist_ga_checkpoint(
+                    "running",
+                    0,
+                    history_df=checkpoint_history_df,
                 )
 
             def ga_progress_callback(payload, _model_name=model_name):
@@ -2976,6 +3664,17 @@ cells += [
                             f"evaluations {generation_eval_completed}/{evaluation_progress.total}",
                             flush=True,
                         )
+                    checkpoint_history_df.loc[len(checkpoint_history_df)] = {
+                        "Best_individual": payload.get("best_individual"),
+                        "Fitness_values": payload.get("best_fitness"),
+                        "Time (hours)": float(payload.get("elapsed_hours", 0.0)),
+                    }
+                    persist_ga_checkpoint(
+                        "running",
+                        completed,
+                        history_df=checkpoint_history_df,
+                        best_fitness_value=best_fitness_value,
+                    )
 
             remaining_generations = max(0, int(ga_generations) - resume_generation_offset)
             best_history, best_raw_params = ga.search(
@@ -3022,13 +3721,7 @@ cells += [
             tuned_predictions[model_name] = {"train": pred_train, "test": pred_test}
             ga_histories[model_name] = best_history.copy()
             if enable_tuned_model_cache:
-                artifact_base = f"{STATE['cache_session_stamp']}_{tuned_dataset_label}_{model_slug}_ga_tuned"
-                model_path = tuned_cache_dir / f"{artifact_base}.joblib"
-                prediction_path = tuned_cache_dir / f"{artifact_base}_predictions.csv"
-                history_path = tuned_cache_dir / f"{artifact_base}_ga_history.csv"
-                state_path = tuned_cache_dir / f"{artifact_base}_ga_state.json"
-                metadata_path = tuned_cache_dir / f"{artifact_base}_metadata.json"
-                joblib_dump(best_model, model_path)
+                joblib_dump(best_model, active_model_path)
                 pd.DataFrame(
                     {
                         "split": ["train"] * len(pred_train) + ["test"] * len(pred_test),
@@ -3036,39 +3729,20 @@ cells += [
                         "observed": list(np.asarray(y_train, dtype=float)) + list(np.asarray(y_test, dtype=float)),
                         "predicted": list(pred_train) + list(pred_test),
                     }
-                ).to_csv(prediction_path, index=False)
-                best_history.to_csv(history_path, index=False)
-                write_ga_state(state_path, ga.population, ga.fitness_dict)
-                write_cache_metadata(
-                    metadata_path,
-                    {
-                        "model_name": model_name,
-                        "workflow": "Tuned conventional ML",
-                        "dataset_label": tuned_dataset_label,
-                        "cache_run_name": tuned_cache_dir.name,
-                        "split_strategy": str(tuning_split_strategy),
-                        "test_fraction": float(tuning_test_fraction),
-                        "random_seed": int(tuning_random_seed),
-                        "model_path": model_path,
-                        "prediction_path": prediction_path,
-                        "ga_history_path": history_path,
-                        "ga_state_path": state_path,
-                        "ga_objective": ga_objective,
-                        "ga_cv_folds": int(effective_search_folds),
-                        "ga_generations_completed": int(len(best_history)),
-                        "ga_population_size": int(ga_population_size),
-                        "ga_crossover_size": int(ga_crossover_size),
-                        "ga_mutation_size": int(ga_mutation_size),
-                        "ga_mutation_probability": float(ga_mutation_probability),
-                        "best_params": best_params,
-                    },
+                ).to_csv(active_prediction_path, index=False)
+                persist_ga_checkpoint(
+                    "completed",
+                    len(best_history),
+                    history_df=best_history,
+                    best_params_value=best_params,
+                    best_fitness_value=best_fitness,
                 )
                 tuned_cache_paths[model_name] = {
-                    "model_path": str(model_path),
-                    "prediction_path": str(prediction_path),
-                    "ga_history_path": str(history_path),
-                    "ga_state_path": str(state_path),
-                    "metadata_path": str(metadata_path),
+                    "model_path": str(active_model_path),
+                    "prediction_path": str(active_prediction_path),
+                    "ga_history_path": str(active_history_path),
+                    "ga_state_path": str(active_state_path),
+                    "metadata_path": str(active_metadata_path),
                 }
             print(
                 f"[GA] Finished {model_name}: test R2={row['Test R2']:.4f}, "
@@ -3439,7 +4113,7 @@ cells += [
 
         This section trains the neural-network models built directly into this repository through **ChemML's MLP interface**.
 
-        In plain language, ChemML takes the same fixed-length fingerprint-style feature matrix used by the conventional models and fits a multilayer perceptron:
+        In plain language, ChemML takes the same fixed-length molecular feature matrix used by the conventional models and fits a multilayer perceptron:
 
         - the input layer receives the molecular features
         - one or more hidden layers learn nonlinear combinations of those features
@@ -3526,7 +4200,7 @@ cells += [
         run_unimolv2 = False
 
         if "feature_matrix" not in STATE:
-            raise RuntimeError("Please build the fingerprint representation first.")
+            raise RuntimeError("Please build the molecular feature matrix first.")
 
         split_payload = apply_qsar_split(
             split_strategy=str(deep_split_strategy),
@@ -3534,6 +4208,7 @@ cells += [
             random_seed=int(deep_split_random_seed),
             announce=True,
         )
+        feature_metadata = current_feature_metadata()
 
         gpu_available = bool(STATE.get("gpu_available", False))
         STATE["deep_learning_execution_mode"] = "gpu" if gpu_available else "cpu"
@@ -3721,6 +4396,13 @@ cells += [
                                 "chemml_batch_size": int(chemml_batch_size),
                                 "chemml_learning_rate": float(chemml_learning_rate),
                                 "deep_random_seed": int(deep_random_seed),
+                                "selected_feature_families": list(feature_metadata["selected_feature_families"]),
+                                "built_feature_families": list(feature_metadata["built_feature_families"]),
+                                "fingerprint_radius": int(feature_metadata["fingerprint_radius"]),
+                                "fingerprint_bits": int(feature_metadata["fingerprint_bits"]),
+                                "lasso_feature_selection_enabled": bool(feature_metadata["lasso_feature_selection_enabled"]),
+                                "lasso_alpha": feature_metadata["lasso_alpha"],
+                                "lasso_selected_feature_count": int(feature_metadata["lasso_selected_feature_count"]),
                             }
                             if not cache_metadata_matches(metadata, expected_metadata):
                                 continue
@@ -3790,6 +4472,14 @@ cells += [
                             "workflow": "ChemML deep learning",
                             "engine": engine_name,
                             "dataset_label": deep_dataset_label,
+                            "representation_label": feature_metadata["representation_label"],
+                            "selected_feature_families": list(feature_metadata["selected_feature_families"]),
+                            "built_feature_families": list(feature_metadata["built_feature_families"]),
+                            "fingerprint_radius": int(feature_metadata["fingerprint_radius"]),
+                            "fingerprint_bits": int(feature_metadata["fingerprint_bits"]),
+                            "lasso_feature_selection_enabled": bool(feature_metadata["lasso_feature_selection_enabled"]),
+                            "lasso_alpha": feature_metadata["lasso_alpha"],
+                            "lasso_selected_feature_count": int(feature_metadata["lasso_selected_feature_count"]),
                             "cache_run_name": deep_cache_dir.name,
                             "qsar_split_strategy": str(deep_split_strategy),
                             "qsar_test_fraction": float(deep_test_fraction),
@@ -4105,6 +4795,9 @@ cells += [
         STATE["deep_models"] = merged_deep_models
         STATE["deep_predictions"] = merged_deep_predictions
         STATE["best_deep_model_name"] = deep_results.loc[0, "Model"]
+        if 'x_scaler' in locals() and 'y_scaler' in locals():
+            STATE["deep_x_scaler"] = x_scaler
+            STATE["deep_y_scaler"] = y_scaler
         STATE["deep_model_cache_paths"] = deep_model_cache_paths
         if deep_cache_dir is not None:
             STATE["deep_model_cache_dir"] = str(deep_cache_dir)
@@ -4116,7 +4809,7 @@ cells += [
                 print(f"ChemML cache artifacts saved under: {deep_cache_dir}")
         display_note(
             f"The strongest ChemML model in this run is **{best_deep_name}**. "
-            "ChemML remains a fingerprint-based neural workflow. If you want the separate pretrained 3D workflow, continue to section `6` for Uni-Mol."
+            "ChemML remains a tabular molecular-feature workflow. If you want the separate pretrained 3D workflow, continue to section `6` for Uni-Mol."
         )
         """
     ),
@@ -4288,7 +4981,7 @@ cells += [
         > Uni-Mol paper: [https://openreview.net/forum?id=6K2RM6wVqKu](https://openreview.net/forum?id=6K2RM6wVqKu)
         > Open-source code: [https://github.com/dptech-corp/Uni-Mol](https://github.com/dptech-corp/Uni-Mol)
 
-        Because Uni-Mol is built around 3D information, it is especially relevant when stereochemistry, conformation, and spatial arrangement matter. Compared with the 2D fingerprint models above, Uni-Mol is slower and more demanding, but it can capture molecular information that 2D fingerprints do not directly encode.
+        Because Uni-Mol is built around 3D information, it is especially relevant when stereochemistry, conformation, and spatial arrangement matter. Compared with the 2D feature-based models above, Uni-Mol is slower and more demanding, but it can capture molecular information that 2D descriptors do not directly encode.
 
         In this notebook, **Uni-Mol V1** can be attempted on CPU for smaller demonstrations, but **Uni-Mol V2 is treated as GPU-only** because of its substantially higher resource demands.
 
@@ -4371,7 +5064,7 @@ cells += [
         unimol_prepare_random_seed = 42 # @param {type:"integer"}
 
         if "feature_matrix" not in STATE:
-            raise RuntimeError("Please build the fingerprint representation first.")
+            raise RuntimeError("Please build the molecular feature matrix first.")
 
         apply_qsar_split(
             split_strategy=str(unimol_data_split_strategy),
@@ -5455,7 +6148,7 @@ cells += [
         - **LRP** local and global relevance heatmaps
         - **LIME** local relevance bar plots
 
-        Because this tutorial uses **fingerprint bits**, the explanations refer to abstract structural fragments rather than named physicochemical descriptors.
+        Because this tutorial can use either fingerprints or descriptor tables, the explanations refer to whichever molecular features were selected earlier in the workflow.
         """
     ),
     code(
@@ -5572,14 +6265,14 @@ cells += [
             x="Importance",
             y="Feature",
             orientation="h",
-            title=f"{model_name}: top fingerprint features by {method_label}",
+            title=f"{model_name}: top molecular features by {method_label}",
         )
         fig.update_layout(height=550)
         show_plotly(fig)
 
         display_note(
-            "These are the fingerprint bits that most influenced the conventional model. "
-            "High importance means the bit was useful for prediction, not necessarily that it has a simple one-to-one chemical interpretation."
+            "These are the molecular features that most influenced the conventional model. "
+            "High importance means the feature was useful for prediction, not necessarily that it has a simple one-to-one chemical interpretation."
         )
         """
     ),
@@ -5723,27 +6416,775 @@ cells += [
 
         display_note(
             "These visualizations now use ChemML's native explanation plotting helpers from this repository rather than a generic bar-chart fallback. "
-            "For fingerprint-based QSAR, they show which structural bits were most influential for one molecule or across a set of molecules."
+            "For this QSAR workflow, they show which molecular features were most influential for one molecule or across a set of molecules."
         )
         """
     ),
     md(
         """
-        ## 9. What To Look For Next
+        ## 9. Predict New Molecules
+
+        Use this block to score a new list of SMILES with a model that has already been trained in the current notebook session.
+
+        Supported prediction sources:
+
+        - conventional ML models
+        - tuned conventional ML models
+        - ChemML deep-learning models
+        - Uni-Mol models
+        - the ensemble built in section `7`
+        """
+    ),
+    code(
+        """
+        # @title 9A. Predict from a trained model using a new SMILES table { display-mode: "form" }
+        prediction_workflow = "Best available" # @param ["Best available", "Conventional ML", "Tuned conventional ML", "ChemML deep learning", "Uni-Mol", "Ensemble"]
+        prediction_model_name = "" # @param {type:"string"}
+        prediction_input_source = "File path" # @param ["File path", "Upload CSV (Colab only)"]
+        prediction_input_path = "./portable_colab_qsar_bundle/example_prediction_smiles.csv" # @param {type:"string"}
+        prediction_smiles_column = "SMILES" # @param {type:"string"}
+        save_prediction_output = False # @param {type:"boolean"}
+        prediction_output_path = "" # @param {type:"string"}
+
+        if "feature_builder_config" not in STATE or "feature_names" not in STATE:
+            raise RuntimeError(
+                "Please run the molecular-feature generation block first so the notebook knows which representation to use for prediction."
+            )
+
+        def _prediction_feature_build_kwargs():
+            config = dict(STATE["feature_builder_config"])
+            return {
+                "selected_feature_families": list(config.get("built_feature_families") or config.get("selected_feature_families") or []),
+                "radius": int(config.get("fingerprint_radius", STATE.get("fingerprint_radius", 2))),
+                "n_bits": int(config.get("fingerprint_bits", STATE.get("fingerprint_bits", 1024))),
+            }
+
+        def _load_prediction_input_table():
+            if prediction_input_source == "Upload CSV (Colab only)":
+                df = read_uploaded_dataframe()
+                source_label = STATE.get("uploaded_filename", "uploaded prediction file")
+            else:
+                path_obj = Path(str(prediction_input_path).strip())
+                if not str(path_obj):
+                    raise ValueError("Please provide a file path for the prediction input table.")
+                if not path_obj.exists():
+                    raise FileNotFoundError(f"Prediction input file not found: {path_obj}")
+                if path_obj.suffix.lower() == ".csv":
+                    df = pd.read_csv(path_obj)
+                elif path_obj.suffix.lower() in {".xlsx", ".xls"}:
+                    df = pd.read_excel(path_obj)
+                else:
+                    raise ValueError("Prediction input must be a .csv, .xlsx, or .xls file.")
+                source_label = str(path_obj)
+            return df, source_label
+
+        def _resolve_prediction_target():
+            requested_workflow = str(prediction_workflow)
+            requested_model_name = str(prediction_model_name).strip()
+            workflow_frames = {}
+            if "traditional_results" in STATE:
+                conventional_df = STATE["traditional_results"].copy()
+                conventional_df["Workflow"] = "Conventional ML"
+                workflow_frames["Conventional ML"] = conventional_df
+            if "tuned_traditional_results" in STATE:
+                tuned_df = STATE["tuned_traditional_results"].copy()
+                tuned_df["Workflow"] = "Tuned conventional ML"
+                workflow_frames["Tuned conventional ML"] = tuned_df
+            if "deep_results" in STATE:
+                deep_df = STATE["deep_results"].copy()
+                for workflow_name in sorted(deep_df["Workflow"].dropna().astype(str).unique()):
+                    workflow_frames[workflow_name] = deep_df.loc[deep_df["Workflow"].astype(str) == workflow_name].copy()
+            if "ensemble_results" in STATE:
+                workflow_frames["Ensemble"] = STATE["ensemble_results"].copy()
+
+            if requested_workflow == "Best available":
+                best_candidates = []
+                if "ensemble_results" in STATE and not STATE["ensemble_results"].empty:
+                    best_candidates.append(("Ensemble", STATE["ensemble_results"].iloc[0]["Model"], float(STATE["ensemble_results"].iloc[0]["Test RMSE"])))
+                if "tuned_traditional_results" in STATE and not STATE["tuned_traditional_results"].empty:
+                    best_candidates.append(("Tuned conventional ML", STATE["tuned_traditional_results"].iloc[0]["Model"], float(STATE["tuned_traditional_results"].iloc[0]["Test RMSE"])))
+                if "deep_results" in STATE and not STATE["deep_results"].empty:
+                    best_candidates.append((str(STATE["deep_results"].iloc[0]["Workflow"]), STATE["deep_results"].iloc[0]["Model"], float(STATE["deep_results"].iloc[0]["Test RMSE"])))
+                if "traditional_results" in STATE and not STATE["traditional_results"].empty:
+                    best_candidates.append(("Conventional ML", STATE["traditional_results"].iloc[0]["Model"], float(STATE["traditional_results"].iloc[0]["Test RMSE"])))
+                if not best_candidates:
+                    raise RuntimeError("No trained models are available yet. Train at least one model before running prediction.")
+                selected_workflow, selected_model_name, _ = sorted(best_candidates, key=lambda item: item[2])[0]
+                return selected_workflow, str(selected_model_name)
+
+            if requested_workflow not in workflow_frames:
+                raise RuntimeError(
+                    f"No trained models are available for workflow '{requested_workflow}'. Train that workflow first."
+                )
+            available_models = workflow_frames[requested_workflow]["Model"].astype(str).tolist()
+            if requested_model_name:
+                if requested_model_name not in available_models:
+                    raise ValueError(
+                        f"Model '{requested_model_name}' was not found in workflow '{requested_workflow}'. "
+                        f"Available models: {available_models}"
+                    )
+                return requested_workflow, requested_model_name
+            return requested_workflow, str(workflow_frames[requested_workflow].iloc[0]["Model"])
+
+        def _predict_with_model(workflow_name, model_name, smiles_series):
+            smiles_series = pd.Series(smiles_series, dtype=str).reset_index(drop=True)
+            canonical_smiles = []
+            valid_mask = []
+            invalid_reasons = []
+            for smiles_text in smiles_series:
+                mol = Chem.MolFromSmiles(str(smiles_text))
+                if mol is None:
+                    canonical_smiles.append(None)
+                    valid_mask.append(False)
+                    invalid_reasons.append("Invalid SMILES")
+                else:
+                    canonical_smiles.append(Chem.MolToSmiles(mol))
+                    valid_mask.append(True)
+                    invalid_reasons.append("")
+            result_df = pd.DataFrame(
+                {
+                    "input_smiles": smiles_series,
+                    "canonical_smiles": canonical_smiles,
+                    "valid_smiles": valid_mask,
+                    "note": invalid_reasons,
+                }
+            )
+            valid_smiles = result_df.loc[result_df["valid_smiles"], "canonical_smiles"].astype(str).reset_index(drop=True)
+            if valid_smiles.empty:
+                result_df["prediction"] = np.nan
+                return result_df
+
+            if workflow_name == "Conventional ML":
+                if "traditional_models" not in STATE or model_name not in STATE["traditional_models"]:
+                    raise RuntimeError(f"Conventional model '{model_name}' is not loaded in this session.")
+                model = STATE["traditional_models"][model_name]
+                feature_df, _ = build_feature_matrix_from_smiles(
+                    valid_smiles.tolist(),
+                    **_prediction_feature_build_kwargs(),
+                )
+                feature_df = align_feature_matrix_to_training_columns(feature_df, STATE["feature_names"])
+                predictions = np.asarray(model.predict(feature_df)).reshape(-1)
+            elif workflow_name == "Tuned conventional ML":
+                if "tuned_traditional_models" not in STATE or model_name not in STATE["tuned_traditional_models"]:
+                    raise RuntimeError(f"Tuned model '{model_name}' is not loaded in this session.")
+                model = STATE["tuned_traditional_models"][model_name]
+                feature_df, _ = build_feature_matrix_from_smiles(
+                    valid_smiles.tolist(),
+                    **_prediction_feature_build_kwargs(),
+                )
+                feature_df = align_feature_matrix_to_training_columns(feature_df, STATE["feature_names"])
+                predictions = np.asarray(model.predict(feature_df)).reshape(-1)
+            elif workflow_name == "ChemML deep learning":
+                if "deep_models" not in STATE or model_name not in STATE["deep_models"]:
+                    raise RuntimeError(f"ChemML model '{model_name}' is not loaded in this session.")
+                if "deep_x_scaler" not in STATE or "deep_y_scaler" not in STATE:
+                    raise RuntimeError("ChemML scalers are not available in STATE. Rerun the ChemML training block in this session.")
+                model = STATE["deep_models"][model_name]
+                feature_df, _ = build_feature_matrix_from_smiles(
+                    valid_smiles.tolist(),
+                    **_prediction_feature_build_kwargs(),
+                )
+                feature_df = align_feature_matrix_to_training_columns(feature_df, STATE["feature_names"])
+                x_scaled = STATE["deep_x_scaler"].transform(feature_df.to_numpy(dtype=np.float32)).astype(np.float32)
+                predictions = STATE["deep_y_scaler"].inverse_transform(
+                    np.asarray(model.predict(x_scaled)).reshape(-1, 1)
+                ).reshape(-1)
+            elif workflow_name == "Uni-Mol":
+                if "unimol_model_dirs" not in STATE or model_name not in STATE["unimol_model_dirs"]:
+                    raise RuntimeError(f"Uni-Mol model directory for '{model_name}' is not available in this session.")
+                try:
+                    from unimol_tools import MolPredict
+                except Exception as exc:
+                    raise RuntimeError(
+                        "Uni-Mol prediction requires `unimol_tools` to be available in the active environment."
+                    ) from exc
+                prediction_dir = Path("./.cache/unimol_prediction_inputs")
+                prediction_dir.mkdir(parents=True, exist_ok=True)
+                prediction_csv = prediction_dir / f"{slugify_cache_text(model_name)}_prediction_input.csv"
+                pd.DataFrame({"SMILES": valid_smiles, "TARGET": np.zeros(len(valid_smiles), dtype=float)}).to_csv(prediction_csv, index=False)
+                predictor = MolPredict(load_model=str(STATE["unimol_model_dirs"][model_name]))
+                predictions = np.asarray(predictor.predict(str(prediction_csv))).reshape(-1)
+            elif workflow_name == "Ensemble":
+                if "ensemble_prediction_columns" not in STATE or "ensemble_weight_table" not in STATE:
+                    raise RuntimeError("No ensemble artifacts are available in this session. Run block 7A first.")
+                member_predictions = []
+                weight_df = STATE["ensemble_weight_table"].copy()
+                for member_name in STATE["ensemble_prediction_columns"]:
+                    if member_name.startswith("Tuned "):
+                        member_workflow = "Tuned conventional ML"
+                        member_model_name = member_name.replace("Tuned ", "", 1)
+                    elif "traditional_models" in STATE and member_name in STATE["traditional_models"]:
+                        member_workflow = "Conventional ML"
+                        member_model_name = member_name
+                    elif "deep_results" in STATE and member_name in STATE["deep_results"]["Model"].astype(str).tolist():
+                        member_workflow = str(
+                            STATE["deep_results"].loc[STATE["deep_results"]["Model"].astype(str) == member_name, "Workflow"].iloc[0]
+                        )
+                        member_model_name = member_name
+                    else:
+                        raise RuntimeError(f"Could not resolve ensemble member '{member_name}' for prediction.")
+                    member_result = _predict_with_model(member_workflow, member_model_name, valid_smiles)
+                    member_predictions.append(member_result.loc[member_result["valid_smiles"], "prediction"].to_numpy(dtype=float))
+                weights = (
+                    weight_df.set_index("Model").loc[STATE["ensemble_prediction_columns"], "Weight"].to_numpy(dtype=float)
+                )
+                predictions = np.average(np.column_stack(member_predictions), axis=1, weights=weights)
+            else:
+                raise ValueError(f"Unsupported workflow for prediction: {workflow_name}")
+
+            result_df["prediction"] = np.nan
+            result_df.loc[result_df["valid_smiles"], "prediction"] = predictions
+            return result_df
+
+        input_df, input_source_label = _load_prediction_input_table()
+        if prediction_smiles_column not in input_df.columns:
+            raise ValueError(
+                f"SMILES column '{prediction_smiles_column}' was not found in the input table. "
+                f"Available columns: {list(input_df.columns)}"
+            )
+
+        selected_workflow, selected_model_name = _resolve_prediction_target()
+        prediction_df = _predict_with_model(
+            selected_workflow,
+            selected_model_name,
+            input_df[prediction_smiles_column].astype(str).reset_index(drop=True),
+        )
+        prediction_df.insert(0, "row_id", np.arange(len(prediction_df)))
+        prediction_df["workflow"] = selected_workflow
+        prediction_df["model_name"] = selected_model_name
+
+        STATE["latest_prediction_results"] = prediction_df.copy()
+        STATE["latest_prediction_model"] = {
+            "workflow": selected_workflow,
+            "model_name": selected_model_name,
+            "input_source": input_source_label,
+        }
+
+        print(f"Prediction source: {input_source_label}")
+        print(f"Prediction model: {selected_model_name} ({selected_workflow})")
+        print(
+            f"Predicted {int(prediction_df['valid_smiles'].sum())} valid molecule(s); "
+            f"{int((~prediction_df['valid_smiles']).sum())} row(s) were invalid."
+        )
+        display_interactive_table(prediction_df.round(6), rows=min(20, len(prediction_df)))
+
+        if save_prediction_output:
+            output_path_text = str(prediction_output_path).strip()
+            if not output_path_text:
+                raise ValueError("Please provide `prediction_output_path` when `save_prediction_output=True`.")
+            output_path = Path(output_path_text)
+            output_path.parent.mkdir(parents=True, exist_ok=True)
+            prediction_df.to_csv(output_path, index=False)
+            print(f"Saved predictions to: {output_path}")
+
+        display_note(
+            "This block predicts on **new SMILES only**. Invalid SMILES are flagged and left with missing predictions. "
+            "Conventional, tuned, and ChemML models reuse the notebook's saved molecular feature settings; Uni-Mol uses the saved Uni-Mol model directory; "
+            "the ensemble averages the currently available member models. "
+            "A bundled example file with 10 SMILES is provided by default at `./portable_colab_qsar_bundle/example_prediction_smiles.csv`."
+        )
+        """
+    ),
+    md(
+        """
+        ### 9B. UMAP View Of Train, Test, And New Chemistry
+
+        This plot embeds the **best conventional model's** train/test feature space together with the **new molecules** from `9A`.
+
+        It is useful for visually checking whether the new prediction set lands near the chemistry the model already saw during training or in sparse regions of feature space.
+        """
+    ),
+    code(
+        """
+        # @title 9B. Build an interactive UMAP for train, test, and new molecules { display-mode: "form" }
+        umap_neighbors = 25 # @param {type:"slider", min:5, max:100, step:5}
+        umap_min_dist = 0.1 # @param {type:"number"}
+        umap_metric = "euclidean" # @param ["euclidean", "manhattan", "cosine"]
+        umap_random_seed = 42 # @param {type:"integer"}
+
+        if "latest_prediction_results" not in STATE:
+            raise RuntimeError("Please run block 9A first so there is a new-molecule prediction table to embed.")
+        if "best_traditional_model_name" not in STATE:
+            raise RuntimeError("Please run block 4A first so the notebook knows which conventional model performed best.")
+        if "X_train" not in STATE or "X_test" not in STATE or "smiles_train" not in STATE or "smiles_test" not in STATE:
+            raise RuntimeError("The conventional training split is not available in STATE. Rerun block 4A.")
+
+        try:
+            import umap
+        except Exception as exc:
+            raise RuntimeError(
+                "UMAP is not available in this environment. Install `umap-learn`, rerun the setup cell, then rerun this block."
+            ) from exc
+
+        def _umap_prediction_feature_build_kwargs():
+            config = dict(STATE["feature_builder_config"])
+            return {
+                "selected_feature_families": list(config.get("built_feature_families") or config.get("selected_feature_families") or []),
+                "radius": int(config.get("fingerprint_radius", STATE.get("fingerprint_radius", 2))),
+                "n_bits": int(config.get("fingerprint_bits", STATE.get("fingerprint_bits", 1024))),
+            }
+
+        prediction_df = STATE["latest_prediction_results"].copy()
+        valid_prediction_rows = prediction_df["valid_smiles"].astype(bool)
+        if int(valid_prediction_rows.sum()) == 0:
+            raise ValueError("The latest prediction table contains no valid SMILES to embed.")
+
+        X_train = pd.DataFrame(STATE["X_train"]).copy()
+        X_test = pd.DataFrame(STATE["X_test"]).copy()
+        expected_columns = list(STATE["feature_names"])
+        if list(X_train.columns) != expected_columns:
+            X_train.columns = expected_columns
+        if list(X_test.columns) != expected_columns:
+            X_test.columns = expected_columns
+
+        prediction_feature_df, _ = build_feature_matrix_from_smiles(
+            prediction_df.loc[valid_prediction_rows, "canonical_smiles"].astype(str).tolist(),
+            **_umap_prediction_feature_build_kwargs(),
+        )
+        prediction_feature_df = align_feature_matrix_to_training_columns(prediction_feature_df, expected_columns)
+
+        train_plot_df = pd.DataFrame(
+            {
+                "dataset_role": "Train",
+                "smiles": STATE["smiles_train"].astype(str).reset_index(drop=True),
+                "observed_target": pd.Series(np.asarray(STATE["y_train"], dtype=float)),
+                "predicted_value": np.nan,
+                "model_name": STATE["best_traditional_model_name"],
+            }
+        )
+        test_plot_df = pd.DataFrame(
+            {
+                "dataset_role": "Test",
+                "smiles": STATE["smiles_test"].astype(str).reset_index(drop=True),
+                "observed_target": pd.Series(np.asarray(STATE["y_test"], dtype=float)),
+                "predicted_value": np.nan,
+                "model_name": STATE["best_traditional_model_name"],
+            }
+        )
+        new_plot_df = pd.DataFrame(
+            {
+                "dataset_role": "New prediction",
+                "smiles": prediction_df.loc[valid_prediction_rows, "canonical_smiles"].astype(str).reset_index(drop=True),
+                "observed_target": np.nan,
+                "predicted_value": prediction_df.loc[valid_prediction_rows, "prediction"].to_numpy(dtype=float),
+                "model_name": prediction_df.loc[valid_prediction_rows, "model_name"].astype(str).reset_index(drop=True),
+            }
+        )
+
+        combined_features = pd.concat(
+            [
+                X_train.reset_index(drop=True),
+                X_test.reset_index(drop=True),
+                prediction_feature_df.reset_index(drop=True),
+            ],
+            axis=0,
+            ignore_index=True,
+        )
+        combined_plot_df = pd.concat(
+            [
+                train_plot_df.reset_index(drop=True),
+                test_plot_df.reset_index(drop=True),
+                new_plot_df.reset_index(drop=True),
+            ],
+            axis=0,
+            ignore_index=True,
+        )
+
+        reducer = umap.UMAP(
+            n_neighbors=int(umap_neighbors),
+            min_dist=float(umap_min_dist),
+            metric=str(umap_metric),
+            random_state=int(umap_random_seed),
+        )
+        embedding = reducer.fit_transform(combined_features.to_numpy(dtype=np.float32))
+        combined_plot_df["UMAP_1"] = embedding[:, 0]
+        combined_plot_df["UMAP_2"] = embedding[:, 1]
+
+        fig = px.scatter(
+            combined_plot_df,
+            x="UMAP_1",
+            y="UMAP_2",
+            color="dataset_role",
+            hover_data={
+                "smiles": True,
+                "observed_target": ":.4f",
+                "predicted_value": ":.4f",
+                "model_name": True,
+                "dataset_role": True,
+            },
+            category_orders={"dataset_role": ["Train", "Test", "New prediction"]},
+            color_discrete_map={
+                "Train": "#1f77b4",
+                "Test": "#d62728",
+                "New prediction": "#2ca02c",
+            },
+            title=f"UMAP of best conventional-model feature space ({STATE['best_traditional_model_name']})",
+        )
+        fig.update_layout(height=650)
+        show_plotly(fig)
+
+        STATE["latest_prediction_umap_df"] = combined_plot_df.copy()
+        STATE["latest_prediction_umap_settings"] = {
+            "best_conventional_model_name": STATE["best_traditional_model_name"],
+            "n_neighbors": int(umap_neighbors),
+            "min_dist": float(umap_min_dist),
+            "metric": str(umap_metric),
+            "random_seed": int(umap_random_seed),
+        }
+
+        display_note(
+            "Train, test, and new molecules are embedded in the same UMAP using the descriptor space from the best conventional-model workflow. "
+            "New points that sit far from both the train and test clouds may deserve extra caution before trusting the prediction."
+        )
+        """
+    ),
+    md(
+        """
+        ### 9C. Why Applicability Domain Matters
+
+        A QSAR prediction is most trustworthy when a new molecule is similar, in feature space, to the chemistry used to train the model.  
+        The 2025 npj Computational Materials paper by Schultz, Wang, Jacobs, and Morgan argues that **applicability domain** should be treated as a quantitative companion to prediction, not as an afterthought:
+
+        - molecules far from the training distribution can have deceptively confident-looking predictions
+        - prediction error and uncertainty calibration often degrade as dissimilarity from the training set increases
+        - a practical deployment workflow should flag whether each new prediction appears **in-domain** or **out-of-domain**
+
+        Their preferred implementation uses a **kernel-density-estimate dissimilarity model** with learned domain thresholds through the **MADML / MAST-ML** workflow:
+
+        - Paper: https://www.nature.com/articles/s41524-025-01573-x
+        - MAST-ML repository: https://github.com/uw-cmg/MAST-ML
+        - MADML repository: https://github.com/uw-cmg/materials_application_domain_machine_learning
+
+        The block below fits that style of MAST-ML/MADML guide-rail model on the notebook's current training feature space and applies it to the latest new-molecule predictions from `9A`.  
+        Because it operates in the notebook's tabular molecular-feature space, it is most directly aligned with the **conventional**, **tuned conventional**, and **ChemML** workflows.
+        """
+    ),
+    code(
+        """
+        # @title 9D. Fit and apply the MAST-ML / MADML applicability-domain workflow { display-mode: "form" }
+        install_mastml_if_missing = False # @param {type:"boolean"}
+        mastml_random_forest_estimators = 300 # @param {type:"slider", min:100, max:600, step:50}
+        mastml_n_repeats = 1 # @param {type:"slider", min:1, max:3, step:1}
+        mastml_bins = 10 # @param {type:"slider", min:5, max:20, step:1}
+        mastml_kernel = "epanechnikov" # @param ["epanechnikov", "gaussian", "tophat", "exponential"]
+        mastml_use_custom_bandwidth = False # @param {type:"boolean"}
+        mastml_bandwidth = 1.5 # @param {type:"number"}
+        save_mastml_ad_output = False # @param {type:"boolean"}
+        mastml_ad_output_path = "" # @param {type:"string"}
+
+        if "latest_prediction_results" not in STATE:
+            raise RuntimeError("Please run block 9A first so there is a new-molecule prediction table to assess.")
+        if "X_train" not in STATE or "y_train" not in STATE:
+            raise RuntimeError(
+                "Please run a feature-based training block first so the notebook has training features available for applicability-domain fitting."
+            )
+
+        def _mastml_prediction_feature_build_kwargs():
+            config = dict(STATE["feature_builder_config"])
+            return {
+                "selected_feature_families": list(config.get("built_feature_families") or config.get("selected_feature_families") or []),
+                "radius": int(config.get("fingerprint_radius", STATE.get("fingerprint_radius", 2))),
+                "n_bits": int(config.get("fingerprint_bits", STATE.get("fingerprint_bits", 1024))),
+            }
+
+        def _ensure_mastml_packages():
+            import importlib
+            import importlib.metadata
+
+            print(f"Current notebook Python: {sys.executable}", flush=True)
+            print(f"Current notebook Python version: {sys.version.split()[0]}", flush=True)
+
+            def _try_import_versions():
+                loaded = {}
+                try:
+                    import madml  # noqa: F401
+                    loaded["madml"] = importlib.metadata.version("madml")
+                except Exception:
+                    pass
+                try:
+                    import mastml  # noqa: F401
+                    try:
+                        loaded["mastml"] = importlib.metadata.version("mastml")
+                    except Exception:
+                        loaded["mastml"] = "source"
+                except Exception:
+                    pass
+                return loaded
+
+            loaded_versions = _try_import_versions()
+            if "madml" in loaded_versions and "mastml" in loaded_versions:
+                print(
+                    f"MAST-ML environment ready: madml={loaded_versions['madml']}, mastml={loaded_versions['mastml']}",
+                    flush=True,
+                )
+                return
+
+            def _pip_install_verbose(args, label):
+                cmd = [sys.executable, "-m", "pip", "install", *args]
+                print(f"Running pip install for {label}: {' '.join(cmd)}", flush=True)
+                result = subprocess.run(cmd, capture_output=True, text=True)
+                stdout = (result.stdout or "").strip()
+                stderr = (result.stderr or "").strip()
+                if result.returncode == 0:
+                    print(f"[ok] pip install succeeded for {label}", flush=True)
+                    if stdout:
+                        print(stdout[-2000:], flush=True)
+                    return True, stdout, stderr
+                print(f"[failed] pip install failed for {label}", flush=True)
+                if stdout:
+                    print(stdout[-2000:], flush=True)
+                if stderr:
+                    print(stderr[-2000:], flush=True)
+                return False, stdout, stderr
+
+            try:
+                import mastml  # noqa: F401
+                import madml  # noqa: F401
+                return
+            except Exception:
+                pass
+            if not install_mastml_if_missing:
+                raise RuntimeError(
+                    "MAST-ML / MADML are not available in this environment. "
+                    "Set `install_mastml_if_missing=True` and rerun this block, or install `mastml` and `madml` manually."
+                )
+            
+            def _clone_repo(repo_url, branch, destination_dir):
+                destination_dir = Path(destination_dir)
+                if destination_dir.exists() and any(destination_dir.iterdir()):
+                    print(f"Using existing source checkout: {destination_dir}", flush=True)
+                    return destination_dir
+                destination_dir.parent.mkdir(parents=True, exist_ok=True)
+                print(f"Cloning {repo_url} ({branch}) into {destination_dir}", flush=True)
+                subprocess.check_call(
+                    [
+                        "git",
+                        "clone",
+                        "--depth",
+                        "1",
+                        "--branch",
+                        str(branch),
+                        str(repo_url),
+                        str(destination_dir),
+                    ]
+                )
+                return destination_dir
+
+            pip_attempt_notes = []
+
+            if "madml" not in loaded_versions:
+                ok_madml, _, _ = _pip_install_verbose(["madml"], "madml")
+                pip_attempt_notes.append(f"madml_pip={'ok' if ok_madml else 'failed'}")
+            loaded_versions = _try_import_versions()
+            if "madml" in loaded_versions:
+                print(f"MADML available: version={loaded_versions['madml']}", flush=True)
+
+            if "mastml" not in loaded_versions:
+                ok_mastml, _, _ = _pip_install_verbose(["mastml"], "mastml")
+                pip_attempt_notes.append(f"mastml_pip={'ok' if ok_mastml else 'failed'}")
+            loaded_versions = _try_import_versions()
+            if "mastml" in loaded_versions:
+                print(f"MAST-ML available: version={loaded_versions['mastml']}", flush=True)
+
+            if "madml" in loaded_versions and "mastml" in loaded_versions:
+                print("Using pip-available MAST-ML / MADML packages.", flush=True)
+                return
+
+            print(
+                "One or both packages are still unavailable in this notebook kernel after pip install attempts. "
+                "Trying a source-based fallback...",
+                flush=True,
+            )
+
+            minimal_runtime_dependencies = [
+                ("dill", "dill"),
+                ("pathos", "pathos"),
+                ("docker", "docker"),
+                ("pymatgen", "pymatgen"),
+            ]
+            for import_name, pip_name in minimal_runtime_dependencies:
+                try:
+                    __import__(import_name)
+                except Exception:
+                    _pip_install_verbose([pip_name], pip_name)
+
+            source_cache_dir = Path("./.cache/mastml_source_runtime")
+            mastml_source_root = _clone_repo(
+                "https://github.com/uw-cmg/MAST-ML",
+                "master",
+                source_cache_dir / "mastml",
+            )
+            madml_source_root = _clone_repo(
+                "https://github.com/uw-cmg/materials_application_domain_machine_learning",
+                "main",
+                source_cache_dir / "madml",
+            )
+
+            for candidate_path in [
+                str(mastml_source_root),
+                str(Path(madml_source_root) / "src"),
+            ]:
+                if candidate_path not in sys.path:
+                    sys.path.insert(0, candidate_path)
+
+            loaded_versions = _try_import_versions()
+            if "madml" in loaded_versions and "mastml" in loaded_versions:
+                print(
+                    f"Using source fallback: madml={loaded_versions['madml']}, mastml={loaded_versions['mastml']}",
+                    flush=True,
+                )
+                return
+
+            raise RuntimeError(
+                "MAST-ML / MADML could not be made available in this environment. "
+                f"Installer notes: {', '.join(pip_attempt_notes) if pip_attempt_notes else 'no pip attempts recorded'}. "
+                "If you successfully installed these packages in a different shell or conda environment, "
+                "the notebook kernel may be using a different Python interpreter than that shell."
+            )
+
+        _ensure_mastml_packages()
+
+        from mastml.domain import Domain
+        from sklearn.ensemble import RandomForestRegressor
+        from sklearn.preprocessing import StandardScaler
+
+        latest_prediction_results = STATE["latest_prediction_results"].copy()
+        latest_prediction_model = dict(STATE.get("latest_prediction_model", {}))
+        valid_prediction_rows = latest_prediction_results["valid_smiles"].astype(bool)
+        if int(valid_prediction_rows.sum()) == 0:
+            raise ValueError("The latest prediction table contains no valid SMILES to assess.")
+        if latest_prediction_model.get("workflow") in {"Uni-Mol", "Ensemble"}:
+            print(
+                "Warning: the MAST-ML / MADML applicability-domain model is being fit in the notebook's tabular feature space. "
+                "That makes it a guide rail for chemistry-space coverage, but it is not the native representation used by Uni-Mol.",
+                flush=True,
+            )
+
+        training_feature_df = pd.DataFrame(STATE["X_train"]).copy()
+        if list(training_feature_df.columns) != list(STATE["feature_names"]):
+            training_feature_df.columns = list(STATE["feature_names"])
+        training_target = pd.Series(np.asarray(STATE["y_train"], dtype=float), name="target")
+
+        prediction_feature_df, _ = build_feature_matrix_from_smiles(
+            latest_prediction_results.loc[valid_prediction_rows, "canonical_smiles"].astype(str).tolist(),
+            **_mastml_prediction_feature_build_kwargs(),
+        )
+        prediction_feature_df = align_feature_matrix_to_training_columns(prediction_feature_df, STATE["feature_names"])
+
+        mastml_params = {
+            "n_repeats": int(mastml_n_repeats),
+            "bins": int(mastml_bins),
+            "kernel": str(mastml_kernel),
+        }
+        if mastml_use_custom_bandwidth:
+            mastml_params["bandwidth"] = float(mastml_bandwidth)
+
+        class _MastmlPreprocessorShim:
+            def __init__(self):
+                self.preprocessor = StandardScaler()
+
+        class _MastmlModelShim:
+            def __init__(self, n_estimators, random_state=42, n_jobs=1):
+                self.model = RandomForestRegressor(
+                    n_estimators=int(n_estimators),
+                    random_state=int(random_state),
+                    n_jobs=int(n_jobs),
+                )
+
+        mastml_preprocessor = _MastmlPreprocessorShim()
+        mastml_model = _MastmlModelShim(
+            n_estimators=int(mastml_random_forest_estimators),
+            random_state=42,
+            n_jobs=1,
+        )
+
+        mastml_output_dir = Path("./.cache/mastml_applicability_domain") / slugify_cache_text(
+            f"{STATE['cache_session_stamp']}_{current_dataset_cache_label()}_mastml_ad"
+        )
+        mastml_output_dir.mkdir(parents=True, exist_ok=True)
+
+        print("Fitting the MAST-ML / MADML applicability-domain model on the training feature space...", flush=True)
+        ad_model = Domain(
+            "madml",
+            preprocessor=mastml_preprocessor,
+            model=mastml_model,
+            params=mastml_params,
+            path=str(mastml_output_dir),
+        )
+        ad_model.fit(training_feature_df, training_target)
+        print("Applying the fitted applicability-domain model to the new prediction set...", flush=True)
+        ad_results_valid = ad_model.predict(prediction_feature_df)
+        ad_results_valid = ad_results_valid.add_prefix("mastml_")
+
+        ad_prediction_df = latest_prediction_results.copy()
+        for column_name in ad_results_valid.columns:
+            ad_prediction_df[column_name] = np.nan
+        ad_prediction_df.loc[valid_prediction_rows, ad_results_valid.columns] = ad_results_valid.to_numpy()
+
+        domain_columns = [column for column in ad_prediction_df.columns if "Domain Prediction" in column]
+        if domain_columns:
+            id_columns = [
+                column
+                for column in domain_columns
+                if ad_prediction_df[column].astype(str).eq("ID").any()
+            ]
+            if id_columns:
+                ad_prediction_df["mastml_any_domain_id"] = ad_prediction_df[id_columns].apply(
+                    lambda row: any(str(value) == "ID" for value in row),
+                    axis=1,
+                )
+            else:
+                ad_prediction_df["mastml_any_domain_id"] = False
+
+        STATE["latest_prediction_results_with_ad"] = ad_prediction_df.copy()
+        STATE["mastml_ad_model_info"] = {
+            "package_workflow": "MAST-ML Domain('madml')",
+            "output_dir": str(mastml_output_dir),
+            "params": dict(mastml_params),
+            "random_forest_estimators": int(mastml_random_forest_estimators),
+        }
+
+        print("Applied the MAST-ML / MADML applicability-domain workflow to the latest prediction table.")
+        print(f"MAST-ML output directory: {mastml_output_dir}")
+        print(
+            f"Assessed {int(valid_prediction_rows.sum())} valid predicted molecule(s); "
+            f"{int((~valid_prediction_rows).sum())} invalid row(s) were left unchanged."
+        )
+        display_interactive_table(ad_prediction_df, rows=min(20, len(ad_prediction_df)))
+
+        if save_mastml_ad_output:
+            output_path_text = str(mastml_ad_output_path).strip()
+            if not output_path_text:
+                raise ValueError("Please provide `mastml_ad_output_path` when `save_mastml_ad_output=True`.")
+            output_path = Path(output_path_text)
+            output_path.parent.mkdir(parents=True, exist_ok=True)
+            ad_prediction_df.to_csv(output_path, index=False)
+            print(f"Saved applicability-domain results to: {output_path}")
+
+        display_note(
+            "This block adds MAST-ML / MADML guide rails to the latest new-molecule predictions. "
+            "The MADML implementation in MAST-ML uses KDE-based dissimilarity and learned in-domain / out-of-domain thresholds. "
+            "These domain labels are meant to complement the QSAR prediction, not replace chemical judgment or external validation."
+        )
+        """
+    ),
+    md(
+        """
+        ## 10. What To Look For Next
 
         After running the notebook, useful follow-up questions are:
 
         - Is the similarity map dominated by a few clusters or evenly spread?
         - Does the test performance look similar to cross-validation?
-        - Do the most important fingerprint bits seem chemically plausible?
+        - Do the most important molecular features seem chemically plausible?
         - Do the deep models improve accuracy enough to justify their extra complexity?
 
         If you want to expand this workflow later, the next logical additions are:
 
         - hyperparameter optimization
-        - descriptor sets beyond fingerprints
+        - additional descriptor engineering and feature-selection workflows
         - external validation on a second dataset
-        - applicability-domain analysis
+        - richer applicability-domain threshold tuning and deployment rules
         """
     ),
 ]
