@@ -6859,6 +6859,19 @@ cells += [
         Because it operates in the notebook's tabular molecular-feature space, it is most directly aligned with the **conventional**, **tuned conventional**, and **ChemML** workflows.
         """
     ),
+    md(
+        """
+        ### 9D. Runtime And Caching Notes
+
+        The MADML applicability-domain workflow can take several minutes because it performs repeated internal cross-validation and clustered split evaluations.
+
+        When you run the block below, the notebook will:
+
+        - print a **runtime estimate** based on the current dataset size, feature count, and MADML settings
+        - report whether it is using a cached fitted AD model or fitting a new one
+        - report separately when it starts **fitting** and when it starts **applying** the AD model
+        """
+    ),
     code(
         """
         # @title 9D. Fit and apply the MAST-ML / MADML applicability-domain workflow { display-mode: "form" }
@@ -6869,6 +6882,9 @@ cells += [
         mastml_kernel = "epanechnikov" # @param ["epanechnikov", "gaussian", "tophat", "exponential"]
         mastml_use_custom_bandwidth = False # @param {type:"boolean"}
         mastml_bandwidth = 1.5 # @param {type:"number"}
+        enable_mastml_ad_cache = True # @param {type:"boolean"}
+        reuse_mastml_ad_cache = True # @param {type:"boolean"}
+        mastml_ad_cache_run_name = "AUTO" # @param {type:"string"}
         save_mastml_ad_output = False # @param {type:"boolean"}
         mastml_ad_output_path = "" # @param {type:"string"}
 
@@ -6898,7 +6914,10 @@ cells += [
                 loaded = {}
                 try:
                     import madml  # noqa: F401
-                    loaded["madml"] = importlib.metadata.version("madml")
+                    try:
+                        loaded["madml"] = importlib.metadata.version("madml")
+                    except Exception:
+                        loaded["madml"] = "source"
                 except Exception:
                     pass
                 try:
@@ -7076,6 +7095,7 @@ cells += [
             "bins": int(mastml_bins),
             "kernel": str(mastml_kernel),
         }
+        mastml_cluster_settings = [2, 3]
         if mastml_use_custom_bandwidth:
             mastml_params["bandwidth"] = float(mastml_bandwidth)
 
@@ -7098,28 +7118,164 @@ cells += [
             n_jobs=1,
         )
 
-        mastml_output_dir = Path("./.cache/mastml_applicability_domain") / slugify_cache_text(
-            f"{STATE['cache_session_stamp']}_{current_dataset_cache_label()}_mastml_ad"
+        ad_cache_dir = None
+        ad_model_path = None
+        ad_results_path = None
+        ad_metadata_path = None
+        existing_ad_metadata_path = None
+        ad_prediction_cache_key = slugify_cache_text(
+            "__".join(latest_prediction_results.loc[valid_prediction_rows, "canonical_smiles"].astype(str).tolist())
         )
-        mastml_output_dir.mkdir(parents=True, exist_ok=True)
+        feature_metadata = current_feature_metadata()
+        if enable_mastml_ad_cache:
+            ad_cache_dir = resolve_model_cache_dir(
+                "applicability_domain",
+                mastml_ad_cache_run_name,
+                prefer_existing=bool(reuse_mastml_ad_cache),
+            )
+            print(f"Applicability-domain cache directory: {ad_cache_dir}", flush=True)
+            if reuse_mastml_ad_cache and ad_cache_dir.exists():
+                existing_metadata_candidates = sorted(
+                    ad_cache_dir.glob("*_mastml_ad_metadata.json"),
+                    key=lambda path: path.name,
+                    reverse=True,
+                )
+                if existing_metadata_candidates:
+                    existing_ad_metadata_path = existing_metadata_candidates[0]
+            artifact_base = f"{STATE['cache_session_stamp']}_{current_dataset_cache_label()}_mastml_ad"
+            ad_model_path = ad_cache_dir / f"{artifact_base}_model.joblib"
+            ad_results_path = ad_cache_dir / f"{artifact_base}_{ad_prediction_cache_key}_results.csv"
+            ad_metadata_path = ad_cache_dir / f"{artifact_base}_metadata.json"
 
-        print("Fitting the MAST-ML / MADML applicability-domain model on the training feature space...", flush=True)
-        ad_model = Domain(
-            "madml",
-            preprocessor=mastml_preprocessor,
-            model=mastml_model,
-            params=mastml_params,
-            path=str(mastml_output_dir),
-        )
-        ad_model.fit(training_feature_df, training_target)
-        print("Applying the fitted applicability-domain model to the new prediction set...", flush=True)
-        ad_results_valid = ad_model.predict(prediction_feature_df)
-        ad_results_valid = ad_results_valid.add_prefix("mastml_")
+        expected_ad_metadata = {
+            "workflow": "MAST-ML applicability domain",
+            "dataset_label": current_dataset_cache_label(),
+            "best_conventional_model_name": str(STATE["best_traditional_model_name"]),
+            "selected_feature_families": list(feature_metadata["selected_feature_families"]),
+            "built_feature_families": list(feature_metadata["built_feature_families"]),
+            "fingerprint_radius": int(feature_metadata["fingerprint_radius"]),
+            "fingerprint_bits": int(feature_metadata["fingerprint_bits"]),
+            "lasso_feature_selection_enabled": bool(feature_metadata["lasso_feature_selection_enabled"]),
+            "lasso_alpha": feature_metadata["lasso_alpha"],
+            "lasso_selected_feature_count": int(feature_metadata["lasso_selected_feature_count"]),
+            "mastml_random_forest_estimators": int(mastml_random_forest_estimators),
+            "mastml_n_repeats": int(mastml_n_repeats),
+            "mastml_bins": int(mastml_bins),
+            "mastml_kernel": str(mastml_kernel),
+            "mastml_bandwidth": float(mastml_bandwidth) if mastml_use_custom_bandwidth else None,
+            "prediction_smiles_key": ad_prediction_cache_key,
+        }
 
-        ad_prediction_df = latest_prediction_results.copy()
-        for column_name in ad_results_valid.columns:
-            ad_prediction_df[column_name] = np.nan
-        ad_prediction_df.loc[valid_prediction_rows, ad_results_valid.columns] = ad_results_valid.to_numpy()
+        ad_model = None
+        cached_ad_prediction_df = None
+        metadata_probe_path = None
+        if enable_mastml_ad_cache and reuse_mastml_ad_cache:
+            if existing_ad_metadata_path is not None and existing_ad_metadata_path.exists():
+                metadata_probe_path = existing_ad_metadata_path
+            elif ad_metadata_path is not None and ad_metadata_path.exists():
+                metadata_probe_path = ad_metadata_path
+        if metadata_probe_path is not None and metadata_probe_path.exists():
+            try:
+                cached_metadata = read_cache_metadata(metadata_probe_path)
+                if cache_metadata_matches(cached_metadata, expected_ad_metadata):
+                    resolved_model_path = resolve_cached_artifact_path(
+                        cached_metadata.get("model_path", ad_model_path),
+                        metadata_probe_path,
+                    )
+                    resolved_results_path = resolve_cached_artifact_path(
+                        cached_metadata.get("results_path", ad_results_path),
+                        metadata_probe_path,
+                    )
+                    ad_metadata_path = metadata_probe_path
+                    ad_model_path = resolved_model_path
+                    ad_results_path = resolved_results_path
+                    if cached_metadata.get("run_status") == "completed" and ad_results_path is not None and ad_results_path.exists():
+                        cached_ad_prediction_df = pd.read_csv(ad_results_path)
+                        print("Loaded cached applicability-domain assessment results.", flush=True)
+                    elif cached_metadata.get("run_status") in {"fit_completed", "completed"} and ad_model_path is not None and ad_model_path.exists():
+                        import dill
+                        with open(ad_model_path, "rb") as handle:
+                            ad_model = dill.load(handle)
+                        print("Loaded cached fitted applicability-domain model.", flush=True)
+            except Exception:
+                pass
+
+        if cached_ad_prediction_df is None:
+            if enable_mastml_ad_cache and ad_metadata_path is not None:
+                write_cache_metadata(
+                    ad_metadata_path,
+                    {
+                        **expected_ad_metadata,
+                        "cache_run_name": ad_cache_dir.name if ad_cache_dir is not None else "",
+                        "model_path": str(ad_model_path) if ad_model_path is not None else "",
+                        "results_path": str(ad_results_path) if ad_results_path is not None else "",
+                        "run_status": "initialized",
+                    },
+                )
+
+            if ad_model is None:
+                benchmark_rows = min(250, len(training_feature_df))
+                benchmark_estimators = 30
+                benchmark_rf = RandomForestRegressor(
+                    n_estimators=benchmark_estimators,
+                    random_state=42,
+                    n_jobs=1,
+                )
+                benchmark_start = time.perf_counter()
+                benchmark_rf.fit(
+                    training_feature_df.iloc[:benchmark_rows].to_numpy(dtype=np.float32),
+                    training_target.iloc[:benchmark_rows].to_numpy(dtype=float),
+                )
+                benchmark_seconds = max(0.01, time.perf_counter() - benchmark_start)
+                total_fit_equivalents = int(mastml_n_repeats) * (10 + sum(mastml_cluster_settings))
+                row_scale = max(1.0, len(training_feature_df) / max(1, benchmark_rows))
+                estimated_seconds = benchmark_seconds * (int(mastml_random_forest_estimators) / benchmark_estimators) * total_fit_equivalents * row_scale
+                print(
+                    f"Estimated MADML runtime: about {estimated_seconds / 60.0:.1f} minute(s) "
+                    f"for {len(training_feature_df)} training molecule(s), {training_feature_df.shape[1]} feature(s), "
+                    f"{int(mastml_n_repeats)} repeat(s), and cluster settings {mastml_cluster_settings}.",
+                    flush=True,
+                )
+
+                print("Fitting the MAST-ML / MADML applicability-domain model on the training feature space...", flush=True)
+                fit_start = time.perf_counter()
+                ad_model = Domain(
+                    "madml",
+                    preprocessor=mastml_preprocessor,
+                    model=mastml_model,
+                    params=mastml_params,
+                    path=str(ad_cache_dir if ad_cache_dir is not None else Path("./.cache/mastml_applicability_domain")),
+                )
+                ad_model.fit(training_feature_df, training_target)
+                fit_seconds = time.perf_counter() - fit_start
+                print(f"Finished fitting the applicability-domain model in {fit_seconds / 60.0:.2f} minute(s).", flush=True)
+                if enable_mastml_ad_cache and ad_model_path is not None:
+                    import dill
+                    with open(ad_model_path, "wb") as handle:
+                        dill.dump(ad_model, handle)
+                    if ad_metadata_path is not None:
+                        write_cache_metadata(
+                            ad_metadata_path,
+                            {
+                                **expected_ad_metadata,
+                                "cache_run_name": ad_cache_dir.name if ad_cache_dir is not None else "",
+                                "model_path": str(ad_model_path),
+                                "results_path": str(ad_results_path) if ad_results_path is not None else "",
+                                "run_status": "fit_completed",
+                                "fit_time_seconds": float(fit_seconds),
+                            },
+                        )
+
+            print("Applying the fitted applicability-domain model to the new prediction set...", flush=True)
+            ad_results_valid = ad_model.predict(prediction_feature_df)
+            ad_results_valid = ad_results_valid.add_prefix("mastml_")
+
+            ad_prediction_df = latest_prediction_results.copy()
+            for column_name in ad_results_valid.columns:
+                ad_prediction_df[column_name] = np.nan
+            ad_prediction_df.loc[valid_prediction_rows, ad_results_valid.columns] = ad_results_valid.to_numpy()
+        else:
+            ad_prediction_df = cached_ad_prediction_df.copy()
 
         domain_columns = [column for column in ad_prediction_df.columns if "Domain Prediction" in column]
         if domain_columns:
@@ -7136,21 +7292,170 @@ cells += [
             else:
                 ad_prediction_df["mastml_any_domain_id"] = False
 
+        rename_map = {
+            "mastml_y_pred": "mastml_internal_rf_prediction",
+            "mastml_d_pred": "mastml_kde_dissimilarity",
+            "mastml_y_stdu_pred": "mastml_internal_rf_uncertainty_raw",
+            "mastml_y_stdc_pred": "mastml_internal_rf_uncertainty_calibrated",
+            "mastml_any_domain_id": "mastml_in_domain_by_any_rule",
+        }
+        for column_name in list(ad_prediction_df.columns):
+            if column_name.startswith("mastml_absres/mad_y Domain Prediction"):
+                rename_map[column_name] = "mastml_ad_residual_rule"
+            elif column_name.startswith("mastml_rmse/std_y Domain Prediction"):
+                rename_map[column_name] = "mastml_ad_rmse_rule"
+            elif column_name.startswith("mastml_cdf_area Domain Prediction"):
+                rename_map[column_name] = "mastml_ad_calibration_area_rule"
+        ad_prediction_df = ad_prediction_df.rename(columns=rename_map)
+
+        ad_rule_columns = [
+            column
+            for column in ["mastml_ad_residual_rule", "mastml_ad_rmse_rule", "mastml_ad_calibration_area_rule"]
+            if column in ad_prediction_df.columns
+        ]
+        if ad_rule_columns:
+            ad_prediction_df["mastml_id_rule_count"] = ad_prediction_df[ad_rule_columns].apply(
+                lambda row: int(sum(str(value) == "ID" for value in row)),
+                axis=1,
+            )
+            ad_prediction_df["mastml_overall_concern"] = ad_prediction_df["mastml_id_rule_count"].map(
+                {
+                    3: "Low concern",
+                    2: "Moderate concern",
+                    1: "High concern",
+                    0: "High concern",
+                }
+            )
+            def _interpret_ad_row(row):
+                residual_id = str(row.get("mastml_ad_residual_rule", "")) == "ID"
+                rmse_id = str(row.get("mastml_ad_rmse_rule", "")) == "ID"
+                calibration_id = str(row.get("mastml_ad_calibration_area_rule", "")) == "ID"
+                concern = str(row.get("mastml_overall_concern", ""))
+                if concern == "Low concern":
+                    return "All three MADML rules marked this molecule in-domain."
+                if residual_id and rmse_id and not calibration_id:
+                    return "Prediction appears supported by similarity/error rules, but the MADML uncertainty calibration rule flagged caution."
+                if residual_id or rmse_id or calibration_id:
+                    return "Only partial MADML support was found; use this prediction cautiously and inspect chemistry-space proximity."
+                return "All MADML rules flagged this molecule as out-of-domain."
+            ad_prediction_df["mastml_interpretation"] = ad_prediction_df.apply(_interpret_ad_row, axis=1)
+        if "mastml_in_domain_by_any_rule" in ad_prediction_df.columns:
+            ad_prediction_df["mastml_domain_summary"] = np.where(
+                ad_prediction_df["mastml_in_domain_by_any_rule"].fillna(False).astype(bool),
+                "Supported by at least one MADML rule",
+                "Flagged by all MADML rules",
+            )
+
         STATE["latest_prediction_results_with_ad"] = ad_prediction_df.copy()
         STATE["mastml_ad_model_info"] = {
             "package_workflow": "MAST-ML Domain('madml')",
-            "output_dir": str(mastml_output_dir),
+            "output_dir": str(ad_cache_dir if ad_cache_dir is not None else Path("./.cache/mastml_applicability_domain")),
             "params": dict(mastml_params),
             "random_forest_estimators": int(mastml_random_forest_estimators),
         }
 
+        if enable_mastml_ad_cache and ad_results_path is not None:
+            ad_prediction_df.to_csv(ad_results_path, index=False)
+            if ad_metadata_path is not None:
+                write_cache_metadata(
+                    ad_metadata_path,
+                    {
+                        **expected_ad_metadata,
+                        "cache_run_name": ad_cache_dir.name if ad_cache_dir is not None else "",
+                        "model_path": str(ad_model_path) if ad_model_path is not None else "",
+                        "results_path": str(ad_results_path),
+                        "run_status": "completed",
+                    },
+                )
+
         print("Applied the MAST-ML / MADML applicability-domain workflow to the latest prediction table.")
-        print(f"MAST-ML output directory: {mastml_output_dir}")
+        print(f"MAST-ML output directory: {ad_cache_dir if ad_cache_dir is not None else Path('./.cache/mastml_applicability_domain')}")
         print(
             f"Assessed {int(valid_prediction_rows.sum())} valid predicted molecule(s); "
             f"{int((~valid_prediction_rows).sum())} invalid row(s) were left unchanged."
         )
-        display_interactive_table(ad_prediction_df, rows=min(20, len(ad_prediction_df)))
+        concern_palette = {
+            "Low concern": "#d9f2d9",
+            "Moderate concern": "#fff2cc",
+            "High concern": "#f4cccc",
+        }
+        domain_palette = {"ID": "#d9f2d9", "OD": "#f4cccc"}
+        styled_columns = [
+            column
+            for column in [
+                "row_id",
+                "canonical_smiles",
+                "prediction",
+                "workflow",
+                "model_name",
+                "mastml_overall_concern",
+                "mastml_interpretation",
+                "mastml_ad_residual_rule",
+                "mastml_ad_rmse_rule",
+                "mastml_ad_calibration_area_rule",
+                "mastml_kde_dissimilarity",
+                "mastml_internal_rf_uncertainty_calibrated",
+            ]
+            if column in ad_prediction_df.columns
+        ]
+        if styled_columns:
+            styled_df = ad_prediction_df.loc[:, styled_columns].copy().round(6)
+            styled_table = (
+                styled_df.style
+                .map(lambda value: f"background-color: {concern_palette.get(str(value), '')}", subset=["mastml_overall_concern"] if "mastml_overall_concern" in styled_df.columns else [])
+            )
+            for ad_rule_column in ["mastml_ad_residual_rule", "mastml_ad_rmse_rule", "mastml_ad_calibration_area_rule"]:
+                if ad_rule_column in styled_df.columns:
+                    styled_table = styled_table.map(
+                        lambda value: f"background-color: {domain_palette.get(str(value), '')}",
+                        subset=[ad_rule_column],
+                    )
+            display(styled_table)
+        display_interactive_table(ad_prediction_df.round(6), rows=min(20, len(ad_prediction_df)))
+
+        plot_df = ad_prediction_df.loc[ad_prediction_df["valid_smiles"].astype(bool)].copy()
+        if "mastml_overall_concern" in plot_df.columns:
+            scatter_fig = px.scatter(
+                plot_df,
+                x="mastml_kde_dissimilarity",
+                y="mastml_internal_rf_uncertainty_calibrated",
+                color="mastml_overall_concern",
+                symbol="mastml_overall_concern",
+                hover_data={
+                    "canonical_smiles": True,
+                    "prediction": ":.4f",
+                    "mastml_overall_concern": True,
+                    "mastml_interpretation": True,
+                    "mastml_kde_dissimilarity": ":.4f",
+                    "mastml_internal_rf_uncertainty_calibrated": ":.4f",
+                },
+                title="Applicability domain concern: dissimilarity vs MADML calibrated uncertainty",
+                color_discrete_map={
+                    "Low concern": "#2ca02c",
+                    "Moderate concern": "#ffbf00",
+                    "High concern": "#d62728",
+                },
+            )
+            show_plotly(scatter_fig)
+
+        if ad_rule_columns:
+            ad_rule_counts = (
+                plot_df[ad_rule_columns]
+                .melt(var_name="AD rule", value_name="Domain label")
+                .groupby(["AD rule", "Domain label"], observed=True)
+                .size()
+                .reset_index(name="Count")
+            )
+            bar_fig = px.bar(
+                ad_rule_counts,
+                x="AD rule",
+                y="Count",
+                color="Domain label",
+                barmode="group",
+                title="Applicability domain rule outcomes for new molecules",
+                color_discrete_map={"ID": "#2ca02c", "OD": "#d62728"},
+            )
+            show_plotly(bar_fig)
 
         if save_mastml_ad_output:
             output_path_text = str(mastml_ad_output_path).strip()
@@ -7161,10 +7466,25 @@ cells += [
             ad_prediction_df.to_csv(output_path, index=False)
             print(f"Saved applicability-domain results to: {output_path}")
 
+        in_domain_count = int(
+            ad_prediction_df.get("mastml_in_domain_by_any_rule", pd.Series(False, index=ad_prediction_df.index))
+            .fillna(False)
+            .astype(bool)
+            .sum()
+        )
+        out_of_domain_count = int(valid_prediction_rows.sum()) - in_domain_count
+        low_concern_count = int(ad_prediction_df.get("mastml_overall_concern", pd.Series("", index=ad_prediction_df.index)).astype(str).eq("Low concern").sum())
+        moderate_concern_count = int(ad_prediction_df.get("mastml_overall_concern", pd.Series("", index=ad_prediction_df.index)).astype(str).eq("Moderate concern").sum())
+        high_concern_count = int(ad_prediction_df.get("mastml_overall_concern", pd.Series("", index=ad_prediction_df.index)).astype(str).eq("High concern").sum())
         display_note(
-            "This block adds MAST-ML / MADML guide rails to the latest new-molecule predictions. "
-            "The MADML implementation in MAST-ML uses KDE-based dissimilarity and learned in-domain / out-of-domain thresholds. "
-            "These domain labels are meant to complement the QSAR prediction, not replace chemical judgment or external validation."
+            "This block adds MAST-ML / MADML guide rails to the latest new-molecule predictions rather than replacing your chosen prediction model. "
+            "The internal MAST-ML random forest is used only to estimate chemistry-space coverage and rule-based concern levels in the same feature space as the conventional workflow. "
+            "Use the color-coded concern labels as the main interpretation layer: `Low concern` means all three MADML rules marked the molecule in-domain, "
+            "`Moderate concern` means two rules supported it but one rule still raised caution, and `High concern` means at most one rule supported it. "
+            f"In this run, the concern breakdown was {low_concern_count} low, {moderate_concern_count} moderate, and {high_concern_count} high across valid molecules. "
+            f"{in_domain_count} valid molecule(s) were supported by at least one MADML rule and {out_of_domain_count} were flagged by all three rules. "
+            "Lower `mastml_kde_dissimilarity` usually means a molecule sits closer to the training chemistry. "
+            "`mastml_internal_rf_uncertainty_raw` and `mastml_internal_rf_uncertainty_calibrated` are guide-rail uncertainty estimates from the internal MAST-ML random forest, not formal uncertainty intervals for CatBoost, XGBoost, or an ensemble prediction."
         )
         """
     ),
