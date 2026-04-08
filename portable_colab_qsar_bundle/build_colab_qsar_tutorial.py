@@ -1566,6 +1566,8 @@ cells += [
             feature_df = feature_df.copy()
             feature_df = feature_df.replace([np.inf, -np.inf], np.nan)
             feature_df = feature_df.apply(pd.to_numeric, errors="coerce")
+            float32_limit = np.finfo(np.float32).max
+            feature_df = feature_df.mask(feature_df.abs() > float32_limit, np.nan)
             all_nan_columns = [column for column in feature_df.columns if feature_df[column].isna().all()]
             if all_nan_columns:
                 feature_df = feature_df.drop(columns=all_nan_columns)
@@ -1667,6 +1669,12 @@ cells += [
                 if column not in aligned.columns:
                     aligned[column] = 0.0
             aligned = aligned.loc[:, list(expected_columns)].copy()
+            aligned = aligned.replace([np.inf, -np.inf], np.nan)
+            aligned = aligned.apply(pd.to_numeric, errors="coerce")
+            float32_limit = np.finfo(np.float32).max
+            aligned = aligned.mask(aligned.abs() > float32_limit, np.nan)
+            aligned = aligned.fillna(aligned.median(numeric_only=True))
+            aligned = aligned.fillna(0.0)
             return aligned.astype(np.float32)
 
         def make_regularization_grid(min_log10=-4, max_log10=0, grid_size=40):
@@ -2694,7 +2702,15 @@ cells += [
 
             if map_df is None:
                 progress.set_postfix_str(f"Running PCA/t-SNE: {map_label}")
-                pca_scores = PCA(n_components=n_pca, random_state=int(embedding_random_seed)).fit_transform(feature_df)
+                embedding_feature_df = feature_df.copy()
+                embedding_feature_df = embedding_feature_df.replace([np.inf, -np.inf], np.nan)
+                embedding_feature_df = embedding_feature_df.apply(pd.to_numeric, errors="coerce")
+                float64_limit = np.finfo(np.float64).max / 1000.0
+                embedding_feature_df = embedding_feature_df.mask(embedding_feature_df.abs() > float64_limit, np.nan)
+                embedding_feature_df = embedding_feature_df.fillna(embedding_feature_df.median(numeric_only=True))
+                embedding_feature_df = embedding_feature_df.fillna(0.0)
+                embedding_matrix = StandardScaler().fit_transform(embedding_feature_df.to_numpy(dtype=np.float64))
+                pca_scores = PCA(n_components=n_pca, random_state=int(embedding_random_seed)).fit_transform(embedding_matrix)
                 tsne_scores = TSNE(
                     n_components=2,
                     perplexity=tsne_perplexity,

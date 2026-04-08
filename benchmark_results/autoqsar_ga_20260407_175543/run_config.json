@@ -1,0 +1,49 @@
+{
+  "dataset": null,
+  "include_chemml": false,
+  "output_dir": "C:\\Users\\Scott.Coffin\\OneDrive - California OEHHA\\R_new\\AutoQSAR\\benchmark_results\\autoqsar_ga_20260407_175543",
+  "dry_run": false,
+  "minimum_rows": 20,
+  "row_limit": 0,
+  "fingerprint_bits": 1024,
+  "log10_target": true,
+  "split_strategy": "target_quartiles",
+  "test_fraction": 0.2,
+  "random_seed": 13,
+  "selector_method": "elasticnet_cv",
+  "selector_l1_ratio_grid": "0.1, 0.3, 0.5, 0.7, 0.9",
+  "selector_alpha_min_log10": -5,
+  "selector_alpha_max_log10": -1,
+  "selector_alpha_grid_size": 40,
+  "selector_cv_folds": 5,
+  "selector_max_iter": 50000,
+  "selector_coefficient_threshold": 1e-10,
+  "max_selected_features": 0,
+  "cv_folds": 5,
+  "elasticnet_l1_ratio_grid": "0.4, 0.5, 0.6, 0.7, 0.9",
+  "elasticnet_alpha_min_log10": -4,
+  "elasticnet_alpha_max_log10": 0,
+  "elasticnet_alpha_grid_size": 40,
+  "elasticnet_cv_folds": 5,
+  "elasticnet_max_iter": 50000,
+  "ga_models": "ElasticNet,CatBoost",
+  "ga_generations": 12,
+  "ga_population_size": 16,
+  "ga_elites": 2,
+  "ga_cv_folds": 5,
+  "ga_mutation_probability": 0.35,
+  "datasets": [
+    {
+      "name": "comprehensive_dataset",
+      "source": "C:\\Users\\Scott.Coffin\\OneDrive - California OEHHA\\R_new\\AutoQSAR\\test_data\\comprehensive_dataset.csv",
+      "smiles_column": "QSAR_READY_SMILES",
+      "target_column": "Repro/Dev"
+    },
+    {
+      "name": "repro_dev_data",
+      "source": "C:\\Users\\Scott.Coffin\\OneDrive - California OEHHA\\R_new\\AutoQSAR\\test_data\\repro_dev_data.csv",
+      "smiles_column": "SMILES",
+      "target_column": "TARGET"
+    }
+  ]
+}
