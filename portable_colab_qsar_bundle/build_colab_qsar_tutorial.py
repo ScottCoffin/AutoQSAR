@@ -26,6 +26,7 @@ PARAM_LINE_RE = re.compile(
     r'^(?P<indent>\s*)(?P<name>[A-Za-z_]\w*)\s*=\s*(?P<default>.*?)\s*#\s*@param\s*(?P<spec>.+?)\s*$'
 )
 TITLE_LINE_RE = re.compile(r'^\s*#\s*@title\s+(?P<title>.*?)(?:\s+\{.*\})?\s*$')
+MARKDOWN_LINE_RE = re.compile(r'^(?P<indent>\s*)#\s*@markdown(?:\s*(?P<text>.*))?$')
 
 
 def _parse_param_spec(spec_text: str):
@@ -50,6 +51,17 @@ def _extract_form_schema(text: str):
             title_match = TITLE_LINE_RE.match(line)
             if title_match:
                 title = title_match.group("title").strip()
+        markdown_match = MARKDOWN_LINE_RE.match(line)
+        if markdown_match:
+            markdown_text = (markdown_match.group("text") or "").strip()
+            if markdown_text:
+                schema.append(
+                    {
+                        "widget_kind": "markdown",
+                        "label": markdown_text,
+                    }
+                )
+            continue
         match = PARAM_LINE_RE.match(line)
         if not match:
             continue
@@ -95,6 +107,8 @@ def _inject_local_widget_read(text: str, form_id: str):
         f"{param_indent}    _local_form_values = read_local_form_values({form_id!r}, {repr(schema)})",
     ]
     for item in schema:
+        if item.get("widget_kind") == "markdown":
+            continue
         override_lines.append(f"{param_indent}    {item['name']} = _local_form_values[{item['name']!r}]")
     lines[last_param_index + 1:last_param_index + 1] = override_lines
     return "\n".join(lines) + "\n"
@@ -159,7 +173,7 @@ cells += [
         """
         # Tutorial: Guided QSAR Workflow With Widgets
 
-        [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ScottCoffin/chemml/blob/master/portable_colab_qsar_bundle/colab_qsar_tutorial.ipynb)
+        [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ScottCoffin/AutoQSAR/blob/master/portable_colab_qsar_bundle/colab_qsar_tutorial.ipynb)
         """
     ),
     md(
@@ -241,7 +255,7 @@ cells += [
         warnings.filterwarnings("ignore")
 
         PACKAGE_PROGRESS = {"done": 0, "total": 15}
-        SETUP_PROGRESS = {"done": 0, "total": 26}
+        SETUP_PROGRESS = {"done": 0, "total": 27}
         try:
             RUNNING_IN_COLAB = importlib.util.find_spec("google.colab") is not None
         except ModuleNotFoundError:
@@ -561,7 +575,7 @@ cells += [
         from sklearn.ensemble import RandomForestRegressor
         from sklearn.impute import SimpleImputer
         from sklearn.inspection import permutation_importance
-        from sklearn.linear_model import ElasticNet, Lasso
+        from sklearn.linear_model import ElasticNet, ElasticNetCV, Lasso, LassoCV
         from sklearn.manifold import TSNE
         from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
         from sklearn.model_selection import KFold, cross_validate, train_test_split
@@ -704,6 +718,28 @@ cells += [
                     return False
             return True
 
+        def dataframe_cache_signature(frame, max_rows=None):
+            import hashlib
+
+            working = frame.copy()
+            if max_rows is not None and len(working) > int(max_rows):
+                working = working.iloc[: int(max_rows)].copy()
+            hashed = pd.util.hash_pandas_object(working, index=True).to_numpy(dtype=np.uint64)
+            digest = hashlib.sha256()
+            digest.update(np.asarray(hashed, dtype=np.uint64).tobytes())
+            digest.update("|".join(map(str, working.columns)).encode("utf-8"))
+            digest.update(str(tuple(working.shape)).encode("utf-8"))
+            return digest.hexdigest()
+
+        def array_cache_signature(values):
+            import hashlib
+
+            arr = np.asarray(values, dtype=float).reshape(-1)
+            digest = hashlib.sha256()
+            digest.update(np.nan_to_num(arr, nan=1.23456789e308, posinf=9.87654321e307, neginf=-9.87654321e307).tobytes())
+            digest.update(str(arr.shape).encode("utf-8"))
+            return digest.hexdigest()
+
         def write_ga_state(path, population, fitness_dict):
             import json
 
@@ -816,6 +852,60 @@ cells += [
                 smiles_series.iloc[test_indices].reset_index(drop=True),
             )
 
+        def target_quartile_labels(y, q=4):
+            y_series = pd.Series(y, dtype=float).reset_index(drop=True)
+            if len(y_series) < int(q) * 2:
+                raise ValueError(
+                    f"Target-quartile splitting needs at least {int(q) * 2} rows; found {len(y_series)}."
+                )
+            labels = pd.qcut(y_series, q=int(q), labels=False, duplicates="drop")
+            labels = labels.astype("Int64")
+            if labels.isna().any() or labels.nunique(dropna=True) < 2:
+                raise ValueError(
+                    "Target-quartile splitting could not create at least two non-empty target bins. "
+                    "Use the random split for very small or low-variance target data."
+                )
+            label_counts = labels.value_counts(dropna=True)
+            if int(label_counts.min()) < 2:
+                raise ValueError(
+                    "Target-quartile splitting requires at least two samples per target bin. "
+                    "Use a smaller test fraction or the random split for this dataset."
+                )
+            return labels.astype(int).astype(str)
+
+        def plot_train_test_target_distribution(y_train, y_test, split_strategy):
+            import plotly.graph_objects as go
+
+            y_train_series = pd.Series(y_train, dtype=float, name="target")
+            y_test_series = pd.Series(y_test, dtype=float, name="target")
+            fig = go.Figure()
+            fig.add_trace(
+                go.Histogram(
+                    x=y_train_series,
+                    name="Train",
+                    opacity=0.55,
+                    marker_color="#1f77b4",
+                    histnorm="probability density",
+                )
+            )
+            fig.add_trace(
+                go.Histogram(
+                    x=y_test_series,
+                    name="Test",
+                    opacity=0.75,
+                    marker_color="#d62728",
+                    histnorm="probability density",
+                )
+            )
+            fig.update_layout(
+                title=f"Train/test target distribution ({split_strategy})",
+                xaxis_title="Target endpoint value",
+                yaxis_title="Density",
+                barmode="overlay",
+                height=420,
+            )
+            show_plotly(fig)
+
         def apply_qsar_split(split_strategy="random", test_fraction=0.2, random_seed=42, announce=True):
             if "feature_matrix" not in STATE:
                 raise RuntimeError("Please build the molecular feature matrix first.")
@@ -825,16 +915,20 @@ cells += [
             smiles = STATE["curated_df"]["canonical_smiles"].astype(str).reset_index(drop=True)
 
             split_strategy = str(split_strategy).strip().lower()
-            if split_strategy not in {"random", "scaffold"}:
-                raise ValueError("Split strategy must be either 'random' or 'scaffold'.")
+            if split_strategy not in {"random", "scaffold", "target_quartiles"}:
+                raise ValueError("Split strategy must be 'random', 'scaffold', or 'target_quartiles'.")
 
-            if split_strategy == "random":
+            if split_strategy in {"random", "target_quartiles"}:
+                stratify_labels = None
+                if split_strategy == "target_quartiles":
+                    stratify_labels = target_quartile_labels(y, q=4)
                 X_train, X_test, y_train, y_test, smiles_train, smiles_test = train_test_split(
                     X,
                     y,
                     smiles,
                     test_size=float(test_fraction),
                     random_state=int(random_seed),
+                    stratify=stratify_labels,
                 )
                 X_train = X_train.reset_index(drop=True)
                 X_test = X_test.reset_index(drop=True)
@@ -985,6 +1079,27 @@ cells += [
             display(Markdown(text))
         setup_done("display helper")
 
+        setup_start("column inference helper")
+        def infer_column_by_case_insensitive_name(df, desired_name):
+            desired_lower = str(desired_name).strip().lower()
+            columns = list(df.columns)
+            exact_matches = [column for column in columns if str(column) == str(desired_name)]
+            if exact_matches:
+                return exact_matches[0]
+            case_insensitive_matches = [
+                column for column in columns
+                if str(column).strip().lower() == desired_lower
+            ]
+            if len(case_insensitive_matches) == 1:
+                return case_insensitive_matches[0]
+            if len(case_insensitive_matches) > 1:
+                raise ValueError(
+                    f"Multiple columns match {desired_name!r} ignoring case: {case_insensitive_matches}. "
+                    "Please type the exact column name."
+                )
+            return None
+        setup_done("column inference helper")
+
         setup_start("Local widget helper")
         LOCAL_FORM_STATE = {}
 
@@ -998,13 +1113,24 @@ cells += [
 
         def _make_local_widget(spec):
             kind = spec["widget_kind"]
-            default = spec["default"]
             label = spec["label"]
             if widgets is None:
                 raise RuntimeError(
                     "ipywidgets is not available in this environment. "
                     "Rerun step 0 so local notebook controls can be created."
                 )
+            if kind == "markdown":
+                text = str(label).strip()
+                if text.startswith("### "):
+                    html_text = f"<hr><b>{text[4:]}</b>"
+                elif text.startswith("## "):
+                    html_text = f"<hr><b>{text[3:]}</b>"
+                elif text.startswith("# "):
+                    html_text = f"<hr><b>{text[2:]}</b>"
+                else:
+                    html_text = text
+                return widgets.HTML(value=html_text)
+            default = spec["default"]
             if kind == "boolean":
                 return _apply_local_widget_layout(
                     widgets.Checkbox(value=bool(default), description=label, indent=False)
@@ -1060,7 +1186,7 @@ cells += [
             return value
 
         def ensure_local_form_display(form_title, form_id, schema):
-            defaults = {item["name"]: item["default"] for item in schema}
+            defaults = {item["name"]: item["default"] for item in schema if item.get("widget_kind") != "markdown"}
             if IN_COLAB:
                 return
             if widgets is None:
@@ -1071,7 +1197,7 @@ cells += [
 
             if form_id not in LOCAL_FORM_STATE:
                 widget_map = {}
-                spec_map = {item["name"]: item for item in schema}
+                spec_map = {item["name"]: item for item in schema if item.get("widget_kind") != "markdown"}
                 LOCAL_FORM_STATE[form_id] = {
                     "widget_map": widget_map,
                     "spec_map": spec_map,
@@ -1086,15 +1212,16 @@ cells += [
                 ]
                 for item in schema:
                     widget = _make_local_widget(item)
-                    widget.value = defaults[item["name"]]
-                    widget_map[item["name"]] = widget
+                    if item.get("widget_kind") != "markdown":
+                        widget.value = defaults[item["name"]]
+                        widget_map[item["name"]] = widget
                     rows.append(widget)
                 container = widgets.VBox(rows, layout=widgets.Layout(width="100%", max_width="1200px"))
                 LOCAL_FORM_STATE[form_id]["container"] = container
             display(LOCAL_FORM_STATE[form_id]["container"])
 
         def read_local_form_values(form_id, schema):
-            defaults = {item["name"]: item["default"] for item in schema}
+            defaults = {item["name"]: item["default"] for item in schema if item.get("widget_kind") != "markdown"}
             if IN_COLAB:
                 return defaults
             if widgets is None:
@@ -1542,31 +1669,246 @@ cells += [
             aligned = aligned.loc[:, list(expected_columns)].copy()
             return aligned.astype(np.float32)
 
-        def apply_lasso_feature_selection(feature_df, target_values, alpha=0.001, random_seed=42):
+        def make_regularization_grid(min_log10=-4, max_log10=0, grid_size=40):
+            min_log10 = float(min_log10)
+            max_log10 = float(max_log10)
+            grid_size = int(grid_size)
+            if grid_size < 2:
+                raise ValueError("Regularization grid size must be at least 2.")
+            if min_log10 >= max_log10:
+                raise ValueError("Regularization grid minimum exponent must be less than the maximum exponent.")
+            return np.logspace(min_log10, max_log10, grid_size)
+
+        def parse_l1_ratio_grid(l1_ratio_grid_text):
+            values = []
+            for token in str(l1_ratio_grid_text).split(","):
+                token = token.strip()
+                if not token:
+                    continue
+                values.append(float(token))
+            if not values:
+                values = [0.1, 0.3, 0.5, 0.7, 0.9, 1.0]
+            values = sorted({float(value) for value in values if 0.0 < float(value) <= 1.0})
+            if not values:
+                raise ValueError("ElasticNetCV l1_ratio values must be > 0 and <= 1.")
+            return values
+
+        def select_top_coefficient_mask(coefficients, coefficient_threshold=1e-10, max_selected_features=0):
+            coefficients = np.asarray(coefficients, dtype=float)
+            abs_coefficients = np.abs(coefficients)
+            selected_mask = abs_coefficients > float(coefficient_threshold)
+            if not np.any(selected_mask):
+                strongest_index = int(np.argmax(abs_coefficients))
+                if not np.isfinite(coefficients[strongest_index]):
+                    raise RuntimeError("Sparse linear feature selection did not produce any finite coefficients.")
+                selected_mask[strongest_index] = True
+            if int(max_selected_features) > 0 and int(selected_mask.sum()) > int(max_selected_features):
+                selected_indices = np.flatnonzero(selected_mask)
+                ranked_selected = selected_indices[np.argsort(abs_coefficients[selected_indices])[::-1]]
+                keep_indices = ranked_selected[: int(max_selected_features)]
+                trimmed_mask = np.zeros_like(selected_mask, dtype=bool)
+                trimmed_mask[keep_indices] = True
+                selected_mask = trimmed_mask
+            return selected_mask
+
+        def apply_sparse_linear_feature_selection(
+            feature_df,
+            target_values,
+            selector_method="lasso_cv",
+            alpha=1.0,
+            alpha_grid_min_log10=-4,
+            alpha_grid_max_log10=0,
+            alpha_grid_size=40,
+            elasticnet_l1_ratio_grid="0.1, 0.3, 0.5, 0.7, 0.9",
+            cv_folds=5,
+            random_seed=42,
+            coefficient_threshold=1e-10,
+            max_iter=50000,
+            selection_mode="cyclic coordinate updates",
+            max_selected_features=0,
+            progress_bar=None,
+            progress_fit_units=1,
+        ):
             working_df = feature_df.copy()
             y = np.asarray(target_values, dtype=float).reshape(-1)
             if working_df.empty:
-                raise ValueError("Cannot run LASSO feature selection on an empty feature matrix.")
+                raise ValueError("Cannot run sparse linear feature selection on an empty feature matrix.")
+            selector_method = str(selector_method).strip().lower()
             scaler = StandardScaler()
             X_scaled = scaler.fit_transform(working_df.to_numpy(dtype=np.float32))
-            selector = Lasso(alpha=float(alpha), max_iter=20000, random_state=int(random_seed))
+            if progress_bar is not None:
+                progress_bar.set_description("Scaled feature matrix")
+                progress_bar.update(1)
+            sklearn_selection_mode = "random" if str(selection_mode).strip().lower() == "random coordinate updates" else "cyclic"
+            effective_cv_folds = None
+
+            if selector_method == "fixed_lasso":
+                selector = Lasso(
+                    alpha=float(alpha),
+                    max_iter=int(max_iter),
+                    random_state=int(random_seed),
+                    selection=sklearn_selection_mode,
+                )
+            elif selector_method == "lasso_cv":
+                effective_cv_folds = min(int(cv_folds), len(working_df))
+                if effective_cv_folds < 2:
+                    raise ValueError("LassoCV requires at least 2 CV folds.")
+                selector = LassoCV(
+                    alphas=make_regularization_grid(alpha_grid_min_log10, alpha_grid_max_log10, alpha_grid_size),
+                    cv=effective_cv_folds,
+                    max_iter=int(max_iter),
+                    n_jobs=-1,
+                    random_state=int(random_seed),
+                    selection=sklearn_selection_mode,
+                )
+            elif selector_method == "elasticnet_cv":
+                effective_cv_folds = min(int(cv_folds), len(working_df))
+                if effective_cv_folds < 2:
+                    raise ValueError("ElasticNetCV requires at least 2 CV folds.")
+                selector = ElasticNetCV(
+                    l1_ratio=parse_l1_ratio_grid(elasticnet_l1_ratio_grid),
+                    alphas=make_regularization_grid(alpha_grid_min_log10, alpha_grid_max_log10, alpha_grid_size),
+                    cv=effective_cv_folds,
+                    max_iter=int(max_iter),
+                    n_jobs=-1,
+                    random_state=int(random_seed),
+                    selection=sklearn_selection_mode,
+                )
+            else:
+                raise ValueError("selector_method must be 'fixed_lasso', 'lasso_cv', or 'elasticnet_cv'.")
+
+            if progress_bar is not None:
+                progress_bar.set_description(f"Fitting {selector_method}")
+                progress_bar.update(1)
             selector.fit(X_scaled, y)
+            if progress_bar is not None:
+                progress_bar.update(max(1, int(progress_fit_units)))
+                progress_bar.set_description("Selecting nonzero coefficients")
             coefficients = np.asarray(selector.coef_, dtype=float)
-            selected_mask = np.abs(coefficients) > 1e-10
-            if not np.any(selected_mask):
-                strongest_index = int(np.argmax(np.abs(coefficients)))
-                if not np.isfinite(coefficients[strongest_index]):
-                    raise RuntimeError("LASSO feature selection did not produce any finite coefficients.")
-                selected_mask[strongest_index] = True
+            selected_mask = select_top_coefficient_mask(
+                coefficients,
+                coefficient_threshold=float(coefficient_threshold),
+                max_selected_features=int(max_selected_features),
+            )
             selected_columns = working_df.columns[selected_mask].tolist()
             trimmed_df = working_df.loc[:, selected_columns].copy()
+            if progress_bar is not None:
+                progress_bar.update(1)
+                progress_bar.set_description("Building diagnostics")
+            abs_coefficients = np.abs(coefficients)
+            diagnostic_df = pd.DataFrame(
+                {
+                    "feature": working_df.columns.astype(str),
+                    "coefficient": coefficients,
+                    "abs_coefficient": abs_coefficients,
+                    "selected": selected_mask,
+                }
+            ).sort_values("abs_coefficient", ascending=False).reset_index(drop=True)
+            cv_diagnostics_df = pd.DataFrame()
+            best_cv_rmse = None
+            best_alpha_at_grid_edge = None
+            best_l1_ratio_at_grid_edge = None
+            if selector_method in {"lasso_cv", "elasticnet_cv"} and hasattr(selector, "mse_path_"):
+                mse_path = np.asarray(selector.mse_path_, dtype=float)
+                rows = []
+                if selector_method == "elasticnet_cv" and mse_path.ndim == 3:
+                    l1_values = parse_l1_ratio_grid(elasticnet_l1_ratio_grid)
+                    alpha_values = np.asarray(selector.alphas_, dtype=float)
+                    for l1_index, l1_value in enumerate(l1_values):
+                        for alpha_index, alpha_value in enumerate(alpha_values):
+                            fold_mse = np.asarray(mse_path[l1_index, alpha_index, :], dtype=float)
+                            rows.append(
+                                {
+                                    "alpha": float(alpha_value),
+                                    "l1_ratio": float(l1_value),
+                                    "mean_cv_mse": float(np.nanmean(fold_mse)),
+                                    "std_cv_mse": float(np.nanstd(fold_mse)),
+                                    "mean_cv_rmse": float(np.sqrt(np.nanmean(fold_mse))),
+                                }
+                            )
+                elif mse_path.ndim == 2:
+                    alpha_values = np.asarray(selector.alphas_, dtype=float)
+                    for alpha_index, alpha_value in enumerate(alpha_values):
+                        fold_mse = np.asarray(mse_path[alpha_index, :], dtype=float)
+                        rows.append(
+                            {
+                                "alpha": float(alpha_value),
+                                "l1_ratio": None,
+                                "mean_cv_mse": float(np.nanmean(fold_mse)),
+                                "std_cv_mse": float(np.nanstd(fold_mse)),
+                                "mean_cv_rmse": float(np.sqrt(np.nanmean(fold_mse))),
+                            }
+                        )
+                if rows:
+                    cv_diagnostics_df = pd.DataFrame(rows).sort_values("mean_cv_mse", ascending=True).reset_index(drop=True)
+                    best_cv_rmse = float(cv_diagnostics_df.loc[0, "mean_cv_rmse"])
+                    alpha_grid_values = np.asarray(selector.alphas_, dtype=float).reshape(-1)
+                    best_alpha = float(getattr(selector, "alpha_", float(alpha)))
+                    best_alpha_at_grid_edge = bool(
+                        np.isclose(best_alpha, float(np.nanmin(alpha_grid_values)))
+                        or np.isclose(best_alpha, float(np.nanmax(alpha_grid_values)))
+                    )
+                    if selector_method == "elasticnet_cv":
+                        l1_values = np.asarray(parse_l1_ratio_grid(elasticnet_l1_ratio_grid), dtype=float)
+                        best_l1 = float(getattr(selector, "l1_ratio_", np.nan))
+                        best_l1_ratio_at_grid_edge = bool(
+                            np.isfinite(best_l1)
+                            and (
+                                np.isclose(best_l1, float(np.nanmin(l1_values)))
+                                or np.isclose(best_l1, float(np.nanmax(l1_values)))
+                            )
+                        )
             summary = {
+                "selector_method": selector_method,
                 "selected_columns": list(selected_columns),
                 "selected_feature_count": int(len(selected_columns)),
                 "original_feature_count": int(working_df.shape[1]),
-                "alpha": float(alpha),
+                "alpha": float(getattr(selector, "alpha_", float(alpha))),
+                "l1_ratio": (
+                    float(getattr(selector, "l1_ratio_"))
+                    if hasattr(selector, "l1_ratio_")
+                    else None
+                ),
+                "coefficient_threshold": float(coefficient_threshold),
+                "max_iter": int(max_iter),
+                "selection_mode": str(selection_mode),
+                "max_selected_features": int(max_selected_features),
+                "cv_folds": int(effective_cv_folds) if effective_cv_folds is not None else None,
+                "n_iter": int(np.max(np.atleast_1d(getattr(selector, "n_iter_", 0)))),
+                "training_r2_on_scaled_features": float(selector.score(X_scaled, y)),
+                "intercept": float(np.ravel(np.atleast_1d(selector.intercept_))[0]),
+                "top_coefficients": diagnostic_df.head(50).copy(),
+                "cv_diagnostics": cv_diagnostics_df.head(50).copy(),
+                "best_cv_rmse": best_cv_rmse,
+                "best_alpha_at_grid_edge": best_alpha_at_grid_edge,
+                "best_l1_ratio_at_grid_edge": best_l1_ratio_at_grid_edge,
             }
+            if progress_bar is not None:
+                progress_bar.update(1)
+                progress_bar.set_description("Feature selection complete")
             return trimmed_df.astype(np.float32), summary
+
+        def apply_lasso_feature_selection(
+            feature_df,
+            target_values,
+            alpha=1.0,
+            random_seed=42,
+            coefficient_threshold=1e-10,
+            max_iter=50000,
+            selection_mode="nonzero coefficients",
+            max_selected_features=200,
+        ):
+            return apply_sparse_linear_feature_selection(
+                feature_df=feature_df,
+                target_values=target_values,
+                selector_method="fixed_lasso",
+                alpha=alpha,
+                random_seed=random_seed,
+                coefficient_threshold=coefficient_threshold,
+                max_iter=max_iter,
+                selection_mode=selection_mode,
+                max_selected_features=max_selected_features,
+            )
 
         def current_feature_metadata():
             builder_config = dict(STATE.get("feature_builder_config", {}))
@@ -1577,9 +1919,15 @@ cells += [
                 "fingerprint_radius": int(builder_config.get("fingerprint_radius", STATE.get("fingerprint_radius", 2))),
                 "fingerprint_bits": int(builder_config.get("fingerprint_bits", STATE.get("fingerprint_bits", 1024))),
                 "lasso_feature_selection_enabled": bool(builder_config.get("lasso_feature_selection_enabled", False)),
+                "lasso_selector_method": str(builder_config.get("lasso_selector_method", "fixed_lasso" if builder_config.get("lasso_feature_selection_enabled", False) else "none")),
                 "lasso_alpha": (
                     float(builder_config.get("lasso_alpha"))
                     if builder_config.get("lasso_alpha") not in [None, ""]
+                    else None
+                ),
+                "lasso_l1_ratio": (
+                    float(builder_config.get("lasso_l1_ratio"))
+                    if builder_config.get("lasso_l1_ratio") not in [None, ""]
                     else None
                 ),
                 "lasso_selected_feature_count": int(builder_config.get("lasso_selected_feature_count", len(STATE.get("feature_names", [])) or 0)),
@@ -1621,6 +1969,7 @@ cells += [
         data_source = "Example dataset" # @param ["Upload CSV/XLSX (Colab only)", "File path", "Example dataset"]
         example_dataset = "ChemML | organic_density" # @param ["ChemML | organic_density", "ChemML | cep_homo", "ChemML | xyz_polarizability", "ChemML | comp_energy", "ChemML | crystal_structures", "TDC | ADME | caco2_wang", "TDC | ADME | lipophilicity_astrazeneca", "TDC | ADME | solubility_aqsoldb", "TDC | ADME | ppbr_az", "TDC | ADME | vdss_lombardo", "TDC | ADME | half_life_obach", "TDC | ADME | clearance_hepatocyte_az", "TDC | ADME | clearance_microsome_az", "TDC | Tox | ld50_zhu"]
         dataset_file_path = "/content/drive/MyDrive/your_dataset.csv" # @param {type:"string"}
+        log10_transform_target = True # @param {type:"boolean"}
         preview_rows = 5 # @param {type:"slider", min:3, max:15, step:1}
 
         if data_source == "Example dataset":
@@ -1643,19 +1992,21 @@ cells += [
             raw_df = read_path_dataframe(dataset_file_path)
             STATE["data_source_label"] = STATE.get("uploaded_filename", "path-based file")
             STATE["data_source_kind"] = "path_file"
-            STATE["default_smiles_column"] = "smiles" if "smiles" in raw_df.columns else None
-            STATE["default_target_column"] = "target" if "target" in raw_df.columns else None
+            STATE["default_smiles_column"] = infer_column_by_case_insensitive_name(raw_df, "smiles")
+            STATE["default_target_column"] = infer_column_by_case_insensitive_name(raw_df, "target")
             STATE["tdc_metadata"] = None
         else:
             raw_df = read_uploaded_dataframe()
             STATE["data_source_label"] = STATE.get("uploaded_filename", "uploaded file")
             STATE["data_source_kind"] = "uploaded_file"
-            STATE["default_smiles_column"] = "smiles" if "smiles" in raw_df.columns else None
-            STATE["default_target_column"] = "target" if "target" in raw_df.columns else None
+            STATE["default_smiles_column"] = infer_column_by_case_insensitive_name(raw_df, "smiles")
+            STATE["default_target_column"] = infer_column_by_case_insensitive_name(raw_df, "target")
             STATE["tdc_metadata"] = None
 
         STATE["raw_df"] = raw_df.copy()
+        STATE["log10_transform_target"] = bool(log10_transform_target)
         print(f"Loaded {len(raw_df):,} rows and {raw_df.shape[1]:,} columns from: {STATE['data_source_label']}")
+        print(f"Log10-transform target after preprocessing: {'yes' if STATE['log10_transform_target'] else 'no'}")
         print("Available columns:", list(raw_df.columns))
         if STATE.get("tdc_metadata") is not None:
             tdc_meta = STATE["tdc_metadata"]
@@ -1703,7 +2054,7 @@ cells += [
         else:
             display_note(
                 "**Next step:** In the next cell, enter the exact column name for the **SMILES** field and the exact column name for your **numeric target**. "
-                "If your file already uses `smiles` and `target`, you can leave the fields as `AUTO`. "
+                "If your file uses `smiles` and `target` in any capitalization, such as `SMILES`, `Smiles`, `TARGET`, or `Target`, you can leave the fields as `AUTO`. "
                 "In local Jupyter, prefer the **File path** option instead of the Colab-only upload option."
             )
         """
@@ -1718,8 +2069,21 @@ cells += [
         if "raw_df" not in STATE:
             raise RuntimeError("Please run the dataset loading cell first.")
 
-        resolved_smiles_column = STATE.get("default_smiles_column") if str(smiles_column).strip().upper() == "AUTO" else smiles_column
-        resolved_target_column = STATE.get("default_target_column") if str(target_column).strip().upper() == "AUTO" else target_column
+        resolved_smiles_column = (
+            STATE.get("default_smiles_column")
+            if str(smiles_column).strip().upper() == "AUTO"
+            else smiles_column
+        )
+        resolved_target_column = (
+            STATE.get("default_target_column")
+            if str(target_column).strip().upper() == "AUTO"
+            else target_column
+        )
+
+        if str(smiles_column).strip().upper() == "AUTO" and resolved_smiles_column is None:
+            resolved_smiles_column = infer_column_by_case_insensitive_name(STATE["raw_df"], "smiles")
+        if str(target_column).strip().upper() == "AUTO" and resolved_target_column is None:
+            resolved_target_column = infer_column_by_case_insensitive_name(STATE["raw_df"], "target")
 
         if resolved_smiles_column is None or resolved_target_column is None:
             raise ValueError(
@@ -1875,6 +2239,18 @@ cells += [
                 else:
                     raise ValueError(f"Unsupported missing-value strategy for this QSAR workflow: {missing_value_strategy}")
 
+        target_transform_label = "raw"
+        if bool(STATE.get("log10_transform_target", False)):
+            nonpositive_mask = working_df[target_col].astype(float) <= 0
+            if bool(nonpositive_mask.any()):
+                example_values = working_df.loc[nonpositive_mask, target_col].head(5).tolist()
+                raise ValueError(
+                    "The log10 target transform requires all target values to be greater than zero after missing-value handling. "
+                    f"Found {int(nonpositive_mask.sum())} non-positive value(s), including: {example_values}"
+                )
+            working_df[target_col] = np.log10(working_df[target_col].astype(float))
+            target_transform_label = "log10"
+
         curated_df, curation_stats = curate_smiles_dataframe(
             working_df,
             smiles_col,
@@ -1887,8 +2263,10 @@ cells += [
         STATE["curated_df"] = curated_df.copy()
         STATE["missing_value_strategy"] = applied_strategy
         STATE["missing_value_tokens"] = parsed_tokens
+        STATE["target_transform"] = target_transform_label
 
         print(f"Applied missing-value strategy: {applied_strategy}")
+        print(f"Target transform: {target_transform_label}")
         print("Preprocessing summary")
         print(f"- rows_removed_for_missing_smiles: {rows_removed_for_missing_smiles:,}")
         if int(any_missing_mask.sum()) > 0:
@@ -1981,15 +2359,13 @@ cells += [
     code(
         """
         # @title 2B. Generate molecular features { display-mode: "form" }
-        use_morgan_features = False # @param {type:"boolean"}
+        use_morgan_features = True # @param {type:"boolean"}
         use_ecfp6_features = True # @param {type:"boolean"}
-        use_fcfp6_features = False # @param {type:"boolean"}
-        use_maccs_keys = False # @param {type:"boolean"}
-        use_rdkit_descriptors = False # @param {type:"boolean"}
+        use_fcfp6_features = True # @param {type:"boolean"}
+        use_maccs_keys = True # @param {type:"boolean"}
+        use_rdkit_descriptors = True # @param {type:"boolean"}
         morgan_radius = 2 # @param {type:"slider", min:1, max:4, step:1}
         fingerprint_bits = "1024" # @param ["256", "512", "1024", "2048"]
-        enable_lasso_feature_selection = False # @param {type:"boolean"}
-        lasso_feature_selection_alpha = 0.001 # @param {type:"number"}
 
         if "curated_df" not in STATE:
             raise RuntimeError("Please run the curation cell first.")
@@ -2020,52 +2396,165 @@ cells += [
         for warning_text in build_info["warnings"]:
             print(f"Warning: {warning_text}")
 
-        lasso_summary = None
-        if enable_lasso_feature_selection:
-            X, lasso_summary = apply_lasso_feature_selection(
-                X,
-                curated_df["target"].to_numpy(dtype=float),
-                alpha=float(lasso_feature_selection_alpha),
-                random_seed=42,
-            )
-
         STATE["feature_matrix"] = X.copy()
+        STATE["unfiltered_feature_matrix"] = X.copy()
         STATE["feature_names"] = list(X.columns)
         STATE["fingerprint_radius"] = int(morgan_radius)
         STATE["fingerprint_bits"] = int(fingerprint_bits)
         STATE["selected_feature_families"] = list(build_info["selected_feature_families"])
         STATE["built_feature_families"] = list(build_info["built_feature_families"])
         STATE["skipped_feature_families"] = list(build_info["skipped_feature_families"])
-        STATE["lasso_feature_selection_summary"] = dict(lasso_summary) if lasso_summary is not None else {}
+        STATE["lasso_feature_selection_summary"] = {}
         STATE["feature_builder_config"] = {
             "selected_feature_families": list(build_info["selected_feature_families"]),
             "built_feature_families": list(build_info["built_feature_families"]),
             "skipped_feature_families": list(build_info["skipped_feature_families"]),
             "fingerprint_radius": int(morgan_radius),
             "fingerprint_bits": int(fingerprint_bits),
-            "lasso_feature_selection_enabled": bool(enable_lasso_feature_selection),
-            "lasso_alpha": float(lasso_feature_selection_alpha) if enable_lasso_feature_selection else None,
+            "lasso_feature_selection_enabled": False,
+            "lasso_alpha": None,
             "lasso_selected_feature_count": int(X.shape[1]),
         }
         STATE["representation_label"] = build_info["representation_label"]
+        STATE["base_representation_label"] = build_info["representation_label"]
         print(f"Representation built: {STATE['representation_label']}")
         print(f"Selected feature families: {', '.join(build_info['selected_feature_families'])}")
         print(f"Built feature families: {', '.join(build_info['built_feature_families'])}")
         if build_info["skipped_feature_families"]:
             print(f"Skipped feature families: {', '.join(build_info['skipped_feature_families'])}")
-        if lasso_summary is not None:
-            print(
-                "LASSO feature selection kept "
-                f"{lasso_summary['selected_feature_count']:,} of {lasso_summary['original_feature_count']:,} features "
-                f"(alpha={lasso_summary['alpha']})."
-            )
         print(f"Feature matrix shape: {X.shape[0]:,} molecules x {X.shape[1]:,} features")
         display(X.head(3))
         """
     ),
     md(
         """
-        ### 2C. Representation Note
+        ### 2C. Configure Train-Only Feature Selection
+
+        Molecular feature generation can take a while, and feature selection can also take a while. This block now stores the feature-selection settings in one place; the actual selector is fit later in `4A`, after the train/test split exists. That keeps the workflow leakage-safe: the selector sees only the training rows, then the selected feature columns are applied to the held-out test rows.
+
+        **Methods and reference context**
+
+        - `fixed_lasso`: fits one LASSO model at the chosen alpha. This is fast and useful for sensitivity checks, but it is not optimized unless alpha was chosen by a separate train-only validation process. Avoid `alpha=0.0` for LASSO feature selection; it removes the L1 penalty and convergence warnings become hard to interpret.
+        - `lasso_cv`: cross-validates alpha over a log-spaced grid and keeps features with nonzero coefficients. This follows the two-step QSAR pattern in `refs/1708.pdf`: standardize features, select variables on training data where possible, then evaluate models after selection.
+        - `elasticnet_cv`: cross-validates both alpha and the L1/L2 mixing ratio. This is often more stable for correlated molecular descriptors because pure LASSO can select one descriptor arbitrarily from a correlated group. This matches the ElasticNet strategy used in the bundled ChemML AutoML references.
+        - `random_forest_importance`: fits a random forest on the training rows and keeps the highest-importance features. The `refs/btab659.pdf` LASSO-RF workflow and the Journal of Chemometrics two-step hybrid modeling paper both support comparing sparse linear selection against tree-based importance selection.
+
+        **Recommended starting settings**
+
+        - Given the example testing where ElasticNet is substantially outperforming CatBoost, start with `feature_selector_method = elasticnet_cv`, alpha grid `10^-5` to `10^-1`, grid size `40`, `5` CV folds, and `l1_ratio` values `0.1, 0.3, 0.5, 0.7, 0.9`.
+        - ChemML's installed AutoML search space does **not** include `l1_ratio = 1.0`; it uses values around `0.4` to `0.7` for ElasticNet. You can still add `1.0` manually if you want the grid to include the pure-LASSO endpoint.
+        - Use `lasso_cv` when you want a sparser model or when ElasticNetCV is too slow.
+        - Leave `max_selected_features = 0` to use the default cap of about 10% of the total molecule count. Enter a positive integer to override that cap.
+        - Keep caching enabled. `4A` will reuse a selector result only when the training data signature and selector parameters match exactly.
+
+        **What the main settings mean**
+
+        - `selector_alpha_grid_min_log10` and `selector_alpha_grid_max_log10`: lower and upper exponents for the alpha grid. `-5` to `-1` means alpha values from `0.00001` to `0.1`. This avoids making `1.0` the top of the default search grid, which can be too strong for some QSAR descriptor matrices.
+        - `selector_alpha_grid_size`: number of alpha values to test. Larger values search more finely but increase runtime approximately linearly.
+        - `elasticnet_l1_ratio_grid`: ElasticNet mixing values. `1.0` is pure LASSO; the default stops at `0.9` so ElasticNetCV does not silently collapse to the pure-LASSO endpoint unless you explicitly add `1.0`.
+        - `selector_cv_folds`: internal folds used to choose alpha, and for ElasticNetCV also the L1 ratio. More folds can be more stable but slower.
+        - `lasso_coefficient_threshold`: absolute coefficient cutoff for keeping a feature after scaling. The default keeps essentially nonzero coefficients.
+        - `max_selected_features`: optional cap on selected features by largest absolute coefficient or RF importance. Use `0` for the automatic default of 10% of curated molecules, or enter a positive absolute feature count to override that default.
+        - `lasso_max_iter`: maximum coordinate descent iterations. If the selector uses all iterations, increase this value or use a stronger alpha grid.
+        - `lasso_coordinate_selection`: cyclic is deterministic; random can sometimes converge faster on difficult correlated matrices.
+        - `selector_cache_run_name`: set to `AUTO` to reuse the latest matching selector cache for this dataset, or type a run label to reuse/save under a named selector cache folder.
+        """
+    ),
+    code(
+        """
+        # @title 2C. Configure train-only feature selection { display-mode: "form" }
+        # @markdown ### Selector method
+        feature_selector_method = "elasticnet_cv" # @param ["none", "fixed_lasso", "lasso_cv", "elasticnet_cv", "random_forest_importance"]
+        # @markdown ### Fixed LASSO settings
+        lasso_feature_selection_alpha = 1.0 # @param {type:"number"}
+        # @markdown ### LassoCV and ElasticNetCV alpha grid
+        selector_alpha_grid_min_log10 = -5 # @param {type:"integer"}
+        selector_alpha_grid_max_log10 = -1 # @param {type:"integer"}
+        selector_alpha_grid_size = 40 # @param {type:"slider", min:10, max:80, step:5}
+        # @markdown ### ElasticNetCV l1-ratio grid
+        elasticnet_l1_ratio_grid = "0.1, 0.3, 0.5, 0.7, 0.9" # @param {type:"string"}
+        # @markdown ### Cross-validation and convergence
+        selector_cv_folds = 5 # @param [3, 5, 10]
+        lasso_coefficient_threshold = 1e-10 # @param {type:"number"}
+        lasso_max_iter = 50000 # @param {type:"integer"}
+        lasso_coordinate_selection = "cyclic coordinate updates" # @param ["cyclic coordinate updates", "random coordinate updates"]
+        # @markdown ### Output size and diagnostics
+        max_selected_features = 0 # @param {type:"integer"}
+        random_forest_selector_trees = 500 # @param {type:"integer"}
+        show_lasso_coefficient_diagnostics = True # @param {type:"boolean"}
+        top_lasso_coefficients_to_show = 30 # @param {type:"slider", min:10, max:50, step:5}
+        # @markdown ### Selector cache
+        enable_feature_selector_cache = True # @param {type:"boolean"}
+        reuse_feature_selector_cache = True # @param {type:"boolean"}
+        selector_cache_run_name = "AUTO" # @param {type:"string"}
+
+        STATE.setdefault("feature_builder_config", {})
+        selected_selector_method = str(feature_selector_method).strip().lower()
+        if selected_selector_method not in {"none", "fixed_lasso", "lasso_cv", "elasticnet_cv", "random_forest_importance"}:
+            raise ValueError(f"Unsupported feature selector method: {feature_selector_method}")
+        dataset_row_count = int(len(STATE["curated_df"])) if "curated_df" in STATE else 0
+        if int(max_selected_features) <= 0:
+            effective_max_selected_features = max(1, int(math.ceil(0.10 * max(1, dataset_row_count))))
+        else:
+            effective_max_selected_features = int(max_selected_features)
+
+        STATE["feature_selection_config"] = {
+            "method": selected_selector_method,
+            "fixed_lasso_alpha": float(lasso_feature_selection_alpha),
+            "alpha_grid_min_log10": float(selector_alpha_grid_min_log10),
+            "alpha_grid_max_log10": float(selector_alpha_grid_max_log10),
+            "alpha_grid_size": int(selector_alpha_grid_size),
+            "elasticnet_l1_ratio_grid": str(elasticnet_l1_ratio_grid),
+            "cv_folds": int(selector_cv_folds),
+            "coefficient_threshold": float(lasso_coefficient_threshold),
+            "max_iter": int(lasso_max_iter),
+            "selection_mode": str(lasso_coordinate_selection),
+            "max_selected_features": int(effective_max_selected_features),
+            "max_selected_features_mode": "10_percent_of_total_rows" if int(max_selected_features) <= 0 else "manual",
+            "random_forest_selector_trees": int(random_forest_selector_trees),
+            "show_diagnostics": bool(show_lasso_coefficient_diagnostics),
+            "top_coefficients_to_show": int(top_lasso_coefficients_to_show),
+            "enable_cache": bool(enable_feature_selector_cache),
+            "reuse_cache": bool(reuse_feature_selector_cache),
+            "cache_run_name": str(selector_cache_run_name),
+        }
+        STATE["lasso_feature_selection_summary"] = {}
+        STATE["feature_builder_config"]["lasso_feature_selection_enabled"] = False
+        STATE["feature_builder_config"]["lasso_selector_method"] = "none"
+        STATE["feature_builder_config"]["lasso_alpha"] = None
+        STATE["feature_builder_config"]["lasso_l1_ratio"] = None
+        STATE["feature_builder_config"]["lasso_selected_feature_count"] = int(STATE.get("feature_matrix", pd.DataFrame()).shape[1]) if "feature_matrix" in STATE else 0
+
+        print(f"Configured train-only feature selector: {selected_selector_method}")
+        if selected_selector_method == "elasticnet_cv":
+            l1_ratio_values = parse_l1_ratio_grid(elasticnet_l1_ratio_grid)
+            print(
+                "ElasticNetCV will run in 4A after the train/test split: "
+                f"{int(selector_alpha_grid_size)} alpha values x {len(l1_ratio_values)} l1_ratio values x up to "
+                f"{int(selector_cv_folds)} CV folds."
+            )
+        elif selected_selector_method == "lasso_cv":
+            print(
+                "LassoCV will run in 4A after the train/test split: "
+                f"{int(selector_alpha_grid_size)} alpha values x up to {int(selector_cv_folds)} CV folds."
+            )
+        elif selected_selector_method == "fixed_lasso":
+            print(f"Fixed LASSO will run in 4A after the train/test split at alpha={float(lasso_feature_selection_alpha)}.")
+        elif selected_selector_method == "random_forest_importance":
+            print(f"Random-forest importance selection will run in 4A with {int(random_forest_selector_trees):,} trees.")
+        else:
+            print("Feature selection disabled. 4A will train on the full feature matrix.")
+        if int(max_selected_features) <= 0:
+            print(f"Maximum selected features: {effective_max_selected_features:,} (10% of {dataset_row_count:,} total curated molecule(s), rounded up).")
+        else:
+            print(f"Maximum selected features: {int(max_selected_features):,}")
+        print(f"Selector cache enabled: {'yes' if enable_feature_selector_cache else 'no'}; reuse cache: {'yes' if reuse_feature_selector_cache else 'no'}")
+        print("Run 4A to split the data and fit or load the cached selector, then run 4B to train the conventional models.")
+        """
+    ),
+    md(
+        """
+        ### 2D. Representation Note
 
         `Morgan`, `ECFP6`, and `FCFP6` are all circular fingerprints:
 
@@ -2075,7 +2564,7 @@ cells += [
         - **MACCS** provides a compact fixed key set
         - **RDKit descriptors** provide continuous physicochemical summary features
 
-        If the descriptor count becomes large relative to the number of molecules, you can enable the optional **LASSO feature-selection** step in `2B` to trim the matrix before downstream modeling.
+        If the descriptor count becomes large relative to the number of molecules, configure the optional **train-only feature-selection** step in `2C`. The selector is fit in `4A` after the train/test split so held-out test rows do not influence the selected feature set.
         """
     ),
     md(
@@ -2289,27 +2778,22 @@ cells += [
 
         - build a numerical representation from SMILES
         - split data into training and test sets
+        - optionally run the train-only feature selector configured in `2C`
         - use scaling where the model benefits from it
         - compare several algorithms with the **same split**
         - judge the final models by both cross-validation and held-out test performance
+
+        The selector follows the stronger pattern from the QSAR references in `refs/`: split first, fit feature selection on the training data only, then evaluate the selected representation on held-out test data.
+
+        **Local Jupyter / VS Code note:** widget controls appear in the separate `Local widget controls for...` cell immediately before each runnable block. Run that controls cell first, adjust the widgets, then run the following block. In Google Colab, the `# @param` controls appear directly in the runnable block.
         """
     ),
     code(
         """
-        # @title 4A. Train conventional ML models and show an interactive metrics table { display-mode: "form" }
-        data_split_strategy = "random" # @param ["random", "scaffold"]
+        # @title 4A. Split train/test data { display-mode: "form" }
+        data_split_strategy = "target_quartiles" # @param ["random", "target_quartiles", "scaffold"]
         test_fraction = 0.2 # @param {type:"slider", min:0.1, max:0.4, step:0.05}
-        use_cross_validation = True # @param {type:"boolean"}
-        cv_folds = 5 # @param [3, 5, 10]
         model_random_seed = 42 # @param {type:"integer"}
-        enable_conventional_model_cache = True # @param {type:"boolean"}
-        reuse_conventional_cached_models = True # @param {type:"boolean"}
-        conventional_cache_run_name = "AUTO" # @param {type:"string"}
-        run_elasticnet = True # @param {type:"boolean"}
-        run_svr = True # @param {type:"boolean"}
-        run_random_forest = True # @param {type:"boolean"}
-        run_xgboost = True # @param {type:"boolean"}
-        run_catboost = True # @param {type:"boolean"}
 
         if "feature_matrix" not in STATE:
             raise RuntimeError("Please build the molecular feature matrix first.")
@@ -2326,19 +2810,509 @@ cells += [
         y_test = pd.Series(split_payload["y_test"], dtype=float)
         smiles_train = split_payload["smiles_train"]
         smiles_test = split_payload["smiles_test"]
+        plot_train_test_target_distribution(
+            y_train,
+            y_test,
+            split_strategy=str(data_split_strategy),
+        )
+
+        STATE["X_train_unselected"] = X_train.copy()
+        STATE["X_test_unselected"] = X_test.copy()
+        STATE["y_train_unselected"] = y_train.to_numpy(dtype=float)
+        STATE["y_test_unselected"] = y_test.to_numpy(dtype=float)
+        STATE["smiles_train_unselected"] = smiles_train.reset_index(drop=True)
+        STATE["smiles_test_unselected"] = smiles_test.reset_index(drop=True)
+        STATE["split_random_seed"] = int(model_random_seed)
+        STATE["split_strategy"] = str(data_split_strategy)
+        STATE["split_test_fraction"] = float(test_fraction)
+        STATE["traditional_feature_metadata"] = current_feature_metadata()
+
+        print(
+            f"Saved raw train/test split: {X_train.shape[0]:,} train row(s), "
+            f"{X_test.shape[0]:,} test row(s), {X_train.shape[1]:,} feature(s) before selection."
+        )
+        display_note("Run `4B` next to fit or load the train-only feature selector before conventional model training.")
+        """
+    ),
+    code(
+        """
+        # @title 4B. Run train-only feature selection { display-mode: "form" }
+        if "X_train_unselected" not in STATE or "X_test_unselected" not in STATE:
+            raise RuntimeError("Please run block 4A first to create the train/test split.")
+
+        X_train = STATE["X_train_unselected"].copy()
+        X_test = STATE["X_test_unselected"].copy()
+        y_train = pd.Series(STATE["y_train_unselected"], dtype=float)
+        y_test = pd.Series(STATE["y_test_unselected"], dtype=float)
+        smiles_train = STATE["smiles_train_unselected"].reset_index(drop=True)
+        smiles_test = STATE["smiles_test_unselected"].reset_index(drop=True)
+        model_random_seed = int(STATE.get("split_random_seed", 42))
+        feature_metadata = current_feature_metadata()
+        feature_selection_config = dict(
+            STATE.get(
+                "feature_selection_config",
+                {
+                    "method": "none",
+                    "fixed_lasso_alpha": 1.0,
+                    "alpha_grid_min_log10": -5.0,
+                    "alpha_grid_max_log10": -1.0,
+                    "alpha_grid_size": 40,
+                    "elasticnet_l1_ratio_grid": "0.1, 0.3, 0.5, 0.7, 0.9",
+                    "cv_folds": 5,
+                    "coefficient_threshold": 1e-10,
+                    "max_iter": 50000,
+                    "selection_mode": "cyclic coordinate updates",
+                    "max_selected_features": max(1, int(math.ceil(0.10 * max(1, len(STATE.get("curated_df", [])))))),
+                    "random_forest_selector_trees": 500,
+                    "show_diagnostics": True,
+                    "top_coefficients_to_show": 30,
+                    "enable_cache": True,
+                    "reuse_cache": True,
+                    "cache_run_name": "AUTO",
+                },
+            )
+        )
+        train_selector_method = str(feature_selection_config.get("method", "none")).strip().lower()
+        train_selector_max_features = int(feature_selection_config.get("max_selected_features", 300))
+        train_selector_summary = {
+            "train_only_feature_selector_method": train_selector_method,
+            "train_only_feature_selector_selected_count": int(X_train.shape[1]),
+            "train_only_feature_selector_alpha": None,
+            "train_only_feature_selector_l1_ratio": None,
+            "train_only_feature_selector_max_features": int(train_selector_max_features),
+        }
+        selector_cache_dir = None
+        selector_cache_paths = {}
+
+        if train_selector_method != "none":
+            if int(train_selector_max_features) < 1:
+                raise ValueError("max_selected_features must be at least 1 when train-only selection is enabled.")
+            if train_selector_method not in {"fixed_lasso", "lasso_cv", "elasticnet_cv", "random_forest_importance"}:
+                raise ValueError(f"Unsupported train-only feature selector: {train_selector_method}")
+
+            selector_data_signature = dataframe_cache_signature(X_train) + "_" + array_cache_signature(y_train)
+            import hashlib
+
+            selector_parameter_text = "|".join(
+                [
+                    train_selector_method,
+                    str(feature_selection_config.get("fixed_lasso_alpha")),
+                    str(feature_selection_config.get("alpha_grid_min_log10")),
+                    str(feature_selection_config.get("alpha_grid_max_log10")),
+                    str(feature_selection_config.get("alpha_grid_size")),
+                    str(feature_selection_config.get("elasticnet_l1_ratio_grid")),
+                    str(feature_selection_config.get("cv_folds")),
+                    str(feature_selection_config.get("coefficient_threshold")),
+                    str(feature_selection_config.get("max_iter")),
+                    str(feature_selection_config.get("selection_mode")),
+                    str(feature_selection_config.get("max_selected_features")),
+                    str(feature_selection_config.get("random_forest_selector_trees")),
+                    str(model_random_seed),
+                ]
+            )
+            selector_parameter_signature = hashlib.sha256(selector_parameter_text.encode("utf-8")).hexdigest()
+            selector_cache_enabled = bool(feature_selection_config.get("enable_cache", True))
+            selector_cache_reuse = bool(feature_selection_config.get("reuse_cache", True))
+            if selector_cache_enabled:
+                selector_cache_dir = resolve_model_cache_dir(
+                    "feature_selector",
+                    feature_selection_config.get("cache_run_name", "AUTO"),
+                    prefer_existing=selector_cache_reuse,
+                )
+                print(f"Feature-selector cache directory: {selector_cache_dir}")
+
+            expected_selector_metadata = {
+                "workflow": "Train-only feature selector",
+                "dataset_label": current_dataset_cache_label(),
+                "representation_label": feature_metadata["representation_label"],
+                "selector_method": train_selector_method,
+                "data_signature": selector_data_signature,
+                "parameter_signature": selector_parameter_signature,
+                "random_seed": int(model_random_seed),
+            }
+            cached_selector_loaded = False
+            selector_details = None
+            selected_columns = None
+
+            if selector_cache_enabled and selector_cache_reuse and selector_cache_dir is not None:
+                metadata_candidates = sorted(
+                    selector_cache_dir.glob(f"*_{current_dataset_cache_label()}_{train_selector_method}_selector_metadata.json"),
+                    key=lambda path: path.name,
+                    reverse=True,
+                )
+                for metadata_path in metadata_candidates:
+                    try:
+                        metadata = read_cache_metadata(metadata_path)
+                        if not cache_metadata_matches(metadata, expected_selector_metadata):
+                            continue
+                        columns_path = resolve_cached_artifact_path(metadata["selected_columns_path"], metadata_path)
+                        diagnostics_path = resolve_cached_artifact_path(metadata["diagnostics_path"], metadata_path)
+                        cv_diagnostics_value = metadata.get("cv_diagnostics_path")
+                        cv_diagnostics_path = (
+                            resolve_cached_artifact_path(cv_diagnostics_value, metadata_path)
+                            if cv_diagnostics_value not in [None, "", "None"]
+                            else None
+                        )
+                        if not columns_path.exists() or not diagnostics_path.exists():
+                            continue
+                        cached_columns_df = pd.read_csv(columns_path)
+                        selected_columns = cached_columns_df["feature"].astype(str).tolist()
+                        if any(column not in X_train.columns for column in selected_columns):
+                            continue
+                        diagnostics_df = pd.read_csv(diagnostics_path)
+                        cv_diagnostics_df = (
+                            pd.read_csv(cv_diagnostics_path)
+                            if cv_diagnostics_path is not None and cv_diagnostics_path.exists()
+                            else pd.DataFrame()
+                        )
+                        selector_details = {
+                            "selector_method": train_selector_method,
+                            "selected_columns": selected_columns,
+                            "selected_feature_count": int(len(selected_columns)),
+                            "original_feature_count": int(metadata.get("original_feature_count", X_train.shape[1])),
+                            "alpha": float(metadata["alpha"]) if metadata.get("alpha") not in [None, "", "None"] else None,
+                            "l1_ratio": float(metadata["l1_ratio"]) if metadata.get("l1_ratio") not in [None, "", "None"] else None,
+                            "cv_folds": int(metadata["cv_folds"]) if metadata.get("cv_folds") not in [None, "", "None"] else None,
+                            "n_iter": int(metadata["n_iter"]) if metadata.get("n_iter") not in [None, "", "None"] else 0,
+                            "training_r2_on_scaled_features": float(metadata["training_r2_on_scaled_features"]) if metadata.get("training_r2_on_scaled_features") not in [None, "", "None"] else np.nan,
+                            "top_coefficients": diagnostics_df,
+                            "cv_diagnostics": cv_diagnostics_df,
+                            "best_cv_rmse": float(metadata["best_cv_rmse"]) if metadata.get("best_cv_rmse") not in [None, "", "None"] else None,
+                            "best_alpha_at_grid_edge": str(metadata.get("best_alpha_at_grid_edge", "")).lower() == "true",
+                            "best_l1_ratio_at_grid_edge": str(metadata.get("best_l1_ratio_at_grid_edge", "")).lower() == "true",
+                        }
+                        cached_selector_loaded = True
+                        selector_cache_paths[train_selector_method] = {
+                            "selected_columns_path": str(columns_path),
+                            "diagnostics_path": str(diagnostics_path),
+                            "cv_diagnostics_path": str(cv_diagnostics_path) if cv_diagnostics_path is not None and cv_diagnostics_path.exists() else "",
+                            "metadata_path": str(metadata_path),
+                        }
+                        print(f"Loaded cached train-only {train_selector_method} selector from {metadata_path.parent}", flush=True)
+                        break
+                    except Exception:
+                        continue
+
+            if train_selector_method in {"fixed_lasso", "lasso_cv", "elasticnet_cv"}:
+                if not cached_selector_loaded:
+                    if train_selector_method == "elasticnet_cv":
+                        l1_ratio_values = parse_l1_ratio_grid(feature_selection_config.get("elasticnet_l1_ratio_grid", "0.1, 0.3, 0.5, 0.7, 0.9"))
+                        estimated_fit_units = int(feature_selection_config.get("alpha_grid_size", 40)) * len(l1_ratio_values) * min(int(feature_selection_config.get("cv_folds", 5)), len(X_train))
+                        print(
+                            "Running train-only ElasticNetCV selector: "
+                            f"{int(feature_selection_config.get('alpha_grid_size', 40))} alpha values x {len(l1_ratio_values)} l1_ratio values x "
+                            f"{min(int(feature_selection_config.get('cv_folds', 5)), len(X_train))} CV folds = about {estimated_fit_units:,} model fits."
+                        )
+                    elif train_selector_method == "lasso_cv":
+                        estimated_fit_units = int(feature_selection_config.get("alpha_grid_size", 40)) * min(int(feature_selection_config.get("cv_folds", 5)), len(X_train))
+                        print(
+                            "Running train-only LassoCV selector: "
+                            f"{int(feature_selection_config.get('alpha_grid_size', 40))} alpha values x "
+                            f"{min(int(feature_selection_config.get('cv_folds', 5)), len(X_train))} CV folds = about {estimated_fit_units:,} model fits."
+                        )
+                    else:
+                        estimated_fit_units = 1
+                        print(f"Running train-only fixed LASSO selector at alpha={float(feature_selection_config.get('fixed_lasso_alpha', 1.0))}.")
+                    selector_progress = tqdm(total=int(estimated_fit_units) + 4, desc=f"Train-only {train_selector_method}", leave=False, unit="step")
+                    try:
+                        selected_X_train, selector_details = apply_sparse_linear_feature_selection(
+                            feature_df=X_train,
+                            target_values=y_train.to_numpy(dtype=float),
+                            selector_method=train_selector_method,
+                            alpha=float(feature_selection_config.get("fixed_lasso_alpha", 1.0)),
+                            alpha_grid_min_log10=float(feature_selection_config.get("alpha_grid_min_log10", -4)),
+                            alpha_grid_max_log10=float(feature_selection_config.get("alpha_grid_max_log10", 0)),
+                            alpha_grid_size=int(feature_selection_config.get("alpha_grid_size", 40)),
+                            elasticnet_l1_ratio_grid=str(feature_selection_config.get("elasticnet_l1_ratio_grid", "0.1, 0.3, 0.5, 0.7, 0.9")),
+                            cv_folds=int(feature_selection_config.get("cv_folds", 5)),
+                            random_seed=int(model_random_seed),
+                            coefficient_threshold=float(feature_selection_config.get("coefficient_threshold", 1e-10)),
+                            max_iter=int(feature_selection_config.get("max_iter", 50000)),
+                            selection_mode=str(feature_selection_config.get("selection_mode", "cyclic coordinate updates")),
+                            max_selected_features=int(train_selector_max_features),
+                            progress_bar=selector_progress,
+                            progress_fit_units=int(estimated_fit_units),
+                        )
+                    finally:
+                        selector_progress.close()
+                    selected_columns = selector_details["selected_columns"]
+                else:
+                    selected_X_train = X_train.loc[:, selected_columns].reset_index(drop=True).copy()
+                X_train = selected_X_train.copy()
+                X_test = X_test.loc[:, selected_columns].reset_index(drop=True).copy()
+                train_selector_summary.update(
+                    {
+                        "train_only_feature_selector_selected_count": int(X_train.shape[1]),
+                        "train_only_feature_selector_alpha": selector_details.get("alpha"),
+                        "train_only_feature_selector_l1_ratio": selector_details.get("l1_ratio"),
+                    }
+                )
+                print(
+                    f"Train-only {train_selector_method} selected {X_train.shape[1]:,} of "
+                    f"{selector_details['original_feature_count']:,} features "
+                    f"(alpha={selector_details.get('alpha')}, l1_ratio={selector_details.get('l1_ratio')})."
+                )
+                print(f"Selector CV folds: {selector_details.get('cv_folds')}; iterations: {selector_details.get('n_iter')}")
+                if selector_details.get("best_cv_rmse") is not None:
+                    print(f"Best selector internal CV RMSE: {selector_details['best_cv_rmse']:.4f}")
+                if selector_details.get("best_alpha_at_grid_edge"):
+                    print("Diagnostic warning: selected alpha is on the edge of the alpha grid; consider widening or shifting the alpha range.")
+                if selector_details.get("best_l1_ratio_at_grid_edge"):
+                    print("Diagnostic warning: selected l1_ratio is on the edge of the l1_ratio grid; consider extending the l1_ratio grid.")
+                if bool(feature_selection_config.get("show_diagnostics", True)):
+                    display(selector_details["top_coefficients"].head(int(feature_selection_config.get("top_coefficients_to_show", 30))))
+                    if not selector_details.get("cv_diagnostics", pd.DataFrame()).empty:
+                        cv_diagnostics_df = selector_details["cv_diagnostics"].copy()
+                        if train_selector_method == "elasticnet_cv" and "l1_ratio" in cv_diagnostics_df.columns:
+                            import plotly.graph_objects as go
+
+                            cv_diagnostics_df["alpha"] = pd.to_numeric(cv_diagnostics_df["alpha"], errors="coerce")
+                            cv_diagnostics_df["l1_ratio"] = pd.to_numeric(cv_diagnostics_df["l1_ratio"], errors="coerce")
+                            cv_diagnostics_df["mean_cv_rmse"] = pd.to_numeric(cv_diagnostics_df["mean_cv_rmse"], errors="coerce")
+                            cv_heatmap_df = cv_diagnostics_df.dropna(subset=["alpha", "l1_ratio", "mean_cv_rmse"]).copy()
+                            if cv_heatmap_df.empty:
+                                display(cv_diagnostics_df.head(20))
+                            else:
+                                alpha_values = sorted(cv_heatmap_df["alpha"].unique())
+                                l1_ratio_values = sorted(cv_heatmap_df["l1_ratio"].unique())
+                                heatmap_matrix = (
+                                    cv_heatmap_df.pivot_table(
+                                        index="l1_ratio",
+                                        columns="alpha",
+                                        values="mean_cv_rmse",
+                                        aggfunc="mean",
+                                    )
+                                    .reindex(index=l1_ratio_values, columns=alpha_values)
+                                )
+                                heatmap_text = heatmap_matrix.to_numpy(dtype=float)
+                                fig = go.Figure(
+                                    data=go.Heatmap(
+                                        z=heatmap_matrix.to_numpy(dtype=float),
+                                        x=[f"{value:.2e}" for value in alpha_values],
+                                        y=[f"{value:.2f}" for value in l1_ratio_values],
+                                        text=heatmap_text,
+                                        texttemplate="%{text:.3g}",
+                                        colorscale="Viridis_r",
+                                        colorbar={"title": "CV RMSE"},
+                                        hovertemplate=(
+                                            "alpha=%{x}<br>"
+                                            "l1_ratio=%{y}<br>"
+                                            "CV RMSE=%{z:.4g}<extra></extra>"
+                                        ),
+                                    )
+                                )
+                                fig.update_layout(
+                                    title="ElasticNetCV selector grid performance",
+                                    xaxis_title="alpha",
+                                    yaxis_title="l1_ratio",
+                                    height=max(420, 70 + 45 * len(l1_ratio_values)),
+                                )
+                                show_plotly(fig)
+                                display(cv_diagnostics_df.head(20))
+                        else:
+                            display(cv_diagnostics_df.head(20))
+            elif train_selector_method == "random_forest_importance":
+                if cached_selector_loaded:
+                    importance_df = selector_details["top_coefficients"].copy()
+                else:
+                    rf_progress = tqdm(total=3, desc="Train-only RF selector", leave=False)
+                    rf_selector = RandomForestRegressor(
+                        n_estimators=int(feature_selection_config.get("random_forest_selector_trees", 500)),
+                        random_state=int(model_random_seed),
+                        n_jobs=-1,
+                    )
+                    rf_progress.set_postfix_str("fitting forest")
+                    rf_selector.fit(X_train, y_train)
+                    rf_progress.update(1)
+                    importances = np.asarray(rf_selector.feature_importances_, dtype=float)
+                    ranked_indices = np.argsort(importances)[::-1]
+                    positive_ranked_indices = [idx for idx in ranked_indices if importances[idx] > 0]
+                    selected_indices = positive_ranked_indices[: int(train_selector_max_features)]
+                    if not selected_indices:
+                        selected_indices = ranked_indices[: min(int(train_selector_max_features), X_train.shape[1])].tolist()
+                    selected_columns = X_train.columns[selected_indices].tolist()
+                    importance_df = pd.DataFrame(
+                        {
+                            "feature": X_train.columns.astype(str),
+                            "importance": importances,
+                            "selected": [column in set(selected_columns) for column in X_train.columns],
+                        }
+                    ).sort_values("importance", ascending=False).reset_index(drop=True)
+                    rf_progress.update(1)
+                    selector_details = {
+                        "selector_method": train_selector_method,
+                        "selected_columns": selected_columns,
+                        "selected_feature_count": int(len(selected_columns)),
+                        "original_feature_count": int(X_train.shape[1]),
+                        "alpha": None,
+                        "l1_ratio": None,
+                        "cv_folds": None,
+                        "n_iter": 0,
+                        "training_r2_on_scaled_features": float(rf_selector.score(X_train, y_train)),
+                        "top_coefficients": importance_df,
+                    }
+                    rf_progress.update(1)
+                    rf_progress.close()
+                X_train = X_train.loc[:, selected_columns].reset_index(drop=True).copy()
+                X_test = X_test.loc[:, selected_columns].reset_index(drop=True).copy()
+                train_selector_summary["train_only_feature_selector_selected_count"] = int(X_train.shape[1])
+                print(
+                    f"Train-only random forest importance selected {X_train.shape[1]:,} "
+                    f"of {importance_df.shape[0]:,} features."
+                )
+                if bool(feature_selection_config.get("show_diagnostics", True)):
+                    display(importance_df.head(20))
+                    fig = px.bar(
+                        importance_df.head(30).sort_values("importance", ascending=True),
+                        x="importance",
+                        y="feature",
+                        color="selected",
+                        orientation="h",
+                        title="Top train-only random forest feature importances",
+                    )
+                    fig.update_layout(height=max(420, 18 * min(30, len(importance_df))))
+                    show_plotly(fig)
+
+            if selector_cache_enabled and not cached_selector_loaded and selector_cache_dir is not None and selector_details is not None:
+                artifact_base = f"{STATE['cache_session_stamp']}_{current_dataset_cache_label()}_{train_selector_method}_selector"
+                selected_columns_path = selector_cache_dir / f"{artifact_base}_selected_columns.csv"
+                diagnostics_path = selector_cache_dir / f"{artifact_base}_diagnostics.csv"
+                cv_diagnostics_path = selector_cache_dir / f"{artifact_base}_cv_diagnostics.csv"
+                metadata_path = selector_cache_dir / f"{artifact_base}_metadata.json"
+                pd.DataFrame({"feature": list(selector_details["selected_columns"])}).to_csv(selected_columns_path, index=False)
+                selector_details["top_coefficients"].to_csv(diagnostics_path, index=False)
+                selector_details.get("cv_diagnostics", pd.DataFrame()).to_csv(cv_diagnostics_path, index=False)
+                write_cache_metadata(
+                    metadata_path,
+                    {
+                        **expected_selector_metadata,
+                        "cache_run_name": selector_cache_dir.name,
+                        "selected_columns_path": selected_columns_path,
+                        "diagnostics_path": diagnostics_path,
+                        "cv_diagnostics_path": cv_diagnostics_path,
+                        "selected_feature_count": int(len(selector_details["selected_columns"])),
+                        "original_feature_count": int(selector_details.get("original_feature_count", len(selector_details["selected_columns"]))),
+                        "alpha": selector_details.get("alpha"),
+                        "l1_ratio": selector_details.get("l1_ratio"),
+                        "cv_folds": selector_details.get("cv_folds"),
+                        "n_iter": selector_details.get("n_iter"),
+                        "training_r2_on_scaled_features": selector_details.get("training_r2_on_scaled_features"),
+                        "best_cv_rmse": selector_details.get("best_cv_rmse"),
+                        "best_alpha_at_grid_edge": selector_details.get("best_alpha_at_grid_edge"),
+                        "best_l1_ratio_at_grid_edge": selector_details.get("best_l1_ratio_at_grid_edge"),
+                    },
+                )
+                selector_cache_paths[train_selector_method] = {
+                    "selected_columns_path": str(selected_columns_path),
+                    "diagnostics_path": str(diagnostics_path),
+                    "cv_diagnostics_path": str(cv_diagnostics_path),
+                    "metadata_path": str(metadata_path),
+                }
+                print(f"Saved train-only selector cache artifacts under: {selector_cache_dir}")
+
+        feature_metadata.update(train_selector_summary)
+        STATE["X_train"] = X_train.copy()
+        STATE["X_test"] = X_test.copy()
+        STATE["y_train"] = y_train.to_numpy(dtype=float)
+        STATE["y_test"] = y_test.to_numpy(dtype=float)
+        STATE["smiles_train"] = smiles_train.reset_index(drop=True)
+        STATE["smiles_test"] = smiles_test.reset_index(drop=True)
+        STATE["traditional_feature_metadata"] = dict(feature_metadata)
+        STATE["traditional_train_only_feature_selector"] = dict(train_selector_summary)
+        STATE["feature_selector_cache_paths"] = selector_cache_paths
+        if selector_cache_dir is not None:
+            STATE["feature_selector_cache_dir"] = str(selector_cache_dir)
+
+        print(
+            f"Prepared conventional modeling data: {X_train.shape[0]:,} train row(s), "
+            f"{X_test.shape[0]:,} test row(s), {X_train.shape[1]:,} feature(s)."
+        )
+        if selector_cache_dir is not None:
+            print(f"Feature-selector cache directory: {selector_cache_dir}")
+        display_note("Run `4C` next to train the conventional ML models on this prepared split.")
+        """
+    ),
+    code(
+        """
+        # @title 4C. Train conventional ML models and show an interactive metrics table { display-mode: "form" }
+        use_cross_validation = True # @param {type:"boolean"}
+        cv_folds = 5 # @param [3, 5, 10]
+        model_random_seed = 42 # @param {type:"integer"}
+        enable_conventional_model_cache = True # @param {type:"boolean"}
+        reuse_conventional_cached_models = True # @param {type:"boolean"}
+        conventional_cache_run_name = "AUTO" # @param {type:"string"}
+        # @markdown ### ElasticNet comparison models
+        run_elasticnet_cv = True # @param {type:"boolean"}
+        # @markdown ### Other conventional models
+        run_svr = True # @param {type:"boolean"}
+        run_random_forest = True # @param {type:"boolean"}
+        run_xgboost = True # @param {type:"boolean"}
+        run_catboost = True # @param {type:"boolean"}
+        # @markdown ### ElasticNetCV model settings
+        elasticnet_model_alpha_grid_min_log10 = -4 # @param {type:"integer"}
+        elasticnet_model_alpha_grid_max_log10 = 0 # @param {type:"integer"}
+        elasticnet_model_alpha_grid_size = 40 # @param {type:"slider", min:10, max:80, step:5}
+        elasticnet_model_l1_ratio_grid = "0.4, 0.5, 0.6, 0.7, 0.9" # @param {type:"string"}
+        elasticnet_model_cv_folds = 5 # @param [3, 5, 10]
+        elasticnet_model_max_iter = 50000 # @param {type:"integer"}
+
+        if "X_train" not in STATE or "X_test" not in STATE or "traditional_feature_metadata" not in STATE:
+            raise RuntimeError("Please run block 4B first to prepare the feature-selected train/test split.")
+
+        X_train = STATE["X_train"].copy()
+        X_test = STATE["X_test"].copy()
+        y_train = pd.Series(STATE["y_train"], dtype=float)
+        y_test = pd.Series(STATE["y_test"], dtype=float)
+        smiles_train = STATE["smiles_train"].reset_index(drop=True)
+        smiles_test = STATE["smiles_test"].reset_index(drop=True)
+        feature_metadata = dict(STATE["traditional_feature_metadata"])
+        selector_cache_dir = Path(STATE["feature_selector_cache_dir"]) if STATE.get("feature_selector_cache_dir") else None
+        selector_cache_paths = dict(STATE.get("feature_selector_cache_paths", {}))
+        train_selector_summary = dict(STATE.get("traditional_train_only_feature_selector", {}))
         effective_cv_folds = None
         if use_cross_validation:
             effective_cv_folds = min(int(cv_folds), len(X_train))
             if effective_cv_folds < 2:
                 raise ValueError("At least 2 cross-validation folds are required when cross-validation is enabled.")
-        feature_metadata = current_feature_metadata()
+
+        elasticnet_alpha_grid = make_regularization_grid(
+            elasticnet_model_alpha_grid_min_log10,
+            elasticnet_model_alpha_grid_max_log10,
+            elasticnet_model_alpha_grid_size,
+        )
+        elasticnet_l1_ratio_values = parse_l1_ratio_grid(elasticnet_model_l1_ratio_grid)
+        elasticnet_internal_cv_folds = min(int(elasticnet_model_cv_folds), len(X_train))
+        if elasticnet_internal_cv_folds < 2:
+            raise ValueError("ElasticNetCV model tuning requires at least 2 CV folds.")
+
+        elasticnet_model_cache_metadata = {
+            "elasticnet_model_cv": True,
+            "elasticnet_model_alpha_grid_min_log10": float(elasticnet_model_alpha_grid_min_log10),
+            "elasticnet_model_alpha_grid_max_log10": float(elasticnet_model_alpha_grid_max_log10),
+            "elasticnet_model_alpha_grid_size": int(elasticnet_model_alpha_grid_size),
+            "elasticnet_model_l1_ratio_grid": ", ".join(str(value) for value in elasticnet_l1_ratio_values),
+            "elasticnet_model_cv_folds": int(elasticnet_internal_cv_folds),
+            "elasticnet_model_max_iter": int(elasticnet_model_max_iter),
+        }
+        model_specific_cache_metadata = {
+            "ElasticNetCV": elasticnet_model_cache_metadata,
+        }
+
+        elasticnet_cv_estimator = ElasticNetCV(
+            l1_ratio=elasticnet_l1_ratio_values,
+            alphas=elasticnet_alpha_grid,
+            cv=elasticnet_internal_cv_folds,
+            max_iter=int(elasticnet_model_max_iter),
+            n_jobs=-1,
+            random_state=int(model_random_seed),
+        )
 
         available_models = {
-            "ElasticNet": Pipeline(
+            "ElasticNetCV": Pipeline(
                 [
                     ("imputer", SimpleImputer(strategy="median")),
                     ("scaler", StandardScaler()),
-                    ("model", ElasticNet(alpha=0.01, l1_ratio=0.2, max_iter=10000)),
+                    ("model", elasticnet_cv_estimator),
                 ]
             ),
             "SVR": Pipeline(
@@ -2372,8 +3346,8 @@ cells += [
         }
 
         selected_models = {}
-        if run_elasticnet:
-            selected_models["ElasticNet"] = available_models["ElasticNet"]
+        if run_elasticnet_cv:
+            selected_models["ElasticNetCV"] = available_models["ElasticNetCV"]
         if run_svr:
             selected_models["SVR"] = available_models["SVR"]
         if run_random_forest:
@@ -2386,6 +3360,18 @@ cells += [
         if not selected_models:
             raise ValueError("Please select at least one conventional model to run.")
 
+        if run_elasticnet_cv:
+            estimated_elasticnet_fits = len(elasticnet_alpha_grid) * len(elasticnet_l1_ratio_values) * int(elasticnet_internal_cv_folds)
+            print(
+                "ElasticNetCV conventional model uses internal CV tuning: "
+                f"{len(elasticnet_alpha_grid)} alpha values x {len(elasticnet_l1_ratio_values)} l1_ratio values x "
+                f"{int(elasticnet_internal_cv_folds)} CV folds = about {estimated_elasticnet_fits:,} model fits per final fit."
+            )
+            if use_cross_validation:
+                print(
+                    "Outer conventional-model cross-validation is also enabled, so ElasticNetCV is evaluated with "
+                    "train-fold-only internal tuning in each outer fold."
+                )
         cv = None
         scoring = None
         if use_cross_validation:
@@ -2444,8 +3430,16 @@ cells += [
                             "fingerprint_radius": int(feature_metadata["fingerprint_radius"]),
                             "fingerprint_bits": int(feature_metadata["fingerprint_bits"]),
                             "lasso_feature_selection_enabled": bool(feature_metadata["lasso_feature_selection_enabled"]),
+                            "lasso_selector_method": feature_metadata["lasso_selector_method"],
                             "lasso_alpha": feature_metadata["lasso_alpha"],
+                            "lasso_l1_ratio": feature_metadata["lasso_l1_ratio"],
                             "lasso_selected_feature_count": int(feature_metadata["lasso_selected_feature_count"]),
+                            "train_only_feature_selector_method": feature_metadata["train_only_feature_selector_method"],
+                            "train_only_feature_selector_selected_count": int(feature_metadata["train_only_feature_selector_selected_count"]),
+                            "train_only_feature_selector_alpha": feature_metadata["train_only_feature_selector_alpha"],
+                            "train_only_feature_selector_l1_ratio": feature_metadata["train_only_feature_selector_l1_ratio"],
+                            "train_only_feature_selector_max_features": int(feature_metadata["train_only_feature_selector_max_features"]),
+                            **model_specific_cache_metadata.get(name, {}),
                         }
                         if not cache_metadata_matches(metadata, expected_metadata):
                             continue
@@ -2508,6 +3502,22 @@ cells += [
             }
             row.update(summarize_regression(y_train, pred_train, "Train"))
             row.update(summarize_regression(y_test, pred_test, "Test"))
+            if name == "ElasticNetCV":
+                elasticnet_step = fitted.named_steps.get("model") if hasattr(fitted, "named_steps") else fitted
+                row["Model alpha"] = (
+                    float(getattr(elasticnet_step, "alpha_", getattr(elasticnet_step, "alpha", np.nan)))
+                    if not cached_model_loaded
+                    else float(cached_metadata.get("model_alpha", np.nan))
+                    if cached_metadata is not None and cached_metadata.get("model_alpha") not in [None, "None", ""]
+                    else np.nan
+                )
+                row["Model l1_ratio"] = (
+                    float(getattr(elasticnet_step, "l1_ratio_", getattr(elasticnet_step, "l1_ratio", np.nan)))
+                    if not cached_model_loaded
+                    else float(cached_metadata.get("model_l1_ratio", np.nan))
+                    if cached_metadata is not None and cached_metadata.get("model_l1_ratio") not in [None, "None", ""]
+                    else np.nan
+                )
             metrics_rows.append(row)
             fitted_models[name] = fitted
             predictions[name] = {"train": pred_train, "test": pred_test}
@@ -2537,8 +3547,15 @@ cells += [
                         "fingerprint_radius": int(feature_metadata["fingerprint_radius"]),
                         "fingerprint_bits": int(feature_metadata["fingerprint_bits"]),
                         "lasso_feature_selection_enabled": bool(feature_metadata["lasso_feature_selection_enabled"]),
+                        "lasso_selector_method": feature_metadata["lasso_selector_method"],
                         "lasso_alpha": feature_metadata["lasso_alpha"],
+                        "lasso_l1_ratio": feature_metadata["lasso_l1_ratio"],
                         "lasso_selected_feature_count": int(feature_metadata["lasso_selected_feature_count"]),
+                        "train_only_feature_selector_method": feature_metadata["train_only_feature_selector_method"],
+                        "train_only_feature_selector_selected_count": int(feature_metadata["train_only_feature_selector_selected_count"]),
+                        "train_only_feature_selector_alpha": feature_metadata["train_only_feature_selector_alpha"],
+                        "train_only_feature_selector_l1_ratio": feature_metadata["train_only_feature_selector_l1_ratio"],
+                        "train_only_feature_selector_max_features": int(feature_metadata["train_only_feature_selector_max_features"]),
                         "cache_run_name": conventional_cache_dir.name,
                         "model_path": model_path,
                         "prediction_path": prediction_path,
@@ -2550,6 +3567,9 @@ cells += [
                         "cv_rmse": row["CV RMSE"],
                         "cv_mae": row["CV MAE"],
                         "random_seed": int(model_random_seed),
+                        "model_alpha": row.get("Model alpha"),
+                        "model_l1_ratio": row.get("Model l1_ratio"),
+                        **model_specific_cache_metadata.get(name, {}),
                     },
                 )
                 traditional_cache_paths[name] = {
@@ -2573,6 +3593,10 @@ cells += [
         STATE["traditional_results"] = results_df.copy()
         STATE["best_traditional_model_name"] = best_model_name
         STATE["traditional_model_cache_paths"] = traditional_cache_paths
+        STATE["feature_selector_cache_paths"] = selector_cache_paths
+        STATE["traditional_train_only_feature_selector"] = dict(train_selector_summary)
+        if selector_cache_dir is not None:
+            STATE["feature_selector_cache_dir"] = str(selector_cache_dir)
         if conventional_cache_dir is not None:
             STATE["traditional_model_cache_dir"] = str(conventional_cache_dir)
 
@@ -2584,6 +3608,8 @@ cells += [
         print(f"Best conventional model on the held-out test set: {best_model_name}")
         if enable_conventional_model_cache and conventional_cache_dir is not None:
             print(f"Conventional model cache directory: {conventional_cache_dir}")
+        if selector_cache_dir is not None:
+            print(f"Feature-selector cache directory: {selector_cache_dir}")
         display_interactive_table(results_df.round(4), rows=min(10, len(results_df)))
         if use_cross_validation:
             display_note(
@@ -2598,43 +3624,24 @@ cells += [
     ),
     code(
         """
-        # @title 4B. Plot observed vs predicted values for selected conventional models { display-mode: "form" }
-        point_size = 10 # @param {type:"slider", min:6, max:18, step:1}
-        show_elasticnet_plot = False # @param {type:"boolean"}
-        show_svr_plot = False # @param {type:"boolean"}
-        show_random_forest_plot = False # @param {type:"boolean"}
-        show_xgboost_plot = False # @param {type:"boolean"}
-        show_catboost_plot = True # @param {type:"boolean"}
+        # @title 4D. Plot observed vs predicted values for all conventional models { display-mode: "form" }
+        point_size = 10
 
         if "best_traditional_model_name" not in STATE:
             raise RuntimeError("Please train the conventional models first.")
-
-        requested_models = []
-        if show_elasticnet_plot:
-            requested_models.append("ElasticNet")
-        if show_svr_plot:
-            requested_models.append("SVR")
-        if show_random_forest_plot:
-            requested_models.append("Random forest")
-        if show_xgboost_plot:
-            requested_models.append("XGBoost")
-        if show_catboost_plot:
-            requested_models.append("CatBoost")
-
-        if not requested_models:
-            raise ValueError("Please select at least one conventional model to plot.")
 
         import plotly.graph_objects as go
         from plotly.subplots import make_subplots
 
         available_predictions = STATE["traditional_predictions"]
         available_results = STATE["traditional_results"].set_index("Model")
+        requested_models = list(available_predictions.keys())
         plotted_models = []
         panel_frames = []
 
         for model_name in requested_models:
             if model_name not in available_predictions:
-                print(f"Skipping {model_name}: it was not trained in block 4A.")
+                print(f"Skipping {model_name}: it was not trained in block 4C.")
                 continue
 
             pred_train = available_predictions[model_name]["train"]
@@ -2674,18 +3681,25 @@ cells += [
             plotted_models.append(model_name)
 
         if not plotted_models:
-            raise ValueError("None of the selected models were trained in block 4A.")
+            raise ValueError("None of the selected models were trained in block 4C.")
 
         combined_df = pd.concat(panel_frames, axis=0, ignore_index=True)
-        low = float(min(combined_df["Observed"].min(), combined_df["Predicted"].min()))
-        high = float(max(combined_df["Observed"].max(), combined_df["Predicted"].max()))
+        low = float(combined_df["Observed"].min())
+        high = float(combined_df["Observed"].max())
         use_log_axes = bool((combined_df["Observed"] > 0).all() and (combined_df["Predicted"] > 0).all())
         if low == high:
-            low -= 1.0
-            high += 1.0
+            if use_log_axes:
+                low = low / 1.1
+                high = high * 1.1
+            else:
+                low -= 1.0
+                high += 1.0
         if use_log_axes:
-            plot_low = low / 3.0
-            plot_high = high * 3.0
+            log_low = math.log10(low)
+            log_high = math.log10(high)
+            log_span = max(log_high - log_low, 0.05)
+            plot_low = 10 ** (log_low - 0.05 * log_span)
+            plot_high = 10 ** (log_high + 0.05 * log_span)
         else:
             plot_span = high - low
             plot_low = low - 0.05 * plot_span
@@ -2834,7 +3848,7 @@ cells += [
                 fig.update_yaxes(title_text="Predicted", range=[plot_low, plot_high], row=row_num, col=col_num)
 
         fig.update_layout(
-            title="Observed vs predicted values for selected conventional models",
+            title="Observed vs predicted values for all conventional models that ran",
             height=max(520, 420 * n_rows),
             width=1100 if n_cols == 2 else 700,
         )
@@ -2855,19 +3869,24 @@ cells += [
     ),
     md(
         """
-        ### 4C. Genetic-Algorithm Hyperparameter Tuning
+        ### 4E. Genetic-Algorithm Hyperparameter Tuning
 
         The hyperparameter tuning block in this notebook uses ChemML's own **genetic algorithm** implementation: `chemml.optimization.GeneticAlgorithm`.
 
         Instead of exhaustively checking every point in a grid, the genetic algorithm proposes candidate hyperparameter combinations, evaluates them with cross-validation on the training set, and evolves toward better configurations over successive generations. That makes it a better match for mixed continuous, integer, and categorical search spaces like the ones used here.
+
+        By default this block now uses the prepared `4A`/`4B` split, so tuned models are evaluated on the same train/test rows and the same train-only selected features as the conventional models in `4C`. That differs from ChemML's original `ModelScreener`, which screens each representation separately with its own 90/10 random split.
+
+        The ElasticNet GA search space follows the installed ChemML AutoML implementation: alpha is searched from `1e-4` to `1e-1` on the log scale, and `l1_ratio` is chosen from `0.4, 0.5, 0.6, 0.7`. This is a model-tuning step, not a separate feature selector.
 
         The defaults below are intentionally moderate for Colab. If you need a deeper search, increase the population size or number of generations.
         """
     ),
     code(
         """
-        # @title 4C. Run genetic-algorithm tuning for selected conventional models { display-mode: "form" }
-        tuning_split_strategy = "random" # @param ["random", "scaffold"]
+        # @title 4E. Run genetic-algorithm tuning for selected conventional models { display-mode: "form" }
+        use_prepared_4b_split_for_tuning = True # @param {type:"boolean"}
+        tuning_split_strategy = "target_quartiles" # @param ["target_quartiles", "random", "scaffold"]
         tuning_test_fraction = 0.2 # @param {type:"slider", min:0.1, max:0.4, step:0.05}
         tuning_random_seed = 42 # @param {type:"integer"}
         ga_cv_folds = 5 # @param [3, 5]
@@ -2883,10 +3902,10 @@ cells += [
         tuned_cache_run_name = "AUTO" # @param {type:"string"}
         previous_ga_run_source = "" # @param {type:"string"}
         upload_previous_ga_run_source = False # @param {type:"boolean"}
-        tune_elasticnet = False # @param {type:"boolean"}
+        tune_elasticnet = True # @param {type:"boolean"}
         tune_svr = False # @param {type:"boolean"}
-        tune_random_forest = True # @param {type:"boolean"}
-        tune_xgboost = True # @param {type:"boolean"}
+        tune_random_forest = False # @param {type:"boolean"}
+        tune_xgboost = False # @param {type:"boolean"}
         tune_catboost = True # @param {type:"boolean"}
 
         if "feature_matrix" not in STATE:
@@ -3009,21 +4028,44 @@ cells += [
                 flush=True,
             )
             display_note(
-                "Previous GA metadata was supplied, so the `4C` tuning controls were updated to match "
+                "Previous GA metadata was supplied, so the `4E` tuning controls were updated to match "
                 "that run before executing the block."
             )
 
-        split_payload = apply_qsar_split(
-            split_strategy=str(tuning_split_strategy),
-            test_fraction=float(tuning_test_fraction),
-            random_seed=int(tuning_random_seed),
-            announce=True,
-        )
-        X_train = split_payload["X_train"].copy()
-        X_test = split_payload["X_test"].copy()
-        y_train = np.asarray(split_payload["y_train"], dtype=float)
-        y_test = np.asarray(split_payload["y_test"], dtype=float)
-        feature_metadata = current_feature_metadata()
+        if bool(use_prepared_4b_split_for_tuning):
+            required_keys = {"X_train", "X_test", "y_train", "y_test", "smiles_train", "smiles_test", "traditional_feature_metadata"}
+            missing_keys = sorted(required_keys.difference(STATE.keys()))
+            if missing_keys:
+                raise RuntimeError(
+                    "Please run blocks 4A and 4B before GA tuning, or set use_prepared_4b_split_for_tuning=False. "
+                    f"Missing: {', '.join(missing_keys)}"
+                )
+            X_train = STATE["X_train"].copy()
+            X_test = STATE["X_test"].copy()
+            y_train = np.asarray(STATE["y_train"], dtype=float)
+            y_test = np.asarray(STATE["y_test"], dtype=float)
+            feature_metadata = dict(STATE["traditional_feature_metadata"])
+            tuning_split_strategy = str(STATE.get("model_split_strategy", tuning_split_strategy))
+            tuning_test_fraction = float(STATE.get("model_test_fraction", tuning_test_fraction))
+            tuning_random_seed = int(STATE.get("model_split_random_seed", tuning_random_seed))
+            print(
+                "GA tuning is using the prepared 4A/4B split and feature-selected matrix: "
+                f"strategy={tuning_split_strategy}, test_fraction={float(tuning_test_fraction):.2f}, "
+                f"train={len(X_train)}, test={len(X_test)}, features={X_train.shape[1]}",
+                flush=True,
+            )
+        else:
+            split_payload = apply_qsar_split(
+                split_strategy=str(tuning_split_strategy),
+                test_fraction=float(tuning_test_fraction),
+                random_seed=int(tuning_random_seed),
+                announce=True,
+            )
+            X_train = split_payload["X_train"].copy()
+            X_test = split_payload["X_test"].copy()
+            y_train = np.asarray(split_payload["y_train"], dtype=float)
+            y_test = np.asarray(split_payload["y_test"], dtype=float)
+            feature_metadata = current_feature_metadata()
 
         def _rounded_float(value, digits=6):
             return float(np.round(float(value), digits))
@@ -3059,15 +4101,15 @@ cells += [
                             ElasticNet(
                                 alpha=float(np.exp(params["log_alpha"])),
                                 l1_ratio=float(params["l1_ratio"]),
-                                max_iter=10000,
+                                max_iter=50000,
                                 random_state=42,
                             ),
                         ),
                     ]
                 ),
                 (
-                    {"log_alpha": {"uniform": [float(np.log(0.001)), float(np.log(1.0))], "mutation": [0.0, 0.35]}},
-                    {"l1_ratio": {"uniform": [0.05, 0.95], "mutation": [0.0, 0.15]}},
+                    {"log_alpha": {"uniform": [float(np.log(0.0001)), float(np.log(0.1))], "mutation": [0.0, 1.0]}},
+                    {"l1_ratio": {"choice": [0.4, 0.5, 0.6, 0.7]}},
                 ),
                 lambda params: {
                     "alpha": _rounded_float(np.exp(params["log_alpha"])),
@@ -3297,8 +4339,16 @@ cells += [
                             "fingerprint_radius": int(feature_metadata["fingerprint_radius"]),
                             "fingerprint_bits": int(feature_metadata["fingerprint_bits"]),
                             "lasso_feature_selection_enabled": bool(feature_metadata["lasso_feature_selection_enabled"]),
+                            "lasso_selector_method": feature_metadata.get("lasso_selector_method"),
                             "lasso_alpha": feature_metadata["lasso_alpha"],
+                            "lasso_l1_ratio": feature_metadata.get("lasso_l1_ratio"),
                             "lasso_selected_feature_count": int(feature_metadata["lasso_selected_feature_count"]),
+                            "train_only_feature_selector_method": feature_metadata.get("train_only_feature_selector_method", "none"),
+                            "train_only_feature_selector_selected_count": int(feature_metadata.get("train_only_feature_selector_selected_count", X_train.shape[1])),
+                            "train_only_feature_selector_alpha": feature_metadata.get("train_only_feature_selector_alpha"),
+                            "train_only_feature_selector_l1_ratio": feature_metadata.get("train_only_feature_selector_l1_ratio"),
+                            "train_only_feature_selector_max_features": int(feature_metadata.get("train_only_feature_selector_max_features", X_train.shape[1])),
+                            "use_prepared_4b_split_for_tuning": bool(use_prepared_4b_split_for_tuning),
                         }
                         if not cache_metadata_matches(metadata, expected_metadata):
                             continue
@@ -3471,12 +4521,20 @@ cells += [
                     "fingerprint_radius": int(feature_metadata["fingerprint_radius"]),
                     "fingerprint_bits": int(feature_metadata["fingerprint_bits"]),
                     "lasso_feature_selection_enabled": bool(feature_metadata["lasso_feature_selection_enabled"]),
+                    "lasso_selector_method": feature_metadata.get("lasso_selector_method"),
                     "lasso_alpha": feature_metadata["lasso_alpha"],
+                    "lasso_l1_ratio": feature_metadata.get("lasso_l1_ratio"),
                     "lasso_selected_feature_count": int(feature_metadata["lasso_selected_feature_count"]),
+                    "train_only_feature_selector_method": feature_metadata.get("train_only_feature_selector_method", "none"),
+                    "train_only_feature_selector_selected_count": int(feature_metadata.get("train_only_feature_selector_selected_count", X_train.shape[1])),
+                    "train_only_feature_selector_alpha": feature_metadata.get("train_only_feature_selector_alpha"),
+                    "train_only_feature_selector_l1_ratio": feature_metadata.get("train_only_feature_selector_l1_ratio"),
+                    "train_only_feature_selector_max_features": int(feature_metadata.get("train_only_feature_selector_max_features", X_train.shape[1])),
                     "cache_run_name": active_cache_run_name,
                     "split_strategy": str(tuning_split_strategy),
                     "test_fraction": float(tuning_test_fraction),
                     "random_seed": int(tuning_random_seed),
+                    "use_prepared_4b_split_for_tuning": bool(use_prepared_4b_split_for_tuning),
                     "train_rows": int(len(X_train)),
                     "test_rows": int(len(X_test)),
                     "feature_count": int(X_train.shape[1]),
@@ -3781,43 +4839,24 @@ cells += [
     ),
     code(
         """
-        # @title 4D. Plot observed vs predicted values for tuned conventional models { display-mode: "form" }
-        tuned_point_size = 10 # @param {type:"slider", min:6, max:18, step:1}
-        show_tuned_elasticnet_plot = False # @param {type:"boolean"}
-        show_tuned_svr_plot = False # @param {type:"boolean"}
-        show_tuned_random_forest_plot = True # @param {type:"boolean"}
-        show_tuned_xgboost_plot = True # @param {type:"boolean"}
-        show_tuned_catboost_plot = True # @param {type:"boolean"}
+        # @title 4F. Plot observed vs predicted values for all tuned conventional models { display-mode: "form" }
+        tuned_point_size = 10
 
         if "tuned_traditional_results" not in STATE:
-            raise RuntimeError("Please run block 4C first to fit tuned conventional models.")
-
-        tuned_requested_models = []
-        if show_tuned_elasticnet_plot:
-            tuned_requested_models.append("ElasticNet")
-        if show_tuned_svr_plot:
-            tuned_requested_models.append("SVR")
-        if show_tuned_random_forest_plot:
-            tuned_requested_models.append("Random forest")
-        if show_tuned_xgboost_plot:
-            tuned_requested_models.append("XGBoost")
-        if show_tuned_catboost_plot:
-            tuned_requested_models.append("CatBoost")
-
-        if not tuned_requested_models:
-            raise ValueError("Please select at least one tuned conventional model to plot.")
+            raise RuntimeError("Please run block 4E first to fit tuned conventional models.")
 
         import plotly.graph_objects as go
         from plotly.subplots import make_subplots
 
         tuned_predictions = STATE["tuned_traditional_predictions"]
         tuned_results = STATE["tuned_traditional_results"].set_index("Model")
+        tuned_requested_models = list(tuned_predictions.keys())
         tuned_panel_frames = []
         tuned_plotted_models = []
 
         for model_name in tuned_requested_models:
             if model_name not in tuned_predictions:
-                print(f"Skipping {model_name}: it was not tuned in block 4C.")
+                print(f"Skipping {model_name}: it was not tuned in block 4E.")
                 continue
 
             pred_train = tuned_predictions[model_name]["train"]
@@ -3856,18 +4895,25 @@ cells += [
             tuned_plotted_models.append(model_name)
 
         if not tuned_plotted_models:
-            raise ValueError("None of the selected tuned models were fit in block 4C.")
+            raise ValueError("None of the selected tuned models were fit in block 4E.")
 
         combined_df = pd.concat(tuned_panel_frames, axis=0, ignore_index=True)
-        low = float(min(combined_df["Observed"].min(), combined_df["Predicted"].min()))
-        high = float(max(combined_df["Observed"].max(), combined_df["Predicted"].max()))
+        low = float(combined_df["Observed"].min())
+        high = float(combined_df["Observed"].max())
         use_log_axes = bool((combined_df["Observed"] > 0).all() and (combined_df["Predicted"] > 0).all())
         if low == high:
-            low -= 1.0
-            high += 1.0
+            if use_log_axes:
+                low = low / 1.1
+                high = high * 1.1
+            else:
+                low -= 1.0
+                high += 1.0
         if use_log_axes:
-            plot_low = low / 3.0
-            plot_high = high * 3.0
+            log_low = math.log10(low)
+            log_high = math.log10(high)
+            log_span = max(log_high - log_low, 0.05)
+            plot_low = 10 ** (log_low - 0.05 * log_span)
+            plot_high = 10 ** (log_high + 0.05 * log_span)
         else:
             plot_span = high - low
             plot_low = low - 0.05 * plot_span
@@ -4016,7 +5062,7 @@ cells += [
                 fig.update_yaxes(title_text="Predicted", range=[plot_low, plot_high], row=row_num, col=col_num)
 
         fig.update_layout(
-            title="Observed vs predicted values for tuned conventional models",
+            title="Observed vs predicted values for all tuned conventional models that ran",
             height=max(520, 420 * n_rows),
             width=1100 if n_cols == 2 else 700,
         )
@@ -4034,7 +5080,7 @@ cells += [
     ),
     code(
         """
-        # @title 4E. Plot GA convergence history for tuned conventional models { display-mode: "form" }
+        # @title 4G. Plot GA convergence history for tuned conventional models { display-mode: "form" }
         show_ga_history_elasticnet = False # @param {type:"boolean"}
         show_ga_history_svr = False # @param {type:"boolean"}
         show_ga_history_random_forest = True # @param {type:"boolean"}
@@ -4042,7 +5088,7 @@ cells += [
         show_ga_history_catboost = True # @param {type:"boolean"}
 
         if "tuned_traditional_ga_histories" not in STATE or not STATE["tuned_traditional_ga_histories"]:
-            raise RuntimeError("Please run block 4C first so GA tuning histories are available.")
+            raise RuntimeError("Please run block 4E first so GA tuning histories are available.")
 
         import matplotlib.pyplot as plt
 
@@ -4065,7 +5111,7 @@ cells += [
         tuned_results_lookup = STATE["tuned_traditional_results"].set_index("Model")
         plotted_history_models = [name for name in requested_history_models if name in ga_histories]
         if not plotted_history_models:
-            raise ValueError("None of the selected models were tuned in block 4C.")
+            raise ValueError("None of the selected models were tuned in block 4E.")
 
         objective_name = str(tuned_results_lookup.iloc[0]["GA objective"]) if "GA objective" in tuned_results_lookup.columns else "fitness"
         n_panels = len(plotted_history_models)
@@ -6705,9 +7751,9 @@ cells += [
         if "latest_prediction_results" not in STATE:
             raise RuntimeError("Please run block 9A first so there is a new-molecule prediction table to embed.")
         if "best_traditional_model_name" not in STATE:
-            raise RuntimeError("Please run block 4A first so the notebook knows which conventional model performed best.")
+            raise RuntimeError("Please run block 4C first so the notebook knows which conventional model performed best.")
         if "X_train" not in STATE or "X_test" not in STATE or "smiles_train" not in STATE or "smiles_test" not in STATE:
-            raise RuntimeError("The conventional training split is not available in STATE. Rerun block 4A.")
+            raise RuntimeError("The conventional training split is not available in STATE. Rerun blocks 4A and 4B.")
 
         try:
             import umap

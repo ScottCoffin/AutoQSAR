@@ -5,7 +5,7 @@ starting_data <- read_csv("test_data/comprehensive_dataset.csv")
 
 # isolate repro/dev as target and QSAR_Ready_smiles
 repro_dev_data <- starting_data %>%
-  select(QSAR_READY_SMILES, target = `Repro/Dev`) |> 
+  select(SMILES = QSAR_READY_SMILES, TARGET = `Repro/Dev`) |>
   drop_na()
 
 #save csv for processing in autoQSAR
