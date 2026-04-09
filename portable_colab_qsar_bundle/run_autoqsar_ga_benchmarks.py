@@ -1,23 +1,29 @@
 #!/usr/bin/env python
 """Benchmark the conventional AutoQSAR workflow.
 
-This script discovers selected example CSV datasets, builds molecular features,
-runs the train/test split plus train-only ElasticNetCV feature selection,
-evaluates conventional models, optionally runs a small GA tuning pass for
-selected models, and writes cross-dataset performance tables. It intentionally
-does not run deep-learning models.
+This script benchmarks the notebook's example SMILES-based datasets: runnable
+ChemML bundled examples plus the PyTDC QSAR benchmark datasets. It builds
+molecular features, runs the train/test split plus train-only ElasticNetCV
+feature selection, evaluates conventional models, optionally runs a small GA
+tuning pass for selected models, and writes cross-dataset performance tables.
+It intentionally does not run deep-learning models.
 """
 
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import json
 import math
 import random
 import time
+import tempfile
+import tarfile
+import urllib.request
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable
+import sys
 
 import numpy as np
 import pandas as pd
@@ -26,15 +32,32 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.impute import SimpleImputer
 from sklearn.linear_model import ElasticNet, ElasticNetCV
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
-from sklearn.model_selection import KFold, cross_validate, train_test_split
+from sklearn.model_selection import cross_validate, train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVR
 
-from rdkit import Chem, DataStructs, RDLogger
-from rdkit.Chem import AllChem, Descriptors, MACCSkeys
+from rdkit import Chem, RDLogger
 
 RDLogger.DisableLog("rdApp.warning")
+
+try:
+    from portable_colab_qsar_bundle.qsar_workflow_core import (
+        build_feature_matrix_from_smiles,
+        make_qsar_cv_splitter,
+        make_reusable_inner_cv_splitter,
+        scaffold_train_test_split,
+        target_quartile_labels,
+    )
+except ModuleNotFoundError:
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+    from portable_colab_qsar_bundle.qsar_workflow_core import (
+        build_feature_matrix_from_smiles,
+        make_qsar_cv_splitter,
+        make_reusable_inner_cv_splitter,
+        scaffold_train_test_split,
+        target_quartile_labels,
+    )
 
 try:
     from catboost import CatBoostRegressor
@@ -49,7 +72,113 @@ except Exception:
 
 SMILES_CANDIDATES = ["QSAR_READY_SMILES", "canonical_smiles", "SMILES", "smiles", "Smiles"]
 TARGET_CANDIDATES = ["TARGET", "target", "Target", "Repro/Dev", "Non-Repro/Dev", "density_Kg/m3"]
-DEFAULT_DATASET_FILES = ["fu.csv", "HLe_invivo.csv", "VDss.csv"]
+CHEMML_EXAMPLE_OPTIONS = ["organic_density", "cep_homo", "xyz_polarizability"]
+PYTDC_SOURCE_URL = "https://files.pythonhosted.org/packages/db/bf/db7525f0e9c48d340a66ae11ed46bbb1966234660a6882ce47d1e1d52824/pytdc-1.1.15.tar.gz"
+TDC_QSAR_OPTIONS = {
+    "caco2_wang": {"task": "ADME", "label": "Caco-2 permeability"},
+    "lipophilicity_astrazeneca": {"task": "ADME", "label": "Lipophilicity"},
+    "solubility_aqsoldb": {"task": "ADME", "label": "AqSolDB solubility"},
+    "ppbr_az": {"task": "ADME", "label": "Plasma protein binding"},
+    "vdss_lombardo": {"task": "ADME", "label": "Volume of distribution"},
+    "half_life_obach": {"task": "ADME", "label": "Half-life"},
+    "clearance_hepatocyte_az": {"task": "ADME", "label": "Hepatocyte clearance"},
+    "clearance_microsome_az": {"task": "ADME", "label": "Microsome clearance"},
+    "ld50_zhu": {"task": "Tox", "label": "Acute toxicity LD50"},
+}
+
+
+def ensure_chemml_from_source() -> bool:
+    if importlib.util.find_spec("chemml") is not None:
+        return True
+
+    search_roots = [
+        Path.cwd(),
+        Path.cwd().parent,
+        Path(__file__).resolve().parents[1],
+        Path(__file__).resolve().parents[1].parent,
+        Path("/content"),
+        Path("/content/chemml"),
+        Path("/content/drive/MyDrive"),
+    ]
+    repo_candidates: list[Path] = []
+    for root in search_roots:
+        repo_candidates.extend([root, root / "chemml"])
+
+    for candidate in repo_candidates:
+        if (candidate / "chemml" / "__init__.py").exists() and (candidate / "setup.py").exists():
+            if str(candidate) not in sys.path:
+                sys.path.insert(0, str(candidate))
+            importlib.invalidate_caches()
+            if importlib.util.find_spec("chemml") is not None:
+                return True
+    return False
+
+
+def ensure_tdc_from_source() -> bool:
+    if importlib.util.find_spec("tdc") is not None:
+        return True
+
+    def try_load_tdc_from_path(candidate_path: Path) -> bool:
+        possible_roots: list[Path] = []
+        if (candidate_path / "tdc" / "__init__.py").exists():
+            possible_roots.append(candidate_path)
+        possible_roots.extend(
+            sorted(
+                {
+                    p.parent.parent
+                    for p in candidate_path.rglob("__init__.py")
+                    if p.parent.name == "tdc"
+                },
+                key=lambda path: len(str(path)),
+            )
+        )
+        for root_path in possible_roots:
+            if str(root_path) not in sys.path:
+                sys.path.insert(0, str(root_path))
+            importlib.invalidate_caches()
+            if importlib.util.find_spec("tdc") is not None:
+                return True
+        return False
+
+    search_roots = [
+        Path.cwd(),
+        Path.cwd().parent,
+        Path(__file__).resolve().parents[1],
+        Path(__file__).resolve().parents[1].parent,
+        Path("/content"),
+        Path("/content/chemml"),
+        Path("/content/drive/MyDrive"),
+    ]
+    archive_candidates: list[Path] = []
+    source_dir_candidates: list[Path] = []
+    for root in search_roots:
+        archive_candidates.extend([root / "TDC" / "pytdc-1.1.15.tar.gz", root / "pytdc-1.1.15.tar.gz"])
+        source_dir_candidates.append(root / "TDC")
+
+    for candidate in source_dir_candidates:
+        if candidate.exists() and try_load_tdc_from_path(candidate):
+            return True
+
+    for candidate in archive_candidates:
+        if candidate.exists():
+            extract_root = Path(tempfile.mkdtemp(prefix="pytdc_src_"))
+            with tarfile.open(candidate, "r:gz") as tf:
+                tf.extractall(extract_root)
+            if try_load_tdc_from_path(extract_root):
+                return True
+
+    download_dir = Path("/content") if str(Path.cwd()).startswith("/content") else (Path.cwd() / ".cache")
+    download_dir.mkdir(parents=True, exist_ok=True)
+    download_target = download_dir / "pytdc-1.1.15.tar.gz"
+    if not download_target.exists():
+        try:
+            urllib.request.urlretrieve(PYTDC_SOURCE_URL, download_target)
+        except Exception:
+            return False
+    extract_root = Path(tempfile.mkdtemp(prefix="pytdc_src_"))
+    with tarfile.open(download_target, "r:gz") as tf:
+        tf.extractall(extract_root)
+    return try_load_tdc_from_path(extract_root)
 
 
 @dataclass
@@ -61,8 +190,35 @@ class DatasetSpec:
     target_column: str
 
 
+@dataclass
+class DatasetRunResult:
+    metrics_rows: list[dict[str, Any]]
+    prediction_tables: list[pd.DataFrame]
+    ga_history_tables: list[pd.DataFrame]
+    status: str
+    elapsed_seconds: float
+
+
 def slugify(text: str) -> str:
     return "_".join("".join(ch.lower() if ch.isalnum() else "_" for ch in str(text)).split("_")) or "dataset"
+
+
+def format_seconds(seconds: float) -> str:
+    seconds = max(0, int(round(float(seconds))))
+    hours, remainder = divmod(seconds, 3600)
+    minutes, secs = divmod(remainder, 60)
+    if hours:
+        return f"{hours:d}h {minutes:02d}m {secs:02d}s"
+    if minutes:
+        return f"{minutes:d}m {secs:02d}s"
+    return f"{secs:d}s"
+
+
+def benchmark_config_signature(args: argparse.Namespace) -> str:
+    config = vars(args).copy()
+    config.pop("output_dir", None)
+    config.pop("dry_run", None)
+    return json.dumps(config, sort_keys=True, default=str)
 
 
 def infer_column(columns: list[str], candidates: list[str]) -> str | None:
@@ -79,21 +235,8 @@ def infer_column(columns: list[str], candidates: list[str]) -> str | None:
     return None
 
 
-def default_dataset_paths(root: Path) -> list[Path]:
-    test_data = root / "test_data"
-    available = {path.name.lower(): path for path in test_data.glob("*.csv")}
-    paths = []
-    for name in DEFAULT_DATASET_FILES:
-        match = available.get(name.lower())
-        if match is None:
-            print(f"[skip] default dataset {name}: file not found under {test_data}")
-            continue
-        paths.append(match)
-    return paths
-
-
 def discover_local_datasets(root: Path, explicit_paths: list[str] | None = None) -> list[DatasetSpec]:
-    paths = [Path(path) for path in explicit_paths or []] or default_dataset_paths(root)
+    paths = [Path(path) for path in explicit_paths or []]
     datasets: list[DatasetSpec] = []
     for path in paths:
         frame = pd.read_csv(path, low_memory=False)
@@ -109,23 +252,94 @@ def discover_local_datasets(root: Path, explicit_paths: list[str] | None = None)
 
 def load_chemml_datasets() -> list[DatasetSpec]:
     datasets: list[DatasetSpec] = []
-    try:
-        from chemml.datasets.base import load_cep_homo, load_organic_density
-    except Exception as exc:
-        print(f"[skip] ChemML bundled datasets: {exc}")
-        return datasets
-    for name, loader, target_column in [
-        ("chemml_organic_density", load_organic_density, "density_Kg/m3"),
-        ("chemml_cep_homo", load_cep_homo, None),
-    ]:
+    ensure_chemml_from_source()
+    for name in CHEMML_EXAMPLE_OPTIONS:
         try:
-            payload = loader()
-            smiles_df, target_df = payload[0], payload[1]
-            target = target_column or target_df.columns[0]
-            frame = pd.concat([smiles_df.reset_index(drop=True), target_df.reset_index(drop=True)], axis=1)
-            datasets.append(DatasetSpec(name, f"ChemML bundled dataset: {name}", frame, "smiles", target))
+            if name == "organic_density":
+                frame = None
+                try:
+                    from chemml.datasets.base import load_organic_density
+
+                    smiles_df, target_df, _ = load_organic_density()
+                    frame = pd.concat([smiles_df.reset_index(drop=True), target_df.reset_index(drop=True)], axis=1)
+                except Exception:
+                    import importlib.util
+
+                    chemml_spec = importlib.util.find_spec("chemml")
+                    if chemml_spec is None or not chemml_spec.submodule_search_locations:
+                        raise
+                    data_path = Path(list(chemml_spec.submodule_search_locations)[0]) / "datasets" / "data" / "moldescriptor_density_smiles.csv"
+                    frame = pd.read_csv(data_path)
+                target = "density_Kg/m3"
+                datasets.append(DatasetSpec("chemml_organic_density", "ChemML bundled dataset: organic_density", frame, "smiles", target))
+            elif name == "cep_homo":
+                frame = None
+                try:
+                    from chemml.datasets.base import load_cep_homo
+
+                    smiles_df, target_df = load_cep_homo()
+                    frame = pd.concat([smiles_df.reset_index(drop=True), target_df.reset_index(drop=True)], axis=1)
+                except Exception:
+                    import importlib.util
+
+                    chemml_spec = importlib.util.find_spec("chemml")
+                    if chemml_spec is None or not chemml_spec.submodule_search_locations:
+                        raise
+                    data_path = Path(list(chemml_spec.submodule_search_locations)[0]) / "datasets" / "data" / "cep_homo.csv"
+                    frame = pd.read_csv(data_path)
+                target = infer_column(list(frame.columns), ["homo", "HOMO", "target", "TARGET"]) or frame.columns[-1]
+                datasets.append(DatasetSpec("chemml_cep_homo", "ChemML bundled dataset: cep_homo", frame, "smiles", target))
+            elif name == "xyz_polarizability":
+                from chemml.datasets.base import load_xyz_polarizability
+
+                molecules, target_df = load_xyz_polarizability()
+                smiles_values = []
+                for idx, molecule in enumerate(molecules):
+                    smiles_value = getattr(molecule, "smiles", None)
+                    if not smiles_value:
+                        raise ValueError(f"missing SMILES for row {idx}")
+                    smiles_values.append(smiles_value)
+                target = target_df.columns[0]
+                frame = pd.DataFrame({"smiles": smiles_values, target: target_df.iloc[:, 0].to_numpy()})
+                datasets.append(DatasetSpec("chemml_xyz_polarizability", "ChemML bundled dataset: xyz_polarizability", frame, "smiles", target))
+            else:
+                raise ValueError(f"Unknown ChemML example: {name}")
         except Exception as exc:
-            print(f"[skip] {name}: {exc}")
+            print(f"[skip] ChemML {name}: {exc}")
+    return datasets
+
+
+def load_tdc_datasets(path: str = "./data") -> list[DatasetSpec]:
+    datasets: list[DatasetSpec] = []
+    ensure_tdc_from_source()
+    try:
+        from tdc.single_pred import ADME, Tox
+    except Exception as exc:
+        print(f"[skip] PyTDC benchmark datasets: {exc}")
+        return datasets
+    loader_by_task = {"ADME": ADME, "Tox": Tox}
+    for dataset_name, config in TDC_QSAR_OPTIONS.items():
+        try:
+            loader = loader_by_task[config["task"]](name=dataset_name, path=path, print_stats=False)
+            frame = loader.get_data().copy().rename(columns={"Drug": "smiles", "Y": "target"})
+            datasets.append(
+                DatasetSpec(
+                    f"tdc_{dataset_name}",
+                    f"PyTDC {config['task']} benchmark: {dataset_name}",
+                    frame,
+                    "smiles",
+                    "target",
+                )
+            )
+        except Exception as exc:
+            print(f"[skip] PyTDC {dataset_name}: {exc}")
+    return datasets
+
+
+def discover_default_example_datasets(root: Path) -> list[DatasetSpec]:
+    datasets: list[DatasetSpec] = []
+    datasets.extend(load_chemml_datasets())
+    datasets.extend(load_tdc_datasets(path=str(root / "data")))
     return datasets
 
 
@@ -156,46 +370,6 @@ def canonicalize_frame(spec: DatasetSpec, log10_target: bool) -> tuple[pd.DataFr
     return df, {"target_transform": transform, "smiles_column": spec.smiles_column, "target_column": spec.target_column}
 
 
-def bitvect_array(bitvect: Any) -> np.ndarray:
-    arr = np.zeros((bitvect.GetNumBits(),), dtype=np.float32)
-    DataStructs.ConvertToNumpyArray(bitvect, arr)
-    return arr
-
-
-def build_feature_matrix(smiles_values: pd.Series, fingerprint_bits: int) -> tuple[pd.DataFrame, dict[str, Any]]:
-    rows, valid = [], []
-    descriptor_names = [name for name, _ in Descriptors._descList]
-    for idx, smiles in enumerate(smiles_values.astype(str)):
-        mol = Chem.MolFromSmiles(smiles)
-        if mol is None:
-            continue
-        chunks = [
-            bitvect_array(AllChem.GetMorganFingerprintAsBitVect(mol, radius=2, nBits=fingerprint_bits)),
-            bitvect_array(AllChem.GetMorganFingerprintAsBitVect(mol, radius=3, nBits=fingerprint_bits)),
-            bitvect_array(AllChem.GetMorganFingerprintAsBitVect(mol, radius=3, nBits=fingerprint_bits, useFeatures=True)),
-            bitvect_array(MACCSkeys.GenMACCSKeys(mol)),
-        ]
-        descriptor_values = []
-        for _name, fn in Descriptors._descList:
-            try:
-                descriptor_values.append(float(fn(mol)))
-            except Exception:
-                descriptor_values.append(np.nan)
-        chunks.append(np.asarray(descriptor_values, dtype=np.float32))
-        rows.append(np.concatenate(chunks).astype(np.float32))
-        valid.append(idx)
-    columns = (
-        [f"morgan_r2_{i}" for i in range(fingerprint_bits)]
-        + [f"ecfp6_{i}" for i in range(fingerprint_bits)]
-        + [f"fcfp6_{i}" for i in range(fingerprint_bits)]
-        + [f"maccs_{i}" for i in range(167)]
-        + [f"rdkit_{name}" for name in descriptor_names]
-    )
-    X = pd.DataFrame(rows, columns=columns).replace([np.inf, -np.inf], np.nan)
-    X = X.drop(columns=X.columns[X.isna().all()].tolist())
-    return X.reset_index(drop=True), {"valid_indices": valid, "feature_count": int(X.shape[1])}
-
-
 def parse_l1_grid(text: str) -> list[float]:
     return sorted({float(token.strip()) for token in str(text).split(",") if token.strip()})
 
@@ -215,12 +389,25 @@ def target_quartile_labels(y: pd.Series) -> pd.Series | None:
 
 
 def split_data(X: pd.DataFrame, y: pd.Series, smiles: pd.Series, args: argparse.Namespace) -> dict[str, Any]:
-    stratify = target_quartile_labels(y) if args.split_strategy == "target_quartiles" else None
-    if args.split_strategy == "target_quartiles" and stratify is None:
-        print("[info] quartile split unavailable; falling back to random split.")
-    X_train, X_test, y_train, y_test, smiles_train, smiles_test = train_test_split(
-        X, y, smiles, test_size=args.test_fraction, random_state=args.random_seed, stratify=stratify
-    )
+    split_strategy = str(args.split_strategy).strip().lower()
+    if split_strategy not in {"random", "target_quartiles", "scaffold"}:
+        raise ValueError("split_strategy must be one of: random, target_quartiles, scaffold")
+    if split_strategy in {"random", "target_quartiles"}:
+        stratify = None
+        if split_strategy == "target_quartiles":
+            try:
+                stratify = target_quartile_labels(y)
+            except Exception:
+                print("[info] quartile split unavailable; falling back to random split.")
+                split_strategy = "random"
+        X_train, X_test, y_train, y_test, smiles_train, smiles_test = train_test_split(
+            X, y, smiles, test_size=args.test_fraction, random_state=args.random_seed, stratify=stratify
+        )
+    else:
+        X_train, X_test, y_train, y_test, smiles_train, smiles_test = scaffold_train_test_split(
+            X, y, smiles, test_size=args.test_fraction, random_state=args.random_seed
+        )
+    split_strategy_used = split_strategy
     return {
         "X_train": X_train.reset_index(drop=True),
         "X_test": X_test.reset_index(drop=True),
@@ -228,11 +415,11 @@ def split_data(X: pd.DataFrame, y: pd.Series, smiles: pd.Series, args: argparse.
         "y_test": y_test.reset_index(drop=True),
         "smiles_train": smiles_train.reset_index(drop=True),
         "smiles_test": smiles_test.reset_index(drop=True),
-        "split_strategy_used": "target_quartiles" if stratify is not None else "random",
+        "split_strategy_used": split_strategy_used,
     }
 
 
-def select_features(X_train: pd.DataFrame, X_test: pd.DataFrame, y_train: pd.Series, args: argparse.Namespace):
+def select_features(X_train: pd.DataFrame, X_test: pd.DataFrame, y_train: pd.Series, smiles_train: pd.Series, args: argparse.Namespace):
     if args.selector_method == "none":
         return X_train.copy(), X_test.copy(), {
             "selector_method": "none",
@@ -242,10 +429,18 @@ def select_features(X_train: pd.DataFrame, X_test: pd.DataFrame, y_train: pd.Ser
         }
     imputer, scaler = SimpleImputer(strategy="median"), StandardScaler()
     X_scaled = scaler.fit_transform(imputer.fit_transform(X_train))
+    selector_cv, selector_cv_folds, selector_cv_strategy = make_qsar_cv_splitter(
+        X_train,
+        y_train,
+        smiles_train,
+        split_strategy=args.split_strategy,
+        cv_folds=args.selector_cv_folds,
+        random_seed=args.random_seed,
+    )
     selector = ElasticNetCV(
         l1_ratio=parse_l1_grid(args.selector_l1_ratio_grid),
         alphas=regularization_grid(args.selector_alpha_min_log10, args.selector_alpha_max_log10, args.selector_alpha_grid_size),
-        cv=min(args.selector_cv_folds, len(X_train)),
+        cv=selector_cv,
         max_iter=args.selector_max_iter,
         n_jobs=-1,
         random_state=args.random_seed,
@@ -271,6 +466,8 @@ def select_features(X_train: pd.DataFrame, X_test: pd.DataFrame, y_train: pd.Ser
         "selector_alpha": float(selector.alpha_),
         "selector_l1_ratio": float(selector.l1_ratio_),
         "selector_n_iter": int(np.max(np.atleast_1d(selector.n_iter_))),
+        "selector_cv_folds": int(selector_cv_folds),
+        "selector_cv_split_strategy": selector_cv_strategy,
         "selected_features": columns,
         "selector_coefficients": coef_df.sort_values("abs_coefficient", ascending=False),
         "max_selected_features": int(max_features),
@@ -288,7 +485,12 @@ def regression_metrics(y_train, pred_train, y_test, pred_test) -> dict[str, floa
     }
 
 
-def conventional_models(args: argparse.Namespace) -> dict[str, Any]:
+def conventional_models(args: argparse.Namespace, X_train: pd.DataFrame, y_train: pd.Series, smiles_train: pd.Series) -> dict[str, Any]:
+    elasticnet_cv, elasticnet_cv_folds, elasticnet_cv_strategy = make_reusable_inner_cv_splitter(
+        split_strategy=args.split_strategy,
+        cv_folds=args.elasticnet_cv_folds,
+        random_seed=args.random_seed,
+    )
     models: dict[str, Any] = {
         "ElasticNetCV": Pipeline(
             [
@@ -299,7 +501,7 @@ def conventional_models(args: argparse.Namespace) -> dict[str, Any]:
                     ElasticNetCV(
                         l1_ratio=parse_l1_grid(args.elasticnet_l1_ratio_grid),
                         alphas=regularization_grid(args.elasticnet_alpha_min_log10, args.elasticnet_alpha_max_log10, args.elasticnet_alpha_grid_size),
-                        cv=args.elasticnet_cv_folds,
+                        cv=elasticnet_cv,
                         max_iter=args.elasticnet_max_iter,
                         n_jobs=-1,
                         random_state=args.random_seed,
@@ -336,11 +538,22 @@ def conventional_models(args: argparse.Namespace) -> dict[str, Any]:
             random_seed=args.random_seed,
             verbose=False,
         )
+    models["_elasticnet_cv_meta"] = {
+        "elasticnet_cv_folds": int(elasticnet_cv_folds),
+        "elasticnet_cv_split_strategy": elasticnet_cv_strategy,
+    }
     return models
 
 
-def evaluate_model(name: str, estimator: Any, X_train, X_test, y_train, y_test, args: argparse.Namespace):
-    cv = KFold(n_splits=min(args.cv_folds, len(X_train)), shuffle=True, random_state=args.random_seed)
+def evaluate_model(name: str, estimator: Any, X_train, X_test, y_train, y_test, smiles_train, args: argparse.Namespace):
+    cv, cv_folds, cv_split_strategy = make_qsar_cv_splitter(
+        X_train,
+        y_train,
+        smiles_train,
+        split_strategy=args.split_strategy,
+        cv_folds=args.cv_folds,
+        random_seed=args.random_seed,
+    )
     scores = cross_validate(
         clone(estimator),
         X_train,
@@ -356,6 +569,8 @@ def evaluate_model(name: str, estimator: Any, X_train, X_test, y_train, y_test, 
     row = {
         "model": name,
         "workflow": "conventional",
+        "cv_folds": int(cv_folds),
+        "cv_split_strategy": cv_split_strategy,
         "cv_r2": float(np.mean(scores["test_r2"])),
         "cv_rmse": float(np.mean(np.sqrt(-scores["test_mse"]))),
         "cv_mae": float(np.mean(-scores["test_mae"])),
@@ -439,10 +654,17 @@ def ga_model_specs(args: argparse.Namespace):
     return specs
 
 
-def run_simple_ga(name: str, build_estimator: Callable, space: dict[str, dict[str, Any]], decode: Callable, X_train, X_test, y_train, y_test, args):
+def run_simple_ga(name: str, build_estimator: Callable, space: dict[str, dict[str, Any]], decode: Callable, X_train, X_test, y_train, y_test, smiles_train, args):
     rng = random.Random(args.random_seed)
     keys = list(space)
-    cv = KFold(n_splits=min(args.ga_cv_folds, len(X_train)), shuffle=True, random_state=args.random_seed)
+    cv, cv_folds, cv_split_strategy = make_qsar_cv_splitter(
+        X_train,
+        y_train,
+        smiles_train,
+        split_strategy=args.split_strategy,
+        cv_folds=args.ga_cv_folds,
+        random_seed=args.random_seed,
+    )
 
     def random_individual():
         return {key: sample_value(space[key], rng) for key in keys}
@@ -481,7 +703,14 @@ def run_simple_ga(name: str, build_estimator: Callable, space: dict[str, dict[st
     fitted.fit(X_train, y_train)
     pred_train = np.asarray(fitted.predict(X_train)).reshape(-1)
     pred_test = np.asarray(fitted.predict(X_test)).reshape(-1)
-    row = {"model": f"{name} GA", "workflow": "ga_tuned", "cv_rmse": best_score, "best_params": json.dumps(decode(best_individual), sort_keys=True)}
+    row = {
+        "model": f"{name} GA",
+        "workflow": "ga_tuned",
+        "cv_rmse": best_score,
+        "cv_folds": int(cv_folds),
+        "cv_split_strategy": cv_split_strategy,
+        "best_params": json.dumps(decode(best_individual), sort_keys=True),
+    }
     row.update(regression_metrics(y_train, pred_train, y_test, pred_test))
     return row, pd.DataFrame(history), pred_train, pred_test
 
@@ -508,35 +737,113 @@ def write_selector_outputs(dataset_dir: Path, selector_meta: dict[str, Any]) -> 
         coefficients.to_csv(dataset_dir / "selector_coefficients.csv", index=False)
 
 
-def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace) -> tuple[list[dict[str, Any]], list[pd.DataFrame], list[pd.DataFrame]]:
+def dataset_status_paths(dataset_dir: Path) -> tuple[Path, Path]:
+    return dataset_dir / "run_status.json", dataset_dir / "metrics.csv"
+
+
+def load_completed_dataset_result(dataset_dir: Path) -> DatasetRunResult | None:
+    status_path, metrics_path = dataset_status_paths(dataset_dir)
+    predictions_path = dataset_dir / "predictions.csv"
+    ga_history_path = dataset_dir / "ga_history.csv"
+    if not status_path.exists() or not metrics_path.exists():
+        return None
+    try:
+        status_payload = json.loads(status_path.read_text(encoding="utf-8"))
+    except Exception:
+        return None
+    if status_payload.get("status") != "completed":
+        return None
+    metrics_rows = pd.read_csv(metrics_path).to_dict(orient="records")
+    prediction_tables = [pd.read_csv(predictions_path)] if predictions_path.exists() else []
+    ga_history_tables = [pd.read_csv(ga_history_path)] if ga_history_path.exists() else []
+    return DatasetRunResult(
+        metrics_rows=metrics_rows,
+        prediction_tables=prediction_tables,
+        ga_history_tables=ga_history_tables,
+        status="resumed",
+        elapsed_seconds=float(status_payload.get("elapsed_seconds", 0.0)),
+    )
+
+
+def write_dataset_status(dataset_dir: Path, payload: dict[str, Any]) -> None:
+    status_path, _metrics_path = dataset_status_paths(dataset_dir)
+    status_path.write_text(json.dumps(payload, indent=2, default=str), encoding="utf-8")
+
+
+def selected_conventional_model_names(args: argparse.Namespace) -> list[str]:
+    names = ["ElasticNetCV", "SVR", "Random forest"]
+    if XGBRegressor is not None:
+        names.append("XGBoost")
+    if CatBoostRegressor is not None:
+        names.append("CatBoost")
+    return names
+
+
+def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, dataset_position: int | None = None, dataset_total: int | None = None) -> DatasetRunResult:
     start = time.time()
     dataset_id = slugify(spec.name)
     dataset_dir = output_dir / dataset_id
     dataset_dir.mkdir(parents=True, exist_ok=True)
-    print(f"\n[{dataset_id}] loading {spec.source}")
+    completed_result = load_completed_dataset_result(dataset_dir)
+    if completed_result is not None:
+        prefix = f"[{dataset_position}/{dataset_total}] " if dataset_position is not None and dataset_total is not None else ""
+        print(f"\n{prefix}{dataset_id}: already completed in {format_seconds(completed_result.elapsed_seconds)}; reusing saved outputs")
+        return completed_result
 
+    requested_ga_models = [model.strip() for model in args.ga_models.split(",") if model.strip()]
+    total_stages = 3 + len(selected_conventional_model_names(args)) + len(requested_ga_models)
+
+    def stage_message(stage_index: int, label: str) -> None:
+        elapsed = time.time() - start
+        avg_stage = elapsed / max(1, stage_index - 1) if stage_index > 1 else 0.0
+        remaining = max(0, total_stages - stage_index + 1)
+        eta = avg_stage * remaining if avg_stage else 0.0
+        prefix = f"[{dataset_position}/{dataset_total}] " if dataset_position is not None and dataset_total is not None else ""
+        print(f"\n{prefix}{dataset_id} | stage {stage_index}/{total_stages}: {label} | elapsed {format_seconds(elapsed)} | dataset ETA {format_seconds(eta)}")
+
+    write_dataset_status(
+        dataset_dir,
+        {
+            "status": "running",
+            "dataset": dataset_id,
+            "source": spec.source,
+            "started_at": time.strftime("%Y-%m-%d %H:%M:%S"),
+        },
+    )
+
+    stage_message(1, f"loading {spec.source}")
     df, input_meta = canonicalize_frame(spec, args.log10_target)
     if len(df) < args.minimum_rows:
         print(f"[skip] {dataset_id}: only {len(df)} valid rows after cleanup")
-        return [], [], []
+        write_dataset_status(dataset_dir, {"status": "skipped", "reason": "too_few_rows_after_cleanup", "n_rows": int(len(df))})
+        return DatasetRunResult([], [], [], "skipped", time.time() - start)
     if args.row_limit and len(df) > args.row_limit:
         df = df.sample(n=args.row_limit, random_state=args.random_seed).reset_index(drop=True)
 
-    X, feature_meta = build_feature_matrix(df["canonical_smiles"], args.fingerprint_bits)
-    valid_indices = feature_meta["valid_indices"]
-    df = df.iloc[valid_indices].reset_index(drop=True)
+    stage_message(2, "building molecular features")
+    X, feature_meta = build_feature_matrix_from_smiles(
+        df["canonical_smiles"].tolist(),
+        selected_feature_families=["morgan", "ecfp6", "fcfp6", "maccs", "rdkit"],
+        radius=2,
+        n_bits=args.fingerprint_bits,
+        enable_persistent_feature_store=args.enable_persistent_feature_store,
+        reuse_persistent_feature_store=args.reuse_persistent_feature_store,
+        persistent_feature_store_path=args.persistent_feature_store_path,
+    )
     y = df["target"].astype(float).reset_index(drop=True)
     smiles = df["canonical_smiles"].reset_index(drop=True)
 
     if len(df) < args.minimum_rows:
         print(f"[skip] {dataset_id}: only {len(df)} valid rows after feature generation")
-        return [], [], []
+        write_dataset_status(dataset_dir, {"status": "skipped", "reason": "too_few_rows_after_features", "n_rows": int(len(df))})
+        return DatasetRunResult([], [], [], "skipped", time.time() - start)
 
     selector_args = argparse.Namespace(**vars(args))
     if selector_args.max_selected_features <= 0:
         selector_args.max_selected_features = max(1, math.ceil(0.10 * len(y)))
+    stage_message(3, "splitting data and selecting features")
     split = split_data(X, y, smiles, args)
-    X_train, X_test, selector_meta = select_features(split["X_train"], split["X_test"], split["y_train"], selector_args)
+    X_train, X_test, selector_meta = select_features(split["X_train"], split["X_test"], split["y_train"], split["smiles_train"], selector_args)
     write_selector_outputs(dataset_dir, selector_meta)
 
     base_meta = {
@@ -555,20 +862,33 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace) -
         "selector_alpha": selector_meta.get("selector_alpha", np.nan),
         "selector_l1_ratio": selector_meta.get("selector_l1_ratio", np.nan),
         "selector_n_iter": selector_meta.get("selector_n_iter", np.nan),
+        "selector_cv_folds": selector_meta.get("selector_cv_folds", np.nan),
+        "selector_cv_split_strategy": selector_meta.get("selector_cv_split_strategy", ""),
         "selector_max_selected_features": selector_meta.get("max_selected_features", np.nan),
+        "feature_store_path": feature_meta.get("feature_store_path", ""),
+        "feature_store_shard_format": feature_meta.get("feature_store_shard_format", ""),
+        "feature_store_cached_rows": feature_meta.get("cached_rows_loaded", np.nan),
+        "feature_store_generated_rows": feature_meta.get("generated_rows_added", np.nan),
+        "representation_key": feature_meta.get("representation_key", ""),
     }
 
     metrics_rows: list[dict[str, Any]] = []
     prediction_tables: list[pd.DataFrame] = []
     ga_history_tables: list[pd.DataFrame] = []
 
-    for model_name, estimator in conventional_models(args).items():
-        print(f"[{dataset_id}] conventional: {model_name}")
+    stage_index = 4
+    model_bundle = conventional_models(args, X_train, split["y_train"], split["smiles_train"])
+    elasticnet_cv_meta = model_bundle.pop("_elasticnet_cv_meta", {})
+    model_items = list(model_bundle.items())
+    for model_name, estimator in model_items:
+        stage_message(stage_index, f"conventional model {model_name}")
         try:
-            row, pred_train, pred_test = evaluate_model(model_name, estimator, X_train, X_test, split["y_train"], split["y_test"], args)
+            row, pred_train, pred_test = evaluate_model(model_name, estimator, X_train, X_test, split["y_train"], split["y_test"], split["smiles_train"], args)
         except Exception as exc:
             row = {"model": model_name, "workflow": "conventional", "error": str(exc)}
             pred_train, pred_test = np.array([]), np.array([])
+        if model_name == "ElasticNetCV":
+            row.update(elasticnet_cv_meta)
         row = {**base_meta, **row, "elapsed_seconds": round(time.time() - start, 3)}
         metrics_rows.append(row)
         if len(pred_train):
@@ -578,16 +898,17 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace) -
                     prediction_frame(dataset_id, model_name, "conventional", "test", split["smiles_test"], split["y_test"], pred_test),
                 ]
             )
+        stage_index += 1
 
     ga_specs = ga_model_specs(args)
-    requested_ga_models = [model.strip() for model in args.ga_models.split(",") if model.strip()]
     for model_name in requested_ga_models:
         if model_name not in ga_specs:
             print(f"[skip] {dataset_id} GA {model_name}: model unavailable")
+            stage_index += 1
             continue
-        print(f"[{dataset_id}] GA tuning: {model_name}")
+        stage_message(stage_index, f"GA tuning {model_name}")
         try:
-            row, history, pred_train, pred_test = run_simple_ga(model_name, *ga_specs[model_name], X_train, X_test, split["y_train"], split["y_test"], args)
+            row, history, pred_train, pred_test = run_simple_ga(model_name, *ga_specs[model_name], X_train, X_test, split["y_train"], split["y_test"], split["smiles_train"], args)
         except Exception as exc:
             row = {"model": f"{model_name} GA", "workflow": "ga_tuned", "error": str(exc)}
             history, pred_train, pred_test = pd.DataFrame(), np.array([]), np.array([])
@@ -603,19 +924,32 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace) -
                     prediction_frame(dataset_id, f"{model_name} GA", "ga_tuned", "test", split["smiles_test"], split["y_test"], pred_test),
                 ]
             )
+        stage_index += 1
 
     pd.DataFrame(metrics_rows).to_csv(dataset_dir / "metrics.csv", index=False)
     if prediction_tables:
         pd.concat(prediction_tables, ignore_index=True).to_csv(dataset_dir / "predictions.csv", index=False)
     if ga_history_tables:
         pd.concat(ga_history_tables, ignore_index=True).to_csv(dataset_dir / "ga_history.csv", index=False)
-    return metrics_rows, prediction_tables, ga_history_tables
+    elapsed_seconds = time.time() - start
+    write_dataset_status(
+        dataset_dir,
+        {
+            "status": "completed",
+            "dataset": dataset_id,
+            "source": spec.source,
+            "completed_at": time.strftime("%Y-%m-%d %H:%M:%S"),
+            "elapsed_seconds": round(elapsed_seconds, 3),
+            "n_metrics_rows": len(metrics_rows),
+        },
+    )
+    return DatasetRunResult(metrics_rows, prediction_tables, ga_history_tables, "completed", elapsed_seconds)
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--dataset", action="append", help="CSV dataset path. Repeat to run a subset. Defaults to test_data/fu.csv, test_data/HLe_invivo.csv, and test_data/VDss.csv.")
-    parser.add_argument("--include-chemml", action="store_true", help="Also run ChemML bundled example datasets if ChemML is installed.")
+    parser.add_argument("--dataset", action="append", help="CSV dataset path. Repeat to override the default notebook example set with local CSVs only.")
+    parser.add_argument("--include-local-csv", action="append", help="Optional extra local CSV dataset path to add on top of the default ChemML + PyTDC example set.")
     parser.add_argument("--output-dir", type=Path, default=None, help="Output directory. Defaults to benchmark_results/autoqsar_benchmark_<timestamp>.")
     parser.add_argument("--dry-run", action="store_true", help="List discovered datasets and planned configuration without fitting models.")
 
@@ -623,9 +957,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--row-limit", type=int, default=0, help="Optional deterministic row cap for smoke tests. 0 uses all rows.")
     parser.add_argument("--fingerprint-bits", type=int, default=2048, help="Morgan/ECFP/FCFP fingerprint bit length.")
     parser.add_argument("--log10-target", action=argparse.BooleanOptionalAction, default=True)
-    parser.add_argument("--split-strategy", choices=["target_quartiles", "random"], default="target_quartiles")
+    parser.add_argument("--split-strategy", choices=["target_quartiles", "random", "scaffold"], default="target_quartiles")
     parser.add_argument("--test-fraction", type=float, default=0.2)
     parser.add_argument("--random-seed", type=int, default=13)
+    parser.add_argument("--enable-persistent-feature-store", action=argparse.BooleanOptionalAction, default=True)
+    parser.add_argument("--reuse-persistent-feature-store", action=argparse.BooleanOptionalAction, default=True)
+    parser.add_argument("--persistent-feature-store-path", default="AUTO")
 
     parser.add_argument("--selector-method", choices=["elasticnet_cv", "none"], default="elasticnet_cv")
     parser.add_argument("--selector-l1-ratio-grid", default="0.1, 0.3, 0.5, 0.7, 0.9")
@@ -651,19 +988,45 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--ga-elites", type=int, default=2)
     parser.add_argument("--ga-cv-folds", type=int, default=5)
     parser.add_argument("--ga-mutation-probability", type=float, default=0.35)
+    parser.add_argument("--resume", action=argparse.BooleanOptionalAction, default=True, help="Resume a compatible incomplete run when possible.")
     return parser.parse_args()
+
+
+def select_output_dir(root: Path, args: argparse.Namespace) -> Path:
+    if args.output_dir is not None:
+        return Path(args.output_dir)
+    benchmark_root = root / "benchmark_results"
+    benchmark_root.mkdir(parents=True, exist_ok=True)
+    config_signature = benchmark_config_signature(args)
+    if args.resume:
+        for candidate in sorted(benchmark_root.glob("autoqsar_benchmark_*"), key=lambda path: path.name, reverse=True):
+            run_config_path = candidate / "run_config.json"
+            run_complete_path = candidate / "run_complete.json"
+            if not run_config_path.exists() or run_complete_path.exists():
+                continue
+            try:
+                payload = json.loads(run_config_path.read_text(encoding="utf-8"))
+            except Exception:
+                continue
+            if payload.get("config_signature") == config_signature:
+                print(f"Resuming compatible incomplete run: {candidate}")
+                return candidate
+    return benchmark_root / f"autoqsar_benchmark_{time.strftime('%Y%m%d_%H%M%S')}"
 
 
 def main() -> int:
     args = parse_args()
     root = Path(__file__).resolve().parents[1]
-    output_dir = args.output_dir or root / "benchmark_results" / f"autoqsar_benchmark_{time.strftime('%Y%m%d_%H%M%S')}"
+    output_dir = select_output_dir(root, args)
 
-    datasets = discover_local_datasets(root, args.dataset)
-    if args.include_chemml:
-        datasets.extend(load_chemml_datasets())
+    if args.dataset:
+        datasets = discover_local_datasets(root, args.dataset)
+    else:
+        datasets = discover_default_example_datasets(root)
+        if args.include_local_csv:
+            datasets.extend(discover_local_datasets(root, args.include_local_csv))
     if not datasets:
-        print("No datasets found. Provide --dataset PATH or add CSV files under test_data/.")
+        print("No datasets found. Provide --dataset PATH or verify ChemML / PyTDC dependencies are available.")
         return 1
 
     if args.dry_run:
@@ -676,6 +1039,7 @@ def main() -> int:
     output_dir.mkdir(parents=True, exist_ok=True)
     config = vars(args).copy()
     config["output_dir"] = str(output_dir)
+    config["config_signature"] = benchmark_config_signature(args)
     config["datasets"] = [{"name": item.name, "source": item.source, "smiles_column": item.smiles_column, "target_column": item.target_column} for item in datasets]
     (output_dir / "run_config.json").write_text(json.dumps(config, indent=2, default=str), encoding="utf-8")
 
@@ -684,14 +1048,28 @@ def main() -> int:
     for dataset in datasets:
         print(f"  - {dataset.name}: smiles={dataset.smiles_column}, target={dataset.target_column}, source={dataset.source}")
 
+    overall_start = time.time()
     all_metrics: list[dict[str, Any]] = []
     all_predictions: list[pd.DataFrame] = []
     all_histories: list[pd.DataFrame] = []
-    for spec in datasets:
-        metrics, predictions, histories = run_dataset(spec, output_dir, args)
-        all_metrics.extend(metrics)
-        all_predictions.extend(predictions)
-        all_histories.extend(histories)
+    completed_dataset_times: list[float] = []
+    for index, spec in enumerate(datasets, start=1):
+        result = run_dataset(spec, output_dir, args, dataset_position=index, dataset_total=len(datasets))
+        all_metrics.extend(result.metrics_rows)
+        all_predictions.extend(result.prediction_tables)
+        all_histories.extend(result.ga_history_tables)
+        if result.status in {"completed", "resumed"}:
+            completed_dataset_times.append(float(result.elapsed_seconds))
+        elapsed = time.time() - overall_start
+        avg_dataset_time = sum(completed_dataset_times) / max(1, len(completed_dataset_times)) if completed_dataset_times else 0.0
+        remaining = len(datasets) - index
+        eta = avg_dataset_time * remaining if avg_dataset_time else 0.0
+        print(
+            f"[overall {index}/{len(datasets)}] "
+            f"status={result.status} | elapsed {format_seconds(elapsed)} | "
+            f"average per finished dataset {format_seconds(avg_dataset_time) if avg_dataset_time else 'n/a'} | "
+            f"ETA {format_seconds(eta)}"
+        )
 
     if all_metrics:
         summary = pd.DataFrame(all_metrics)
@@ -703,6 +1081,17 @@ def main() -> int:
         pd.concat(all_predictions, ignore_index=True).to_csv(output_dir / "predictions.csv", index=False)
     if all_histories:
         pd.concat(all_histories, ignore_index=True).to_csv(output_dir / "ga_history.csv", index=False)
+    (output_dir / "run_complete.json").write_text(
+        json.dumps(
+            {
+                "completed_at": time.strftime("%Y-%m-%d %H:%M:%S"),
+                "elapsed_seconds": round(time.time() - overall_start, 3),
+                "dataset_count": len(datasets),
+            },
+            indent=2,
+        ),
+        encoding="utf-8",
+    )
 
     primary_files = ["summary_metrics.csv", "test_rmse_pivot.csv", "predictions.csv", "run_config.json"]
     if all_histories:

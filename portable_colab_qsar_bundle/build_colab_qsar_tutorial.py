@@ -102,7 +102,9 @@ def _inject_local_widget_read(text: str, form_id: str):
         return dedented
     override_lines = [
         "",
-        f"{param_indent}if not IN_COLAB:",
+        f"{param_indent}if not globals().get('IN_COLAB', False):",
+        f"{param_indent}    if 'read_local_form_values' not in globals():",
+        f"{param_indent}        raise RuntimeError(\"Local widget helpers are not initialized. Run step 0 first.\")",
         f"{param_indent}    _local_form_id = {form_id!r}",
         f"{param_indent}    _local_form_values = read_local_form_values({form_id!r}, {repr(schema)})",
     ]
@@ -155,7 +157,9 @@ def code(text: str, form: bool = True):
     form_id = uuid.uuid4().hex[:8]
     form_cell_text = f"""
     # Local widget controls for: {title}
-    if not IN_COLAB:
+    if not globals().get("IN_COLAB", False):
+        if "ensure_local_form_display" not in globals():
+            raise RuntimeError("Local widget helpers are not initialized. Run step 0 first.")
         ensure_local_form_display({title!r}, {form_id!r}, {repr(schema)})
     """
     run_cell_text = _inject_local_widget_read(text, form_id)
@@ -241,6 +245,7 @@ cells += [
         import base64
         import importlib.util
         import io
+        import hashlib
         import math
         import os
         import re
@@ -254,8 +259,8 @@ cells += [
         from pathlib import Path
         warnings.filterwarnings("ignore")
 
-        PACKAGE_PROGRESS = {"done": 0, "total": 15}
-        SETUP_PROGRESS = {"done": 0, "total": 27}
+        PACKAGE_PROGRESS = {"done": 0, "total": 17}
+        SETUP_PROGRESS = {"done": 0, "total": 29}
         try:
             RUNNING_IN_COLAB = importlib.util.find_spec("google.colab") is not None
         except ModuleNotFoundError:
@@ -264,6 +269,7 @@ cells += [
         RESTART_REQUIRED_PACKAGES = []
         PYTDC_SOURCE_URL = "https://files.pythonhosted.org/packages/db/bf/db7525f0e9c48d340a66ae11ed46bbb1966234660a6882ce47d1e1d52824/pytdc-1.1.15.tar.gz"
         CHEMML_ORGANIC_DENSITY_URL = "https://raw.githubusercontent.com/hachmannlab/chemml/master/chemml/datasets/data/moldescriptor_density_smiles.csv"
+        AUTOQSAR_QSAR_CORE_URL = "https://raw.githubusercontent.com/ScottCoffin/AutoQSAR/master/portable_colab_qsar_bundle/qsar_workflow_core.py"
 
         def progress_message(package_label, status, extra=""):
             PACKAGE_PROGRESS["done"] += 1
@@ -458,6 +464,38 @@ cells += [
             RESTART_REQUIRED_PACKAGES.append(package_label)
             progress_message(package_label, "installed", f"{elapsed:.1f}s")
 
+        def ensure_autoqsar_bundle_source():
+            search_roots = [
+                Path.cwd(),
+                Path.cwd().parent,
+                Path("/content"),
+                Path("/content/AutoQSAR"),
+                Path("/content/drive/MyDrive"),
+                Path("/content/drive/MyDrive/AutoQSAR"),
+            ]
+            for root in search_roots:
+                candidate = root / "portable_colab_qsar_bundle" / "qsar_workflow_core.py"
+                if candidate.exists():
+                    if str(root) not in sys.path:
+                        sys.path.insert(0, str(root))
+                    importlib.invalidate_caches()
+                    return candidate
+
+            target_root = Path.cwd()
+            bundle_dir = target_root / "portable_colab_qsar_bundle"
+            bundle_dir.mkdir(parents=True, exist_ok=True)
+            init_path = bundle_dir / "__init__.py"
+            if not init_path.exists():
+                init_path.write_text("", encoding="utf-8")
+            target_path = bundle_dir / "qsar_workflow_core.py"
+            if not target_path.exists():
+                print(f"[downloading] AutoQSAR shared workflow core from: {AUTOQSAR_QSAR_CORE_URL}", flush=True)
+                urllib.request.urlretrieve(AUTOQSAR_QSAR_CORE_URL, target_path)
+            if str(target_root) not in sys.path:
+                sys.path.insert(0, str(target_root))
+            importlib.invalidate_caches()
+            return target_path
+
         def restart_if_needed():
             if not RESTART_REQUIRED_PACKAGES:
                 return
@@ -524,6 +562,7 @@ cells += [
         ensure_package("ipywidgets", "ipywidgets")
         ensure_package("umap", "umap-learn", label="umap-learn")
         ensure_package("huggingface_hub", "huggingface_hub", label="huggingface_hub")
+        ensure_package("pyarrow", "pyarrow")
         ensure_tdc_from_source()
         ensure_chemml_from_source()
         restart_if_needed()
@@ -578,7 +617,7 @@ cells += [
         from sklearn.linear_model import ElasticNet, ElasticNetCV, Lasso, LassoCV
         from sklearn.manifold import TSNE
         from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
-        from sklearn.model_selection import KFold, cross_validate, train_test_split
+        from sklearn.model_selection import GroupKFold, KFold, StratifiedKFold, cross_validate, train_test_split
         from sklearn.pipeline import Pipeline
         from sklearn.preprocessing import StandardScaler
         from sklearn.svm import SVR
@@ -791,87 +830,20 @@ cells += [
                 "test": test_frame,
             }
 
-        def murcko_scaffold_key(smiles_text):
-            smiles_text = str(smiles_text)
-            mol = Chem.MolFromSmiles(smiles_text)
-            if mol is None:
-                return f"INVALID::{smiles_text}"
-            scaffold = MurckoScaffold.MurckoScaffoldSmiles(mol=mol, includeChirality=False)
-            return scaffold or f"NO_SCAFFOLD::{smiles_text}"
-
-        def scaffold_train_test_split(X, y, smiles, test_size=0.2, random_state=42):
-            smiles_series = pd.Series(smiles, dtype=str).reset_index(drop=True)
-            y_series = pd.Series(y, dtype=float).reset_index(drop=True)
-            X_frame = X.reset_index(drop=True).copy()
-
-            n_total = len(smiles_series)
-            if n_total < 3:
-                raise ValueError("Scaffold splitting requires at least 3 molecules.")
-
-            desired_test = int(round(float(test_size) * n_total))
-            desired_test = min(max(desired_test, 1), n_total - 1)
-
-            scaffold_to_indices = {}
-            for idx, smiles_value in enumerate(smiles_series):
-                scaffold_to_indices.setdefault(murcko_scaffold_key(smiles_value), []).append(idx)
-
-            rng = np.random.RandomState(int(random_state))
-            grouped = list(scaffold_to_indices.items())
-            rng.shuffle(grouped)
-            grouped.sort(key=lambda item: (-len(item[1]), item[0]))
-
-            train_indices = []
-            test_indices = []
-            for scaffold_key, indices in grouped:
-                current_test = len(test_indices)
-                proposed_test = current_test + len(indices)
-                assign_to_test = current_test < desired_test and (
-                    abs(proposed_test - desired_test) <= abs(current_test - desired_test) or current_test == 0
-                )
-                if assign_to_test:
-                    test_indices.extend(indices)
-                else:
-                    train_indices.extend(indices)
-
-            if len(test_indices) == 0 and len(train_indices) > 1:
-                moved_index = train_indices.pop()
-                test_indices.append(moved_index)
-            if len(train_indices) == 0 and len(test_indices) > 1:
-                moved_index = test_indices.pop()
-                train_indices.append(moved_index)
-
-            train_indices = sorted(train_indices)
-            test_indices = sorted(test_indices)
-
-            return (
-                X_frame.iloc[train_indices].reset_index(drop=True),
-                X_frame.iloc[test_indices].reset_index(drop=True),
-                y_series.iloc[train_indices].reset_index(drop=True),
-                y_series.iloc[test_indices].reset_index(drop=True),
-                smiles_series.iloc[train_indices].reset_index(drop=True),
-                smiles_series.iloc[test_indices].reset_index(drop=True),
-            )
-
-        def target_quartile_labels(y, q=4):
-            y_series = pd.Series(y, dtype=float).reset_index(drop=True)
-            if len(y_series) < int(q) * 2:
-                raise ValueError(
-                    f"Target-quartile splitting needs at least {int(q) * 2} rows; found {len(y_series)}."
-                )
-            labels = pd.qcut(y_series, q=int(q), labels=False, duplicates="drop")
-            labels = labels.astype("Int64")
-            if labels.isna().any() or labels.nunique(dropna=True) < 2:
-                raise ValueError(
-                    "Target-quartile splitting could not create at least two non-empty target bins. "
-                    "Use the random split for very small or low-variance target data."
-                )
-            label_counts = labels.value_counts(dropna=True)
-            if int(label_counts.min()) < 2:
-                raise ValueError(
-                    "Target-quartile splitting requires at least two samples per target bin. "
-                    "Use a smaller test fraction or the random split for this dataset."
-                )
-            return labels.astype(int).astype(str)
+        setup_start("AutoQSAR shared workflow core")
+        ensure_autoqsar_bundle_source()
+        from portable_colab_qsar_bundle.qsar_workflow_core import (
+            FEATURE_FAMILY_LABELS as QSAR_CORE_FEATURE_FAMILY_LABELS,
+            align_feature_matrix_to_training_columns,
+            build_feature_matrix_from_smiles,
+            make_qsar_cv_splitter,
+            make_reusable_inner_cv_splitter,
+            normalize_selected_feature_families,
+            scaffold_train_test_split,
+            target_quartile_labels,
+        )
+        FEATURE_FAMILY_LABELS = dict(QSAR_CORE_FEATURE_FAMILY_LABELS)
+        setup_done("AutoQSAR shared workflow core")
 
         def plot_train_test_target_distribution(y_train, y_test, split_strategy):
             import plotly.graph_objects as go
@@ -1514,169 +1486,6 @@ cells += [
             return temp.reset_index(drop=True), stats
         setup_done("SMILES curation helper")
 
-        setup_start("feature builder helper")
-        def make_morgan_matrix(smiles_list, radius=2, n_bits=1024):
-            generator = AllChem.GetMorganGenerator(radius=int(radius), fpSize=int(n_bits))
-            rows = []
-            for smi in smiles_list:
-                mol = Chem.MolFromSmiles(smi)
-                fp = generator.GetFingerprint(mol)
-                arr = np.zeros((int(n_bits),), dtype=np.float32)
-                DataStructs.ConvertToNumpyArray(fp, arr)
-                rows.append(arr)
-            return pd.DataFrame(rows, columns=[f"morgan_bit_{i:04d}" for i in range(n_bits)])
-
-        def make_circular_fingerprint_matrix(smiles_list, radius=3, n_bits=1024, use_features=False, prefix="ecfp6"):
-            generator = AllChem.GetMorganGenerator(radius=int(radius), fpSize=int(n_bits), atomInvariantsGenerator=(AllChem.GetMorganFeatureAtomInvGen() if bool(use_features) else None))
-            rows = []
-            for smi in smiles_list:
-                mol = Chem.MolFromSmiles(smi)
-                fp = generator.GetFingerprint(mol)
-                arr = np.zeros((int(n_bits),), dtype=np.float32)
-                DataStructs.ConvertToNumpyArray(fp, arr)
-                rows.append(arr)
-            return pd.DataFrame(rows, columns=[f"{prefix}_bit_{i:04d}" for i in range(n_bits)])
-
-        def make_ecfp6_matrix(smiles_list, n_bits=1024):
-            return make_circular_fingerprint_matrix(smiles_list, radius=3, n_bits=int(n_bits), use_features=False, prefix="ecfp6")
-
-        def make_fcfp6_matrix(smiles_list, n_bits=1024):
-            return make_circular_fingerprint_matrix(smiles_list, radius=3, n_bits=int(n_bits), use_features=True, prefix="fcfp6")
-
-        def make_maccs_matrix(smiles_list):
-            rows = []
-            for smi in smiles_list:
-                mol = Chem.MolFromSmiles(smi)
-                fp = MACCSkeys.GenMACCSKeys(mol)
-                arr = np.zeros((fp.GetNumBits(),), dtype=np.float32)
-                DataStructs.ConvertToNumpyArray(fp, arr)
-                rows.append(arr)
-            return pd.DataFrame(rows, columns=[f"maccs_bit_{i:03d}" for i in range(fp.GetNumBits())])
-
-        RDKit_DESCRIPTOR_NAMES = [name for name, _ in Descriptors._descList]
-
-        def make_rdkit_descriptor_matrix(smiles_list):
-            rows = []
-            for smi in smiles_list:
-                mol = Chem.MolFromSmiles(smi)
-                rows.append({f"rdkit_{name}": func(mol) for name, func in Descriptors._descList})
-            return pd.DataFrame(rows)
-
-        def finalize_feature_matrix(feature_df):
-            feature_df = feature_df.copy()
-            feature_df = feature_df.replace([np.inf, -np.inf], np.nan)
-            feature_df = feature_df.apply(pd.to_numeric, errors="coerce")
-            float32_limit = np.finfo(np.float32).max
-            feature_df = feature_df.mask(feature_df.abs() > float32_limit, np.nan)
-            all_nan_columns = [column for column in feature_df.columns if feature_df[column].isna().all()]
-            if all_nan_columns:
-                feature_df = feature_df.drop(columns=all_nan_columns)
-            feature_df = feature_df.fillna(feature_df.median(numeric_only=True))
-            feature_df = feature_df.fillna(0.0)
-            return feature_df.astype(np.float32)
-
-        FEATURE_FAMILY_LABELS = {
-            "morgan": "Morgan fingerprints",
-            "ecfp6": "ECFP6 fingerprints",
-            "fcfp6": "FCFP6 fingerprints",
-            "maccs": "MACCS keys",
-            "rdkit": "RDKit descriptors",
-        }
-
-        def normalize_selected_feature_families(selected_feature_families=None, **feature_flags):
-            selected = []
-            if selected_feature_families is not None:
-                for family in selected_feature_families:
-                    family_key = str(family).strip().lower()
-                    if family_key in FEATURE_FAMILY_LABELS and family_key not in selected:
-                        selected.append(family_key)
-            flag_mapping = {
-                "use_morgan_features": "morgan",
-                "use_ecfp6_features": "ecfp6",
-                "use_fcfp6_features": "fcfp6",
-                "use_maccs_keys": "maccs",
-                "use_rdkit_descriptors": "rdkit",
-            }
-            for flag_name, family_key in flag_mapping.items():
-                if bool(feature_flags.get(flag_name)) and family_key not in selected:
-                    selected.append(family_key)
-            return selected
-
-        def feature_family_label(family_key, radius=2, n_bits=1024):
-            family_key = str(family_key).strip().lower()
-            if family_key == "morgan":
-                return f"Morgan(radius={int(radius)}, bits={int(n_bits)})"
-            if family_key == "ecfp6":
-                return f"ECFP6(bits={int(n_bits)})"
-            if family_key == "fcfp6":
-                return f"FCFP6(bits={int(n_bits)})"
-            return FEATURE_FAMILY_LABELS[family_key]
-
-        def build_feature_matrix_from_smiles(smiles_list, selected_feature_families=None, radius=2, n_bits=1024, **feature_flags):
-            selected_families = normalize_selected_feature_families(
-                selected_feature_families=selected_feature_families,
-                **feature_flags,
-            )
-            if not selected_families:
-                raise ValueError("Please select at least one molecular feature family.")
-            frames = []
-            labels = []
-            built_families = []
-            skipped_families = []
-            warnings_list = []
-
-            for family_key in selected_families:
-                if family_key == "morgan":
-                    frames.append(make_morgan_matrix(smiles_list, radius=int(radius), n_bits=int(n_bits)))
-                    labels.append(feature_family_label(family_key, radius=radius, n_bits=n_bits))
-                    built_families.append(family_key)
-                elif family_key == "ecfp6":
-                    frames.append(make_ecfp6_matrix(smiles_list, n_bits=int(n_bits)))
-                    labels.append(feature_family_label(family_key, radius=radius, n_bits=n_bits))
-                    built_families.append(family_key)
-                elif family_key == "fcfp6":
-                    frames.append(make_fcfp6_matrix(smiles_list, n_bits=int(n_bits)))
-                    labels.append(feature_family_label(family_key, radius=radius, n_bits=n_bits))
-                    built_families.append(family_key)
-                elif family_key == "maccs":
-                    frames.append(make_maccs_matrix(smiles_list))
-                    labels.append(feature_family_label(family_key))
-                    built_families.append(family_key)
-                elif family_key == "rdkit":
-                    frames.append(make_rdkit_descriptor_matrix(smiles_list))
-                    labels.append(feature_family_label(family_key))
-                    built_families.append(family_key)
-                else:
-                    raise ValueError(f"Unsupported feature family: {family_key}")
-
-            if not frames:
-                raise RuntimeError(
-                    "None of the requested molecular feature families could be built."
-                )
-            combined = pd.concat(frames, axis=1)
-            build_info = {
-                "selected_feature_families": list(selected_families),
-                "built_feature_families": list(built_families),
-                "skipped_feature_families": list(skipped_families),
-                "warnings": list(warnings_list),
-                "representation_label": " + ".join(labels),
-            }
-            return finalize_feature_matrix(combined), build_info
-
-        def align_feature_matrix_to_training_columns(feature_df, expected_columns):
-            aligned = feature_df.copy()
-            for column in expected_columns:
-                if column not in aligned.columns:
-                    aligned[column] = 0.0
-            aligned = aligned.loc[:, list(expected_columns)].copy()
-            aligned = aligned.replace([np.inf, -np.inf], np.nan)
-            aligned = aligned.apply(pd.to_numeric, errors="coerce")
-            float32_limit = np.finfo(np.float32).max
-            aligned = aligned.mask(aligned.abs() > float32_limit, np.nan)
-            aligned = aligned.fillna(aligned.median(numeric_only=True))
-            aligned = aligned.fillna(0.0)
-            return aligned.astype(np.float32)
-
         def make_regularization_grid(min_log10=-4, max_log10=0, grid_size=40):
             min_log10 = float(min_log10)
             max_log10 = float(max_log10)
@@ -1722,12 +1531,14 @@ cells += [
         def apply_sparse_linear_feature_selection(
             feature_df,
             target_values,
+            smiles_values=None,
             selector_method="lasso_cv",
             alpha=1.0,
             alpha_grid_min_log10=-4,
             alpha_grid_max_log10=0,
             alpha_grid_size=40,
             elasticnet_l1_ratio_grid="0.1, 0.3, 0.5, 0.7, 0.9",
+            cv_split_strategy="random",
             cv_folds=5,
             random_seed=42,
             coefficient_threshold=1e-10,
@@ -1749,6 +1560,7 @@ cells += [
                 progress_bar.update(1)
             sklearn_selection_mode = "random" if str(selection_mode).strip().lower() == "random coordinate updates" else "cyclic"
             effective_cv_folds = None
+            selector_cv_strategy = None
 
             if selector_method == "fixed_lasso":
                 selector = Lasso(
@@ -1758,25 +1570,35 @@ cells += [
                     selection=sklearn_selection_mode,
                 )
             elif selector_method == "lasso_cv":
-                effective_cv_folds = min(int(cv_folds), len(working_df))
-                if effective_cv_folds < 2:
-                    raise ValueError("LassoCV requires at least 2 CV folds.")
+                selector_cv, effective_cv_folds, selector_cv_strategy = make_qsar_cv_splitter(
+                    working_df,
+                    y,
+                    smiles_values if smiles_values is not None else pd.Series([""] * len(working_df)),
+                    split_strategy=cv_split_strategy,
+                    cv_folds=cv_folds,
+                    random_seed=random_seed,
+                )
                 selector = LassoCV(
                     alphas=make_regularization_grid(alpha_grid_min_log10, alpha_grid_max_log10, alpha_grid_size),
-                    cv=effective_cv_folds,
+                    cv=selector_cv,
                     max_iter=int(max_iter),
                     n_jobs=-1,
                     random_state=int(random_seed),
                     selection=sklearn_selection_mode,
                 )
             elif selector_method == "elasticnet_cv":
-                effective_cv_folds = min(int(cv_folds), len(working_df))
-                if effective_cv_folds < 2:
-                    raise ValueError("ElasticNetCV requires at least 2 CV folds.")
+                selector_cv, effective_cv_folds, selector_cv_strategy = make_qsar_cv_splitter(
+                    working_df,
+                    y,
+                    smiles_values if smiles_values is not None else pd.Series([""] * len(working_df)),
+                    split_strategy=cv_split_strategy,
+                    cv_folds=cv_folds,
+                    random_seed=random_seed,
+                )
                 selector = ElasticNetCV(
                     l1_ratio=parse_l1_ratio_grid(elasticnet_l1_ratio_grid),
                     alphas=make_regularization_grid(alpha_grid_min_log10, alpha_grid_max_log10, alpha_grid_size),
-                    cv=effective_cv_folds,
+                    cv=selector_cv,
                     max_iter=int(max_iter),
                     n_jobs=-1,
                     random_state=int(random_seed),
@@ -1882,6 +1704,7 @@ cells += [
                 "selection_mode": str(selection_mode),
                 "max_selected_features": int(max_selected_features),
                 "cv_folds": int(effective_cv_folds) if effective_cv_folds is not None else None,
+                "cv_split_strategy": selector_cv_strategy if selector_method in {"lasso_cv", "elasticnet_cv"} else None,
                 "n_iter": int(np.max(np.atleast_1d(getattr(selector, "n_iter_", 0)))),
                 "training_r2_on_scaled_features": float(selector.score(X_scaled, y)),
                 "intercept": float(np.ravel(np.atleast_1d(selector.intercept_))[0]),
@@ -2362,6 +2185,19 @@ cells += [
         ### 2B. Generate Molecular Features
 
         Select one or more molecular feature families below. Checking every box is the equivalent of an "all descriptors" representation.
+
+        This block now uses a persistent molecular feature store by default. The store is an append-only Parquet layout that keeps previously generated feature rows keyed by:
+
+        - canonical SMILES
+        - selected feature families
+        - fingerprint settings relevant to those families
+
+        Internally, each representation gets its own folder with:
+
+        - a schema file describing the feature columns
+        - append-only Parquet shard files for newly generated rows
+
+        When you rerun feature generation, the notebook first checks that store. Existing rows are loaded immediately, and only missing rows are newly generated and appended to the store.
         """
     ),
     code(
@@ -2374,10 +2210,14 @@ cells += [
         use_rdkit_descriptors = True # @param {type:"boolean"}
         morgan_radius = 2 # @param {type:"slider", min:1, max:4, step:1}
         fingerprint_bits = "1024" # @param ["256", "512", "1024", "2048"]
+        enable_persistent_feature_store = True # @param {type:"boolean"}
+        reuse_persistent_feature_store = True # @param {type:"boolean"}
+        persistent_feature_store_path = "AUTO" # @param {type:"string"}
 
         if "curated_df" not in STATE:
             raise RuntimeError("Please run the curation cell first.")
 
+        curated_df = STATE["curated_df"].copy()
         selected_feature_families = normalize_selected_feature_families(
             use_morgan_features=use_morgan_features,
             use_ecfp6_features=use_ecfp6_features,
@@ -2394,6 +2234,9 @@ cells += [
                 selected_feature_families=selected_feature_families,
                 radius=int(morgan_radius),
                 n_bits=int(fingerprint_bits),
+                enable_persistent_feature_store=bool(enable_persistent_feature_store),
+                reuse_persistent_feature_store=bool(reuse_persistent_feature_store),
+                persistent_feature_store_path=str(persistent_feature_store_path),
             )
         except Exception as exc:
             raise RuntimeError(
@@ -2412,6 +2255,8 @@ cells += [
         STATE["selected_feature_families"] = list(build_info["selected_feature_families"])
         STATE["built_feature_families"] = list(build_info["built_feature_families"])
         STATE["skipped_feature_families"] = list(build_info["skipped_feature_families"])
+        STATE["molecular_feature_store_path"] = build_info.get("feature_store_path", "")
+        STATE["molecular_feature_store_representation_key"] = build_info.get("representation_key")
         STATE["lasso_feature_selection_summary"] = {}
         STATE["feature_builder_config"] = {
             "selected_feature_families": list(build_info["selected_feature_families"]),
@@ -2419,6 +2264,9 @@ cells += [
             "skipped_feature_families": list(build_info["skipped_feature_families"]),
             "fingerprint_radius": int(morgan_radius),
             "fingerprint_bits": int(fingerprint_bits),
+            "enable_persistent_feature_store": bool(enable_persistent_feature_store),
+            "reuse_persistent_feature_store": bool(reuse_persistent_feature_store),
+            "persistent_feature_store_path": build_info.get("feature_store_path", str(persistent_feature_store_path)),
             "lasso_feature_selection_enabled": False,
             "lasso_alpha": None,
             "lasso_selected_feature_count": int(X.shape[1]),
@@ -2431,6 +2279,13 @@ cells += [
         if build_info["skipped_feature_families"]:
             print(f"Skipped feature families: {', '.join(build_info['skipped_feature_families'])}")
         print(f"Feature matrix shape: {X.shape[0]:,} molecules x {X.shape[1]:,} features")
+        if bool(enable_persistent_feature_store):
+            print(
+                "Persistent feature store: "
+                f"loaded {int(build_info.get('cached_rows_loaded', 0)):,} cached row(s), "
+                f"generated and appended {int(build_info.get('generated_rows_added', 0)):,} new row(s)."
+            )
+            print(f"Feature store path: {build_info.get('feature_store_path', persistent_feature_store_path)}")
         display(X.head(3))
         """
     ),
@@ -2863,6 +2718,7 @@ cells += [
         smiles_train = STATE["smiles_train_unselected"].reset_index(drop=True)
         smiles_test = STATE["smiles_test_unselected"].reset_index(drop=True)
         model_random_seed = int(STATE.get("split_random_seed", 42))
+        selector_cv_split_strategy = str(STATE.get("model_split_strategy", STATE.get("split_strategy", "random")))
         feature_metadata = current_feature_metadata()
         feature_selection_config = dict(
             STATE.get(
@@ -2923,6 +2779,7 @@ cells += [
                     str(feature_selection_config.get("selection_mode")),
                     str(feature_selection_config.get("max_selected_features")),
                     str(feature_selection_config.get("random_forest_selector_trees")),
+                    str(selector_cv_split_strategy),
                     str(model_random_seed),
                 ]
             )
@@ -2942,6 +2799,7 @@ cells += [
                 "dataset_label": current_dataset_cache_label(),
                 "representation_label": feature_metadata["representation_label"],
                 "selector_method": train_selector_method,
+                "cv_split_strategy": selector_cv_split_strategy,
                 "data_signature": selector_data_signature,
                 "parameter_signature": selector_parameter_signature,
                 "random_seed": int(model_random_seed),
@@ -2989,6 +2847,7 @@ cells += [
                             "alpha": float(metadata["alpha"]) if metadata.get("alpha") not in [None, "", "None"] else None,
                             "l1_ratio": float(metadata["l1_ratio"]) if metadata.get("l1_ratio") not in [None, "", "None"] else None,
                             "cv_folds": int(metadata["cv_folds"]) if metadata.get("cv_folds") not in [None, "", "None"] else None,
+                            "cv_split_strategy": metadata.get("cv_split_strategy"),
                             "n_iter": int(metadata["n_iter"]) if metadata.get("n_iter") not in [None, "", "None"] else 0,
                             "training_r2_on_scaled_features": float(metadata["training_r2_on_scaled_features"]) if metadata.get("training_r2_on_scaled_features") not in [None, "", "None"] else np.nan,
                             "top_coefficients": diagnostics_df,
@@ -3040,12 +2899,14 @@ cells += [
                             alpha_grid_max_log10=float(feature_selection_config.get("alpha_grid_max_log10", 0)),
                             alpha_grid_size=int(feature_selection_config.get("alpha_grid_size", 40)),
                             elasticnet_l1_ratio_grid=str(feature_selection_config.get("elasticnet_l1_ratio_grid", "0.1, 0.3, 0.5, 0.7, 0.9")),
+                            cv_split_strategy=selector_cv_split_strategy,
                             cv_folds=int(feature_selection_config.get("cv_folds", 5)),
                             random_seed=int(model_random_seed),
                             coefficient_threshold=float(feature_selection_config.get("coefficient_threshold", 1e-10)),
                             max_iter=int(feature_selection_config.get("max_iter", 50000)),
                             selection_mode=str(feature_selection_config.get("selection_mode", "cyclic coordinate updates")),
                             max_selected_features=int(train_selector_max_features),
+                            smiles_values=smiles_train,
                             progress_bar=selector_progress,
                             progress_fit_units=int(estimated_fit_units),
                         )
@@ -3068,7 +2929,11 @@ cells += [
                     f"{selector_details['original_feature_count']:,} features "
                     f"(alpha={selector_details.get('alpha')}, l1_ratio={selector_details.get('l1_ratio')})."
                 )
-                print(f"Selector CV folds: {selector_details.get('cv_folds')}; iterations: {selector_details.get('n_iter')}")
+                print(
+                    f"Selector CV folds: {selector_details.get('cv_folds')} "
+                    f"using {selector_details.get('cv_split_strategy')}; "
+                    f"iterations: {selector_details.get('n_iter')}"
+                )
                 if selector_details.get("best_cv_rmse") is not None:
                     print(f"Best selector internal CV RMSE: {selector_details['best_cv_rmse']:.4f}")
                 if selector_details.get("best_alpha_at_grid_edge"):
@@ -3211,6 +3076,7 @@ cells += [
                         "alpha": selector_details.get("alpha"),
                         "l1_ratio": selector_details.get("l1_ratio"),
                         "cv_folds": selector_details.get("cv_folds"),
+                        "cv_split_strategy": selector_details.get("cv_split_strategy"),
                         "n_iter": selector_details.get("n_iter"),
                         "training_r2_on_scaled_features": selector_details.get("training_r2_on_scaled_features"),
                         "best_cv_rmse": selector_details.get("best_cv_rmse"),
@@ -3246,6 +3112,15 @@ cells += [
         if selector_cache_dir is not None:
             print(f"Feature-selector cache directory: {selector_cache_dir}")
         display_note("Run `4C` next to train the conventional ML models on this prepared split.")
+        """
+    ),
+    md(
+        """
+        ### 4C. Conventional-Model CV Note
+
+        When the train/test workflow uses **scaffold** splitting, the **outer** conventional-model evaluation still follows the scaffold groups.
+
+        One exception is the **inner** tuning loop inside `ElasticNetCV`: scikit-learn does not provide a way to pass scaffold groups into that nested internal CV. In that case, the notebook falls back to **random K-folds for the inner ElasticNetCV tuning only**, while keeping the outer scaffold-based evaluation unchanged.
         """
     ),
     code(
@@ -3285,11 +3160,20 @@ cells += [
         selector_cache_dir = Path(STATE["feature_selector_cache_dir"]) if STATE.get("feature_selector_cache_dir") else None
         selector_cache_paths = dict(STATE.get("feature_selector_cache_paths", {}))
         train_selector_summary = dict(STATE.get("traditional_train_only_feature_selector", {}))
+        training_cv_split_strategy = str(STATE.get("model_split_strategy", STATE.get("split_strategy", "random")))
         effective_cv_folds = None
         if use_cross_validation:
-            effective_cv_folds = min(int(cv_folds), len(X_train))
-            if effective_cv_folds < 2:
-                raise ValueError("At least 2 cross-validation folds are required when cross-validation is enabled.")
+            cv, effective_cv_folds, effective_cv_split_strategy = make_qsar_cv_splitter(
+                X_train,
+                y_train,
+                smiles_train,
+                split_strategy=training_cv_split_strategy,
+                cv_folds=cv_folds,
+                random_seed=int(model_random_seed),
+            )
+        else:
+            cv = None
+            effective_cv_split_strategy = None
 
         elasticnet_alpha_grid = make_regularization_grid(
             elasticnet_model_alpha_grid_min_log10,
@@ -3297,9 +3181,11 @@ cells += [
             elasticnet_model_alpha_grid_size,
         )
         elasticnet_l1_ratio_values = parse_l1_ratio_grid(elasticnet_model_l1_ratio_grid)
-        elasticnet_internal_cv_folds = min(int(elasticnet_model_cv_folds), len(X_train))
-        if elasticnet_internal_cv_folds < 2:
-            raise ValueError("ElasticNetCV model tuning requires at least 2 CV folds.")
+        elasticnet_internal_cv, elasticnet_internal_cv_folds, elasticnet_internal_cv_split_strategy = make_reusable_inner_cv_splitter(
+            split_strategy=training_cv_split_strategy,
+            cv_folds=elasticnet_model_cv_folds,
+            random_seed=int(model_random_seed),
+        )
 
         elasticnet_model_cache_metadata = {
             "elasticnet_model_cv": True,
@@ -3308,6 +3194,7 @@ cells += [
             "elasticnet_model_alpha_grid_size": int(elasticnet_model_alpha_grid_size),
             "elasticnet_model_l1_ratio_grid": ", ".join(str(value) for value in elasticnet_l1_ratio_values),
             "elasticnet_model_cv_folds": int(elasticnet_internal_cv_folds),
+            "elasticnet_model_cv_split_strategy": elasticnet_internal_cv_split_strategy,
             "elasticnet_model_max_iter": int(elasticnet_model_max_iter),
         }
         model_specific_cache_metadata = {
@@ -3317,7 +3204,7 @@ cells += [
         elasticnet_cv_estimator = ElasticNetCV(
             l1_ratio=elasticnet_l1_ratio_values,
             alphas=elasticnet_alpha_grid,
-            cv=elasticnet_internal_cv_folds,
+            cv=elasticnet_internal_cv,
             max_iter=int(elasticnet_model_max_iter),
             n_jobs=-1,
             random_state=int(model_random_seed),
@@ -3381,17 +3268,20 @@ cells += [
             print(
                 "ElasticNetCV conventional model uses internal CV tuning: "
                 f"{len(elasticnet_alpha_grid)} alpha values x {len(elasticnet_l1_ratio_values)} l1_ratio values x "
-                f"{int(elasticnet_internal_cv_folds)} CV folds = about {estimated_elasticnet_fits:,} model fits per final fit."
+                f"{int(elasticnet_internal_cv_folds)} {elasticnet_internal_cv_split_strategy} CV folds = about {estimated_elasticnet_fits:,} model fits per final fit."
             )
+            if training_cv_split_strategy == "scaffold":
+                print(
+                    "Note: nested ElasticNetCV cannot receive scaffold groups inside sklearn's internal fit loop, "
+                    "so the inner tuning CV falls back to random folds while the outer evaluation CV still follows the scaffold split."
+                )
             if use_cross_validation:
                 print(
                     "Outer conventional-model cross-validation is also enabled, so ElasticNetCV is evaluated with "
                     "train-fold-only internal tuning in each outer fold."
                 )
-        cv = None
         scoring = None
         if use_cross_validation:
-            cv = KFold(n_splits=effective_cv_folds, shuffle=True, random_state=int(model_random_seed))
             scoring = {
                 "r2": "r2",
                 "mae": "neg_mean_absolute_error",
@@ -3440,6 +3330,7 @@ cells += [
                             "test_fraction": float(test_fraction),
                             "cross_validation_enabled": bool(use_cross_validation),
                             "cv_folds": int(effective_cv_folds) if effective_cv_folds is not None else None,
+                            "cv_split_strategy": effective_cv_split_strategy if effective_cv_split_strategy is not None else None,
                             "random_seed": int(model_random_seed),
                             "selected_feature_families": list(feature_metadata["selected_feature_families"]),
                             "built_feature_families": list(feature_metadata["built_feature_families"]),
@@ -3579,6 +3470,7 @@ cells += [
                         "test_fraction": float(test_fraction),
                         "cross_validation_enabled": bool(use_cross_validation),
                         "cv_folds": int(effective_cv_folds) if effective_cv_folds is not None else None,
+                        "cv_split_strategy": effective_cv_split_strategy if effective_cv_split_strategy is not None else None,
                         "cv_r2": row["CV R2"],
                         "cv_rmse": row["CV RMSE"],
                         "cv_mae": row["CV MAE"],
@@ -3618,7 +3510,7 @@ cells += [
 
         print(f"Ran {len(selected_models)} conventional model(s): {', '.join(selected_models.keys())}")
         if use_cross_validation:
-            print(f"Cross-validation enabled with {effective_cv_folds} folds.")
+            print(f"Cross-validation enabled with {effective_cv_folds} folds using {effective_cv_split_strategy}.")
         else:
             print("Cross-validation disabled. Ranking is based on held-out test performance only.")
         print(f"Best conventional model on the held-out test set: {best_model_name}")
