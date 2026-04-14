@@ -103,10 +103,15 @@ def _inject_local_widget_read(text: str, form_id: str):
     override_lines = [
         "",
         f"{param_indent}if not globals().get('IN_COLAB', False):",
-        f"{param_indent}    if 'read_local_form_values' not in globals():",
-        f"{param_indent}        raise RuntimeError(\"Local widget helpers are not initialized. Run step 0 first.\")",
-        f"{param_indent}    _local_form_id = {form_id!r}",
-        f"{param_indent}    _local_form_values = read_local_form_values({form_id!r}, {repr(schema)})",
+        f"{param_indent}    if 'read_local_form_values' not in globals() or 'ensure_local_form_display' not in globals():",
+        f"{param_indent}        print(\"Local widget helpers are not initialized. Run step 0 first.\")",
+        f"{param_indent}        _local_form_values = {{item['name']: item['default'] for item in {repr(schema)} if item.get('widget_kind') != 'markdown'}}",
+        f"{param_indent}    else:",
+        f"{param_indent}        _local_form_id = {form_id!r}",
+        f"{param_indent}        if 'LOCAL_FORM_STATE' in globals() and _local_form_id not in LOCAL_FORM_STATE:",
+        f"{param_indent}            ensure_local_form_display({title!r}, {form_id!r}, {repr(schema)})",
+        f"{param_indent}            print(\"Local widgets displayed above. Adjust them and rerun this cell if needed.\")",
+        f"{param_indent}        _local_form_values = read_local_form_values({form_id!r}, {repr(schema)})",
     ]
     for item in schema:
         if item.get("widget_kind") == "markdown":
@@ -159,8 +164,9 @@ def code(text: str, form: bool = True):
     # Local widget controls for: {title}
     if not globals().get("IN_COLAB", False):
         if "ensure_local_form_display" not in globals():
-            raise RuntimeError("Local widget helpers are not initialized. Run step 0 first.")
-        ensure_local_form_display({title!r}, {form_id!r}, {repr(schema)})
+            print("Local widget helpers are not initialized. Run step 0 first, then rerun this controls cell.")
+        else:
+            ensure_local_form_display({title!r}, {form_id!r}, {repr(schema)})
     """
     run_cell_text = _inject_local_widget_read(text, form_id)
     return [
@@ -178,6 +184,22 @@ cells += [
         # Tutorial: Guided QSAR Workflow With Widgets
 
         [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ScottCoffin/AutoQSAR/blob/master/portable_colab_qsar_bundle/colab_qsar_tutorial.ipynb)
+
+        **Kernel note (local Jupyter users)**  
+        This notebook is configured to prefer the **AutoQSAR (py311)** kernel. If you do not see it in the kernel list, create it first:
+
+        ```powershell
+        conda create -n autoqsar-py311 python=3.11 -y
+        conda activate autoqsar-py311
+        python -m pip install --upgrade pip
+        python -m pip install jupyter ipykernel
+        python -m ipykernel install --user --name autoqsar-py311 --display-name "AutoQSAR (py311)"
+        ```
+
+        After that, switch the notebook kernel to **AutoQSAR (py311)** and rerun step 0.
+
+        **Colab note (MapLight + GNN)**  
+        The MapLight + GNN workflow depends on DGL, which the MapLight repo reports as unreliable on Colab. If you enable MapLight + GNN in Colab, the notebook will skip it with a message rather than crash. Use a local Python 3.11 kernel if you need that model.
         """
     ),
     md(
@@ -259,7 +281,7 @@ cells += [
         from pathlib import Path
         warnings.filterwarnings("ignore")
 
-        PACKAGE_PROGRESS = {"done": 0, "total": 17}
+        PACKAGE_PROGRESS = {"done": 0, "total": 18}
         SETUP_PROGRESS = {"done": 0, "total": 29}
         try:
             RUNNING_IN_COLAB = importlib.util.find_spec("google.colab") is not None
@@ -324,6 +346,16 @@ cells += [
                 f"Unable to install a working package for '{import_name}'. "
                 f"Tried: {pip_names}. Last error: {last_error}"
             )
+
+        def install_dependencies(pip_names):
+            if not pip_names:
+                return
+            for pip_name in pip_names:
+                try:
+                    print(f"[installing] {pip_name}", flush=True)
+                    subprocess.check_call([sys.executable, "-m", "pip", "install", "-q", str(pip_name)])
+                except Exception as exc:
+                    raise RuntimeError(f"Failed to install dependency '{pip_name}': {exc}") from exc
 
         def ensure_tdc_from_source():
             package_label = "PyTDC"
@@ -558,6 +590,7 @@ cells += [
         ensure_package("future", "future")
         ensure_package("mordred", "mordred")
         ensure_package("seaborn", "seaborn")
+        ensure_package("lxml", "lxml")
         ensure_package("fuzzywuzzy", "fuzzywuzzy")
         ensure_package("ipywidgets", "ipywidgets")
         ensure_package("umap", "umap-learn", label="umap-learn")
@@ -598,6 +631,36 @@ cells += [
                     pass
             return tqdm_auto(*args, **kwargs)
         setup_done("core python packages")
+
+        setup_start("packaging helpers")
+        try:
+            import pkg_resources  # noqa: F401
+            setup_done("packaging helpers")
+        except Exception:
+            ensure_package("setuptools", "setuptools", "setuptools")
+            try:
+                import pkg_resources  # noqa: F401
+                setup_done("packaging helpers", "installed setuptools")
+            except Exception:
+                ensure_package("packaging", "packaging", "packaging")
+                import types as _types
+                import sys as _sys
+                from packaging import version as _pkg_version
+
+                class _Dist:
+                    def __init__(self, version="0"):
+                        self.version = version
+
+                def _get_distribution(_name):
+                    return _Dist("0")
+
+                shim = _types.SimpleNamespace(
+                    get_distribution=_get_distribution,
+                    parse_version=_pkg_version.parse,
+                    DistributionNotFound=Exception,
+                )
+                _sys.modules["pkg_resources"] = shim
+                setup_done("packaging helpers", "shimmed pkg_resources")
 
         setup_start("visualization and chemistry packages")
         import plotly.express as px
@@ -832,6 +895,9 @@ cells += [
 
         setup_start("AutoQSAR shared workflow core")
         ensure_autoqsar_bundle_source()
+        import importlib
+        import portable_colab_qsar_bundle.qsar_workflow_core as qsar_core
+        importlib.reload(qsar_core)
         from portable_colab_qsar_bundle.qsar_workflow_core import (
             FEATURE_FAMILY_LABELS as QSAR_CORE_FEATURE_FAMILY_LABELS,
             align_feature_matrix_to_training_columns,
@@ -1162,10 +1228,11 @@ cells += [
             if IN_COLAB:
                 return
             if widgets is None:
-                raise RuntimeError(
-                    "Local notebook forms require `ipywidgets`. "
+                print(
+                    "Local notebook forms require `ipywidgets`, but it is not available in this environment. "
                     "Rerun step 0 so `ipywidgets` can be installed and imported."
                 )
+                return
 
             if form_id not in LOCAL_FORM_STATE:
                 widget_map = {}
@@ -1454,9 +1521,10 @@ cells += [
         setup_done("TDC leaderboard helper")
 
         setup_start("SMILES curation helper")
-        def curate_smiles_dataframe(df, smiles_col, target_col, deduplicate=True):
-            temp = df[[smiles_col, target_col]].copy()
-            temp.columns = ["raw_smiles", "target"]
+        def curate_smiles_dataframe(df, smiles_col, target_col, aux_columns=None, deduplicate=True):
+            aux_columns = [col for col in (aux_columns or []) if col in df.columns and col not in {smiles_col, target_col}]
+            temp = df[[smiles_col, target_col] + aux_columns].copy()
+            temp = temp.rename(columns={smiles_col: "raw_smiles", target_col: "target"})
             temp["target"] = pd.to_numeric(temp["target"], errors="coerce")
             temp["raw_smiles"] = temp["raw_smiles"].astype(str).str.strip()
             stats = {"rows_before": int(len(temp))}
@@ -1480,11 +1548,68 @@ cells += [
             stats["invalid_smiles_removed"] = int(invalid)
             before_dedup = len(temp)
             if deduplicate:
-                temp = temp.groupby("canonical_smiles", as_index=False).agg(target=("target", "mean"))
+                def _first_nonnull(series):
+                    series = series.dropna()
+                    if series.empty:
+                        return np.nan
+                    return series.iloc[0]
+
+                agg_map = {"target": "mean"}
+                for col in aux_columns:
+                    agg_map[col] = _first_nonnull
+                temp = temp.groupby("canonical_smiles", as_index=False).agg(agg_map)
                 temp["rdkit_mol"] = temp["canonical_smiles"].map(Chem.MolFromSmiles)
             stats["duplicate_canonical_smiles_collapsed"] = int(before_dedup - len(temp))
+            stats["aux_columns_retained"] = int(len(aux_columns))
             return temp.reset_index(drop=True), stats
         setup_done("SMILES curation helper")
+
+        setup_start("auxiliary feature helper")
+        def build_auxiliary_feature_matrix(df, aux_columns):
+            aux_columns = [col for col in (aux_columns or []) if col in df.columns]
+            if not aux_columns:
+                return pd.DataFrame(index=df.index)
+
+            aux_df = df[aux_columns].copy()
+            numeric_cols = []
+            categorical_cols = []
+            for col in aux_columns:
+                series = aux_df[col]
+                non_null = series.notna().sum()
+                numeric_series = pd.to_numeric(series, errors="coerce")
+                numeric_non_null = numeric_series.notna().sum()
+                if non_null > 0 and numeric_non_null >= max(1, int(0.7 * non_null)):
+                    aux_df[col] = numeric_series
+                    numeric_cols.append(col)
+                else:
+                    categorical_cols.append(col)
+
+            numeric_frame = pd.DataFrame(index=aux_df.index)
+            if numeric_cols:
+                numeric_frame = aux_df[numeric_cols].copy()
+                for col in numeric_cols:
+                    median = numeric_frame[col].median()
+                    if pd.isna(median):
+                        median = 0.0
+                    numeric_frame[col] = numeric_frame[col].fillna(median).astype(float)
+                numeric_frame = numeric_frame.rename(columns={col: f"aux_{col}" for col in numeric_cols})
+
+            categorical_frame = pd.DataFrame(index=aux_df.index)
+            if categorical_cols:
+                cat_base = aux_df[categorical_cols].copy()
+                for col in categorical_cols:
+                    cat_base[col] = cat_base[col].astype(str).fillna("Unknown")
+                categorical_frame = pd.get_dummies(
+                    cat_base,
+                    prefix=[f"aux_{col}" for col in categorical_cols],
+                    prefix_sep="=",
+                    dummy_na=False,
+                )
+
+            combined = pd.concat([numeric_frame, categorical_frame], axis=1)
+            combined = combined.reindex(sorted(combined.columns), axis=1)
+            return combined.reset_index(drop=True)
+        setup_done("auxiliary feature helper")
 
         def make_regularization_grid(min_log10=-4, max_log10=0, grid_size=40):
             min_log10 = float(min_log10)
@@ -1610,7 +1735,28 @@ cells += [
             if progress_bar is not None:
                 progress_bar.set_description(f"Fitting {selector_method}")
                 progress_bar.update(1)
+            elapsed_event = None
+            elapsed_thread = None
+            if progress_bar is not None and selector_method in {"lasso_cv", "elasticnet_cv"}:
+                import threading
+                import time as _time
+
+                elapsed_event = threading.Event()
+
+                def _elapsed_updater():
+                    start = _time.perf_counter()
+                    while not elapsed_event.is_set():
+                        _time.sleep(2.0)
+                        elapsed = _time.perf_counter() - start
+                        progress_bar.set_postfix_str(f"elapsed {elapsed/60.0:.1f} min")
+
+                elapsed_thread = threading.Thread(target=_elapsed_updater, daemon=True)
+                elapsed_thread.start()
             selector.fit(X_scaled, y)
+            if elapsed_event is not None:
+                elapsed_event.set()
+                if elapsed_thread is not None:
+                    elapsed_thread.join(timeout=1.0)
             if progress_bar is not None:
                 progress_bar.update(max(1, int(progress_fit_units)))
                 progress_bar.set_description("Selecting nonzero coefficients")
@@ -1640,10 +1786,10 @@ cells += [
             best_l1_ratio_at_grid_edge = None
             if selector_method in {"lasso_cv", "elasticnet_cv"} and hasattr(selector, "mse_path_"):
                 mse_path = np.asarray(selector.mse_path_, dtype=float)
+                alpha_values = np.asarray(selector.alphas_, dtype=float)
+                l1_values = np.asarray(parse_l1_ratio_grid(elasticnet_l1_ratio_grid), dtype=float)
                 rows = []
                 if selector_method == "elasticnet_cv" and mse_path.ndim == 3:
-                    l1_values = parse_l1_ratio_grid(elasticnet_l1_ratio_grid)
-                    alpha_values = np.asarray(selector.alphas_, dtype=float)
                     for l1_index, l1_value in enumerate(l1_values):
                         for alpha_index, alpha_value in enumerate(alpha_values):
                             fold_mse = np.asarray(mse_path[l1_index, alpha_index, :], dtype=float)
@@ -1657,7 +1803,6 @@ cells += [
                                 }
                             )
                 elif mse_path.ndim == 2:
-                    alpha_values = np.asarray(selector.alphas_, dtype=float)
                     for alpha_index, alpha_value in enumerate(alpha_values):
                         fold_mse = np.asarray(mse_path[alpha_index, :], dtype=float)
                         rows.append(
@@ -1672,14 +1817,13 @@ cells += [
                 if rows:
                     cv_diagnostics_df = pd.DataFrame(rows).sort_values("mean_cv_mse", ascending=True).reset_index(drop=True)
                     best_cv_rmse = float(cv_diagnostics_df.loc[0, "mean_cv_rmse"])
-                    alpha_grid_values = np.asarray(selector.alphas_, dtype=float).reshape(-1)
+                    alpha_grid_values = np.asarray(alpha_values, dtype=float).reshape(-1)
                     best_alpha = float(getattr(selector, "alpha_", float(alpha)))
                     best_alpha_at_grid_edge = bool(
                         np.isclose(best_alpha, float(np.nanmin(alpha_grid_values)))
                         or np.isclose(best_alpha, float(np.nanmax(alpha_grid_values)))
                     )
                     if selector_method == "elasticnet_cv":
-                        l1_values = np.asarray(parse_l1_ratio_grid(elasticnet_l1_ratio_grid), dtype=float)
                         best_l1 = float(getattr(selector, "l1_ratio_", np.nan))
                         best_l1_ratio_at_grid_edge = bool(
                             np.isfinite(best_l1)
@@ -1693,11 +1837,11 @@ cells += [
                 "selected_columns": list(selected_columns),
                 "selected_feature_count": int(len(selected_columns)),
                 "original_feature_count": int(working_df.shape[1]),
-                "alpha": float(getattr(selector, "alpha_", float(alpha))),
+                "alpha": float(getattr(selector, "alpha_", getattr(selector, "alpha", float(alpha)))),
                 "l1_ratio": (
                     float(getattr(selector, "l1_ratio_"))
                     if hasattr(selector, "l1_ratio_")
-                    else None
+                    else getattr(selector, "l1_ratio", None)
                 ),
                 "coefficient_threshold": float(coefficient_threshold),
                 "max_iter": int(max_iter),
@@ -1749,6 +1893,8 @@ cells += [
                 "built_feature_families": list(builder_config.get("built_feature_families", STATE.get("built_feature_families", []))),
                 "fingerprint_radius": int(builder_config.get("fingerprint_radius", STATE.get("fingerprint_radius", 2))),
                 "fingerprint_bits": int(builder_config.get("fingerprint_bits", STATE.get("fingerprint_bits", 1024))),
+                "auxiliary_columns": list(builder_config.get("auxiliary_columns", STATE.get("auxiliary_columns", []))),
+                "auxiliary_feature_columns": list(builder_config.get("auxiliary_feature_columns", STATE.get("auxiliary_feature_columns", []))),
                 "lasso_feature_selection_enabled": bool(builder_config.get("lasso_feature_selection_enabled", False)),
                 "lasso_selector_method": str(builder_config.get("lasso_selector_method", "fixed_lasso" if builder_config.get("lasso_feature_selection_enabled", False) else "none")),
                 "lasso_alpha": (
@@ -1767,7 +1913,17 @@ cells += [
 
         setup_start("regression summary helper")
         def summarize_regression(y_true, y_pred, prefix):
-            return {f"{prefix} R2": float(r2_score(y_true, y_pred)), f"{prefix} RMSE": float(math.sqrt(mean_squared_error(y_true, y_pred))), f"{prefix} MAE": float(mean_absolute_error(y_true, y_pred))}
+            series_true = pd.Series(y_true, dtype=float)
+            series_pred = pd.Series(y_pred, dtype=float)
+            spearman = series_true.corr(series_pred, method="spearman")
+            if pd.isna(spearman):
+                spearman = np.nan
+            return {
+                f"{prefix} R2": float(r2_score(y_true, y_pred)),
+                f"{prefix} RMSE": float(math.sqrt(mean_squared_error(y_true, y_pred))),
+                f"{prefix} MAE": float(mean_absolute_error(y_true, y_pred)),
+                f"{prefix} Spearman": float(spearman),
+            }
         setup_done("regression summary helper")
 
         setup_start("interactive table helper")
@@ -1857,6 +2013,8 @@ cells += [
                     "Official TDC leaderboard best model: "
                     f"{leaderboard_summary['model']}"
                 )
+                if leaderboard_summary.get("rank"):
+                    print(f"Official TDC leaderboard rank: {leaderboard_summary['rank']}")
                 if leaderboard_summary.get("metric_name") and leaderboard_summary.get("metric_value"):
                     print(
                         "Official TDC leaderboard best metric: "
@@ -1895,6 +2053,10 @@ cells += [
         # @title 1B. Choose the SMILES and target columns { display-mode: "form" }
         smiles_column = "AUTO" # @param {type:"string"}
         target_column = "AUTO" # @param {type:"string"}
+        use_only_smiles_target = True # @param {type:"boolean"}
+        include_all_columns = False # @param {type:"boolean"}
+        include_auxiliary_columns = False # @param {type:"boolean"}
+        auxiliary_columns = "" # @param {type:"string"}
         preview_selected_rows = 5 # @param {type:"slider", min:3, max:15, step:1}
 
         if "raw_df" not in STATE:
@@ -1925,16 +2087,46 @@ cells += [
         if resolved_target_column not in STATE["raw_df"].columns:
             raise ValueError(f"Target column not found: {resolved_target_column}")
 
+        candidate_aux_columns = [
+            col for col in STATE["raw_df"].columns
+            if col not in {resolved_smiles_column, resolved_target_column}
+        ]
+        auxiliary_list = []
+        auxiliary_mode = "smiles_target"
+        if bool(include_all_columns):
+            auxiliary_list = candidate_aux_columns
+            auxiliary_mode = "all_columns"
+        elif bool(include_auxiliary_columns):
+            requested = [col.strip() for col in str(auxiliary_columns).split(",") if col.strip()]
+            missing = [col for col in requested if col not in STATE["raw_df"].columns]
+            if missing:
+                raise ValueError(f"Auxiliary columns not found in dataset: {missing}")
+            auxiliary_list = requested
+            auxiliary_mode = "selected_columns" if requested else "none"
+        elif bool(use_only_smiles_target):
+            auxiliary_list = []
+            auxiliary_mode = "smiles_target"
+        else:
+            auxiliary_list = []
+            auxiliary_mode = "none"
+
         STATE["smiles_column"] = resolved_smiles_column
         STATE["target_column"] = resolved_target_column
+        STATE["auxiliary_columns"] = auxiliary_list
+        STATE["auxiliary_mode"] = auxiliary_mode
         print(f"Using SMILES column: {resolved_smiles_column}")
         print(f"Using target column: {resolved_target_column}")
+        if auxiliary_list:
+            print(f"Auxiliary columns ({len(auxiliary_list)}): {', '.join(auxiliary_list)}")
+        else:
+            print("Auxiliary columns: none")
         selected_preview = STATE["raw_df"][[resolved_smiles_column, resolved_target_column]].copy()
         print(f"Selected subset shape: {selected_preview.shape[0]:,} rows x {selected_preview.shape[1]} columns")
         display(selected_preview.head(preview_selected_rows))
         display_note(
             "Run the next preprocessing cell to **assess missingness** in the selected SMILES and target columns and choose how to handle it before curation. "
-            "This step is adapted from `references/missing_values.ipynb`."
+            "This step is adapted from `references/missing_values.ipynb`. "
+            "Auxiliary columns (if selected) are carried forward and will be one-hot encoded for categorical values and median-imputed for numeric values."
         )
         """
     ),
@@ -1982,7 +2174,8 @@ cells += [
         raw_df = STATE["raw_df"].copy()
         smiles_col = STATE["smiles_column"]
         target_col = STATE["target_column"]
-        selected_df = raw_df[[smiles_col, target_col]].copy()
+        aux_columns = list(STATE.get("auxiliary_columns", []))
+        selected_df = raw_df[[smiles_col, target_col] + aux_columns].copy()
 
         parsed_tokens = []
         for token in str(custom_missing_tokens).split(","):
@@ -2074,10 +2267,11 @@ cells += [
         if bool(STATE.get("log10_transform_target", False)):
             nonpositive_mask = working_df[target_col].astype(float) <= 0
             if bool(nonpositive_mask.any()):
-                example_values = working_df.loc[nonpositive_mask, target_col].head(5).tolist()
-                raise ValueError(
-                    "The log10 target transform requires all target values to be greater than zero after missing-value handling. "
-                    f"Found {int(nonpositive_mask.sum())} non-positive value(s), including: {example_values}"
+                removed_nonpositive = int(nonpositive_mask.sum())
+                working_df = working_df.loc[~nonpositive_mask].copy()
+                print(
+                    "Log10 transform: removed "
+                    f"{removed_nonpositive:,} row(s) with non-positive target values."
                 )
             working_df[target_col] = np.log10(working_df[target_col].astype(float))
             target_transform_label = "log10"
@@ -2086,6 +2280,7 @@ cells += [
             working_df,
             smiles_col,
             target_col,
+            aux_columns=aux_columns,
             deduplicate=bool(collapse_duplicate_canonical_smiles),
         )
         if curated_df.empty:
@@ -2107,7 +2302,10 @@ cells += [
         for key, value in curation_stats.items():
             print(f"- {key}: {value:,}")
         print(f"- rows_after_cleaning: {len(curated_df):,}")
-        display(curated_df[["canonical_smiles", "target"]].head(preview_rows_after_cleaning))
+        preview_cols = ["canonical_smiles", "target"]
+        if aux_columns:
+            preview_cols.extend(aux_columns)
+        display(curated_df[preview_cols].head(preview_rows_after_cleaning))
 
         if int(any_missing_mask.sum()) > 0:
             display_note(
@@ -2208,6 +2406,7 @@ cells += [
         use_fcfp6_features = True # @param {type:"boolean"}
         use_maccs_keys = True # @param {type:"boolean"}
         use_rdkit_descriptors = True # @param {type:"boolean"}
+        use_maplight_classic = True # @param {type:"boolean"}
         morgan_radius = 2 # @param {type:"slider", min:1, max:4, step:1}
         fingerprint_bits = "1024" # @param ["256", "512", "1024", "2048"]
         enable_persistent_feature_store = True # @param {type:"boolean"}
@@ -2224,7 +2423,10 @@ cells += [
             use_fcfp6_features=use_fcfp6_features,
             use_maccs_keys=use_maccs_keys,
             use_rdkit_descriptors=use_rdkit_descriptors,
+            use_maplight_classic=use_maplight_classic,
         )
+        if not selected_feature_families and bool(use_maplight_classic):
+            selected_feature_families = ["maplight"]
         if not selected_feature_families:
             raise ValueError("Please select at least one molecular feature family.")
 
@@ -2244,12 +2446,18 @@ cells += [
                 f"{exc}"
             ) from exc
 
+        auxiliary_columns = list(STATE.get("auxiliary_columns", []))
+        aux_feature_df = build_auxiliary_feature_matrix(curated_df, auxiliary_columns)
+        if not aux_feature_df.empty:
+            X = pd.concat([X.reset_index(drop=True), aux_feature_df.reset_index(drop=True)], axis=1)
+
         for warning_text in build_info["warnings"]:
             print(f"Warning: {warning_text}")
 
         STATE["feature_matrix"] = X.copy()
         STATE["unfiltered_feature_matrix"] = X.copy()
         STATE["feature_names"] = list(X.columns)
+        STATE["auxiliary_feature_columns"] = list(aux_feature_df.columns) if not aux_feature_df.empty else []
         STATE["fingerprint_radius"] = int(morgan_radius)
         STATE["fingerprint_bits"] = int(fingerprint_bits)
         STATE["selected_feature_families"] = list(build_info["selected_feature_families"])
@@ -2267,6 +2475,8 @@ cells += [
             "enable_persistent_feature_store": bool(enable_persistent_feature_store),
             "reuse_persistent_feature_store": bool(reuse_persistent_feature_store),
             "persistent_feature_store_path": build_info.get("feature_store_path", str(persistent_feature_store_path)),
+            "auxiliary_columns": list(auxiliary_columns),
+            "auxiliary_feature_columns": list(aux_feature_df.columns) if not aux_feature_df.empty else [],
             "lasso_feature_selection_enabled": False,
             "lasso_alpha": None,
             "lasso_selected_feature_count": int(X.shape[1]),
@@ -2279,6 +2489,8 @@ cells += [
         if build_info["skipped_feature_families"]:
             print(f"Skipped feature families: {', '.join(build_info['skipped_feature_families'])}")
         print(f"Feature matrix shape: {X.shape[0]:,} molecules x {X.shape[1]:,} features")
+        if auxiliary_columns:
+            print(f"Auxiliary columns used: {', '.join(auxiliary_columns)}")
         if bool(enable_persistent_feature_store):
             print(
                 "Persistent feature store: "
@@ -2287,132 +2499,6 @@ cells += [
             )
             print(f"Feature store path: {build_info.get('feature_store_path', persistent_feature_store_path)}")
         display(X.head(3))
-        """
-    ),
-    md(
-        """
-        ### 2C. Configure Train-Only Feature Selection
-
-        Molecular feature generation can take a while, and feature selection can also take a while. This block now stores the feature-selection settings in one place; the actual selector is fit later in `4A`, after the train/test split exists. That keeps the workflow leakage-safe: the selector sees only the training rows, then the selected feature columns are applied to the held-out test rows.
-
-        **Methods and reference context**
-
-        - `fixed_lasso`: fits one LASSO model at the chosen alpha. This is fast and useful for sensitivity checks, but it is not optimized unless alpha was chosen by a separate train-only validation process. Avoid `alpha=0.0` for LASSO feature selection; it removes the L1 penalty and convergence warnings become hard to interpret.
-        - `lasso_cv`: cross-validates alpha over a log-spaced grid and keeps features with nonzero coefficients. This follows the two-step QSAR pattern in `refs/1708.pdf`: standardize features, select variables on training data where possible, then evaluate models after selection.
-        - `elasticnet_cv`: cross-validates both alpha and the L1/L2 mixing ratio. This is often more stable for correlated molecular descriptors because pure LASSO can select one descriptor arbitrarily from a correlated group. This matches the ElasticNet strategy used in the bundled ChemML AutoML references.
-        - `random_forest_importance`: fits a random forest on the training rows and keeps the highest-importance features. The `refs/btab659.pdf` LASSO-RF workflow and the Journal of Chemometrics two-step hybrid modeling paper both support comparing sparse linear selection against tree-based importance selection.
-
-        **Recommended starting settings**
-
-        - Given the example testing where ElasticNet is substantially outperforming CatBoost, start with `feature_selector_method = elasticnet_cv`, alpha grid `10^-5` to `10^-1`, grid size `40`, `5` CV folds, and `l1_ratio` values `0.1, 0.3, 0.5, 0.7, 0.9`.
-        - ChemML's installed AutoML search space does **not** include `l1_ratio = 1.0`; it uses values around `0.4` to `0.7` for ElasticNet. You can still add `1.0` manually if you want the grid to include the pure-LASSO endpoint.
-        - Use `lasso_cv` when you want a sparser model or when ElasticNetCV is too slow.
-        - Leave `max_selected_features = 0` to use the default cap of about 10% of the total molecule count. Enter a positive integer to override that cap.
-        - Keep caching enabled. `4A` will reuse a selector result only when the training data signature and selector parameters match exactly.
-
-        **What the main settings mean**
-
-        - `selector_alpha_grid_min_log10` and `selector_alpha_grid_max_log10`: lower and upper exponents for the alpha grid. `-5` to `-1` means alpha values from `0.00001` to `0.1`. This avoids making `1.0` the top of the default search grid, which can be too strong for some QSAR descriptor matrices.
-        - `selector_alpha_grid_size`: number of alpha values to test. Larger values search more finely but increase runtime approximately linearly.
-        - `elasticnet_l1_ratio_grid`: ElasticNet mixing values. `1.0` is pure LASSO; the default stops at `0.9` so ElasticNetCV does not silently collapse to the pure-LASSO endpoint unless you explicitly add `1.0`.
-        - `selector_cv_folds`: internal folds used to choose alpha, and for ElasticNetCV also the L1 ratio. More folds can be more stable but slower.
-        - `lasso_coefficient_threshold`: absolute coefficient cutoff for keeping a feature after scaling. The default keeps essentially nonzero coefficients.
-        - `max_selected_features`: optional cap on selected features by largest absolute coefficient or RF importance. Use `0` for the automatic default of 10% of curated molecules, or enter a positive absolute feature count to override that default.
-        - `lasso_max_iter`: maximum coordinate descent iterations. If the selector uses all iterations, increase this value or use a stronger alpha grid.
-        - `lasso_coordinate_selection`: cyclic is deterministic; random can sometimes converge faster on difficult correlated matrices.
-        - `selector_cache_run_name`: set to `AUTO` to reuse the latest matching selector cache for this dataset, or type a run label to reuse/save under a named selector cache folder.
-        """
-    ),
-    code(
-        """
-        # @title 2C. Configure train-only feature selection { display-mode: "form" }
-        # @markdown ### Selector method
-        feature_selector_method = "elasticnet_cv" # @param ["none", "fixed_lasso", "lasso_cv", "elasticnet_cv", "random_forest_importance"]
-        # @markdown ### Fixed LASSO settings
-        lasso_feature_selection_alpha = 1.0 # @param {type:"number"}
-        # @markdown ### LassoCV and ElasticNetCV alpha grid
-        selector_alpha_grid_min_log10 = -5 # @param {type:"integer"}
-        selector_alpha_grid_max_log10 = -1 # @param {type:"integer"}
-        selector_alpha_grid_size = 40 # @param {type:"slider", min:10, max:80, step:5}
-        # @markdown ### ElasticNetCV l1-ratio grid
-        elasticnet_l1_ratio_grid = "0.1, 0.3, 0.5, 0.7, 0.9" # @param {type:"string"}
-        # @markdown ### Cross-validation and convergence
-        selector_cv_folds = 5 # @param [3, 5, 10]
-        lasso_coefficient_threshold = 1e-10 # @param {type:"number"}
-        lasso_max_iter = 50000 # @param {type:"integer"}
-        lasso_coordinate_selection = "cyclic coordinate updates" # @param ["cyclic coordinate updates", "random coordinate updates"]
-        # @markdown ### Output size and diagnostics
-        max_selected_features = 0 # @param {type:"integer"}
-        random_forest_selector_trees = 500 # @param {type:"integer"}
-        show_lasso_coefficient_diagnostics = True # @param {type:"boolean"}
-        top_lasso_coefficients_to_show = 30 # @param {type:"slider", min:10, max:50, step:5}
-        # @markdown ### Selector cache
-        enable_feature_selector_cache = True # @param {type:"boolean"}
-        reuse_feature_selector_cache = True # @param {type:"boolean"}
-        selector_cache_run_name = "AUTO" # @param {type:"string"}
-
-        STATE.setdefault("feature_builder_config", {})
-        selected_selector_method = str(feature_selector_method).strip().lower()
-        if selected_selector_method not in {"none", "fixed_lasso", "lasso_cv", "elasticnet_cv", "random_forest_importance"}:
-            raise ValueError(f"Unsupported feature selector method: {feature_selector_method}")
-        dataset_row_count = int(len(STATE["curated_df"])) if "curated_df" in STATE else 0
-        if int(max_selected_features) <= 0:
-            effective_max_selected_features = max(1, int(math.ceil(0.10 * max(1, dataset_row_count))))
-        else:
-            effective_max_selected_features = int(max_selected_features)
-
-        STATE["feature_selection_config"] = {
-            "method": selected_selector_method,
-            "fixed_lasso_alpha": float(lasso_feature_selection_alpha),
-            "alpha_grid_min_log10": float(selector_alpha_grid_min_log10),
-            "alpha_grid_max_log10": float(selector_alpha_grid_max_log10),
-            "alpha_grid_size": int(selector_alpha_grid_size),
-            "elasticnet_l1_ratio_grid": str(elasticnet_l1_ratio_grid),
-            "cv_folds": int(selector_cv_folds),
-            "coefficient_threshold": float(lasso_coefficient_threshold),
-            "max_iter": int(lasso_max_iter),
-            "selection_mode": str(lasso_coordinate_selection),
-            "max_selected_features": int(effective_max_selected_features),
-            "max_selected_features_mode": "10_percent_of_total_rows" if int(max_selected_features) <= 0 else "manual",
-            "random_forest_selector_trees": int(random_forest_selector_trees),
-            "show_diagnostics": bool(show_lasso_coefficient_diagnostics),
-            "top_coefficients_to_show": int(top_lasso_coefficients_to_show),
-            "enable_cache": bool(enable_feature_selector_cache),
-            "reuse_cache": bool(reuse_feature_selector_cache),
-            "cache_run_name": str(selector_cache_run_name),
-        }
-        STATE["lasso_feature_selection_summary"] = {}
-        STATE["feature_builder_config"]["lasso_feature_selection_enabled"] = False
-        STATE["feature_builder_config"]["lasso_selector_method"] = "none"
-        STATE["feature_builder_config"]["lasso_alpha"] = None
-        STATE["feature_builder_config"]["lasso_l1_ratio"] = None
-        STATE["feature_builder_config"]["lasso_selected_feature_count"] = int(STATE.get("feature_matrix", pd.DataFrame()).shape[1]) if "feature_matrix" in STATE else 0
-
-        print(f"Configured train-only feature selector: {selected_selector_method}")
-        if selected_selector_method == "elasticnet_cv":
-            l1_ratio_values = parse_l1_ratio_grid(elasticnet_l1_ratio_grid)
-            print(
-                "ElasticNetCV will run in 4A after the train/test split: "
-                f"{int(selector_alpha_grid_size)} alpha values x {len(l1_ratio_values)} l1_ratio values x up to "
-                f"{int(selector_cv_folds)} CV folds."
-            )
-        elif selected_selector_method == "lasso_cv":
-            print(
-                "LassoCV will run in 4A after the train/test split: "
-                f"{int(selector_alpha_grid_size)} alpha values x up to {int(selector_cv_folds)} CV folds."
-            )
-        elif selected_selector_method == "fixed_lasso":
-            print(f"Fixed LASSO will run in 4A after the train/test split at alpha={float(lasso_feature_selection_alpha)}.")
-        elif selected_selector_method == "random_forest_importance":
-            print(f"Random-forest importance selection will run in 4A with {int(random_forest_selector_trees):,} trees.")
-        else:
-            print("Feature selection disabled. 4A will train on the full feature matrix.")
-        if int(max_selected_features) <= 0:
-            print(f"Maximum selected features: {effective_max_selected_features:,} (10% of {dataset_row_count:,} total curated molecule(s), rounded up).")
-        else:
-            print(f"Maximum selected features: {int(max_selected_features):,}")
-        print(f"Selector cache enabled: {'yes' if enable_feature_selector_cache else 'no'}; reuse cache: {'yes' if reuse_feature_selector_cache else 'no'}")
-        print("Run 4A to split the data and fit or load the cached selector, then run 4B to train the conventional models.")
         """
     ),
     md(
@@ -2427,7 +2513,7 @@ cells += [
         - **MACCS** provides a compact fixed key set
         - **RDKit descriptors** provide continuous physicochemical summary features
 
-        If the descriptor count becomes large relative to the number of molecules, configure the optional **train-only feature-selection** step in `2C`. The selector is fit in `4A` after the train/test split so held-out test rows do not influence the selected feature set.
+        If the descriptor count becomes large relative to the number of molecules, configure the optional **train-only feature-selection** step in `2C` (placed just before `4B`). The selector is fit in `4B` after the train/test split so held-out test rows do not influence the selected feature set.
         """
     ),
     md(
@@ -2702,7 +2788,108 @@ cells += [
             f"Saved raw train/test split: {X_train.shape[0]:,} train row(s), "
             f"{X_test.shape[0]:,} test row(s), {X_train.shape[1]:,} feature(s) before selection."
         )
-        display_note("Run `4B` next to fit or load the train-only feature selector before conventional model training.")
+        display_note("Configure selector settings in `2C` (now placed here), then run `4B` to fit or load the train-only feature selector.")
+        """
+    ),
+    md(
+        """
+        ### 2C. Configure Train-Only Feature Selection
+
+        This configuration block is placed here so selector settings are chosen right before the selector implementation in `4B`.
+        """
+    ),
+    code(
+        """
+        # @title 2C. Configure train-only feature selection { display-mode: "form" }
+        # @markdown ### Selector method
+        feature_selector_method = "elasticnet_cv" # @param ["none", "fixed_lasso", "lasso_cv", "elasticnet_cv", "random_forest_importance"]
+        # @markdown ### Fixed LASSO settings
+        lasso_feature_selection_alpha = 1.0 # @param {type:"number"}
+        # @markdown ### LassoCV and ElasticNetCV alpha grid
+        selector_alpha_grid_min_log10 = -5 # @param {type:"integer"}
+        selector_alpha_grid_max_log10 = -1 # @param {type:"integer"}
+        selector_alpha_grid_size = 40 # @param {type:"slider", min:10, max:80, step:5}
+        # @markdown ### ElasticNetCV l1-ratio grid
+        elasticnet_l1_ratio_grid = "0.1, 0.3, 0.5, 0.7, 0.9" # @param {type:"string"}
+        # @markdown ### Cross-validation and convergence
+        selector_cv_folds = 5 # @param [3, 5, 10]
+        lasso_coefficient_threshold = 1e-10 # @param {type:"number"}
+        lasso_max_iter = 50000 # @param {type:"integer"}
+        lasso_coordinate_selection = "cyclic coordinate updates" # @param ["cyclic coordinate updates", "random coordinate updates"]
+        estimate_selector_runtime = False # @param {type:"boolean"}
+        # @markdown ### Output size and diagnostics
+        max_selected_features = 0 # @param {type:"integer"}
+        random_forest_selector_trees = 500 # @param {type:"integer"}
+        show_lasso_coefficient_diagnostics = True # @param {type:"boolean"}
+        top_lasso_coefficients_to_show = 30 # @param {type:"slider", min:10, max:50, step:5}
+        # @markdown ### Selector cache
+        enable_feature_selector_cache = True # @param {type:"boolean"}
+        reuse_feature_selector_cache = True # @param {type:"boolean"}
+        selector_cache_run_name = "AUTO" # @param {type:"string"}
+
+        STATE.setdefault("feature_builder_config", {})
+        selected_selector_method = str(feature_selector_method).strip().lower()
+        if selected_selector_method not in {"none", "fixed_lasso", "lasso_cv", "elasticnet_cv", "random_forest_importance"}:
+            raise ValueError(f"Unsupported feature selector method: {feature_selector_method}")
+        dataset_row_count = int(len(STATE["curated_df"])) if "curated_df" in STATE else 0
+        if int(max_selected_features) <= 0:
+            effective_max_selected_features = max(1, int(math.ceil(0.10 * max(1, dataset_row_count))))
+        else:
+            effective_max_selected_features = int(max_selected_features)
+
+        STATE["feature_selection_config"] = {
+            "method": selected_selector_method,
+            "fixed_lasso_alpha": float(lasso_feature_selection_alpha),
+            "alpha_grid_min_log10": float(selector_alpha_grid_min_log10),
+            "alpha_grid_max_log10": float(selector_alpha_grid_max_log10),
+            "alpha_grid_size": int(selector_alpha_grid_size),
+            "elasticnet_l1_ratio_grid": str(elasticnet_l1_ratio_grid),
+            "cv_folds": int(selector_cv_folds),
+            "coefficient_threshold": float(lasso_coefficient_threshold),
+            "max_iter": int(lasso_max_iter),
+            "selection_mode": str(lasso_coordinate_selection),
+            "max_selected_features": int(effective_max_selected_features),
+            "max_selected_features_mode": "10_percent_of_total_rows" if int(max_selected_features) <= 0 else "manual",
+            "random_forest_selector_trees": int(random_forest_selector_trees),
+            "estimate_runtime": bool(estimate_selector_runtime),
+            "show_diagnostics": bool(show_lasso_coefficient_diagnostics),
+            "top_coefficients_to_show": int(top_lasso_coefficients_to_show),
+            "enable_cache": bool(enable_feature_selector_cache),
+            "reuse_cache": bool(reuse_feature_selector_cache),
+            "cache_run_name": str(selector_cache_run_name),
+        }
+        STATE["lasso_feature_selection_summary"] = {}
+        STATE["feature_builder_config"]["lasso_feature_selection_enabled"] = False
+        STATE["feature_builder_config"]["lasso_selector_method"] = "none"
+        STATE["feature_builder_config"]["lasso_alpha"] = None
+        STATE["feature_builder_config"]["lasso_l1_ratio"] = None
+        STATE["feature_builder_config"]["lasso_selected_feature_count"] = int(STATE.get("feature_matrix", pd.DataFrame()).shape[1]) if "feature_matrix" in STATE else 0
+
+        print(f"Configured train-only feature selector: {selected_selector_method}")
+        if selected_selector_method == "elasticnet_cv":
+            l1_ratio_values = parse_l1_ratio_grid(elasticnet_l1_ratio_grid)
+            print(
+                "ElasticNetCV will run in 4B after the train/test split: "
+                f"{int(selector_alpha_grid_size)} alpha values x {len(l1_ratio_values)} l1_ratio values x up to "
+                f"{int(selector_cv_folds)} CV folds."
+            )
+        elif selected_selector_method == "lasso_cv":
+            print(
+                "LassoCV will run in 4B after the train/test split: "
+                f"{int(selector_alpha_grid_size)} alpha values x up to {int(selector_cv_folds)} CV folds."
+            )
+        elif selected_selector_method == "fixed_lasso":
+            print(f"Fixed LASSO will run in 4B after the train/test split at alpha={float(lasso_feature_selection_alpha)}.")
+        elif selected_selector_method == "random_forest_importance":
+            print(f"Random-forest importance selection will run in 4B with {int(random_forest_selector_trees):,} trees.")
+        else:
+            print("Feature selection disabled. 4B will train on the full feature matrix.")
+        if int(max_selected_features) <= 0:
+            print(f"Maximum selected features: {effective_max_selected_features:,} (10% of {dataset_row_count:,} total curated molecule(s), rounded up).")
+        else:
+            print(f"Maximum selected features: {int(max_selected_features):,}")
+        print(f"Selector cache enabled: {'yes' if enable_feature_selector_cache else 'no'}; reuse cache: {'yes' if reuse_feature_selector_cache else 'no'}")
+        print("Run 4B next to fit or load the cached selector, then continue to conventional model training.")
         """
     ),
     code(
@@ -2888,6 +3075,60 @@ cells += [
                     else:
                         estimated_fit_units = 1
                         print(f"Running train-only fixed LASSO selector at alpha={float(feature_selection_config.get('fixed_lasso_alpha', 1.0))}.")
+                    if (
+                        bool(feature_selection_config.get("estimate_runtime", False))
+                        and train_selector_method in {"lasso_cv", "elasticnet_cv"}
+                        and int(estimated_fit_units) > 0
+                    ):
+                        try:
+                            import time as _time
+                            sample_rows = min(int(X_train.shape[0]), 200)
+                            if sample_rows >= 20:
+                                rng = np.random.RandomState(int(model_random_seed))
+                                sample_idx = rng.choice(X_train.index.to_numpy(), size=sample_rows, replace=False)
+                                X_sample = X_train.loc[sample_idx].copy()
+                                y_sample = y_train.loc[sample_idx].to_numpy(dtype=float)
+                                warmup_alpha_grid = make_regularization_grid(
+                                    float(feature_selection_config.get("alpha_grid_min_log10", -4)),
+                                    float(feature_selection_config.get("alpha_grid_max_log10", 0)),
+                                    max(3, int(feature_selection_config.get("alpha_grid_size", 40) // 4)),
+                                )
+                                warmup_l1 = parse_l1_ratio_grid(
+                                    feature_selection_config.get("elasticnet_l1_ratio_grid", "0.1, 0.3, 0.5, 0.7, 0.9")
+                                )
+                                if train_selector_method == "lasso_cv":
+                                    warmup_l1 = [1.0]
+                                warmup_folds = max(2, int(feature_selection_config.get("cv_folds", 5)))
+                                warmup_selector = ElasticNetCV(
+                                    l1_ratio=warmup_l1,
+                                    alphas=warmup_alpha_grid,
+                                    cv=warmup_folds,
+                                    max_iter=int(feature_selection_config.get("max_iter", 50000)),
+                                    n_jobs=-1,
+                                    random_state=int(model_random_seed),
+                                    selection=str(feature_selection_config.get("selection_mode", "cyclic coordinate updates")).strip().lower().startswith("random") and "random" or "cyclic",
+                                ) if train_selector_method == "elasticnet_cv" else LassoCV(
+                                    alphas=warmup_alpha_grid,
+                                    cv=warmup_folds,
+                                    max_iter=int(feature_selection_config.get("max_iter", 50000)),
+                                    n_jobs=-1,
+                                    random_state=int(model_random_seed),
+                                    selection=str(feature_selection_config.get("selection_mode", "cyclic coordinate updates")).strip().lower().startswith("random") and "random" or "cyclic",
+                                )
+                                start = _time.perf_counter()
+                                warmup_selector.fit(X_sample.to_numpy(dtype=np.float32), y_sample)
+                                elapsed = _time.perf_counter() - start
+                                warmup_units = int(len(warmup_alpha_grid) * len(warmup_l1) * warmup_folds)
+                                if warmup_units > 0 and elapsed > 0:
+                                    seconds_per_unit = elapsed / float(warmup_units)
+                                    eta_seconds = seconds_per_unit * float(estimated_fit_units)
+                                    eta_hours = eta_seconds / 3600.0
+                                    print(
+                                        f"Estimated selector runtime (rough): {eta_hours:.2f} hours "
+                                        f"based on a warm-up of {warmup_units} fits."
+                                    )
+                        except Exception:
+                            pass
                     selector_progress = tqdm(total=int(estimated_fit_units) + 4, desc=f"Train-only {train_selector_method}", leave=False, unit="step")
                     try:
                         selected_X_train, selector_details = apply_sparse_linear_feature_selection(
@@ -3247,6 +3488,15 @@ cells += [
                 verbose=False,
             ),
         }
+        if CatBoostRegressor is not None:
+            available_models["MapLight CatBoost"] = CatBoostRegressor(
+                iterations=400,
+                depth=6,
+                learning_rate=0.05,
+                loss_function="RMSE",
+                random_seed=int(model_random_seed),
+                verbose=False,
+            )
 
         selected_models = {}
         if run_elasticnet_cv:
@@ -3259,6 +3509,20 @@ cells += [
             selected_models["XGBoost"] = available_models["XGBoost"]
         if run_catboost:
             selected_models["CatBoost"] = available_models["CatBoost"]
+
+        maplight_feature_cols = []
+        maplight_prefixes = ("maplight_morgan_", "avalon_count_", "erg_", "maplight_desc_")
+        if "X_train_unselected" in STATE:
+            maplight_feature_cols = [
+                col for col in STATE["X_train_unselected"].columns
+                if str(col).startswith(maplight_prefixes)
+            ]
+        if maplight_feature_cols:
+            selected_models["MapLight CatBoost"] = available_models["MapLight CatBoost"]
+        elif "MapLight CatBoost" in available_models:
+            print(
+                "MapLight CatBoost skipped: MapLight classic features were not found in the feature matrix."
+            )
 
         if not selected_models:
             raise ValueError("Please select at least one conventional model to run.")
@@ -3313,6 +3577,11 @@ cells += [
             cached_model_loaded = False
             cached_metadata = None
             model_slug = slugify_cache_text(name)
+            model_X_train = X_train
+            model_X_test = X_test
+            if name == "MapLight CatBoost" and maplight_feature_cols:
+                model_X_train = STATE["X_train_unselected"].loc[:, maplight_feature_cols].reset_index(drop=True)
+                model_X_test = STATE["X_test_unselected"].loc[:, maplight_feature_cols].reset_index(drop=True)
             if enable_conventional_model_cache and reuse_conventional_cached_models:
                 metadata_candidates = sorted(
                     conventional_cache_dir.glob(f"*_{conventional_dataset_label}_{model_slug}_metadata.json"),
@@ -3377,11 +3646,11 @@ cells += [
             scores = None
             if not cached_model_loaded:
                 if use_cross_validation:
-                    scores = cross_validate(clone(estimator), X_train, y_train, cv=cv, scoring=scoring, n_jobs=1)
+                    scores = cross_validate(clone(estimator), model_X_train, y_train, cv=cv, scoring=scoring, n_jobs=1)
                 fitted = clone(estimator)
-                fitted.fit(X_train, y_train)
-                pred_train = np.asarray(fitted.predict(X_train)).reshape(-1)
-                pred_test = np.asarray(fitted.predict(X_test)).reshape(-1)
+                fitted.fit(model_X_train, y_train)
+                pred_train = np.asarray(fitted.predict(model_X_train)).reshape(-1)
+                pred_test = np.asarray(fitted.predict(model_X_test)).reshape(-1)
 
             row = {
                 "Model": name,
@@ -5104,12 +5373,13 @@ cells += [
     ),
     md(
         """
-        ### How To Use The ChemML Controls
+        ### How To Use The Deep-Learning Controls
 
         The `5B` controls are split into **backend-selection options** and **training-parameter options**:
 
         - `run_chemml_pytorch`: train the ChemML multilayer perceptron with the PyTorch backend
         - `run_chemml_tensorflow`: train the ChemML multilayer perceptron with the TensorFlow backend
+        - `run_maplight_gnn`: run the MapLight + GNN workflow (CatBoost on MapLight classic + GIN embeddings)
         - `chemml_hidden_layers`: number of hidden layers in the ChemML neural network
         - `chemml_hidden_width`: number of neurons per hidden layer
         - `chemml_training_epochs`: number of full passes through the training data
@@ -5129,14 +5399,16 @@ cells += [
 
         - **ChemML PyTorch** can run on CPU or GPU after the PyTorch dependency is installed
         - **ChemML TensorFlow** can run on CPU or GPU, but it requires TensorFlow to be installed
+        - **MapLight + GNN** depends on `molfeat` + `dgl` + a PyTorch backend; the MapLight repo notes that it does not run reliably on Colab
         - this section does **not** train Uni-Mol; the dedicated Uni-Mol workflow appears in section `6`
         """
     ),
     code(
         """
-        # @title 5B. Train selected ChemML deep-learning models { display-mode: "form" }
+        # @title 5B. Train selected deep-learning models { display-mode: "form" }
         run_chemml_pytorch = True # @param {type:"boolean"}
         run_chemml_tensorflow = False # @param {type:"boolean"}
+        run_maplight_gnn = False # @param {type:"boolean"}
         chemml_hidden_layers = 2 # @param {type:"slider", min:1, max:4, step:1}
         chemml_hidden_width = 128 # @param [64, 128, 256, 512]
         chemml_training_epochs = 60 # @param {type:"slider", min:20, max:200, step:10}
@@ -5176,12 +5448,51 @@ cells += [
                 "**ChemML TensorFlow** can run on CPU if TensorFlow is installed. "
                 "If you want the pretrained 3D molecular models, use the dedicated Uni-Mol section below."
             )
+        display_note(
+            "Recommended MapLight + GNN runtime: GPU with 8+ GB VRAM (16+ GB preferred), "
+            "16+ GB system RAM (32+ GB preferred), and 8+ CPU cores. "
+            "Small datasets can run on CPU, but embedding generation will be slow."
+        )
         print(
-            "Selected ChemML backends: "
+            "Selected deep-learning backends: "
             f"ChemML PyTorch={'on' if run_chemml_pytorch else 'off'}, "
-            f"ChemML TensorFlow={'on' if run_chemml_tensorflow else 'off'}",
+            f"ChemML TensorFlow={'on' if run_chemml_tensorflow else 'off'}, "
+            f"MapLight + GNN={'on' if run_maplight_gnn else 'off'}",
             flush=True,
         )
+
+        if run_maplight_gnn:
+            if not maplight_gnn_available:
+                run_maplight_gnn = False
+            maplight_gnn_available = True
+            try:
+                from molfeat.trans.pretrained import PretrainedDGLTransformer
+                import dgl  # noqa: F401
+            except Exception:
+                print("Installing MapLight + GNN dependencies (molfeat, dgl, dgllife)...", flush=True)
+                try:
+                    install_dependencies(["molfeat", "dgl", "dgllife"])
+                    from molfeat.trans.pretrained import PretrainedDGLTransformer  # noqa: F401
+                    import dgl  # noqa: F401
+                except Exception as exc:
+                    maplight_gnn_available = False
+                    message = (
+                        "MapLight + GNN dependencies could not be loaded after installation. "
+                        f"{exc}"
+                    )
+                    print(message, flush=True)
+                    if IN_COLAB:
+                        display_note(
+                            "MapLight + GNN is known to fail on Colab due to DGL installation issues. "
+                            "This run was skipped so the notebook can continue."
+                        )
+                    else:
+                        display_note(
+                            "MapLight + GNN is not available in this environment. "
+                            "On Windows + Python 3.14, DGL wheels may not be published yet. "
+                            "If you need this model, install a supported Python version (e.g., 3.10/3.11) "
+                            "and rerun this cell."
+                        )
 
         deep_rows = []
         deep_models = {}
@@ -5261,10 +5572,11 @@ cells += [
             [
                 run_chemml_pytorch,
                 run_chemml_tensorflow,
+                run_maplight_gnn,
             ]
         )
         if not selected_any:
-            raise ValueError("Please enable at least one ChemML model.")
+            raise ValueError("Please enable at least one deep-learning model.")
 
         if run_chemml_pytorch or run_chemml_tensorflow:
             try:
@@ -5463,6 +5775,99 @@ cells += [
             STATE["y_train_scaled"] = y_train_scaled
             STATE["y_scaler"] = y_scaler
             STATE["x_scaler"] = x_scaler
+
+        if run_maplight_gnn:
+            maplight_label = "MapLight + GNN (CatBoost)"
+            if CatBoostRegressor is None:
+                print("MapLight + GNN skipped: CatBoost is not available.", flush=True)
+            else:
+                try:
+                    from molfeat.trans.pretrained import PretrainedDGLTransformer
+                except Exception as exc:
+                    message = (
+                        "MapLight + GNN requires `molfeat` and its DGL/PyTorch dependencies. "
+                        f"Import error: {exc}"
+                    )
+                    if IN_COLAB:
+                        print(f"[skip] {message}", flush=True)
+                        display_note(
+                            "MapLight + GNN is known to fail on Colab due to the upstream DGL installation issue. "
+                            "This run was skipped so the notebook can continue."
+                        )
+                    else:
+                        raise RuntimeError(message) from exc
+                else:
+                    try:
+                        from rdkit import Chem, RDLogger
+                    except Exception as exc:
+                        raise RuntimeError("RDKit is required for MapLight + GNN.") from exc
+
+                    RDLogger.DisableLog("rdApp.*")
+                    maplight_smiles = STATE["curated_df"]["canonical_smiles"].astype(str).reset_index(drop=True)
+                    maplight_base, _ = build_feature_matrix_from_smiles(
+                        maplight_smiles.tolist(),
+                        selected_feature_families=["maplight"],
+                        radius=int(feature_metadata["fingerprint_radius"]),
+                        n_bits=int(feature_metadata["fingerprint_bits"]),
+                        enable_persistent_feature_store=True,
+                        reuse_persistent_feature_store=True,
+                        persistent_feature_store_path=str(feature_metadata.get("persistent_feature_store_path", "AUTO")),
+                    )
+                    mols = maplight_smiles.apply(Chem.MolFromSmiles)
+                    transformer = PretrainedDGLTransformer(kind="gin_supervised_masking", dtype=float)
+                    gin_embeddings = transformer(mols)
+                    gin_array = np.asarray(gin_embeddings)
+                    if gin_array.ndim == 1:
+                        gin_array = gin_array.reshape(len(maplight_smiles), -1)
+                    gin_df = pd.DataFrame(
+                        gin_array,
+                        columns=[f"maplight_gin_{i:04d}" for i in range(gin_array.shape[1])],
+                    )
+                    maplight_features = pd.concat([maplight_base.reset_index(drop=True), gin_df], axis=1)
+                    maplight_features.index = maplight_smiles
+
+                    train_smiles = split_payload["smiles_train"].astype(str).reset_index(drop=True)
+                    test_smiles = split_payload["smiles_test"].astype(str).reset_index(drop=True)
+                    X_train_maplight = maplight_features.loc[train_smiles].reset_index(drop=True)
+                    X_test_maplight = maplight_features.loc[test_smiles].reset_index(drop=True)
+                    y_train_maplight = np.asarray(split_payload["y_train"], dtype=float)
+                    y_test_maplight = np.asarray(split_payload["y_test"], dtype=float)
+
+                    maplight_model = CatBoostRegressor(
+                        iterations=400,
+                        depth=6,
+                        learning_rate=0.05,
+                        loss_function="RMSE",
+                        random_seed=int(deep_random_seed),
+                        verbose=False,
+                    )
+                    maplight_model.fit(X_train_maplight, y_train_maplight)
+                    pred_train = np.asarray(maplight_model.predict(X_train_maplight)).reshape(-1)
+                    pred_test = np.asarray(maplight_model.predict(X_test_maplight)).reshape(-1)
+
+                    if "maplight_gnn_models" not in STATE:
+                        STATE["maplight_gnn_models"] = {}
+                    STATE["maplight_gnn_models"][maplight_label] = maplight_model
+                    STATE["maplight_gnn_feature_config"] = {
+                        "fingerprint_radius": int(feature_metadata["fingerprint_radius"]),
+                        "fingerprint_bits": int(feature_metadata["fingerprint_bits"]),
+                        "persistent_feature_store_path": str(feature_metadata.get("persistent_feature_store_path", "AUTO")),
+                    }
+
+                    deep_predictions[maplight_label] = {
+                        "train": pred_train,
+                        "test": pred_test,
+                        "train_observed": y_train_maplight,
+                        "test_observed": y_test_maplight,
+                        "train_smiles": train_smiles,
+                        "test_smiles": test_smiles,
+                        "workflow": "MapLight + GNN",
+                    }
+                    row = {"Model": maplight_label, "Workflow": "MapLight + GNN"}
+                    row["Execution mode"] = "GPU" if gpu_available else "CPU"
+                    row.update(summarize_regression(y_train_maplight, pred_train, "Train"))
+                    row.update(summarize_regression(y_test_maplight, pred_test, "Test"))
+                    deep_rows.append(row)
 
         if run_unimolv1 or run_unimolv2:
             try:
@@ -6768,6 +7173,7 @@ cells += [
         include_best_conventional = True # @param {type:"boolean"}
         include_best_tuned_conventional = False # @param {type:"boolean"}
         include_best_chemml = True # @param {type:"boolean"}
+        include_best_maplight_gnn = True # @param {type:"boolean"}
         include_best_unimol = True # @param {type:"boolean"}
 
         if not build_ensemble:
@@ -6824,6 +7230,20 @@ cells += [
                 requested_categories.append("best ChemML")
                 unavailable_categories.append("best ChemML")
                 availability_messages.append("best ChemML: unavailable")
+
+            if include_best_maplight_gnn and "deep_results" in STATE:
+                requested_categories.append("best MapLight + GNN")
+                gnn_rows = STATE["deep_results"].loc[STATE["deep_results"]["Workflow"] == "MapLight + GNN"]
+                if not gnn_rows.empty:
+                    selected_models.append(("MapLight + GNN", gnn_rows.iloc[0]["Model"]))
+                    availability_messages.append(f"best MapLight + GNN: {gnn_rows.iloc[0]['Model']}")
+                else:
+                    unavailable_categories.append("best MapLight + GNN")
+                    availability_messages.append("best MapLight + GNN: unavailable")
+            elif include_best_maplight_gnn:
+                requested_categories.append("best MapLight + GNN")
+                unavailable_categories.append("best MapLight + GNN")
+                availability_messages.append("best MapLight + GNN: unavailable")
 
             if include_best_unimol:
                 requested_categories.append("best Uni-Mol")
@@ -7392,7 +7812,7 @@ cells += [
     code(
         """
         # @title 9A. Predict from a trained model using a new SMILES table { display-mode: "form" }
-        prediction_workflow = "Best available" # @param ["Best available", "Conventional ML", "Tuned conventional ML", "ChemML deep learning", "Uni-Mol", "Ensemble"]
+        prediction_workflow = "Best available" # @param ["Best available", "Conventional ML", "Tuned conventional ML", "ChemML deep learning", "MapLight + GNN", "Uni-Mol", "Ensemble"]
         prediction_model_name = "" # @param {type:"string"}
         prediction_input_source = "File path" # @param ["File path", "Upload CSV (Colab only)"]
         prediction_input_path = "./portable_colab_qsar_bundle/example_prediction_smiles.csv" # @param {type:"string"}
@@ -7480,7 +7900,7 @@ cells += [
                 return requested_workflow, requested_model_name
             return requested_workflow, str(workflow_frames[requested_workflow].iloc[0]["Model"])
 
-        def _predict_with_model(workflow_name, model_name, smiles_series):
+        def _predict_with_model(workflow_name, model_name, smiles_series, full_input_df):
             smiles_series = pd.Series(smiles_series, dtype=str).reset_index(drop=True)
             canonical_smiles = []
             valid_mask = []
@@ -7508,6 +7928,18 @@ cells += [
                 result_df["prediction"] = np.nan
                 return result_df
 
+            aux_columns = list(STATE.get("auxiliary_columns", []))
+            aux_feature_df = pd.DataFrame()
+            if aux_columns:
+                missing_aux = [col for col in aux_columns if col not in full_input_df.columns]
+                if missing_aux:
+                    raise ValueError(
+                        "Prediction input is missing auxiliary columns: "
+                        f"{missing_aux}. Remove auxiliary columns from the workflow or provide them in the input file."
+                    )
+                aux_source = full_input_df.loc[result_df["valid_smiles"], aux_columns].reset_index(drop=True)
+                aux_feature_df = build_auxiliary_feature_matrix(aux_source, aux_columns)
+
             if workflow_name == "Conventional ML":
                 if "traditional_models" not in STATE or model_name not in STATE["traditional_models"]:
                     raise RuntimeError(f"Conventional model '{model_name}' is not loaded in this session.")
@@ -7516,6 +7948,8 @@ cells += [
                     valid_smiles.tolist(),
                     **_prediction_feature_build_kwargs(),
                 )
+                if not aux_feature_df.empty:
+                    feature_df = pd.concat([feature_df.reset_index(drop=True), aux_feature_df.reset_index(drop=True)], axis=1)
                 feature_df = align_feature_matrix_to_training_columns(feature_df, STATE["feature_names"])
                 predictions = np.asarray(model.predict(feature_df)).reshape(-1)
             elif workflow_name == "Tuned conventional ML":
@@ -7526,6 +7960,8 @@ cells += [
                     valid_smiles.tolist(),
                     **_prediction_feature_build_kwargs(),
                 )
+                if not aux_feature_df.empty:
+                    feature_df = pd.concat([feature_df.reset_index(drop=True), aux_feature_df.reset_index(drop=True)], axis=1)
                 feature_df = align_feature_matrix_to_training_columns(feature_df, STATE["feature_names"])
                 predictions = np.asarray(model.predict(feature_df)).reshape(-1)
             elif workflow_name == "ChemML deep learning":
@@ -7538,11 +7974,53 @@ cells += [
                     valid_smiles.tolist(),
                     **_prediction_feature_build_kwargs(),
                 )
+                if not aux_feature_df.empty:
+                    feature_df = pd.concat([feature_df.reset_index(drop=True), aux_feature_df.reset_index(drop=True)], axis=1)
                 feature_df = align_feature_matrix_to_training_columns(feature_df, STATE["feature_names"])
                 x_scaled = STATE["deep_x_scaler"].transform(feature_df.to_numpy(dtype=np.float32)).astype(np.float32)
                 predictions = STATE["deep_y_scaler"].inverse_transform(
                     np.asarray(model.predict(x_scaled)).reshape(-1, 1)
                 ).reshape(-1)
+            elif workflow_name == "MapLight + GNN":
+                if "maplight_gnn_models" not in STATE or model_name not in STATE["maplight_gnn_models"]:
+                    raise RuntimeError(f"MapLight + GNN model '{model_name}' is not loaded in this session.")
+                try:
+                    from molfeat.trans.pretrained import PretrainedDGLTransformer
+                except Exception as exc:
+                    raise RuntimeError(
+                        "MapLight + GNN requires `molfeat` and its DGL/PyTorch dependencies."
+                    ) from exc
+                from rdkit import Chem, RDLogger
+
+                RDLogger.DisableLog("rdApp.*")
+                config = dict(STATE.get("maplight_gnn_feature_config", {}))
+                maplight_radius = int(config.get("fingerprint_radius", STATE.get("fingerprint_radius", 2)))
+                maplight_bits = int(config.get("fingerprint_bits", STATE.get("fingerprint_bits", 1024)))
+                maplight_store = str(config.get("persistent_feature_store_path", "AUTO"))
+                maplight_base, _ = build_feature_matrix_from_smiles(
+                    valid_smiles.tolist(),
+                    selected_feature_families=["maplight"],
+                    radius=maplight_radius,
+                    n_bits=maplight_bits,
+                    enable_persistent_feature_store=True,
+                    reuse_persistent_feature_store=True,
+                    persistent_feature_store_path=maplight_store,
+                )
+                mols = valid_smiles.apply(Chem.MolFromSmiles)
+                transformer = PretrainedDGLTransformer(kind="gin_supervised_masking", dtype=float)
+                gin_embeddings = transformer(mols)
+                gin_array = np.asarray(gin_embeddings)
+                if gin_array.ndim == 1:
+                    gin_array = gin_array.reshape(len(valid_smiles), -1)
+                gin_df = pd.DataFrame(
+                    gin_array,
+                    columns=[f"maplight_gin_{i:04d}" for i in range(gin_array.shape[1])],
+                )
+                maplight_features = pd.concat([maplight_base.reset_index(drop=True), gin_df], axis=1)
+                if not aux_feature_df.empty:
+                    maplight_features = pd.concat([maplight_features.reset_index(drop=True), aux_feature_df.reset_index(drop=True)], axis=1)
+                model = STATE["maplight_gnn_models"][model_name]
+                predictions = np.asarray(model.predict(maplight_features)).reshape(-1)
             elif workflow_name == "Uni-Mol":
                 if "unimol_model_dirs" not in STATE or model_name not in STATE["unimol_model_dirs"]:
                     raise RuntimeError(f"Uni-Mol model directory for '{model_name}' is not available in this session.")
@@ -7577,7 +8055,7 @@ cells += [
                         member_model_name = member_name
                     else:
                         raise RuntimeError(f"Could not resolve ensemble member '{member_name}' for prediction.")
-                    member_result = _predict_with_model(member_workflow, member_model_name, valid_smiles)
+                    member_result = _predict_with_model(member_workflow, member_model_name, valid_smiles, input_df)
                     member_predictions.append(member_result.loc[member_result["valid_smiles"], "prediction"].to_numpy(dtype=float))
                 weights = (
                     weight_df.set_index("Model").loc[STATE["ensemble_prediction_columns"], "Weight"].to_numpy(dtype=float)
@@ -7602,6 +8080,7 @@ cells += [
             selected_workflow,
             selected_model_name,
             input_df[prediction_smiles_column].astype(str).reset_index(drop=True),
+            input_df,
         )
         prediction_df.insert(0, "row_id", np.arange(len(prediction_df)))
         prediction_df["workflow"] = selected_workflow
@@ -8474,8 +8953,8 @@ for cell in cells:
 notebook = {
     "cells": flat_cells,
     "metadata": {
-        "kernelspec": {"display_name": "Python 3", "language": "python", "name": "python3"},
-        "language_info": {"name": "python", "version": "3.12"},
+        "kernelspec": {"display_name": "AutoQSAR (py311)", "language": "python", "name": "autoqsar-py311"},
+        "language_info": {"name": "python", "version": "3.11"},
         "colab": {"name": "colab_qsar_tutorial.ipynb", "provenance": [], "toc_visible": True},
     },
     "nbformat": 4,

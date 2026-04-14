@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find \"/c/Users/Scott.Coffin/OneDrive - California OEHHA/R_new/AutoQSAR/portable_colab_qsar_bundle\" -type f -name \"*.py\" -exec grep -l \"class.*MLP\\\\|class.*Model\\\\|class.*Network\" {} \\\\;)",
+      "Bash(python3 -c \"import json; nb = json.load\\(open\\('Convo_nets.ipynb'\\)\\); [print\\(c['source'][0] if c['cell_type']=='code' else ''\\) for c in nb['cells'][:20]]\")",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:api.github.com)"
+    ]
+  }
+}

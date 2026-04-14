@@ -9,8 +9,10 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 from rdkit import Chem, DataStructs
-from rdkit.Chem import AllChem, Descriptors, MACCSkeys
+from rdkit.Chem import AllChem, Descriptors, MACCSkeys, rdReducedGraphs, rdMolDescriptors
 from rdkit.Chem.Scaffolds import MurckoScaffold
+from rdkit.Avalon import pyAvalonTools
+from rdkit.ML.Descriptors.MoleculeDescriptors import MolecularDescriptorCalculator
 from sklearn.model_selection import GroupKFold, KFold, StratifiedKFold, train_test_split
 
 try:
@@ -32,7 +34,41 @@ FEATURE_FAMILY_LABELS = {
     "fcfp6": "FCFP6 fingerprints",
     "maccs": "MACCS keys",
     "rdkit": "RDKit descriptors",
+    "maplight": "MapLight classic (Morgan + Avalon + ErG + chosen descriptors)",
 }
+
+MAPLIGHT_DESCRIPTOR_NAMES = [
+    "BalabanJ", "BertzCT", "Chi0", "Chi0n", "Chi0v", "Chi1", "Chi1n", "Chi1v", "Chi2n", "Chi2v",
+    "Chi3n", "Chi3v", "Chi4n", "Chi4v", "EState_VSA1", "EState_VSA10", "EState_VSA11", "EState_VSA2",
+    "EState_VSA3", "EState_VSA4", "EState_VSA5", "EState_VSA6", "EState_VSA7", "EState_VSA8", "EState_VSA9",
+    "ExactMolWt", "FpDensityMorgan1", "FpDensityMorgan2", "FpDensityMorgan3", "FractionCSP3", "HallKierAlpha",
+    "HeavyAtomCount", "HeavyAtomMolWt", "Ipc", "Kappa1", "Kappa2", "Kappa3", "LabuteASA", "MaxAbsEStateIndex",
+    "MaxAbsPartialCharge", "MaxEStateIndex", "MaxPartialCharge", "MinAbsEStateIndex", "MinAbsPartialCharge",
+    "MinEStateIndex", "MinPartialCharge", "MolLogP", "MolMR", "MolWt", "NHOHCount", "NOCount",
+    "NumAliphaticCarbocycles", "NumAliphaticHeterocycles", "NumAliphaticRings", "NumAromaticCarbocycles",
+    "NumAromaticHeterocycles", "NumAromaticRings", "NumHAcceptors", "NumHDonors", "NumHeteroatoms",
+    "NumRadicalElectrons", "NumRotatableBonds", "NumSaturatedCarbocycles", "NumSaturatedHeterocycles",
+    "NumSaturatedRings", "NumValenceElectrons", "PEOE_VSA1", "PEOE_VSA10", "PEOE_VSA11", "PEOE_VSA12",
+    "PEOE_VSA13", "PEOE_VSA14", "PEOE_VSA2", "PEOE_VSA3", "PEOE_VSA4", "PEOE_VSA5", "PEOE_VSA6",
+    "PEOE_VSA7", "PEOE_VSA8", "PEOE_VSA9", "RingCount", "SMR_VSA1", "SMR_VSA10", "SMR_VSA2", "SMR_VSA3",
+    "SMR_VSA4", "SMR_VSA5", "SMR_VSA6", "SMR_VSA7", "SMR_VSA8", "SMR_VSA9", "SlogP_VSA1", "SlogP_VSA10",
+    "SlogP_VSA11", "SlogP_VSA12", "SlogP_VSA2", "SlogP_VSA3", "SlogP_VSA4", "SlogP_VSA5", "SlogP_VSA6",
+    "SlogP_VSA7", "SlogP_VSA8", "SlogP_VSA9", "TPSA", "VSA_EState1", "VSA_EState10", "VSA_EState2",
+    "VSA_EState3", "VSA_EState4", "VSA_EState5", "VSA_EState6", "VSA_EState7", "VSA_EState8",
+    "VSA_EState9", "fr_Al_COO", "fr_Al_OH", "fr_Al_OH_noTert", "fr_ArN", "fr_Ar_COO", "fr_Ar_N",
+    "fr_Ar_NH", "fr_Ar_OH", "fr_COO", "fr_COO2", "fr_C_O", "fr_C_O_noCOO", "fr_C_S", "fr_HOCCN",
+    "fr_Imine", "fr_NH0", "fr_NH1", "fr_NH2", "fr_N_O", "fr_Ndealkylation1", "fr_Ndealkylation2",
+    "fr_Nhpyrrole", "fr_SH", "fr_aldehyde", "fr_alkyl_carbamate", "fr_alkyl_halide", "fr_allylic_oxid",
+    "fr_amide", "fr_amidine", "fr_aniline", "fr_aryl_methyl", "fr_azide", "fr_azo", "fr_barbitur",
+    "fr_benzene", "fr_benzodiazepine", "fr_bicyclic", "fr_diazo", "fr_dihydropyridine", "fr_epoxide",
+    "fr_ester", "fr_ether", "fr_furan", "fr_guanido", "fr_halogen", "fr_hdrzine", "fr_hdrzone",
+    "fr_imidazole", "fr_imide", "fr_isocyan", "fr_isothiocyan", "fr_ketone", "fr_ketone_Topliss",
+    "fr_lactam", "fr_lactone", "fr_methoxy", "fr_morpholine", "fr_nitrile", "fr_nitro", "fr_nitro_arom",
+    "fr_nitro_arom_nonortho", "fr_nitroso", "fr_oxazole", "fr_oxime", "fr_para_hydroxylation", "fr_phenol",
+    "fr_phenol_noOrthoHbond", "fr_phos_acid", "fr_phos_ester", "fr_piperdine", "fr_piperzine", "fr_priamide",
+    "fr_prisulfonamd", "fr_pyridine", "fr_quatN", "fr_sulfide", "fr_sulfonamd", "fr_sulfone", "fr_term_acetylene",
+    "fr_tetrazole", "fr_thiazole", "fr_thiocyan", "fr_thiophene", "fr_unbrch_alkane", "fr_urea", "qed",
+]
 
 
 def murcko_scaffold_key(smiles_text):
@@ -242,6 +278,67 @@ def make_rdkit_descriptor_matrix(smiles_list):
     return pd.DataFrame(rows)
 
 
+def make_maplight_morgan_count_matrix(smiles_list, radius=2, n_bits=1024):
+    rows = []
+    for smi in smiles_list:
+        mol = Chem.MolFromSmiles(smi)
+        if mol is None:
+            rows.append(np.zeros((int(n_bits),), dtype=np.float32))
+            continue
+        fp = rdMolDescriptors.GetHashedMorganFingerprint(mol, radius=int(radius), nBits=int(n_bits))
+        arr = np.zeros((int(n_bits),), dtype=np.int32)
+        for bit_id, count in fp.GetNonzeroElements().items():
+            bit_id = int(bit_id)
+            if 0 <= bit_id < int(n_bits):
+                arr[bit_id] = int(count)
+        rows.append(arr.astype(np.float32))
+    return pd.DataFrame(rows, columns=[f"maplight_morgan_{i:04d}" for i in range(int(n_bits))])
+
+
+def make_avalon_count_matrix(smiles_list, n_bits=1024):
+    rows = []
+    for smi in smiles_list:
+        mol = Chem.MolFromSmiles(smi)
+        if mol is None:
+            rows.append(np.zeros((int(n_bits),), dtype=np.float32))
+            continue
+        fp = pyAvalonTools.GetAvalonCountFP(mol, nBits=int(n_bits))
+        arr = np.zeros((int(n_bits),), dtype=np.int32)
+        DataStructs.ConvertToNumpyArray(fp, arr)
+        rows.append(arr.astype(np.float32))
+    return pd.DataFrame(rows, columns=[f"avalon_count_{i:04d}" for i in range(int(n_bits))])
+
+
+def make_erg_matrix(smiles_list):
+    rows = []
+    for smi in smiles_list:
+        mol = Chem.MolFromSmiles(smi)
+        erg = rdReducedGraphs.GetErGFingerprint(mol)
+        rows.append(np.asarray(erg, dtype=np.float32))
+    arr = np.vstack(rows)
+    return pd.DataFrame(arr, columns=[f"erg_{i:03d}" for i in range(arr.shape[1])])
+
+
+def make_maplight_descriptor_matrix(smiles_list):
+    calculator = MolecularDescriptorCalculator(MAPLIGHT_DESCRIPTOR_NAMES)
+    rows = []
+    for smi in smiles_list:
+        mol = Chem.MolFromSmiles(smi)
+        rows.append(np.asarray(calculator.CalcDescriptors(mol), dtype=np.float32))
+    arr = np.vstack(rows)
+    return pd.DataFrame(arr, columns=[f"maplight_desc_{name}" for name in MAPLIGHT_DESCRIPTOR_NAMES])
+
+
+def make_maplight_classic_matrix(smiles_list, radius=2, n_bits=1024):
+    parts = [
+        make_maplight_morgan_count_matrix(smiles_list, radius=radius, n_bits=n_bits),
+        make_avalon_count_matrix(smiles_list, n_bits=n_bits),
+        make_erg_matrix(smiles_list),
+        make_maplight_descriptor_matrix(smiles_list),
+    ]
+    return pd.concat(parts, axis=1)
+
+
 def finalize_feature_matrix(feature_df):
     feature_df = feature_df.copy()
     feature_df = feature_df.replace([np.inf, -np.inf], np.nan)
@@ -275,6 +372,7 @@ def normalize_selected_feature_families(selected_feature_families=None, **featur
         "use_fcfp6_features": "fcfp6",
         "use_maccs_keys": "maccs",
         "use_rdkit_descriptors": "rdkit",
+        "use_maplight_classic": "maplight",
     }
     for flag_name, family_key in flag_mapping.items():
         if bool(feature_flags.get(flag_name)) and family_key not in selected:
@@ -290,6 +388,8 @@ def feature_family_label(family_key, radius=2, n_bits=1024):
         return f"ECFP6(bits={int(n_bits)})"
     if family_key == "fcfp6":
         return f"FCFP6(bits={int(n_bits)})"
+    if family_key == "maplight":
+        return f"MapLight classic (Morgan+Avalon+ErG, bits={int(n_bits)})"
     return FEATURE_FAMILY_LABELS[family_key]
 
 
@@ -308,8 +408,8 @@ def feature_store_representation_payload(selected_families, radius=2, n_bits=102
     selected_families = [str(family).strip().lower() for family in selected_families]
     return {
         "families": selected_families,
-        "morgan_radius": int(radius) if "morgan" in selected_families else None,
-        "fingerprint_bits": int(n_bits) if any(family in {"morgan", "ecfp6", "fcfp6"} for family in selected_families) else None,
+        "morgan_radius": int(radius) if any(family in {"morgan", "maplight"} for family in selected_families) else None,
+        "fingerprint_bits": int(n_bits) if any(family in {"morgan", "ecfp6", "fcfp6", "maplight"} for family in selected_families) else None,
     }
 
 
@@ -440,6 +540,10 @@ def build_feature_family_frames(smiles_list, selected_families, radius=2, n_bits
             frames.append(make_morgan_matrix(smiles_list, radius=int(radius), n_bits=int(n_bits)))
             labels.append(feature_family_label(family_key, radius=radius, n_bits=n_bits))
             built_families.append(family_key)
+        elif family_key == "maplight":
+            frames.append(make_maplight_classic_matrix(smiles_list, radius=int(radius), n_bits=int(n_bits)))
+            labels.append(feature_family_label(family_key, radius=radius, n_bits=n_bits))
+            built_families.append(family_key)
         elif family_key == "ecfp6":
             frames.append(make_ecfp6_matrix(smiles_list, n_bits=int(n_bits)))
             labels.append(feature_family_label(family_key, radius=radius, n_bits=n_bits))
@@ -475,6 +579,8 @@ def build_feature_matrix_from_smiles(
         selected_feature_families=selected_feature_families,
         **feature_flags,
     )
+    if not selected_families and bool(feature_flags.get("use_maplight_classic")):
+        selected_families = ["maplight"]
     if not selected_families:
         raise ValueError("Please select at least one molecular feature family.")
     smiles_list = [str(smiles) for smiles in smiles_list]

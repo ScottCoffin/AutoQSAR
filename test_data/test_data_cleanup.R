@@ -37,3 +37,37 @@ write_csv(fu, "test_data/fu.csv")
 
 ## examine how many PFAS are in each dataset
 VDss |> group_by(group) |> summarize(n_distinct(SMILES))
+
+
+## match structure that Ernesto uses with Auxiliary variables
+# get species physio params
+physio <- tk_complete |>
+  select(species_name, contains("Prox")) |>
+  distinct() |>
+  drop_na()
+
+
+HLe_invivo_aux <- tk_complete |>
+  filter(standard_endpoint == "HLe_invivo") |>
+  mutate(TARGET = standard_value) |>
+  select(SMILES, TARGET, species_name, sex) |>
+  left_join(physio, by = "species_name") |>
+  drop_na()
+
+write.csv(HLe_invivo_aux, "test_data/HLe_invivo_aux.csv", row.names = FALSE)
+
+
+## beta-test on just PFAS
+PFAS <- tk_complete  |>
+  filter(grepl("PFAS", group)) |> 
+  select(SMILES, group) |> 
+  distinct()
+
+HLe_invivo_aux_pfas <- HLe_invivo_aux |>
+  filter(SMILES %in% PFAS$SMILES)
+
+write.csv(
+  HLe_invivo_aux_pfas,
+  "test_data/HLe_invivo_aux_pfas.csv",
+  row.names = FALSE
+)

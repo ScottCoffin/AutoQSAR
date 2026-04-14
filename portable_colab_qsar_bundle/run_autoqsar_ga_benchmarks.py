@@ -31,7 +31,7 @@ from sklearn.base import clone
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.impute import SimpleImputer
 from sklearn.linear_model import ElasticNet, ElasticNetCV
-from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
+from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score, make_scorer
 from sklearn.model_selection import cross_validate, train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
@@ -85,6 +85,8 @@ TDC_QSAR_OPTIONS = {
     "clearance_microsome_az": {"task": "ADME", "label": "Microsome clearance"},
     "ld50_zhu": {"task": "Tox", "label": "Acute toxicity LD50"},
 }
+
+CURRENT_DATASET_SPEC: "DatasetSpec | None" = None
 
 
 def ensure_chemml_from_source() -> bool:
@@ -188,6 +190,8 @@ class DatasetSpec:
     frame: pd.DataFrame
     smiles_column: str
     target_column: str
+    recommended_split: str | None = None
+    recommended_metric: str | None = None
 
 
 @dataclass
@@ -314,6 +318,7 @@ def load_tdc_datasets(path: str = "./data") -> list[DatasetSpec]:
     ensure_tdc_from_source()
     try:
         from tdc.single_pred import ADME, Tox
+        from tdc.metadata import admet_metrics, admet_splits
     except Exception as exc:
         print(f"[skip] PyTDC benchmark datasets: {exc}")
         return datasets
@@ -322,6 +327,9 @@ def load_tdc_datasets(path: str = "./data") -> list[DatasetSpec]:
         try:
             loader = loader_by_task[config["task"]](name=dataset_name, path=path, print_stats=False)
             frame = loader.get_data().copy().rename(columns={"Drug": "smiles", "Y": "target"})
+            dataset_key = dataset_name.lower().strip()
+            recommended_metric = admet_metrics.get(dataset_key) if isinstance(admet_metrics, dict) else None
+            recommended_split = admet_splits.get(dataset_key) if isinstance(admet_splits, dict) else None
             datasets.append(
                 DatasetSpec(
                     f"tdc_{dataset_name}",
@@ -329,6 +337,8 @@ def load_tdc_datasets(path: str = "./data") -> list[DatasetSpec]:
                     frame,
                     "smiles",
                     "target",
+                    recommended_split=recommended_split,
+                    recommended_metric=recommended_metric,
                 )
             )
         except Exception as exc:
@@ -343,7 +353,85 @@ def discover_default_example_datasets(root: Path) -> list[DatasetSpec]:
     return datasets
 
 
+def normalize_tdc_split(recommended_split: str | None, fallback: str) -> str:
+    if not recommended_split:
+        return fallback
+    text = str(recommended_split).strip().lower()
+    if "scaffold" in text:
+        return "scaffold"
+    if "random" in text:
+        return "random"
+    if "strat" in text or "stratif" in text:
+        return "target_quartiles"
+    return fallback
+
+
+def normalize_tdc_metric(recommended_metric: str | None, fallback: str = "rmse") -> str:
+    if not recommended_metric:
+        return fallback
+    text = str(recommended_metric).strip().lower()
+    if "rmse" in text:
+        return "rmse"
+    if "mae" in text:
+        return "mae"
+    if "spearman" in text:
+        return "spearman"
+    if "pearson" in text:
+        return "pearson"
+    if text in {"r2", "r^2"}:
+        return "r2"
+    return fallback
+
+
+def compute_primary_metric(metric_name: str, y_true: np.ndarray, y_pred: np.ndarray) -> float:
+    metric = str(metric_name).strip().lower()
+    if metric == "rmse":
+        return float(math.sqrt(mean_squared_error(y_true, y_pred)))
+    if metric == "mae":
+        return float(mean_absolute_error(y_true, y_pred))
+    if metric == "r2":
+        return float(r2_score(y_true, y_pred))
+    if metric in {"spearman", "pearson"}:
+        try:
+            from scipy.stats import spearmanr, pearsonr
+
+            if metric == "spearman":
+                return float(spearmanr(y_true, y_pred).correlation)
+            return float(pearsonr(y_true, y_pred).statistic)
+        except Exception:
+            series_true = pd.Series(y_true, dtype=float)
+            series_pred = pd.Series(y_pred, dtype=float)
+            return float(series_true.corr(series_pred, method=metric))
+    return float(math.sqrt(mean_squared_error(y_true, y_pred)))
+
+
+def primary_metric_scorer(metric_name: str):
+    metric = str(metric_name).strip().lower()
+    if metric == "rmse":
+        return make_scorer(lambda y_true, y_pred: math.sqrt(mean_squared_error(y_true, y_pred)), greater_is_better=False)
+    if metric == "mae":
+        return make_scorer(mean_absolute_error, greater_is_better=False)
+    if metric == "r2":
+        return make_scorer(r2_score)
+    if metric in {"spearman", "pearson"}:
+        def corr_score(y_true, y_pred):
+            try:
+                from scipy.stats import spearmanr, pearsonr
+
+                if metric == "spearman":
+                    return float(spearmanr(y_true, y_pred).correlation)
+                return float(pearsonr(y_true, y_pred).statistic)
+            except Exception:
+                series_true = pd.Series(y_true, dtype=float)
+                series_pred = pd.Series(y_pred, dtype=float)
+                return float(series_true.corr(series_pred, method=metric))
+        return make_scorer(corr_score, greater_is_better=True)
+    return make_scorer(lambda y_true, y_pred: math.sqrt(mean_squared_error(y_true, y_pred)), greater_is_better=False)
+
+
 def canonicalize_frame(spec: DatasetSpec, log10_target: bool) -> tuple[pd.DataFrame, dict[str, Any]]:
+    global CURRENT_DATASET_SPEC
+    CURRENT_DATASET_SPEC = spec
     df = spec.frame[[spec.smiles_column, spec.target_column]].copy()
     df.columns = ["smiles", "target"]
     df["target"] = pd.to_numeric(df["target"], errors="coerce")
@@ -388,8 +476,16 @@ def target_quartile_labels(y: pd.Series) -> pd.Series | None:
     return labels.astype(int)
 
 
-def split_data(X: pd.DataFrame, y: pd.Series, smiles: pd.Series, args: argparse.Namespace) -> dict[str, Any]:
-    split_strategy = str(args.split_strategy).strip().lower()
+def split_data(
+    X: pd.DataFrame,
+    y: pd.Series,
+    smiles: pd.Series,
+    args: argparse.Namespace,
+    split_strategy_override: str | None = None,
+) -> dict[str, Any]:
+    split_strategy = str(split_strategy_override or args.split_strategy).strip().lower()
+    if CURRENT_DATASET_SPEC is not None and CURRENT_DATASET_SPEC.recommended_split:
+        split_strategy = normalize_tdc_split(CURRENT_DATASET_SPEC.recommended_split, split_strategy)
     if split_strategy not in {"random", "target_quartiles", "scaffold"}:
         raise ValueError("split_strategy must be one of: random, target_quartiles, scaffold")
     if split_strategy in {"random", "target_quartiles"}:
@@ -475,13 +571,21 @@ def select_features(X_train: pd.DataFrame, X_test: pd.DataFrame, y_train: pd.Ser
 
 
 def regression_metrics(y_train, pred_train, y_test, pred_test) -> dict[str, float]:
+    train_series = pd.Series(y_train, dtype=float)
+    train_pred_series = pd.Series(pred_train, dtype=float)
+    test_series = pd.Series(y_test, dtype=float)
+    test_pred_series = pd.Series(pred_test, dtype=float)
+    train_spearman = train_series.corr(train_pred_series, method="spearman")
+    test_spearman = test_series.corr(test_pred_series, method="spearman")
     return {
         "train_r2": float(r2_score(y_train, pred_train)),
         "train_rmse": float(math.sqrt(mean_squared_error(y_train, pred_train))),
         "train_mae": float(mean_absolute_error(y_train, pred_train)),
+        "train_spearman": float(train_spearman) if pd.notna(train_spearman) else np.nan,
         "test_r2": float(r2_score(y_test, pred_test)),
         "test_rmse": float(math.sqrt(mean_squared_error(y_test, pred_test))),
         "test_mae": float(mean_absolute_error(y_test, pred_test)),
+        "test_spearman": float(test_spearman) if pd.notna(test_spearman) else np.nan,
     }
 
 
@@ -538,6 +642,14 @@ def conventional_models(args: argparse.Namespace, X_train: pd.DataFrame, y_train
             random_seed=args.random_seed,
             verbose=False,
         )
+        models["MapLight CatBoost"] = CatBoostRegressor(
+            iterations=400,
+            depth=6,
+            learning_rate=0.05,
+            loss_function="RMSE",
+            random_seed=args.random_seed,
+            verbose=False,
+        )
     models["_elasticnet_cv_meta"] = {
         "elasticnet_cv_folds": int(elasticnet_cv_folds),
         "elasticnet_cv_split_strategy": elasticnet_cv_strategy,
@@ -545,27 +657,59 @@ def conventional_models(args: argparse.Namespace, X_train: pd.DataFrame, y_train
     return models
 
 
-def evaluate_model(name: str, estimator: Any, X_train, X_test, y_train, y_test, smiles_train, args: argparse.Namespace):
+def evaluate_model(
+    name: str,
+    estimator: Any,
+    X_train,
+    X_test,
+    y_train,
+    y_test,
+    smiles_train,
+    args: argparse.Namespace,
+    primary_metric: str | None = None,
+):
+    effective_split_strategy = str(args.split_strategy).strip().lower()
+    if CURRENT_DATASET_SPEC is not None and CURRENT_DATASET_SPEC.recommended_split:
+        effective_split_strategy = normalize_tdc_split(CURRENT_DATASET_SPEC.recommended_split, effective_split_strategy)
+    if primary_metric is None:
+        if CURRENT_DATASET_SPEC is not None and CURRENT_DATASET_SPEC.recommended_metric:
+            primary_metric = normalize_tdc_metric(CURRENT_DATASET_SPEC.recommended_metric, fallback="rmse")
+        else:
+            primary_metric = "rmse"
     cv, cv_folds, cv_split_strategy = make_qsar_cv_splitter(
         X_train,
         y_train,
         smiles_train,
-        split_strategy=args.split_strategy,
+        split_strategy=effective_split_strategy,
         cv_folds=args.cv_folds,
         random_seed=args.random_seed,
     )
+    primary_scorer = primary_metric_scorer(primary_metric)
     scores = cross_validate(
         clone(estimator),
         X_train,
         y_train,
         cv=cv,
-        scoring={"r2": "r2", "mae": "neg_mean_absolute_error", "mse": "neg_mean_squared_error"},
+        scoring={
+            "r2": "r2",
+            "mae": "neg_mean_absolute_error",
+            "mse": "neg_mean_squared_error",
+            "primary": primary_scorer,
+        },
         n_jobs=1,
     )
     fitted = clone(estimator)
     fitted.fit(X_train, y_train)
     pred_train = np.asarray(fitted.predict(X_train)).reshape(-1)
     pred_test = np.asarray(fitted.predict(X_test)).reshape(-1)
+    primary_test_value = compute_primary_metric(primary_metric, y_test, pred_test)
+    primary_cv_values = scores.get("test_primary")
+    if primary_cv_values is not None and len(primary_cv_values):
+        primary_cv = float(np.mean(primary_cv_values))
+        if primary_metric in {"rmse", "mae"}:
+            primary_cv = float(abs(primary_cv))
+    else:
+        primary_cv = np.nan
     row = {
         "model": name,
         "workflow": "conventional",
@@ -574,8 +718,11 @@ def evaluate_model(name: str, estimator: Any, X_train, X_test, y_train, y_test, 
         "cv_r2": float(np.mean(scores["test_r2"])),
         "cv_rmse": float(np.mean(np.sqrt(-scores["test_mse"]))),
         "cv_mae": float(np.mean(-scores["test_mae"])),
+        "primary_metric": primary_metric,
+        "cv_primary": primary_cv,
     }
     row.update(regression_metrics(y_train, pred_train, y_test, pred_test))
+    row["primary_metric_value"] = primary_test_value
     step = fitted.named_steps.get("model") if hasattr(fitted, "named_steps") else fitted
     if hasattr(step, "alpha_") or hasattr(step, "alpha"):
         row["model_alpha"] = float(getattr(step, "alpha_", getattr(step, "alpha", np.nan)))
@@ -823,7 +970,7 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
     stage_message(2, "building molecular features")
     X, feature_meta = build_feature_matrix_from_smiles(
         df["canonical_smiles"].tolist(),
-        selected_feature_families=["morgan", "ecfp6", "fcfp6", "maccs", "rdkit"],
+        selected_feature_families=["morgan", "ecfp6", "fcfp6", "maccs", "rdkit", "maplight"],
         radius=2,
         n_bits=args.fingerprint_bits,
         enable_persistent_feature_store=args.enable_persistent_feature_store,
@@ -845,6 +992,10 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
     split = split_data(X, y, smiles, args)
     X_train, X_test, selector_meta = select_features(split["X_train"], split["X_test"], split["y_train"], split["smiles_train"], selector_args)
     write_selector_outputs(dataset_dir, selector_meta)
+    maplight_prefixes = ("maplight_morgan_", "avalon_count_", "erg_", "maplight_desc_")
+    maplight_feature_cols = [
+        col for col in split["X_train"].columns if str(col).startswith(maplight_prefixes)
+    ]
 
     base_meta = {
         "dataset": dataset_id,
@@ -882,8 +1033,18 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
     model_items = list(model_bundle.items())
     for model_name, estimator in model_items:
         stage_message(stage_index, f"conventional model {model_name}")
+        if model_name == "MapLight CatBoost":
+            if not maplight_feature_cols:
+                print(f"[skip] {dataset_id} {model_name}: MapLight classic features were not found in the feature matrix")
+                stage_index += 1
+                continue
+            model_X_train = split["X_train"].loc[:, maplight_feature_cols].reset_index(drop=True)
+            model_X_test = split["X_test"].loc[:, maplight_feature_cols].reset_index(drop=True)
+        else:
+            model_X_train = X_train
+            model_X_test = X_test
         try:
-            row, pred_train, pred_test = evaluate_model(model_name, estimator, X_train, X_test, split["y_train"], split["y_test"], split["smiles_train"], args)
+            row, pred_train, pred_test = evaluate_model(model_name, estimator, model_X_train, model_X_test, split["y_train"], split["y_test"], split["smiles_train"], args)
         except Exception as exc:
             row = {"model": model_name, "workflow": "conventional", "error": str(exc)}
             pred_train, pred_test = np.array([]), np.array([])
