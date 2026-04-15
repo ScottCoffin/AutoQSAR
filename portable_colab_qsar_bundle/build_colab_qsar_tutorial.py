@@ -200,6 +200,9 @@ cells += [
 
         **Colab note (MapLight + GNN)**  
         The MapLight + GNN workflow depends on DGL, which the MapLight repo reports as unreliable on Colab. If you enable MapLight + GNN in Colab, the notebook will skip it with a message rather than crash. Use a local Python 3.11 kernel if you need that model.
+
+        **Colab note (persistent outputs)**  
+        Step `0` now includes an opt-in toggle to mount Google Drive and write cache/output artifacts under a Drive folder so results persist across runtime resets.
         """
     ),
     md(
@@ -264,6 +267,9 @@ cells += [
     code(
         """
         # @title 0. Install packages and initialize the tutorial { display-mode: "form" }
+        persist_outputs_to_google_drive = False # @param {type:"boolean"}
+        google_drive_output_root = "/content/drive/MyDrive/AutoQSAR_outputs" # @param {type:"string"}
+
         import base64
         import importlib.util
         import io
@@ -734,6 +740,25 @@ cells += [
 
         setup_start("state container")
         STATE = {}
+        persistent_output_root = Path(".").resolve()
+        if bool(persist_outputs_to_google_drive):
+            if IN_COLAB:
+                from google.colab import drive
+
+                print("Mounting Google Drive for persistent outputs...", flush=True)
+                drive.mount("/content/drive", force_remount=False)
+                configured_output_root = str(google_drive_output_root).strip() or "/content/drive/MyDrive/AutoQSAR_outputs"
+                persistent_output_root = Path(configured_output_root).expanduser().resolve()
+                persistent_output_root.mkdir(parents=True, exist_ok=True)
+                print(f"Persistent output root: {persistent_output_root}", flush=True)
+            else:
+                print(
+                    "Google Drive output persistence was requested, but this is not Colab. "
+                    "Continuing with local output paths.",
+                    flush=True,
+                )
+        STATE["persistent_output_root"] = str(persistent_output_root)
+        STATE["persist_outputs_to_google_drive"] = bool(persist_outputs_to_google_drive and IN_COLAB)
         setup_done("state container")
 
         setup_start("Model cache helper")
@@ -754,13 +779,21 @@ cells += [
             except Exception:
                 return slugify_cache_text(label)
 
+        def resolve_output_path(path_text):
+            candidate = Path(str(path_text))
+            if candidate.is_absolute():
+                return candidate
+            root = Path(STATE.get("persistent_output_root", ".")).expanduser()
+            return (root / candidate).resolve()
+
         def resolve_model_cache_dir(workflow_key, run_name="AUTO", prefer_existing=False):
             workflow_slug = slugify_cache_text(workflow_key)
+            model_cache_root = resolve_output_path("model_cache")
             run_text = str(run_name).strip()
             if run_text and run_text.upper() != "AUTO":
                 run_slug = slugify_cache_text(run_text)
             else:
-                workflow_root = Path("./model_cache") / workflow_slug
+                workflow_root = model_cache_root / workflow_slug
                 dataset_suffix = f"_{current_dataset_cache_label()}_{workflow_slug}"
                 if prefer_existing and workflow_root.exists():
                     existing = sorted(
@@ -779,7 +812,7 @@ cells += [
                     f"{STATE.get('cache_session_stamp', time.strftime('%Y%m%d_%H%M%S'))}_"
                     f"{current_dataset_cache_label()}_{workflow_slug}"
                 )
-            cache_dir = Path("./model_cache") / workflow_slug / run_slug
+            cache_dir = model_cache_root / workflow_slug / run_slug
             cache_dir.mkdir(parents=True, exist_ok=True)
             return cache_dir
 
@@ -1396,7 +1429,7 @@ cells += [
             if not uploaded:
                 raise ValueError("No file was uploaded.")
             filename = next(iter(uploaded))
-            destination = Path(destination_dir)
+            destination = resolve_output_path(destination_dir)
             destination.mkdir(parents=True, exist_ok=True)
             saved_path = destination / Path(filename).name
             saved_path.write_bytes(uploaded[filename])
@@ -1444,7 +1477,9 @@ cells += [
                 raise ValueError(f"Unknown TDC dataset option: {option_key}")
             config = TDC_QSAR_OPTIONS[option_key]
             loader_class = {"ADME": ADME, "Tox": Tox}[config["task"]]
-            loader = loader_class(name=config["name"], path=path, print_stats=False)
+            data_path = resolve_output_path(path)
+            data_path.mkdir(parents=True, exist_ok=True)
+            loader = loader_class(name=config["name"], path=str(data_path), print_stats=False)
             df = loader.get_data().copy()
             df = df.rename(columns={"Drug": "smiles", "Y": "target"})
             meta = {
@@ -1609,6 +1644,94 @@ cells += [
             combined = pd.concat([numeric_frame, categorical_frame], axis=1)
             combined = combined.reindex(sorted(combined.columns), axis=1)
             return combined.reset_index(drop=True)
+
+        def build_auxiliary_features_for_smiles(smiles_values, aux_columns):
+            smiles_series = pd.Series(smiles_values, dtype=str).reset_index(drop=True)
+            aux_columns = [col for col in (aux_columns or [])]
+            if not aux_columns or "curated_df" not in STATE:
+                return pd.DataFrame(index=smiles_series.index)
+            curated = STATE["curated_df"].copy()
+            available_aux = [col for col in aux_columns if col in curated.columns]
+            if not available_aux:
+                return pd.DataFrame(index=smiles_series.index)
+            lookup = (
+                curated[["canonical_smiles"] + available_aux]
+                .drop_duplicates(subset=["canonical_smiles"], keep="first")
+                .set_index("canonical_smiles")
+            )
+            ordered = lookup.reindex(smiles_series.tolist()).reset_index(drop=True)
+            return build_auxiliary_feature_matrix(ordered, available_aux)
+
+        def fit_auxiliary_fusion_head(
+            base_train_predictions,
+            base_test_predictions,
+            y_train_values,
+            train_smiles,
+            test_smiles,
+            random_seed=42,
+            label=None,
+        ):
+            aux_columns = list(STATE.get("auxiliary_columns", []))
+            if not aux_columns:
+                return np.asarray(base_train_predictions, dtype=float), np.asarray(base_test_predictions, dtype=float), None
+
+            train_aux = build_auxiliary_features_for_smiles(train_smiles, aux_columns)
+            test_aux_raw = build_auxiliary_features_for_smiles(test_smiles, aux_columns)
+            if train_aux.empty:
+                return np.asarray(base_train_predictions, dtype=float), np.asarray(base_test_predictions, dtype=float), None
+
+            train_aux = align_feature_matrix_to_training_columns(train_aux, list(train_aux.columns))
+            test_aux = align_feature_matrix_to_training_columns(test_aux_raw, list(train_aux.columns))
+
+            fusion_train = pd.concat(
+                [
+                    pd.DataFrame({"base_prediction": np.asarray(base_train_predictions, dtype=float)}),
+                    train_aux.reset_index(drop=True),
+                ],
+                axis=1,
+            )
+            fusion_test = pd.concat(
+                [
+                    pd.DataFrame({"base_prediction": np.asarray(base_test_predictions, dtype=float)}),
+                    test_aux.reset_index(drop=True),
+                ],
+                axis=1,
+            )
+
+            fusion_model = ElasticNet(
+                alpha=0.001,
+                l1_ratio=0.5,
+                max_iter=20000,
+                random_state=int(random_seed),
+            )
+            fusion_model.fit(fusion_train.to_numpy(dtype=float), np.asarray(y_train_values, dtype=float))
+            fused_train = np.asarray(fusion_model.predict(fusion_train.to_numpy(dtype=float)), dtype=float).reshape(-1)
+            fused_test = np.asarray(fusion_model.predict(fusion_test.to_numpy(dtype=float)), dtype=float).reshape(-1)
+
+            payload = {
+                "model": fusion_model,
+                "train_aux_feature_columns": list(train_aux.columns),
+                "auxiliary_columns": list(aux_columns),
+                "label": str(label) if label is not None else "",
+            }
+            return fused_train, fused_test, payload
+
+        def apply_auxiliary_fusion_head(base_predictions, aux_feature_df, fusion_payload):
+            if not fusion_payload:
+                return np.asarray(base_predictions, dtype=float).reshape(-1)
+            model = fusion_payload.get("model")
+            if model is None:
+                return np.asarray(base_predictions, dtype=float).reshape(-1)
+            expected_aux_columns = list(fusion_payload.get("train_aux_feature_columns", []))
+            aligned_aux = align_feature_matrix_to_training_columns(aux_feature_df.copy(), expected_aux_columns)
+            fusion_frame = pd.concat(
+                [
+                    pd.DataFrame({"base_prediction": np.asarray(base_predictions, dtype=float).reshape(-1)}),
+                    aligned_aux.reset_index(drop=True),
+                ],
+                axis=1,
+            )
+            return np.asarray(model.predict(fusion_frame.to_numpy(dtype=float)), dtype=float).reshape(-1)
         setup_done("auxiliary feature helper")
 
         def make_regularization_grid(min_log10=-4, max_log10=0, grid_size=40):
@@ -3882,27 +4005,6 @@ cells += [
             plot_low = low - 0.05 * plot_span
             plot_high = high + 0.05 * plot_span
 
-        def visible_line_segment(slope, lower_bound, upper_bound):
-            candidate_x = np.array(
-                [lower_bound, upper_bound, lower_bound / slope, upper_bound / slope],
-                dtype=float,
-            )
-            candidate_y = slope * candidate_x
-            visible_mask = (
-                np.isfinite(candidate_x)
-                & np.isfinite(candidate_y)
-                & (candidate_x >= lower_bound)
-                & (candidate_x <= upper_bound)
-                & (candidate_y >= lower_bound)
-                & (candidate_y <= upper_bound)
-            )
-            visible_x = candidate_x[visible_mask]
-            if visible_x.size < 2:
-                return None
-            x_start = float(np.min(visible_x))
-            x_end = float(np.max(visible_x))
-            return [x_start, x_end], [float(slope * x_start), float(slope * x_end)]
-
         n_panels = len(plotted_models)
         n_cols = 2 if n_panels > 1 else 1
         n_rows = int(math.ceil(n_panels / n_cols))
@@ -3973,38 +4075,6 @@ cells += [
                 row=row_num,
                 col=col_num,
             )
-            upper_segment = visible_line_segment(3.0, plot_low, plot_high)
-            if upper_segment is not None:
-                fig.add_trace(
-                    go.Scatter(
-                        x=upper_segment[0],
-                        y=upper_segment[1],
-                        mode="lines",
-                        name="3x line",
-                        legendgroup="guide-lines",
-                        showlegend=(panel_index == 1),
-                        line={"color": "#7f7f7f", "dash": "dot"},
-                        hoverinfo="skip",
-                    ),
-                    row=row_num,
-                    col=col_num,
-                )
-            lower_segment = visible_line_segment(1.0 / 3.0, plot_low, plot_high)
-            if lower_segment is not None:
-                fig.add_trace(
-                    go.Scatter(
-                        x=lower_segment[0],
-                        y=lower_segment[1],
-                        mode="lines",
-                        name="1/3x line",
-                        legendgroup="guide-lines",
-                        showlegend=(panel_index == 1),
-                        line={"color": "#7f7f7f", "dash": "dot"},
-                        hoverinfo="skip",
-                    ),
-                    row=row_num,
-                    col=col_num,
-                )
             if use_log_axes:
                 fig.update_xaxes(
                     title_text="Observed (log10 scale)",
@@ -4032,15 +4102,13 @@ cells += [
         show_plotly(fig)
         if use_log_axes:
             display_note(
-                "These observed/predicted panels use **log10 axes**. The dashed line is the ideal **1x** agreement line, "
-                "and the dotted lines mark **3-fold error bounds** (predicted = 3 x observed and predicted = observed / 3). "
+                "These observed/predicted panels use **log10 axes**. The dashed line is the ideal **1:1** agreement line. "
                 "Hover over any point to see the SMILES string and its observed and predicted values."
             )
         else:
             display_note(
                 "These observed/predicted panels use **linear axes** because at least one observed or predicted value is non-positive. "
-                "The dashed line is the ideal **1x** agreement line, and the dotted lines mark **3-fold error bounds** "
-                "(predicted = 3 x observed and predicted = observed / 3). Hover over any point to see the SMILES string and its observed and predicted values."
+                "The dashed line is the ideal **1:1** agreement line. Hover over any point to see the SMILES string and its observed and predicted values."
             )
         """
     ),
@@ -5096,27 +5164,6 @@ cells += [
             plot_low = low - 0.05 * plot_span
             plot_high = high + 0.05 * plot_span
 
-        def visible_line_segment(slope, lower_bound, upper_bound):
-            candidate_x = np.array(
-                [lower_bound, upper_bound, lower_bound / slope, upper_bound / slope],
-                dtype=float,
-            )
-            candidate_y = slope * candidate_x
-            visible_mask = (
-                np.isfinite(candidate_x)
-                & np.isfinite(candidate_y)
-                & (candidate_x >= lower_bound)
-                & (candidate_x <= upper_bound)
-                & (candidate_y >= lower_bound)
-                & (candidate_y <= upper_bound)
-            )
-            visible_x = candidate_x[visible_mask]
-            if visible_x.size < 2:
-                return None
-            x_start = float(np.min(visible_x))
-            x_end = float(np.max(visible_x))
-            return [x_start, x_end], [float(slope * x_start), float(slope * x_end)]
-
         n_panels = len(tuned_plotted_models)
         n_cols = 2 if n_panels > 1 else 1
         n_rows = int(math.ceil(n_panels / n_cols))
@@ -5187,38 +5234,6 @@ cells += [
                 row=row_num,
                 col=col_num,
             )
-            upper_segment = visible_line_segment(3.0, plot_low, plot_high)
-            if upper_segment is not None:
-                fig.add_trace(
-                    go.Scatter(
-                        x=upper_segment[0],
-                        y=upper_segment[1],
-                        mode="lines",
-                        name="3x line",
-                        legendgroup="guide-lines",
-                        showlegend=(panel_index == 1),
-                        line={"color": "#7f7f7f", "dash": "dot"},
-                        hoverinfo="skip",
-                    ),
-                    row=row_num,
-                    col=col_num,
-                )
-            lower_segment = visible_line_segment(1.0 / 3.0, plot_low, plot_high)
-            if lower_segment is not None:
-                fig.add_trace(
-                    go.Scatter(
-                        x=lower_segment[0],
-                        y=lower_segment[1],
-                        mode="lines",
-                        name="1/3x line",
-                        legendgroup="guide-lines",
-                        showlegend=(panel_index == 1),
-                        line={"color": "#7f7f7f", "dash": "dot"},
-                        hoverinfo="skip",
-                    ),
-                    row=row_num,
-                    col=col_num,
-                )
             if use_log_axes:
                 fig.update_xaxes(
                     title_text="Observed (log10 scale)",
@@ -5246,12 +5261,12 @@ cells += [
         show_plotly(fig)
         if use_log_axes:
             display_note(
-                "These tuned observed/predicted panels use **log10 axes**. Hover over any point to inspect the SMILES string and its observed and predicted values."
+                "These tuned observed/predicted panels use **log10 axes**. The dashed line is the ideal **1:1** agreement line. Hover over any point to inspect the SMILES string and its observed and predicted values."
             )
         else:
             display_note(
                 "These tuned observed/predicted panels use **linear axes** because at least one observed or predicted value is non-positive. "
-                "Hover over any point to inspect the SMILES string and its observed and predicted values."
+                "The dashed line is the ideal **1:1** agreement line. Hover over any point to inspect the SMILES string and its observed and predicted values."
             )
         """
     ),
@@ -5385,7 +5400,9 @@ cells += [
         - `chemml_training_epochs`: number of full passes through the training data
         - `chemml_batch_size`: number of molecules processed per optimization step
         - `chemml_learning_rate`: optimizer step size
+        - `chemml_use_cross_validation`, `chemml_cv_folds`: optional CV metrics for direct comparison with conventional-model CV tables
         - `deep_random_seed`: random seed for reproducibility
+        - `deep_use_existing_qsar_split`: reuse the currently active QSAR split from section `4` so ChemML, MapLight, and conventional models are directly comparable
         - `deep_split_strategy`, `deep_test_fraction`, `deep_split_random_seed`: define the train/test split used for the ChemML run
 
         Practical interpretation:
@@ -5414,7 +5431,10 @@ cells += [
         chemml_training_epochs = 60 # @param {type:"slider", min:20, max:200, step:10}
         chemml_batch_size = 64 # @param [16, 32, 64, 128]
         chemml_learning_rate = 0.001 # @param {type:"number"}
+        chemml_use_cross_validation = True # @param {type:"boolean"}
+        chemml_cv_folds = 5 # @param [3, 5, 10]
         deep_random_seed = 42 # @param {type:"integer"}
+        deep_use_existing_qsar_split = True # @param {type:"boolean"}
         deep_split_strategy = "random" # @param ["random", "scaffold"]
         deep_test_fraction = 0.2 # @param {type:"slider", min:0.1, max:0.4, step:0.05}
         deep_split_random_seed = 42 # @param {type:"integer"}
@@ -5428,12 +5448,34 @@ cells += [
         if "feature_matrix" not in STATE:
             raise RuntimeError("Please build the molecular feature matrix first.")
 
-        split_payload = apply_qsar_split(
-            split_strategy=str(deep_split_strategy),
-            test_fraction=float(deep_test_fraction),
-            random_seed=int(deep_split_random_seed),
-            announce=True,
+        use_existing_split = bool(deep_use_existing_qsar_split) and all(
+            key in STATE for key in ["X_train", "X_test", "y_train", "y_test", "smiles_train", "smiles_test"]
         )
+        if use_existing_split:
+            split_payload = {
+                "X_train": STATE["X_train"].copy(),
+                "X_test": STATE["X_test"].copy(),
+                "y_train": np.asarray(STATE["y_train"], dtype=float),
+                "y_test": np.asarray(STATE["y_test"], dtype=float),
+                "smiles_train": STATE["smiles_train"].astype(str).reset_index(drop=True),
+                "smiles_test": STATE["smiles_test"].astype(str).reset_index(drop=True),
+            }
+            deep_split_strategy = str(STATE.get("model_split_strategy", deep_split_strategy))
+            deep_test_fraction = float(STATE.get("model_test_fraction", deep_test_fraction))
+            deep_split_random_seed = int(STATE.get("model_split_random_seed", deep_split_random_seed))
+            print(
+                "Using existing QSAR split for deep-learning workflows: "
+                f"strategy={deep_split_strategy}, test_fraction={deep_test_fraction:.2f}, random_seed={deep_split_random_seed}, "
+                f"train={len(split_payload['X_train'])}, test={len(split_payload['X_test'])}",
+                flush=True,
+            )
+        else:
+            split_payload = apply_qsar_split(
+                split_strategy=str(deep_split_strategy),
+                test_fraction=float(deep_test_fraction),
+                random_seed=int(deep_split_random_seed),
+                announce=True,
+            )
         feature_metadata = current_feature_metadata()
 
         gpu_available = bool(STATE.get("gpu_available", False))
@@ -5601,17 +5643,17 @@ cells += [
             X_test = split_payload["X_test"].to_numpy(dtype=np.float32)
             y_train = np.asarray(split_payload["y_train"], dtype=np.float32).reshape(-1, 1)
             y_test = np.asarray(split_payload["y_test"], dtype=np.float32).reshape(-1, 1)
+            smiles_train_for_cv = split_payload["smiles_train"].astype(str).reset_index(drop=True)
 
-            x_scaler = StandardScaler()
-            y_scaler = StandardScaler()
-            X_train_scaled = x_scaler.fit_transform(X_train).astype(np.float32)
-            X_test_scaled = x_scaler.transform(X_test).astype(np.float32)
-            y_train_scaled = y_scaler.fit_transform(y_train).astype(np.float32)
-
-            def fit_chemml_mlp(engine_name):
+            def fit_chemml_mlp(engine_name, X_fit_raw, y_fit_raw, X_predict_raw, random_seed_value):
+                x_scaler_local = StandardScaler()
+                y_scaler_local = StandardScaler()
+                X_fit_scaled = x_scaler_local.fit_transform(np.asarray(X_fit_raw, dtype=np.float32)).astype(np.float32)
+                X_predict_scaled = x_scaler_local.transform(np.asarray(X_predict_raw, dtype=np.float32)).astype(np.float32)
+                y_fit_scaled = y_scaler_local.fit_transform(np.asarray(y_fit_raw, dtype=np.float32).reshape(-1, 1)).astype(np.float32)
                 mlp = MLP(
                     engine=engine_name,
-                    nfeatures=X_train_scaled.shape[1],
+                    nfeatures=X_fit_scaled.shape[1],
                     nneurons=[int(chemml_hidden_width)] * int(chemml_hidden_layers),
                     activations=["ReLU"] * int(chemml_hidden_layers),
                     learning_rate=float(chemml_learning_rate),
@@ -5623,25 +5665,65 @@ cells += [
                     nclasses=None,
                     layer_config_file=None,
                     opt_config="Adam",
-                    random_seed=int(deep_random_seed),
+                    random_seed=int(random_seed_value),
                 )
-                mlp.fit(X_train_scaled, y_train_scaled)
-                train_pred = y_scaler.inverse_transform(np.asarray(mlp.predict(X_train_scaled)).reshape(-1, 1)).reshape(-1)
-                test_pred = y_scaler.inverse_transform(np.asarray(mlp.predict(X_test_scaled)).reshape(-1, 1)).reshape(-1)
-                return mlp, train_pred, test_pred
+                mlp.fit(X_fit_scaled, y_fit_scaled)
+                fit_pred = y_scaler_local.inverse_transform(np.asarray(mlp.predict(X_fit_scaled)).reshape(-1, 1)).reshape(-1)
+                predict_pred = y_scaler_local.inverse_transform(np.asarray(mlp.predict(X_predict_scaled)).reshape(-1, 1)).reshape(-1)
+                return mlp, fit_pred, predict_pred, x_scaler_local, y_scaler_local
+
+            X_train_scaled = None
+            X_test_scaled = None
+            y_train_scaled = None
+            x_scaler = None
+            y_scaler = None
+            cv_splitter = None
+            chemml_effective_cv_folds = None
+            chemml_cv_split_strategy = None
+            if bool(chemml_use_cross_validation):
+                try:
+                    cv_splitter, chemml_effective_cv_folds, chemml_cv_split_strategy = make_qsar_cv_splitter(
+                        split_payload["X_train"],
+                        pd.Series(split_payload["y_train"], dtype=float),
+                        smiles_train_for_cv,
+                        split_strategy=str(deep_split_strategy),
+                        cv_folds=int(chemml_cv_folds),
+                        random_seed=int(deep_random_seed),
+                    )
+                except Exception as exc:
+                    print(
+                        "ChemML CV split fallback: requested split strategy could not be used for CV "
+                        f"({exc}). Falling back to random CV folds.",
+                        flush=True,
+                    )
+                    cv_splitter, chemml_effective_cv_folds, chemml_cv_split_strategy = make_qsar_cv_splitter(
+                        split_payload["X_train"],
+                        pd.Series(split_payload["y_train"], dtype=float),
+                        smiles_train_for_cv,
+                        split_strategy="random",
+                        cv_folds=int(chemml_cv_folds),
+                        random_seed=int(deep_random_seed),
+                    )
 
             selected_chemml_models = []
             if run_chemml_pytorch:
                 selected_chemml_models.append(("pytorch", "ChemML MLP (PyTorch)"))
             if run_chemml_tensorflow:
                 selected_chemml_models.append(("tensorflow", "ChemML MLP (TensorFlow)"))
+            if bool(chemml_use_cross_validation) and chemml_effective_cv_folds is not None:
+                print(
+                    f"ChemML CV enabled with {chemml_effective_cv_folds} folds using {chemml_cv_split_strategy}.",
+                    flush=True,
+                )
 
             chemml_progress = tqdm(selected_chemml_models, desc="ChemML models", leave=False)
             for engine_name, label in chemml_progress:
                 chemml_progress.set_postfix_str(label)
                 model_slug = slugify_cache_text(label)
                 cached_model_loaded = False
+                cached_metadata = None
                 mlp = None
+                cv_summary = None
                 if enable_deep_model_cache and reuse_deep_cached_models:
                     model_dir = deep_cache_dir / model_slug
                     metadata_candidates = sorted(model_dir.glob("*_metadata.json"), key=lambda path: path.name, reverse=True) if model_dir.exists() else []
@@ -5662,6 +5744,9 @@ cells += [
                                 "chemml_batch_size": int(chemml_batch_size),
                                 "chemml_learning_rate": float(chemml_learning_rate),
                                 "deep_random_seed": int(deep_random_seed),
+                                "chemml_use_cross_validation": bool(chemml_use_cross_validation),
+                                "chemml_cv_folds": int(chemml_effective_cv_folds) if chemml_effective_cv_folds is not None else None,
+                                "chemml_cv_split_strategy": chemml_cv_split_strategy if chemml_cv_split_strategy is not None else None,
                                 "selected_feature_families": list(feature_metadata["selected_feature_families"]),
                                 "built_feature_families": list(feature_metadata["built_feature_families"]),
                                 "fingerprint_radius": int(feature_metadata["fingerprint_radius"]),
@@ -5678,6 +5763,15 @@ cells += [
                             test_pred = loaded_cache["pred_test"]
                             x_scaler = loaded_cache["x_scaler"]
                             y_scaler = loaded_cache["y_scaler"]
+                            X_train_scaled = x_scaler.transform(np.asarray(X_train, dtype=np.float32)).astype(np.float32)
+                            X_test_scaled = x_scaler.transform(np.asarray(X_test, dtype=np.float32)).astype(np.float32)
+                            y_train_scaled = y_scaler.transform(np.asarray(y_train, dtype=np.float32)).astype(np.float32)
+                            cv_summary = {
+                                "CV R2": float(metadata.get("cv_r2")) if metadata.get("cv_r2") not in [None, "None", ""] else np.nan,
+                                "CV RMSE": float(metadata.get("cv_rmse")) if metadata.get("cv_rmse") not in [None, "None", ""] else np.nan,
+                                "CV MAE": float(metadata.get("cv_mae")) if metadata.get("cv_mae") not in [None, "None", ""] else np.nan,
+                            }
+                            cached_metadata = metadata
                             cached_model_loaded = True
                             deep_model_cache_paths[label] = {
                                 "model_dir": str(model_dir),
@@ -5691,7 +5785,52 @@ cells += [
                             continue
 
                 if not cached_model_loaded:
-                    mlp, train_pred, test_pred = fit_chemml_mlp(engine_name)
+                    mlp, train_pred, test_pred, x_scaler, y_scaler = fit_chemml_mlp(
+                        engine_name,
+                        X_train,
+                        y_train,
+                        X_test,
+                        random_seed_value=int(deep_random_seed),
+                    )
+                    X_train_scaled = x_scaler.transform(np.asarray(X_train, dtype=np.float32)).astype(np.float32)
+                    X_test_scaled = x_scaler.transform(np.asarray(X_test, dtype=np.float32)).astype(np.float32)
+                    y_train_scaled = y_scaler.transform(np.asarray(y_train, dtype=np.float32)).astype(np.float32)
+                    if bool(chemml_use_cross_validation) and cv_splitter is not None:
+                        y_train_flat = np.asarray(y_train, dtype=float).reshape(-1)
+                        if isinstance(cv_splitter, list):
+                            fold_splits = list(cv_splitter)
+                        else:
+                            fold_splits = list(cv_splitter.split(split_payload["X_train"], y_train_flat))
+                        fold_metrics = []
+                        fold_progress = tqdm(fold_splits, desc=f"{label} CV folds", leave=False)
+                        for fold_idx, (fold_train_idx, fold_val_idx) in enumerate(fold_progress, start=1):
+                            fold_train_idx = np.asarray(fold_train_idx, dtype=int)
+                            fold_val_idx = np.asarray(fold_val_idx, dtype=int)
+                            _, _, fold_val_pred, _, _ = fit_chemml_mlp(
+                                engine_name,
+                                X_train[fold_train_idx],
+                                y_train[fold_train_idx],
+                                X_train[fold_val_idx],
+                                random_seed_value=int(deep_random_seed) + int(fold_idx),
+                            )
+                            fold_y_true = y_train_flat[fold_val_idx]
+                            fold_metrics.append(
+                                {
+                                    "r2": float(r2_score(fold_y_true, fold_val_pred)),
+                                    "rmse": float(np.sqrt(mean_squared_error(fold_y_true, fold_val_pred))),
+                                    "mae": float(mean_absolute_error(fold_y_true, fold_val_pred)),
+                                }
+                            )
+                        fold_progress.close()
+                        if fold_metrics:
+                            cv_summary = {
+                                "CV R2": float(np.mean([item["r2"] for item in fold_metrics])),
+                                "CV RMSE": float(np.mean([item["rmse"] for item in fold_metrics])),
+                                "CV MAE": float(np.mean([item["mae"] for item in fold_metrics])),
+                            }
+                        else:
+                            cv_summary = {"CV R2": np.nan, "CV RMSE": np.nan, "CV MAE": np.nan}
+
                 deep_models[label] = mlp
                 deep_predictions[label] = {
                     "train": train_pred,
@@ -5703,7 +5842,10 @@ cells += [
                     "workflow": "ChemML deep learning",
                 }
                 row = {"Model": label, "Workflow": "ChemML deep learning"}
-                row["Execution mode"] = "CPU"
+                row["Execution mode"] = "GPU" if gpu_available else "CPU"
+                row["CV R2"] = cv_summary["CV R2"] if cv_summary is not None else np.nan
+                row["CV RMSE"] = cv_summary["CV RMSE"] if cv_summary is not None else np.nan
+                row["CV MAE"] = cv_summary["CV MAE"] if cv_summary is not None else np.nan
                 row.update(summarize_regression(y_train.reshape(-1), train_pred, "Train"))
                 row.update(summarize_regression(y_test.reshape(-1), test_pred, "Test"))
                 deep_rows.append(row)
@@ -5759,6 +5901,12 @@ cells += [
                             "chemml_batch_size": int(chemml_batch_size),
                             "chemml_learning_rate": float(chemml_learning_rate),
                             "deep_random_seed": int(deep_random_seed),
+                            "chemml_use_cross_validation": bool(chemml_use_cross_validation),
+                            "chemml_cv_folds": int(chemml_effective_cv_folds) if chemml_effective_cv_folds is not None else None,
+                            "chemml_cv_split_strategy": chemml_cv_split_strategy if chemml_cv_split_strategy is not None else None,
+                            "cv_r2": row["CV R2"],
+                            "cv_rmse": row["CV RMSE"],
+                            "cv_mae": row["CV MAE"],
                         },
                     )
                     deep_model_cache_paths[label] = {
@@ -5842,12 +5990,28 @@ cells += [
                         verbose=False,
                     )
                     maplight_model.fit(X_train_maplight, y_train_maplight)
-                    pred_train = np.asarray(maplight_model.predict(X_train_maplight)).reshape(-1)
-                    pred_test = np.asarray(maplight_model.predict(X_test_maplight)).reshape(-1)
+                    base_pred_train = np.asarray(maplight_model.predict(X_train_maplight)).reshape(-1)
+                    base_pred_test = np.asarray(maplight_model.predict(X_test_maplight)).reshape(-1)
+                    pred_train, pred_test, maplight_aux_fusion_payload = fit_auxiliary_fusion_head(
+                        base_pred_train,
+                        base_pred_test,
+                        y_train_maplight,
+                        train_smiles,
+                        test_smiles,
+                        random_seed=int(deep_random_seed),
+                        label=maplight_label,
+                    )
 
                     if "maplight_gnn_models" not in STATE:
                         STATE["maplight_gnn_models"] = {}
                     STATE["maplight_gnn_models"][maplight_label] = maplight_model
+                    if "maplight_gnn_aux_fusion_models" not in STATE:
+                        STATE["maplight_gnn_aux_fusion_models"] = {}
+                    if maplight_aux_fusion_payload is not None:
+                        STATE["maplight_gnn_aux_fusion_models"][maplight_label] = maplight_aux_fusion_payload
+                        print("MapLight + GNN auxiliary fusion: enabled", flush=True)
+                    else:
+                        STATE["maplight_gnn_aux_fusion_models"].pop(maplight_label, None)
                     STATE["maplight_gnn_feature_config"] = {
                         "fingerprint_radius": int(feature_metadata["fingerprint_radius"]),
                         "fingerprint_bits": int(feature_metadata["fingerprint_bits"]),
@@ -5943,7 +6107,7 @@ cells += [
                 resolved_unimol_run_label = str(unimol_run_label).strip()
                 if not resolved_unimol_run_label or resolved_unimol_run_label.upper() == "AUTO":
                     resolved_unimol_run_label = f"{STATE['cache_session_stamp']}_{deep_dataset_label}_unimol"
-                output_dir = Path("./unimol_runs") / slugify_cache_text(resolved_unimol_run_label)
+                output_dir = resolve_output_path("unimol_runs") / slugify_cache_text(resolved_unimol_run_label)
             output_dir.mkdir(parents=True, exist_ok=True)
             base_train_csv = output_dir / "train.csv"
             base_test_csv = output_dir / "test.csv"
@@ -6056,6 +6220,24 @@ cells += [
                     predictor = MolPredict(load_model=str(save_dir))
                     pred_train = np.asarray(predictor.predict(str(model_train_csv))).reshape(-1)
                     pred_test = np.asarray(predictor.predict(str(model_test_csv))).reshape(-1)
+                base_pred_train = np.asarray(pred_train, dtype=float).reshape(-1)
+                base_pred_test = np.asarray(pred_test, dtype=float).reshape(-1)
+                pred_train, pred_test, unimol_aux_fusion_payload = fit_auxiliary_fusion_head(
+                    base_pred_train,
+                    base_pred_test,
+                    model_train_df["TARGET"].to_numpy(dtype=float),
+                    model_train_df["SMILES"].astype(str).reset_index(drop=True),
+                    model_test_df["SMILES"].astype(str).reset_index(drop=True),
+                    random_seed=int(deep_random_seed),
+                    label=label,
+                )
+                if "unimol_aux_fusion_models" not in STATE:
+                    STATE["unimol_aux_fusion_models"] = {}
+                if unimol_aux_fusion_payload is not None:
+                    STATE["unimol_aux_fusion_models"][label] = unimol_aux_fusion_payload
+                    print(f"{label} auxiliary fusion: enabled", flush=True)
+                else:
+                    STATE["unimol_aux_fusion_models"].pop(label, None)
 
                 unimol_predictions[label] = {
                     "train": pred_train,
@@ -6102,10 +6284,10 @@ cells += [
                     )
                     pd.DataFrame(
                         {
-                            "split": ["train"] * len(pred_train) + ["test"] * len(pred_test),
+                            "split": ["train"] * len(base_pred_train) + ["test"] * len(base_pred_test),
                             "smiles": list(model_train_df["SMILES"].astype(str)) + list(model_test_df["SMILES"].astype(str)),
                             "observed": list(model_train_df["TARGET"].to_numpy(dtype=float)) + list(model_test_df["TARGET"].to_numpy(dtype=float)),
-                            "predicted": list(pred_train) + list(pred_test),
+                            "predicted": list(base_pred_train) + list(base_pred_test),
                         }
                     ).to_csv(prediction_path, index=False)
                     deep_model_cache_paths[label] = {
@@ -6442,7 +6624,7 @@ cells += [
             resolved_unimol_run_label = str(unimol_run_label).strip()
             if not resolved_unimol_run_label or resolved_unimol_run_label.upper() == "AUTO":
                 resolved_unimol_run_label = f"{STATE['cache_session_stamp']}_{current_dataset_cache_label()}_unimol"
-            output_dir = Path("./unimol_runs") / slugify_cache_text(resolved_unimol_run_label)
+            output_dir = resolve_output_path("unimol_runs") / slugify_cache_text(resolved_unimol_run_label)
         output_dir.mkdir(parents=True, exist_ok=True)
         train_df, test_df, train_csv, test_csv = prepare_unimol_files_from_current_split(
             output_dir,
@@ -6615,6 +6797,24 @@ cells += [
                 predictor = MolPredict(load_model=str(save_dir))
                 pred_train = np.asarray(predictor.predict(str(train_csv))).reshape(-1)
                 pred_test = np.asarray(predictor.predict(str(test_csv))).reshape(-1)
+            base_pred_train = np.asarray(pred_train, dtype=float).reshape(-1)
+            base_pred_test = np.asarray(pred_test, dtype=float).reshape(-1)
+            pred_train, pred_test, unimol_aux_fusion_payload = fit_auxiliary_fusion_head(
+                base_pred_train,
+                base_pred_test,
+                train_df["TARGET"].to_numpy(dtype=float),
+                train_df["SMILES"].astype(str).reset_index(drop=True),
+                test_df["SMILES"].astype(str).reset_index(drop=True),
+                random_seed=int(unimol_split_random_seed),
+                label=label,
+            )
+            if "unimol_aux_fusion_models" not in STATE:
+                STATE["unimol_aux_fusion_models"] = {}
+            if unimol_aux_fusion_payload is not None:
+                STATE["unimol_aux_fusion_models"][label] = unimol_aux_fusion_payload
+                print(f"{label} auxiliary fusion: enabled", flush=True)
+            else:
+                STATE["unimol_aux_fusion_models"].pop(label, None)
 
             row = {"Model": label, "Execution mode": "GPU" if gpu_available else "CPU"}
             row.update(summarize_regression(train_df["TARGET"].to_numpy(dtype=float), pred_train, "Train"))
@@ -6655,10 +6855,10 @@ cells += [
             )
             pd.DataFrame(
                 {
-                    "split": ["train"] * len(pred_train) + ["test"] * len(pred_test),
+                    "split": ["train"] * len(base_pred_train) + ["test"] * len(base_pred_test),
                     "smiles": list(train_df["SMILES"].astype(str)) + list(test_df["SMILES"].astype(str)),
                     "observed": list(train_df["TARGET"].to_numpy(dtype=float)) + list(test_df["TARGET"].to_numpy(dtype=float)),
-                    "predicted": list(pred_train) + list(pred_test),
+                    "predicted": list(base_pred_train) + list(base_pred_test),
                 }
             ).to_csv(prediction_path, index=False)
             unimol_model_cache_paths[label] = {
@@ -6904,6 +7104,24 @@ cells += [
             predictor = MolPredict(load_model=str(save_dir))
             pred_train = np.asarray(predictor.predict(str(train_csv))).reshape(-1)
             pred_test = np.asarray(predictor.predict(str(test_csv))).reshape(-1)
+        base_pred_train = np.asarray(pred_train, dtype=float).reshape(-1)
+        base_pred_test = np.asarray(pred_test, dtype=float).reshape(-1)
+        pred_train, pred_test, unimol_aux_fusion_payload = fit_auxiliary_fusion_head(
+            base_pred_train,
+            base_pred_test,
+            train_df["TARGET"].to_numpy(dtype=float),
+            train_df["SMILES"].astype(str).reset_index(drop=True),
+            test_df["SMILES"].astype(str).reset_index(drop=True),
+            random_seed=int(unimol_split_random_seed),
+            label=label,
+        )
+        if "unimol_aux_fusion_models" not in STATE:
+            STATE["unimol_aux_fusion_models"] = {}
+        if unimol_aux_fusion_payload is not None:
+            STATE["unimol_aux_fusion_models"][label] = unimol_aux_fusion_payload
+            print(f"{label} auxiliary fusion: enabled", flush=True)
+        else:
+            STATE["unimol_aux_fusion_models"].pop(label, None)
 
         row = {"Model": label, "Execution mode": "GPU"}
         row.update(summarize_regression(train_df["TARGET"].to_numpy(dtype=float), pred_train, "Train"))
@@ -6944,10 +7162,10 @@ cells += [
         )
         pd.DataFrame(
             {
-                "split": ["train"] * len(pred_train) + ["test"] * len(pred_test),
+                "split": ["train"] * len(base_pred_train) + ["test"] * len(base_pred_test),
                 "smiles": list(train_df["SMILES"].astype(str)) + list(test_df["SMILES"].astype(str)),
                 "observed": list(train_df["TARGET"].to_numpy(dtype=float)) + list(test_df["TARGET"].to_numpy(dtype=float)),
-                "predicted": list(pred_train) + list(pred_test),
+                "predicted": list(base_pred_train) + list(base_pred_test),
             }
         ).to_csv(prediction_path, index=False)
         unimol_model_cache_paths[label] = {
@@ -7064,8 +7282,6 @@ cells += [
             ax.scatter(train_df["TARGET"], pred_train, alpha=0.6, label="Train", color="#1f77b4")
             ax.scatter(test_df["TARGET"], pred_test, alpha=0.7, label="Test", color="#d62728")
             ax.plot([low, high], [low, high], linestyle="--", color="#444444", linewidth=1.0)
-            ax.plot([low, high], [3.0 * low, 3.0 * high], linestyle=":", color="#7f7f7f", linewidth=1.0)
-            ax.plot([low, high], [low / 3.0, high / 3.0], linestyle=":", color="#7f7f7f", linewidth=1.0)
             ax.set_title(model_name)
             if use_log_axes:
                 ax.set_xscale("log")
@@ -7092,7 +7308,7 @@ cells += [
         plt.tight_layout()
         plt.show()
         display_note(
-            "The dashed diagonal is the ideal 1x line. The dotted lines mark 3-fold error bounds. "
+            "The dashed diagonal is the ideal 1:1 line. "
             "Axes are shown on a **log10 scale** when all observed and predicted values are positive; otherwise the affected panel uses linear axes. "
             "Because this uses a static Matplotlib figure, hover inspection is not available here."
         )
@@ -7357,7 +7573,7 @@ cells += [
                 for model_name, payload in model_payloads.items():
                     split_df = pd.DataFrame(
                         {
-                            "SMILES": pd.Series(payload[f"{split_name}_smiles"], dtype=str),
+                            "SMILES": pd.Series(payload[f"{split_name}_smiles"], dtype=str).str.strip(),
                             "Observed": np.asarray(payload[f"{split_name}_observed"], dtype=float),
                             model_name: np.asarray(payload[split_name], dtype=float),
                         }
@@ -7366,12 +7582,61 @@ cells += [
                     if merged is None:
                         merged = split_df
                     else:
-                        merged = merged.merge(split_df, on=["SMILES", "Observed"], how="inner")
+                        merged = merged.merge(split_df, on=["SMILES"], how="inner", suffixes=("", "__new_obs"))
+                        if "Observed__new_obs" in merged.columns:
+                            obs_a = merged["Observed"].to_numpy(dtype=float)
+                            obs_b = merged["Observed__new_obs"].to_numpy(dtype=float)
+                            disagreement_mask = ~np.isclose(obs_a, obs_b, rtol=1e-5, atol=1e-8)
+                            disagreement_count = int(disagreement_mask.sum())
+                            if disagreement_count > 0:
+                                print(
+                                    f"[ensemble] warning: {disagreement_count} {split_name} row(s) had slight observed-value disagreement across members; "
+                                    "using the first model's observed values for alignment.",
+                                    flush=True,
+                                )
+                            merged = merged.drop(columns=["Observed__new_obs"])
                     prediction_columns.append(model_name)
                 return merged, prediction_columns
 
             aligned_train, prediction_columns = build_split_frame(payloads, "train")
             aligned_test, _ = build_split_frame(payloads, "test")
+
+            fallback_used = False
+            if aligned_train is None or aligned_test is None or aligned_train.empty or aligned_test.empty:
+                combined = None
+                for model_name, payload in payloads.items():
+                    combined_df = pd.concat(
+                        [
+                            pd.DataFrame(
+                                {
+                                    "SMILES": pd.Series(payload["train_smiles"], dtype=str).str.strip(),
+                                    "Observed": np.asarray(payload["train_observed"], dtype=float),
+                                    model_name: np.asarray(payload["train"], dtype=float),
+                                }
+                            ),
+                            pd.DataFrame(
+                                {
+                                    "SMILES": pd.Series(payload["test_smiles"], dtype=str).str.strip(),
+                                    "Observed": np.asarray(payload["test_observed"], dtype=float),
+                                    model_name: np.asarray(payload["test"], dtype=float),
+                                }
+                            ),
+                        ],
+                        axis=0,
+                        ignore_index=True,
+                    ).drop_duplicates(subset=["SMILES"])
+                    if combined is None:
+                        combined = combined_df
+                    else:
+                        combined = combined.merge(combined_df, on=["SMILES"], how="inner", suffixes=("", "__new_obs"))
+                        if "Observed__new_obs" in combined.columns:
+                            combined = combined.drop(columns=["Observed__new_obs"])
+                reference_train_smiles = pd.Series(STATE.get("smiles_train", []), dtype=str).str.strip()
+                reference_test_smiles = pd.Series(STATE.get("smiles_test", []), dtype=str).str.strip()
+                if combined is not None and not combined.empty and not reference_train_smiles.empty and not reference_test_smiles.empty:
+                    aligned_train = combined.loc[combined["SMILES"].isin(set(reference_train_smiles))].copy().reset_index(drop=True)
+                    aligned_test = combined.loc[combined["SMILES"].isin(set(reference_test_smiles))].copy().reset_index(drop=True)
+                    fallback_used = True
 
             if aligned_train is None or aligned_test is None or aligned_train.empty or aligned_test.empty:
                 raise ValueError(
@@ -7419,12 +7684,24 @@ cells += [
             print(f"Ensemble built from {len(prediction_columns)} model(s): {', '.join(prediction_columns)}")
             print(f"Train overlap used: {len(aligned_train)} molecules")
             print(f"Test overlap used: {len(aligned_test)} molecules")
+            if fallback_used:
+                print(
+                    "Ensemble alignment fallback was used: members were merged by canonical SMILES across train+test predictions, "
+                    "then remapped to the current active train/test split.",
+                    flush=True,
+                )
             display_interactive_table(ensemble_results.round(4), rows=min(10, len(ensemble_results)))
             display(weight_df.round(4))
-            display_note(
+            ensemble_note = (
                 "The ensemble is evaluated only on molecules that were predicted by every selected model. "
                 "That matters most when a Uni-Mol model was trained or filtered on a reduced subset."
             )
+            if fallback_used:
+                ensemble_note += (
+                    " Split-alignment fallback was used because model train/test partitions were not directly compatible; "
+                    "for the strictest comparison, rerun workflows with a shared split."
+                )
+            display_note(ensemble_note)
         """
     ),
     code(
@@ -7466,8 +7743,6 @@ cells += [
             ax.scatter(train_obs, train_pred, alpha=0.55, label="Train", color="#1f77b4")
             ax.scatter(test_obs, test_pred, alpha=0.70, label="Test", color="#d62728")
             ax.plot([low, high], [low, high], linestyle="--", color="#444444", linewidth=1.0)
-            ax.plot([low, high], [3.0 * low, 3.0 * high], linestyle=":", color="#7f7f7f", linewidth=1.0)
-            ax.plot([low, high], [low / 3.0, high / 3.0], linestyle=":", color="#7f7f7f", linewidth=1.0)
             ax.set_title(model_name)
             if use_log_axes:
                 ax.set_xscale("log")
@@ -8017,10 +8292,14 @@ cells += [
                     columns=[f"maplight_gin_{i:04d}" for i in range(gin_array.shape[1])],
                 )
                 maplight_features = pd.concat([maplight_base.reset_index(drop=True), gin_df], axis=1)
-                if not aux_feature_df.empty:
-                    maplight_features = pd.concat([maplight_features.reset_index(drop=True), aux_feature_df.reset_index(drop=True)], axis=1)
                 model = STATE["maplight_gnn_models"][model_name]
-                predictions = np.asarray(model.predict(maplight_features)).reshape(-1)
+                base_predictions = np.asarray(model.predict(maplight_features)).reshape(-1)
+                maplight_fusion_payload = (
+                    STATE.get("maplight_gnn_aux_fusion_models", {}).get(model_name)
+                    if isinstance(STATE.get("maplight_gnn_aux_fusion_models"), dict)
+                    else None
+                )
+                predictions = apply_auxiliary_fusion_head(base_predictions, aux_feature_df, maplight_fusion_payload)
             elif workflow_name == "Uni-Mol":
                 if "unimol_model_dirs" not in STATE or model_name not in STATE["unimol_model_dirs"]:
                     raise RuntimeError(f"Uni-Mol model directory for '{model_name}' is not available in this session.")
@@ -8030,12 +8309,18 @@ cells += [
                     raise RuntimeError(
                         "Uni-Mol prediction requires `unimol_tools` to be available in the active environment."
                     ) from exc
-                prediction_dir = Path("./.cache/unimol_prediction_inputs")
+                prediction_dir = resolve_output_path(".cache/unimol_prediction_inputs")
                 prediction_dir.mkdir(parents=True, exist_ok=True)
                 prediction_csv = prediction_dir / f"{slugify_cache_text(model_name)}_prediction_input.csv"
                 pd.DataFrame({"SMILES": valid_smiles, "TARGET": np.zeros(len(valid_smiles), dtype=float)}).to_csv(prediction_csv, index=False)
                 predictor = MolPredict(load_model=str(STATE["unimol_model_dirs"][model_name]))
-                predictions = np.asarray(predictor.predict(str(prediction_csv))).reshape(-1)
+                base_predictions = np.asarray(predictor.predict(str(prediction_csv))).reshape(-1)
+                unimol_fusion_payload = (
+                    STATE.get("unimol_aux_fusion_models", {}).get(model_name)
+                    if isinstance(STATE.get("unimol_aux_fusion_models"), dict)
+                    else None
+                )
+                predictions = apply_auxiliary_fusion_head(base_predictions, aux_feature_df, unimol_fusion_payload)
             elif workflow_name == "Ensemble":
                 if "ensemble_prediction_columns" not in STATE or "ensemble_weight_table" not in STATE:
                     raise RuntimeError("No ensemble artifacts are available in this session. Run block 7A first.")
@@ -8460,7 +8745,7 @@ cells += [
                 except Exception:
                     _pip_install_verbose([pip_name], pip_name)
 
-            source_cache_dir = Path("./.cache/mastml_source_runtime")
+            source_cache_dir = resolve_output_path(".cache/mastml_source_runtime")
             mastml_source_root = _clone_repo(
                 "https://github.com/uw-cmg/MAST-ML",
                 "master",
@@ -8677,7 +8962,7 @@ cells += [
                     preprocessor=mastml_preprocessor,
                     model=mastml_model,
                     params=mastml_params,
-                    path=str(ad_cache_dir if ad_cache_dir is not None else Path("./.cache/mastml_applicability_domain")),
+                    path=str(ad_cache_dir if ad_cache_dir is not None else resolve_output_path(".cache/mastml_applicability_domain")),
                 )
                 ad_model.fit(training_feature_df, training_target)
                 fit_seconds = time.perf_counter() - fit_start
@@ -8782,7 +9067,7 @@ cells += [
         STATE["latest_prediction_results_with_ad"] = ad_prediction_df.copy()
         STATE["mastml_ad_model_info"] = {
             "package_workflow": "MAST-ML Domain('madml')",
-            "output_dir": str(ad_cache_dir if ad_cache_dir is not None else Path("./.cache/mastml_applicability_domain")),
+            "output_dir": str(ad_cache_dir if ad_cache_dir is not None else resolve_output_path(".cache/mastml_applicability_domain")),
             "params": dict(mastml_params),
             "random_forest_estimators": int(mastml_random_forest_estimators),
         }
@@ -8802,7 +9087,7 @@ cells += [
                 )
 
         print("Applied the MAST-ML / MADML applicability-domain workflow to the latest prediction table.")
-        print(f"MAST-ML output directory: {ad_cache_dir if ad_cache_dir is not None else Path('./.cache/mastml_applicability_domain')}")
+        print(f"MAST-ML output directory: {ad_cache_dir if ad_cache_dir is not None else resolve_output_path('.cache/mastml_applicability_domain')}")
         print(
             f"Assessed {int(valid_prediction_rows.sum())} valid predicted molecule(s); "
             f"{int((~valid_prediction_rows).sum())} invalid row(s) were left unchanged."
