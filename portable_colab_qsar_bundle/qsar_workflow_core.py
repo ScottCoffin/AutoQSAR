@@ -5,6 +5,7 @@ import json
 import time
 import uuid
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -32,10 +33,102 @@ FEATURE_FAMILY_LABELS = {
     "morgan": "Morgan fingerprints",
     "ecfp6": "ECFP6 fingerprints",
     "fcfp6": "FCFP6 fingerprints",
+    "layered": "RDKit layered fingerprints",
+    "atom_pair": "Atom-pair fingerprints",
+    "topological_torsion": "Topological torsion fingerprints",
+    "rdk_path": "RDKit path fingerprints",
     "maccs": "MACCS keys",
     "rdkit": "RDKit descriptors",
     "maplight": "MapLight classic (Morgan + Avalon + ErG + chosen descriptors)",
 }
+
+
+CHEMPROP_ARCHITECTURE_REGISTRY = {
+    "dmpnn": {
+        "display_name": "D-MPNN",
+        "variant_tag": "dmpnn",
+        "workflow": "Chemprop v2",
+        "train_args": [],
+        "molecule_featurizers": [],
+        "notes": "Chemprop v2 default directed message-passing network.",
+    },
+    "cmpnn": {
+        "display_name": "CMPNN",
+        "variant_tag": "cmpnn",
+        "workflow": "Chemprop v2",
+        "train_args": ["--atom-messages", "--undirected"],
+        "molecule_featurizers": [],
+        "notes": "CMPNN-style Chemprop configuration via atom-level message passing.",
+    },
+    "attentivefp": {
+        "display_name": "AttentiveFP",
+        "variant_tag": "attentivefp",
+        "workflow": "Chemprop v2",
+        "train_args": [
+            "--atom-messages",
+            "--aggregation", "norm",
+            "--aggregation-norm", "100",
+            "--dropout", "0.1",
+        ],
+        "molecule_featurizers": ["rdkit_2d"],
+        "notes": "AttentiveFP-style Chemprop proxy with atom messages plus descriptor fusion.",
+    },
+}
+
+
+def list_supported_chemprop_architectures() -> list[str]:
+    return list(CHEMPROP_ARCHITECTURE_REGISTRY.keys())
+
+
+def resolve_chemprop_architecture_specs(
+    architecture_keys: list[str] | None = None,
+    *,
+    ensemble_size: int = 1,
+    include_rdkit2d_extra: bool = False,
+) -> list[dict[str, Any]]:
+    requested = [str(key).strip().lower() for key in (architecture_keys or list_supported_chemprop_architectures())]
+    requested = [key for key in requested if key]
+    if not requested:
+        requested = list_supported_chemprop_architectures()
+
+    specs: list[dict[str, Any]] = []
+    seen_variant_tags: set[str] = set()
+
+    def _append_spec(architecture_key: str, *, force_rdkit2d: bool = False):
+        if architecture_key not in CHEMPROP_ARCHITECTURE_REGISTRY:
+            supported = ", ".join(list_supported_chemprop_architectures())
+            raise ValueError(
+                f"Unsupported Chemprop architecture '{architecture_key}'. Supported: {supported}."
+            )
+        base = CHEMPROP_ARCHITECTURE_REGISTRY[architecture_key]
+        featurizers = [str(item).strip() for item in list(base.get("molecule_featurizers", [])) if str(item).strip()]
+        variant_tag = str(base.get("variant_tag", architecture_key))
+        display_name = str(base.get("display_name", architecture_key.upper()))
+        if force_rdkit2d and "rdkit_2d" not in featurizers:
+            featurizers.append("rdkit_2d")
+            variant_tag = f"{variant_tag}_rdkit2d"
+            display_name = f"{display_name} + RDKit2D"
+        if variant_tag in seen_variant_tags:
+            return
+        seen_variant_tags.add(variant_tag)
+        specs.append(
+            {
+                "architecture_key": architecture_key,
+                "variant_tag": variant_tag,
+                "label": f"Chemprop v2 ({display_name}, ensemble={int(ensemble_size)})",
+                "workflow": str(base.get("workflow", "Chemprop v2")),
+                "train_args": [str(item) for item in list(base.get("train_args", []))],
+                "featurizers": featurizers,
+                "notes": str(base.get("notes", "")),
+            }
+        )
+
+    for key in requested:
+        _append_spec(key, force_rdkit2d=False)
+        if bool(include_rdkit2d_extra) and key == "dmpnn":
+            _append_spec(key, force_rdkit2d=True)
+
+    return specs
 
 MAPLIGHT_DESCRIPTOR_NAMES = [
     "BalabanJ", "BertzCT", "Chi0", "Chi0n", "Chi0v", "Chi1", "Chi1n", "Chi1v", "Chi2n", "Chi2v",
@@ -259,6 +352,71 @@ def make_fcfp6_matrix(smiles_list, n_bits=1024):
     return make_circular_fingerprint_matrix(smiles_list, radius=3, n_bits=int(n_bits), use_features=True, prefix="fcfp6")
 
 
+def make_layered_matrix(smiles_list, n_bits=1024):
+    rows = []
+    for smi in smiles_list:
+        mol = Chem.MolFromSmiles(smi)
+        fp = Chem.LayeredFingerprint(mol, fpSize=int(n_bits))
+        arr = np.zeros((int(n_bits),), dtype=np.float32)
+        DataStructs.ConvertToNumpyArray(fp, arr)
+        rows.append(arr)
+    return pd.DataFrame(rows, columns=[f"layered_bit_{i:04d}" for i in range(int(n_bits))])
+
+
+def make_atom_pair_matrix(smiles_list, n_bits=1024):
+    atom_pair_generator = None
+    try:
+        atom_pair_generator = AllChem.GetAtomPairGenerator(fpSize=int(n_bits))
+    except Exception:
+        atom_pair_generator = None
+    rows = []
+    for smi in smiles_list:
+        mol = Chem.MolFromSmiles(smi)
+        if atom_pair_generator is not None:
+            fp = atom_pair_generator.GetFingerprint(mol)
+        else:
+            fp = rdMolDescriptors.GetHashedAtomPairFingerprintAsBitVect(mol, nBits=int(n_bits))
+        arr = np.zeros((int(n_bits),), dtype=np.float32)
+        DataStructs.ConvertToNumpyArray(fp, arr)
+        rows.append(arr)
+    return pd.DataFrame(rows, columns=[f"atom_pair_bit_{i:04d}" for i in range(int(n_bits))])
+
+
+def make_topological_torsion_matrix(smiles_list, n_bits=1024):
+    torsion_generator = None
+    try:
+        torsion_generator = AllChem.GetTopologicalTorsionGenerator(fpSize=int(n_bits))
+    except Exception:
+        torsion_generator = None
+    rows = []
+    for smi in smiles_list:
+        mol = Chem.MolFromSmiles(smi)
+        if torsion_generator is not None:
+            fp = torsion_generator.GetFingerprint(mol)
+        else:
+            fp = rdMolDescriptors.GetHashedTopologicalTorsionFingerprintAsBitVect(mol, nBits=int(n_bits))
+        arr = np.zeros((int(n_bits),), dtype=np.float32)
+        DataStructs.ConvertToNumpyArray(fp, arr)
+        rows.append(arr)
+    return pd.DataFrame(rows, columns=[f"topological_torsion_bit_{i:04d}" for i in range(int(n_bits))])
+
+
+def make_rdk_path_matrix(smiles_list, n_bits=1024, min_path=1, max_path=7):
+    rows = []
+    for smi in smiles_list:
+        mol = Chem.MolFromSmiles(smi)
+        fp = Chem.RDKFingerprint(
+            mol,
+            fpSize=int(n_bits),
+            minPath=int(min_path),
+            maxPath=int(max_path),
+        )
+        arr = np.zeros((int(n_bits),), dtype=np.float32)
+        DataStructs.ConvertToNumpyArray(fp, arr)
+        rows.append(arr)
+    return pd.DataFrame(rows, columns=[f"rdk_path_bit_{i:04d}" for i in range(int(n_bits))])
+
+
 def make_maccs_matrix(smiles_list):
     rows = []
     for smi in smiles_list:
@@ -359,17 +517,161 @@ def align_feature_matrix_to_training_columns(feature_df, expected_columns):
     return finalize_feature_matrix(aligned)
 
 
+def drop_exact_and_near_duplicate_features(
+    X_train,
+    X_other=None,
+    *,
+    correlation_threshold=0.999,
+    report_limit=20,
+):
+    """Greedily keep first-occurring columns and drop exact / near-exact duplicates.
+
+    Duplicate handling order:
+    1. Exact duplicates (identical values across all training rows)
+    2. Near duplicates by absolute Pearson correlation threshold
+
+    Parameters
+    ----------
+    X_train : DataFrame-like
+        Training feature matrix used to detect duplicate columns.
+    X_other : DataFrame-like or None
+        Optional second matrix (for example test features) that will be aligned to
+        the retained training columns.
+    correlation_threshold : float
+        Near-duplicate threshold on absolute Pearson correlation.
+    report_limit : int
+        Maximum number of representative duplicate pairs to keep in metadata.
+    """
+
+    train_df = pd.DataFrame(X_train).copy()
+    other_df = pd.DataFrame(X_other).copy() if X_other is not None else None
+
+    original_columns = list(train_df.columns)
+    dropped_exact_columns = []
+    dropped_exact_pairs = []
+    hash_buckets = {}
+    for column in original_columns:
+        series = train_df[column]
+        series_hash = int(pd.util.hash_pandas_object(series, index=False).sum())
+        bucket = hash_buckets.setdefault(series_hash, [])
+        duplicate_of = None
+        for prior_column in bucket:
+            if series.equals(train_df[prior_column]):
+                duplicate_of = prior_column
+                break
+        if duplicate_of is not None:
+            dropped_exact_columns.append(column)
+            if len(dropped_exact_pairs) < int(report_limit):
+                dropped_exact_pairs.append((str(duplicate_of), str(column)))
+        else:
+            bucket.append(column)
+
+    if dropped_exact_columns:
+        train_df = train_df.drop(columns=dropped_exact_columns, errors="ignore")
+        if other_df is not None:
+            drop_in_other = [column for column in dropped_exact_columns if column in other_df.columns]
+            if drop_in_other:
+                other_df = other_df.drop(columns=drop_in_other, errors="ignore")
+
+    dropped_near_columns = []
+    dropped_near_pairs = []
+    near_duplicate_scan_error = None
+    threshold = float(correlation_threshold)
+    if train_df.shape[1] > 1 and threshold < 1.0:
+        try:
+            train_values = train_df.to_numpy(dtype=np.float64, copy=True)
+            if train_values.size:
+                train_values[~np.isfinite(train_values)] = np.nan
+                if np.isnan(train_values).any():
+                    medians = np.nanmedian(train_values, axis=0)
+                    medians = np.where(np.isfinite(medians), medians, 0.0)
+                    nan_rows, nan_cols = np.where(np.isnan(train_values))
+                    train_values[nan_rows, nan_cols] = medians[nan_cols]
+
+                centered = train_values - np.mean(train_values, axis=0, keepdims=True)
+                norms = np.linalg.norm(centered, axis=0)
+                valid_mask = norms > 0.0
+                valid_columns = list(train_df.columns[valid_mask])
+                if len(valid_columns) > 1:
+                    standardized = centered[:, valid_mask] / norms[valid_mask]
+                    standardized = np.asarray(standardized, dtype=np.float32)
+                    corr_abs = np.asarray(np.abs(standardized.T @ standardized), dtype=np.float32)
+                    diagonal_index = np.arange(corr_abs.shape[0], dtype=int)
+                    corr_abs[diagonal_index, diagonal_index] = 0.0
+
+                    keep_mask = np.ones(corr_abs.shape[0], dtype=bool)
+                    for left_idx in range(corr_abs.shape[0] - 1):
+                        if not keep_mask[left_idx]:
+                            continue
+                        right_view = corr_abs[left_idx, left_idx + 1 :]
+                        if right_view.size == 0:
+                            continue
+                        duplicate_local = np.where((right_view > threshold) & keep_mask[left_idx + 1 :])[0]
+                        if duplicate_local.size == 0:
+                            continue
+                        duplicate_idx = duplicate_local + left_idx + 1
+                        keep_mask[duplicate_idx] = False
+                        for dup_idx in duplicate_idx.tolist():
+                            dup_column = valid_columns[dup_idx]
+                            dropped_near_columns.append(dup_column)
+                            if len(dropped_near_pairs) < int(report_limit):
+                                dropped_near_pairs.append((str(valid_columns[left_idx]), str(dup_column)))
+
+                    if dropped_near_columns:
+                        train_df = train_df.drop(columns=dropped_near_columns, errors="ignore")
+                        if other_df is not None:
+                            drop_in_other = [column for column in dropped_near_columns if column in other_df.columns]
+                            if drop_in_other:
+                                other_df = other_df.drop(columns=drop_in_other, errors="ignore")
+        except Exception as exc:
+            near_duplicate_scan_error = f"{type(exc).__name__}: {exc}"
+
+    dedup_metadata = {
+        "correlation_threshold": float(threshold),
+        "original_feature_count": int(len(original_columns)),
+        "post_dedup_feature_count": int(train_df.shape[1]),
+        "dropped_feature_count": int(len(dropped_exact_columns) + len(dropped_near_columns)),
+        "dropped_exact_count": int(len(dropped_exact_columns)),
+        "dropped_near_count": int(len(dropped_near_columns)),
+        "dropped_exact_columns": [str(column) for column in dropped_exact_columns],
+        "dropped_near_columns": [str(column) for column in dropped_near_columns],
+        "exact_duplicate_examples": [
+            {"kept": str(kept), "dropped": str(dropped)} for kept, dropped in dropped_exact_pairs
+        ],
+        "near_duplicate_examples": [
+            {"kept": str(kept), "dropped": str(dropped)} for kept, dropped in dropped_near_pairs
+        ],
+        "near_duplicate_scan_error": near_duplicate_scan_error or "",
+    }
+    return train_df.reset_index(drop=True), (other_df.reset_index(drop=True) if other_df is not None else None), dedup_metadata
+
+
 def normalize_selected_feature_families(selected_feature_families=None, **feature_flags):
     selected = []
+    family_aliases = {
+        "layeredfp": "layered",
+        "rdk": "rdk_path",
+        "rdkfp": "rdk_path",
+        "atompair": "atom_pair",
+        "atom_pair": "atom_pair",
+        "topologicaltorsion": "topological_torsion",
+        "topo_torsion": "topological_torsion",
+        "tt": "topological_torsion",
+    }
     if selected_feature_families is not None:
         for family in selected_feature_families:
             family_key = str(family).strip().lower()
+            family_key = family_aliases.get(family_key, family_key)
             if family_key in FEATURE_FAMILY_LABELS and family_key not in selected:
                 selected.append(family_key)
     flag_mapping = {
         "use_morgan_features": "morgan",
         "use_ecfp6_features": "ecfp6",
         "use_fcfp6_features": "fcfp6",
+        "use_layered_features": "layered",
+        "use_atom_pair_features": "atom_pair",
+        "use_topological_torsion_features": "topological_torsion",
+        "use_rdk_path_features": "rdk_path",
         "use_maccs_keys": "maccs",
         "use_rdkit_descriptors": "rdkit",
         "use_maplight_classic": "maplight",
@@ -388,6 +690,14 @@ def feature_family_label(family_key, radius=2, n_bits=1024):
         return f"ECFP6(bits={int(n_bits)})"
     if family_key == "fcfp6":
         return f"FCFP6(bits={int(n_bits)})"
+    if family_key == "layered":
+        return f"RDKit layered(bits={int(n_bits)})"
+    if family_key == "atom_pair":
+        return f"Atom-pair(bits={int(n_bits)})"
+    if family_key == "topological_torsion":
+        return f"Topological torsion(bits={int(n_bits)})"
+    if family_key == "rdk_path":
+        return f"RDKit path(bits={int(n_bits)})"
     if family_key == "maplight":
         return f"MapLight classic (Morgan+Avalon+ErG, bits={int(n_bits)})"
     return FEATURE_FAMILY_LABELS[family_key]
@@ -409,7 +719,12 @@ def feature_store_representation_payload(selected_families, radius=2, n_bits=102
     return {
         "families": selected_families,
         "morgan_radius": int(radius) if any(family in {"morgan", "maplight"} for family in selected_families) else None,
-        "fingerprint_bits": int(n_bits) if any(family in {"morgan", "ecfp6", "fcfp6", "maplight"} for family in selected_families) else None,
+        "fingerprint_bits": int(n_bits)
+        if any(
+            family in {"morgan", "ecfp6", "fcfp6", "layered", "atom_pair", "topological_torsion", "rdk_path", "maplight"}
+            for family in selected_families
+        )
+        else None,
     }
 
 
@@ -550,6 +865,22 @@ def build_feature_family_frames(smiles_list, selected_families, radius=2, n_bits
             built_families.append(family_key)
         elif family_key == "fcfp6":
             frames.append(make_fcfp6_matrix(smiles_list, n_bits=int(n_bits)))
+            labels.append(feature_family_label(family_key, radius=radius, n_bits=n_bits))
+            built_families.append(family_key)
+        elif family_key == "layered":
+            frames.append(make_layered_matrix(smiles_list, n_bits=int(n_bits)))
+            labels.append(feature_family_label(family_key, radius=radius, n_bits=n_bits))
+            built_families.append(family_key)
+        elif family_key == "atom_pair":
+            frames.append(make_atom_pair_matrix(smiles_list, n_bits=int(n_bits)))
+            labels.append(feature_family_label(family_key, radius=radius, n_bits=n_bits))
+            built_families.append(family_key)
+        elif family_key == "topological_torsion":
+            frames.append(make_topological_torsion_matrix(smiles_list, n_bits=int(n_bits)))
+            labels.append(feature_family_label(family_key, radius=radius, n_bits=n_bits))
+            built_families.append(family_key)
+        elif family_key == "rdk_path":
+            frames.append(make_rdk_path_matrix(smiles_list, n_bits=int(n_bits)))
             labels.append(feature_family_label(family_key, radius=radius, n_bits=n_bits))
             built_families.append(family_key)
         elif family_key == "maccs":

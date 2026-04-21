@@ -209,3 +209,16 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# AutoQSAR generated benchmark/runtime artifacts
+benchmark_results/
+tmp/
+.autoqsar_tmp/
+data/admet_group/
+data/moleculenet/
+data/polaris_adme/
+data/benchmark_leaderboards/
+data/*.zip
+gin_supervised_masking_pre_trained.pth
+**/trainer_logs/
+**/events.out.tfevents*

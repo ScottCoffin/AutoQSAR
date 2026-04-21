@@ -5,7 +5,25 @@ import textwrap
 import uuid
 from pathlib import Path
 
+try:
+    from portable_colab_qsar_bundle.benchmark_registry import (
+        MOLECULENET_PHYSCHEM_OPTIONS,
+        POLARIS_ADME_OPTIONS,
+        TDC_LEADERBOARD_URLS,
+        TDC_QSAR_OPTIONS,
+        notebook_example_dataset_options,
+    )
+except ModuleNotFoundError:
+    from benchmark_registry import (  # type: ignore
+        MOLECULENET_PHYSCHEM_OPTIONS,
+        POLARIS_ADME_OPTIONS,
+        TDC_LEADERBOARD_URLS,
+        TDC_QSAR_OPTIONS,
+        notebook_example_dataset_options,
+    )
+
 OUT_PATH = Path(r"portable_colab_qsar_bundle/colab_qsar_tutorial.ipynb")
+EXAMPLE_DATASET_OPTIONS = notebook_example_dataset_options()
 
 
 def src(text: str):
@@ -771,8 +789,10 @@ cells += [
             return text or "artifact"
 
         def current_dataset_cache_label():
-            if STATE.get("tdc_metadata") is not None:
-                return slugify_cache_text(STATE["tdc_metadata"].get("dataset_name", "tdc_dataset"))
+            benchmark_meta = STATE.get("benchmark_metadata") or {}
+            benchmark_dataset_name = str(benchmark_meta.get("dataset_name", "")).strip()
+            if benchmark_dataset_name:
+                return slugify_cache_text(benchmark_dataset_name)
             label = STATE.get("data_source_label") or STATE.get("uploaded_filename") or "dataset"
             try:
                 return slugify_cache_text(Path(str(label)).stem)
@@ -853,6 +873,88 @@ cells += [
                     return False
             return True
 
+        def _normalize_smiles_series(values):
+            return pd.Series(values, dtype=str).astype(str).str.strip().reset_index(drop=True)
+
+        def build_split_signature(train_smiles, test_smiles):
+            import hashlib
+
+            train_series = _normalize_smiles_series(train_smiles)
+            test_series = _normalize_smiles_series(test_smiles)
+
+            if train_series.empty or test_series.empty:
+                raise ValueError(
+                    "Split signature guard cannot run on an empty split. "
+                    f"Received train={len(train_series)}, test={len(test_series)}."
+                )
+            if train_series.duplicated().any():
+                raise ValueError("Split signature guard requires unique training SMILES, but duplicates were found.")
+            if test_series.duplicated().any():
+                raise ValueError("Split signature guard requires unique test SMILES, but duplicates were found.")
+
+            train_set = set(train_series.tolist())
+            test_set = set(test_series.tolist())
+            overlap = sorted(train_set.intersection(test_set))
+            if overlap:
+                overlap_preview = ", ".join(overlap[:3])
+                raise ValueError(
+                    "Split signature guard requires disjoint train/test SMILES, "
+                    f"but found {len(overlap)} overlap(s): {overlap_preview}."
+                )
+
+            def _hash_smiles_set(smiles_set):
+                digest = hashlib.sha256()
+                for item in sorted(smiles_set):
+                    digest.update(item.encode("utf-8"))
+                    digest.update(b"\\n")
+                return digest.hexdigest()
+
+            return {
+                "train_count": int(len(train_series)),
+                "test_count": int(len(test_series)),
+                "train_hash": _hash_smiles_set(train_set),
+                "test_hash": _hash_smiles_set(test_set),
+            }
+
+        def ensure_global_split_signature(train_smiles, test_smiles, source_label="unknown"):
+            signature = build_split_signature(train_smiles, test_smiles)
+            dataset_label = current_dataset_cache_label()
+            canonical_signature = STATE.get("canonical_split_signature")
+            canonical_dataset_label = STATE.get("canonical_split_dataset_label")
+            canonical_source = STATE.get("canonical_split_source", "unknown")
+
+            if canonical_signature is None or str(canonical_dataset_label) != str(dataset_label):
+                STATE["canonical_split_signature"] = dict(signature)
+                STATE["canonical_split_dataset_label"] = str(dataset_label)
+                STATE["canonical_split_source"] = str(source_label)
+                print(
+                    "Canonical split signature established: "
+                    f"dataset={dataset_label}, source={source_label}, "
+                    f"train={signature['train_count']}, test={signature['test_count']}",
+                    flush=True,
+                )
+                return dict(signature)
+
+            mismatch_fields = []
+            for key in ["train_count", "test_count", "train_hash", "test_hash"]:
+                if str(canonical_signature.get(key)) != str(signature.get(key)):
+                    mismatch_fields.append(key)
+
+            if mismatch_fields:
+                raise RuntimeError(
+                    "Global split signature guard violation: train/test SMILES do not match the canonical split for this dataset.\\n"
+                    f"Dataset label: {dataset_label}\\n"
+                    f"Canonical source: {canonical_source}\\n"
+                    f"Current source: {source_label}\\n"
+                    f"Mismatched fields: {', '.join(mismatch_fields)}\\n"
+                    f"Canonical counts (train/test): {canonical_signature.get('train_count')}/{canonical_signature.get('test_count')}\\n"
+                    f"Current counts (train/test): {signature.get('train_count')}/{signature.get('test_count')}\\n"
+                    "Rerun from step 0 and keep identical split settings across workflows. "
+                    "If using Uni-Mol, disable subset/filter options that change split membership."
+                )
+
+            return dict(signature)
+
         def dataframe_cache_signature(frame, max_rows=None):
             import hashlib
 
@@ -904,7 +1006,37 @@ cells += [
                 "fitness_dict": fitness_dict,
             }
 
-        def load_prediction_splits(prediction_path, train_smiles, test_smiles):
+        def extract_ga_fitness_scalar(value):
+            import ast
+            import re
+
+            if value is None:
+                return np.nan
+            if isinstance(value, (tuple, list, np.ndarray)):
+                if len(value) == 0:
+                    return np.nan
+                return float(value[0])
+            if isinstance(value, str):
+                text = value.strip()
+                if not text:
+                    return np.nan
+                try:
+                    parsed = ast.literal_eval(text)
+                except Exception:
+                    parsed = None
+                if isinstance(parsed, (tuple, list, np.ndarray)):
+                    if len(parsed) == 0:
+                        return np.nan
+                    return float(parsed[0])
+                if parsed is not None:
+                    return float(parsed)
+                numeric_match = re.search(r"[-+]?(?:[0-9]+\\.?[0-9]*|\\.[0-9]+)(?:[eE][-+]?[0-9]+)?", text)
+                if numeric_match:
+                    return float(numeric_match.group(0))
+                raise ValueError(f"Could not parse GA fitness value: {value!r}")
+            return float(value)
+
+        def load_prediction_splits(prediction_path, train_smiles, test_smiles, allow_reorder=False):
             prediction_df = pd.read_csv(prediction_path)
             if "split" not in prediction_df.columns:
                 raise ValueError("Cached prediction file is missing the 'split' column.")
@@ -916,10 +1048,46 @@ cells += [
 
             if len(train_frame) != len(expected_train_smiles) or len(test_frame) != len(expected_test_smiles):
                 raise ValueError("Cached prediction lengths do not match the current train/test split.")
-            if not train_frame["smiles"].astype(str).reset_index(drop=True).equals(expected_train_smiles):
-                raise ValueError("Cached training predictions do not match the current train split.")
-            if not test_frame["smiles"].astype(str).reset_index(drop=True).equals(expected_test_smiles):
-                raise ValueError("Cached test predictions do not match the current test split.")
+
+            train_smiles_cached = train_frame["smiles"].astype(str).reset_index(drop=True)
+            test_smiles_cached = test_frame["smiles"].astype(str).reset_index(drop=True)
+            train_exact_match = train_smiles_cached.equals(expected_train_smiles)
+            test_exact_match = test_smiles_cached.equals(expected_test_smiles)
+
+            if not (train_exact_match and test_exact_match):
+                if not allow_reorder:
+                    if not train_exact_match:
+                        raise ValueError("Cached training predictions do not match the current train split.")
+                    raise ValueError("Cached test predictions do not match the current test split.")
+
+                def _reorder_split_frame(frame, expected_smiles, split_label):
+                    expected_smiles = pd.Series(expected_smiles, dtype=str).reset_index(drop=True)
+                    frame = frame.copy()
+                    frame["smiles"] = frame["smiles"].astype(str).reset_index(drop=True)
+                    if frame["smiles"].duplicated().any():
+                        raise ValueError(
+                            f"Cached {split_label} predictions contain duplicate SMILES; cannot safely reorder."
+                        )
+                    if expected_smiles.duplicated().any():
+                        raise ValueError(
+                            f"Current {split_label} split contains duplicate SMILES; cannot safely reorder cached predictions."
+                        )
+                    frame_indexed = frame.set_index("smiles", drop=False)
+                    expected_set = set(expected_smiles.tolist())
+                    cached_set = set(frame_indexed.index.tolist())
+                    if expected_set != cached_set:
+                        missing = sorted(expected_set - cached_set)
+                        extra = sorted(cached_set - expected_set)
+                        missing_preview = ", ".join(missing[:3]) if missing else "none"
+                        extra_preview = ", ".join(extra[:3]) if extra else "none"
+                        raise ValueError(
+                            f"Cached {split_label} SMILES set does not match current split "
+                            f"(missing={len(missing)} [{missing_preview}], extra={len(extra)} [{extra_preview}])."
+                        )
+                    return frame_indexed.loc[expected_smiles.tolist()].reset_index(drop=True)
+
+                train_frame = _reorder_split_frame(train_frame, expected_train_smiles, "train")
+                test_frame = _reorder_split_frame(test_frame, expected_test_smiles, "test")
 
             return {
                 "train": train_frame,
@@ -935,9 +1103,12 @@ cells += [
             FEATURE_FAMILY_LABELS as QSAR_CORE_FEATURE_FAMILY_LABELS,
             align_feature_matrix_to_training_columns,
             build_feature_matrix_from_smiles,
+            drop_exact_and_near_duplicate_features,
+            list_supported_chemprop_architectures,
             make_qsar_cv_splitter,
             make_reusable_inner_cv_splitter,
             normalize_selected_feature_families,
+            resolve_chemprop_architecture_specs,
             scaffold_train_test_split,
             target_quartile_labels,
         )
@@ -986,10 +1157,40 @@ cells += [
             smiles = STATE["curated_df"]["canonical_smiles"].astype(str).reset_index(drop=True)
 
             split_strategy = str(split_strategy).strip().lower()
-            if split_strategy not in {"random", "scaffold", "target_quartiles"}:
-                raise ValueError("Split strategy must be 'random', 'scaffold', or 'target_quartiles'.")
+            if split_strategy not in {"random", "scaffold", "target_quartiles", "predefined"}:
+                raise ValueError("Split strategy must be 'random', 'scaffold', 'target_quartiles', or 'predefined'.")
 
-            if split_strategy in {"random", "target_quartiles"}:
+            if split_strategy == "predefined":
+                split_labels = STATE.get("predefined_split_labels")
+                if split_labels is None:
+                    raise ValueError(
+                        "Split strategy `predefined` requires predefined split labels from the loaded benchmark dataset."
+                    )
+                split_labels = (
+                    pd.Series(split_labels, dtype=str)
+                    .str.strip()
+                    .str.lower()
+                    .reset_index(drop=True)
+                )
+                if len(split_labels) != len(X):
+                    raise ValueError(
+                        "Predefined split labels length does not match the current curated dataset length. "
+                        "Rerun from step 1A and keep benchmark split labels in sync."
+                    )
+                train_mask = split_labels == "train"
+                test_mask = split_labels == "test"
+                if int(train_mask.sum()) == 0 or int(test_mask.sum()) == 0:
+                    raise ValueError(
+                        "Predefined split labels must contain both train and test rows after curation."
+                    )
+                X_train = X.loc[train_mask].reset_index(drop=True)
+                X_test = X.loc[test_mask].reset_index(drop=True)
+                y_train = y.loc[train_mask].reset_index(drop=True)
+                y_test = y.loc[test_mask].reset_index(drop=True)
+                smiles_train = smiles.loc[train_mask].reset_index(drop=True)
+                smiles_test = smiles.loc[test_mask].reset_index(drop=True)
+                test_fraction = float(len(X_test) / max(1, len(X)))
+            elif split_strategy in {"random", "target_quartiles"}:
                 stratify_labels = None
                 if split_strategy == "target_quartiles":
                     stratify_labels = target_quartile_labels(y, q=4)
@@ -1019,6 +1220,12 @@ cells += [
             if len(X_train) < 3:
                 raise ValueError("Please use more rows or a smaller test fraction so the training set has at least 3 molecules.")
 
+            ensure_global_split_signature(
+                smiles_train,
+                smiles_test,
+                source_label=f"apply_qsar_split(strategy={split_strategy}, test_fraction={float(test_fraction):.2f}, random_seed={int(random_seed)})",
+            )
+
             STATE["X_train"] = X_train.copy()
             STATE["X_test"] = X_test.copy()
             STATE["y_train"] = y_train.to_numpy(dtype=float)
@@ -1045,6 +1252,70 @@ cells += [
                 "smiles_test": smiles_test.reset_index(drop=True),
             }
 
+        def ensure_shared_qsar_split(
+            default_strategy="random",
+            default_test_fraction=0.2,
+            default_random_seed=42,
+            source_label="shared workflow",
+        ):
+            recommended_split = str(STATE.get("recommended_split_strategy", "")).strip().lower()
+            if (
+                recommended_split in {"random", "target_quartiles", "scaffold", "predefined"}
+                and str(default_strategy).strip().lower() == "random"
+            ):
+                default_strategy = recommended_split
+            has_existing_split = all(
+                key in STATE for key in ["X_train", "X_test", "y_train", "y_test", "smiles_train", "smiles_test"]
+            )
+            if has_existing_split:
+                split_strategy = str(STATE.get("model_split_strategy", default_strategy))
+                split_fraction = float(STATE.get("model_test_fraction", default_test_fraction))
+                split_seed = int(STATE.get("model_split_random_seed", default_random_seed))
+                ensure_global_split_signature(
+                    STATE["smiles_train"].astype(str).reset_index(drop=True),
+                    STATE["smiles_test"].astype(str).reset_index(drop=True),
+                    source_label=f"{source_label} (reuse established split)",
+                )
+                print(
+                    f"{source_label}: reusing established QSAR split "
+                    f"(strategy={split_strategy}, test_fraction={split_fraction:.2f}, random_seed={split_seed}, "
+                    f"train={len(STATE['X_train'])}, test={len(STATE['X_test'])}).",
+                    flush=True,
+                )
+                return {
+                    "X_train": STATE["X_train"].copy(),
+                    "X_test": STATE["X_test"].copy(),
+                    "y_train": np.asarray(STATE["y_train"], dtype=float),
+                    "y_test": np.asarray(STATE["y_test"], dtype=float),
+                    "smiles_train": STATE["smiles_train"].astype(str).reset_index(drop=True),
+                    "smiles_test": STATE["smiles_test"].astype(str).reset_index(drop=True),
+                }
+
+            print(
+                f"{source_label}: no prior QSAR split found, creating one with "
+                f"strategy={str(default_strategy)}, test_fraction={float(default_test_fraction):.2f}, "
+                f"random_seed={int(default_random_seed)}.",
+                flush=True,
+            )
+            return apply_qsar_split(
+                split_strategy=str(default_strategy),
+                test_fraction=float(default_test_fraction),
+                random_seed=int(default_random_seed),
+                announce=True,
+            )
+
+        def normalize_cv_split_strategy(split_strategy, fallback="random"):
+            normalized = str(split_strategy).strip().lower()
+            if normalized == "predefined":
+                return str(fallback)
+            if normalized not in {"random", "target_quartiles", "scaffold"}:
+                return str(fallback)
+            return normalized
+
+        def current_cv_split_strategy(default_strategy="random", fallback="random"):
+            candidate = str(STATE.get("model_split_strategy", STATE.get("split_strategy", default_strategy)))
+            return normalize_cv_split_strategy(candidate, fallback=fallback)
+
         def prepare_unimol_files_from_current_split(output_dir, train_subset_size=0, prepare_random_seed=42):
             train_df = pd.DataFrame(
                 {
@@ -1061,6 +1332,12 @@ cells += [
 
             if int(train_subset_size) > 0 and int(train_subset_size) < len(train_df):
                 train_df = train_df.sample(int(train_subset_size), random_state=int(prepare_random_seed)).reset_index(drop=True)
+
+            ensure_global_split_signature(
+                train_df["SMILES"].astype(str),
+                test_df["SMILES"].astype(str),
+                source_label=f"prepare_unimol_files_from_current_split(train_subset_size={int(train_subset_size)})",
+            )
 
             train_df["ROW_ID"] = np.arange(len(train_df))
             test_df["ROW_ID"] = np.arange(len(test_df))
@@ -1081,69 +1358,78 @@ cells += [
             return train_df, test_df, train_csv, test_csv
         setup_done("Model cache helper")
 
-        setup_start("TDC option registry")
-        TDC_QSAR_OPTIONS = {
-            "ADME | caco2_wang": {
-                "task": "ADME",
-                "name": "caco2_wang",
-                "label": "Caco-2 permeability",
-            },
-            "ADME | lipophilicity_astrazeneca": {
-                "task": "ADME",
-                "name": "lipophilicity_astrazeneca",
-                "label": "Lipophilicity",
-            },
-            "ADME | solubility_aqsoldb": {
-                "task": "ADME",
-                "name": "solubility_aqsoldb",
-                "label": "AqSolDB solubility",
-            },
-            "ADME | ppbr_az": {
-                "task": "ADME",
-                "name": "ppbr_az",
-                "label": "Plasma protein binding",
-            },
-            "ADME | vdss_lombardo": {
-                "task": "ADME",
-                "name": "vdss_lombardo",
-                "label": "Volume of distribution",
-            },
-            "ADME | half_life_obach": {
-                "task": "ADME",
-                "name": "half_life_obach",
-                "label": "Half-life",
-            },
-            "ADME | clearance_hepatocyte_az": {
-                "task": "ADME",
-                "name": "clearance_hepatocyte_az",
-                "label": "Hepatocyte clearance",
-            },
-            "ADME | clearance_microsome_az": {
-                "task": "ADME",
-                "name": "clearance_microsome_az",
-                "label": "Microsome clearance",
-            },
-            "Tox | ld50_zhu": {
-                "task": "Tox",
-                "name": "ld50_zhu",
-                "label": "Acute toxicity LD50",
-            },
-        }
-        setup_done("TDC option registry", f"{len(TDC_QSAR_OPTIONS)} dataset options")
+        setup_start("Benchmark option registry")
+        MOLECULENET_LEADERBOARD_README_URL = "https://raw.githubusercontent.com/deepchem/moleculenet/master/README.md"
+        try:
+            from portable_colab_qsar_bundle.benchmark_registry import (
+                MOLECULENET_LEADERBOARD_README_URL as _REG_MOLECULENET_LEADERBOARD_README_URL,
+                MOLECULENET_PHYSCHEM_OPTIONS as _REG_MOLECULENET_PHYSCHEM_OPTIONS,
+                POLARIS_ADME_OPTIONS as _REG_POLARIS_ADME_OPTIONS,
+                TDC_LEADERBOARD_URLS as _REG_TDC_LEADERBOARD_URLS,
+                TDC_QSAR_OPTIONS as _REG_TDC_QSAR_OPTIONS,
+            )
+            MOLECULENET_LEADERBOARD_README_URL = str(_REG_MOLECULENET_LEADERBOARD_README_URL)
+        except Exception:
+            _REG_TDC_QSAR_OPTIONS = {
+                "caco2_wang": {"task": "ADME", "label": "Caco-2 permeability"},
+                "lipophilicity_astrazeneca": {"task": "ADME", "label": "Lipophilicity"},
+                "solubility_aqsoldb": {"task": "ADME", "label": "AqSolDB solubility"},
+                "ppbr_az": {"task": "ADME", "label": "Plasma protein binding"},
+                "vdss_lombardo": {"task": "ADME", "label": "Volume of distribution"},
+                "half_life_obach": {"task": "ADME", "label": "Half-life"},
+                "clearance_hepatocyte_az": {"task": "ADME", "label": "Hepatocyte clearance"},
+                "clearance_microsome_az": {"task": "ADME", "label": "Microsome clearance"},
+                "ld50_zhu": {"task": "Tox", "label": "Acute toxicity LD50"},
+            }
+            _REG_TDC_LEADERBOARD_URLS = {
+                "caco2_wang": "https://tdcommons.ai/benchmark/admet_group/01caco2/",
+                "lipophilicity_astrazeneca": "https://tdcommons.ai/benchmark/admet_group/05lipo/",
+                "solubility_aqsoldb": "https://tdcommons.ai/benchmark/admet_group/06aqsol/",
+                "ppbr_az": "https://tdcommons.ai/benchmark/admet_group/08ppbr/",
+                "vdss_lombardo": "https://tdcommons.ai/benchmark/admet_group/09vdss/",
+                "half_life_obach": "https://tdcommons.ai/benchmark/admet_group/16halflife/",
+                "clearance_hepatocyte_az": "https://tdcommons.ai/benchmark/admet_group/17clhepa/",
+                "clearance_microsome_az": "https://tdcommons.ai/benchmark/admet_group/18clmicro/",
+                "ld50_zhu": "https://tdcommons.ai/benchmark/admet_group/19ld50/",
+            }
+            _REG_MOLECULENET_PHYSCHEM_OPTIONS = {}
+            _REG_POLARIS_ADME_OPTIONS = {}
 
-        setup_start("TDC leaderboard registry")
-        TDC_LEADERBOARD_URLS = {
-            "caco2_wang": "https://tdcommons.ai/benchmark/admet_group/01caco2/",
-            "lipophilicity_astrazeneca": "https://tdcommons.ai/benchmark/admet_group/05lipo/",
-            "solubility_aqsoldb": "https://tdcommons.ai/benchmark/admet_group/06aqsol/",
-            "ppbr_az": "https://tdcommons.ai/benchmark/admet_group/08ppbr/",
-            "vdss_lombardo": "https://tdcommons.ai/benchmark/admet_group/09vdss/",
-            "half_life_obach": "https://tdcommons.ai/benchmark/admet_group/16halflife/",
-            "clearance_hepatocyte_az": "https://tdcommons.ai/benchmark/admet_group/17clhepa/",
-            "clearance_microsome_az": "https://tdcommons.ai/benchmark/admet_group/18clmicro/",
-            "ld50_zhu": "https://tdcommons.ai/benchmark/admet_group/19ld50/",
+        TDC_QSAR_OPTIONS = {
+            f"{config['task']} | {dataset_name}": {
+                "task": config["task"],
+                "name": dataset_name,
+                "label": config.get("label", dataset_name),
+            }
+            for dataset_name, config in dict(_REG_TDC_QSAR_OPTIONS).items()
         }
-        setup_done("TDC leaderboard registry", f"{len(TDC_LEADERBOARD_URLS)} leaderboard pages")
+        TDC_LEADERBOARD_URLS = dict(_REG_TDC_LEADERBOARD_URLS)
+        MOLECULENET_PHYSCHEM_OPTIONS = {
+            str(config.get("option_label")): dict(config)
+            for config in dict(_REG_MOLECULENET_PHYSCHEM_OPTIONS).values()
+            if str(config.get("option_label", "")).strip()
+        }
+        POLARIS_ADME_OPTIONS = {
+            str(config.get("option_label")): dict(config)
+            for config in dict(_REG_POLARIS_ADME_OPTIONS).values()
+            if str(config.get("option_label", "")).strip()
+        }
+        setup_done(
+            "Benchmark option registry",
+            (
+                f"tdc={len(TDC_QSAR_OPTIONS)}, "
+                f"moleculenet={len(MOLECULENET_PHYSCHEM_OPTIONS)}, "
+                f"polaris={len(POLARIS_ADME_OPTIONS)}"
+            ),
+        )
+        setup_start("Benchmark leaderboard registry")
+        setup_done(
+            "Benchmark leaderboard registry",
+            (
+                f"tdc_urls={len(TDC_LEADERBOARD_URLS)}, "
+                f"moleculenet_readme={'yes' if bool(MOLECULENET_LEADERBOARD_README_URL) else 'no'}"
+            ),
+        )
 
         setup_start("display helper")
         def display_note(text):
@@ -1471,7 +1757,14 @@ cells += [
             return df
         setup_done("File path helper")
 
-        setup_start("TDC dataset helper")
+        setup_start("benchmark dataset helpers")
+        def download_csv_with_cache(url, destination):
+            destination = resolve_output_path(destination)
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            if not destination.exists():
+                urllib.request.urlretrieve(str(url), destination)
+            return pd.read_csv(destination, low_memory=False)
+
         def load_tdc_qsar_dataset(option_key, path="./data"):
             if option_key not in TDC_QSAR_OPTIONS:
                 raise ValueError(f"Unknown TDC dataset option: {option_key}")
@@ -1480,22 +1773,97 @@ cells += [
             data_path = resolve_output_path(path)
             data_path.mkdir(parents=True, exist_ok=True)
             loader = loader_class(name=config["name"], path=str(data_path), print_stats=False)
-            df = loader.get_data().copy()
-            df = df.rename(columns={"Drug": "smiles", "Y": "target"})
+            df = loader.get_data().copy().rename(columns={"Drug": "smiles", "Y": "target"})
+            dataset_key = str(config["name"]).lower().strip()
             meta = {
+                "suite": "tdc",
                 "task": config["task"],
                 "dataset_name": config["name"],
                 "dataset_label": config["label"],
-                "recommended_metric": admet_metrics.get(config["name"].lower(), "not listed"),
-                "recommended_split": admet_splits.get(config["name"].lower(), "random"),
-                "dataset_size": int(name2stats.get(config["name"].lower(), len(df))),
-                "leaderboard_url": TDC_LEADERBOARD_URLS.get(config["name"].lower()),
+                "recommended_metric": admet_metrics.get(dataset_key, "not listed"),
+                "recommended_split": admet_splits.get(dataset_key, "random"),
+                "dataset_size": int(name2stats.get(dataset_key, len(df))),
+                "leaderboard_url": TDC_LEADERBOARD_URLS.get(dataset_key),
                 "loader": loader,
             }
             return df, meta
-        setup_done("TDC dataset helper")
 
-        setup_start("TDC leaderboard helper")
+        def load_moleculenet_physchem_dataset(option_key, path="./data/moleculenet"):
+            if option_key not in MOLECULENET_PHYSCHEM_OPTIONS:
+                raise ValueError(f"Unknown MoleculeNet dataset option: {option_key}")
+            config = MOLECULENET_PHYSCHEM_OPTIONS[option_key]
+            source_url = str(config.get("source_url", "")).strip()
+            if not source_url:
+                raise ValueError(f"MoleculeNet source URL is missing for option: {option_key}")
+            csv_name = Path(source_url.split("?")[0]).name or f"{config.get('dataset_name', 'dataset')}.csv"
+            frame = download_csv_with_cache(source_url, Path(path) / csv_name)
+            smiles_column = infer_column_by_case_insensitive_name(frame, str(config.get("smiles_column", "smiles")))
+            if smiles_column is None:
+                raise ValueError(f"SMILES column not found in MoleculeNet dataset columns: {list(frame.columns)}")
+            target_candidates = [str(item).strip() for item in config.get("target_candidates", ["target"])]
+            target_column = None
+            for candidate in target_candidates:
+                resolved = infer_column_by_case_insensitive_name(frame, candidate)
+                if resolved is not None:
+                    target_column = resolved
+                    break
+            if target_column is None:
+                raise ValueError(f"Target column not found; tried: {target_candidates}")
+            df = frame.rename(columns={smiles_column: "smiles", target_column: "target"}).copy()
+            meta = {
+                "suite": "moleculenet",
+                "dataset_name": str(config.get("dataset_name", option_key)),
+                "dataset_label": str(config.get("source_label", option_key)),
+                "recommended_metric": str(config.get("recommended_metric", "rmse")),
+                "recommended_split": str(config.get("recommended_split", "random")),
+                "dataset_size": int(len(df)),
+                "leaderboard_url": str(config.get("leaderboard_url", "")),
+                "leaderboard_section": config.get("leaderboard_section"),
+                "source_url": source_url,
+            }
+            return df, meta
+
+        def load_polaris_adme_dataset(option_key, path="./data/polaris_adme"):
+            if option_key not in POLARIS_ADME_OPTIONS:
+                raise ValueError(f"Unknown Polaris dataset option: {option_key}")
+            config = POLARIS_ADME_OPTIONS[option_key]
+            train_url = str(config.get("train_url", "")).strip()
+            test_url = str(config.get("test_url", "")).strip()
+            if not train_url or not test_url:
+                raise ValueError(f"Polaris train/test URLs are missing for option: {option_key}")
+            train_name = Path(train_url.split("?")[0]).name or "polaris_train.csv"
+            test_name = Path(test_url.split("?")[0]).name or "polaris_test.csv"
+            train_df = download_csv_with_cache(train_url, Path(path) / train_name)
+            test_df = download_csv_with_cache(test_url, Path(path) / test_name)
+            smiles_column = infer_column_by_case_insensitive_name(train_df, str(config.get("smiles_column", "smiles")))
+            target_column = infer_column_by_case_insensitive_name(train_df, str(config.get("target_column", "activity")))
+            if smiles_column is None or target_column is None:
+                raise ValueError("Could not resolve Polaris smiles/target columns from training file.")
+            if smiles_column not in test_df.columns or target_column not in test_df.columns:
+                raise ValueError("Polaris train/test schema mismatch for smiles/target columns.")
+            train_frame = train_df[[smiles_column, target_column]].copy()
+            test_frame = test_df[[smiles_column, target_column]].copy()
+            train_frame["__benchmark_split"] = "train"
+            test_frame["__benchmark_split"] = "test"
+            df = pd.concat([train_frame, test_frame], ignore_index=True)
+            df = df.rename(columns={smiles_column: "smiles", target_column: "target"}).copy()
+            meta = {
+                "suite": "polaris",
+                "dataset_name": str(config.get("dataset_name", option_key)),
+                "dataset_label": str(config.get("source_label", option_key)),
+                "benchmark_id": str(config.get("benchmark_id", option_key)),
+                "recommended_metric": str(config.get("recommended_metric", "mean_squared_error")),
+                "recommended_split": str(config.get("recommended_split", "predefined")),
+                "dataset_size": int(len(df)),
+                "leaderboard_url": str(config.get("benchmark_url", "")),
+                "split_column": "__benchmark_split",
+                "source_train_url": train_url,
+                "source_test_url": test_url,
+            }
+            return df, meta
+        setup_done("benchmark dataset helpers")
+
+        setup_start("benchmark leaderboard helpers")
         def fetch_tdc_leaderboard_best(dataset_name, timeout=20):
             dataset_key = str(dataset_name).lower().strip()
             leaderboard_url = TDC_LEADERBOARD_URLS.get(dataset_key)
@@ -1552,12 +1920,114 @@ cells += [
                 "metric_name": metric_name,
                 "metric_value": metric_value,
                 "dataset_split": dataset_split,
+                "source": "tdc",
             }
-        setup_done("TDC leaderboard helper")
+
+        def fetch_moleculenet_leaderboard_best(benchmark_meta, timeout=20):
+            if benchmark_meta is None:
+                return None
+            section_name = str(benchmark_meta.get("leaderboard_section", "")).strip()
+            if not section_name:
+                return None
+            request = urllib.request.Request(
+                MOLECULENET_LEADERBOARD_README_URL,
+                headers={"User-Agent": "ChemML-QSAR-Tutorial/1.0"},
+            )
+            with urllib.request.urlopen(request, timeout=int(timeout)) as response:
+                markdown = response.read().decode("utf-8", errors="replace")
+            pattern = (
+                rf"###\\s*{re.escape(str(section_name))}\\s*"
+                rf"\\|[^|]*Rank[^|]*\\|[^|]*Model[^|]*\\|[^|]*Featurization[^|]*\\|[^|]*Test RMSE[^|]*\\|"
+                rf"\\s*[^|]*\\|\\s*1\\s*\\|\\s*(?P<model>[^|]+)\\|\\s*(?P<featurization>[^|]+)\\|\\s*(?P<metric_value>[^|]+)\\|"
+            )
+            match = re.search(pattern, markdown, flags=re.IGNORECASE)
+            if match is None:
+                return None
+            return {
+                "url": str(benchmark_meta.get("leaderboard_url", "")).strip(),
+                "rank": "1",
+                "model": match.group("model").strip(),
+                "metric_name": "Test RMSE",
+                "metric_value": match.group("metric_value").strip(),
+                "dataset_split": str(benchmark_meta.get("recommended_split", "random")).strip(),
+                "source": "moleculenet",
+            }
+
+        def fetch_polaris_leaderboard_best(leaderboard_url, timeout=20):
+            leaderboard_url = str(leaderboard_url).strip()
+            if not leaderboard_url:
+                return None
+            request = urllib.request.Request(
+                leaderboard_url,
+                headers={"User-Agent": "ChemML-QSAR-Tutorial/1.0"},
+            )
+            with urllib.request.urlopen(request, timeout=int(timeout)) as response:
+                html = response.read().decode("utf-8", errors="replace")
+            tables = pd.read_html(io.StringIO(html))
+            leaderboard_table = None
+            for table in tables:
+                columns = [str(col).strip() for col in table.columns]
+                cols = set(columns)
+                if {"#", "Name"}.issubset(cols) or {"Name", "mean_squared_error"}.issubset(cols):
+                    leaderboard_table = table.copy()
+                    leaderboard_table.columns = columns
+                    break
+            if leaderboard_table is None:
+                return None
+            leaderboard_table = leaderboard_table.dropna(how="all")
+            if leaderboard_table.empty:
+                return None
+            top_row = leaderboard_table.iloc[0]
+            metric_name = None
+            for candidate in ["mean_squared_error", "r2", "spearmanr", "pearsonr", "mean_absolute_error"]:
+                if candidate in leaderboard_table.columns:
+                    metric_name = candidate
+                    break
+            if metric_name is None:
+                metric_name = next(
+                    (
+                        col for col in leaderboard_table.columns
+                        if col not in {"#", "Name", "Contributors", "References"}
+                    ),
+                    None,
+                )
+            metric_value = None if metric_name is None else str(top_row.get(metric_name, "")).strip()
+            return {
+                "url": leaderboard_url,
+                "rank": str(top_row.get("#", "")).strip() or str(top_row.get("Rank", "")).strip(),
+                "model": str(top_row.get("Name", "")).strip() or str(top_row.get("Model", "")).strip(),
+                "metric_name": metric_name,
+                "metric_value": metric_value,
+                "dataset_split": "predefined",
+                "source": "polaris",
+            }
+
+        def fetch_benchmark_leaderboard_best(benchmark_meta, timeout=20):
+            benchmark_meta = benchmark_meta or {}
+            suite = str(benchmark_meta.get("suite", "")).strip().lower()
+            if suite == "tdc":
+                return fetch_tdc_leaderboard_best(benchmark_meta.get("dataset_name", ""), timeout=timeout)
+            if suite == "moleculenet":
+                return fetch_moleculenet_leaderboard_best(benchmark_meta, timeout=timeout)
+            if suite == "polaris":
+                return fetch_polaris_leaderboard_best(benchmark_meta.get("leaderboard_url", ""), timeout=timeout)
+            return None
+        setup_done("benchmark leaderboard helpers")
 
         setup_start("SMILES curation helper")
-        def curate_smiles_dataframe(df, smiles_col, target_col, aux_columns=None, deduplicate=True):
+        def curate_smiles_dataframe(
+            df,
+            smiles_col,
+            target_col,
+            aux_columns=None,
+            deduplicate=True,
+            strict_consistency_columns=None,
+        ):
             aux_columns = [col for col in (aux_columns or []) if col in df.columns and col not in {smiles_col, target_col}]
+            strict_consistency_columns = [
+                col for col in (strict_consistency_columns or [])
+                if col in aux_columns
+            ]
             temp = df[[smiles_col, target_col] + aux_columns].copy()
             temp = temp.rename(columns={smiles_col: "raw_smiles", target_col: "target"})
             temp["target"] = pd.to_numeric(temp["target"], errors="coerce")
@@ -1583,6 +2053,20 @@ cells += [
             stats["invalid_smiles_removed"] = int(invalid)
             before_dedup = len(temp)
             if deduplicate:
+                for col in strict_consistency_columns:
+                    inconsistent_mask = (
+                        temp.groupby("canonical_smiles")[col]
+                        .nunique(dropna=False)
+                        .gt(1)
+                    )
+                    if bool(inconsistent_mask.any()):
+                        conflicting = inconsistent_mask[inconsistent_mask].index.tolist()
+                        preview = ", ".join([str(item) for item in conflicting[:3]])
+                        raise ValueError(
+                            f"Found conflicting `{col}` labels for {len(conflicting)} canonical SMILES after curation "
+                            f"(examples: {preview}). Disable duplicate collapsing or use a split-consistent dataset."
+                        )
+
                 def _first_nonnull(series):
                     series = series.dropna()
                     if series.empty:
@@ -2070,14 +2554,14 @@ cells += [
 
         - an uploaded `.csv` or `.xlsx` file in **Colab**
         - a normal **file path** in Colab or local Jupyter
-        - a built-in example dataset from **ChemML** or **TDC**
+        - a built-in example dataset from **ChemML**, **TDC**, **MoleculeNet PhysChem**, or **Polaris ADME**
         """
     ),
     code(
         """
         # @title 1A. Load a dataset { display-mode: "form" }
         data_source = "Example dataset" # @param ["Upload CSV/XLSX (Colab only)", "File path", "Example dataset"]
-        example_dataset = "ChemML | organic_density" # @param ["ChemML | organic_density", "ChemML | cep_homo", "ChemML | xyz_polarizability", "ChemML | comp_energy", "ChemML | crystal_structures", "TDC | ADME | caco2_wang", "TDC | ADME | lipophilicity_astrazeneca", "TDC | ADME | solubility_aqsoldb", "TDC | ADME | ppbr_az", "TDC | ADME | vdss_lombardo", "TDC | ADME | half_life_obach", "TDC | ADME | clearance_hepatocyte_az", "TDC | ADME | clearance_microsome_az", "TDC | Tox | ld50_zhu"]
+        example_dataset = "ChemML | organic_density" # @param ["ChemML | organic_density", "ChemML | cep_homo", "ChemML | xyz_polarizability", "ChemML | comp_energy", "ChemML | crystal_structures", "TDC | ADME | caco2_wang", "TDC | ADME | lipophilicity_astrazeneca", "TDC | ADME | solubility_aqsoldb", "TDC | ADME | ppbr_az", "TDC | ADME | vdss_lombardo", "TDC | ADME | half_life_obach", "TDC | ADME | clearance_hepatocyte_az", "TDC | ADME | clearance_microsome_az", "TDC | Tox | ld50_zhu", "MoleculeNet | PhysChem | ESOL (Delaney)", "MoleculeNet | PhysChem | FreeSolv (SAMPL)", "MoleculeNet | PhysChem | Lipophilicity", "Polaris | ADME | adme-fang-perm-1", "Polaris | ADME | adme-fang-solu-1", "Polaris | ADME | adme-fang-rclint-1", "Polaris | ADME | adme-fang-hppb-1", "Polaris | ADME | adme-fang-rppb-1"]
         dataset_file_path = "/content/drive/MyDrive/your_dataset.csv" # @param {type:"string"}
         log10_transform_target = True # @param {type:"boolean"}
         preview_rows = 5 # @param {type:"slider", min:3, max:15, step:1}
@@ -2089,79 +2573,125 @@ cells += [
                 STATE["data_source_kind"] = chemml_meta["source_kind"]
                 STATE["default_smiles_column"] = chemml_meta["default_smiles_column"]
                 STATE["default_target_column"] = chemml_meta["default_target_column"]
-                STATE["tdc_metadata"] = None
-            else:
+                STATE["benchmark_metadata"] = None
+            elif example_dataset.startswith("TDC | "):
                 tdc_dataset = example_dataset.replace("TDC | ", "", 1)
                 raw_df, tdc_meta = load_tdc_qsar_dataset(tdc_dataset)
                 STATE["data_source_label"] = f"TDC dataset: {tdc_meta['dataset_name']}"
                 STATE["data_source_kind"] = "tdc"
                 STATE["default_smiles_column"] = "smiles"
                 STATE["default_target_column"] = "target"
-                STATE["tdc_metadata"] = tdc_meta
+                STATE["benchmark_metadata"] = dict(tdc_meta)
+            elif example_dataset.startswith("MoleculeNet | "):
+                raw_df, benchmark_meta = load_moleculenet_physchem_dataset(example_dataset)
+                STATE["data_source_label"] = benchmark_meta["dataset_label"]
+                STATE["data_source_kind"] = "moleculenet"
+                STATE["default_smiles_column"] = "smiles"
+                STATE["default_target_column"] = "target"
+                STATE["benchmark_metadata"] = dict(benchmark_meta)
+            elif example_dataset.startswith("Polaris | "):
+                raw_df, benchmark_meta = load_polaris_adme_dataset(example_dataset)
+                STATE["data_source_label"] = benchmark_meta["dataset_label"]
+                STATE["data_source_kind"] = "polaris"
+                STATE["default_smiles_column"] = "smiles"
+                STATE["default_target_column"] = "target"
+                STATE["benchmark_metadata"] = dict(benchmark_meta)
+            else:
+                raise ValueError(f"Unknown example dataset option: {example_dataset}")
         elif data_source == "File path":
             raw_df = read_path_dataframe(dataset_file_path)
             STATE["data_source_label"] = STATE.get("uploaded_filename", "path-based file")
             STATE["data_source_kind"] = "path_file"
             STATE["default_smiles_column"] = infer_column_by_case_insensitive_name(raw_df, "smiles")
             STATE["default_target_column"] = infer_column_by_case_insensitive_name(raw_df, "target")
-            STATE["tdc_metadata"] = None
+            STATE["benchmark_metadata"] = None
         else:
             raw_df = read_uploaded_dataframe()
             STATE["data_source_label"] = STATE.get("uploaded_filename", "uploaded file")
             STATE["data_source_kind"] = "uploaded_file"
             STATE["default_smiles_column"] = infer_column_by_case_insensitive_name(raw_df, "smiles")
             STATE["default_target_column"] = infer_column_by_case_insensitive_name(raw_df, "target")
-            STATE["tdc_metadata"] = None
+            STATE["benchmark_metadata"] = None
 
         STATE["raw_df"] = raw_df.copy()
         STATE["log10_transform_target"] = bool(log10_transform_target)
+        STATE["predefined_split_column"] = None
+        STATE["benchmark_leaderboard_summary"] = None
+        benchmark_meta = STATE.get("benchmark_metadata") or {}
+        if benchmark_meta:
+            split_column = str(benchmark_meta.get("split_column", "")).strip()
+            if split_column and split_column in raw_df.columns:
+                STATE["predefined_split_column"] = split_column
+            recommended_split = str(benchmark_meta.get("recommended_split", "")).strip().lower()
+            if recommended_split in {"random", "target_quartiles", "scaffold", "predefined"}:
+                STATE["recommended_split_strategy"] = recommended_split
+            recommended_metric = str(benchmark_meta.get("recommended_metric", "")).strip().lower()
+            if recommended_metric:
+                STATE["recommended_primary_metric"] = recommended_metric
+        else:
+            STATE.pop("recommended_split_strategy", None)
+            STATE.pop("recommended_primary_metric", None)
         print(f"Loaded {len(raw_df):,} rows and {raw_df.shape[1]:,} columns from: {STATE['data_source_label']}")
         print(f"Log10-transform target after preprocessing: {'yes' if STATE['log10_transform_target'] else 'no'}")
         print("Available columns:", list(raw_df.columns))
-        if STATE.get("tdc_metadata") is not None:
-            tdc_meta = STATE["tdc_metadata"]
-            print(f"TDC task: {tdc_meta['task']}")
-            print(f"TDC dataset label: {tdc_meta['dataset_label']}")
-            print(f"TDC recommended benchmark metric: {tdc_meta['recommended_metric']}")
-            print(f"TDC recommended benchmark split: {tdc_meta['recommended_split']}")
+        if benchmark_meta:
+            benchmark_suite = str(benchmark_meta.get("suite", "benchmark")).strip()
+            print(f"Benchmark suite: {benchmark_suite}")
+            if str(benchmark_meta.get("task", "")).strip():
+                print(f"Benchmark task: {benchmark_meta['task']}")
+            print(f"Benchmark dataset: {benchmark_meta.get('dataset_name', benchmark_meta.get('dataset_label', 'unknown'))}")
+            print(f"Benchmark recommended metric: {benchmark_meta.get('recommended_metric', 'not listed')}")
+            print(f"Benchmark recommended split: {benchmark_meta.get('recommended_split', 'not listed')}")
             leaderboard_summary = None
             leaderboard_error = None
             try:
-                leaderboard_summary = fetch_tdc_leaderboard_best(tdc_meta["dataset_name"])
+                leaderboard_summary = fetch_benchmark_leaderboard_best(benchmark_meta)
             except Exception as exc:
                 leaderboard_error = str(exc)
-            STATE["tdc_leaderboard_summary"] = leaderboard_summary
+            STATE["benchmark_leaderboard_summary"] = leaderboard_summary
             if leaderboard_summary is not None:
                 print(
-                    "Official TDC leaderboard best model: "
+                    "Official benchmark leaderboard best model: "
                     f"{leaderboard_summary['model']}"
                 )
                 if leaderboard_summary.get("rank"):
-                    print(f"Official TDC leaderboard rank: {leaderboard_summary['rank']}")
+                    print(f"Official benchmark leaderboard rank: {leaderboard_summary['rank']}")
                 if leaderboard_summary.get("metric_name") and leaderboard_summary.get("metric_value"):
                     print(
-                        "Official TDC leaderboard best metric: "
+                        "Official benchmark leaderboard best metric: "
                         f"{leaderboard_summary['metric_name']} = {leaderboard_summary['metric_value']}"
                     )
                 if leaderboard_summary.get("dataset_split"):
                     print(
-                        "Official TDC leaderboard split: "
+                        "Official benchmark leaderboard split: "
                         f"{leaderboard_summary['dataset_split']}"
                     )
                 if leaderboard_summary.get("url"):
-                    print(f"Official TDC leaderboard page: {leaderboard_summary['url']}")
+                    print(f"Official benchmark leaderboard page: {leaderboard_summary['url']}")
             else:
-                STATE["tdc_leaderboard_summary"] = None
+                STATE["benchmark_leaderboard_summary"] = None
                 if leaderboard_error:
                     print(
-                        "Official TDC leaderboard summary could not be retrieved in this session: "
+                        "Official benchmark leaderboard summary could not be retrieved in this session: "
                         f"{leaderboard_error}"
                     )
+            if STATE.get("predefined_split_column"):
+                split_counts = (
+                    raw_df[STATE["predefined_split_column"]]
+                    .astype(str)
+                    .str.strip()
+                    .str.lower()
+                    .value_counts(dropna=False)
+                )
+                print(
+                    f"Predefined split column '{STATE['predefined_split_column']}' counts: "
+                    + ", ".join([f"{idx}={val}" for idx, val in split_counts.items()])
+                )
         display(raw_df.head(preview_rows))
-        if STATE.get("tdc_metadata") is not None:
+        if benchmark_meta:
             display_note(
                 "**Next step:** In the next cell, you can usually leave both fields as `AUTO`. "
-                "The TDC loader has already standardized the table to `smiles` and `target` columns."
+                "The benchmark loader has already standardized the table to `smiles` and `target` columns."
             )
         else:
             display_note(
@@ -2298,7 +2828,18 @@ cells += [
         smiles_col = STATE["smiles_column"]
         target_col = STATE["target_column"]
         aux_columns = list(STATE.get("auxiliary_columns", []))
-        selected_df = raw_df[[smiles_col, target_col] + aux_columns].copy()
+        benchmark_split_column = str(STATE.get("predefined_split_column", "")).strip()
+        effective_aux_columns = list(aux_columns)
+        if benchmark_split_column and benchmark_split_column in raw_df.columns and benchmark_split_column not in effective_aux_columns:
+            effective_aux_columns.append(benchmark_split_column)
+        selected_df = raw_df[[smiles_col, target_col] + effective_aux_columns].copy()
+        if benchmark_split_column and benchmark_split_column in selected_df.columns:
+            selected_df[benchmark_split_column] = (
+                selected_df[benchmark_split_column]
+                .astype(str)
+                .str.strip()
+                .str.lower()
+            )
 
         parsed_tokens = []
         for token in str(custom_missing_tokens).split(","):
@@ -2403,11 +2944,39 @@ cells += [
             working_df,
             smiles_col,
             target_col,
-            aux_columns=aux_columns,
+            aux_columns=effective_aux_columns,
             deduplicate=bool(collapse_duplicate_canonical_smiles),
+            strict_consistency_columns=[benchmark_split_column] if benchmark_split_column else [],
         )
         if curated_df.empty:
             raise ValueError("No valid rows remain after preprocessing and SMILES curation.")
+
+        if benchmark_split_column and benchmark_split_column in curated_df.columns:
+            split_labels = (
+                curated_df[benchmark_split_column]
+                .astype(str)
+                .str.strip()
+                .str.lower()
+                .reset_index(drop=True)
+            )
+            valid_labels = {"train", "test"}
+            invalid_labels = sorted(set(split_labels.unique()) - valid_labels)
+            if invalid_labels:
+                raise ValueError(
+                    "Predefined split labels must be `train` or `test` after curation. "
+                    f"Found invalid labels: {invalid_labels}"
+                )
+            if not valid_labels.issubset(set(split_labels.unique())):
+                counts = split_labels.value_counts(dropna=False).to_dict()
+                raise ValueError(
+                    "Predefined split labels must contain both train and test rows after curation. "
+                    f"Observed counts: {counts}"
+                )
+            STATE["predefined_split_column"] = benchmark_split_column
+            STATE["predefined_split_labels"] = split_labels.copy()
+        else:
+            STATE["predefined_split_column"] = None
+            STATE["predefined_split_labels"] = None
 
         STATE["curated_df"] = curated_df.copy()
         STATE["missing_value_strategy"] = applied_strategy
@@ -2425,6 +2994,14 @@ cells += [
         for key, value in curation_stats.items():
             print(f"- {key}: {value:,}")
         print(f"- rows_after_cleaning: {len(curated_df):,}")
+        if STATE.get("predefined_split_labels") is not None:
+            split_counts = (
+                STATE["predefined_split_labels"]
+                .astype(str)
+                .value_counts(dropna=False)
+                .to_dict()
+            )
+            print(f"- predefined_split_counts: {split_counts}")
         preview_cols = ["canonical_smiles", "target"]
         if aux_columns:
             preview_cols.extend(aux_columns)
@@ -2440,10 +3017,12 @@ cells += [
                 "No missing values were detected in the selected SMILES and target columns, so the notebook proceeded directly to SMILES curation."
             )
 
-        if STATE.get("tdc_metadata") is not None:
-            tdc_meta = STATE["tdc_metadata"]
+        if STATE.get("benchmark_metadata") is not None:
+            benchmark_meta = STATE["benchmark_metadata"]
             display_note(
-                f"For this TDC dataset, the repository metadata recommends the **{tdc_meta['recommended_split']}** split and the **{tdc_meta['recommended_metric']}** metric."
+                "For this benchmark dataset, the metadata recommends the "
+                f"**{benchmark_meta.get('recommended_split', 'not listed')}** split and the "
+                f"**{benchmark_meta.get('recommended_metric', 'not listed')}** metric."
             )
         """
     ),
@@ -2507,6 +3086,8 @@ cells += [
 
         Select one or more molecular feature families below. Checking every box is the equivalent of an "all descriptors" representation.
 
+        **Avalon note:** there is no separate Avalon checkbox because Avalon-count fingerprints are already included inside **MapLight classic** (`maplight` family), alongside Morgan-count, ErG, and MapLight descriptor blocks.
+
         This block now uses a persistent molecular feature store by default. The store is an append-only Parquet layout that keeps previously generated feature rows keyed by:
 
         - canonical SMILES
@@ -2527,8 +3108,13 @@ cells += [
         use_morgan_features = True # @param {type:"boolean"}
         use_ecfp6_features = True # @param {type:"boolean"}
         use_fcfp6_features = True # @param {type:"boolean"}
+        use_layered_features = True # @param {type:"boolean"}
+        use_atom_pair_features = True # @param {type:"boolean"}
+        use_topological_torsion_features = True # @param {type:"boolean"}
+        use_rdk_path_features = True # @param {type:"boolean"}
         use_maccs_keys = True # @param {type:"boolean"}
         use_rdkit_descriptors = True # @param {type:"boolean"}
+        # MapLight classic includes Avalon-count fingerprints (`avalon_count_*`) plus Morgan-count, ErG, and descriptor features.
         use_maplight_classic = True # @param {type:"boolean"}
         morgan_radius = 2 # @param {type:"slider", min:1, max:4, step:1}
         fingerprint_bits = "1024" # @param ["256", "512", "1024", "2048"]
@@ -2544,6 +3130,10 @@ cells += [
             use_morgan_features=use_morgan_features,
             use_ecfp6_features=use_ecfp6_features,
             use_fcfp6_features=use_fcfp6_features,
+            use_layered_features=use_layered_features,
+            use_atom_pair_features=use_atom_pair_features,
+            use_topological_torsion_features=use_topological_torsion_features,
+            use_rdk_path_features=use_rdk_path_features,
             use_maccs_keys=use_maccs_keys,
             use_rdkit_descriptors=use_rdkit_descriptors,
             use_maplight_classic=use_maplight_classic,
@@ -2633,6 +3223,10 @@ cells += [
         - **Morgan** uses the user-selected radius and bit length
         - **ECFP6** uses atom-identity style invariants
         - **FCFP6** uses feature-based invariants
+        - **Layered fingerprint** captures layered path/subgraph pattern classes
+        - **Atom-pair** fingerprints encode atom-type pairs with topological distances
+        - **Topological torsion** fingerprints encode 4-atom bond paths
+        - **RDKit path** fingerprints capture hashed subgraph path patterns
         - **MACCS** provides a compact fixed key set
         - **RDKit descriptors** provide continuous physicochemical summary features
 
@@ -2653,6 +3247,10 @@ cells += [
         tsne_use_rdkit_descriptors = True # @param {type:"boolean"}
         tsne_use_ecfp6_features = True # @param {type:"boolean"}
         tsne_use_fcfp6_features = False # @param {type:"boolean"}
+        tsne_use_layered_features = False # @param {type:"boolean"}
+        tsne_use_atom_pair_features = False # @param {type:"boolean"}
+        tsne_use_topological_torsion_features = False # @param {type:"boolean"}
+        tsne_use_rdk_path_features = False # @param {type:"boolean"}
         tsne_use_maccs_keys = False # @param {type:"boolean"}
         tsne_use_all_descriptors = False # @param {type:"boolean"}
         tsne_morgan_radius = 2 # @param {type:"slider", min:1, max:4, step:1}
@@ -2685,10 +3283,33 @@ cells += [
             selected_map_options.append(("ECFP6 fingerprints", ["ecfp6"]))
         if tsne_use_fcfp6_features:
             selected_map_options.append(("FCFP6 fingerprints", ["fcfp6"]))
+        if tsne_use_layered_features:
+            selected_map_options.append(("RDKit layered fingerprints", ["layered"]))
+        if tsne_use_atom_pair_features:
+            selected_map_options.append(("Atom-pair fingerprints", ["atom_pair"]))
+        if tsne_use_topological_torsion_features:
+            selected_map_options.append(("Topological torsion fingerprints", ["topological_torsion"]))
+        if tsne_use_rdk_path_features:
+            selected_map_options.append(("RDKit path fingerprints", ["rdk_path"]))
         if tsne_use_maccs_keys:
             selected_map_options.append(("MACCS keys", ["maccs"]))
         if tsne_use_all_descriptors:
-            selected_map_options.append(("All descriptors", ["morgan", "rdkit", "ecfp6", "fcfp6", "maccs"]))
+            selected_map_options.append(
+                (
+                    "All descriptors",
+                    [
+                        "morgan",
+                        "ecfp6",
+                        "fcfp6",
+                        "layered",
+                        "atom_pair",
+                        "topological_torsion",
+                        "rdk_path",
+                        "maccs",
+                        "rdkit",
+                    ],
+                )
+            )
         if not selected_map_options:
             raise ValueError("Please select at least one descriptor option for the similarity map.")
 
@@ -2871,12 +3492,19 @@ cells += [
     code(
         """
         # @title 4A. Split train/test data { display-mode: "form" }
-        data_split_strategy = "target_quartiles" # @param ["random", "target_quartiles", "scaffold"]
+        data_split_strategy = "target_quartiles" # @param ["random", "target_quartiles", "scaffold", "predefined"]
         test_fraction = 0.2 # @param {type:"slider", min:0.1, max:0.4, step:0.05}
         model_random_seed = 42 # @param {type:"integer"}
 
         if "feature_matrix" not in STATE:
             raise RuntimeError("Please build the molecular feature matrix first.")
+
+        recommended_split_strategy = str(STATE.get("recommended_split_strategy", "")).strip().lower()
+        if (
+            recommended_split_strategy in {"random", "target_quartiles", "scaffold", "predefined"}
+            and str(data_split_strategy).strip().lower() == "target_quartiles"
+        ):
+            data_split_strategy = recommended_split_strategy
 
         split_payload = apply_qsar_split(
             split_strategy=str(data_split_strategy),
@@ -2884,6 +3512,8 @@ cells += [
             random_seed=int(model_random_seed),
             announce=True,
         )
+        data_split_strategy = str(STATE.get("model_split_strategy", data_split_strategy))
+        test_fraction = float(STATE.get("model_test_fraction", test_fraction))
         X_train = split_payload["X_train"]
         X_test = split_payload["X_test"]
         y_train = pd.Series(split_payload["y_train"], dtype=float)
@@ -3028,8 +3658,35 @@ cells += [
         smiles_train = STATE["smiles_train_unselected"].reset_index(drop=True)
         smiles_test = STATE["smiles_test_unselected"].reset_index(drop=True)
         model_random_seed = int(STATE.get("split_random_seed", 42))
-        selector_cv_split_strategy = str(STATE.get("model_split_strategy", STATE.get("split_strategy", "random")))
+        selector_cv_split_strategy = current_cv_split_strategy(default_strategy="random", fallback="random")
         feature_metadata = current_feature_metadata()
+        feature_dedup_threshold = 0.999
+        X_train, X_test, feature_dedup_summary = drop_exact_and_near_duplicate_features(
+            X_train,
+            X_test,
+            correlation_threshold=float(feature_dedup_threshold),
+        )
+        dedup_dropped_count = int(feature_dedup_summary.get("dropped_feature_count", 0))
+        if dedup_dropped_count > 0:
+            print(
+                "Feature de-duplication (pre-selector/model): "
+                f"dropped {dedup_dropped_count:,} feature(s) "
+                f"({int(feature_dedup_summary.get('dropped_exact_count', 0)):,} exact, "
+                f"{int(feature_dedup_summary.get('dropped_near_count', 0)):,} near-duplicate at "
+                f"|r|>{float(feature_dedup_summary.get('correlation_threshold', feature_dedup_threshold)):.3f})."
+            )
+        else:
+            print(
+                "Feature de-duplication (pre-selector/model): no exact/near-duplicate features were dropped "
+                f"at |r|>{float(feature_dedup_threshold):.3f}."
+            )
+        if str(feature_dedup_summary.get("near_duplicate_scan_error", "")).strip():
+            print(
+                "Feature de-duplication warning: "
+                f"{str(feature_dedup_summary.get('near_duplicate_scan_error')).strip()}"
+            )
+        X_train_unselected_dedup = X_train.copy()
+        X_test_unselected_dedup = X_test.copy()
         feature_selection_config = dict(
             STATE.get(
                 "feature_selection_config",
@@ -3062,6 +3719,13 @@ cells += [
             "train_only_feature_selector_alpha": None,
             "train_only_feature_selector_l1_ratio": None,
             "train_only_feature_selector_max_features": int(train_selector_max_features),
+            "train_only_feature_dedup_threshold": float(feature_dedup_summary.get("correlation_threshold", feature_dedup_threshold)),
+            "train_only_feature_count_before_dedup": int(feature_dedup_summary.get("original_feature_count", X_train.shape[1])),
+            "train_only_feature_count_after_dedup": int(feature_dedup_summary.get("post_dedup_feature_count", X_train.shape[1])),
+            "train_only_feature_dedup_dropped_count": int(feature_dedup_summary.get("dropped_feature_count", 0)),
+            "train_only_feature_dedup_exact_count": int(feature_dedup_summary.get("dropped_exact_count", 0)),
+            "train_only_feature_dedup_near_count": int(feature_dedup_summary.get("dropped_near_count", 0)),
+            "train_only_feature_dedup_scan_warning": str(feature_dedup_summary.get("near_duplicate_scan_error", "")),
         }
         selector_cache_dir = None
         selector_cache_paths = {}
@@ -3457,6 +4121,8 @@ cells += [
                 print(f"Saved train-only selector cache artifacts under: {selector_cache_dir}")
 
         feature_metadata.update(train_selector_summary)
+        STATE["X_train_unselected"] = X_train_unselected_dedup.copy()
+        STATE["X_test_unselected"] = X_test_unselected_dedup.copy()
         STATE["X_train"] = X_train.copy()
         STATE["X_test"] = X_test.copy()
         STATE["y_train"] = y_train.to_numpy(dtype=float)
@@ -3465,6 +4131,7 @@ cells += [
         STATE["smiles_test"] = smiles_test.reset_index(drop=True)
         STATE["traditional_feature_metadata"] = dict(feature_metadata)
         STATE["traditional_train_only_feature_selector"] = dict(train_selector_summary)
+        STATE["traditional_feature_dedup_summary"] = dict(feature_dedup_summary)
         STATE["feature_selector_cache_paths"] = selector_cache_paths
         if selector_cache_dir is not None:
             STATE["feature_selector_cache_dir"] = str(selector_cache_dir)
@@ -3524,7 +4191,7 @@ cells += [
         selector_cache_dir = Path(STATE["feature_selector_cache_dir"]) if STATE.get("feature_selector_cache_dir") else None
         selector_cache_paths = dict(STATE.get("feature_selector_cache_paths", {}))
         train_selector_summary = dict(STATE.get("traditional_train_only_feature_selector", {}))
-        training_cv_split_strategy = str(STATE.get("model_split_strategy", STATE.get("split_strategy", "random")))
+        training_cv_split_strategy = current_cv_split_strategy(default_strategy="random", fallback="random")
         effective_cv_folds = None
         if use_cross_validation:
             cv, effective_cv_folds, effective_cv_split_strategy = make_qsar_cv_splitter(
@@ -4130,8 +4797,8 @@ cells += [
     code(
         """
         # @title 4E. Run genetic-algorithm tuning for selected conventional models { display-mode: "form" }
-        use_prepared_4b_split_for_tuning = True # @param {type:"boolean"}
-        tuning_split_strategy = "target_quartiles" # @param ["target_quartiles", "random", "scaffold"]
+        use_prepared_4b_split_for_tuning = True
+        tuning_split_strategy = "target_quartiles" # @param ["target_quartiles", "random", "scaffold", "predefined"]
         tuning_test_fraction = 0.2 # @param {type:"slider", min:0.1, max:0.4, step:0.05}
         tuning_random_seed = 42 # @param {type:"integer"}
         ga_cv_folds = 5 # @param [3, 5]
@@ -4282,7 +4949,7 @@ cells += [
             missing_keys = sorted(required_keys.difference(STATE.keys()))
             if missing_keys:
                 raise RuntimeError(
-                    "Please run blocks 4A and 4B before GA tuning, or set use_prepared_4b_split_for_tuning=False. "
+                    "Please run blocks 4A and 4B before GA tuning. "
                     f"Missing: {', '.join(missing_keys)}"
                 )
             X_train = STATE["X_train"].copy()
@@ -4612,9 +5279,16 @@ cells += [
                             if history_exists
                             else pd.DataFrame(columns=["Best_individual", "Fitness_values", "Time (hours)"])
                         )
+                        requested_generations = int(ga_generations)
                         completed_generations = int(metadata.get("ga_generations_completed", len(best_history)))
+                        run_status = str(metadata.get("run_status", "")).strip().lower()
+                        completed_or_finalized = (
+                            completed_generations >= requested_generations
+                            or run_status == "completed"
+                        )
                         ga_resume_compatible = (
-                            completed_generations < int(ga_generations)
+                            not completed_or_finalized
+                            and completed_generations < requested_generations
                             and state_path is not None
                             and state_path.exists()
                             and cache_metadata_matches(
@@ -4646,7 +5320,7 @@ cells += [
                                     flush=True,
                                 )
                                 break
-                        if completed_generations < int(ga_generations):
+                        if not completed_or_finalized:
                             continue
                         if not model_path.exists() or not prediction_path.exists() or not history_exists:
                             continue
@@ -4658,7 +5332,11 @@ cells += [
                         best_model = joblib_load(model_path)
                         pred_train = loaded_splits["train"]["predicted"].to_numpy(dtype=float)
                         pred_test = loaded_splits["test"]["predicted"].to_numpy(dtype=float)
-                        best_fitness = float(best_history.iloc[-1]["Fitness_values"][0]) if len(best_history) else np.nan
+                        best_fitness = (
+                            extract_ga_fitness_scalar(best_history.iloc[-1]["Fitness_values"])
+                            if len(best_history)
+                            else np.nan
+                        )
                         best_params = metadata.get("best_params", "{}")
                         row = {
                             "Model": model_name,
@@ -5009,7 +5687,7 @@ cells += [
             pred_train = np.asarray(best_model.predict(X_train)).reshape(-1)
             pred_test = np.asarray(best_model.predict(X_test)).reshape(-1)
 
-            best_fitness = float(best_history.iloc[-1]["Fitness_values"][0])
+            best_fitness = extract_ga_fitness_scalar(best_history.iloc[-1]["Fitness_values"])
             row = {
                 "Model": model_name,
                 "Best GA Fitness": best_fitness,
@@ -5315,7 +5993,7 @@ cells += [
         for ax, model_name in zip(axes, plotted_history_models):
             history_df = ga_histories[model_name].copy()
             generations = np.arange(1, len(history_df) + 1)
-            best_fitness = history_df["Fitness_values"].apply(lambda values: float(values[0])).to_numpy(dtype=float)
+            best_fitness = history_df["Fitness_values"].apply(extract_ga_fitness_scalar).to_numpy(dtype=float)
             elapsed_hours = history_df["Time (hours)"].to_numpy(dtype=float)
             metrics_row = tuned_results_lookup.loc[model_name]
 
@@ -5400,10 +6078,9 @@ cells += [
         - `chemml_training_epochs`: number of full passes through the training data
         - `chemml_batch_size`: number of molecules processed per optimization step
         - `chemml_learning_rate`: optimizer step size
-        - `chemml_use_cross_validation`, `chemml_cv_folds`: optional CV metrics for direct comparison with conventional-model CV tables
+        - `chemml_use_cross_validation`, `chemml_cv_folds`: optional CV metrics for direct comparison with conventional-model CV tables (used by both ChemML and MapLight + GNN)
         - `deep_random_seed`: random seed for reproducibility
-        - `deep_use_existing_qsar_split`: reuse the currently active QSAR split from section `4` so ChemML, MapLight, and conventional models are directly comparable
-        - `deep_split_strategy`, `deep_test_fraction`, `deep_split_random_seed`: define the train/test split used for the ChemML run
+        - split controls are centralized: this block now always reuses the currently established QSAR split from earlier blocks for direct comparability
 
         Practical interpretation:
 
@@ -5424,8 +6101,8 @@ cells += [
         """
         # @title 5B. Train selected deep-learning models { display-mode: "form" }
         run_chemml_pytorch = True # @param {type:"boolean"}
-        run_chemml_tensorflow = False # @param {type:"boolean"}
-        run_maplight_gnn = False # @param {type:"boolean"}
+        run_chemml_tensorflow = True # @param {type:"boolean"}
+        run_maplight_gnn = True # @param {type:"boolean"}
         chemml_hidden_layers = 2 # @param {type:"slider", min:1, max:4, step:1}
         chemml_hidden_width = 128 # @param [64, 128, 256, 512]
         chemml_training_epochs = 60 # @param {type:"slider", min:20, max:200, step:10}
@@ -5434,10 +6111,6 @@ cells += [
         chemml_use_cross_validation = True # @param {type:"boolean"}
         chemml_cv_folds = 5 # @param [3, 5, 10]
         deep_random_seed = 42 # @param {type:"integer"}
-        deep_use_existing_qsar_split = True # @param {type:"boolean"}
-        deep_split_strategy = "random" # @param ["random", "scaffold"]
-        deep_test_fraction = 0.2 # @param {type:"slider", min:0.1, max:0.4, step:0.05}
-        deep_split_random_seed = 42 # @param {type:"integer"}
         enable_deep_model_cache = True # @param {type:"boolean"}
         reuse_deep_cached_models = True # @param {type:"boolean"}
         deep_cache_run_name = "AUTO" # @param {type:"string"}
@@ -5448,34 +6121,20 @@ cells += [
         if "feature_matrix" not in STATE:
             raise RuntimeError("Please build the molecular feature matrix first.")
 
-        use_existing_split = bool(deep_use_existing_qsar_split) and all(
-            key in STATE for key in ["X_train", "X_test", "y_train", "y_test", "smiles_train", "smiles_test"]
+        split_payload = ensure_shared_qsar_split(
+            default_strategy="random",
+            default_test_fraction=0.2,
+            default_random_seed=42,
+            source_label="5B deep-learning workflows",
         )
-        if use_existing_split:
-            split_payload = {
-                "X_train": STATE["X_train"].copy(),
-                "X_test": STATE["X_test"].copy(),
-                "y_train": np.asarray(STATE["y_train"], dtype=float),
-                "y_test": np.asarray(STATE["y_test"], dtype=float),
-                "smiles_train": STATE["smiles_train"].astype(str).reset_index(drop=True),
-                "smiles_test": STATE["smiles_test"].astype(str).reset_index(drop=True),
-            }
-            deep_split_strategy = str(STATE.get("model_split_strategy", deep_split_strategy))
-            deep_test_fraction = float(STATE.get("model_test_fraction", deep_test_fraction))
-            deep_split_random_seed = int(STATE.get("model_split_random_seed", deep_split_random_seed))
-            print(
-                "Using existing QSAR split for deep-learning workflows: "
-                f"strategy={deep_split_strategy}, test_fraction={deep_test_fraction:.2f}, random_seed={deep_split_random_seed}, "
-                f"train={len(split_payload['X_train'])}, test={len(split_payload['X_test'])}",
-                flush=True,
-            )
-        else:
-            split_payload = apply_qsar_split(
-                split_strategy=str(deep_split_strategy),
-                test_fraction=float(deep_test_fraction),
-                random_seed=int(deep_split_random_seed),
-                announce=True,
-            )
+        deep_split_strategy = str(STATE.get("model_split_strategy", "random"))
+        deep_test_fraction = float(STATE.get("model_test_fraction", 0.2))
+        deep_split_random_seed = int(STATE.get("model_split_random_seed", 42))
+        ensure_global_split_signature(
+            split_payload["smiles_train"],
+            split_payload["smiles_test"],
+            source_label="5B deep-learning split payload",
+        )
         feature_metadata = current_feature_metadata()
 
         gpu_available = bool(STATE.get("gpu_available", False))
@@ -5503,19 +6162,345 @@ cells += [
             flush=True,
         )
 
+        def _version_key(version_text):
+            parts = re.findall(r"\\d+", str(version_text))
+            parts = [int(part) for part in parts[:3]]
+            while len(parts) < 3:
+                parts.append(0)
+            return tuple(parts)
+
+        def _recommended_torchdata_requirements(torch_base_text):
+            torch_key = _version_key(torch_base_text)
+            if torch_key <= (2, 3, 99):
+                return ["torchdata==0.7.1", "torchdata==0.7.0", "torchdata<0.8,>=0.7.1"]
+            if torch_key <= (2, 4, 99):
+                return ["torchdata==0.8.0", "torchdata<0.9,>=0.8.0"]
+            if torch_key <= (2, 5, 99):
+                return ["torchdata==0.9.0", "torchdata<0.10,>=0.9.0"]
+            return ["torchdata"]
+
+        def _patch_torchdata_dill_available():
+            try:
+                import torch.utils.data.datapipes.utils.common as _torch_datapipe_common
+
+                if not hasattr(_torch_datapipe_common, "DILL_AVAILABLE"):
+                    _torch_datapipe_common.DILL_AVAILABLE = False
+                    return True
+            except Exception:
+                return False
+            return False
+
+        def ensure_maplight_graphbolt_compatibility():
+            if IN_COLAB:
+                return
+
+            def _run_pip_repair(attempts, failure_message):
+                failed_attempts = []
+                for attempt_label, attempt_cmd in attempts:
+                    print(f"[MapLight fix] Attempting install via {attempt_label}...", flush=True)
+                    result = subprocess.run(attempt_cmd, capture_output=True, text=True)
+                    if result.returncode == 0:
+                        print(f"[MapLight fix] Install succeeded via {attempt_label}.", flush=True)
+                        return True
+                    failure_text = ((result.stdout or "") + "\\n" + (result.stderr or "")).strip()
+                    failed_attempts.append((attempt_label, result.returncode, failure_text[-1200:]))
+                    print(
+                        f"[MapLight fix] Install attempt failed via {attempt_label} (exit code {result.returncode}).",
+                        flush=True,
+                    )
+
+                failure_summary = "; ".join(
+                    [f"{label} exit={code}" for label, code, _ in failed_attempts]
+                )
+                last_logs = failed_attempts[-1][2] if failed_attempts else ""
+                raise RuntimeError(
+                    f"{failure_message} Automatic attempts failed ({failure_summary}).\\n\\n"
+                    "Last pip output snippet:\\n"
+                    f"{last_logs}"
+                )
+
+            def _torchdata_datapipes_check():
+                result = subprocess.run(
+                    [
+                        sys.executable,
+                        "-c",
+                        "import torch.utils.data.datapipes.utils.common as _c; "
+                        "_c.DILL_AVAILABLE = getattr(_c, 'DILL_AVAILABLE', False); "
+                        "from torchdata import datapipes as _dp; print('torchdata_datapipes_ok')",
+                    ],
+                    capture_output=True,
+                    text=True,
+                )
+                logs = ((result.stdout or "") + "\\n" + (result.stderr or "")).strip()
+                return result.returncode == 0, logs[-1200:]
+
+            dgl_spec = importlib.util.find_spec("dgl")
+            if dgl_spec is None or not getattr(dgl_spec, "origin", None):
+                return
+            dgl_root = Path(dgl_spec.origin).resolve().parent
+            graphbolt_dir = dgl_root / "graphbolt"
+            if not graphbolt_dir.exists():
+                return
+
+            if sys.platform.startswith("win"):
+                graphbolt_pattern = "graphbolt_pytorch_*.dll"
+                graphbolt_regex = re.compile(r"^graphbolt_pytorch_([0-9]+[.][0-9]+[.][0-9]+)[.]dll$")
+            elif sys.platform.startswith("linux"):
+                graphbolt_pattern = "libgraphbolt_pytorch_*.so"
+                graphbolt_regex = re.compile(r"^libgraphbolt_pytorch_([0-9]+[.][0-9]+[.][0-9]+)[.]so$")
+            elif sys.platform.startswith("darwin"):
+                graphbolt_pattern = "libgraphbolt_pytorch_*.dylib"
+                graphbolt_regex = re.compile(r"^libgraphbolt_pytorch_([0-9]+[.][0-9]+[.][0-9]+)[.]dylib$")
+            else:
+                return
+
+            available_versions = []
+            for path in graphbolt_dir.glob(graphbolt_pattern):
+                match = graphbolt_regex.match(path.name)
+                if match:
+                    available_versions.append(match.group(1))
+            if not available_versions:
+                return
+            available_versions = sorted(set(available_versions), key=_version_key)
+
+            repaired_components = []
+
+            torch_version = ""
+            if torch is not None:
+                torch_version = str(getattr(torch, "__version__", "") or "")
+            if not torch_version:
+                try:
+                    import importlib.metadata as _importlib_metadata
+
+                    torch_version = str(_importlib_metadata.version("torch"))
+                except Exception:
+                    return
+            torch_base = torch_version.split("+", 1)[0]
+            effective_torch_base = torch_base
+            if torch_base not in available_versions:
+                target_torch = available_versions[-1]
+                print(
+                    "MapLight + GNN compatibility check: "
+                    f"installed torch={torch_base}, but DGL provides GraphBolt binaries for {available_versions}.",
+                    flush=True,
+                )
+                print(
+                    "Installing a CPU PyTorch build compatible with installed DGL: "
+                    f"torch=={target_torch}",
+                    flush=True,
+                )
+
+                install_attempts = [
+                    (
+                        "PyTorch CPU index (no deps)",
+                        [
+                            sys.executable,
+                            "-m",
+                            "pip",
+                            "install",
+                            "-q",
+                            "--force-reinstall",
+                            "--no-deps",
+                            "--index-url",
+                            "https://download.pytorch.org/whl/cpu",
+                            f"torch=={target_torch}",
+                        ],
+                    ),
+                    (
+                        "Default pip index (no deps)",
+                        [
+                            sys.executable,
+                            "-m",
+                            "pip",
+                            "install",
+                            "-q",
+                            "--force-reinstall",
+                            "--no-deps",
+                            f"torch=={target_torch}",
+                        ],
+                    ),
+                ]
+                _run_pip_repair(
+                    install_attempts,
+                    (
+                        "MapLight + GNN local CPU setup failed while trying to align PyTorch with DGL GraphBolt binaries.\\n"
+                        "Please run manually in this environment:\\n"
+                        f"{sys.executable} -m pip install --force-reinstall --no-deps --index-url https://download.pytorch.org/whl/cpu torch=={target_torch}\\n"
+                        "Then restart the kernel, rerun step 0, and rerun block 5B.\\n"
+                    ),
+                )
+                repaired_components.append(f"torch=={target_torch}")
+                effective_torch_base = target_torch
+
+            numpy_version = str(getattr(np, "__version__", "0"))
+            if _version_key(numpy_version) >= (2, 0, 0):
+                print(
+                    f"MapLight + GNN compatibility check: installed numpy={numpy_version}; installing numpy<2 for DGL compatibility.",
+                    flush=True,
+                )
+                _run_pip_repair(
+                    [
+                        (
+                            "Default pip index",
+                            [
+                                sys.executable,
+                                "-m",
+                                "pip",
+                                "install",
+                                "-q",
+                                "--force-reinstall",
+                                "numpy<2",
+                            ],
+                        )
+                    ],
+                    (
+                        "MapLight + GNN local CPU setup failed while trying to align NumPy with DGL.\\n"
+                        "Please run manually in this environment:\\n"
+                        f"{sys.executable} -m pip install --force-reinstall 'numpy<2'\\n"
+                        "Then restart the kernel, rerun step 0, and rerun block 5B.\\n"
+                    ),
+                )
+                repaired_components.append("numpy<2")
+
+            mordred_spec = importlib.util.find_spec("mordred")
+            if mordred_spec is not None:
+                try:
+                    import networkx as _nx
+
+                    nx_version = str(getattr(_nx, "__version__", "0"))
+                except Exception:
+                    nx_version = "0"
+                if _version_key(nx_version) >= (3, 0, 0):
+                    print(
+                        f"MapLight + GNN compatibility check: installed networkx={nx_version}; installing networkx<3 for Mordred compatibility.",
+                        flush=True,
+                    )
+                    _run_pip_repair(
+                        [
+                            (
+                                "Default pip index",
+                                [
+                                    sys.executable,
+                                    "-m",
+                                    "pip",
+                                    "install",
+                                    "-q",
+                                    "--force-reinstall",
+                                    "networkx<3,>=2.8.8",
+                                ],
+                            )
+                        ],
+                        (
+                            "MapLight + GNN local CPU setup failed while trying to align networkx for Mordred compatibility.\\n"
+                            "Please run manually in this environment:\\n"
+                            f"{sys.executable} -m pip install --force-reinstall 'networkx<3,>=2.8.8'\\n"
+                            "Then restart the kernel, rerun step 0, and rerun block 5B.\\n"
+                        ),
+                    )
+                    repaired_components.append("networkx<3")
+
+            if _patch_torchdata_dill_available():
+                print(
+                    "MapLight + GNN compatibility check: applied runtime torchdata compatibility shim for missing DILL_AVAILABLE.",
+                    flush=True,
+                )
+
+            torchdata_ok, torchdata_probe_logs = _torchdata_datapipes_check()
+            if not torchdata_ok:
+                torchdata_requirements = _recommended_torchdata_requirements(effective_torch_base)
+                print(
+                    "MapLight + GNN compatibility check: `torchdata.datapipes` is not importable; "
+                    f"trying candidates {torchdata_requirements}.",
+                    flush=True,
+                )
+                torchdata_fixed = False
+                torchdata_failures = []
+                for torchdata_requirement in torchdata_requirements:
+                    install_attempts = [
+                        (
+                            f"Default pip index (no deps): {torchdata_requirement}",
+                            [
+                                sys.executable,
+                                "-m",
+                                "pip",
+                                "install",
+                                "-q",
+                                "--force-reinstall",
+                                "--no-deps",
+                                torchdata_requirement,
+                            ],
+                        ),
+                    ]
+                    for attempt_label, attempt_cmd in install_attempts:
+                        print(f"[MapLight fix] Attempting install via {attempt_label}...", flush=True)
+                        install_result = subprocess.run(attempt_cmd, capture_output=True, text=True)
+                        install_logs = ((install_result.stdout or "") + "\\n" + (install_result.stderr or "")).strip()
+                        if install_result.returncode != 0:
+                            torchdata_failures.append(
+                                f"{attempt_label} exit={install_result.returncode}: {install_logs[-400:]}"
+                            )
+                            continue
+                        probe_ok, probe_logs = _torchdata_datapipes_check()
+                        if probe_ok:
+                            print(f"[MapLight fix] torchdata validated via {attempt_label}.", flush=True)
+                            repaired_components.append(torchdata_requirement)
+                            torchdata_fixed = True
+                            break
+                        torchdata_failures.append(
+                            f"{attempt_label} installed but probe failed: {probe_logs}"
+                        )
+                    if torchdata_fixed:
+                        break
+
+                if not torchdata_fixed:
+                    failure_summary = "\\n".join(torchdata_failures[-8:])
+                    raise RuntimeError(
+                        "MapLight + GNN local CPU setup failed while trying to align torchdata with PyTorch/DGL.\\n"
+                        "Please run manually in this environment:\\n"
+                        f"{sys.executable} -m pip install --force-reinstall --no-deps 'torchdata==0.7.1'\\n"
+                        "Then restart the kernel, rerun step 0, and rerun block 5B.\\n\\n"
+                        "Initial torchdata probe output:\\n"
+                        f"{torchdata_probe_logs}\\n\\n"
+                        "Recent torchdata install/probe failures:\\n"
+                        f"{failure_summary}"
+                    )
+
+            if repaired_components:
+                raise RuntimeError(
+                    "Installed/updated MapLight + GNN compatibility dependencies "
+                    f"({', '.join(repaired_components)}). "
+                    "Restart the kernel, rerun step 0, then rerun block 5B."
+                )
+
+        maplight_gnn_available = True
         if run_maplight_gnn:
-            if not maplight_gnn_available:
-                run_maplight_gnn = False
-            maplight_gnn_available = True
+            if not IN_COLAB:
+                ensure_maplight_graphbolt_compatibility()
             try:
                 from molfeat.trans.pretrained import PretrainedDGLTransformer
                 import dgl  # noqa: F401
+                _patch_torchdata_dill_available()
+                from torchdata import datapipes as _torchdata_datapipes  # noqa: F401
             except Exception:
-                print("Installing MapLight + GNN dependencies (molfeat, dgl, dgllife)...", flush=True)
+                print("Installing MapLight + GNN dependencies (molfeat, dgl, dgllife, torchdata)...", flush=True)
                 try:
-                    install_dependencies(["molfeat", "dgl", "dgllife"])
+                    runtime_torch_version = ""
+                    if torch is not None:
+                        runtime_torch_version = str(getattr(torch, "__version__", "") or "")
+                    if not runtime_torch_version:
+                        try:
+                            import importlib.metadata as _importlib_metadata
+
+                            runtime_torch_version = str(_importlib_metadata.version("torch"))
+                        except Exception:
+                            runtime_torch_version = ""
+                    runtime_torch_base = runtime_torch_version.split("+", 1)[0] if runtime_torch_version else "2.3.0"
+                    torchdata_requirement = _recommended_torchdata_requirements(runtime_torch_base)[0]
+                    install_dependencies(["molfeat", "dgl", "dgllife", torchdata_requirement])
                     from molfeat.trans.pretrained import PretrainedDGLTransformer  # noqa: F401
                     import dgl  # noqa: F401
+                    _patch_torchdata_dill_available()
+                    from torchdata import datapipes as _torchdata_datapipes  # noqa: F401
                 except Exception as exc:
                     maplight_gnn_available = False
                     message = (
@@ -5531,10 +6516,95 @@ cells += [
                     else:
                         display_note(
                             "MapLight + GNN is not available in this environment. "
-                            "On Windows + Python 3.14, DGL wheels may not be published yet. "
+                            f"Detected Python {sys.version_info.major}.{sys.version_info.minor}. "
+                            "Some DGL/torchdata wheels may be unavailable or incompatible for this stack. "
                             "If you need this model, install a supported Python version (e.g., 3.10/3.11) "
                             "and rerun this cell."
                         )
+
+        def _is_maplight_store_access_error(exc):
+            message = str(exc).lower()
+            markers = [
+                "molfeat-store-prod",
+                "storage.objects.list",
+                "anonymous caller",
+                "default credentials",
+                "httperror",
+                "cannot connect to host storage.googleapis.com",
+            ]
+            return any(marker in message for marker in markers)
+
+        def _build_maplight_gnn_embedder(kind="gin_supervised_masking"):
+            _patch_torchdata_dill_available()
+            from molfeat.trans.pretrained import PretrainedDGLTransformer
+
+            try:
+                transformer = PretrainedDGLTransformer(kind=kind, dtype=float)
+
+                def _embed_with_molfeat(smiles_values):
+                    return transformer(smiles_values)
+
+                return _embed_with_molfeat, "molfeat-store"
+            except Exception as primary_exc:
+                if not _is_maplight_store_access_error(primary_exc):
+                    raise
+                try:
+                    import dgl
+                    import dgllife
+                    import torch
+                    from torch.utils.data import DataLoader
+
+                    fallback_model = dgllife.model.load_pretrained(kind)
+                    fallback_model.eval()
+                    pooling = PretrainedDGLTransformer.get_pooling("mean")
+
+                    def _embed_with_dgllife(smiles_values):
+                        smiles_list = [str(value) for value in list(smiles_values)]
+                        dataset, successes = PretrainedDGLTransformer.graph_featurizer(smiles_list, kind=kind)
+                        data_loader = DataLoader(
+                            dataset,
+                            batch_size=32,
+                            collate_fn=dgl.batch,
+                            shuffle=False,
+                            drop_last=False,
+                        )
+                        mol_emb = []
+                        for bg in data_loader:
+                            nfeats = [
+                                bg.ndata.pop("atomic_number").to(torch.device("cpu")),
+                                bg.ndata.pop("chirality_type").to(torch.device("cpu")),
+                            ]
+                            efeats = [
+                                bg.edata.pop("bond_type").to(torch.device("cpu")),
+                                bg.edata.pop("bond_direction_type").to(torch.device("cpu")),
+                            ]
+                            with torch.no_grad():
+                                node_repr = fallback_model(bg, nfeats, efeats)
+                            mol_emb.append(pooling(bg, node_repr).detach().cpu().numpy())
+
+                        if mol_emb:
+                            mol_emb = np.concatenate(mol_emb, axis=0)
+                        else:
+                            mol_emb = np.empty((0, 0), dtype=float)
+
+                        out = []
+                        emb_idx = 0
+                        for success in successes:
+                            if success:
+                                out.append(mol_emb[emb_idx])
+                                emb_idx += 1
+                            else:
+                                out.append(None)
+                        return out
+
+                    return _embed_with_dgllife, "dgllife-direct"
+                except Exception as fallback_exc:
+                    raise RuntimeError(
+                        "MapLight + GNN could not load pretrained GIN weights. "
+                        "The molfeat store backend failed and dgllife direct fallback download/load also failed.\\n"
+                        f"molfeat-store error: {primary_exc}\\n"
+                        f"dgllife direct fallback error: {fallback_exc}"
+                    ) from fallback_exc
 
         deep_rows = []
         deep_models = {}
@@ -5554,7 +6624,7 @@ cells += [
                 deep_cache_run_name,
                 prefer_existing=bool(reuse_deep_cached_models),
             )
-            print(f"ChemML cache directory: {deep_cache_dir}")
+            print(f"Deep-learning cache directory: {deep_cache_dir}")
 
         def load_cached_chemml_artifacts(model_dir, metadata, label):
             chemml_model_jsons = sorted(model_dir.glob("*_chemml_model.json"), key=lambda path: path.name, reverse=True)
@@ -5620,6 +6690,66 @@ cells += [
         if not selected_any:
             raise ValueError("Please enable at least one deep-learning model.")
 
+        if run_chemml_pytorch and torch is None:
+            print(
+                "ChemML PyTorch was requested, but PyTorch is unavailable in this environment. "
+                "This backend will be skipped.",
+                flush=True,
+            )
+            run_chemml_pytorch = False
+        if run_chemml_tensorflow and tf is None:
+            print(
+                "ChemML TensorFlow was requested, but TensorFlow is unavailable in this environment. "
+                "This backend will be skipped.",
+                flush=True,
+            )
+            run_chemml_tensorflow = False
+
+        if not any([run_chemml_pytorch, run_chemml_tensorflow, run_maplight_gnn]):
+            raise RuntimeError(
+                "All selected deep-learning backends were disabled due to missing dependencies. "
+                "Install the requested backend(s) or enable a different workflow."
+            )
+
+        smiles_train_for_cv = split_payload["smiles_train"].astype(str).reset_index(drop=True)
+        deep_cv_splitter = None
+        deep_effective_cv_folds = None
+        deep_cv_split_strategy = None
+        deep_requested_cv_split_strategy = current_cv_split_strategy(
+            default_strategy=deep_split_strategy,
+            fallback="random",
+        )
+        if bool(chemml_use_cross_validation):
+            try:
+                deep_cv_splitter, deep_effective_cv_folds, deep_cv_split_strategy = make_qsar_cv_splitter(
+                    split_payload["X_train"],
+                    pd.Series(split_payload["y_train"], dtype=float),
+                    smiles_train_for_cv,
+                    split_strategy=str(deep_requested_cv_split_strategy),
+                    cv_folds=int(chemml_cv_folds),
+                    random_seed=int(deep_random_seed),
+                )
+            except Exception as exc:
+                print(
+                    "Deep-learning CV split fallback: requested split strategy could not be used for CV "
+                    f"({exc}). Falling back to random CV folds.",
+                    flush=True,
+                )
+                deep_cv_splitter, deep_effective_cv_folds, deep_cv_split_strategy = make_qsar_cv_splitter(
+                    split_payload["X_train"],
+                    pd.Series(split_payload["y_train"], dtype=float),
+                    smiles_train_for_cv,
+                    split_strategy="random",
+                    cv_folds=int(chemml_cv_folds),
+                    random_seed=int(deep_random_seed),
+                )
+
+        if bool(chemml_use_cross_validation) and deep_effective_cv_folds is not None:
+            print(
+                f"Deep-learning CV enabled with {deep_effective_cv_folds} folds using {deep_cv_split_strategy}.",
+                flush=True,
+            )
+
         if run_chemml_pytorch or run_chemml_tensorflow:
             try:
                 from chemml.models.mlp import MLP
@@ -5630,20 +6760,10 @@ cells += [
                     "the TensorFlow backend requires TensorFlow."
                 ) from exc
 
-            if run_chemml_pytorch and torch is None:
-                raise RuntimeError(
-                    "ChemML PyTorch was selected, but PyTorch is not available in this environment."
-                )
-            if run_chemml_tensorflow and tf is None:
-                raise RuntimeError(
-                    "ChemML TensorFlow was selected, but TensorFlow is not available in this environment."
-                )
-
             X_train = split_payload["X_train"].to_numpy(dtype=np.float32)
             X_test = split_payload["X_test"].to_numpy(dtype=np.float32)
             y_train = np.asarray(split_payload["y_train"], dtype=np.float32).reshape(-1, 1)
             y_test = np.asarray(split_payload["y_test"], dtype=np.float32).reshape(-1, 1)
-            smiles_train_for_cv = split_payload["smiles_train"].astype(str).reset_index(drop=True)
 
             def fit_chemml_mlp(engine_name, X_fit_raw, y_fit_raw, X_predict_raw, random_seed_value):
                 x_scaler_local = StandardScaler()
@@ -5677,45 +6797,15 @@ cells += [
             y_train_scaled = None
             x_scaler = None
             y_scaler = None
-            cv_splitter = None
-            chemml_effective_cv_folds = None
-            chemml_cv_split_strategy = None
-            if bool(chemml_use_cross_validation):
-                try:
-                    cv_splitter, chemml_effective_cv_folds, chemml_cv_split_strategy = make_qsar_cv_splitter(
-                        split_payload["X_train"],
-                        pd.Series(split_payload["y_train"], dtype=float),
-                        smiles_train_for_cv,
-                        split_strategy=str(deep_split_strategy),
-                        cv_folds=int(chemml_cv_folds),
-                        random_seed=int(deep_random_seed),
-                    )
-                except Exception as exc:
-                    print(
-                        "ChemML CV split fallback: requested split strategy could not be used for CV "
-                        f"({exc}). Falling back to random CV folds.",
-                        flush=True,
-                    )
-                    cv_splitter, chemml_effective_cv_folds, chemml_cv_split_strategy = make_qsar_cv_splitter(
-                        split_payload["X_train"],
-                        pd.Series(split_payload["y_train"], dtype=float),
-                        smiles_train_for_cv,
-                        split_strategy="random",
-                        cv_folds=int(chemml_cv_folds),
-                        random_seed=int(deep_random_seed),
-                    )
+            cv_splitter = deep_cv_splitter
+            chemml_effective_cv_folds = deep_effective_cv_folds
+            chemml_cv_split_strategy = deep_cv_split_strategy
 
             selected_chemml_models = []
             if run_chemml_pytorch:
                 selected_chemml_models.append(("pytorch", "ChemML MLP (PyTorch)"))
             if run_chemml_tensorflow:
                 selected_chemml_models.append(("tensorflow", "ChemML MLP (TensorFlow)"))
-            if bool(chemml_use_cross_validation) and chemml_effective_cv_folds is not None:
-                print(
-                    f"ChemML CV enabled with {chemml_effective_cv_folds} folds using {chemml_cv_split_strategy}.",
-                    flush=True,
-                )
-
             chemml_progress = tqdm(selected_chemml_models, desc="ChemML models", leave=False)
             for engine_name, label in chemml_progress:
                 chemml_progress.set_postfix_str(label)
@@ -5926,7 +7016,9 @@ cells += [
 
         if run_maplight_gnn:
             maplight_label = "MapLight + GNN (CatBoost)"
-            if CatBoostRegressor is None:
+            if not maplight_gnn_available:
+                print("MapLight + GNN skipped: dependencies are unavailable in this environment.", flush=True)
+            elif CatBoostRegressor is None:
                 print("MapLight + GNN skipped: CatBoost is not available.", flush=True)
             else:
                 try:
@@ -5943,7 +7035,11 @@ cells += [
                             "This run was skipped so the notebook can continue."
                         )
                     else:
-                        raise RuntimeError(message) from exc
+                        print(f"[skip] {message}", flush=True)
+                        display_note(
+                            "MapLight + GNN was skipped in this local run because the DGL/PyTorch stack is not importable. "
+                            "Rerun block 5B after completing the compatibility fix message from earlier in this cell."
+                        )
                 else:
                     try:
                         from rdkit import Chem, RDLogger
@@ -5952,59 +7048,286 @@ cells += [
 
                     RDLogger.DisableLog("rdApp.*")
                     maplight_smiles = STATE["curated_df"]["canonical_smiles"].astype(str).reset_index(drop=True)
-                    maplight_base, _ = build_feature_matrix_from_smiles(
-                        maplight_smiles.tolist(),
-                        selected_feature_families=["maplight"],
-                        radius=int(feature_metadata["fingerprint_radius"]),
-                        n_bits=int(feature_metadata["fingerprint_bits"]),
-                        enable_persistent_feature_store=True,
-                        reuse_persistent_feature_store=True,
-                        persistent_feature_store_path=str(feature_metadata.get("persistent_feature_store_path", "AUTO")),
-                    )
-                    mols = maplight_smiles.apply(Chem.MolFromSmiles)
-                    transformer = PretrainedDGLTransformer(kind="gin_supervised_masking", dtype=float)
-                    gin_embeddings = transformer(mols)
-                    gin_array = np.asarray(gin_embeddings)
-                    if gin_array.ndim == 1:
-                        gin_array = gin_array.reshape(len(maplight_smiles), -1)
-                    gin_df = pd.DataFrame(
-                        gin_array,
-                        columns=[f"maplight_gin_{i:04d}" for i in range(gin_array.shape[1])],
-                    )
-                    maplight_features = pd.concat([maplight_base.reset_index(drop=True), gin_df], axis=1)
-                    maplight_features.index = maplight_smiles
-
                     train_smiles = split_payload["smiles_train"].astype(str).reset_index(drop=True)
                     test_smiles = split_payload["smiles_test"].astype(str).reset_index(drop=True)
-                    X_train_maplight = maplight_features.loc[train_smiles].reset_index(drop=True)
-                    X_test_maplight = maplight_features.loc[test_smiles].reset_index(drop=True)
                     y_train_maplight = np.asarray(split_payload["y_train"], dtype=float)
                     y_test_maplight = np.asarray(split_payload["y_test"], dtype=float)
+                    maplight_cv_summary = {"CV R2": np.nan, "CV RMSE": np.nan, "CV MAE": np.nan}
+                    maplight_embedding_backend = "molfeat-store"
+                    maplight_aux_fusion_payload = None
+                    maplight_model = None
+                    pred_train = None
+                    pred_test = None
+                    maplight_cache_loaded = False
+                    maplight_model_slug = slugify_cache_text(maplight_label)
+                    maplight_iterations = 400
+                    maplight_depth = 6
+                    maplight_learning_rate = 0.05
+                    maplight_loss = "RMSE"
 
-                    maplight_model = CatBoostRegressor(
-                        iterations=400,
-                        depth=6,
-                        learning_rate=0.05,
-                        loss_function="RMSE",
-                        random_seed=int(deep_random_seed),
-                        verbose=False,
-                    )
-                    maplight_model.fit(X_train_maplight, y_train_maplight)
-                    base_pred_train = np.asarray(maplight_model.predict(X_train_maplight)).reshape(-1)
-                    base_pred_test = np.asarray(maplight_model.predict(X_test_maplight)).reshape(-1)
-                    pred_train, pred_test, maplight_aux_fusion_payload = fit_auxiliary_fusion_head(
-                        base_pred_train,
-                        base_pred_test,
-                        y_train_maplight,
-                        train_smiles,
-                        test_smiles,
-                        random_seed=int(deep_random_seed),
-                        label=maplight_label,
-                    )
+                    if enable_deep_model_cache and reuse_deep_cached_models:
+                        model_dir = deep_cache_dir / maplight_model_slug
+                        metadata_candidates = sorted(
+                            model_dir.glob("*_metadata.json"),
+                            key=lambda path: path.name,
+                            reverse=True,
+                        ) if model_dir.exists() else []
+                        for metadata_path in metadata_candidates:
+                            try:
+                                metadata = read_cache_metadata(metadata_path)
+                                expected_metadata = {
+                                    "model_name": maplight_label,
+                                    "workflow": "MapLight + GNN",
+                                    "dataset_label": deep_dataset_label,
+                                    "representation_label": feature_metadata["representation_label"],
+                                    "selected_feature_families": list(feature_metadata["selected_feature_families"]),
+                                    "built_feature_families": list(feature_metadata["built_feature_families"]),
+                                    "fingerprint_radius": int(feature_metadata["fingerprint_radius"]),
+                                    "fingerprint_bits": int(feature_metadata["fingerprint_bits"]),
+                                    "lasso_feature_selection_enabled": bool(feature_metadata["lasso_feature_selection_enabled"]),
+                                    "lasso_alpha": feature_metadata["lasso_alpha"],
+                                    "lasso_selected_feature_count": int(feature_metadata["lasso_selected_feature_count"]),
+                                    "qsar_split_strategy": str(deep_split_strategy),
+                                    "qsar_test_fraction": float(deep_test_fraction),
+                                    "qsar_split_random_seed": int(deep_split_random_seed),
+                                    "deep_random_seed": int(deep_random_seed),
+                                    "chemml_use_cross_validation": bool(chemml_use_cross_validation),
+                                    "chemml_cv_folds": int(deep_effective_cv_folds) if deep_effective_cv_folds is not None else None,
+                                    "chemml_cv_split_strategy": deep_cv_split_strategy if deep_cv_split_strategy is not None else None,
+                                    "catboost_iterations": int(maplight_iterations),
+                                    "catboost_depth": int(maplight_depth),
+                                    "catboost_learning_rate": float(maplight_learning_rate),
+                                    "catboost_loss_function": str(maplight_loss),
+                                }
+                                if not cache_metadata_matches(metadata, expected_metadata):
+                                    continue
+
+                                prediction_path = resolve_cached_artifact_path(metadata["prediction_path"], metadata_path)
+                                loaded_splits = load_prediction_splits(
+                                    prediction_path,
+                                    train_smiles,
+                                    test_smiles,
+                                )
+
+                                model_path = resolve_cached_artifact_path(metadata["model_path"], metadata_path)
+                                restored_model = None
+                                if model_path.exists():
+                                    try:
+                                        restored_model = CatBoostRegressor()
+                                        restored_model.load_model(str(model_path))
+                                    except Exception as exc:
+                                        print(
+                                            "Cached predictions for MapLight + GNN were loaded, but the CatBoost model "
+                                            f"object could not be restored ({exc}).",
+                                            flush=True,
+                                        )
+
+                                aux_fusion_path = None
+                                if metadata.get("aux_fusion_path") not in [None, "None", ""]:
+                                    aux_fusion_path = resolve_cached_artifact_path(metadata.get("aux_fusion_path"), metadata_path)
+                                if aux_fusion_path is not None and aux_fusion_path.exists():
+                                    try:
+                                        maplight_aux_fusion_payload = joblib_load(aux_fusion_path)
+                                    except Exception as exc:
+                                        print(
+                                            "Cached predictions for MapLight + GNN were loaded, but auxiliary fusion "
+                                            f"artifacts could not be restored ({exc}).",
+                                            flush=True,
+                                        )
+                                        maplight_aux_fusion_payload = None
+                                else:
+                                    maplight_aux_fusion_payload = None
+
+                                pred_train = loaded_splits["train"]["predicted"].to_numpy(dtype=float)
+                                pred_test = loaded_splits["test"]["predicted"].to_numpy(dtype=float)
+                                maplight_model = restored_model
+                                maplight_embedding_backend = str(metadata.get("maplight_embedding_backend", "cached"))
+                                maplight_cv_summary = {
+                                    "CV R2": float(metadata.get("cv_r2")) if metadata.get("cv_r2") not in [None, "None", ""] else np.nan,
+                                    "CV RMSE": float(metadata.get("cv_rmse")) if metadata.get("cv_rmse") not in [None, "None", ""] else np.nan,
+                                    "CV MAE": float(metadata.get("cv_mae")) if metadata.get("cv_mae") not in [None, "None", ""] else np.nan,
+                                }
+                                maplight_cache_loaded = True
+                                deep_model_cache_paths[maplight_label] = {
+                                    "model_dir": str(model_dir),
+                                    "model_path": str(model_path),
+                                    "prediction_path": str(prediction_path),
+                                    "metadata_path": str(metadata_path),
+                                    "aux_fusion_path": str(aux_fusion_path) if aux_fusion_path is not None else "",
+                                }
+                                print(f"Loaded cached MapLight + GNN artifacts for {maplight_label} from {model_dir}", flush=True)
+                                break
+                            except Exception:
+                                continue
+
+                    if not maplight_cache_loaded:
+                        maplight_base, _ = build_feature_matrix_from_smiles(
+                            maplight_smiles.tolist(),
+                            selected_feature_families=["maplight"],
+                            radius=int(feature_metadata["fingerprint_radius"]),
+                            n_bits=int(feature_metadata["fingerprint_bits"]),
+                            enable_persistent_feature_store=True,
+                            reuse_persistent_feature_store=True,
+                            persistent_feature_store_path=str(feature_metadata.get("persistent_feature_store_path", "AUTO")),
+                        )
+                        embed_maplight_gnn, maplight_embedding_backend = _build_maplight_gnn_embedder("gin_supervised_masking")
+                        if maplight_embedding_backend != "molfeat-store":
+                            print(
+                                "MapLight + GNN embedding backend switched to "
+                                f"{maplight_embedding_backend} due to molfeat store access issues.",
+                                flush=True,
+                            )
+                        gin_embeddings = embed_maplight_gnn(maplight_smiles.tolist())
+                        gin_array = np.asarray(gin_embeddings)
+                        if gin_array.ndim == 1:
+                            gin_array = gin_array.reshape(len(maplight_smiles), -1)
+                        gin_df = pd.DataFrame(
+                            gin_array,
+                            columns=[f"maplight_gin_{i:04d}" for i in range(gin_array.shape[1])],
+                        )
+                        maplight_features = pd.concat([maplight_base.reset_index(drop=True), gin_df], axis=1)
+                        maplight_features.index = maplight_smiles
+
+                        X_train_maplight = maplight_features.loc[train_smiles].reset_index(drop=True)
+                        X_test_maplight = maplight_features.loc[test_smiles].reset_index(drop=True)
+
+                        maplight_model = CatBoostRegressor(
+                            iterations=int(maplight_iterations),
+                            depth=int(maplight_depth),
+                            learning_rate=float(maplight_learning_rate),
+                            loss_function=str(maplight_loss),
+                            random_seed=int(deep_random_seed),
+                            verbose=False,
+                        )
+                        maplight_model.fit(X_train_maplight, y_train_maplight)
+                        base_pred_train = np.asarray(maplight_model.predict(X_train_maplight)).reshape(-1)
+                        base_pred_test = np.asarray(maplight_model.predict(X_test_maplight)).reshape(-1)
+                        pred_train, pred_test, maplight_aux_fusion_payload = fit_auxiliary_fusion_head(
+                            base_pred_train,
+                            base_pred_test,
+                            y_train_maplight,
+                            train_smiles,
+                            test_smiles,
+                            random_seed=int(deep_random_seed),
+                            label=maplight_label,
+                        )
+
+                        if bool(chemml_use_cross_validation) and deep_cv_splitter is not None:
+                            if isinstance(deep_cv_splitter, list):
+                                fold_splits = list(deep_cv_splitter)
+                            else:
+                                fold_splits = list(deep_cv_splitter.split(split_payload["X_train"], y_train_maplight))
+                            fold_metrics = []
+                            fold_progress = tqdm(fold_splits, desc=f"{maplight_label} CV folds", leave=False)
+                            for fold_idx, (fold_train_idx, fold_val_idx) in enumerate(fold_progress, start=1):
+                                fold_train_idx = np.asarray(fold_train_idx, dtype=int)
+                                fold_val_idx = np.asarray(fold_val_idx, dtype=int)
+                                fold_model = CatBoostRegressor(
+                                    iterations=int(maplight_iterations),
+                                    depth=int(maplight_depth),
+                                    learning_rate=float(maplight_learning_rate),
+                                    loss_function=str(maplight_loss),
+                                    random_seed=int(deep_random_seed) + int(fold_idx),
+                                    verbose=False,
+                                )
+                                fold_model.fit(
+                                    X_train_maplight.iloc[fold_train_idx].reset_index(drop=True),
+                                    y_train_maplight[fold_train_idx],
+                                )
+                                fold_val_pred = np.asarray(
+                                    fold_model.predict(
+                                        X_train_maplight.iloc[fold_val_idx].reset_index(drop=True)
+                                    )
+                                ).reshape(-1)
+                                fold_y_true = y_train_maplight[fold_val_idx]
+                                fold_metrics.append(
+                                    {
+                                        "r2": float(r2_score(fold_y_true, fold_val_pred)),
+                                        "rmse": float(np.sqrt(mean_squared_error(fold_y_true, fold_val_pred))),
+                                        "mae": float(mean_absolute_error(fold_y_true, fold_val_pred)),
+                                    }
+                                )
+                            fold_progress.close()
+                            if fold_metrics:
+                                maplight_cv_summary = {
+                                    "CV R2": float(np.mean([item["r2"] for item in fold_metrics])),
+                                    "CV RMSE": float(np.mean([item["rmse"] for item in fold_metrics])),
+                                    "CV MAE": float(np.mean([item["mae"] for item in fold_metrics])),
+                                }
+
+                        if enable_deep_model_cache:
+                            artifact_base = f"{STATE['cache_session_stamp']}_{deep_dataset_label}_{maplight_model_slug}"
+                            model_dir = deep_cache_dir / maplight_model_slug
+                            model_dir.mkdir(parents=True, exist_ok=True)
+                            model_path = model_dir / f"{artifact_base}_model.cbm"
+                            prediction_path = model_dir / f"{artifact_base}_predictions.csv"
+                            metadata_path = model_dir / f"{artifact_base}_metadata.json"
+                            aux_fusion_path = model_dir / f"{artifact_base}_aux_fusion.joblib"
+
+                            maplight_model.save_model(str(model_path))
+                            if maplight_aux_fusion_payload is not None:
+                                joblib_dump(maplight_aux_fusion_payload, aux_fusion_path)
+                            elif aux_fusion_path.exists():
+                                aux_fusion_path.unlink()
+
+                            pd.DataFrame(
+                                {
+                                    "split": ["train"] * len(pred_train) + ["test"] * len(pred_test),
+                                    "smiles": list(train_smiles.astype(str)) + list(test_smiles.astype(str)),
+                                    "observed": list(y_train_maplight) + list(y_test_maplight),
+                                    "predicted": list(pred_train) + list(pred_test),
+                                }
+                            ).to_csv(prediction_path, index=False)
+                            write_cache_metadata(
+                                metadata_path,
+                                {
+                                    "model_name": maplight_label,
+                                    "workflow": "MapLight + GNN",
+                                    "dataset_label": deep_dataset_label,
+                                    "representation_label": feature_metadata["representation_label"],
+                                    "selected_feature_families": list(feature_metadata["selected_feature_families"]),
+                                    "built_feature_families": list(feature_metadata["built_feature_families"]),
+                                    "fingerprint_radius": int(feature_metadata["fingerprint_radius"]),
+                                    "fingerprint_bits": int(feature_metadata["fingerprint_bits"]),
+                                    "lasso_feature_selection_enabled": bool(feature_metadata["lasso_feature_selection_enabled"]),
+                                    "lasso_alpha": feature_metadata["lasso_alpha"],
+                                    "lasso_selected_feature_count": int(feature_metadata["lasso_selected_feature_count"]),
+                                    "cache_run_name": deep_cache_dir.name,
+                                    "qsar_split_strategy": str(deep_split_strategy),
+                                    "qsar_test_fraction": float(deep_test_fraction),
+                                    "qsar_split_random_seed": int(deep_split_random_seed),
+                                    "deep_random_seed": int(deep_random_seed),
+                                    "chemml_use_cross_validation": bool(chemml_use_cross_validation),
+                                    "chemml_cv_folds": int(deep_effective_cv_folds) if deep_effective_cv_folds is not None else None,
+                                    "chemml_cv_split_strategy": deep_cv_split_strategy if deep_cv_split_strategy is not None else None,
+                                    "catboost_iterations": int(maplight_iterations),
+                                    "catboost_depth": int(maplight_depth),
+                                    "catboost_learning_rate": float(maplight_learning_rate),
+                                    "catboost_loss_function": str(maplight_loss),
+                                    "maplight_embedding_backend": maplight_embedding_backend,
+                                    "model_dir": model_dir,
+                                    "model_path": model_path,
+                                    "prediction_path": prediction_path,
+                                    "aux_fusion_path": aux_fusion_path if maplight_aux_fusion_payload is not None else None,
+                                    "cv_r2": maplight_cv_summary["CV R2"],
+                                    "cv_rmse": maplight_cv_summary["CV RMSE"],
+                                    "cv_mae": maplight_cv_summary["CV MAE"],
+                                },
+                            )
+                            deep_model_cache_paths[maplight_label] = {
+                                "model_dir": str(model_dir),
+                                "model_path": str(model_path),
+                                "prediction_path": str(prediction_path),
+                                "metadata_path": str(metadata_path),
+                                "aux_fusion_path": str(aux_fusion_path) if maplight_aux_fusion_payload is not None else "",
+                            }
 
                     if "maplight_gnn_models" not in STATE:
                         STATE["maplight_gnn_models"] = {}
-                    STATE["maplight_gnn_models"][maplight_label] = maplight_model
+                    if maplight_model is not None:
+                        STATE["maplight_gnn_models"][maplight_label] = maplight_model
+                    else:
+                        STATE["maplight_gnn_models"].pop(maplight_label, None)
                     if "maplight_gnn_aux_fusion_models" not in STATE:
                         STATE["maplight_gnn_aux_fusion_models"] = {}
                     if maplight_aux_fusion_payload is not None:
@@ -6017,6 +7340,7 @@ cells += [
                         "fingerprint_bits": int(feature_metadata["fingerprint_bits"]),
                         "persistent_feature_store_path": str(feature_metadata.get("persistent_feature_store_path", "AUTO")),
                     }
+                    STATE["maplight_gnn_embedding_backend"] = maplight_embedding_backend
 
                     deep_predictions[maplight_label] = {
                         "train": pred_train,
@@ -6029,6 +7353,9 @@ cells += [
                     }
                     row = {"Model": maplight_label, "Workflow": "MapLight + GNN"}
                     row["Execution mode"] = "GPU" if gpu_available else "CPU"
+                    row["CV R2"] = maplight_cv_summary["CV R2"]
+                    row["CV RMSE"] = maplight_cv_summary["CV RMSE"]
+                    row["CV MAE"] = maplight_cv_summary["CV MAE"]
                     row.update(summarize_regression(y_train_maplight, pred_train, "Train"))
                     row.update(summarize_regression(y_test_maplight, pred_test, "Test"))
                     deep_rows.append(row)
@@ -6156,6 +7483,11 @@ cells += [
             unimol_progress = tqdm(selected_unimol_models, desc="Uni-Mol models", leave=False)
             for model_name, label, model_train_csv, model_test_csv, model_train_df, model_test_df in unimol_progress:
                 unimol_progress.set_postfix_str(label)
+                ensure_global_split_signature(
+                    model_train_df["SMILES"].astype(str),
+                    model_test_df["SMILES"].astype(str),
+                    source_label=f"5B {label}",
+                )
                 save_dir = output_dir / label.lower().replace(" ", "_").replace("(", "").replace(")", "")
                 metadata_path = save_dir / "cache_metadata.json"
                 prediction_path = save_dir / "cached_predictions.csv"
@@ -6170,13 +7502,11 @@ cells += [
                             "qsar_split_strategy": str(deep_split_strategy),
                             "qsar_test_fraction": float(deep_test_fraction),
                             "qsar_split_random_seed": int(deep_split_random_seed),
-                            "execution_mode": "GPU" if gpu_available else "CPU",
                             "split": str(unimol_internal_split),
                             "epochs": int(unimol_epochs),
                             "learning_rate": float(unimol_learning_rate),
                             "batch_size": int(unimol_batch_size),
                             "early_stopping": int(unimol_early_stopping),
-                            "num_workers": int(unimol_num_workers),
                         }
                         if model_name == "unimolv2":
                             expected_metadata["model_size"] = str(unimol_model_size)
@@ -6187,6 +7517,7 @@ cells += [
                                 prediction_path,
                                 model_train_df["SMILES"].astype(str),
                                 model_test_df["SMILES"].astype(str),
+                                allow_reorder=True,
                             )
                             pred_train = loaded_splits["train"]["predicted"].to_numpy(dtype=float)
                             pred_test = loaded_splits["test"]["predicted"].to_numpy(dtype=float)
@@ -6347,20 +7678,21 @@ cells += [
         best_deep_name = deep_results.loc[0, "Model"]
         if enable_deep_model_cache:
             if deep_cache_dir is not None:
-                print(f"ChemML cache artifacts saved under: {deep_cache_dir}")
+                print(f"Deep-learning cache artifacts saved under: {deep_cache_dir}")
         display_note(
-            f"The strongest ChemML model in this run is **{best_deep_name}**. "
-            "ChemML remains a tabular molecular-feature workflow. If you want the separate pretrained 3D workflow, continue to section `6` for Uni-Mol."
+            f"The strongest deep-learning model in this run is **{best_deep_name}**. "
+            "This summary includes every deep workflow enabled in block `5B` (ChemML and/or MapLight + GNN). "
+            "If you also want the separate pretrained 3D workflow, continue to section `6` for Uni-Mol."
         )
         """
     ),
     code(
         """
-        # @title 5C. Compare conventional and ChemML performance { display-mode: "form" }
+        # @title 5C. Compare conventional and deep-learning performance { display-mode: "form" }
         if "traditional_results" not in STATE:
             raise RuntimeError("Please run the conventional modeling cell first.")
         if "deep_results" not in STATE:
-            raise RuntimeError("Please run the ChemML cell first.")
+            raise RuntimeError("Please run the deep-learning cell first.")
         comparison_scatter_top_n = 6 # @param {type:"slider", min:2, max:12, step:1}
         include_tuned_models_in_comparison = False # @param {type:"boolean"}
 
@@ -6377,9 +7709,9 @@ cells += [
             tuned["Workflow"] = "Tuned conventional ML"
             frames.append(tuned)
 
-        deep = STATE["deep_results"].loc[STATE["deep_results"]["Workflow"] == "ChemML deep learning"].copy()
+        deep = STATE["deep_results"].copy()
         if deep.empty:
-            raise RuntimeError("No ChemML results are available yet. Run block 5B first.")
+            raise RuntimeError("No deep-learning results are available yet. Run block 5B first.")
         compare_df = pd.concat(frames + [deep], axis=0, ignore_index=True)
         compare_df = compare_df.sort_values(["Test RMSE", "Test MAE"], ascending=True).reset_index(drop=True)
         STATE["comparison_results"] = compare_df.copy()
@@ -6528,7 +7860,7 @@ cells += [
 
         <img src="https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/article/110155/60ae7257eca14ef288e15ebb9fdf1565/d592ed9f-78e4-4d51-84d4-44a2f88e95f3.png" width="70%" height="70%">
 
-        In this notebook, Uni-Mol uses the **same held-out train/test split** created in block `4A` so its external test performance can be compared more fairly with the other QSAR workflows.
+        In this notebook, Uni-Mol uses the **same held-out train/test split** established earlier in the workflow so its external test performance can be compared more fairly with the other QSAR workflows.
 
         ### Uni-Mol V2 Model Sizes
 
@@ -6595,9 +7927,6 @@ cells += [
     code(
         """
         # @title 6B. Prepare Uni-Mol train and test files from the QSAR split { display-mode: "form" }
-        unimol_data_split_strategy = "random" # @param ["random", "scaffold"]
-        unimol_test_fraction = 0.2 # @param {type:"slider", min:0.1, max:0.4, step:0.05}
-        unimol_split_random_seed = 42 # @param {type:"integer"}
         enable_unimol_model_cache = True # @param {type:"boolean"}
         reuse_unimol_cached_models = True # @param {type:"boolean"}
         unimol_run_label = "AUTO" # @param {type:"string"}
@@ -6607,12 +7936,15 @@ cells += [
         if "feature_matrix" not in STATE:
             raise RuntimeError("Please build the molecular feature matrix first.")
 
-        apply_qsar_split(
-            split_strategy=str(unimol_data_split_strategy),
-            test_fraction=float(unimol_test_fraction),
-            random_seed=int(unimol_split_random_seed),
-            announce=True,
+        ensure_shared_qsar_split(
+            default_strategy="random",
+            default_test_fraction=0.2,
+            default_random_seed=42,
+            source_label="6B Uni-Mol file preparation",
         )
+        unimol_data_split_strategy = str(STATE.get("model_split_strategy", "random"))
+        unimol_test_fraction = float(STATE.get("model_test_fraction", 0.2))
+        unimol_split_random_seed = int(STATE.get("model_split_random_seed", 42))
 
         if enable_unimol_model_cache:
             output_dir = resolve_model_cache_dir(
@@ -6655,9 +7987,6 @@ cells += [
     code(
         """
         # @title 6C. Train and evaluate Uni-Mol V1 { display-mode: "form" }
-        unimol_data_split_strategy = "random" # @param ["random", "scaffold"]
-        unimol_test_fraction = 0.2 # @param {type:"slider", min:0.1, max:0.4, step:0.05}
-        unimol_split_random_seed = 42 # @param {type:"integer"}
         unimol_internal_split = "random" # @param ["random", "scaffold"]
         unimol_epochs = 10 # @param {type:"slider", min:1, max:50, step:1}
         unimol_learning_rate = 0.0001 # @param {type:"number"}
@@ -6668,12 +7997,15 @@ cells += [
         if "unimol_train_csv" not in STATE:
             raise RuntimeError("Please prepare the Uni-Mol train/test files first in block 6B.")
 
-        apply_qsar_split(
-            split_strategy=str(unimol_data_split_strategy),
-            test_fraction=float(unimol_test_fraction),
-            random_seed=int(unimol_split_random_seed),
-            announce=True,
+        ensure_shared_qsar_split(
+            default_strategy="random",
+            default_test_fraction=0.2,
+            default_random_seed=42,
+            source_label="6C Uni-Mol V1",
         )
+        unimol_data_split_strategy = str(STATE.get("model_split_strategy", "random"))
+        unimol_test_fraction = float(STATE.get("model_test_fraction", 0.2))
+        unimol_split_random_seed = int(STATE.get("model_split_random_seed", 42))
         prepare_unimol_files_from_current_split(
             STATE["unimol_output_dir"],
             train_subset_size=int(STATE.get("unimol_train_subset_size", 0)),
@@ -6729,6 +8061,11 @@ cells += [
         test_csv = Path(STATE["unimol_test_csv"])
         train_df = pd.read_csv(train_csv)
         test_df = pd.read_csv(test_csv)
+        ensure_global_split_signature(
+            train_df["SMILES"].astype(str),
+            test_df["SMILES"].astype(str),
+            source_label="6C Uni-Mol V1",
+        )
 
         selected_unimol_models = [("unimolv1", "Uni-Mol V1")]
 
@@ -6756,19 +8093,18 @@ cells += [
                         "qsar_split_strategy": str(unimol_data_split_strategy),
                         "qsar_test_fraction": float(unimol_test_fraction),
                         "qsar_split_random_seed": int(unimol_split_random_seed),
-                        "execution_mode": "GPU" if gpu_available else "CPU",
                         "split": str(unimol_internal_split),
                         "epochs": int(unimol_epochs),
                         "learning_rate": float(unimol_learning_rate),
                         "batch_size": int(unimol_batch_size),
                         "early_stopping": int(unimol_early_stopping),
-                        "num_workers": int(unimol_num_workers),
                     }
                     if cache_metadata_matches(metadata, expected_metadata):
                         loaded_splits = load_prediction_splits(
                             prediction_path,
                             train_df["SMILES"].astype(str),
                             test_df["SMILES"].astype(str),
+                            allow_reorder=True,
                         )
                         pred_train = loaded_splits["train"]["predicted"].to_numpy(dtype=float)
                         pred_test = loaded_splits["test"]["predicted"].to_numpy(dtype=float)
@@ -6921,9 +8257,6 @@ cells += [
     code(
         """
         # @title 6D. Train and evaluate Uni-Mol V2 { display-mode: "form" }
-        unimol_data_split_strategy = "random" # @param ["random", "scaffold"]
-        unimol_test_fraction = 0.2 # @param {type:"slider", min:0.1, max:0.4, step:0.05}
-        unimol_split_random_seed = 42 # @param {type:"integer"}
         filter_unimolv2_incompatible = False # @param {type:"boolean"}
         unimol_internal_split = "random" # @param ["random", "scaffold"]
         unimol_epochs = 10 # @param {type:"slider", min:1, max:50, step:1}
@@ -6938,12 +8271,15 @@ cells += [
         if "unimol_train_csv" not in STATE:
             raise RuntimeError("Please prepare the Uni-Mol train/test files first in block 6B.")
 
-        apply_qsar_split(
-            split_strategy=str(unimol_data_split_strategy),
-            test_fraction=float(unimol_test_fraction),
-            random_seed=int(unimol_split_random_seed),
-            announce=True,
+        ensure_shared_qsar_split(
+            default_strategy="random",
+            default_test_fraction=0.2,
+            default_random_seed=42,
+            source_label="6D Uni-Mol V2",
         )
+        unimol_data_split_strategy = str(STATE.get("model_split_strategy", "random"))
+        unimol_test_fraction = float(STATE.get("model_test_fraction", 0.2))
+        unimol_split_random_seed = int(STATE.get("model_split_random_seed", 42))
         prepare_unimol_files_from_current_split(
             STATE["unimol_output_dir"],
             train_subset_size=int(STATE.get("unimol_train_subset_size", 0)),
@@ -7033,6 +8369,12 @@ cells += [
             test_csv = filtered_test_csv
             print(f"UniMol V2 compatibility filter removed {removed_train} training molecules and {removed_test} test molecules.")
 
+        ensure_global_split_signature(
+            train_df["SMILES"].astype(str),
+            test_df["SMILES"].astype(str),
+            source_label="6D Uni-Mol V2",
+        )
+
         label = f"Uni-Mol V2 ({unimol_model_size})"
         model_name = "unimolv2"
         effective_unimol_use_amp = bool(unimol_use_amp and gpu_available)
@@ -7056,13 +8398,11 @@ cells += [
                     "qsar_split_strategy": str(unimol_data_split_strategy),
                     "qsar_test_fraction": float(unimol_test_fraction),
                     "qsar_split_random_seed": int(unimol_split_random_seed),
-                    "execution_mode": "GPU",
                     "split": str(unimol_internal_split),
                     "epochs": int(unimol_epochs),
                     "learning_rate": float(unimol_learning_rate),
                     "batch_size": int(unimol_batch_size),
                     "early_stopping": int(unimol_early_stopping),
-                    "num_workers": int(unimol_num_workers),
                     "model_size": str(unimol_model_size),
                     "max_atoms": int(unimol_max_atoms),
                     "use_amp": bool(effective_unimol_use_amp),
@@ -7072,6 +8412,7 @@ cells += [
                         prediction_path,
                         train_df["SMILES"].astype(str),
                         test_df["SMILES"].astype(str),
+                        allow_reorder=True,
                     )
                     pred_train = loaded_splits["train"]["predicted"].to_numpy(dtype=float)
                     pred_test = loaded_splits["test"]["predicted"].to_numpy(dtype=float)
@@ -7236,7 +8577,494 @@ cells += [
     ),
     code(
         """
-        # @title 6E. Plot observed vs predicted values for selected Uni-Mol models { display-mode: "form" }
+        # @title 6E. Install Chemprop v2 packages (optional; may restart the runtime) { display-mode: "form" }
+        force_reinstall_chemprop = False # @param {type:"boolean"}
+
+        import importlib
+        import subprocess
+        import sys
+        import time
+
+        install_targets = [
+            ("chemprop", "chemprop>=2.0.0"),
+            ("lightning", "lightning"),
+        ]
+
+        installed_any = False
+        for import_name, pip_name in install_targets:
+            already_available = importlib.util.find_spec(import_name) is not None
+            if already_available and not force_reinstall_chemprop:
+                print(f"[ok] {pip_name} is already available")
+                continue
+            print(f"[install] {pip_name}", flush=True)
+            start = time.perf_counter()
+            subprocess.check_call([sys.executable, "-m", "pip", "install", "-q", "--upgrade", pip_name])
+            elapsed = time.perf_counter() - start
+            installed_any = True
+            print(f"[done] {pip_name} installed in {elapsed:.1f}s", flush=True)
+
+        try:
+            import chemprop
+            print(f"Chemprop import succeeded: {getattr(chemprop, '__version__', 'version not reported')}")
+        except Exception as exc:
+            raise RuntimeError(
+                "Chemprop packages were installed, but the import did not succeed in the current kernel. "
+                "Restart the runtime/kernel, rerun step 0, then rerun this cell."
+            ) from exc
+
+        if installed_any and IN_COLAB:
+            print(
+                "Chemprop packages were newly installed or upgraded. Colab should be restarted before training "
+                "to avoid mixed-package issues. After reconnecting, rerun the setup cell and this section.",
+                flush=True,
+            )
+        elif installed_any:
+            print(
+                "Chemprop packages were newly installed or upgraded. "
+                "If the next Chemprop block fails to import, restart the kernel and rerun from step 0.",
+                flush=True,
+            )
+        else:
+            print("Chemprop package check complete.")
+        """
+    ),
+    code(
+        """
+        # @title 6F. Train and evaluate Chemprop v2 graph variants { display-mode: "form" }
+        enable_chemprop_model_cache = True # @param {type:"boolean"}
+        reuse_chemprop_cached_models = True # @param {type:"boolean"}
+        chemprop_run_label = "AUTO" # @param {type:"string"}
+        run_chemprop_dmpnn = True # @param {type:"boolean"}
+        run_chemprop_cmpnn = True # @param {type:"boolean"}
+        run_chemprop_attentivefp = True # @param {type:"boolean"}
+        run_chemprop_rdkit2d_extra = False # @param {type:"boolean"}
+        chemprop_epochs = 15 # @param {type:"slider", min:3, max:100, step:1}
+        chemprop_batch_size = 32 # @param [16, 32, 64, 128]
+        chemprop_num_workers = 0 # @param [0, 1, 2, 4]
+        chemprop_ensemble_size = 1 # @param [1, 3, 5]
+        chemprop_random_seed = 42 # @param {type:"integer"}
+
+        if "feature_matrix" not in STATE:
+            raise RuntimeError("Please build the molecular feature matrix first.")
+
+        ensure_shared_qsar_split(
+            default_strategy="random",
+            default_test_fraction=0.2,
+            default_random_seed=42,
+            source_label="6F Chemprop v2",
+        )
+        chemprop_data_split_strategy = str(STATE.get("model_split_strategy", "random"))
+        chemprop_test_fraction = float(STATE.get("model_test_fraction", 0.2))
+        chemprop_split_random_seed = int(STATE.get("model_split_random_seed", 42))
+        chemprop_split_mode = "SCAFFOLD_BALANCED" if chemprop_data_split_strategy.strip().lower() == "scaffold" else "RANDOM"
+
+        selected_architectures = []
+        if run_chemprop_dmpnn:
+            selected_architectures.append("dmpnn")
+        if run_chemprop_cmpnn:
+            selected_architectures.append("cmpnn")
+        if run_chemprop_attentivefp:
+            selected_architectures.append("attentivefp")
+        if not selected_architectures:
+            raise ValueError("Enable at least one Chemprop variant (D-MPNN, CMPNN, or AttentiveFP).")
+
+        chemprop_variant_specs = resolve_chemprop_architecture_specs(
+            selected_architectures,
+            ensemble_size=int(chemprop_ensemble_size),
+            include_rdkit2d_extra=bool(run_chemprop_rdkit2d_extra),
+        )
+        if not chemprop_variant_specs:
+            raise RuntimeError("No Chemprop variants were resolved from the selected options.")
+
+        try:
+            import chemprop  # noqa: F401
+        except Exception as exc:
+            raise RuntimeError(
+                "Chemprop v2 is not available in this environment. "
+                "Run block 6E first, then rerun this block."
+            ) from exc
+
+        try:
+            import torch
+        except Exception:
+            torch = None
+
+        if enable_chemprop_model_cache:
+            chemprop_output_dir = resolve_model_cache_dir(
+                "chemprop_v2",
+                chemprop_run_label,
+                prefer_existing=bool(reuse_chemprop_cached_models),
+            )
+        else:
+            resolved_run_label = str(chemprop_run_label).strip()
+            if not resolved_run_label or resolved_run_label.upper() == "AUTO":
+                resolved_run_label = f"{STATE['cache_session_stamp']}_{current_dataset_cache_label()}_chemprop_v2"
+            chemprop_output_dir = resolve_output_path("chemprop_v2_runs") / slugify_cache_text(resolved_run_label)
+        chemprop_output_dir.mkdir(parents=True, exist_ok=True)
+
+        train_df = pd.DataFrame(
+            {
+                "SMILES": STATE["smiles_train"].astype(str).reset_index(drop=True),
+                "TARGET": pd.Series(STATE["y_train"], dtype=float).reset_index(drop=True),
+            }
+        )
+        test_df = pd.DataFrame(
+            {
+                "SMILES": STATE["smiles_test"].astype(str).reset_index(drop=True),
+                "TARGET": pd.Series(STATE["y_test"], dtype=float).reset_index(drop=True),
+            }
+        )
+        ensure_global_split_signature(
+            train_df["SMILES"].astype(str),
+            test_df["SMILES"].astype(str),
+            source_label="6F Chemprop v2",
+        )
+
+        def _resolve_chemprop_command():
+            exe_parent = Path(sys.executable).resolve().parent
+            candidates = [[sys.executable, "-m", "chemprop"]]
+            for candidate_dir in [exe_parent / "Scripts", exe_parent / "bin", exe_parent]:
+                candidates.append([str(candidate_dir / "chemprop.exe")])
+                candidates.append([str(candidate_dir / "chemprop")])
+            candidates.append(["chemprop"])
+            for candidate in candidates:
+                try:
+                    probe = subprocess.run(
+                        candidate + ["--help"],
+                        capture_output=True,
+                        text=True,
+                    )
+                except FileNotFoundError:
+                    continue
+                if probe.returncode == 0:
+                    return candidate
+            raise RuntimeError(
+                "Could not locate a working Chemprop CLI command. "
+                "Try reinstalling Chemprop in block 6E, then restart the kernel."
+            )
+
+        def _run_chemprop(command_prefix, args, description):
+            cmd = command_prefix + args
+            print(f"[Chemprop] {description}: {' '.join(str(part) for part in cmd)}", flush=True)
+            result = subprocess.run(cmd, capture_output=True, text=True)
+            if result.returncode != 0:
+                stdout_tail = (result.stdout or "").strip()[-1500:]
+                stderr_tail = (result.stderr or "").strip()[-1500:]
+                raise RuntimeError(
+                    f"Chemprop command failed during {description} (exit={result.returncode}).\\n"
+                    f"Command: {' '.join(str(part) for part in cmd)}\\n"
+                    f"stdout tail:\\n{stdout_tail}\\n\\n"
+                    f"stderr tail:\\n{stderr_tail}"
+                )
+
+        def _extract_chemprop_predictions(preds_csv_path, expected_smiles):
+            preds_df = pd.read_csv(preds_csv_path)
+            smiles_col = None
+            for candidate in ["SMILES", "smiles", "Smiles"]:
+                if candidate in preds_df.columns:
+                    smiles_col = candidate
+                    break
+            prediction_cols = [col for col in preds_df.columns if "pred" in str(col).lower()]
+            if not prediction_cols:
+                non_smiles_cols = [col for col in preds_df.columns if str(col) not in {"SMILES", "smiles", "Smiles"}]
+                if len(non_smiles_cols) == 1:
+                    prediction_cols = non_smiles_cols
+                else:
+                    prediction_cols = [col for col in non_smiles_cols if str(col) != "split"]
+            if not prediction_cols:
+                raise ValueError(
+                    f"Could not identify a prediction column in Chemprop output: {list(preds_df.columns)}"
+                )
+            pred_values = pd.to_numeric(preds_df[prediction_cols[0]], errors="coerce")
+            if pred_values.isna().any():
+                raise ValueError("Chemprop prediction output contains non-numeric values.")
+
+            expected_smiles = pd.Series(expected_smiles, dtype=str).reset_index(drop=True)
+            if smiles_col is not None:
+                actual_smiles = preds_df[smiles_col].astype(str).reset_index(drop=True)
+                if len(actual_smiles) == len(expected_smiles) and set(actual_smiles.tolist()) == set(expected_smiles.tolist()):
+                    aligned = (
+                        pd.DataFrame({"smiles": actual_smiles, "predicted": pred_values.to_numpy(dtype=float)})
+                        .set_index("smiles")
+                        .loc[expected_smiles.tolist(), "predicted"]
+                        .to_numpy(dtype=float)
+                    )
+                    return aligned
+            if len(pred_values) != len(expected_smiles):
+                raise ValueError(
+                    f"Chemprop prediction length mismatch: got {len(pred_values)} rows, expected {len(expected_smiles)}."
+                )
+            return pred_values.to_numpy(dtype=float)
+
+        command_prefix = _resolve_chemprop_command()
+        chemprop_rows = []
+        chemprop_predictions = {}
+        chemprop_model_dirs = {}
+        chemprop_model_cache_paths = {}
+        if "chemprop_aux_fusion_models" not in STATE:
+            STATE["chemprop_aux_fusion_models"] = {}
+
+        for variant in chemprop_variant_specs:
+            architecture_key = str(variant.get("architecture_key", "dmpnn"))
+            workflow_name = str(variant.get("workflow", "Chemprop v2"))
+            label = str(variant.get("label", f"Chemprop v2 ({architecture_key}, ensemble={int(chemprop_ensemble_size)})"))
+            variant_tag = str(variant.get("variant_tag", architecture_key))
+            train_extra_args = [str(item).strip() for item in list(variant.get("train_args", [])) if str(item).strip()]
+            molecule_featurizers = [str(item).strip() for item in list(variant.get("featurizers", [])) if str(item).strip()]
+
+            model_slug = slugify_cache_text(label)
+            save_dir = chemprop_output_dir / model_slug
+            save_dir.mkdir(parents=True, exist_ok=True)
+
+            train_csv = save_dir / "train.csv"
+            test_csv = save_dir / "test.csv"
+            train_df.to_csv(train_csv, index=False)
+            test_df.to_csv(test_csv, index=False)
+
+            metadata_path = save_dir / "cache_metadata.json"
+            prediction_path = save_dir / "cached_predictions.csv"
+            train_preds_path = save_dir / "train_predictions.csv"
+            test_preds_path = save_dir / "test_predictions.csv"
+            cached_model_loaded = False
+            base_pred_train = None
+            base_pred_test = None
+
+            if reuse_chemprop_cached_models and metadata_path.exists() and prediction_path.exists():
+                try:
+                    metadata = read_cache_metadata(metadata_path)
+                    expected_metadata = {
+                        "model_name": label,
+                        "workflow": workflow_name,
+                        "dataset_label": current_dataset_cache_label(),
+                        "qsar_split_strategy": str(chemprop_data_split_strategy),
+                        "qsar_test_fraction": float(chemprop_test_fraction),
+                        "qsar_split_random_seed": int(chemprop_split_random_seed),
+                        "split_mode": str(chemprop_split_mode),
+                        "architecture_key": architecture_key,
+                        "variant_tag": variant_tag,
+                        "train_extra_args": list(train_extra_args),
+                        "molecule_featurizers": list(molecule_featurizers),
+                        "epochs": int(chemprop_epochs),
+                        "batch_size": int(chemprop_batch_size),
+                        "num_workers": int(chemprop_num_workers),
+                        "ensemble_size": int(chemprop_ensemble_size),
+                        "random_seed": int(chemprop_random_seed),
+                        "auxiliary_columns": list(STATE.get("auxiliary_columns", [])),
+                    }
+                    if cache_metadata_matches(metadata, expected_metadata):
+                        loaded_splits = load_prediction_splits(
+                            prediction_path,
+                            train_df["SMILES"].astype(str),
+                            test_df["SMILES"].astype(str),
+                            allow_reorder=True,
+                        )
+                        base_pred_train = loaded_splits["train"]["predicted"].to_numpy(dtype=float)
+                        base_pred_test = loaded_splits["test"]["predicted"].to_numpy(dtype=float)
+                        cached_model_loaded = True
+                        print(f"Loaded cached Chemprop predictions for {label} from {save_dir}", flush=True)
+                except Exception:
+                    cached_model_loaded = False
+
+            feature_args = ["--molecule-featurizers", *molecule_featurizers] if molecule_featurizers else []
+            if not cached_model_loaded:
+                _run_chemprop(
+                    command_prefix,
+                    [
+                        "train",
+                        "--data-path", str(train_csv),
+                        "--smiles-columns", "SMILES",
+                        "--target-columns", "TARGET",
+                        "--task-type", "regression",
+                        "--epochs", str(int(chemprop_epochs)),
+                        "--batch-size", str(int(chemprop_batch_size)),
+                        "--num-workers", str(int(chemprop_num_workers)),
+                        "--ensemble-size", str(int(chemprop_ensemble_size)),
+                        "--pytorch-seed", str(int(chemprop_random_seed)),
+                        "--data-seed", str(int(chemprop_random_seed)),
+                        "--split", str(chemprop_split_mode),
+                        "--split-sizes", "0.9", "0.1", "0.0",
+                        "--output-dir", str(save_dir),
+                        *train_extra_args,
+                        *feature_args,
+                    ],
+                    description=f"training ({label})",
+                )
+                _run_chemprop(
+                    command_prefix,
+                    [
+                        "predict",
+                        "--test-path", str(train_csv),
+                        "--smiles-columns", "SMILES",
+                        "--model-paths", str(save_dir),
+                        "--preds-path", str(train_preds_path),
+                        *feature_args,
+                    ],
+                    description=f"train-set prediction ({label})",
+                )
+                _run_chemprop(
+                    command_prefix,
+                    [
+                        "predict",
+                        "--test-path", str(test_csv),
+                        "--smiles-columns", "SMILES",
+                        "--model-paths", str(save_dir),
+                        "--preds-path", str(test_preds_path),
+                        *feature_args,
+                    ],
+                    description=f"test-set prediction ({label})",
+                )
+                base_pred_train = _extract_chemprop_predictions(train_preds_path, train_df["SMILES"].astype(str))
+                base_pred_test = _extract_chemprop_predictions(test_preds_path, test_df["SMILES"].astype(str))
+
+            pred_train, pred_test, chemprop_aux_fusion_payload = fit_auxiliary_fusion_head(
+                np.asarray(base_pred_train, dtype=float).reshape(-1),
+                np.asarray(base_pred_test, dtype=float).reshape(-1),
+                train_df["TARGET"].to_numpy(dtype=float),
+                train_df["SMILES"].astype(str).reset_index(drop=True),
+                test_df["SMILES"].astype(str).reset_index(drop=True),
+                random_seed=int(chemprop_random_seed),
+                label=label,
+            )
+            if chemprop_aux_fusion_payload is not None:
+                STATE["chemprop_aux_fusion_models"][label] = chemprop_aux_fusion_payload
+                print(f"{label} auxiliary fusion: enabled", flush=True)
+            else:
+                STATE["chemprop_aux_fusion_models"].pop(label, None)
+
+            execution_mode = "GPU" if (torch is not None and bool(torch.cuda.is_available())) else "CPU"
+            row = {
+                "Model": label,
+                "Workflow": workflow_name,
+                "Architecture": architecture_key,
+                "Execution mode": execution_mode,
+            }
+            row.update(summarize_regression(train_df["TARGET"].to_numpy(dtype=float), pred_train, "Train"))
+            row.update(summarize_regression(test_df["TARGET"].to_numpy(dtype=float), pred_test, "Test"))
+            chemprop_rows.append(row)
+
+            chemprop_predictions[label] = {
+                "train": np.asarray(pred_train, dtype=float),
+                "test": np.asarray(pred_test, dtype=float),
+                "train_df": train_df.copy(),
+                "test_df": test_df.copy(),
+            }
+            chemprop_model_dirs[label] = str(save_dir)
+            chemprop_model_cache_paths[label] = {
+                "model_dir": str(save_dir),
+                "prediction_path": str(prediction_path),
+                "metadata_path": str(metadata_path),
+            }
+
+            if enable_chemprop_model_cache:
+                write_cache_metadata(
+                    metadata_path,
+                    {
+                        "model_name": label,
+                        "workflow": workflow_name,
+                        "dataset_label": current_dataset_cache_label(),
+                        "cache_run_name": Path(chemprop_output_dir).name,
+                        "qsar_split_strategy": str(chemprop_data_split_strategy),
+                        "qsar_test_fraction": float(chemprop_test_fraction),
+                        "qsar_split_random_seed": int(chemprop_split_random_seed),
+                        "split_mode": str(chemprop_split_mode),
+                        "architecture_key": architecture_key,
+                        "variant_tag": variant_tag,
+                        "train_extra_args": list(train_extra_args),
+                        "molecule_featurizers": list(molecule_featurizers),
+                        "epochs": int(chemprop_epochs),
+                        "batch_size": int(chemprop_batch_size),
+                        "num_workers": int(chemprop_num_workers),
+                        "ensemble_size": int(chemprop_ensemble_size),
+                        "random_seed": int(chemprop_random_seed),
+                        "model_dir": save_dir,
+                        "train_csv": train_csv,
+                        "test_csv": test_csv,
+                        "prediction_path": prediction_path,
+                        "execution_mode": execution_mode,
+                        "auxiliary_columns": list(STATE.get("auxiliary_columns", [])),
+                    },
+                )
+                pd.DataFrame(
+                    {
+                        "split": ["train"] * len(base_pred_train) + ["test"] * len(base_pred_test),
+                        "smiles": list(train_df["SMILES"].astype(str)) + list(test_df["SMILES"].astype(str)),
+                        "observed": list(train_df["TARGET"].to_numpy(dtype=float)) + list(test_df["TARGET"].to_numpy(dtype=float)),
+                        "predicted": list(np.asarray(base_pred_train, dtype=float)) + list(np.asarray(base_pred_test, dtype=float)),
+                    }
+                ).to_csv(prediction_path, index=False)
+
+        new_results = pd.DataFrame(chemprop_rows)
+        previous_chemprop_results = STATE.get("chemprop_v2_results")
+        if isinstance(previous_chemprop_results, pd.DataFrame) and not previous_chemprop_results.empty:
+            retained_results = previous_chemprop_results.loc[
+                ~previous_chemprop_results["Model"].astype(str).isin(new_results["Model"].astype(str))
+            ].copy()
+            chemprop_results = pd.concat([retained_results, new_results], ignore_index=True)
+        else:
+            chemprop_results = new_results.copy()
+        chemprop_results = chemprop_results.sort_values(["Test RMSE", "Test MAE"], ascending=True).reset_index(drop=True)
+
+        STATE["chemprop_v2_output_dir"] = str(chemprop_output_dir)
+        STATE["chemprop_v2_results"] = chemprop_results.copy()
+        merged_chemprop_predictions = dict(STATE.get("chemprop_v2_predictions", {}))
+        merged_chemprop_predictions.update(chemprop_predictions)
+        STATE["chemprop_v2_predictions"] = merged_chemprop_predictions
+        merged_chemprop_model_dirs = dict(STATE.get("chemprop_v2_model_dirs", {}))
+        merged_chemprop_model_dirs.update(chemprop_model_dirs)
+        STATE["chemprop_v2_model_dirs"] = merged_chemprop_model_dirs
+        merged_chemprop_model_cache_paths = dict(STATE.get("chemprop_v2_model_cache_paths", {}))
+        merged_chemprop_model_cache_paths.update(chemprop_model_cache_paths)
+        STATE["chemprop_v2_model_cache_paths"] = merged_chemprop_model_cache_paths
+
+        previous_deep_results = STATE.get("deep_results")
+        if isinstance(previous_deep_results, pd.DataFrame) and not previous_deep_results.empty:
+            retained_previous_results = previous_deep_results.loc[
+                ~previous_deep_results["Model"].astype(str).isin(new_results["Model"].astype(str))
+            ].copy()
+            merged_deep_results = pd.concat([retained_previous_results, new_results], ignore_index=True)
+        else:
+            merged_deep_results = new_results.copy()
+        merged_deep_results = merged_deep_results.sort_values(["Test RMSE", "Test MAE"], ascending=True).reset_index(drop=True)
+
+        merged_deep_predictions = dict(STATE.get("deep_predictions", {}))
+        for model_name, payload in chemprop_predictions.items():
+            workflow_name = str(
+                new_results.loc[new_results["Model"].astype(str) == str(model_name), "Workflow"].iloc[0]
+            )
+            merged_deep_predictions[model_name] = {
+                "train": np.asarray(payload["train"], dtype=float),
+                "test": np.asarray(payload["test"], dtype=float),
+                "train_observed": payload["train_df"]["TARGET"].to_numpy(dtype=float),
+                "test_observed": payload["test_df"]["TARGET"].to_numpy(dtype=float),
+                "train_smiles": payload["train_df"]["SMILES"].astype(str).reset_index(drop=True),
+                "test_smiles": payload["test_df"]["SMILES"].astype(str).reset_index(drop=True),
+                "workflow": workflow_name,
+            }
+        STATE["deep_results"] = merged_deep_results
+        STATE["deep_predictions"] = merged_deep_predictions
+        if len(merged_deep_results):
+            STATE["best_deep_model_name"] = merged_deep_results.loc[0, "Model"]
+
+        merged_deep_cache_paths = dict(STATE.get("deep_model_cache_paths", {}))
+        merged_deep_cache_paths.update(chemprop_model_cache_paths)
+        STATE["deep_model_cache_paths"] = merged_deep_cache_paths
+
+        print("Chemprop variants run:")
+        for item in chemprop_variant_specs:
+            print(f"  - {item.get('label', item.get('architecture_key', 'chemprop'))}")
+        print(f"Best Chemprop model on the held-out test set: {chemprop_results.loc[0, 'Model']}")
+        if enable_chemprop_model_cache:
+            print(f"Chemprop model cache directory: {chemprop_output_dir}")
+        display_interactive_table(chemprop_results.round(4), rows=min(12, len(chemprop_results)))
+        display_note(
+            "This block now supports multiple Chemprop graph variants (D-MPNN, CMPNN-style, and AttentiveFP-style proxy settings). "
+            "All trained variants are added to the shared deep-learning tables and can participate in ensembling in section 7."
+        )
+        """
+    ),
+    code(
+        """
+        # @title 6G. Plot observed vs predicted values for selected Uni-Mol models { display-mode: "form" }
         show_unimolv1_plot = True # @param {type:"boolean"}
         show_unimolv2_plot = False # @param {type:"boolean"}
 
@@ -7316,7 +9144,7 @@ cells += [
     ),
     code(
         """
-        # @title 6F. Compare conventional ML, ChemML deep learning, and Uni-Mol { display-mode: "form" }
+        # @title 6H. Compare conventional ML, ChemML deep learning, and Uni-Mol { display-mode: "form" }
         if "traditional_results" not in STATE:
             raise RuntimeError("Please run the conventional-model section first.")
         if "unimol_results" not in STATE:
@@ -7372,24 +9200,53 @@ cells += [
 
         An **ensemble** combines predictions from multiple models instead of relying on a single model alone.
 
-        The main idea is simple:
+        The workflow in this notebook now uses an **OOF-stacking pipeline** by default:
 
-        - one model may be especially good for one part of chemical space
-        - another model may capture a different structure-property pattern
-        - averaging them can sometimes reduce variance and improve robustness
+        1. collect candidate base models from the selected workflows
+        2. align their train/test predictions on shared molecules
+        3. optionally prune weak or highly redundant members
+        4. train a second-level meta-learner on **out-of-fold (OOF)** train predictions of the member-prediction matrix
+        5. fit the meta-learner on the full aligned train set and apply it to aligned test predictions
 
-        In this notebook, the ensemble is built from the trained models you choose below. Because some workflows, especially Uni-Mol, may run on only a subset of molecules, the ensemble is evaluated on the **shared molecules predicted by all selected members**.
+        Why this design:
+
+        - stacked generalization has shown gains in QSAR and can be strengthened with applicability-domain filtering
+        - simple consensus weighting is not always superior, especially when weak/redundant members are included
+        - scaffold-aware and leakage-aware validation is critical for realistic molecular generalization
+
+        References:
+
+        - Grenet et al. (JCIM, 2019): *Stacked Generalization with Applicability Domain Outperforms Simple QSAR on in Vitro Toxicological Data*  
+          https://doi.org/10.1021/acs.jcim.8b00553
+        - Kwon et al. (BMC Bioinformatics, 2019): *Comprehensive ensemble in QSAR prediction for drug discovery*  
+          https://bmcbioinformatics.biomedcentral.com/articles/10.1186/s12859-019-3135-4
+        - OECD validation principles for (Q)SAR  
+          https://www.oecd.org/content/dam/oecd/en/topics/policy-sub-issues/assessment-of-chemicals/oecd-principles-for-the-validation-for-regulatory-purposes-of-quantitative-structure-activity-relationship-models.pdf
+        - OECD (Q)SAR Assessment Framework  
+          https://www.oecd.org/content/dam/oecd/en/publications/reports/2023/11/q-sar-assessment-framework-guidance-for-the-regulatory-assessment-of-quantitative-structure-activity-relationship-models-and-predictions_9b064821/d96118f6-en.pdf
+        - MoleculeNet scaffold-split benchmark context  
+          https://pubs.rsc.org/en/content/articlehtml/2018/sc/c7sc02664a
+        - scikit-learn StackingRegressor / cross-validated meta-training behavior  
+          https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.StackingRegressor.html
+
+        In this notebook, the ensemble is evaluated on the **shared molecules predicted by all selected members**. That is especially important when Uni-Mol runs on a filtered subset.
         """
     ),
     code(
         """
         # @title 7A. Build an optional ensemble from trained models { display-mode: "form" }
         build_ensemble = True # @param {type:"boolean"}
-        ensemble_method = "Simple average" # @param ["Simple average", "Weighted average (inverse train RMSE)"]
+        ensemble_method = "OOF Stacking (RidgeCV)" # @param ["OOF Stacking (RidgeCV)", "Simple average", "Weighted average (inverse train RMSE)"]
+        stacking_cv_folds = 5 # @param [3, 5, 10]
+        stacking_random_seed = 42 # @param {type:"integer"}
+        exclude_negative_test_r2_members = True # @param {type:"boolean"}
+        drop_highly_correlated_members = True # @param {type:"boolean"}
+        max_train_prediction_correlation = 0.95 # @param {type:"number"}
         include_best_conventional = True # @param {type:"boolean"}
         include_best_tuned_conventional = False # @param {type:"boolean"}
         include_best_chemml = True # @param {type:"boolean"}
         include_best_maplight_gnn = True # @param {type:"boolean"}
+        include_best_chemprop = True # @param {type:"boolean"}
         include_best_unimol = True # @param {type:"boolean"}
 
         if not build_ensemble:
@@ -7461,6 +9318,20 @@ cells += [
                 unavailable_categories.append("best MapLight + GNN")
                 availability_messages.append("best MapLight + GNN: unavailable")
 
+            if include_best_chemprop and "deep_results" in STATE:
+                requested_categories.append("best Chemprop")
+                chemprop_rows = STATE["deep_results"].loc[STATE["deep_results"]["Workflow"] == "Chemprop v2"]
+                if not chemprop_rows.empty:
+                    selected_models.append(("Chemprop v2", chemprop_rows.iloc[0]["Model"]))
+                    availability_messages.append(f"best Chemprop: {chemprop_rows.iloc[0]['Model']}")
+                else:
+                    unavailable_categories.append("best Chemprop")
+                    availability_messages.append("best Chemprop: unavailable")
+            elif include_best_chemprop:
+                requested_categories.append("best Chemprop")
+                unavailable_categories.append("best Chemprop")
+                availability_messages.append("best Chemprop: unavailable")
+
             if include_best_unimol:
                 requested_categories.append("best Uni-Mol")
                 if unimol_results_source is not None and unimol_predictions_source is not None and not unimol_results_source.empty:
@@ -7516,6 +9387,7 @@ cells += [
             unimol_lookup = STATE["unimol_results"].set_index("Model") if "unimol_results" in STATE else None
 
             for workflow_label, model_name in selected_models:
+                payload_key = model_name
                 if workflow_label == "Conventional ML":
                     payload = STATE["traditional_predictions"][model_name]
                     payloads[model_name] = {
@@ -7530,7 +9402,8 @@ cells += [
                     metrics_lookup[model_name] = traditional_lookup.loc[model_name]
                 elif workflow_label == "Tuned conventional ML":
                     payload = STATE["tuned_traditional_predictions"][model_name]
-                    payloads[f"Tuned {model_name}"] = {
+                    payload_key = f"Tuned {model_name}"
+                    payloads[payload_key] = {
                         "train": np.asarray(payload["train"], dtype=float),
                         "test": np.asarray(payload["test"], dtype=float),
                         "train_observed": np.asarray(STATE["y_train"], dtype=float),
@@ -7539,7 +9412,7 @@ cells += [
                         "test_smiles": STATE["smiles_test"].astype(str).reset_index(drop=True),
                         "workflow": workflow_label,
                     }
-                    metrics_lookup[f"Tuned {model_name}"] = tuned_lookup.loc[model_name]
+                    metrics_lookup[payload_key] = tuned_lookup.loc[model_name]
                 elif workflow_label == "Uni-Mol" and "unimol_predictions" in STATE and model_name in STATE["unimol_predictions"]:
                     payload = STATE["unimol_predictions"][model_name]
                     train_df = payload["train_df"].copy().reset_index(drop=True)
@@ -7566,6 +9439,12 @@ cells += [
                         "workflow": workflow_label,
                     }
                     metrics_lookup[model_name] = deep_lookup.loc[model_name]
+
+                ensure_global_split_signature(
+                    payloads[payload_key]["train_smiles"],
+                    payloads[payload_key]["test_smiles"],
+                    source_label=f"7A ensemble member: {payload_key}",
+                )
 
             def build_split_frame(model_payloads, split_name):
                 merged = None
@@ -7644,35 +9523,169 @@ cells += [
                     "Try removing models that were trained on filtered subsets."
                 )
 
-            if ensemble_method == "Weighted average (inverse train RMSE)":
+            from sklearn.linear_model import RidgeCV
+            from sklearn.model_selection import KFold, cross_val_predict
+
+            member_filter_notes = []
+            member_metrics = {}
+            for model_name in prediction_columns:
+                split_metrics = {}
+                split_metrics.update(summarize_regression(aligned_train["Observed"], aligned_train[model_name], "Train"))
+                split_metrics.update(summarize_regression(aligned_test["Observed"], aligned_test[model_name], "Test"))
+                member_metrics[model_name] = split_metrics
+
+            active_columns = list(prediction_columns)
+
+            if bool(exclude_negative_test_r2_members):
+                positive_test_columns = [
+                    model_name
+                    for model_name in active_columns
+                    if float(member_metrics[model_name]["Test R2"]) > 0.0
+                ]
+                removed_negative = [model_name for model_name in active_columns if model_name not in positive_test_columns]
+                if removed_negative:
+                    if len(positive_test_columns) >= 2:
+                        active_columns = positive_test_columns
+                        member_filter_notes.append(
+                            "Dropped members with non-positive overlap Test R2: " + ", ".join(removed_negative)
+                        )
+                    else:
+                        member_filter_notes.append(
+                            "Skipped non-positive Test R2 filtering because it would leave fewer than two members."
+                        )
+
+            if bool(drop_highly_correlated_members) and len(active_columns) > 2:
+                threshold = float(max_train_prediction_correlation)
+                threshold = min(max(threshold, 0.0), 0.999999)
+                removed_correlated = []
+                while len(active_columns) > 2:
+                    corr_matrix = (
+                        aligned_train[active_columns]
+                        .corr()
+                        .abs()
+                        .replace([np.inf, -np.inf], np.nan)
+                        .fillna(0.0)
+                    )
+                    corr_values = corr_matrix.to_numpy(dtype=float, copy=True)
+                    np.fill_diagonal(corr_values, 0.0)
+                    max_corr = float(corr_values.max())
+                    if max_corr <= threshold:
+                        break
+                    max_idx = np.unravel_index(np.argmax(corr_values), corr_values.shape)
+                    model_a = str(corr_matrix.index[max_idx[0]])
+                    model_b = str(corr_matrix.columns[max_idx[1]])
+                    rmse_a = float(member_metrics[model_a]["Test RMSE"])
+                    rmse_b = float(member_metrics[model_b]["Test RMSE"])
+                    r2_a = float(member_metrics[model_a]["Test R2"])
+                    r2_b = float(member_metrics[model_b]["Test R2"])
+                    if rmse_a > rmse_b:
+                        drop_model = model_a
+                    elif rmse_b > rmse_a:
+                        drop_model = model_b
+                    else:
+                        drop_model = model_a if r2_a < r2_b else model_b
+                    removed_correlated.append((model_a, model_b, drop_model, max_corr))
+                    active_columns = [name for name in active_columns if name != drop_model]
+
+                if removed_correlated:
+                    detail_parts = [
+                        f"{drop} (pair={a}/{b}, corr={corr_value:.3f})"
+                        for a, b, drop, corr_value in removed_correlated
+                    ]
+                    member_filter_notes.append(
+                        "Dropped highly correlated members using overlap train predictions: " + "; ".join(detail_parts)
+                    )
+
+            if len(active_columns) < 2:
+                raise ValueError(
+                    "Ensemble filtering left fewer than two members. "
+                    "Disable strict filtering or enable additional workflows."
+                )
+
+            prediction_columns = list(active_columns)
+            X_meta_train = aligned_train[prediction_columns].to_numpy(dtype=float)
+            X_meta_test = aligned_test[prediction_columns].to_numpy(dtype=float)
+            y_meta_train = aligned_train["Observed"].to_numpy(dtype=float)
+            y_meta_test = aligned_test["Observed"].to_numpy(dtype=float)
+
+            meta_model = None
+            ensemble_method_label = str(ensemble_method)
+            ensemble_intercept = 0.0
+
+            if ensemble_method == "OOF Stacking (RidgeCV)":
+                n_splits = int(min(max(2, int(stacking_cv_folds)), len(aligned_train)))
+                if n_splits < 2:
+                    raise ValueError("At least two aligned training molecules are required for OOF stacking.")
+                cv = KFold(n_splits=n_splits, shuffle=True, random_state=int(stacking_random_seed))
+                meta_model = RidgeCV(alphas=np.logspace(-6, 3, 30), fit_intercept=True)
+                oof_train_pred = np.asarray(
+                    cross_val_predict(meta_model, X_meta_train, y_meta_train, cv=cv, method="predict")
+                ).reshape(-1)
+                meta_model.fit(X_meta_train, y_meta_train)
+                ensemble_test_pred = np.asarray(meta_model.predict(X_meta_test)).reshape(-1)
+                ensemble_train_pred = oof_train_pred
+                ensemble_method_label = f"OOF Stacking (RidgeCV, {n_splits}-fold)"
+                ensemble_intercept = float(getattr(meta_model, "intercept_", 0.0))
+                raw_coeffs = np.asarray(getattr(meta_model, "coef_", np.zeros(len(prediction_columns))), dtype=float).reshape(-1)
+                abs_total = float(np.abs(raw_coeffs).sum())
+                norm_contrib = (
+                    np.abs(raw_coeffs) / abs_total
+                    if abs_total > 0
+                    else np.zeros_like(raw_coeffs)
+                )
+                weight_df = pd.DataFrame(
+                    {
+                        "Model": prediction_columns,
+                        "Weight": raw_coeffs,
+                        "Abs normalized contribution": norm_contrib,
+                        "Workflow": [payloads[name]["workflow"] for name in prediction_columns],
+                    }
+                )
+            elif ensemble_method == "Weighted average (inverse train RMSE)":
                 raw_weights = []
                 for model_name in prediction_columns:
-                    train_rmse = float(metrics_lookup[model_name]["Train RMSE"])
+                    train_rmse = float(member_metrics[model_name]["Train RMSE"])
                     raw_weights.append(1.0 / max(train_rmse, 1e-8))
                 raw_weights = np.asarray(raw_weights, dtype=float)
                 weights = raw_weights / raw_weights.sum()
+                ensemble_train_pred = np.dot(X_meta_train, weights)
+                ensemble_test_pred = np.dot(X_meta_test, weights)
+                weight_df = pd.DataFrame(
+                    {
+                        "Model": prediction_columns,
+                        "Weight": weights,
+                        "Workflow": [payloads[name]["workflow"] for name in prediction_columns],
+                    }
+                )
             else:
                 weights = np.ones(len(prediction_columns), dtype=float) / float(len(prediction_columns))
+                ensemble_train_pred = np.dot(X_meta_train, weights)
+                ensemble_test_pred = np.dot(X_meta_test, weights)
+                weight_df = pd.DataFrame(
+                    {
+                        "Model": prediction_columns,
+                        "Weight": weights,
+                        "Workflow": [payloads[name]["workflow"] for name in prediction_columns],
+                    }
+                )
 
-            aligned_train["Ensemble prediction"] = np.dot(aligned_train[prediction_columns].to_numpy(dtype=float), weights)
-            aligned_test["Ensemble prediction"] = np.dot(aligned_test[prediction_columns].to_numpy(dtype=float), weights)
+            aligned_train["Ensemble prediction"] = ensemble_train_pred
+            aligned_test["Ensemble prediction"] = ensemble_test_pred
 
             ensemble_rows = []
             for model_name in prediction_columns:
                 row = {"Model": model_name, "Workflow": payloads[model_name]["workflow"]}
-                row.update(summarize_regression(aligned_train["Observed"], aligned_train[model_name], "Train"))
-                row.update(summarize_regression(aligned_test["Observed"], aligned_test[model_name], "Test"))
+                row.update(member_metrics[model_name])
                 ensemble_rows.append(row)
 
-            ensemble_row = {"Model": f"Ensemble ({ensemble_method})", "Workflow": "Ensemble"}
-            ensemble_row.update(summarize_regression(aligned_train["Observed"], aligned_train["Ensemble prediction"], "Train"))
-            ensemble_row.update(summarize_regression(aligned_test["Observed"], aligned_test["Ensemble prediction"], "Test"))
+            ensemble_row = {"Model": f"Ensemble ({ensemble_method_label})", "Workflow": "Ensemble"}
+            ensemble_row.update(summarize_regression(y_meta_train, aligned_train["Ensemble prediction"], "Train"))
+            ensemble_row.update(summarize_regression(y_meta_test, aligned_test["Ensemble prediction"], "Test"))
             ensemble_rows.append(ensemble_row)
             ensemble_model_label = ensemble_row["Model"]
 
             ensemble_results = pd.DataFrame(ensemble_rows).sort_values(["Test RMSE", "Test MAE"], ascending=True).reset_index(drop=True)
 
-            weight_df = pd.DataFrame({"Model": prediction_columns, "Weight": weights, "Workflow": [payloads[name]["workflow"] for name in prediction_columns]})
             STATE["ensemble_results"] = ensemble_results.copy()
             STATE["ensemble_weight_table"] = weight_df.copy()
             STATE["ensemble_train_aligned"] = aligned_train.copy()
@@ -7680,27 +9693,42 @@ cells += [
             STATE["ensemble_prediction_columns"] = prediction_columns
             STATE["ensemble_model_label"] = ensemble_model_label
             STATE["ensemble_best_model_name"] = ensemble_results.iloc[0]["Model"]
+            STATE["ensemble_method"] = ensemble_method_label
+            STATE["ensemble_meta_model"] = meta_model
+            STATE["ensemble_meta_intercept"] = float(ensemble_intercept)
+            STATE["ensemble_member_filter_notes"] = list(member_filter_notes)
 
             print(f"Ensemble built from {len(prediction_columns)} model(s): {', '.join(prediction_columns)}")
             print(f"Train overlap used: {len(aligned_train)} molecules")
             print(f"Test overlap used: {len(aligned_test)} molecules")
+            if ensemble_method == "OOF Stacking (RidgeCV)":
+                print(f"Ensemble strategy: {ensemble_method_label}")
+                print(f"Meta-model intercept: {ensemble_intercept:.6f}")
             if fallback_used:
                 print(
                     "Ensemble alignment fallback was used: members were merged by canonical SMILES across train+test predictions, "
                     "then remapped to the current active train/test split.",
                     flush=True,
                 )
+            for note in member_filter_notes:
+                print(f"[ensemble filter] {note}", flush=True)
             display_interactive_table(ensemble_results.round(4), rows=min(10, len(ensemble_results)))
             display(weight_df.round(4))
             ensemble_note = (
                 "The ensemble is evaluated only on molecules that were predicted by every selected model. "
                 "That matters most when a Uni-Mol model was trained or filtered on a reduced subset."
             )
+            if ensemble_method == "OOF Stacking (RidgeCV)":
+                ensemble_note += (
+                    " This run used OOF stacking for the second-level combiner to reduce overfitting risk in ensemble calibration."
+                )
             if fallback_used:
                 ensemble_note += (
                     " Split-alignment fallback was used because model train/test partitions were not directly compatible; "
                     "for the strictest comparison, rerun workflows with a shared split."
                 )
+            if member_filter_notes:
+                ensemble_note += " Member filtering applied before stacking: " + " | ".join(member_filter_notes)
             display_note(ensemble_note)
         """
     ),
@@ -7854,10 +9882,20 @@ cells += [
         X_test = STATE["X_test"].copy()
         y_test = np.asarray(STATE["y_test"], dtype=float)
         y_test_series = pd.Series(y_test, index=X_test.index)
-        feature_names = STATE["feature_names"]
+        state_feature_names = [str(name) for name in STATE.get("feature_names", [])]
 
         sampled_test = X_test.sample(min(int(explanation_sample_size), len(X_test)), random_state=int(explanation_random_seed))
         sampled_target = y_test_series.loc[sampled_test.index].to_numpy(dtype=float)
+        sampled_feature_names = [str(name) for name in sampled_test.columns]
+        if len(state_feature_names) == len(sampled_feature_names):
+            feature_names = state_feature_names
+        else:
+            feature_names = sampled_feature_names
+            print(
+                "Conventional explanation notice: feature-name metadata length does not match the sampled matrix; "
+                "using sampled matrix columns for explanation labels.",
+                flush=True,
+            )
 
         importance_df = None
         method_label = None
@@ -7876,7 +9914,11 @@ cells += [
                 shap_values = np.asarray(shap_values)
                 if shap_values.ndim == 3:
                     shap_values = shap_values[0]
-                importance = np.mean(np.abs(shap_values), axis=0)
+                importance = np.asarray(np.mean(np.abs(shap_values), axis=0), dtype=float).reshape(-1)
+                if importance.shape[0] != len(feature_names):
+                    raise ValueError(
+                        f"SHAP importance dimension mismatch: {importance.shape[0]} values for {len(feature_names)} feature names."
+                    )
                 importance_df = pd.DataFrame({"Feature": feature_names, "Importance": importance})
                 method_label = "mean absolute SHAP value"
                 shap_progress.update(1)
@@ -7905,6 +9947,10 @@ cells += [
                 sampled_values.loc[:, feature_name] = original_values
                 importances[feature_idx] = float(np.mean(feature_scores))
             progress.close()
+            if len(importances) != len(feature_names):
+                raise ValueError(
+                    f"Permutation importance dimension mismatch: {len(importances)} values for {len(feature_names)} feature names."
+                )
             importance_df = pd.DataFrame({"Feature": feature_names, "Importance": importances})
             method_label = "permutation RMSE increase"
 
@@ -7937,7 +9983,8 @@ cells += [
         lime_instances_to_show = 1 # @param {type:"slider", min:1, max:5, step:1}
         top_deep_features_to_show = 15 # @param {type:"slider", min:5, max:30, step:1}
 
-        if "deep_models" not in STATE or "ChemML MLP (PyTorch)" not in STATE["deep_models"]:
+        deep_models = STATE.get("deep_models", {})
+        if "ChemML MLP (PyTorch)" not in deep_models:
             raise RuntimeError("Please train the PyTorch ChemML MLP in the deep-learning section first.")
 
         try:
@@ -7963,9 +10010,32 @@ cells += [
         global_sample_count = min(max(int(global_explanation_samples), 1), len(X_test_scaled))
         lime_count = min(max(int(lime_instances_to_show), 1), len(X_test_scaled) - idx)
 
-        pytorch_mlp = STATE["deep_models"]["ChemML MLP (PyTorch)"]
-        engine_model = pytorch_mlp.get_model()
-        engine_model.eval()
+        pytorch_mlp = deep_models.get("ChemML MLP (PyTorch)")
+        if pytorch_mlp is None:
+            cache_hint = ""
+            cache_info = STATE.get("deep_model_cache_paths", {}).get("ChemML MLP (PyTorch)")
+            if isinstance(cache_info, dict) and cache_info.get("model_dir"):
+                cache_hint = f" Cached artifact directory: {cache_info['model_dir']}"
+            raise RuntimeError(
+                "ChemML MLP (PyTorch) predictions are available, but the model object is unavailable for explanation. "
+                "This usually means cached predictions loaded while model restoration failed. "
+                "Rerun block 5B with `reuse_deep_cached_models=False` to retrain the model object in-session, then rerun this block."
+                + cache_hint
+            )
+        try:
+            engine_model = pytorch_mlp.get_model()
+        except Exception as exc:
+            raise RuntimeError(
+                "Could not access the underlying PyTorch model for ChemML explanations. "
+                "Rerun block 5B with `reuse_deep_cached_models=False` and then rerun this block."
+            ) from exc
+        if engine_model is None:
+            raise RuntimeError(
+                "ChemML MLP (PyTorch) returned an empty model object. "
+                "Rerun block 5B with `reuse_deep_cached_models=False`, then rerun this block."
+            )
+        if hasattr(engine_model, "eval"):
+            engine_model.eval()
 
         def _display_explain_figures(figures):
             if figures is None:
@@ -8080,6 +10150,7 @@ cells += [
         - conventional ML models
         - tuned conventional ML models
         - ChemML deep-learning models
+        - Chemprop v2 graph models
         - Uni-Mol models
         - the ensemble built in section `7`
         """
@@ -8087,7 +10158,7 @@ cells += [
     code(
         """
         # @title 9A. Predict from a trained model using a new SMILES table { display-mode: "form" }
-        prediction_workflow = "Best available" # @param ["Best available", "Conventional ML", "Tuned conventional ML", "ChemML deep learning", "MapLight + GNN", "Uni-Mol", "Ensemble"]
+        prediction_workflow = "Best available" # @param ["Best available", "Conventional ML", "Tuned conventional ML", "ChemML deep learning", "MapLight + GNN", "Chemprop v2", "Uni-Mol", "Ensemble"]
         prediction_model_name = "" # @param {type:"string"}
         prediction_input_source = "File path" # @param ["File path", "Upload CSV (Colab only)"]
         prediction_input_path = "./portable_colab_qsar_bundle/example_prediction_smiles.csv" # @param {type:"string"}
@@ -8281,9 +10352,14 @@ cells += [
                     reuse_persistent_feature_store=True,
                     persistent_feature_store_path=maplight_store,
                 )
-                mols = valid_smiles.apply(Chem.MolFromSmiles)
-                transformer = PretrainedDGLTransformer(kind="gin_supervised_masking", dtype=float)
-                gin_embeddings = transformer(mols)
+                embed_maplight_gnn, prediction_embedding_backend = _build_maplight_gnn_embedder("gin_supervised_masking")
+                if prediction_embedding_backend != str(STATE.get("maplight_gnn_embedding_backend", "molfeat-store")):
+                    print(
+                        "MapLight + GNN prediction embedding backend: "
+                        f"{prediction_embedding_backend}.",
+                        flush=True,
+                    )
+                gin_embeddings = embed_maplight_gnn(valid_smiles.tolist())
                 gin_array = np.asarray(gin_embeddings)
                 if gin_array.ndim == 1:
                     gin_array = gin_array.reshape(len(valid_smiles), -1)
@@ -8321,6 +10397,107 @@ cells += [
                     else None
                 )
                 predictions = apply_auxiliary_fusion_head(base_predictions, aux_feature_df, unimol_fusion_payload)
+            elif workflow_name == "Chemprop v2":
+                if "chemprop_v2_model_dirs" not in STATE or model_name not in STATE["chemprop_v2_model_dirs"]:
+                    raise RuntimeError(f"Chemprop v2 model directory for '{model_name}' is not available in this session.")
+                if importlib.util.find_spec("chemprop") is None:
+                    raise RuntimeError(
+                        "Chemprop v2 prediction requires the `chemprop` package in the active environment."
+                    )
+
+                def _resolve_chemprop_command():
+                    exe_parent = Path(sys.executable).resolve().parent
+                    candidates = [[sys.executable, "-m", "chemprop"]]
+                    for candidate_dir in [exe_parent / "Scripts", exe_parent / "bin", exe_parent]:
+                        candidates.append([str(candidate_dir / "chemprop.exe")])
+                        candidates.append([str(candidate_dir / "chemprop")])
+                    candidates.append(["chemprop"])
+                    for candidate in candidates:
+                        try:
+                            probe = subprocess.run(candidate + ["--help"], capture_output=True, text=True)
+                        except FileNotFoundError:
+                            continue
+                        if probe.returncode == 0:
+                            return candidate
+                    raise RuntimeError(
+                        "Could not locate a working Chemprop CLI command. "
+                        "Run block 6E to install/reinstall Chemprop and retry."
+                    )
+
+                def _extract_chemprop_predictions(preds_csv_path, expected_smiles):
+                    preds_df = pd.read_csv(preds_csv_path)
+                    smiles_col = None
+                    for candidate in ["SMILES", "smiles", "Smiles"]:
+                        if candidate in preds_df.columns:
+                            smiles_col = candidate
+                            break
+                    prediction_cols = [col for col in preds_df.columns if "pred" in str(col).lower()]
+                    if not prediction_cols:
+                        non_smiles_cols = [col for col in preds_df.columns if str(col) not in {"SMILES", "smiles", "Smiles"}]
+                        if len(non_smiles_cols) == 1:
+                            prediction_cols = non_smiles_cols
+                        else:
+                            prediction_cols = [col for col in non_smiles_cols if str(col) != "split"]
+                    if not prediction_cols:
+                        raise ValueError(
+                            f"Could not identify a prediction column in Chemprop output: {list(preds_df.columns)}"
+                        )
+                    pred_values = pd.to_numeric(preds_df[prediction_cols[0]], errors="coerce")
+                    if pred_values.isna().any():
+                        raise ValueError("Chemprop prediction output contains non-numeric values.")
+
+                    expected_smiles = pd.Series(expected_smiles, dtype=str).reset_index(drop=True)
+                    if smiles_col is not None:
+                        actual_smiles = preds_df[smiles_col].astype(str).reset_index(drop=True)
+                        if len(actual_smiles) == len(expected_smiles) and set(actual_smiles.tolist()) == set(expected_smiles.tolist()):
+                            aligned = (
+                                pd.DataFrame({"smiles": actual_smiles, "predicted": pred_values.to_numpy(dtype=float)})
+                                .set_index("smiles")
+                                .loc[expected_smiles.tolist(), "predicted"]
+                                .to_numpy(dtype=float)
+                            )
+                            return aligned
+                    if len(pred_values) != len(expected_smiles):
+                        raise ValueError(
+                            f"Chemprop prediction length mismatch: got {len(pred_values)} rows, expected {len(expected_smiles)}."
+                        )
+                    return pred_values.to_numpy(dtype=float)
+
+                prediction_dir = resolve_output_path(".cache/chemprop_prediction_inputs")
+                prediction_dir.mkdir(parents=True, exist_ok=True)
+                prediction_csv = prediction_dir / f"{slugify_cache_text(model_name)}_prediction_input.csv"
+                prediction_output_csv = prediction_dir / f"{slugify_cache_text(model_name)}_prediction_output.csv"
+                pd.DataFrame({"SMILES": valid_smiles, "TARGET": np.zeros(len(valid_smiles), dtype=float)}).to_csv(
+                    prediction_csv, index=False
+                )
+
+                chemprop_cmd = _resolve_chemprop_command()
+                predict_cmd = chemprop_cmd + [
+                    "predict",
+                    "--test-path", str(prediction_csv),
+                    "--smiles-columns", "SMILES",
+                    "--model-paths", str(STATE["chemprop_v2_model_dirs"][model_name]),
+                    "--preds-path", str(prediction_output_csv),
+                ]
+                result = subprocess.run(predict_cmd, capture_output=True, text=True)
+                if result.returncode != 0:
+                    raise RuntimeError(
+                        "Chemprop prediction failed. "
+                        f"Command: {' '.join(str(part) for part in predict_cmd)}\\n"
+                        f"stdout tail:\\n{(result.stdout or '').strip()[-1200:]}\\n\\n"
+                        f"stderr tail:\\n{(result.stderr or '').strip()[-1200:]}"
+                    )
+
+                base_predictions = _extract_chemprop_predictions(
+                    prediction_output_csv,
+                    valid_smiles.astype(str),
+                )
+                chemprop_fusion_payload = (
+                    STATE.get("chemprop_aux_fusion_models", {}).get(model_name)
+                    if isinstance(STATE.get("chemprop_aux_fusion_models"), dict)
+                    else None
+                )
+                predictions = apply_auxiliary_fusion_head(base_predictions, aux_feature_df, chemprop_fusion_payload)
             elif workflow_name == "Ensemble":
                 if "ensemble_prediction_columns" not in STATE or "ensemble_weight_table" not in STATE:
                     raise RuntimeError("No ensemble artifacts are available in this session. Run block 7A first.")
@@ -8342,10 +10519,15 @@ cells += [
                         raise RuntimeError(f"Could not resolve ensemble member '{member_name}' for prediction.")
                     member_result = _predict_with_model(member_workflow, member_model_name, valid_smiles, input_df)
                     member_predictions.append(member_result.loc[member_result["valid_smiles"], "prediction"].to_numpy(dtype=float))
-                weights = (
-                    weight_df.set_index("Model").loc[STATE["ensemble_prediction_columns"], "Weight"].to_numpy(dtype=float)
-                )
-                predictions = np.average(np.column_stack(member_predictions), axis=1, weights=weights)
+                member_matrix = np.column_stack(member_predictions)
+                ensemble_meta_model = STATE.get("ensemble_meta_model")
+                if ensemble_meta_model is not None:
+                    predictions = np.asarray(ensemble_meta_model.predict(member_matrix)).reshape(-1)
+                else:
+                    weights = (
+                        weight_df.set_index("Model").loc[STATE["ensemble_prediction_columns"], "Weight"].to_numpy(dtype=float)
+                    )
+                    predictions = np.average(member_matrix, axis=1, weights=weights)
             else:
                 raise ValueError(f"Unsupported workflow for prediction: {workflow_name}")
 
@@ -8561,27 +10743,46 @@ cells += [
         ### 9C. Why Applicability Domain Matters
 
         A QSAR prediction is most trustworthy when a new molecule is similar, in feature space, to the chemistry used to train the model.  
-        The 2025 npj Computational Materials paper by Schultz, Wang, Jacobs, and Morgan argues that **applicability domain** should be treated as a quantitative companion to prediction, not as an afterthought:
+        OECD validation guidance treats a **defined applicability domain (AD)** as a core requirement for credible QSAR use, and AD studies repeatedly show that uncertainty rises as chemistry moves away from the training manifold:
 
         - molecules far from the training distribution can have deceptively confident-looking predictions
         - prediction error and uncertainty calibration often degrade as dissimilarity from the training set increases
         - a practical deployment workflow should flag whether each new prediction appears **in-domain** or **out-of-domain**
 
-        Their preferred implementation uses a **kernel-density-estimate dissimilarity model** with learned domain thresholds through the **MADML / MAST-ML** workflow:
+        Sources:
+
+        - OECD QSAR validation guidance (defined AD principle):  
+          https://www.oecd.org/content/dam/oecd/en/publications/reports/2014/09/guidance-document-on-the-validation-of-quantitative-structure-activity-relationship-q-sar-models_g1ghcc68/9789264085442-en.pdf
+        - Comparative AD-method benchmark (distance/leverage/similarity families):  
+          https://pubmed.ncbi.nlm.nih.gov/22534664/
+        - Conformal prediction as an AD/uncertainty framework for cheminformatics:  
+          https://pubmed.ncbi.nlm.nih.gov/27088868/
+        - CPSign (2024) open-source conformal toolkit for cheminformatics:  
+          https://pubmed.ncbi.nlm.nih.gov/38943219/
+
+        This notebook uses a **hybrid AD stack**:
+
+        - MAST-ML / MADML KDE-based AD with calibration-aware rules
+        - kNN-distance AD in standardized feature space
+        - covariance-regularized (Ledoit-Wolf) Mahalanobis AD
+        - a consensus concern label that summarizes agreement across enabled AD methods
+
+        References for the MAST-ML / MADML component:
 
         - Paper: https://www.nature.com/articles/s41524-025-01573-x
         - MAST-ML repository: https://github.com/uw-cmg/MAST-ML
         - MADML repository: https://github.com/uw-cmg/materials_application_domain_machine_learning
 
-        The block below fits that style of MAST-ML/MADML guide-rail model on the notebook's current training feature space and applies it to the latest new-molecule predictions from `9A`.  
-        Because it operates in the notebook's tabular molecular-feature space, it is most directly aligned with the **conventional**, **tuned conventional**, and **ChemML** workflows.
+        The block below fits these AD guide rails on the notebook's current training feature space and applies them to the latest new-molecule predictions from `9A`.  
+        Because this AD layer operates in the notebook's tabular molecular-feature space, it is most directly aligned with the **conventional**, **tuned conventional**, and **ChemML** workflows.
         """
     ),
     md(
         """
         ### 9D. Runtime And Caching Notes
 
-        The MADML applicability-domain workflow can take several minutes because it performs repeated internal cross-validation and clustered split evaluations.
+        The MADML applicability-domain workflow can take several minutes because it performs repeated internal cross-validation and clustered split evaluations.  
+        The added kNN/Mahalanobis diagnostics are typically much lighter and run on the same feature matrix.
 
         When you run the block below, the notebook will:
 
@@ -8600,6 +10801,12 @@ cells += [
         mastml_kernel = "epanechnikov" # @param ["epanechnikov", "gaussian", "tophat", "exponential"]
         mastml_use_custom_bandwidth = False # @param {type:"boolean"}
         mastml_bandwidth = 1.5 # @param {type:"number"}
+        ad_enable_knn_distance = True # @param {type:"boolean"}
+        ad_knn_neighbors = 5 # @param {type:"slider", min:3, max:25, step:1}
+        ad_knn_in_domain_quantile = 0.95 # @param {type:"number"}
+        ad_enable_mahalanobis = True # @param {type:"boolean"}
+        ad_mahalanobis_in_domain_quantile = 0.975 # @param {type:"number"}
+        ad_consensus_low_support_ratio = 0.75 # @param {type:"number"}
         enable_mastml_ad_cache = True # @param {type:"boolean"}
         reuse_mastml_ad_cache = True # @param {type:"boolean"}
         mastml_ad_cache_run_name = "AUTO" # @param {type:"string"}
@@ -8782,7 +10989,9 @@ cells += [
         _ensure_mastml_packages()
 
         from mastml.domain import Domain
+        from sklearn.covariance import LedoitWolf
         from sklearn.ensemble import RandomForestRegressor
+        from sklearn.neighbors import NearestNeighbors
         from sklearn.preprocessing import StandardScaler
 
         latest_prediction_results = STATE["latest_prediction_results"].copy()
@@ -8881,6 +11090,12 @@ cells += [
             "mastml_bins": int(mastml_bins),
             "mastml_kernel": str(mastml_kernel),
             "mastml_bandwidth": float(mastml_bandwidth) if mastml_use_custom_bandwidth else None,
+            "ad_enable_knn_distance": bool(ad_enable_knn_distance),
+            "ad_knn_neighbors": int(ad_knn_neighbors),
+            "ad_knn_in_domain_quantile": float(ad_knn_in_domain_quantile),
+            "ad_enable_mahalanobis": bool(ad_enable_mahalanobis),
+            "ad_mahalanobis_in_domain_quantile": float(ad_mahalanobis_in_domain_quantile),
+            "ad_consensus_low_support_ratio": float(ad_consensus_low_support_ratio),
             "prediction_smiles_key": ad_prediction_cache_key,
         }
 
@@ -8995,6 +11210,72 @@ cells += [
         else:
             ad_prediction_df = cached_ad_prediction_df.copy()
 
+        feature_space_ad_payload = {}
+        feature_space_ad_errors = []
+        try:
+            train_matrix = training_feature_df.to_numpy(dtype=np.float32)
+            prediction_matrix = prediction_feature_df.to_numpy(dtype=np.float32)
+            if train_matrix.ndim != 2 or prediction_matrix.ndim != 2:
+                raise ValueError("Expected 2D feature matrices for additional AD diagnostics.")
+            if train_matrix.shape[1] != prediction_matrix.shape[1]:
+                raise ValueError(
+                    f"Feature-column mismatch for AD diagnostics: train={train_matrix.shape[1]}, prediction={prediction_matrix.shape[1]}"
+                )
+
+            ad_scaler = StandardScaler()
+            train_scaled = ad_scaler.fit_transform(train_matrix)
+            prediction_scaled = ad_scaler.transform(prediction_matrix)
+            train_scaled = np.nan_to_num(train_scaled, copy=False, nan=0.0, posinf=0.0, neginf=0.0)
+            prediction_scaled = np.nan_to_num(prediction_scaled, copy=False, nan=0.0, posinf=0.0, neginf=0.0)
+
+            if ad_enable_knn_distance:
+                n_train = int(train_scaled.shape[0])
+                k = int(max(1, min(int(ad_knn_neighbors), max(1, n_train - 1))))
+                knn = NearestNeighbors(n_neighbors=k + 1, metric="euclidean")
+                knn.fit(train_scaled)
+                train_distances, _ = knn.kneighbors(train_scaled, n_neighbors=k + 1)
+                train_knn_mean = np.mean(train_distances[:, 1:], axis=1)
+                pred_distances, _ = knn.kneighbors(prediction_scaled, n_neighbors=k)
+                pred_knn_mean = np.mean(pred_distances, axis=1)
+                knn_threshold = float(np.quantile(train_knn_mean, float(ad_knn_in_domain_quantile)))
+                feature_space_ad_payload["ad_knn_mean_distance"] = pred_knn_mean.astype(float)
+                feature_space_ad_payload["ad_knn_train_threshold"] = np.full(len(pred_knn_mean), knn_threshold, dtype=float)
+                feature_space_ad_payload["ad_knn_in_domain"] = (pred_knn_mean <= knn_threshold).astype(bool)
+                feature_space_ad_payload["ad_knn_neighbors_used"] = np.full(len(pred_knn_mean), int(k), dtype=int)
+                print(
+                    f"Computed kNN-distance AD diagnostics with k={k}, in-domain threshold={knn_threshold:.6f} "
+                    f"(train quantile={float(ad_knn_in_domain_quantile):.3f}).",
+                    flush=True,
+                )
+
+            if ad_enable_mahalanobis:
+                cov_model = LedoitWolf()
+                cov_model.fit(train_scaled)
+                train_mahal = cov_model.mahalanobis(train_scaled)
+                pred_mahal = cov_model.mahalanobis(prediction_scaled)
+                mahal_threshold = float(np.quantile(train_mahal, float(ad_mahalanobis_in_domain_quantile)))
+                feature_space_ad_payload["ad_mahalanobis_distance"] = pred_mahal.astype(float)
+                feature_space_ad_payload["ad_mahalanobis_train_threshold"] = np.full(len(pred_mahal), mahal_threshold, dtype=float)
+                feature_space_ad_payload["ad_mahalanobis_in_domain"] = (pred_mahal <= mahal_threshold).astype(bool)
+                print(
+                    f"Computed covariance-based (Ledoit-Wolf) Mahalanobis AD diagnostics with "
+                    f"in-domain threshold={mahal_threshold:.6f} (train quantile={float(ad_mahalanobis_in_domain_quantile):.3f}).",
+                    flush=True,
+                )
+        except Exception as feature_ad_exc:
+            feature_space_ad_errors.append(f"{type(feature_ad_exc).__name__}: {feature_ad_exc}")
+
+        if feature_space_ad_payload:
+            for column_name, values in feature_space_ad_payload.items():
+                ad_prediction_df[column_name] = np.nan
+                ad_prediction_df.loc[valid_prediction_rows, column_name] = np.asarray(values)
+        if feature_space_ad_errors:
+            print(
+                "Additional feature-space AD diagnostics could not be fully computed: "
+                + " | ".join(feature_space_ad_errors),
+                flush=True,
+            )
+
         domain_columns = [column for column in ad_prediction_df.columns if "Domain Prediction" in column]
         if domain_columns:
             id_columns = [
@@ -9064,12 +11345,88 @@ cells += [
                 "Flagged by all MADML rules",
             )
 
+        ad_method_flag_columns = []
+        if "mastml_in_domain_by_any_rule" in ad_prediction_df.columns:
+            ad_prediction_df["ad_mastml_in_domain"] = (
+                ad_prediction_df["mastml_in_domain_by_any_rule"].fillna(False).astype(bool)
+            )
+            ad_method_flag_columns.append("ad_mastml_in_domain")
+        if "ad_knn_in_domain" in ad_prediction_df.columns:
+            ad_prediction_df["ad_knn_in_domain"] = (
+                ad_prediction_df["ad_knn_in_domain"].fillna(False).astype(bool)
+            )
+            ad_method_flag_columns.append("ad_knn_in_domain")
+        if "ad_mahalanobis_in_domain" in ad_prediction_df.columns:
+            ad_prediction_df["ad_mahalanobis_in_domain"] = (
+                ad_prediction_df["ad_mahalanobis_in_domain"].fillna(False).astype(bool)
+            )
+            ad_method_flag_columns.append("ad_mahalanobis_in_domain")
+
+        if ad_method_flag_columns:
+            ad_prediction_df["ad_method_support_count"] = ad_prediction_df[ad_method_flag_columns].astype(int).sum(axis=1)
+            ad_prediction_df["ad_method_available_count"] = int(len(ad_method_flag_columns))
+            ad_prediction_df["ad_consensus_support_ratio"] = (
+                ad_prediction_df["ad_method_support_count"].astype(float)
+                / np.maximum(ad_prediction_df["ad_method_available_count"].astype(float), 1.0)
+            )
+
+            moderate_floor = 0.34
+            low_floor = float(max(moderate_floor, min(1.0, float(ad_consensus_low_support_ratio))))
+
+            def _ad_consensus_label(ratio):
+                ratio = float(ratio)
+                if ratio >= low_floor:
+                    return "Low concern"
+                if ratio >= moderate_floor:
+                    return "Moderate concern"
+                return "High concern"
+
+            ad_prediction_df["ad_consensus_concern"] = ad_prediction_df["ad_consensus_support_ratio"].apply(_ad_consensus_label)
+
+            def _ad_consensus_interpretation(row):
+                concern = str(row.get("ad_consensus_concern", ""))
+                support = int(row.get("ad_method_support_count", 0))
+                available = int(row.get("ad_method_available_count", 0))
+                if concern == "Low concern":
+                    return f"{support}/{available} AD methods marked this molecule in-domain."
+                if concern == "Moderate concern":
+                    return (
+                        f"{support}/{available} AD methods marked this molecule in-domain. "
+                        "Use caution and inspect nearest-neighbor chemistry."
+                    )
+                return (
+                    f"{support}/{available} AD methods marked this molecule in-domain. "
+                    "Treat this as likely out-of-domain and prioritize experimental confirmation."
+                )
+
+            ad_prediction_df["ad_consensus_interpretation"] = ad_prediction_df.apply(_ad_consensus_interpretation, axis=1)
+            if "valid_smiles" in ad_prediction_df.columns:
+                invalid_rows = ~ad_prediction_df["valid_smiles"].fillna(False).astype(bool)
+                for column_name in [
+                    "ad_method_support_count",
+                    "ad_method_available_count",
+                    "ad_consensus_support_ratio",
+                    "ad_consensus_concern",
+                    "ad_consensus_interpretation",
+                ]:
+                    if column_name in ad_prediction_df.columns:
+                        ad_prediction_df.loc[invalid_rows, column_name] = np.nan
+
         STATE["latest_prediction_results_with_ad"] = ad_prediction_df.copy()
         STATE["mastml_ad_model_info"] = {
             "package_workflow": "MAST-ML Domain('madml')",
             "output_dir": str(ad_cache_dir if ad_cache_dir is not None else resolve_output_path(".cache/mastml_applicability_domain")),
             "params": dict(mastml_params),
             "random_forest_estimators": int(mastml_random_forest_estimators),
+            "ad_methods": [
+                "mastml_madml",
+                "knn_distance" if bool(ad_enable_knn_distance) else "knn_distance_off",
+                "mahalanobis_ledoitwolf" if bool(ad_enable_mahalanobis) else "mahalanobis_ledoitwolf_off",
+            ],
+            "knn_neighbors": int(ad_knn_neighbors),
+            "knn_in_domain_quantile": float(ad_knn_in_domain_quantile),
+            "mahalanobis_in_domain_quantile": float(ad_mahalanobis_in_domain_quantile),
+            "consensus_low_support_ratio": float(ad_consensus_low_support_ratio),
         }
 
         if enable_mastml_ad_cache and ad_results_path is not None:
@@ -9106,8 +11463,19 @@ cells += [
                 "prediction",
                 "workflow",
                 "model_name",
+                "ad_consensus_concern",
+                "ad_consensus_interpretation",
                 "mastml_overall_concern",
                 "mastml_interpretation",
+                "ad_method_support_count",
+                "ad_method_available_count",
+                "ad_consensus_support_ratio",
+                "ad_knn_in_domain",
+                "ad_knn_mean_distance",
+                "ad_knn_train_threshold",
+                "ad_mahalanobis_in_domain",
+                "ad_mahalanobis_distance",
+                "ad_mahalanobis_train_threshold",
                 "mastml_ad_residual_rule",
                 "mastml_ad_rmse_rule",
                 "mastml_ad_calibration_area_rule",
@@ -9120,7 +11488,14 @@ cells += [
             styled_df = ad_prediction_df.loc[:, styled_columns].copy().round(6)
             styled_table = (
                 styled_df.style
-                .map(lambda value: f"background-color: {concern_palette.get(str(value), '')}", subset=["mastml_overall_concern"] if "mastml_overall_concern" in styled_df.columns else [])
+                .map(
+                    lambda value: f"background-color: {concern_palette.get(str(value), '')}",
+                    subset=["ad_consensus_concern"] if "ad_consensus_concern" in styled_df.columns else [],
+                )
+                .map(
+                    lambda value: f"background-color: {concern_palette.get(str(value), '')}",
+                    subset=["mastml_overall_concern"] if "mastml_overall_concern" in styled_df.columns else [],
+                )
             )
             for ad_rule_column in ["mastml_ad_residual_rule", "mastml_ad_rmse_rule", "mastml_ad_calibration_area_rule"]:
                 if ad_rule_column in styled_df.columns:
@@ -9132,22 +11507,35 @@ cells += [
         display_interactive_table(ad_prediction_df.round(6), rows=min(20, len(ad_prediction_df)))
 
         plot_df = ad_prediction_df.loc[ad_prediction_df["valid_smiles"].astype(bool)].copy()
-        if "mastml_overall_concern" in plot_df.columns:
+        concern_col_for_plot = (
+            "ad_consensus_concern"
+            if "ad_consensus_concern" in plot_df.columns
+            else ("mastml_overall_concern" if "mastml_overall_concern" in plot_df.columns else None)
+        )
+        concern_interpret_col_for_plot = (
+            "ad_consensus_interpretation"
+            if "ad_consensus_interpretation" in plot_df.columns
+            else ("mastml_interpretation" if "mastml_interpretation" in plot_df.columns else None)
+        )
+
+        if concern_col_for_plot is not None and "mastml_kde_dissimilarity" in plot_df.columns and "mastml_internal_rf_uncertainty_calibrated" in plot_df.columns:
+            hover_data_map = {
+                "canonical_smiles": True,
+                "prediction": ":.4f",
+                concern_col_for_plot: True,
+                "mastml_kde_dissimilarity": ":.4f",
+                "mastml_internal_rf_uncertainty_calibrated": ":.4f",
+            }
+            if concern_interpret_col_for_plot is not None:
+                hover_data_map[concern_interpret_col_for_plot] = True
             scatter_fig = px.scatter(
                 plot_df,
                 x="mastml_kde_dissimilarity",
                 y="mastml_internal_rf_uncertainty_calibrated",
-                color="mastml_overall_concern",
-                symbol="mastml_overall_concern",
-                hover_data={
-                    "canonical_smiles": True,
-                    "prediction": ":.4f",
-                    "mastml_overall_concern": True,
-                    "mastml_interpretation": True,
-                    "mastml_kde_dissimilarity": ":.4f",
-                    "mastml_internal_rf_uncertainty_calibrated": ":.4f",
-                },
-                title="Applicability domain concern: dissimilarity vs MADML calibrated uncertainty",
+                color=concern_col_for_plot,
+                symbol=concern_col_for_plot,
+                hover_data=hover_data_map,
+                title="Applicability domain concern: dissimilarity vs calibrated uncertainty",
                 color_discrete_map={
                     "Low concern": "#2ca02c",
                     "Moderate concern": "#ffbf00",
@@ -9184,23 +11572,45 @@ cells += [
             ad_prediction_df.to_csv(output_path, index=False)
             print(f"Saved applicability-domain results to: {output_path}")
 
-        in_domain_count = int(
-            ad_prediction_df.get("mastml_in_domain_by_any_rule", pd.Series(False, index=ad_prediction_df.index))
-            .fillna(False)
-            .astype(bool)
-            .sum()
+        concern_col_for_counts = (
+            "ad_consensus_concern"
+            if "ad_consensus_concern" in ad_prediction_df.columns
+            else ("mastml_overall_concern" if "mastml_overall_concern" in ad_prediction_df.columns else None)
         )
+        domain_flag_for_counts = (
+            "ad_mastml_in_domain"
+            if "ad_mastml_in_domain" in ad_prediction_df.columns
+            else ("mastml_in_domain_by_any_rule" if "mastml_in_domain_by_any_rule" in ad_prediction_df.columns else None)
+        )
+
+        if domain_flag_for_counts is not None:
+            in_domain_count = int(
+                ad_prediction_df.loc[valid_prediction_rows, :].get(domain_flag_for_counts, pd.Series(False, index=ad_prediction_df.loc[valid_prediction_rows].index))
+                .fillna(False)
+                .astype(bool)
+                .sum()
+            )
+        else:
+            in_domain_count = 0
         out_of_domain_count = int(valid_prediction_rows.sum()) - in_domain_count
-        low_concern_count = int(ad_prediction_df.get("mastml_overall_concern", pd.Series("", index=ad_prediction_df.index)).astype(str).eq("Low concern").sum())
-        moderate_concern_count = int(ad_prediction_df.get("mastml_overall_concern", pd.Series("", index=ad_prediction_df.index)).astype(str).eq("Moderate concern").sum())
-        high_concern_count = int(ad_prediction_df.get("mastml_overall_concern", pd.Series("", index=ad_prediction_df.index)).astype(str).eq("High concern").sum())
+
+        if concern_col_for_counts is not None:
+            valid_concern_series = ad_prediction_df.loc[valid_prediction_rows, concern_col_for_counts].astype(str)
+            low_concern_count = int(valid_concern_series.eq("Low concern").sum())
+            moderate_concern_count = int(valid_concern_series.eq("Moderate concern").sum())
+            high_concern_count = int(valid_concern_series.eq("High concern").sum())
+        else:
+            low_concern_count = 0
+            moderate_concern_count = 0
+            high_concern_count = 0
         display_note(
-            "This block adds MAST-ML / MADML guide rails to the latest new-molecule predictions rather than replacing your chosen prediction model. "
-            "The internal MAST-ML random forest is used only to estimate chemistry-space coverage and rule-based concern levels in the same feature space as the conventional workflow. "
-            "Use the color-coded concern labels as the main interpretation layer: `Low concern` means all three MADML rules marked the molecule in-domain, "
-            "`Moderate concern` means two rules supported it but one rule still raised caution, and `High concern` means at most one rule supported it. "
+            "This block adds a hybrid applicability-domain guide rail rather than replacing your chosen prediction model. "
+            "It combines MAST-ML / MADML with complementary feature-space diagnostics "
+            "(kNN-distance AD and covariance-based Mahalanobis AD when enabled), then summarizes them into a consensus concern label. "
+            "Use the color-coded concern labels as the main interpretation layer: `Low concern` means most enabled AD methods support in-domain status, "
+            "`Moderate concern` means mixed support, and `High concern` means limited AD support. "
             f"In this run, the concern breakdown was {low_concern_count} low, {moderate_concern_count} moderate, and {high_concern_count} high across valid molecules. "
-            f"{in_domain_count} valid molecule(s) were supported by at least one MADML rule and {out_of_domain_count} were flagged by all three rules. "
+            f"{in_domain_count} valid molecule(s) were marked in-domain by the primary domain flag and {out_of_domain_count} were flagged out-of-domain. "
             "Lower `mastml_kde_dissimilarity` usually means a molecule sits closer to the training chemistry. "
             "`mastml_internal_rf_uncertainty_raw` and `mastml_internal_rf_uncertainty_calibrated` are guide-rail uncertainty estimates from the internal MAST-ML random forest, not formal uncertainty intervals for CatBoost, XGBoost, or an ensemble prediction."
         )
