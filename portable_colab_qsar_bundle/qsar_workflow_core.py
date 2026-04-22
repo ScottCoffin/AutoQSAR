@@ -85,6 +85,7 @@ def resolve_chemprop_architecture_specs(
     *,
     ensemble_size: int = 1,
     include_rdkit2d_extra: bool = False,
+    include_selected_feature_variant: bool = False,
 ) -> list[dict[str, Any]]:
     requested = [str(key).strip().lower() for key in (architecture_keys or list_supported_chemprop_architectures())]
     requested = [key for key in requested if key]
@@ -127,6 +128,35 @@ def resolve_chemprop_architecture_specs(
         _append_spec(key, force_rdkit2d=False)
         if bool(include_rdkit2d_extra) and key == "dmpnn":
             _append_spec(key, force_rdkit2d=True)
+
+    if bool(include_selected_feature_variant):
+        selected_architecture_key = "dmpnn" if "dmpnn" in requested else requested[0]
+        base = CHEMPROP_ARCHITECTURE_REGISTRY[selected_architecture_key]
+        base_variant_tag = str(base.get("variant_tag", selected_architecture_key))
+        base_display_name = str(base.get("display_name", selected_architecture_key.upper()))
+        selected_variant_tag = f"{base_variant_tag}_selected_features"
+        if selected_variant_tag not in seen_variant_tags:
+            seen_variant_tags.add(selected_variant_tag)
+            specs.append(
+                {
+                    "architecture_key": selected_architecture_key,
+                    "variant_tag": selected_variant_tag,
+                    "label": (
+                        f"Chemprop v2 ({base_display_name} + Selected descriptors, "
+                        f"ensemble={int(ensemble_size)})"
+                    ),
+                    "workflow": str(base.get("workflow", "Chemprop v2")),
+                    "train_args": [str(item) for item in list(base.get("train_args", []))],
+                    # This variant intentionally uses the train-only selected descriptor matrix
+                    # instead of predefined molecule featurizer sets.
+                    "featurizers": [],
+                    "use_selected_descriptors": True,
+                    "notes": (
+                        "Chemprop graph encoder with train-only selected tabular descriptors "
+                        "provided through descriptors-path."
+                    ),
+                }
+            )
 
     return specs
 
@@ -522,23 +552,39 @@ def drop_exact_and_near_duplicate_features(
     X_other=None,
     *,
     correlation_threshold=0.999,
+    moderate_correlation_threshold=0.995,
+    variance_threshold=1e-8,
+    binary_prevalence_min=0.005,
+    binary_prevalence_max=0.995,
+    binary_value_tolerance=1e-6,
     report_limit=20,
 ):
-    """Greedily keep first-occurring columns and drop exact / near-exact duplicates.
+    """Apply cheap pre-filters and exact-duplicate pruning.
 
-    Duplicate handling order:
-    1. Exact duplicates (identical values across all training rows)
-    2. Near duplicates by absolute Pearson correlation threshold
+    Filtering order:
+    1. Near-zero variance columns
+    2. Binary prevalence outliers (rare / near-constant bits)
+    3. Exact duplicates (identical values across all training rows)
 
     Parameters
     ----------
     X_train : DataFrame-like
-        Training feature matrix used to detect duplicate columns.
+        Training feature matrix used to detect redundant columns.
     X_other : DataFrame-like or None
         Optional second matrix (for example test features) that will be aligned to
         the retained training columns.
     correlation_threshold : float
-        Near-duplicate threshold on absolute Pearson correlation.
+        Retained for backward compatibility. Correlation pruning is disabled.
+    moderate_correlation_threshold : float
+        Retained for backward compatibility. Correlation pruning is disabled.
+    variance_threshold : float
+        Columns with training variance <= this threshold are removed.
+    binary_prevalence_min : float
+        For binary columns, minimum prevalence of the positive class to keep.
+    binary_prevalence_max : float
+        For binary columns, maximum prevalence of the positive class to keep.
+    binary_value_tolerance : float
+        Tolerance used to detect binary columns near {0, 1}.
     report_limit : int
         Maximum number of representative duplicate pairs to keep in metadata.
     """
@@ -547,10 +593,87 @@ def drop_exact_and_near_duplicate_features(
     other_df = pd.DataFrame(X_other).copy() if X_other is not None else None
 
     original_columns = list(train_df.columns)
+    dropped_low_variance_columns = []
+    dropped_binary_prevalence_columns = []
+    dropped_binary_prevalence_examples = []
+
+    def _drop_from_both(columns_to_drop):
+        nonlocal train_df, other_df
+        if not columns_to_drop:
+            return
+        train_df = train_df.drop(columns=columns_to_drop, errors="ignore")
+        if other_df is not None:
+            drop_in_other = [column for column in columns_to_drop if column in other_df.columns]
+            if drop_in_other:
+                other_df = other_df.drop(columns=drop_in_other, errors="ignore")
+
+    variance_cutoff = float(variance_threshold)
+    if train_df.shape[1] > 0 and np.isfinite(variance_cutoff) and variance_cutoff >= 0.0:
+        try:
+            variance_series = (
+                train_df.var(axis=0, ddof=0)
+                .replace([np.inf, -np.inf], np.nan)
+                .fillna(0.0)
+            )
+            dropped_low_variance_columns = (
+                variance_series[variance_series <= variance_cutoff]
+                .index.astype(str)
+                .tolist()
+            )
+            _drop_from_both(dropped_low_variance_columns)
+        except Exception:
+            dropped_low_variance_columns = []
+
+    prevalence_min = float(binary_prevalence_min)
+    prevalence_max = float(binary_prevalence_max)
+    binary_tol = float(binary_value_tolerance)
+    binary_prevalence_filter_enabled = (
+        train_df.shape[1] > 0
+        and np.isfinite(prevalence_min)
+        and np.isfinite(prevalence_max)
+        and 0.0 <= prevalence_min < prevalence_max <= 1.0
+    )
+    if binary_prevalence_filter_enabled:
+        try:
+            train_values = train_df.to_numpy(dtype=np.float64, copy=True)
+            if train_values.size > 0:
+                train_values[~np.isfinite(train_values)] = np.nan
+                is_zero = np.isclose(train_values, 0.0, atol=binary_tol, rtol=0.0)
+                is_one = np.isclose(train_values, 1.0, atol=binary_tol, rtol=0.0)
+                finite_mask = np.isfinite(train_values)
+                is_binary_entry = finite_mask & (is_zero | is_one)
+                is_binary_column = np.all(is_binary_entry, axis=0)
+                if np.any(is_binary_column):
+                    binary_indices = np.flatnonzero(is_binary_column)
+                    binary_prevalence = np.mean(is_one[:, binary_indices], axis=0)
+                    prevalence_drop_mask = (
+                        (binary_prevalence < prevalence_min)
+                        | (binary_prevalence > prevalence_max)
+                    )
+                    if np.any(prevalence_drop_mask):
+                        drop_binary_indices = binary_indices[np.flatnonzero(prevalence_drop_mask)]
+                        drop_binary_columns = train_df.columns[drop_binary_indices].astype(str).tolist()
+                        dropped_binary_prevalence_columns = list(drop_binary_columns)
+                        for idx, column_name in enumerate(drop_binary_columns):
+                            if idx >= int(report_limit):
+                                break
+                            prevalence_value = float(binary_prevalence[np.flatnonzero(prevalence_drop_mask)[idx]])
+                            dropped_binary_prevalence_examples.append(
+                                {
+                                    "feature": str(column_name),
+                                    "prevalence": prevalence_value,
+                                }
+                            )
+                        _drop_from_both(dropped_binary_prevalence_columns)
+        except Exception:
+            dropped_binary_prevalence_columns = []
+            dropped_binary_prevalence_examples = []
+
     dropped_exact_columns = []
     dropped_exact_pairs = []
     hash_buckets = {}
-    for column in original_columns:
+    current_columns = list(train_df.columns)
+    for column in current_columns:
         series = train_df[column]
         series_hash = int(pd.util.hash_pandas_object(series, index=False).sum())
         bucket = hash_buckets.setdefault(series_hash, [])
@@ -567,79 +690,52 @@ def drop_exact_and_near_duplicate_features(
             bucket.append(column)
 
     if dropped_exact_columns:
-        train_df = train_df.drop(columns=dropped_exact_columns, errors="ignore")
-        if other_df is not None:
-            drop_in_other = [column for column in dropped_exact_columns if column in other_df.columns]
-            if drop_in_other:
-                other_df = other_df.drop(columns=drop_in_other, errors="ignore")
+        _drop_from_both(dropped_exact_columns)
 
     dropped_near_columns = []
     dropped_near_pairs = []
-    near_duplicate_scan_error = None
+    dropped_moderate_columns = []
+    dropped_moderate_pairs = []
+    near_duplicate_scan_error = ""
     threshold = float(correlation_threshold)
-    if train_df.shape[1] > 1 and threshold < 1.0:
-        try:
-            train_values = train_df.to_numpy(dtype=np.float64, copy=True)
-            if train_values.size:
-                train_values[~np.isfinite(train_values)] = np.nan
-                if np.isnan(train_values).any():
-                    medians = np.nanmedian(train_values, axis=0)
-                    medians = np.where(np.isfinite(medians), medians, 0.0)
-                    nan_rows, nan_cols = np.where(np.isnan(train_values))
-                    train_values[nan_rows, nan_cols] = medians[nan_cols]
+    moderate_threshold = float(moderate_correlation_threshold)
 
-                centered = train_values - np.mean(train_values, axis=0, keepdims=True)
-                norms = np.linalg.norm(centered, axis=0)
-                valid_mask = norms > 0.0
-                valid_columns = list(train_df.columns[valid_mask])
-                if len(valid_columns) > 1:
-                    standardized = centered[:, valid_mask] / norms[valid_mask]
-                    standardized = np.asarray(standardized, dtype=np.float32)
-                    corr_abs = np.asarray(np.abs(standardized.T @ standardized), dtype=np.float32)
-                    diagonal_index = np.arange(corr_abs.shape[0], dtype=int)
-                    corr_abs[diagonal_index, diagonal_index] = 0.0
-
-                    keep_mask = np.ones(corr_abs.shape[0], dtype=bool)
-                    for left_idx in range(corr_abs.shape[0] - 1):
-                        if not keep_mask[left_idx]:
-                            continue
-                        right_view = corr_abs[left_idx, left_idx + 1 :]
-                        if right_view.size == 0:
-                            continue
-                        duplicate_local = np.where((right_view > threshold) & keep_mask[left_idx + 1 :])[0]
-                        if duplicate_local.size == 0:
-                            continue
-                        duplicate_idx = duplicate_local + left_idx + 1
-                        keep_mask[duplicate_idx] = False
-                        for dup_idx in duplicate_idx.tolist():
-                            dup_column = valid_columns[dup_idx]
-                            dropped_near_columns.append(dup_column)
-                            if len(dropped_near_pairs) < int(report_limit):
-                                dropped_near_pairs.append((str(valid_columns[left_idx]), str(dup_column)))
-
-                    if dropped_near_columns:
-                        train_df = train_df.drop(columns=dropped_near_columns, errors="ignore")
-                        if other_df is not None:
-                            drop_in_other = [column for column in dropped_near_columns if column in other_df.columns]
-                            if drop_in_other:
-                                other_df = other_df.drop(columns=drop_in_other, errors="ignore")
-        except Exception as exc:
-            near_duplicate_scan_error = f"{type(exc).__name__}: {exc}"
-
+    total_dropped = (
+        len(dropped_low_variance_columns)
+        + len(dropped_binary_prevalence_columns)
+        + len(dropped_exact_columns)
+        + len(dropped_near_columns)
+        + len(dropped_moderate_columns)
+    )
     dedup_metadata = {
         "correlation_threshold": float(threshold),
+        "moderate_correlation_threshold": np.nan,
+        "variance_threshold": float(variance_cutoff),
+        "binary_prevalence_min": float(prevalence_min) if np.isfinite(prevalence_min) else np.nan,
+        "binary_prevalence_max": float(prevalence_max) if np.isfinite(prevalence_max) else np.nan,
+        "binary_value_tolerance": float(binary_tol),
         "original_feature_count": int(len(original_columns)),
         "post_dedup_feature_count": int(train_df.shape[1]),
-        "dropped_feature_count": int(len(dropped_exact_columns) + len(dropped_near_columns)),
+        "dropped_feature_count": int(total_dropped),
+        "dropped_low_variance_count": int(len(dropped_low_variance_columns)),
+        "dropped_binary_prevalence_count": int(len(dropped_binary_prevalence_columns)),
         "dropped_exact_count": int(len(dropped_exact_columns)),
         "dropped_near_count": int(len(dropped_near_columns)),
+        "dropped_moderate_count": int(len(dropped_moderate_columns)),
+        "dropped_low_variance_columns": [str(column) for column in dropped_low_variance_columns],
+        "dropped_binary_prevalence_columns": [str(column) for column in dropped_binary_prevalence_columns],
         "dropped_exact_columns": [str(column) for column in dropped_exact_columns],
         "dropped_near_columns": [str(column) for column in dropped_near_columns],
+        "dropped_moderate_columns": [str(column) for column in dropped_moderate_columns],
+        "binary_prevalence_examples": list(dropped_binary_prevalence_examples),
         "exact_duplicate_examples": [
             {"kept": str(kept), "dropped": str(dropped)} for kept, dropped in dropped_exact_pairs
         ],
         "near_duplicate_examples": [
             {"kept": str(kept), "dropped": str(dropped)} for kept, dropped in dropped_near_pairs
+        ],
+        "moderate_duplicate_examples": [
+            {"kept": str(kept), "dropped": str(dropped)} for kept, dropped in dropped_moderate_pairs
         ],
         "near_duplicate_scan_error": near_duplicate_scan_error or "",
     }

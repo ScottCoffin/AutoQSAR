@@ -14,11 +14,16 @@ writes cross-dataset performance tables.
 from __future__ import annotations
 
 import argparse
+from collections import Counter, defaultdict
+import contextlib
 import hashlib
 import io
 import importlib.util
 import json
+import getpass
+import logging
 import math
+import os
 import pickle
 import random
 import re
@@ -29,6 +34,7 @@ import subprocess
 import tarfile
 import urllib.request
 from dataclasses import dataclass
+from datetime import datetime
 from pathlib import Path
 from typing import Any, Callable
 import sys
@@ -36,13 +42,15 @@ import sys
 import numpy as np
 import pandas as pd
 from sklearn.base import clone
-from sklearn.ensemble import RandomForestRegressor
+from sklearn.ensemble import ExtraTreesRegressor, HistGradientBoostingRegressor, RandomForestRegressor, VotingRegressor
 from sklearn.impute import SimpleImputer
 from sklearn.linear_model import ElasticNet, ElasticNetCV, RidgeCV
 from sklearn.metrics import make_scorer, mean_absolute_error, mean_squared_error, r2_score
 from sklearn.model_selection import KFold, cross_val_predict, cross_validate, train_test_split
+from sklearn.neighbors import KNeighborsRegressor
+from sklearn.neural_network import MLPRegressor
 from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import FunctionTransformer, StandardScaler
 from sklearn.svm import SVR
 
 from rdkit import Chem, RDLogger
@@ -98,6 +106,31 @@ try:
     from xgboost import XGBRegressor
 except Exception:
     XGBRegressor = None
+
+try:
+    from lightgbm import LGBMRegressor
+except Exception:
+    LGBMRegressor = None
+
+try:
+    from tabpfn import TabPFNRegressor
+    TABPFN_REGRESSOR_SOURCE = "tabpfn"
+except Exception:
+    try:
+        from tabpfn_client import TabPFNRegressor
+        TABPFN_REGRESSOR_SOURCE = "tabpfn_client"
+    except Exception:
+        TabPFNRegressor = None
+        TABPFN_REGRESSOR_SOURCE = "unavailable"
+
+
+def detect_gpu_available() -> bool:
+    try:
+        import torch
+
+        return bool(torch.cuda.is_available())
+    except Exception:
+        return False
 
 
 SMILES_CANDIDATES = ["QSAR_READY_SMILES", "canonical_smiles", "SMILES", "smiles", "Smiles"]
@@ -218,6 +251,271 @@ def ensure_tdc_from_source() -> bool:
     return try_load_tdc_from_path(extract_root)
 
 
+def ensure_tabpfn_installed(prefer_local_backend: bool = False) -> bool:
+    global TabPFNRegressor
+    global TABPFN_REGRESSOR_SOURCE
+    current_source = str(TABPFN_REGRESSOR_SOURCE).strip().lower()
+    if TabPFNRegressor is not None and not (prefer_local_backend and current_source != "tabpfn"):
+        return True
+
+    backend_order = ["tabpfn", "tabpfn_client"] if prefer_local_backend else ["tabpfn", "tabpfn_client"]
+    if current_source == "tabpfn_client" and not prefer_local_backend:
+        backend_order = ["tabpfn_client", "tabpfn"]
+
+    install_messages = {
+        "tabpfn": "local tabpfn backend",
+        "tabpfn_client": "tabpfn-client API backend",
+    }
+    import_targets = {
+        "tabpfn": ("tabpfn", "TabPFNRegressor"),
+        "tabpfn_client": ("tabpfn_client", "TabPFNRegressor"),
+    }
+    install_targets = {
+        "tabpfn": "tabpfn",
+        "tabpfn_client": "tabpfn-client",
+    }
+
+    for backend in backend_order:
+        module_name, class_name = import_targets[backend]
+        try:
+            module = importlib.import_module(module_name)
+            TabPFNRegressor = getattr(module, class_name)
+            TABPFN_REGRESSOR_SOURCE = backend
+            return True
+        except Exception:
+            pass
+
+        if importlib.util.find_spec(module_name) is None:
+            print(f"[installing] {install_targets[backend]}", flush=True)
+            install_cmd = [sys.executable, "-m", "pip", "install", "-q", "--no-input", install_targets[backend]]
+            install_result = subprocess.run(install_cmd, capture_output=True, text=True)
+            if install_result.returncode != 0:
+                install_logs = ((install_result.stdout or "") + "\n" + (install_result.stderr or "")).strip()
+                print(
+                    f"{install_messages[backend]} auto-install failed.\n"
+                    f"Command: {' '.join(install_cmd)}\n"
+                    f"Installer output (tail):\n{install_logs[-800:]}",
+                    flush=True,
+                )
+                continue
+            importlib.invalidate_caches()
+        try:
+            module = importlib.import_module(module_name)
+            TabPFNRegressor = getattr(module, class_name)
+            TABPFN_REGRESSOR_SOURCE = backend
+            return True
+        except Exception:
+            continue
+
+    print(
+        "TabPFNRegressor import/install failed for both local and API backends; "
+        "the run will continue without TabPFN.",
+        flush=True,
+    )
+    TabPFNRegressor = None
+    TABPFN_REGRESSOR_SOURCE = "unavailable"
+    return False
+
+
+def ensure_tabpfn_client_installed() -> bool:
+    if importlib.util.find_spec("tabpfn_client") is not None:
+        return True
+    print("[installing] tabpfn-client", flush=True)
+    install_cmd = [sys.executable, "-m", "pip", "install", "-q", "--no-input", "tabpfn-client"]
+    install_result = subprocess.run(install_cmd, capture_output=True, text=True)
+    if install_result.returncode != 0:
+        install_logs = ((install_result.stdout or "") + "\n" + (install_result.stderr or "")).strip()
+        print(
+            "tabpfn-client auto-install failed; token setup via tabpfn_client will be skipped.\n"
+            f"Command: {' '.join(install_cmd)}\n"
+            f"Installer output (tail):\n{install_logs[-800:]}",
+            flush=True,
+        )
+        return False
+    importlib.invalidate_caches()
+    return importlib.util.find_spec("tabpfn_client") is not None
+
+
+def configure_tabpfn_access_token_from_env() -> tuple[bool, str]:
+    api_key = str(os.environ.get("PRIORLABS_API_KEY", os.environ.get("TABPFN_API_KEY", ""))).strip()
+    if not api_key:
+        return False, "No PRIORLABS_API_KEY/TABPFN_API_KEY found in environment."
+    if not ensure_tabpfn_client_installed():
+        return False, "tabpfn-client is unavailable; could not apply access token."
+    try:
+        from tabpfn_client import set_access_token
+
+        set_access_token(api_key)
+        return True, ""
+    except Exception as exc:
+        return False, str(exc)
+
+
+def _probe_tabpfn_runtime_ready() -> tuple[bool, str]:
+    if TabPFNRegressor is None:
+        return False, "TabPFNRegressor is unavailable."
+    try:
+        probe_model = TabPFNRegressor()
+        probe_X = np.asarray(
+            [
+                [0.0, 1.0, 2.0, 3.0],
+                [1.0, 2.0, 3.0, 4.0],
+                [2.0, 3.0, 4.0, 5.0],
+                [3.0, 4.0, 5.0, 6.0],
+                [4.0, 5.0, 6.0, 7.0],
+                [5.0, 6.0, 7.0, 8.0],
+            ],
+            dtype=float,
+        )
+        probe_y = np.asarray([0.0, 1.0, 0.5, 1.5, 1.0, 2.0], dtype=float)
+        probe_model.fit(probe_X, probe_y)
+        _ = probe_model.predict(probe_X[:2])
+        return True, ""
+    except Exception as exc:
+        return False, str(exc)
+
+
+def prepare_tabpfn_auth(args: argparse.Namespace) -> tuple[bool, str]:
+    if not bool(getattr(args, "run_tabpfn", False)):
+        return True, "TabPFN is disabled for this run."
+    if str(TABPFN_REGRESSOR_SOURCE).strip().lower() != "tabpfn_client":
+        return True, f"TabPFN backend source: {TABPFN_REGRESSOR_SOURCE} (no Prior Labs token setup required)."
+
+    token_ok, token_error = configure_tabpfn_access_token_from_env()
+    if token_ok:
+        probe_ok, probe_error = _probe_tabpfn_runtime_ready()
+        if probe_ok:
+            return True, "TabPFN authentication verified via PRIORLABS_API_KEY/TABPFN_API_KEY."
+        if is_tabpfn_token_limit_error(probe_error):
+            return False, format_tabpfn_token_limit_notice(
+                f"TabPFN access token was loaded, but runtime preflight hit a token limit. Error: {probe_error}"
+            )
+        return False, (
+            "TabPFN access token was loaded from environment, but runtime preflight failed. "
+            f"Error: {probe_error}"
+        )
+
+    has_env_key = bool(str(os.environ.get("PRIORLABS_API_KEY", os.environ.get("TABPFN_API_KEY", ""))).strip())
+    if not has_env_key:
+        probe_ok, probe_error = _probe_tabpfn_runtime_ready()
+        if probe_ok:
+            return True, "TabPFN preflight passed using an existing local client token."
+        if is_tabpfn_token_limit_error(probe_error):
+            return False, format_tabpfn_token_limit_notice(probe_error)
+        if sys.stdin is not None and sys.stdin.isatty():
+            try:
+                entered = getpass.getpass(
+                    "TabPFN is enabled and no PRIORLABS_API_KEY/TABPFN_API_KEY was found. "
+                    "Enter Prior Labs API key (input hidden), or press Enter to disable TabPFN for this run: "
+                ).strip()
+            except Exception:
+                entered = ""
+            if entered:
+                os.environ["PRIORLABS_API_KEY"] = entered
+                token_ok, token_error = configure_tabpfn_access_token_from_env()
+                if token_ok:
+                    probe_ok, probe_error = _probe_tabpfn_runtime_ready()
+                    if probe_ok:
+                        return True, "TabPFN authentication verified from interactively provided API key."
+                    if is_tabpfn_token_limit_error(probe_error):
+                        return False, format_tabpfn_token_limit_notice(
+                            f"TabPFN runtime preflight hit a token limit after interactive key setup. Error: {probe_error}"
+                        )
+                    return False, f"TabPFN runtime preflight failed after interactive key setup: {probe_error}"
+                return False, f"TabPFN authentication/setup failed after interactive key entry: {token_error}"
+        return False, (
+            "No PRIORLABS_API_KEY/TABPFN_API_KEY was provided and no existing local client token could be used. "
+            "TabPFN will be disabled for this run."
+        )
+
+    probe_ok, probe_error = _probe_tabpfn_runtime_ready()
+    if probe_ok:
+        return True, "TabPFN preflight passed using the active TabPFN client credentials."
+    if is_tabpfn_token_limit_error(token_error) or is_tabpfn_token_limit_error(probe_error):
+        return False, format_tabpfn_token_limit_notice(token_error or probe_error)
+    return False, f"TabPFN authentication/setup failed: {token_error or probe_error}"
+
+
+TABPFN_DAILY_TOKEN_BUDGET = 1_000_000
+TABPFN_DAILY_RESET_NOTE = (
+    "Prior Labs TabPFN API budget: 1,000,000 tokens per user per day "
+    "(tokens ~ rows * columns * estimators), with a daily reset."
+)
+
+
+def tabpfn_estimators_per_dataset_run(args: argparse.Namespace) -> int:
+    # evaluate_model() performs cross_validate (k fits) + cross_val_predict (k fits) + final fit (1 fit)
+    return max(1, (2 * int(getattr(args, "cv_folds", 5))) + 1)
+
+
+def estimate_tabpfn_tokens(rows: int, columns: int, estimators: int) -> int:
+    return int(max(0, int(rows)) * max(0, int(columns)) * max(1, int(estimators)))
+
+
+def is_tabpfn_token_limit_error(error_like: Any) -> bool:
+    text = str(error_like or "").strip().lower()
+    markers = (
+        "token",
+        "quota",
+        "budget",
+        "limit exceeded",
+        "rate limit",
+        "429",
+        "too many requests",
+    )
+    return any(marker in text for marker in markers)
+
+
+def format_tabpfn_token_limit_notice(base_error: str) -> str:
+    base_text = str(base_error or "").strip()
+    if not base_text:
+        base_text = "TabPFN request failed due to API token budget limits."
+    return f"{base_text} {TABPFN_DAILY_RESET_NOTE}"
+
+
+def estimate_tabpfn_daily_dataset_capacity(
+    datasets: list["DatasetSpec"],
+    args: argparse.Namespace,
+) -> dict[str, Any]:
+    estimators = tabpfn_estimators_per_dataset_run(args)
+    rows_payload = []
+    sortable_tokens = []
+    for spec in datasets:
+        n_rows = int(len(spec.frame))
+        est_train_rows = max(1, int(round(n_rows * (1.0 - float(getattr(args, "test_fraction", 0.2))))))
+        max_features_cfg = int(getattr(args, "max_selected_features", 512))
+        if max_features_cfg > 0:
+            est_columns = int(max_features_cfg)
+        else:
+            est_columns = max(32, int(round(0.1 * est_train_rows)))
+        est_tokens = estimate_tabpfn_tokens(est_train_rows, est_columns, estimators)
+        rows_payload.append(
+            {
+                "dataset": str(spec.name),
+                "estimated_train_rows": est_train_rows,
+                "estimated_columns": est_columns,
+                "estimated_estimators": estimators,
+                "estimated_tabpfn_tokens": est_tokens,
+                "fits_single_day_budget": bool(est_tokens <= TABPFN_DAILY_TOKEN_BUDGET),
+            }
+        )
+        sortable_tokens.append(est_tokens)
+    individually_fit_count = sum(1 for value in sortable_tokens if value <= TABPFN_DAILY_TOKEN_BUDGET)
+    cumulative = 0
+    cumulative_count = 0
+    for value in sorted(sortable_tokens):
+        if cumulative + value > TABPFN_DAILY_TOKEN_BUDGET:
+            break
+        cumulative += value
+        cumulative_count += 1
+    return {
+        "table": pd.DataFrame(rows_payload),
+        "individually_fit_count": int(individually_fit_count),
+        "smallest_first_count": int(cumulative_count),
+        "estimators_per_dataset": int(estimators),
+    }
+
+
 @dataclass
 class DatasetSpec:
     name: str
@@ -258,6 +556,67 @@ def format_seconds(seconds: float) -> str:
     return f"{secs:d}s"
 
 
+def order_datasets_smallest_first(datasets: list["DatasetSpec"]) -> list["DatasetSpec"]:
+    def _dataset_size(spec: "DatasetSpec") -> int:
+        frame = getattr(spec, "frame", None)
+        if isinstance(frame, pd.DataFrame):
+            return int(len(frame))
+        try:
+            return int(len(frame))
+        except Exception:
+            return int(10**12)
+
+    return sorted(
+        list(datasets),
+        key=lambda spec: (
+            _dataset_size(spec),
+            str(getattr(spec, "name", "")).strip().lower(),
+        ),
+    )
+
+
+def local_timestamp_text() -> str:
+    return datetime.now().astimezone().strftime("%Y-%m-%d %H:%M:%S %Z")
+
+
+def estimate_elasticnet_selector_seconds_from_dataset_size(
+    dataset_size: int,
+    *,
+    log10_slope: float,
+    log10_intercept: float,
+) -> float:
+    size = int(dataset_size)
+    if size <= 1:
+        return 0.0
+    slope = float(log10_slope)
+    intercept = float(log10_intercept)
+    if not np.isfinite(slope) or not np.isfinite(intercept) or slope <= 0.0:
+        return float("nan")
+    try:
+        return float(10 ** (intercept + slope * math.log10(float(size))))
+    except Exception:
+        return float("nan")
+
+
+def elasticnet_selector_timeout_dataset_size_threshold(
+    timeout_seconds: float,
+    *,
+    log10_slope: float,
+    log10_intercept: float,
+) -> float:
+    timeout = float(timeout_seconds)
+    slope = float(log10_slope)
+    intercept = float(log10_intercept)
+    if timeout <= 0.0 or not np.isfinite(timeout):
+        return float("nan")
+    if slope <= 0.0 or not np.isfinite(slope) or not np.isfinite(intercept):
+        return float("nan")
+    try:
+        return float(10 ** ((math.log10(timeout) - intercept) / slope))
+    except Exception:
+        return float("nan")
+
+
 def smiles_hash(smiles_values: pd.Series | list[str]) -> str:
     smiles_list = [str(item).strip() for item in list(smiles_values)]
     payload = "\n".join(smiles_list)
@@ -279,8 +638,272 @@ def benchmark_config_signature(args: argparse.Namespace) -> str:
     config = vars(args).copy()
     config.pop("output_dir", None)
     config.pop("dry_run", None)
+    config.pop("ga_resolution", None)
     config["default_feature_families"] = list(DEFAULT_BENCHMARK_FEATURE_FAMILIES)
     return json.dumps(config, sort_keys=True, default=str)
+
+
+def parse_comma_list(text: Any) -> list[str]:
+    return [str(token).strip() for token in str(text or "").split(",") if str(token).strip()]
+
+
+def discover_recent_benchmark_runs(root: Path, *, exclude_dir: Path | None = None) -> list[Path]:
+    benchmark_root = root / "benchmark_results"
+    if not benchmark_root.exists():
+        return []
+    excluded = exclude_dir.resolve() if exclude_dir is not None else None
+    candidates: list[tuple[float, Path]] = []
+    for candidate in benchmark_root.iterdir():
+        if not candidate.is_dir():
+            continue
+        if excluded is not None:
+            try:
+                if candidate.resolve() == excluded:
+                    continue
+            except Exception:
+                pass
+        run_config = candidate / "run_config.json"
+        summary = candidate / "summary_metrics.csv"
+        if run_config.exists():
+            timestamp = run_config.stat().st_mtime
+        elif summary.exists():
+            timestamp = summary.stat().st_mtime
+        else:
+            metrics_files = list(candidate.glob("*/metrics.csv"))
+            if not metrics_files:
+                continue
+            timestamp = max(path.stat().st_mtime for path in metrics_files)
+        candidates.append((float(timestamp), candidate))
+    return [path for _timestamp, path in sorted(candidates, key=lambda item: item[0], reverse=True)]
+
+
+def load_run_config_payload(run_dir: Path) -> dict[str, Any]:
+    config_path = Path(run_dir) / "run_config.json"
+    if not config_path.exists():
+        return {}
+    try:
+        payload = json.loads(config_path.read_text(encoding="utf-8"))
+        return payload if isinstance(payload, dict) else {}
+    except Exception:
+        return {}
+
+
+def load_run_metrics_dataframe(run_dir: Path) -> pd.DataFrame:
+    run_root = Path(run_dir)
+    summary_path = run_root / "summary_metrics.csv"
+    if summary_path.exists():
+        try:
+            summary_df = pd.read_csv(summary_path)
+            if not summary_df.empty:
+                return summary_df
+        except Exception:
+            pass
+
+    rows: list[pd.DataFrame] = []
+    for metrics_path in sorted(run_root.glob("*/metrics.csv")):
+        try:
+            dataset_df = pd.read_csv(metrics_path)
+        except Exception:
+            continue
+        dataset_name = metrics_path.parent.name
+        if "dataset" not in dataset_df.columns:
+            dataset_df.insert(0, "dataset", dataset_name)
+        else:
+            dataset_df["dataset"] = dataset_df["dataset"].where(
+                dataset_df["dataset"].astype(str).str.strip().ne(""),
+                dataset_name,
+            )
+        rows.append(dataset_df)
+    if not rows:
+        return pd.DataFrame()
+    return pd.concat(rows, ignore_index=True)
+
+
+def error_mask(metrics_df: pd.DataFrame) -> pd.Series:
+    if metrics_df.empty:
+        return pd.Series([], dtype=bool)
+    if "error" not in metrics_df.columns:
+        return pd.Series(False, index=metrics_df.index)
+    error_series = metrics_df["error"].fillna("").astype(str).str.strip()
+    return error_series.ne("") & ~error_series.str.lower().isin({"nan", "none"})
+
+
+def meaningful_ga_models_from_reference(
+    metrics_df: pd.DataFrame,
+    *,
+    min_relative_improvement: float = 0.005,
+    min_dataset_wins: int = 1,
+    min_improving_datasets: int = 1,
+) -> tuple[list[str], dict[str, Any]]:
+    if metrics_df.empty or "dataset" not in metrics_df.columns or "model" not in metrics_df.columns:
+        return [], {"reason": "missing_metrics"}
+
+    working = metrics_df.copy()
+    working = working.loc[~error_mask(working)].copy()
+    if working.empty:
+        return [], {"reason": "all_rows_have_errors"}
+    if "primary_metric_value" not in working.columns:
+        return [], {"reason": "missing_primary_metric_value"}
+
+    working["primary_metric_value"] = pd.to_numeric(working["primary_metric_value"], errors="coerce")
+    working = working.loc[working["primary_metric_value"].notna()].copy()
+    if working.empty:
+        return [], {"reason": "no_numeric_primary_metric_values"}
+
+    wins_by_model: Counter[str] = Counter()
+    improvements_by_model: dict[str, set[str]] = defaultdict(set)
+    improvement_details: list[dict[str, Any]] = []
+
+    for dataset_name, dataset_df in working.groupby("dataset", sort=False):
+        if dataset_df.empty:
+            continue
+        metric_name = normalize_benchmark_metric(
+            str(dataset_df.get("primary_metric", pd.Series(["rmse"])).dropna().iloc[0]),
+            fallback="rmse",
+        )
+        lower_is_better = metric_lower_is_better(metric_name)
+        if lower_is_better is None:
+            lower_is_better = True
+
+        values = pd.to_numeric(dataset_df["primary_metric_value"], errors="coerce")
+        if values.notna().sum() == 0:
+            continue
+        best_idx = values.idxmin() if lower_is_better else values.idxmax()
+        best_row = dataset_df.loc[best_idx]
+        best_workflow = str(best_row.get("workflow", "")).strip().lower()
+        best_model = str(best_row.get("model", "")).strip()
+        if best_workflow == "ga_tuned" and best_model.endswith(" GA"):
+            wins_by_model[best_model[:-3].strip()] += 1
+
+        ga_rows = dataset_df.loc[
+            dataset_df.get("workflow", pd.Series("", index=dataset_df.index)).astype(str).str.strip().str.lower().eq("ga_tuned")
+        ].copy()
+        if ga_rows.empty:
+            continue
+
+        for _idx, ga_row in ga_rows.iterrows():
+            ga_model_label = str(ga_row.get("model", "")).strip()
+            if not ga_model_label.endswith(" GA"):
+                continue
+            base_model = ga_model_label[:-3].strip()
+            if not base_model:
+                continue
+            base_rows = dataset_df.loc[
+                dataset_df.get("model", pd.Series("", index=dataset_df.index)).astype(str).str.strip().eq(base_model)
+            ].copy()
+            if base_rows.empty:
+                continue
+            base_values = pd.to_numeric(base_rows["primary_metric_value"], errors="coerce").dropna()
+            if base_values.empty:
+                continue
+            base_best = float(base_values.min() if lower_is_better else base_values.max())
+            ga_value = float(pd.to_numeric(ga_row.get("primary_metric_value"), errors="coerce"))
+            if not math.isfinite(base_best) or not math.isfinite(ga_value):
+                continue
+            improvement = (base_best - ga_value) if lower_is_better else (ga_value - base_best)
+            denom = abs(base_best) if abs(base_best) > 1e-12 else 1.0
+            relative_improvement = float(improvement / denom)
+            if improvement > 0 and relative_improvement >= float(min_relative_improvement):
+                improvements_by_model[base_model].add(str(dataset_name))
+                improvement_details.append(
+                    {
+                        "dataset": str(dataset_name),
+                        "model": base_model,
+                        "base_value": base_best,
+                        "ga_value": ga_value,
+                        "relative_improvement": relative_improvement,
+                        "metric": metric_name,
+                    }
+                )
+
+    candidate_models = sorted(
+        {
+            model_name
+            for model_name in set(wins_by_model.keys()) | set(improvements_by_model.keys())
+            if int(wins_by_model.get(model_name, 0)) >= int(min_dataset_wins)
+            or int(len(improvements_by_model.get(model_name, set()))) >= int(min_improving_datasets)
+        }
+    )
+    diagnostics = {
+        "wins_by_model": {key: int(value) for key, value in wins_by_model.items()},
+        "improving_dataset_counts": {key: int(len(value)) for key, value in improvements_by_model.items()},
+        "min_relative_improvement": float(min_relative_improvement),
+        "improvement_examples": improvement_details[:50],
+    }
+    return candidate_models, diagnostics
+
+
+def resolve_requested_ga_models(args: argparse.Namespace, root: Path, *, exclude_dir: Path | None = None) -> tuple[list[str], dict[str, Any]]:
+    requested_text = str(getattr(args, "ga_models", "")).strip()
+    if not requested_text:
+        return [], {"mode": "disabled", "reason": "empty_ga_models"}
+    if requested_text.lower() != "auto":
+        return parse_comma_list(requested_text), {"mode": "manual"}
+
+    explicit_reference_dir = Path(str(getattr(args, "ga_auto_reference_run_dir", "")).strip()) if str(getattr(args, "ga_auto_reference_run_dir", "")).strip() else None
+    reference_metrics = pd.DataFrame()
+    if explicit_reference_dir is not None and explicit_reference_dir.exists():
+        reference_dir = explicit_reference_dir
+        reference_metrics = load_run_metrics_dataframe(reference_dir)
+    else:
+        recent_runs = discover_recent_benchmark_runs(root, exclude_dir=exclude_dir)
+        reference_dir = None
+        min_reference_datasets = int(getattr(args, "ga_auto_min_reference_datasets", 5))
+        for candidate in recent_runs:
+            candidate_metrics = load_run_metrics_dataframe(candidate)
+            dataset_count = (
+                int(candidate_metrics["dataset"].astype(str).str.strip().nunique())
+                if (not candidate_metrics.empty and "dataset" in candidate_metrics.columns)
+                else 0
+            )
+            ga_row_count = (
+                int(
+                    candidate_metrics.get("workflow", pd.Series("", index=candidate_metrics.index))
+                    .astype(str)
+                    .str.strip()
+                    .str.lower()
+                    .eq("ga_tuned")
+                    .sum()
+                )
+                if not candidate_metrics.empty
+                else 0
+            )
+            if dataset_count >= min_reference_datasets and ga_row_count > 0:
+                reference_dir = candidate
+                reference_metrics = candidate_metrics
+                break
+        if reference_dir is None and recent_runs:
+            reference_dir = recent_runs[0]
+            reference_metrics = load_run_metrics_dataframe(reference_dir)
+
+    if reference_dir is None:
+        return [], {"mode": "auto", "reason": "no_reference_run_found"}
+    selected_models, diagnostics = meaningful_ga_models_from_reference(
+        reference_metrics,
+        min_relative_improvement=float(getattr(args, "ga_auto_min_relative_improvement", 0.005)),
+        min_dataset_wins=int(getattr(args, "ga_auto_min_dataset_wins", 1)),
+        min_improving_datasets=int(getattr(args, "ga_auto_min_improving_datasets", 1)),
+    )
+    diagnostics.update(
+        {
+            "mode": "auto",
+            "reference_run_dir": str(reference_dir),
+            "reference_rows": int(len(reference_metrics)),
+            "reference_dataset_count": int(reference_metrics["dataset"].astype(str).str.strip().nunique()) if (not reference_metrics.empty and "dataset" in reference_metrics.columns) else 0,
+            "reference_ga_row_count": int(
+                reference_metrics.get("workflow", pd.Series("", index=reference_metrics.index))
+                .astype(str)
+                .str.strip()
+                .str.lower()
+                .eq("ga_tuned")
+                .sum()
+            )
+            if not reference_metrics.empty
+            else 0,
+            "selected_models": selected_models,
+        }
+    )
+    return selected_models, diagnostics
 
 
 def infer_column(columns: list[str], candidates: list[str]) -> str | None:
@@ -634,14 +1257,25 @@ def fetch_moleculenet_leaderboard_best(dataset_key: str, timeout: int = 20) -> d
     config = MOLECULENET_PHYSCHEM_OPTIONS.get(str(dataset_key))
     if not config:
         return None
-    section_name = config.get("leaderboard_section")
-    if not section_name:
+    section_name = str(config.get("leaderboard_section") or "").strip()
+    section_candidates = []
+    if section_name:
+        section_candidates.append(section_name)
+    for candidate in list(config.get("leaderboard_section_candidates", [])):
+        candidate_text = str(candidate).strip()
+        if candidate_text and candidate_text not in section_candidates:
+            section_candidates.append(candidate_text)
+    if not section_candidates:
         return None
     request = urllib.request.Request(MOLECULENET_LEADERBOARD_README_URL, headers={"User-Agent": "AutoQSAR-Benchmark/1.0"})
     with urllib.request.urlopen(request, timeout=int(timeout)) as response:
         markdown = response.read().decode("utf-8", errors="replace")
-    section_pattern = rf"###\s*{re.escape(str(section_name))}\s*(?P<section>.*?)(?:\n###\s+|\Z)"
-    section_match = re.search(section_pattern, markdown, flags=re.IGNORECASE | re.DOTALL)
+    section_match = None
+    for candidate_name in section_candidates:
+        section_pattern = rf"###\s*{re.escape(candidate_name)}\s*(?P<section>.*?)(?:\n###\s+|\Z)"
+        section_match = re.search(section_pattern, markdown, flags=re.IGNORECASE | re.DOTALL)
+        if section_match is not None:
+            break
     if section_match is None:
         return None
     section_text = str(section_match.group("section") or "")
@@ -858,7 +1492,7 @@ def normalize_benchmark_metric(recommended_metric: str | None, fallback: str = "
         return fallback
     text = str(recommended_metric).strip().lower()
     if "mean_squared_error" in text or text == "mse":
-        return "rmse"
+        return "mse"
     if "rmse" in text:
         return "rmse"
     if "mae" in text:
@@ -1279,19 +1913,70 @@ def leaderboard_comparison_by_dataset(summary_df: pd.DataFrame) -> pd.DataFrame:
         group = group[group["primary_metric_value"].notna()]
         if group.empty:
             continue
-        primary_metric = str(group["primary_metric"].dropna().iloc[0]).strip().lower() if group["primary_metric"].notna().any() else "rmse"
-        lower_is_better = metric_lower_is_better(primary_metric)
+        group["primary_metric_value"] = pd.to_numeric(group["primary_metric_value"], errors="coerce")
+        group = group[group["primary_metric_value"].notna()].copy()
+        if group.empty:
+            continue
+
+        group["__primary_metric_norm"] = group["primary_metric"].apply(
+            lambda value: normalize_benchmark_metric(value, fallback="rmse")
+        )
+
+        target_metric = ""
+        if "leaderboard_metric_name" in group.columns:
+            lb_metric_norm = group["leaderboard_metric_name"].apply(
+                lambda value: normalize_benchmark_metric(value, fallback="")
+            )
+            lb_metric_norm = lb_metric_norm[lb_metric_norm.astype(str).str.strip() != ""]
+            if not lb_metric_norm.empty:
+                target_metric = str(lb_metric_norm.iloc[0]).strip().lower()
+
+        if not target_metric:
+            target_metric = str(group["__primary_metric_norm"].dropna().iloc[0]).strip().lower()
+
+        metric_matched = group[group["__primary_metric_norm"] == target_metric].copy()
+        working = metric_matched if not metric_matched.empty else group.copy()
+        if working.empty:
+            continue
+
+        rank_values = pd.to_numeric(
+            working.get("leaderboard_estimated_rank_vs_top10", pd.Series(index=working.index, dtype=float)),
+            errors="coerce",
+        )
+        gap_values = pd.to_numeric(
+            working.get("leaderboard_gap_to_top10_cutoff", pd.Series(index=working.index, dtype=float)),
+            errors="coerce",
+        )
+        comparable_mask = rank_values.notna() | gap_values.notna()
+        if bool(comparable_mask.any()):
+            working = working.loc[comparable_mask].copy()
+
+        lower_is_better = metric_lower_is_better(target_metric)
         ascending = True if lower_is_better is None else bool(lower_is_better)
-        best = group.sort_values("primary_metric_value", ascending=ascending).iloc[0]
+        best = working.sort_values("primary_metric_value", ascending=ascending).iloc[0]
+
+        leaderboard_metric_name = str(best.get("leaderboard_metric_name", "")).strip()
+        if not leaderboard_metric_name and "leaderboard_metric_name" in working.columns:
+            metric_name_candidates = working["leaderboard_metric_name"].astype(str).str.strip()
+            metric_name_candidates = metric_name_candidates[metric_name_candidates != ""]
+            if not metric_name_candidates.empty:
+                leaderboard_metric_name = str(metric_name_candidates.iloc[0]).strip()
+
+        leaderboard_metric_reference = pd.to_numeric(best.get("leaderboard_metric_reference", np.nan), errors="coerce")
+        if pd.isna(leaderboard_metric_reference) and "leaderboard_metric_reference" in working.columns:
+            reference_candidates = pd.to_numeric(working["leaderboard_metric_reference"], errors="coerce").dropna()
+            if not reference_candidates.empty:
+                leaderboard_metric_reference = float(reference_candidates.iloc[0])
+
         rows.append(
             {
                 "dataset": str(dataset_name),
                 "best_model": str(best.get("model", "")),
                 "best_workflow": str(best.get("workflow", "")),
-                "primary_metric": primary_metric,
+                "primary_metric": target_metric or str(best.get("primary_metric", "")).strip().lower(),
                 "primary_metric_value": best.get("primary_metric_value", np.nan),
-                "leaderboard_metric_name": best.get("leaderboard_metric_name", ""),
-                "leaderboard_metric_reference": best.get("leaderboard_metric_reference", np.nan),
+                "leaderboard_metric_name": leaderboard_metric_name,
+                "leaderboard_metric_reference": leaderboard_metric_reference,
                 "leaderboard_delta_primary": best.get("leaderboard_delta_primary", np.nan),
                 "leaderboard_estimated_rank_vs_top10": best.get("leaderboard_estimated_rank_vs_top10", np.nan),
                 "leaderboard_estimated_in_top10": best.get("leaderboard_estimated_in_top10", np.nan),
@@ -1308,6 +1993,8 @@ def compute_primary_metric(metric_name: str, y_true: np.ndarray, y_pred: np.ndar
     metric = str(metric_name).strip().lower()
     if metric == "rmse":
         return float(math.sqrt(mean_squared_error(y_true, y_pred)))
+    if metric in {"mse", "mean_squared_error"}:
+        return float(mean_squared_error(y_true, y_pred))
     if metric == "mae":
         return float(mean_absolute_error(y_true, y_pred))
     if metric == "r2":
@@ -1330,6 +2017,8 @@ def primary_metric_scorer(metric_name: str):
     metric = str(metric_name).strip().lower()
     if metric == "rmse":
         return make_scorer(lambda y_true, y_pred: math.sqrt(mean_squared_error(y_true, y_pred)), greater_is_better=False)
+    if metric in {"mse", "mean_squared_error"}:
+        return make_scorer(mean_squared_error, greater_is_better=False)
     if metric == "mae":
         return make_scorer(mean_absolute_error, greater_is_better=False)
     if metric == "r2":
@@ -1648,16 +2337,68 @@ def select_features(
         random_seed=args.random_seed,
     )
     cv_splits = list(selector_cv) if isinstance(selector_cv, list) else list(selector_cv.split(X_train, y_train))
-    selector_fit = run_timed_elasticnet_selector_fit(
-        X_scaled=X_scaled,
-        y_train=y_train.to_numpy(dtype=float),
-        l1_ratio=parse_l1_grid(args.selector_l1_ratio_grid),
-        alphas=regularization_grid(args.selector_alpha_min_log10, args.selector_alpha_max_log10, args.selector_alpha_grid_size),
-        cv_splits=cv_splits,
-        max_iter=args.selector_max_iter,
-        random_seed=args.random_seed,
-        timeout_seconds=float(args.selector_elasticnet_timeout_seconds),
+    selector_fit: dict[str, Any]
+    auto_rf_large_dataset = False
+    predicted_selector_seconds = estimate_elasticnet_selector_seconds_from_dataset_size(
+        int(len(y_train)),
+        log10_slope=float(getattr(args, "selector_auto_rf_log10_slope", 1.225)),
+        log10_intercept=float(getattr(args, "selector_auto_rf_log10_intercept", -0.658)),
     )
+    auto_rf_threshold_seconds = float(getattr(args, "selector_auto_rf_threshold_seconds", 7200.0))
+    auto_rf_threshold_size = elasticnet_selector_timeout_dataset_size_threshold(
+        auto_rf_threshold_seconds,
+        log10_slope=float(getattr(args, "selector_auto_rf_log10_slope", 1.225)),
+        log10_intercept=float(getattr(args, "selector_auto_rf_log10_intercept", -0.658)),
+    )
+    if bool(getattr(args, "selector_auto_rf_by_dataset_size", True)):
+        if (
+            np.isfinite(predicted_selector_seconds)
+            and np.isfinite(auto_rf_threshold_seconds)
+            and predicted_selector_seconds > auto_rf_threshold_seconds
+        ):
+            auto_rf_large_dataset = True
+            selector_fit = {
+                "ok": False,
+                "timed_out": False,
+                "error": (
+                    "ElasticNetCV selector preemptively skipped due to dataset-size runtime estimate "
+                    f"({predicted_selector_seconds:,.0f}s > {auto_rf_threshold_seconds:,.0f}s threshold)."
+                ),
+            }
+            threshold_size_text = (
+                f"{int(round(auto_rf_threshold_size)):,}"
+                if np.isfinite(auto_rf_threshold_size)
+                else "unknown"
+            )
+            print(
+                "[selector] ElasticNetCV predicted runtime exceeds threshold; "
+                f"using RandomForest feature importance by default "
+                f"(n={int(len(y_train)):,}, estimate={predicted_selector_seconds:,.0f}s, "
+                f"threshold={auto_rf_threshold_seconds:,.0f}s, threshold_n~{threshold_size_text}).",
+                flush=True,
+            )
+        else:
+            selector_fit = run_timed_elasticnet_selector_fit(
+                X_scaled=X_scaled,
+                y_train=y_train.to_numpy(dtype=float),
+                l1_ratio=parse_l1_grid(args.selector_l1_ratio_grid),
+                alphas=regularization_grid(args.selector_alpha_min_log10, args.selector_alpha_max_log10, args.selector_alpha_grid_size),
+                cv_splits=cv_splits,
+                max_iter=args.selector_max_iter,
+                random_seed=args.random_seed,
+                timeout_seconds=float(args.selector_elasticnet_timeout_seconds),
+            )
+    else:
+        selector_fit = run_timed_elasticnet_selector_fit(
+            X_scaled=X_scaled,
+            y_train=y_train.to_numpy(dtype=float),
+            l1_ratio=parse_l1_grid(args.selector_l1_ratio_grid),
+            alphas=regularization_grid(args.selector_alpha_min_log10, args.selector_alpha_max_log10, args.selector_alpha_grid_size),
+            cv_splits=cv_splits,
+            max_iter=args.selector_max_iter,
+            random_seed=args.random_seed,
+            timeout_seconds=float(args.selector_elasticnet_timeout_seconds),
+        )
 
     if bool(selector_fit.get("ok")):
         coef = np.asarray(selector_fit["coef"], dtype=float)
@@ -1675,6 +2416,7 @@ def select_features(
         return X_train[columns].copy(), X_test[columns].copy(), {
             "selector_method": "elasticnet_cv",
             "selector_timed_out": False,
+            "selector_auto_rf_large_dataset_triggered": bool(auto_rf_large_dataset),
             "selected_feature_count": int(len(columns)),
             "original_feature_count": int(X_train.shape[1]),
             "selector_alpha": float(selector_fit["alpha"]),
@@ -1682,6 +2424,13 @@ def select_features(
             "selector_n_iter": int(selector_fit["n_iter"]),
             "selector_cv_folds": int(selector_cv_folds),
             "selector_cv_split_strategy": selector_cv_strategy,
+            "selector_predicted_elasticnet_seconds": (
+                float(predicted_selector_seconds) if np.isfinite(predicted_selector_seconds) else np.nan
+            ),
+            "selector_auto_rf_threshold_seconds": float(auto_rf_threshold_seconds),
+            "selector_auto_rf_threshold_dataset_size": (
+                float(auto_rf_threshold_size) if np.isfinite(auto_rf_threshold_size) else np.nan
+            ),
             "selected_features": columns,
             "selector_coefficients": coef_df.sort_values("abs_coefficient", ascending=False),
             "max_selected_features": int(max_features),
@@ -1724,6 +2473,7 @@ def select_features(
     return X_train[columns].copy(), X_test[columns].copy(), {
         "selector_method": "random_forest_importance_fallback",
         "selector_timed_out": bool(selector_fit.get("timed_out", False)),
+        "selector_auto_rf_large_dataset_triggered": bool(auto_rf_large_dataset),
         "selected_feature_count": int(len(columns)),
         "original_feature_count": int(X_train.shape[1]),
         "selector_alpha": np.nan,
@@ -1731,6 +2481,13 @@ def select_features(
         "selector_n_iter": np.nan,
         "selector_cv_folds": int(selector_cv_folds),
         "selector_cv_split_strategy": selector_cv_strategy,
+        "selector_predicted_elasticnet_seconds": (
+            float(predicted_selector_seconds) if np.isfinite(predicted_selector_seconds) else np.nan
+        ),
+        "selector_auto_rf_threshold_seconds": float(auto_rf_threshold_seconds),
+        "selector_auto_rf_threshold_dataset_size": (
+            float(auto_rf_threshold_size) if np.isfinite(auto_rf_threshold_size) else np.nan
+        ),
         "selected_features": columns,
         "selector_coefficients": imp_df.sort_values("importance", ascending=False),
         "max_selected_features": int(max_features),
@@ -1764,6 +2521,11 @@ def conventional_models(
     smiles_train: pd.Series,
     split_strategy_for_cv: str | None = None,
 ) -> dict[str, Any]:
+    finite_numeric = FunctionTransformer(
+        np.nan_to_num,
+        kw_args={"nan": np.nan, "posinf": np.nan, "neginf": np.nan},
+        validate=False,
+    )
     elasticnet_cv, elasticnet_cv_folds, elasticnet_cv_strategy = make_reusable_inner_cv_splitter(
         split_strategy=str(split_strategy_for_cv or args.split_strategy),
         cv_folds=args.elasticnet_cv_folds,
@@ -1795,6 +2557,68 @@ def conventional_models(
             ]
         ),
         "Random forest": RandomForestRegressor(n_estimators=400, random_state=args.random_seed, n_jobs=1),
+        "Extra trees": ExtraTreesRegressor(
+            n_estimators=500,
+            random_state=args.random_seed,
+            n_jobs=1,
+        ),
+        "HistGradientBoosting": Pipeline(
+            [
+                ("finite", finite_numeric),
+                ("imputer", SimpleImputer(strategy="median")),
+                (
+                    "model",
+                    HistGradientBoostingRegressor(
+                        learning_rate=0.05,
+                        max_iter=500,
+                        max_depth=8,
+                        random_state=args.random_seed,
+                    ),
+                ),
+            ]
+        ),
+        "Voting Regressor (KNN, SVM)": VotingRegressor(
+            estimators=[
+                (
+                    "knn",
+                    Pipeline(
+                        [
+                            ("imputer", SimpleImputer(strategy="median")),
+                            ("scaler", StandardScaler()),
+                            ("model", KNeighborsRegressor(n_neighbors=15, weights="distance")),
+                        ]
+                    ),
+                ),
+                (
+                    "svr",
+                    Pipeline(
+                        [
+                            ("imputer", SimpleImputer(strategy="median")),
+                            ("scaler", StandardScaler()),
+                            ("model", SVR(C=10.0, epsilon=0.1, gamma="scale")),
+                        ]
+                    ),
+                ),
+            ]
+        ),
+        "Tabular MLP": Pipeline(
+            [
+                ("imputer", SimpleImputer(strategy="median")),
+                ("scaler", StandardScaler()),
+                (
+                    "model",
+                    MLPRegressor(
+                        hidden_layer_sizes=(512, 256),
+                        activation="relu",
+                        solver="adam",
+                        alpha=1e-4,
+                        learning_rate_init=1e-3,
+                        max_iter=300,
+                        random_state=args.random_seed,
+                    ),
+                ),
+            ]
+        ),
     }
     if XGBRegressor is not None:
         models["XGBoost"] = XGBRegressor(
@@ -1804,6 +2628,16 @@ def conventional_models(
             subsample=0.9,
             colsample_bytree=0.9,
             objective="reg:squarederror",
+            random_state=args.random_seed,
+            n_jobs=1,
+        )
+    if LGBMRegressor is not None:
+        models["LightGBM"] = LGBMRegressor(
+            n_estimators=500,
+            learning_rate=0.05,
+            num_leaves=63,
+            subsample=0.9,
+            colsample_bytree=0.9,
             random_state=args.random_seed,
             n_jobs=1,
         )
@@ -1823,6 +2657,18 @@ def conventional_models(
             loss_function="RMSE",
             random_seed=args.random_seed,
             verbose=False,
+        )
+    if (
+        bool(getattr(args, "run_tabpfn", False))
+        and TabPFNRegressor is not None
+        and int(X_train.shape[0]) <= int(getattr(args, "tabpfn_max_train_rows", 1000))
+    ):
+        models["TabPFNRegressor"] = Pipeline(
+            [
+                ("imputer", SimpleImputer(strategy="median")),
+                ("scaler", StandardScaler()),
+                ("model", TabPFNRegressor()),
+            ]
         )
     models["_elasticnet_cv_meta"] = {
         "elasticnet_cv_folds": int(elasticnet_cv_folds),
@@ -1882,7 +2728,7 @@ def evaluate_model(
     primary_cv_values = scores.get("test_primary")
     if primary_cv_values is not None and len(primary_cv_values):
         primary_cv = float(np.mean(primary_cv_values))
-        if primary_metric in {"rmse", "mae"}:
+        if primary_metric in {"rmse", "mse", "mean_squared_error", "mae"}:
             primary_cv = float(abs(primary_cv))
     else:
         primary_cv = np.nan
@@ -2044,6 +2890,9 @@ def run_simple_ga(
         cv_folds=args.ga_cv_folds,
         random_seed=args.random_seed,
     )
+    cv_splits = list(cv) if isinstance(cv, list) else list(cv.split(X_train, y_train))
+    if not cv_splits:
+        raise ValueError("GA tuning could not build any cross-validation splits.")
 
     def random_individual():
         return {key: sample_value(space[key], rng) for key in keys}
@@ -2051,7 +2900,7 @@ def run_simple_ga(
     def score(individual):
         estimator = build_estimator(individual)
         rmses = []
-        for train_idx, valid_idx in cv.split(X_train, y_train):
+        for train_idx, valid_idx in cv_splits:
             fitted = clone(estimator)
             fitted.fit(X_train.iloc[train_idx], y_train.iloc[train_idx])
             pred = np.asarray(fitted.predict(X_train.iloc[valid_idx])).reshape(-1)
@@ -2162,12 +3011,32 @@ def _is_maplight_store_access_error(exc: Exception) -> bool:
     return any(marker in message for marker in markers)
 
 
+@contextlib.contextmanager
+def _suppress_maplight_store_probe_noise():
+    noisy_loggers = ("gcsfs", "fsspec", "google.auth", "google.cloud")
+    prior_states: list[tuple[logging.Logger, int, bool]] = []
+    for logger_name in noisy_loggers:
+        logger = logging.getLogger(logger_name)
+        prior_states.append((logger, logger.level, logger.disabled))
+        logger.disabled = True
+    probe_stderr = io.StringIO()
+    probe_stdout = io.StringIO()
+    try:
+        with contextlib.redirect_stderr(probe_stderr), contextlib.redirect_stdout(probe_stdout):
+            yield
+    finally:
+        for logger, level, disabled in prior_states:
+            logger.setLevel(level)
+            logger.disabled = disabled
+
+
 def _build_maplight_gnn_embedder(kind: str = "gin_supervised_masking") -> tuple[Callable[[list[str]], list[Any]], str]:
     _patch_torchdata_dill_available()
     from molfeat.trans.pretrained import PretrainedDGLTransformer
 
     try:
-        transformer = PretrainedDGLTransformer(kind=kind, dtype=float)
+        with _suppress_maplight_store_probe_noise():
+            transformer = PretrainedDGLTransformer(kind=kind, dtype=float)
 
         def _embed_with_molfeat(smiles_values: list[str]):
             return transformer(smiles_values)
@@ -2176,6 +3045,10 @@ def _build_maplight_gnn_embedder(kind: str = "gin_supervised_masking") -> tuple[
     except Exception as primary_exc:
         if not _is_maplight_store_access_error(primary_exc):
             raise
+        print(
+            "MapLight + GNN note: molfeat store access unavailable; switching to dgllife-direct fallback.",
+            flush=True,
+        )
         try:
             import dgl
             import dgllife
@@ -2447,8 +3320,40 @@ def _run_chemprop_command(command_prefix: list[str], command_args: list[str], de
         )
 
 
+def _align_predictions_by_smiles_occurrence(
+    expected_smiles: pd.Series,
+    actual_smiles: pd.Series,
+    pred_values: pd.Series,
+) -> np.ndarray | None:
+    expected_df = pd.DataFrame({"smiles": pd.Series(expected_smiles, dtype=str).str.strip()})
+    actual_df = pd.DataFrame(
+        {
+            "smiles": pd.Series(actual_smiles, dtype=str).str.strip(),
+            "predicted": pd.to_numeric(pred_values, errors="coerce"),
+        }
+    )
+    expected_df["_occurrence"] = expected_df.groupby("smiles", sort=False).cumcount()
+    expected_df["_expected_row"] = np.arange(len(expected_df), dtype=int)
+    actual_df["_occurrence"] = actual_df.groupby("smiles", sort=False).cumcount()
+    merged = expected_df.merge(
+        actual_df,
+        on=["smiles", "_occurrence"],
+        how="left",
+        sort=False,
+        validate="one_to_one",
+    )
+    if merged["predicted"].isna().any():
+        return None
+    aligned = merged.sort_values("_expected_row")["predicted"].to_numpy(dtype=float)
+    if len(aligned) != len(expected_df):
+        return None
+    return np.asarray(aligned, dtype=float)
+
+
 def _extract_chemprop_predictions(preds_csv_path: Path, expected_smiles: pd.Series) -> np.ndarray:
     preds_df = pd.read_csv(preds_csv_path)
+    if preds_df.empty:
+        raise ValueError(f"Chemprop prediction file is empty: {preds_csv_path}")
     smiles_col = None
     for candidate in ["SMILES", "smiles", "Smiles"]:
         if candidate in preds_df.columns:
@@ -2463,26 +3368,62 @@ def _extract_chemprop_predictions(preds_csv_path: Path, expected_smiles: pd.Seri
             prediction_cols = [col for col in non_smiles_cols if str(col) != "split"]
     if not prediction_cols:
         raise ValueError(f"Could not identify a prediction column in Chemprop output: {list(preds_df.columns)}")
-    pred_values = pd.to_numeric(preds_df[prediction_cols[0]], errors="coerce")
-    if pred_values.isna().any():
-        raise ValueError("Chemprop prediction output contains non-numeric values.")
+    prediction_col = prediction_cols[0]
+    pred_values = pd.to_numeric(preds_df[prediction_col], errors="coerce")
 
     expected_smiles = pd.Series(expected_smiles, dtype=str).reset_index(drop=True)
     if smiles_col is not None:
-        actual_smiles = preds_df[smiles_col].astype(str).reset_index(drop=True)
-        if len(actual_smiles) == len(expected_smiles) and set(actual_smiles.tolist()) == set(expected_smiles.tolist()):
-            aligned = (
-                pd.DataFrame({"smiles": actual_smiles, "predicted": pred_values.to_numpy(dtype=float)})
-                .set_index("smiles")
-                .loc[expected_smiles.tolist(), "predicted"]
-                .to_numpy(dtype=float)
-            )
-            return np.asarray(aligned, dtype=float)
+        actual_smiles = preds_df[smiles_col].astype(str).str.strip().reset_index(drop=True)
+        expected_smiles = expected_smiles.astype(str).str.strip().reset_index(drop=True)
+
+        valid_mask = pred_values.notna()
+        if not bool(valid_mask.all()):
+            preds_df = preds_df.loc[valid_mask].reset_index(drop=True)
+            pred_values = pred_values.loc[valid_mask].reset_index(drop=True)
+            actual_smiles = actual_smiles.loc[valid_mask].reset_index(drop=True)
+
+        if len(actual_smiles) == len(expected_smiles) and actual_smiles.equals(expected_smiles):
+            return pred_values.to_numpy(dtype=float)
+
+        aligned = _align_predictions_by_smiles_occurrence(
+            expected_smiles=expected_smiles,
+            actual_smiles=actual_smiles,
+            pred_values=pred_values,
+        )
+        if aligned is not None:
+            return aligned
+
+        # Fallback for occasional Chemprop CSV append behavior: preserve order and clip
+        # when prefix rows still align exactly to the expected split.
+        if len(actual_smiles) >= len(expected_smiles):
+            actual_prefix = actual_smiles.iloc[: len(expected_smiles)].reset_index(drop=True)
+            if actual_prefix.equals(expected_smiles):
+                return pred_values.iloc[: len(expected_smiles)].to_numpy(dtype=float)
+
+    if pred_values.isna().any():
+        raise ValueError(
+            "Chemprop prediction output contains non-numeric values "
+            f"(file={preds_csv_path}, prediction_col={prediction_col})."
+        )
+    if len(pred_values) > len(expected_smiles):
+        pred_values = pred_values.iloc[: len(expected_smiles)].reset_index(drop=True)
     if len(pred_values) != len(expected_smiles):
         raise ValueError(
-            f"Chemprop prediction length mismatch: got {len(pred_values)} rows, expected {len(expected_smiles)}."
+            f"Chemprop prediction length mismatch: got {len(pred_values)} rows, expected {len(expected_smiles)} "
+            f"(file={preds_csv_path}, prediction_col={prediction_col})."
         )
     return pred_values.to_numpy(dtype=float)
+
+
+def _is_chemprop_descriptor_scale_error(exc: Exception) -> bool:
+    message = str(exc).lower()
+    markers = [
+        "input x contains infinity",
+        "value too large for dtype",
+        "standardscaler",
+        "check_array",
+    ]
+    return any(marker in message for marker in markers)
 
 
 def train_chemprop_model(
@@ -2502,6 +3443,7 @@ def train_chemprop_model(
     architecture_key: str = "dmpnn",
     workflow_label: str = "Chemprop v2",
     extra_train_args: list[str] | None = None,
+    use_selected_descriptors: bool = False,
 ) -> tuple[dict[str, Any], np.ndarray, np.ndarray]:
     command_prefix = _resolve_chemprop_command()
     featurizer_list = [str(item).strip() for item in list(featurizers or []) if str(item).strip()]
@@ -2521,12 +3463,45 @@ def train_chemprop_model(
     train_df.to_csv(train_csv, index=False)
     test_df.to_csv(test_csv, index=False)
 
+    descriptor_args_train: list[str] = []
+    descriptor_args_train_predict: list[str] = []
+    descriptor_args_test_predict: list[str] = []
+    selected_descriptor_count = 0
+    selected_descriptor_columns_sha256 = ""
+    if bool(use_selected_descriptors):
+        train_descriptor_path = save_dir / "train_descriptors.npz"
+        test_descriptor_path = save_dir / "test_descriptors.npz"
+        selected_descriptor_columns = [str(col) for col in X_train.columns]
+        selected_descriptor_count = int(len(selected_descriptor_columns))
+        selected_descriptor_columns_sha256 = hashlib.sha256(
+            "||".join(selected_descriptor_columns).encode("utf-8")
+        ).hexdigest()
+        train_descriptor_values = np.nan_to_num(
+            X_train.to_numpy(dtype=np.float32, copy=True),
+            nan=0.0,
+            posinf=0.0,
+            neginf=0.0,
+        )
+        test_descriptor_values = np.nan_to_num(
+            X_test.to_numpy(dtype=np.float32, copy=True),
+            nan=0.0,
+            posinf=0.0,
+            neginf=0.0,
+        )
+        np.savez(train_descriptor_path, train_descriptor_values)
+        np.savez(test_descriptor_path, test_descriptor_values)
+        descriptor_args_train = ["--descriptors-path", str(train_descriptor_path)]
+        descriptor_args_train_predict = ["--descriptors-path", str(train_descriptor_path)]
+        descriptor_args_test_predict = ["--descriptors-path", str(test_descriptor_path)]
+
     pred_train: np.ndarray | None = None
     pred_test: np.ndarray | None = None
     feature_args: list[str] = []
     if featurizer_list:
         feature_args = ["--molecule-featurizers", *featurizer_list]
     chemprop_split_mode = "SCAFFOLD_BALANCED" if str(split_strategy_for_cv).strip().lower() == "scaffold" else "RANDOM"
+    effective_featurizers = list(featurizer_list)
+    descriptor_fallback_applied = False
 
     if bool(args.chemprop_reuse_model_cache) and train_preds_path.exists() and test_preds_path.exists():
         try:
@@ -2538,8 +3513,16 @@ def train_chemprop_model(
             pred_test = None
 
     if pred_train is None or pred_test is None:
+        def _remove_stale_prediction_file(path: Path) -> None:
+            try:
+                if path.exists():
+                    path.unlink()
+            except Exception:
+                pass
+
         if bool(args.chemprop_reuse_model_cache):
             try:
+                _remove_stale_prediction_file(train_preds_path)
                 _run_chemprop_command(
                     command_prefix,
                     [
@@ -2549,9 +3532,11 @@ def train_chemprop_model(
                         "--model-paths", str(save_dir),
                         "--preds-path", str(train_preds_path),
                         *feature_args,
+                        *descriptor_args_train_predict,
                     ],
                     description="train-set prediction (cached model)",
                 )
+                _remove_stale_prediction_file(test_preds_path)
                 _run_chemprop_command(
                     command_prefix,
                     [
@@ -2561,6 +3546,7 @@ def train_chemprop_model(
                         "--model-paths", str(save_dir),
                         "--preds-path", str(test_preds_path),
                         *feature_args,
+                        *descriptor_args_test_predict,
                     ],
                     description="test-set prediction (cached model)",
                 )
@@ -2571,54 +3557,84 @@ def train_chemprop_model(
                 pred_test = None
 
     if pred_train is None or pred_test is None:
-        _run_chemprop_command(
-            command_prefix,
-            [
-                "train",
-                "--data-path", str(train_csv),
-                "--smiles-columns", "SMILES",
-                "--target-columns", "TARGET",
-                "--task-type", "regression",
-                "--epochs", str(int(args.chemprop_epochs)),
-                "--batch-size", str(int(args.chemprop_batch_size)),
-                "--num-workers", str(int(args.chemprop_num_workers)),
-                "--ensemble-size", str(int(args.chemprop_ensemble_size)),
-                "--pytorch-seed", str(int(args.chemprop_random_seed)),
-                "--data-seed", str(int(args.chemprop_random_seed)),
-                "--split", str(chemprop_split_mode),
-                "--split-sizes", "0.9", "0.1", "0.0",
-                "--output-dir", str(save_dir),
-                *train_extra_args,
-                *feature_args,
-            ],
-            description="training",
-        )
-        _run_chemprop_command(
-            command_prefix,
-            [
-                "predict",
-                "--test-path", str(train_csv),
-                "--smiles-columns", "SMILES",
-                "--model-paths", str(save_dir),
-                "--preds-path", str(train_preds_path),
-                *feature_args,
-            ],
-            description="train-set prediction",
-        )
-        _run_chemprop_command(
-            command_prefix,
-            [
-                "predict",
-                "--test-path", str(test_csv),
-                "--smiles-columns", "SMILES",
-                "--model-paths", str(save_dir),
-                "--preds-path", str(test_preds_path),
-                *feature_args,
-            ],
-            description="test-set prediction",
-        )
-        pred_train = _extract_chemprop_predictions(train_preds_path, train_df["SMILES"].astype(str))
-        pred_test = _extract_chemprop_predictions(test_preds_path, test_df["SMILES"].astype(str))
+        def _train_and_predict_with_feature_args(active_feature_args: list[str], *, retry_suffix: str = "") -> tuple[np.ndarray, np.ndarray]:
+            _run_chemprop_command(
+                command_prefix,
+                [
+                    "train",
+                    "--data-path", str(train_csv),
+                    "--smiles-columns", "SMILES",
+                    "--target-columns", "TARGET",
+                    "--task-type", "regression",
+                    "--epochs", str(int(args.chemprop_epochs)),
+                    "--batch-size", str(int(args.chemprop_batch_size)),
+                    "--num-workers", str(int(args.chemprop_num_workers)),
+                    "--ensemble-size", str(int(args.chemprop_ensemble_size)),
+                    "--pytorch-seed", str(int(args.chemprop_random_seed)),
+                    "--data-seed", str(int(args.chemprop_random_seed)),
+                    "--split", str(chemprop_split_mode),
+                    "--split-sizes", "0.9", "0.1", "0.0",
+                    "--output-dir", str(save_dir),
+                    *train_extra_args,
+                    *active_feature_args,
+                    *descriptor_args_train,
+                ],
+                description=f"training{retry_suffix}",
+            )
+            _remove_stale_prediction_file(train_preds_path)
+            _run_chemprop_command(
+                command_prefix,
+                [
+                    "predict",
+                    "--test-path", str(train_csv),
+                    "--smiles-columns", "SMILES",
+                    "--model-paths", str(save_dir),
+                    "--preds-path", str(train_preds_path),
+                    *active_feature_args,
+                    *descriptor_args_train_predict,
+                ],
+                description=f"train-set prediction{retry_suffix}",
+            )
+            _remove_stale_prediction_file(test_preds_path)
+            _run_chemprop_command(
+                command_prefix,
+                [
+                    "predict",
+                    "--test-path", str(test_csv),
+                    "--smiles-columns", "SMILES",
+                    "--model-paths", str(save_dir),
+                    "--preds-path", str(test_preds_path),
+                    *active_feature_args,
+                    *descriptor_args_test_predict,
+                ],
+                description=f"test-set prediction{retry_suffix}",
+            )
+            return (
+                _extract_chemprop_predictions(train_preds_path, train_df["SMILES"].astype(str)),
+                _extract_chemprop_predictions(test_preds_path, test_df["SMILES"].astype(str)),
+            )
+
+        try:
+            pred_train, pred_test = _train_and_predict_with_feature_args(feature_args)
+        except Exception as exc:
+            can_retry_without_rdkit2d = (
+                "rdkit_2d" in {item.strip() for item in featurizer_list}
+                and bool(feature_args)
+                and _is_chemprop_descriptor_scale_error(exc)
+            )
+            if not can_retry_without_rdkit2d:
+                raise
+            descriptor_fallback_applied = True
+            effective_featurizers = [item for item in featurizer_list if str(item).strip() != "rdkit_2d"]
+            feature_args = ["--molecule-featurizers", *effective_featurizers] if effective_featurizers else []
+            print(
+                "[Chemprop] detected non-finite RDKit2D descriptor values; retrying training without rdkit_2d features.",
+                flush=True,
+            )
+            pred_train, pred_test = _train_and_predict_with_feature_args(
+                feature_args,
+                retry_suffix=" (retry without rdkit_2d)",
+            )
 
     pred_train = np.asarray(pred_train, dtype=float).reshape(-1)
     pred_test = np.asarray(pred_test, dtype=float).reshape(-1)
@@ -2653,7 +3669,11 @@ def train_chemprop_model(
         "chemprop_architecture": str(architecture_slug),
         "chemprop_variant_tag": str(variant_slug),
         "chemprop_train_extra_args": " ".join(train_extra_args),
-        "chemprop_molecule_featurizers": ",".join(featurizer_list),
+        "chemprop_molecule_featurizers": ",".join(effective_featurizers),
+        "chemprop_rdkit2d_fallback_applied": bool(descriptor_fallback_applied),
+        "chemprop_uses_selected_descriptors": bool(use_selected_descriptors),
+        "chemprop_selected_descriptor_count": int(selected_descriptor_count),
+        "chemprop_selected_descriptor_columns_sha256": str(selected_descriptor_columns_sha256),
     }
     row.update(regression_metrics(y_train, pred_train, y_test, pred_test))
     row["primary_metric_value"] = float(
@@ -2664,6 +3684,113 @@ def train_chemprop_model(
         )
     )
     return row, pred_train, pred_test
+
+
+def train_unimol_v1_model(
+    *,
+    label: str,
+    y_train: pd.Series,
+    y_test: pd.Series,
+    smiles_train: pd.Series,
+    smiles_test: pd.Series,
+    args: argparse.Namespace,
+    dataset_dir: Path,
+) -> tuple[dict[str, Any], np.ndarray, np.ndarray]:
+    try:
+        from unimol_tools import MolPredict, MolTrain
+    except Exception as exc:
+        raise RuntimeError(
+            "Uni-Mol V1 requires `unimol_tools` in the active environment."
+        ) from exc
+
+    save_dir = dataset_dir / "unimol_v1" / f"seed_{int(args.random_seed)}"
+    save_dir.mkdir(parents=True, exist_ok=True)
+    train_csv = save_dir / "train_unimol_v1.csv"
+    test_csv = save_dir / "test_unimol_v1.csv"
+    train_pred_cache = save_dir / "pred_train.npy"
+    test_pred_cache = save_dir / "pred_test.npy"
+
+    train_df = pd.DataFrame(
+        {
+            "SMILES": pd.Series(smiles_train, dtype=str).astype(str).reset_index(drop=True),
+            "TARGET": pd.Series(y_train, dtype=float).reset_index(drop=True),
+        }
+    )
+    test_df = pd.DataFrame(
+        {
+            "SMILES": pd.Series(smiles_test, dtype=str).astype(str).reset_index(drop=True),
+            "TARGET": pd.Series(y_test, dtype=float).reset_index(drop=True),
+        }
+    )
+    train_df.to_csv(train_csv, index=False)
+    test_df.to_csv(test_csv, index=False)
+
+    pred_train: np.ndarray | None = None
+    pred_test: np.ndarray | None = None
+    if bool(getattr(args, "unimol_reuse_model_cache", True)):
+        if train_pred_cache.exists() and test_pred_cache.exists():
+            try:
+                pred_train = np.asarray(np.load(train_pred_cache), dtype=float).reshape(-1)
+                pred_test = np.asarray(np.load(test_pred_cache), dtype=float).reshape(-1)
+                if len(pred_train) != len(train_df) or len(pred_test) != len(test_df):
+                    pred_train, pred_test = None, None
+            except Exception:
+                pred_train, pred_test = None, None
+
+    if pred_train is None or pred_test is None:
+        trainer = MolTrain(
+            task="regression",
+            data_type="molecule",
+            model_name="unimolv1",
+            epochs=int(args.unimol_epochs),
+            learning_rate=float(args.unimol_learning_rate),
+            batch_size=int(args.unimol_batch_size),
+            early_stopping=int(args.unimol_early_stopping),
+            metrics="mse",
+            split=str(args.unimol_internal_split),
+            save_path=str(save_dir),
+            num_workers=int(args.unimol_num_workers),
+        )
+        trainer.fit(str(train_csv))
+        predictor = MolPredict(load_model=str(save_dir))
+        pred_train = np.asarray(predictor.predict(str(train_csv))).reshape(-1)
+        pred_test = np.asarray(predictor.predict(str(test_csv))).reshape(-1)
+        try:
+            np.save(train_pred_cache, np.asarray(pred_train, dtype=float))
+            np.save(test_pred_cache, np.asarray(pred_test, dtype=float))
+        except Exception:
+            pass
+
+    execution_mode = "GPU" if detect_gpu_available() else "CPU"
+    primary_metric = current_dataset_primary_metric("rmse")
+    row = {
+        "model": str(label),
+        "workflow": "Uni-Mol",
+        "execution_mode": execution_mode,
+        "cv_folds": np.nan,
+        "cv_split_strategy": "",
+        "cv_r2": np.nan,
+        "cv_rmse": np.nan,
+        "cv_mae": np.nan,
+        "primary_metric": primary_metric,
+        "cv_primary": np.nan,
+        "unimol_model_dir": str(save_dir),
+        "unimol_internal_split": str(args.unimol_internal_split),
+        "unimol_epochs": int(args.unimol_epochs),
+        "unimol_learning_rate": float(args.unimol_learning_rate),
+        "unimol_batch_size": int(args.unimol_batch_size),
+        "unimol_early_stopping": int(args.unimol_early_stopping),
+        "unimol_num_workers": int(args.unimol_num_workers),
+    }
+    row.update(regression_metrics(y_train, pred_train, y_test, pred_test))
+    row["primary_metric_value"] = float(
+        compute_primary_metric(
+            primary_metric,
+            pd.Series(y_test, dtype=float).to_numpy(dtype=float),
+            np.asarray(pred_test, dtype=float),
+        )
+    )
+    return row, np.asarray(pred_train, dtype=float), np.asarray(pred_test, dtype=float)
 
 
 def build_ensemble_result(
@@ -2812,17 +3939,30 @@ def build_ensemble_result(
         weight_df = pd.DataFrame({"Model": prediction_columns, "Weight": weights, "Workflow": [payloads[name]["workflow"] for name in prediction_columns]})
 
     ensemble_rows: list[dict[str, Any]] = []
+    primary_metric = current_dataset_primary_metric("rmse")
     for model_name in prediction_columns:
         row = {"model": model_name, "workflow": str(payloads[model_name]["workflow"])}
         row.update(regression_metrics(y_meta_train, aligned_train[model_name], y_meta_test, aligned_test[model_name]))
-        row["primary_metric"] = "rmse"
-        row["primary_metric_value"] = float(math.sqrt(mean_squared_error(y_meta_test, aligned_test[model_name])))
+        row["primary_metric"] = primary_metric
+        row["primary_metric_value"] = float(
+            compute_primary_metric(
+                primary_metric,
+                np.asarray(y_meta_test, dtype=float),
+                np.asarray(aligned_test[model_name], dtype=float),
+            )
+        )
         ensemble_rows.append(row)
 
     ensemble_row = {"model": f"Ensemble ({ensemble_method_label})", "workflow": "ensemble"}
     ensemble_row.update(regression_metrics(y_meta_train, ensemble_train_pred, y_meta_test, ensemble_test_pred))
-    ensemble_row["primary_metric"] = "rmse"
-    ensemble_row["primary_metric_value"] = float(math.sqrt(mean_squared_error(y_meta_test, ensemble_test_pred)))
+    ensemble_row["primary_metric"] = primary_metric
+    ensemble_row["primary_metric_value"] = float(
+        compute_primary_metric(
+            primary_metric,
+            np.asarray(y_meta_test, dtype=float),
+            np.asarray(ensemble_test_pred, dtype=float),
+        )
+    )
     ensemble_rows.append(ensemble_row)
     ensemble_results = pd.DataFrame(ensemble_rows).sort_values(["test_rmse", "test_mae"], ascending=True).reset_index(drop=True)
     return (
@@ -2846,10 +3986,16 @@ def write_selector_outputs(dataset_dir: Path, selector_meta: dict[str, Any]) -> 
 
 def write_feature_dedup_outputs(dataset_dir: Path, dedup_meta: dict[str, Any]) -> None:
     dropped_rows = []
+    for feature_name in list(dedup_meta.get("dropped_low_variance_columns", [])):
+        dropped_rows.append({"feature": str(feature_name), "reason": "low_variance"})
+    for feature_name in list(dedup_meta.get("dropped_binary_prevalence_columns", [])):
+        dropped_rows.append({"feature": str(feature_name), "reason": "binary_prevalence"})
     for feature_name in list(dedup_meta.get("dropped_exact_columns", [])):
         dropped_rows.append({"feature": str(feature_name), "reason": "exact_duplicate"})
     for feature_name in list(dedup_meta.get("dropped_near_columns", [])):
         dropped_rows.append({"feature": str(feature_name), "reason": "near_duplicate"})
+    for feature_name in list(dedup_meta.get("dropped_moderate_columns", [])):
+        dropped_rows.append({"feature": str(feature_name), "reason": "moderate_correlation"})
     pd.DataFrame(dropped_rows, columns=["feature", "reason"]).to_csv(
         dataset_dir / "dropped_duplicate_features.csv",
         index=False,
@@ -2959,12 +4105,24 @@ def write_dataset_status(dataset_dir: Path, payload: dict[str, Any]) -> None:
 
 
 def selected_conventional_model_names(args: argparse.Namespace) -> list[str]:
-    names = ["ElasticNetCV", "SVR", "Random forest"]
+    names = [
+        "ElasticNetCV",
+        "SVR",
+        "Random forest",
+        "Extra trees",
+        "HistGradientBoosting",
+        "Voting Regressor (KNN, SVM)",
+        "Tabular MLP",
+    ]
     if XGBRegressor is not None:
         names.append("XGBoost")
+    if LGBMRegressor is not None:
+        names.append("LightGBM")
     if CatBoostRegressor is not None:
         names.append("CatBoost")
         names.append("MapLight CatBoost")
+    if bool(getattr(args, "run_tabpfn", False)) and TabPFNRegressor is not None:
+        names.append("TabPFNRegressor")
     return names
 
 
@@ -2978,10 +4136,12 @@ def chemprop_variant_specs(args: argparse.Namespace) -> list[dict[str, Any]]:
         architecture_keys.append("attentivefp")
     if not architecture_keys:
         return []
+    include_selected_feature_variant = bool(getattr(args, "run_chemprop_selected_features", False))
     return resolve_chemprop_architecture_specs(
         architecture_keys,
         ensemble_size=int(args.chemprop_ensemble_size),
         include_rdkit2d_extra=bool(getattr(args, "run_chemprop_rdkit2d", False)),
+        include_selected_feature_variant=include_selected_feature_variant,
     )
 
 
@@ -3013,18 +4173,96 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
                 flush=True,
             )
 
-    requested_ga_models = [model.strip() for model in args.ga_models.split(",") if model.strip()]
+    requested_ga_models = parse_comma_list(getattr(args, "ga_models_resolved", getattr(args, "ga_models", "")))
     requested_deep_stages = (
         int(bool(args.run_chemml_pytorch))
         + int(bool(args.run_chemml_tensorflow))
         + (len(chemprop_variant_specs(args)) if bool(args.run_chemprop_mpnn) else 0)
+        + int(bool(getattr(args, "run_unimol_v1", False)))
         + int(bool(args.run_maplight_gnn))
     )
     requested_ensemble_stage = int(bool(args.run_ensemble))
     total_stages = 3 + len(selected_conventional_model_names(args)) + len(requested_ga_models) + requested_deep_stages + requested_ensemble_stage
+    step_runtime_csv_path = dataset_dir / "step_runtime.csv"
+    step_runtime_json_path = dataset_dir / "step_runtime.json"
+    stage_records: list[dict[str, Any]] = []
+    active_stage_record: dict[str, Any] | None = None
+
+    def _local_timestamp() -> str:
+        return local_timestamp_text()
+
+    def _close_active_stage(default_status: str = "completed") -> None:
+        nonlocal active_stage_record
+        if active_stage_record is None:
+            return
+        ended_epoch = time.time()
+        active_stage_record["ended_at"] = _local_timestamp()
+        active_stage_record["ended_epoch"] = ended_epoch
+        active_stage_record["duration_seconds"] = round(
+            ended_epoch - float(active_stage_record.get("_started_epoch", ended_epoch)),
+            3,
+        )
+        current_status = str(active_stage_record.get("status", "")).strip().lower()
+        if current_status in {"", "running"}:
+            active_stage_record["status"] = str(default_status)
+        stage_records.append(active_stage_record)
+        active_stage_record = None
+
+    def _set_active_stage_status(status: str, error_text: str = "") -> None:
+        if active_stage_record is None:
+            return
+        active_stage_record["status"] = str(status)
+        if str(error_text).strip():
+            active_stage_record["error"] = str(error_text).strip()
+
+    def _stage_runtime_rows_snapshot() -> list[dict[str, Any]]:
+        rows = list(stage_records)
+        if active_stage_record is not None:
+            now_epoch = time.time()
+            running_copy = dict(active_stage_record)
+            running_copy["ended_at"] = _local_timestamp()
+            running_copy["ended_epoch"] = now_epoch
+            running_copy["duration_seconds"] = round(
+                now_epoch - float(running_copy.get("_started_epoch", now_epoch)),
+                3,
+            )
+            if not str(running_copy.get("status", "")).strip():
+                running_copy["status"] = "running"
+            rows.append(running_copy)
+        clean_rows: list[dict[str, Any]] = []
+        for row in rows:
+            clean_rows.append(
+                {
+                    key: value
+                    for key, value in row.items()
+                    if not str(key).startswith("_")
+                }
+            )
+        return clean_rows
+
+    def _write_stage_runtime_outputs() -> None:
+        runtime_rows = _stage_runtime_rows_snapshot()
+        pd.DataFrame(runtime_rows).to_csv(step_runtime_csv_path, index=False)
+        step_runtime_json_path.write_text(
+            json.dumps(runtime_rows, indent=2, default=str),
+            encoding="utf-8",
+        )
 
     def stage_message(stage_index: int, label: str) -> None:
-        stage_started_at = time.strftime("%Y-%m-%d %H:%M:%S %Z")
+        nonlocal active_stage_record
+        _close_active_stage(default_status="completed")
+        stage_started_at = _local_timestamp()
+        stage_started_epoch = time.time()
+        active_stage_record = {
+            "dataset": dataset_id,
+            "stage_index": int(stage_index),
+            "total_stages": int(total_stages),
+            "stage_label": str(label),
+            "started_at": stage_started_at,
+            "started_epoch": stage_started_epoch,
+            "_started_epoch": stage_started_epoch,
+            "status": "running",
+        }
         elapsed = time.time() - start
         avg_stage = elapsed / max(1, stage_index - 1) if stage_index > 1 else 0.0
         remaining = max(0, total_stages - stage_index + 1)
@@ -3034,13 +4272,18 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
             f"\n{prefix}{dataset_id} | stage {stage_index}/{total_stages}: {label} "
             f"| started {stage_started_at} | elapsed {format_seconds(elapsed)} | dataset ETA {format_seconds(eta)}"
         )
+        _write_stage_runtime_outputs()
 
     metrics_rows, prediction_tables, ga_history_tables = load_partial_dataset_artifacts(dataset_dir)
     prediction_payloads = rebuild_prediction_payloads(prediction_tables)
+    def _row_has_error(row: dict[str, Any]) -> bool:
+        error_text = str(row.get("error", "")).strip().lower()
+        return bool(error_text and error_text not in {"nan", "none"})
+
     completed_model_names = {
         str(row.get("model", "")).strip()
         for row in metrics_rows
-        if str(row.get("model", "")).strip()
+        if str(row.get("model", "")).strip() and not _row_has_error(row)
     }
     if rebuild_ensemble_requested:
         original_metric_count = len(metrics_rows)
@@ -3075,7 +4318,7 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
         completed_model_names = {
             str(row.get("model", "")).strip()
             for row in metrics_rows
-            if str(row.get("model", "")).strip()
+            if str(row.get("model", "")).strip() and not _row_has_error(row)
         }
 
         removed_cached_files: list[str] = []
@@ -3109,6 +4352,7 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
             pd.concat(prediction_tables, ignore_index=True).to_csv(predictions_path, index=False)
         if ga_history_tables:
             pd.concat(ga_history_tables, ignore_index=True).to_csv(ga_history_path, index=False)
+        _write_stage_runtime_outputs()
         write_dataset_status(
             dataset_dir,
             {
@@ -3119,6 +4363,7 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
                 "checkpoint_stage": stage_label,
                 "n_metrics_rows": len(annotated_rows),
                 "n_prediction_tables": len(prediction_tables),
+                "n_stage_records": len(_stage_runtime_rows_snapshot()),
             },
         )
 
@@ -3137,6 +4382,9 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
     df, input_meta = canonicalize_frame(spec, use_log10_target)
     if len(df) < args.minimum_rows:
         print(f"[skip] {dataset_id}: only {len(df)} valid rows after cleanup")
+        _set_active_stage_status("skipped")
+        _close_active_stage(default_status="skipped")
+        _write_stage_runtime_outputs()
         write_dataset_status(dataset_dir, {"status": "skipped", "reason": "too_few_rows_after_cleanup", "n_rows": int(len(df))})
         return DatasetRunResult([], [], [], "skipped", time.time() - start)
     if args.row_limit and len(df) > args.row_limit:
@@ -3157,6 +4405,9 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
 
     if len(df) < args.minimum_rows:
         print(f"[skip] {dataset_id}: only {len(df)} valid rows after feature generation")
+        _set_active_stage_status("skipped")
+        _close_active_stage(default_status="skipped")
+        _write_stage_runtime_outputs()
         write_dataset_status(dataset_dir, {"status": "skipped", "reason": "too_few_rows_after_features", "n_rows": int(len(df))})
         return DatasetRunResult([], [], [], "skipped", time.time() - start)
 
@@ -3171,16 +4422,18 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
     split["X_train"], split["X_test"], feature_dedup_meta = drop_exact_and_near_duplicate_features(
         split["X_train"],
         split["X_test"],
-        correlation_threshold=0.999,
+        variance_threshold=1e-8,
+        binary_prevalence_min=0.005,
+        binary_prevalence_max=0.995,
     )
     dedup_dropped_count = int(feature_dedup_meta.get("dropped_feature_count", 0))
     if dedup_dropped_count > 0:
         print(
             "[feature-dedup] dropped "
             f"{dedup_dropped_count:,} feature(s) before selector/model fitting "
-            f"({int(feature_dedup_meta.get('dropped_exact_count', 0)):,} exact, "
-            f"{int(feature_dedup_meta.get('dropped_near_count', 0)):,} near-duplicate at "
-            f"|r|>{float(feature_dedup_meta.get('correlation_threshold', 0.999)):.3f}).",
+            f"({int(feature_dedup_meta.get('dropped_low_variance_count', 0)):,} low-variance, "
+            f"{int(feature_dedup_meta.get('dropped_binary_prevalence_count', 0)):,} binary-prevalence, "
+            f"{int(feature_dedup_meta.get('dropped_exact_count', 0)):,} exact-duplicate).",
             flush=True,
         )
     if str(feature_dedup_meta.get("near_duplicate_scan_error", "")).strip():
@@ -3229,9 +4482,16 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
         "original_feature_count": int(feature_dedup_meta.get("original_feature_count", selector_meta["original_feature_count"])),
         "post_dedup_feature_count": int(feature_dedup_meta.get("post_dedup_feature_count", selector_meta["original_feature_count"])),
         "feature_dedup_dropped_count": int(feature_dedup_meta.get("dropped_feature_count", 0)),
+        "feature_dedup_low_variance_count": int(feature_dedup_meta.get("dropped_low_variance_count", 0)),
+        "feature_dedup_binary_prevalence_count": int(feature_dedup_meta.get("dropped_binary_prevalence_count", 0)),
         "feature_dedup_exact_count": int(feature_dedup_meta.get("dropped_exact_count", 0)),
         "feature_dedup_near_count": int(feature_dedup_meta.get("dropped_near_count", 0)),
+        "feature_dedup_moderate_count": int(feature_dedup_meta.get("dropped_moderate_count", 0)),
         "feature_dedup_threshold": float(feature_dedup_meta.get("correlation_threshold", 0.999)),
+        "feature_dedup_moderate_threshold": float(feature_dedup_meta.get("moderate_correlation_threshold", np.nan)),
+        "feature_dedup_variance_threshold": float(feature_dedup_meta.get("variance_threshold", np.nan)),
+        "feature_dedup_binary_prevalence_min": float(feature_dedup_meta.get("binary_prevalence_min", np.nan)),
+        "feature_dedup_binary_prevalence_max": float(feature_dedup_meta.get("binary_prevalence_max", np.nan)),
         "feature_dedup_scan_warning": str(feature_dedup_meta.get("near_duplicate_scan_error", "")),
         "selected_feature_count": int(selector_meta["selected_feature_count"]),
         "selector_method": selector_meta["selector_method"],
@@ -3242,6 +4502,21 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
         "selector_cv_folds": selector_meta.get("selector_cv_folds", np.nan),
         "selector_cv_split_strategy": selector_meta.get("selector_cv_split_strategy", ""),
         "selector_max_selected_features": selector_meta.get("max_selected_features", np.nan),
+        "selector_auto_rf_large_dataset_triggered": bool(
+            selector_meta.get("selector_auto_rf_large_dataset_triggered", False)
+        ),
+        "selector_predicted_elasticnet_seconds": selector_meta.get(
+            "selector_predicted_elasticnet_seconds",
+            np.nan,
+        ),
+        "selector_auto_rf_threshold_seconds": selector_meta.get(
+            "selector_auto_rf_threshold_seconds",
+            np.nan,
+        ),
+        "selector_auto_rf_threshold_dataset_size": selector_meta.get(
+            "selector_auto_rf_threshold_dataset_size",
+            np.nan,
+        ),
         "selected_feature_families_json": json.dumps(feature_meta.get("selected_feature_families", []), default=str),
         "built_feature_families_json": json.dumps(feature_meta.get("built_feature_families", []), default=str),
         "feature_store_path": feature_meta.get("feature_store_path", ""),
@@ -3259,6 +4534,18 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
         split["smiles_train"],
         split_strategy_for_cv=cv_strategy_for_workflows,
     )
+    if bool(getattr(args, "run_tabpfn", False)):
+        if TabPFNRegressor is None:
+            print(
+                f"[info] {dataset_id} TabPFNRegressor unavailable: install `tabpfn` to enable this model.",
+                flush=True,
+            )
+        elif int(X_train.shape[0]) > int(getattr(args, "tabpfn_max_train_rows", 1000)):
+            print(
+                f"[skip] {dataset_id} TabPFNRegressor: train rows={int(X_train.shape[0])} exceeds "
+                f"--tabpfn-max-train-rows={int(getattr(args, 'tabpfn_max_train_rows', 1000))}.",
+                flush=True,
+            )
     elasticnet_cv_meta = model_bundle.pop("_elasticnet_cv_meta", {})
     model_items = list(model_bundle.items())
     for model_name, estimator in model_items:
@@ -3301,6 +4588,33 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
         else:
             model_X_train = X_train
             model_X_test = X_test
+        if model_name == "TabPFNRegressor":
+            estimated_tokens = estimate_tabpfn_tokens(
+                rows=int(model_X_train.shape[0]),
+                columns=int(model_X_train.shape[1]),
+                estimators=tabpfn_estimators_per_dataset_run(args),
+            )
+            if estimated_tokens > TABPFN_DAILY_TOKEN_BUDGET:
+                skip_reason = (
+                    f"Skipped TabPFNRegressor: estimated usage {estimated_tokens:,} tokens exceeds "
+                    f"daily budget {TABPFN_DAILY_TOKEN_BUDGET:,}. {TABPFN_DAILY_RESET_NOTE}"
+                )
+                print(f"[skip] {dataset_id} TabPFNRegressor: {skip_reason}", flush=True)
+                row = {
+                    "model": model_name,
+                    "workflow": "conventional",
+                    "error": skip_reason,
+                    "status": "skipped_tabpfn_token_budget_estimate",
+                    "tabpfn_estimated_tokens": int(estimated_tokens),
+                    "tabpfn_daily_token_budget": int(TABPFN_DAILY_TOKEN_BUDGET),
+                    "tabpfn_estimated_estimators": int(tabpfn_estimators_per_dataset_run(args)),
+                }
+                row = {**base_meta, **row, "elapsed_seconds": round(time.time() - start, 3)}
+                metrics_rows.append(row)
+                completed_model_names.add(str(model_name))
+                persist_partial(f"conventional:{model_name}")
+                stage_index += 1
+                continue
         try:
             row, pred_train, pred_test = evaluate_model(
                 model_name,
@@ -3314,7 +4628,11 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
                 split_strategy_for_cv=cv_strategy_for_workflows,
             )
         except Exception as exc:
-            row = {"model": model_name, "workflow": "conventional", "error": str(exc)}
+            error_text = str(exc)
+            if model_name == "TabPFNRegressor" and is_tabpfn_token_limit_error(error_text):
+                error_text = format_tabpfn_token_limit_notice(error_text)
+                print(f"[warn] {dataset_id} TabPFNRegressor token budget event: {error_text}", flush=True)
+            row = {"model": model_name, "workflow": "conventional", "error": error_text}
             pred_train, pred_test = np.array([]), np.array([])
         if model_name == "ElasticNetCV":
             row.update(elasticnet_cv_meta)
@@ -3448,6 +4766,7 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
             chemprop_variant_tag = str(chemprop_variant.get("variant_tag", "base"))
             chemprop_train_args = [str(item).strip() for item in list(chemprop_variant.get("train_args", [])) if str(item).strip()]
             chemprop_featurizers = [str(item).strip() for item in list(chemprop_variant.get("featurizers", [])) if str(item).strip()]
+            chemprop_use_selected_descriptors = bool(chemprop_variant.get("use_selected_descriptors", False))
             if chemprop_label in completed_model_names:
                 stage_message(stage_index, f"deep model {chemprop_label} (cached)")
                 stage_index += 1
@@ -3470,6 +4789,7 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
                     architecture_key=chemprop_architecture,
                     workflow_label=chemprop_workflow,
                     extra_train_args=chemprop_train_args,
+                    use_selected_descriptors=chemprop_use_selected_descriptors,
                 )
             except Exception as exc:
                 row = {
@@ -3480,6 +4800,8 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
                     "chemprop_variant_tag": chemprop_variant_tag,
                     "chemprop_train_extra_args": " ".join(chemprop_train_args),
                     "chemprop_molecule_featurizers": ",".join(chemprop_featurizers),
+                    "chemprop_uses_selected_descriptors": bool(chemprop_use_selected_descriptors),
+                    "chemprop_selected_descriptor_count": int(X_train.shape[1]) if chemprop_use_selected_descriptors else 0,
                 }
                 pred_train, pred_test = np.array([]), np.array([])
             row = {**base_meta, **row, "elapsed_seconds": round(time.time() - start, 3)}
@@ -3504,6 +4826,48 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
             persist_partial(f"deep:Chemprop-v2:{chemprop_variant_tag}")
             stage_index += 1
 
+    if bool(getattr(args, "run_unimol_v1", False)):
+        unimol_label = "Uni-Mol V1"
+        if unimol_label in completed_model_names:
+            stage_message(stage_index, f"deep model {unimol_label} (cached)")
+            stage_index += 1
+        else:
+            stage_message(stage_index, f"deep model {unimol_label}")
+            try:
+                row, pred_train, pred_test = train_unimol_v1_model(
+                    label=unimol_label,
+                    y_train=split["y_train"],
+                    y_test=split["y_test"],
+                    smiles_train=split["smiles_train"],
+                    smiles_test=split["smiles_test"],
+                    args=args,
+                    dataset_dir=dataset_dir,
+                )
+            except Exception as exc:
+                row = {"model": unimol_label, "workflow": "Uni-Mol", "error": str(exc)}
+                pred_train, pred_test = np.array([]), np.array([])
+            row = {**base_meta, **row, "elapsed_seconds": round(time.time() - start, 3)}
+            metrics_rows.append(row)
+            completed_model_names.add(str(unimol_label))
+            if len(pred_train):
+                prediction_tables.extend(
+                    [
+                        prediction_frame(dataset_id, unimol_label, "Uni-Mol", "train", split["smiles_train"], split["y_train"], pred_train),
+                        prediction_frame(dataset_id, unimol_label, "Uni-Mol", "test", split["smiles_test"], split["y_test"], pred_test),
+                    ]
+                )
+                prediction_payloads[unimol_label] = prediction_payload(
+                    workflow="Uni-Mol",
+                    train_smiles=split["smiles_train"],
+                    test_smiles=split["smiles_test"],
+                    y_train=split["y_train"],
+                    y_test=split["y_test"],
+                    pred_train=pred_train,
+                    pred_test=pred_test,
+                )
+            persist_partial("deep:Uni-Mol-V1")
+            stage_index += 1
+
     if bool(args.run_maplight_gnn):
         maplight_label = "MapLight + GNN (CatBoost)"
         if maplight_label in completed_model_names:
@@ -3522,6 +4886,11 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
             else:
                 try:
                     embedder, embedding_backend = _build_maplight_gnn_embedder(str(args.maplight_gnn_kind))
+                    if str(embedding_backend) != "molfeat-store":
+                        print(
+                            f"[info] {dataset_id} MapLight + GNN embedding backend: {embedding_backend}",
+                            flush=True,
+                        )
                     train_embeddings_raw = embedder(split["smiles_train"].astype(str).tolist())
                     test_embeddings_raw = embedder(split["smiles_test"].astype(str).tolist())
                     emb_train = _embeddings_to_matrix(train_embeddings_raw)
@@ -3674,6 +5043,9 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
         pd.concat(prediction_tables, ignore_index=True).to_csv(predictions_path, index=False)
     if ga_history_tables:
         pd.concat(ga_history_tables, ignore_index=True).to_csv(ga_history_path, index=False)
+    _set_active_stage_status("completed")
+    _close_active_stage(default_status="completed")
+    _write_stage_runtime_outputs()
     elapsed_seconds = time.time() - start
     write_dataset_status(
         dataset_dir,
@@ -3684,9 +5056,412 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
             "completed_at": time.strftime("%Y-%m-%d %H:%M:%S"),
             "elapsed_seconds": round(elapsed_seconds, 3),
             "n_metrics_rows": len(final_metrics_rows),
+            "n_stage_records": len(stage_records),
         },
     )
     return DatasetRunResult(final_metrics_rows, prediction_tables, ga_history_tables, "completed", elapsed_seconds)
+
+
+def load_summary_metrics_for_output_dir(output_dir: Path) -> pd.DataFrame:
+    summary_path = output_dir / "summary_metrics.csv"
+    if summary_path.exists():
+        try:
+            return pd.read_csv(summary_path)
+        except Exception:
+            pass
+    return load_run_metrics_dataframe(output_dir)
+
+
+def best_rows_by_dataset(metrics_df: pd.DataFrame) -> pd.DataFrame:
+    if metrics_df.empty or "dataset" not in metrics_df.columns:
+        return pd.DataFrame()
+    working = metrics_df.copy()
+    working = working.loc[~error_mask(working)].copy()
+    if working.empty:
+        return pd.DataFrame()
+    if "primary_metric_value" not in working.columns:
+        return pd.DataFrame()
+    working["primary_metric_value"] = pd.to_numeric(working["primary_metric_value"], errors="coerce")
+    working = working.loc[working["primary_metric_value"].notna()].copy()
+    if working.empty:
+        return pd.DataFrame()
+
+    selected_rows: list[pd.Series] = []
+    for dataset_name, dataset_df in working.groupby("dataset", sort=False):
+        if dataset_df.empty:
+            continue
+        primary_metric = normalize_benchmark_metric(
+            str(dataset_df.get("primary_metric", pd.Series(["rmse"])).dropna().iloc[0]),
+            fallback="rmse",
+        )
+        lower_is_better = metric_lower_is_better(primary_metric)
+        if lower_is_better is None:
+            lower_is_better = True
+        values = pd.to_numeric(dataset_df["primary_metric_value"], errors="coerce")
+        if values.notna().sum() == 0:
+            continue
+        best_idx = values.idxmin() if lower_is_better else values.idxmax()
+        selected_rows.append(dataset_df.loc[best_idx])
+    if not selected_rows:
+        return pd.DataFrame()
+    return pd.DataFrame(selected_rows).reset_index(drop=True)
+
+
+def extract_split_signature_table(metrics_df: pd.DataFrame) -> pd.DataFrame:
+    required = {"dataset", "split_strategy", "split_train_hash", "split_test_hash", "n_train", "n_test"}
+    if metrics_df.empty or not required.issubset(set(metrics_df.columns)):
+        return pd.DataFrame(columns=["dataset", "split_strategy", "split_train_hash", "split_test_hash", "n_train", "n_test"])
+    subset = metrics_df.loc[:, list(required)].copy()
+    subset["dataset"] = subset["dataset"].astype(str).str.strip()
+    subset = subset.loc[subset["dataset"].ne("")].copy()
+    if subset.empty:
+        return pd.DataFrame(columns=["dataset", "split_strategy", "split_train_hash", "split_test_hash", "n_train", "n_test"])
+
+    def _first_non_empty(series: pd.Series) -> Any:
+        for value in series:
+            text = str(value).strip()
+            if text and text.lower() not in {"nan", "none"}:
+                return value
+        return series.iloc[0] if len(series) else ""
+
+    grouped = (
+        subset.groupby("dataset", as_index=False)
+        .agg(
+            {
+                "split_strategy": _first_non_empty,
+                "split_train_hash": _first_non_empty,
+                "split_test_hash": _first_non_empty,
+                "n_train": _first_non_empty,
+                "n_test": _first_non_empty,
+            }
+        )
+        .sort_values("dataset")
+        .reset_index(drop=True)
+    )
+    return grouped
+
+
+def classify_error_transition(previous_error: str, current_error: str) -> str:
+    prev = str(previous_error or "").strip()
+    curr = str(current_error or "").strip()
+    prev_ok = (not prev) or prev.lower() in {"nan", "none"}
+    curr_ok = (not curr) or curr.lower() in {"nan", "none"}
+    if prev_ok and curr_ok:
+        return "ok_both"
+    if prev_ok and not curr_ok:
+        return "new_error"
+    if not prev_ok and curr_ok:
+        return "resolved"
+    if prev == curr:
+        return "persistent_same"
+    return "changed_error"
+
+
+def config_diff_table(current_config: dict[str, Any], reference_config: dict[str, Any]) -> pd.DataFrame:
+    all_keys = sorted(set(current_config.keys()) | set(reference_config.keys()))
+    rows: list[dict[str, Any]] = []
+    for key in all_keys:
+        current_value = current_config.get(key, "")
+        reference_value = reference_config.get(key, "")
+        current_text = json.dumps(current_value, sort_keys=True, default=str) if isinstance(current_value, (dict, list)) else str(current_value)
+        reference_text = json.dumps(reference_value, sort_keys=True, default=str) if isinstance(reference_value, (dict, list)) else str(reference_value)
+        rows.append(
+            {
+                "config_key": key,
+                "current_value": current_text,
+                "reference_value": reference_text,
+                "different": bool(current_text != reference_text),
+            }
+        )
+    return pd.DataFrame(rows)
+
+
+def error_diff_table(current_metrics: pd.DataFrame, reference_metrics: pd.DataFrame) -> pd.DataFrame:
+    def _ensure_error_columns(frame: pd.DataFrame) -> pd.DataFrame:
+        out = frame.copy()
+        for column in ["dataset", "model", "workflow", "error"]:
+            if column not in out.columns:
+                out[column] = ""
+        return out
+
+    current_frame = _ensure_error_columns(current_metrics)
+    reference_frame = _ensure_error_columns(reference_metrics)
+    current_errors = (
+        current_frame.loc[:, ["dataset", "model", "workflow", "error"]]
+        .copy()
+        .rename(columns={"workflow": "current_workflow", "error": "current_error"})
+    )
+    reference_errors = (
+        reference_frame.loc[:, ["dataset", "model", "workflow", "error"]]
+        .copy()
+        .rename(columns={"workflow": "reference_workflow", "error": "reference_error"})
+    )
+    merged = current_errors.merge(
+        reference_errors,
+        on=["dataset", "model"],
+        how="outer",
+        sort=True,
+    )
+    merged["current_error"] = merged["current_error"].fillna("").astype(str)
+    merged["reference_error"] = merged["reference_error"].fillna("").astype(str)
+    merged["transition"] = merged.apply(
+        lambda row: classify_error_transition(row.get("reference_error", ""), row.get("current_error", "")),
+        axis=1,
+    )
+    return merged.sort_values(["transition", "dataset", "model"]).reset_index(drop=True)
+
+
+def leaderboard_comparability_table(current_metrics: pd.DataFrame, reference_metrics: pd.DataFrame | None = None) -> pd.DataFrame:
+    current_best = best_rows_by_dataset(current_metrics)
+    if current_best.empty:
+        return pd.DataFrame()
+    current_cols = {
+        "dataset": "dataset",
+        "model": "current_best_model",
+        "workflow": "current_best_workflow",
+        "primary_metric": "primary_metric",
+        "primary_metric_value": "current_primary_metric_value",
+        "leaderboard_metric_name": "leaderboard_metric_name",
+        "leaderboard_metric_reference": "leaderboard_metric_reference",
+        "leaderboard_estimated_rank_vs_top10": "current_estimated_rank_vs_top10",
+        "leaderboard_estimated_in_top10": "current_estimated_in_top10",
+        "leaderboard_gap_to_top10_cutoff": "current_gap_to_top10_cutoff",
+        "leaderboard_top10_cutoff_value": "leaderboard_top10_cutoff_value",
+        "leaderboard_url": "leaderboard_url",
+    }
+    for key in list(current_cols):
+        if key not in current_best.columns:
+            current_best[key] = np.nan if key != "dataset" else ""
+    output = current_best.loc[:, list(current_cols.keys())].rename(columns=current_cols)
+    output["leaderboard_metric_name"] = output["leaderboard_metric_name"].fillna("").astype(str)
+    output["primary_metric"] = output["primary_metric"].fillna("").astype(str)
+    output["leaderboard_metric_reference"] = pd.to_numeric(output["leaderboard_metric_reference"], errors="coerce")
+    output["leaderboard_comparable"] = output.apply(
+        lambda row: bool(
+            normalize_benchmark_metric(row.get("leaderboard_metric_name"), fallback="")
+            == normalize_benchmark_metric(row.get("primary_metric"), fallback="")
+            and pd.notna(row.get("leaderboard_metric_reference"))
+        ),
+        axis=1,
+    )
+
+    if reference_metrics is not None and not reference_metrics.empty:
+        reference_best = best_rows_by_dataset(reference_metrics)
+        if not reference_best.empty:
+            if "primary_metric_value" not in reference_best.columns:
+                reference_best["primary_metric_value"] = np.nan
+            reference_view = reference_best.loc[:, ["dataset", "model", "primary_metric_value"]].rename(
+                columns={"model": "reference_best_model", "primary_metric_value": "reference_primary_metric_value"}
+            )
+            output = output.merge(reference_view, on="dataset", how="left")
+            output["current_minus_reference"] = (
+                pd.to_numeric(output["current_primary_metric_value"], errors="coerce")
+                - pd.to_numeric(output["reference_primary_metric_value"], errors="coerce")
+            )
+    return output.sort_values("dataset").reset_index(drop=True)
+
+
+def write_model_value_report(output_dir: Path, metrics_df: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
+    if metrics_df.empty or "model" not in metrics_df.columns:
+        empty = pd.DataFrame()
+        empty.to_csv(output_dir / "model_value_report.csv", index=False)
+        empty.to_csv(output_dir / "model_zero_value_candidates.csv", index=False)
+        return empty, empty
+
+    working = metrics_df.copy()
+    if "dataset" not in working.columns:
+        working["dataset"] = ""
+    if "workflow" not in working.columns:
+        working["workflow"] = ""
+    if "primary_metric_value" not in working.columns:
+        working["primary_metric_value"] = np.nan
+    working["primary_metric_value"] = pd.to_numeric(working["primary_metric_value"], errors="coerce")
+    ok_mask = ~error_mask(working)
+
+    top_counter: Counter[str] = Counter()
+    best_rows = best_rows_by_dataset(working)
+    if not best_rows.empty and "model" in best_rows.columns:
+        top_counter.update(best_rows["model"].astype(str).tolist())
+
+    ensemble_weights_rows: list[dict[str, Any]] = []
+    for weights_path in sorted(output_dir.glob("*/ensemble_weights.csv")):
+        dataset_name = weights_path.parent.name
+        try:
+            weight_df = pd.read_csv(weights_path)
+        except Exception:
+            continue
+        if weight_df.empty or "Model" not in weight_df.columns or "Weight" not in weight_df.columns:
+            continue
+        for _idx, row in weight_df.iterrows():
+            model_name = str(row.get("Model", "")).strip()
+            if not model_name:
+                continue
+            weight_value = float(pd.to_numeric(row.get("Weight"), errors="coerce"))
+            if not math.isfinite(weight_value):
+                continue
+            ensemble_weights_rows.append(
+                {
+                    "dataset": dataset_name,
+                    "model": model_name,
+                    "weight": weight_value,
+                    "abs_weight": abs(weight_value),
+                }
+            )
+    ensemble_weights_df = pd.DataFrame(ensemble_weights_rows)
+
+    records: list[dict[str, Any]] = []
+    for model_name, model_df in working.groupby("model", sort=False):
+        model_df = model_df.copy()
+        model_ok = model_df.loc[ok_mask.reindex(model_df.index, fill_value=False)].copy()
+        attempted_datasets = int(model_df["dataset"].astype(str).str.strip().nunique())
+        successful_datasets = int(model_ok["dataset"].astype(str).str.strip().nunique())
+        workflows = [str(item).strip() for item in model_df["workflow"].dropna().tolist() if str(item).strip()]
+        workflow = Counter(workflows).most_common(1)[0][0] if workflows else ""
+        ensemble_subset = (
+            ensemble_weights_df.loc[ensemble_weights_df["model"].astype(str).str.strip().eq(str(model_name).strip())].copy()
+            if not ensemble_weights_df.empty
+            else pd.DataFrame(columns=["dataset", "model", "weight", "abs_weight"])
+        )
+        ensemble_member_count = int(ensemble_subset["dataset"].nunique()) if not ensemble_subset.empty else 0
+        ensemble_nonzero_count = int((ensemble_subset["abs_weight"] > 1e-12).sum()) if not ensemble_subset.empty else 0
+        ensemble_mean_abs = float(ensemble_subset["abs_weight"].mean()) if not ensemble_subset.empty else 0.0
+        top_count = int(top_counter.get(str(model_name), 0))
+        records.append(
+            {
+                "model": str(model_name),
+                "workflow": workflow,
+                "datasets_attempted": attempted_datasets,
+                "datasets_successful": successful_datasets,
+                "top1_count": top_count,
+                "ensemble_member_count": ensemble_member_count,
+                "ensemble_nonzero_weight_count": ensemble_nonzero_count,
+                "ensemble_mean_abs_weight": ensemble_mean_abs,
+                "never_top_or_ensemble": bool(
+                    successful_datasets > 0
+                    and top_count == 0
+                    and ensemble_nonzero_count == 0
+                    and not is_ensemble_result_row(model_name, workflow)
+                ),
+            }
+        )
+    report_df = pd.DataFrame(records).sort_values(
+        ["never_top_or_ensemble", "top1_count", "ensemble_nonzero_weight_count", "datasets_successful", "model"],
+        ascending=[False, True, True, False, True],
+    ).reset_index(drop=True)
+    zero_value_df = report_df.loc[report_df["never_top_or_ensemble"]].copy()
+    report_df.to_csv(output_dir / "model_value_report.csv", index=False)
+    zero_value_df.to_csv(output_dir / "model_zero_value_candidates.csv", index=False)
+    return report_df, zero_value_df
+
+
+def collect_step_runtime_summary(output_dir: Path) -> pd.DataFrame:
+    rows: list[pd.DataFrame] = []
+    for runtime_path in sorted(output_dir.glob("*/step_runtime.csv")):
+        try:
+            runtime_df = pd.read_csv(runtime_path)
+        except Exception:
+            continue
+        if runtime_df.empty:
+            continue
+        if "dataset" not in runtime_df.columns:
+            runtime_df.insert(0, "dataset", runtime_path.parent.name)
+        rows.append(runtime_df)
+    if not rows:
+        return pd.DataFrame()
+    summary_df = pd.concat(rows, ignore_index=True)
+    summary_df.to_csv(output_dir / "step_runtime_summary.csv", index=False)
+    return summary_df
+
+
+def write_run_vs_run_attribution_report(
+    *,
+    root: Path,
+    output_dir: Path,
+    current_metrics: pd.DataFrame,
+    args: argparse.Namespace,
+) -> dict[str, Any]:
+    reference_dir: Path | None = None
+    requested_reference = getattr(args, "compare_run_dir", None)
+    if requested_reference is not None:
+        candidate = Path(requested_reference)
+        if candidate.exists():
+            reference_dir = candidate
+    if reference_dir is None:
+        recent_runs = discover_recent_benchmark_runs(root, exclude_dir=output_dir)
+        if recent_runs:
+            reference_dir = recent_runs[0]
+
+    current_config = load_run_config_payload(output_dir)
+    summary_payload: dict[str, Any] = {
+        "generated_at": local_timestamp_text(),
+        "current_run_dir": str(output_dir),
+        "reference_run_dir": str(reference_dir) if reference_dir is not None else "",
+        "has_reference_run": bool(reference_dir is not None),
+    }
+
+    current_split = extract_split_signature_table(current_metrics)
+    if reference_dir is not None:
+        reference_metrics = load_summary_metrics_for_output_dir(reference_dir)
+        reference_config = load_run_config_payload(reference_dir)
+        reference_split = extract_split_signature_table(reference_metrics)
+        split_diff = current_split.merge(
+            reference_split,
+            on="dataset",
+            how="outer",
+            suffixes=("_current", "_reference"),
+        )
+        for field in ["split_strategy", "split_train_hash", "split_test_hash", "n_train", "n_test"]:
+            split_diff[f"{field}_matches"] = (
+                split_diff[f"{field}_current"].astype(str).fillna("").str.strip()
+                == split_diff[f"{field}_reference"].astype(str).fillna("").str.strip()
+            )
+        split_diff["all_match"] = split_diff[
+            [f"{field}_matches" for field in ["split_strategy", "split_train_hash", "split_test_hash", "n_train", "n_test"]]
+        ].all(axis=1)
+        split_diff.to_csv(output_dir / "run_vs_run_split_match.csv", index=False)
+
+        cfg_diff = config_diff_table(current_config, reference_config)
+        cfg_diff.to_csv(output_dir / "run_vs_run_config_diff.csv", index=False)
+
+        err_diff = error_diff_table(current_metrics, reference_metrics)
+        err_diff.to_csv(output_dir / "run_vs_run_error_diff.csv", index=False)
+
+        lb_comp = leaderboard_comparability_table(current_metrics, reference_metrics)
+        lb_comp.to_csv(output_dir / "run_vs_run_leaderboard_comparability.csv", index=False)
+
+        summary_payload.update(
+            {
+                "split_datasets_compared": int(len(split_diff)),
+                "split_all_match_count": int(split_diff["all_match"].sum()) if not split_diff.empty else 0,
+                "config_diff_count": int(cfg_diff["different"].sum()) if not cfg_diff.empty else 0,
+                "new_error_count": int(err_diff["transition"].astype(str).eq("new_error").sum()) if not err_diff.empty else 0,
+                "resolved_error_count": int(err_diff["transition"].astype(str).eq("resolved").sum()) if not err_diff.empty else 0,
+                "leaderboard_comparable_dataset_count": int(lb_comp["leaderboard_comparable"].sum()) if not lb_comp.empty else 0,
+            }
+        )
+    else:
+        pd.DataFrame().to_csv(output_dir / "run_vs_run_split_match.csv", index=False)
+        pd.DataFrame().to_csv(output_dir / "run_vs_run_config_diff.csv", index=False)
+        pd.DataFrame().to_csv(output_dir / "run_vs_run_error_diff.csv", index=False)
+        lb_comp = leaderboard_comparability_table(current_metrics, None)
+        lb_comp.to_csv(output_dir / "run_vs_run_leaderboard_comparability.csv", index=False)
+        summary_payload.update(
+            {
+                "split_datasets_compared": 0,
+                "split_all_match_count": 0,
+                "config_diff_count": 0,
+                "new_error_count": 0,
+                "resolved_error_count": 0,
+                "leaderboard_comparable_dataset_count": int(lb_comp["leaderboard_comparable"].sum()) if not lb_comp.empty else 0,
+                "note": "No reference run found for run-vs-run attribution.",
+            }
+        )
+
+    (output_dir / "run_vs_run_attribution_summary.json").write_text(
+        json.dumps(summary_payload, indent=2, default=str),
+        encoding="utf-8",
+    )
+    return summary_payload
 
 
 def parse_args() -> argparse.Namespace:
@@ -3708,6 +5483,15 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--include-local-csv", action="append", help="Optional extra local CSV dataset path to add on top of the default benchmark example set.")
     parser.add_argument("--output-dir", type=Path, default=None, help="Output directory. Defaults to benchmark_results/autoqsar_benchmark_<timestamp>.")
+    parser.add_argument(
+        "--benchmark-profile",
+        choices=["cost_optimized", "full"],
+        default="cost_optimized",
+        help=(
+            "Runtime/performance profile. cost_optimized disables historically low-value expensive model variants by default; "
+            "full restores the broader model set."
+        ),
+    )
     parser.add_argument("--dry-run", action="store_true", help="List discovered datasets and planned configuration without fitting models.")
     parser.add_argument(
         "--revisit-completed-datasets",
@@ -3724,7 +5508,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--fingerprint-bits",
         type=int,
-        default=2048,
+        default=1024,
         help="Bit length for hash-based fingerprint families (Morgan/ECFP/FCFP/Layered/AtomPair/TopologicalTorsion/RDKit path).",
     )
     parser.add_argument(
@@ -3742,17 +5526,44 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--persistent-feature-store-path", default="AUTO")
 
     parser.add_argument("--selector-method", choices=["elasticnet_cv", "none"], default="elasticnet_cv")
-    parser.add_argument("--selector-l1-ratio-grid", default="0.1, 0.3, 0.5, 0.7, 0.9")
+    parser.add_argument("--selector-l1-ratio-grid", default="0.3,0.7")
     parser.add_argument("--selector-alpha-min-log10", type=float, default=-5)
     parser.add_argument("--selector-alpha-max-log10", type=float, default=-1)
-    parser.add_argument("--selector-alpha-grid-size", type=int, default=40)
-    parser.add_argument("--selector-cv-folds", type=int, default=5)
-    parser.add_argument("--selector-max-iter", type=int, default=50000)
+    parser.add_argument("--selector-alpha-grid-size", type=int, default=12)
+    parser.add_argument("--selector-cv-folds", type=int, default=3)
+    parser.add_argument("--selector-max-iter", type=int, default=10000)
     parser.add_argument("--selector-coefficient-threshold", type=float, default=1e-10)
+    parser.add_argument(
+        "--selector-auto-rf-by-dataset-size",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help=(
+            "When enabled, preemptively skip ElasticNetCV selector and use RF-importance selector if dataset-size runtime "
+            "estimate exceeds --selector-auto-rf-threshold-seconds."
+        ),
+    )
+    parser.add_argument(
+        "--selector-auto-rf-threshold-seconds",
+        type=float,
+        default=7200.0,
+        help="ElasticNetCV selector runtime threshold used by the dataset-size precheck (default: 2 hours).",
+    )
+    parser.add_argument(
+        "--selector-auto-rf-log10-slope",
+        type=float,
+        default=1.225,
+        help="Slope for log10(runtime_seconds) ~ intercept + slope*log10(dataset_size) used by selector auto-RF precheck.",
+    )
+    parser.add_argument(
+        "--selector-auto-rf-log10-intercept",
+        type=float,
+        default=-0.658,
+        help="Intercept for log10(runtime_seconds) ~ intercept + slope*log10(dataset_size) used by selector auto-RF precheck.",
+    )
     parser.add_argument(
         "--selector-elasticnet-timeout-seconds",
         type=float,
-        default=10800.0,
+        default=7200.0,
         help="Maximum wall-clock time for ElasticNetCV feature selection. If exceeded, fallback to RF importance.",
     )
     parser.add_argument(
@@ -3767,17 +5578,35 @@ def parse_args() -> argparse.Namespace:
         default=True,
         help="Skip the conventional ElasticNetCV training stage when selector ElasticNetCV timed out.",
     )
-    parser.add_argument("--max-selected-features", type=int, default=0, help="0 means auto cap at 10%% of valid molecules; positive values override.")
+    parser.add_argument("--max-selected-features", type=int, default=512, help="0 means auto cap at 10%% of valid molecules; positive values override.")
 
     parser.add_argument("--cv-folds", type=int, default=5)
-    parser.add_argument("--elasticnet-l1-ratio-grid", default="0.4, 0.5, 0.6, 0.7, 0.9")
+    parser.add_argument("--elasticnet-l1-ratio-grid", default="0.4,0.8")
     parser.add_argument("--elasticnet-alpha-min-log10", type=float, default=-4)
     parser.add_argument("--elasticnet-alpha-max-log10", type=float, default=0)
-    parser.add_argument("--elasticnet-alpha-grid-size", type=int, default=40)
-    parser.add_argument("--elasticnet-cv-folds", type=int, default=5)
-    parser.add_argument("--elasticnet-max-iter", type=int, default=50000)
+    parser.add_argument("--elasticnet-alpha-grid-size", type=int, default=12)
+    parser.add_argument("--elasticnet-cv-folds", type=int, default=3)
+    parser.add_argument("--elasticnet-max-iter", type=int, default=15000)
 
-    parser.add_argument("--ga-models", default="", help="Comma-separated GA models to tune. Empty default skips GA. Example: ElasticNet,CatBoost.")
+    parser.add_argument(
+        "--ga-models",
+        default="",
+        help=(
+            "Comma-separated GA models to tune (example: ElasticNet,CatBoost). "
+            "Default is disabled (empty). "
+            "Use 'auto' to enable only GA models that showed meaningful value in the most recent comparable run."
+        ),
+    )
+    parser.add_argument(
+        "--ga-auto-reference-run-dir",
+        type=Path,
+        default=None,
+        help="Optional benchmark run directory used as evidence for --ga-models auto.",
+    )
+    parser.add_argument("--ga-auto-min-relative-improvement", type=float, default=0.005)
+    parser.add_argument("--ga-auto-min-dataset-wins", type=int, default=1)
+    parser.add_argument("--ga-auto-min-improving-datasets", type=int, default=1)
+    parser.add_argument("--ga-auto-min-reference-datasets", type=int, default=5)
     parser.add_argument("--ga-generations", type=int, default=12)
     parser.add_argument("--ga-population-size", type=int, default=16)
     parser.add_argument("--ga-elites", type=int, default=2)
@@ -3785,11 +5614,48 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--ga-mutation-probability", type=float, default=0.35)
 
     parser.add_argument("--run-chemml-pytorch", action=argparse.BooleanOptionalAction, default=True)
-    parser.add_argument("--run-chemml-tensorflow", action=argparse.BooleanOptionalAction, default=True)
+    parser.add_argument("--run-chemml-tensorflow", action=argparse.BooleanOptionalAction, default=False)
+    parser.add_argument(
+        "--run-tabpfn",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help=(
+            "Enable TabPFNRegressor (tabular foundation model) on selected descriptors. "
+            "When GPU is detected, this script prefers local `tabpfn` inference before API-client fallback."
+        ),
+    )
+    parser.add_argument(
+        "--tabpfn-max-train-rows",
+        type=int,
+        default=1000,
+        help="Maximum training rows allowed for TabPFNRegressor (CPU guardrail).",
+    )
     parser.add_argument("--run-chemprop-mpnn", action=argparse.BooleanOptionalAction, default=True)
-    parser.add_argument("--run-chemprop-dmpnn", action=argparse.BooleanOptionalAction, default=True)
-    parser.add_argument("--run-chemprop-cmpnn", action=argparse.BooleanOptionalAction, default=True)
+    parser.add_argument("--run-chemprop-dmpnn", action=argparse.BooleanOptionalAction, default=False)
+    parser.add_argument("--run-chemprop-cmpnn", action=argparse.BooleanOptionalAction, default=False)
     parser.add_argument("--run-chemprop-attentivefp", action=argparse.BooleanOptionalAction, default=True)
+    parser.add_argument(
+        "--run-chemprop-selected-features",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="Run an additional Chemprop variant that consumes the train-only selected descriptor matrix via descriptors-path.",
+    )
+    parser.add_argument(
+        "--run-unimol-v1",
+        action=argparse.BooleanOptionalAction,
+        default=None,
+        help=(
+            "Run Uni-Mol V1 benchmarking stage. Default is auto: enabled only when a GPU is detected. "
+            "Override with --run-unimol-v1 or --no-run-unimol-v1."
+        ),
+    )
+    parser.add_argument("--unimol-internal-split", choices=["random", "scaffold"], default="random")
+    parser.add_argument("--unimol-epochs", type=int, default=10)
+    parser.add_argument("--unimol-learning-rate", type=float, default=1e-4)
+    parser.add_argument("--unimol-batch-size", type=int, default=16)
+    parser.add_argument("--unimol-early-stopping", type=int, default=5)
+    parser.add_argument("--unimol-num-workers", type=int, default=0)
+    parser.add_argument("--unimol-reuse-model-cache", action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument("--run-maplight-gnn", action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument("--chemml-hidden-layers", type=int, default=2)
     parser.add_argument("--chemml-hidden-width", type=int, default=256)
@@ -3825,8 +5691,57 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--ensemble-drop-highly-correlated-members", action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument("--ensemble-max-train-correlation", type=float, default=0.995)
     parser.add_argument("--ensemble-exclude-negative-test-r2-members", action=argparse.BooleanOptionalAction, default=True)
+    parser.add_argument("--compare-run-dir", type=Path, default=None, help="Optional previous run directory for automatic run-vs-run attribution diagnostics.")
+    parser.add_argument("--emit-run-vs-run-report", action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument("--resume", action=argparse.BooleanOptionalAction, default=True, help="Resume a compatible incomplete run when possible.")
     return parser.parse_args()
+
+
+def _cli_option_provided(argv_tokens: list[str], option_name: str) -> bool:
+    option = f"--{str(option_name).strip().replace('_', '-')}"
+    negated = f"--no-{option[2:]}"
+    for token in argv_tokens:
+        token_text = str(token).strip()
+        if (
+            token_text == option
+            or token_text == negated
+            or token_text.startswith(option + "=")
+            or token_text.startswith(negated + "=")
+        ):
+            return True
+    return False
+
+
+def apply_benchmark_profile_defaults(args: argparse.Namespace, argv_tokens: list[str]) -> None:
+    profile = str(getattr(args, "benchmark_profile", "cost_optimized")).strip().lower()
+    if profile not in {"cost_optimized", "full"}:
+        profile = "cost_optimized"
+
+    profile_defaults: dict[str, Any]
+    if profile == "full":
+        profile_defaults = {
+            "run_chemml_tensorflow": True,
+            "run_tabpfn": True,
+            "run_chemprop_dmpnn": True,
+            "run_chemprop_cmpnn": True,
+            "run_chemprop_rdkit2d": True,
+            "chemprop_epochs": 40,
+            "chemprop_ensemble_size": 3,
+            "selector_auto_rf_by_dataset_size": False,
+        }
+    else:
+        profile_defaults = {
+            "run_chemml_tensorflow": False,
+            "run_tabpfn": True,
+            "run_chemprop_dmpnn": False,
+            "run_chemprop_cmpnn": False,
+            "run_chemprop_rdkit2d": False,
+            "selector_auto_rf_by_dataset_size": True,
+        }
+
+    for arg_name, value in profile_defaults.items():
+        if not _cli_option_provided(argv_tokens, arg_name):
+            setattr(args, arg_name, value)
 
 
 def select_output_dir(root: Path, args: argparse.Namespace) -> Path:
@@ -3853,7 +5768,44 @@ def select_output_dir(root: Path, args: argparse.Namespace) -> Path:
 
 def main() -> int:
     args = parse_args()
+    apply_benchmark_profile_defaults(args, sys.argv[1:])
+    gpu_available = detect_gpu_available()
+    args.gpu_available = bool(gpu_available)
+    if getattr(args, "run_unimol_v1", None) is None:
+        args.run_unimol_v1 = bool(gpu_available)
+        print(
+            "Uni-Mol V1 default resolved from GPU detection: "
+            f"{'on' if bool(args.run_unimol_v1) else 'off'} (gpu_detected={'yes' if gpu_available else 'no'}).",
+            flush=True,
+        )
+    elif bool(args.run_unimol_v1) and not gpu_available:
+        print(
+            "Uni-Mol V1 was explicitly enabled without detected GPU; attempting CPU fallback.",
+            flush=True,
+        )
     root = Path(__file__).resolve().parents[1]
+    resolved_ga_models, ga_resolution = resolve_requested_ga_models(
+        args,
+        root,
+        exclude_dir=Path(args.output_dir) if getattr(args, "output_dir", None) is not None else None,
+    )
+    args.ga_models_resolved = ",".join(resolved_ga_models)
+    args.ga_resolution = ga_resolution
+    if str(getattr(args, "ga_models", "")).strip().lower() == "auto":
+        reference_text = str(ga_resolution.get("reference_run_dir", "")).strip()
+        if resolved_ga_models:
+            print(
+                "GA auto-selection: enabled model(s) "
+                f"{', '.join(resolved_ga_models)}"
+                f"{' from reference run ' + reference_text if reference_text else ''}.",
+                flush=True,
+            )
+        else:
+            print(
+                "GA auto-selection: no models met the meaningful-value threshold; GA tuning will be skipped."
+                + (f" Reference run: {reference_text}" if reference_text else ""),
+                flush=True,
+            )
     cache_dir = root / "data" / "benchmark_leaderboards"
     cache_dir.mkdir(parents=True, exist_ok=True)
     latest_cache_path = cache_dir / "leaderboard_top10_reference_latest.csv"
@@ -3912,9 +5864,45 @@ def main() -> int:
         print("No datasets found. Provide --dataset PATH or verify benchmark data access/dependencies are available.")
         return 1
 
+    datasets = order_datasets_smallest_first(datasets)
+
+    tabpfn_budget_estimate = None
+    if bool(getattr(args, "run_tabpfn", False)):
+        tabpfn_budget_estimate = estimate_tabpfn_daily_dataset_capacity(datasets, args)
+
     if args.dry_run:
+        selector_threshold_size = elasticnet_selector_timeout_dataset_size_threshold(
+            float(args.selector_auto_rf_threshold_seconds),
+            log10_slope=float(args.selector_auto_rf_log10_slope),
+            log10_intercept=float(args.selector_auto_rf_log10_intercept),
+        )
+        selector_threshold_size_text = (
+            f"{int(round(selector_threshold_size)):,}"
+            if np.isfinite(selector_threshold_size)
+            else "unknown"
+        )
         print(f"Planned output directory: {output_dir}")
+        print(f"Benchmark profile: {args.benchmark_profile}")
         print(f"Default molecular feature families: {', '.join(DEFAULT_BENCHMARK_FEATURE_FAMILIES)}")
+        print(
+            "Selector auto-RF by dataset size: "
+            f"{'on' if bool(args.selector_auto_rf_by_dataset_size) else 'off'} "
+            f"(threshold={float(args.selector_auto_rf_threshold_seconds):,.0f}s, threshold_n~{selector_threshold_size_text})"
+        )
+        print(
+            "GA models for this run: "
+            + (", ".join(parse_comma_list(getattr(args, "ga_models_resolved", ""))) if parse_comma_list(getattr(args, "ga_models_resolved", "")) else "(none)")
+        )
+        if tabpfn_budget_estimate is not None:
+            print(
+                "TabPFN daily-budget estimate: "
+                f"{tabpfn_budget_estimate['individually_fit_count']}/{len(datasets)} dataset(s) are estimated to fit "
+                f"individually within {TABPFN_DAILY_TOKEN_BUDGET:,} tokens/day. "
+                f"At most {tabpfn_budget_estimate['smallest_first_count']}/{len(datasets)} dataset(s) are estimated to fit "
+                f"if run smallest-first in one day. "
+                f"Estimator multiplier={int(tabpfn_budget_estimate['estimators_per_dataset'])}. "
+                f"{TABPFN_DAILY_RESET_NOTE}"
+            )
         leaderboard_refs = leaderboard_reference_table(datasets)
         print(f"Leaderboard top10 reference rows fetched: {len(leaderboard_refs)}")
         print("Datasets:")
@@ -3931,6 +5919,27 @@ def main() -> int:
             )
         return 0
 
+    if bool(getattr(args, "run_tabpfn", False)):
+        if not ensure_tabpfn_installed(prefer_local_backend=bool(getattr(args, "gpu_available", False))):
+            args.run_tabpfn = False
+            print(
+                "TabPFNRegressor has been automatically disabled for this run. "
+                "You can still run the rest of the workflow. "
+                "If you later set up TabPFN authentication/access, rerun with --run-tabpfn.",
+                flush=True,
+            )
+        else:
+            auth_ready, auth_message = prepare_tabpfn_auth(args)
+            if auth_ready:
+                print(auth_message, flush=True)
+            else:
+                args.run_tabpfn = False
+                print(
+                    "TabPFNRegressor has been disabled for this run because authentication/preflight did not pass.\n"
+                    f"Reason: {auth_message}",
+                    flush=True,
+                )
+
     output_dir.mkdir(parents=True, exist_ok=True)
     config = vars(args).copy()
     config["output_dir"] = str(output_dir)
@@ -3939,9 +5948,47 @@ def main() -> int:
     config["datasets"] = [{"name": item.name, "source": item.source, "smiles_column": item.smiles_column, "target_column": item.target_column} for item in datasets]
     (output_dir / "run_config.json").write_text(json.dumps(config, indent=2, default=str), encoding="utf-8")
     leaderboard_ref_df = write_leaderboard_reference_artifacts(root, output_dir, datasets)
+    if bool(getattr(args, "run_tabpfn", False)) and tabpfn_budget_estimate is not None:
+        tabpfn_budget_estimate["table"].to_csv(output_dir / "tabpfn_daily_budget_estimate.csv", index=False)
 
     print(f"Output directory: {output_dir}")
+    selector_threshold_size = elasticnet_selector_timeout_dataset_size_threshold(
+        float(args.selector_auto_rf_threshold_seconds),
+        log10_slope=float(args.selector_auto_rf_log10_slope),
+        log10_intercept=float(args.selector_auto_rf_log10_intercept),
+    )
+    selector_threshold_size_text = (
+        f"{int(round(selector_threshold_size)):,}"
+        if np.isfinite(selector_threshold_size)
+        else "unknown"
+    )
+    print(f"Benchmark profile: {args.benchmark_profile}")
     print(f"Default molecular feature families: {', '.join(DEFAULT_BENCHMARK_FEATURE_FAMILIES)}")
+    print(
+        "Selector auto-RF by dataset size: "
+        f"{'on' if bool(args.selector_auto_rf_by_dataset_size) else 'off'} "
+        f"(threshold={float(args.selector_auto_rf_threshold_seconds):,.0f}s, threshold_n~{selector_threshold_size_text})"
+    )
+    if bool(getattr(args, "run_tabpfn", False)) and tabpfn_budget_estimate is not None:
+        print(
+            "TabPFN daily-budget estimate: "
+            f"{tabpfn_budget_estimate['individually_fit_count']}/{len(datasets)} dataset(s) are estimated to fit "
+            f"individually within {TABPFN_DAILY_TOKEN_BUDGET:,} tokens/day. "
+            f"At most {tabpfn_budget_estimate['smallest_first_count']}/{len(datasets)} dataset(s) are estimated to fit "
+            f"if run smallest-first in one day. "
+            f"Estimator multiplier={int(tabpfn_budget_estimate['estimators_per_dataset'])}. "
+            f"{TABPFN_DAILY_RESET_NOTE}"
+        )
+        print(f"TabPFN budget detail CSV: {output_dir / 'tabpfn_daily_budget_estimate.csv'}")
+    print(
+        "GA models for this run: "
+        + (", ".join(parse_comma_list(getattr(args, "ga_models_resolved", ""))) if parse_comma_list(getattr(args, "ga_models_resolved", "")) else "(none)")
+    )
+    print(
+        "Uni-Mol V1 stage: "
+        f"{'on' if bool(getattr(args, 'run_unimol_v1', False)) else 'off'} "
+        f"(gpu_detected={'yes' if bool(getattr(args, 'gpu_available', False)) else 'no'})"
+    )
     print(f"Leaderboard reference rows stored: {len(leaderboard_ref_df)}")
     print("Datasets:")
     for dataset in datasets:
@@ -3979,8 +6026,8 @@ def main() -> int:
             f"ETA {format_seconds(eta)}"
         )
 
-    if all_metrics:
-        summary = pd.DataFrame(all_metrics)
+    summary = pd.DataFrame(all_metrics) if all_metrics else pd.DataFrame()
+    if not summary.empty:
         summary.to_csv(output_dir / "summary_metrics.csv", index=False)
         leaderboard_comparison_df = leaderboard_comparison_by_dataset(summary)
         if not leaderboard_comparison_df.empty:
@@ -3992,12 +6039,48 @@ def main() -> int:
         pd.concat(all_predictions, ignore_index=True).to_csv(output_dir / "predictions.csv", index=False)
     if all_histories:
         pd.concat(all_histories, ignore_index=True).to_csv(output_dir / "ga_history.csv", index=False)
+
+    if summary.empty:
+        summary = load_summary_metrics_for_output_dir(output_dir)
+
+    step_runtime_summary = collect_step_runtime_summary(output_dir)
+    if not step_runtime_summary.empty:
+        print(
+            "Step runtime rows captured: "
+            f"{len(step_runtime_summary):,} (saved to {output_dir / 'step_runtime_summary.csv'})",
+            flush=True,
+        )
+
+    model_value_report, zero_value_candidates = write_model_value_report(output_dir, summary)
+    if not model_value_report.empty:
+        print(
+            "Model value report saved: "
+            f"{output_dir / 'model_value_report.csv'} "
+            f"(zero-value candidates: {len(zero_value_candidates)})",
+            flush=True,
+        )
+
+    attribution_payload = {}
+    if bool(getattr(args, "emit_run_vs_run_report", True)):
+        attribution_payload = write_run_vs_run_attribution_report(
+            root=root,
+            output_dir=output_dir,
+            current_metrics=summary,
+            args=args,
+        )
+        print(
+            "Run-vs-run attribution report saved: "
+            f"{output_dir / 'run_vs_run_attribution_summary.json'}",
+            flush=True,
+        )
     (output_dir / "run_complete.json").write_text(
         json.dumps(
             {
                 "completed_at": time.strftime("%Y-%m-%d %H:%M:%S"),
                 "elapsed_seconds": round(time.time() - overall_start, 3),
                 "dataset_count": len(datasets),
+                "ga_models_resolved": parse_comma_list(getattr(args, "ga_models_resolved", "")),
+                "run_vs_run_attribution": attribution_payload,
             },
             indent=2,
         ),
@@ -4007,6 +6090,20 @@ def main() -> int:
     primary_files = ["summary_metrics.csv", "test_rmse_pivot.csv", "predictions.csv", "run_config.json"]
     if all_histories:
         primary_files.append("ga_history.csv")
+    if not step_runtime_summary.empty:
+        primary_files.append("step_runtime_summary.csv")
+    if not model_value_report.empty:
+        primary_files.extend(["model_value_report.csv", "model_zero_value_candidates.csv"])
+    if bool(getattr(args, "emit_run_vs_run_report", True)):
+        primary_files.extend(
+            [
+                "run_vs_run_attribution_summary.json",
+                "run_vs_run_split_match.csv",
+                "run_vs_run_config_diff.csv",
+                "run_vs_run_error_diff.csv",
+                "run_vs_run_leaderboard_comparability.csv",
+            ]
+        )
     print(f"\nWrote benchmark outputs to {output_dir}")
     print("Primary files: " + ", ".join(primary_files))
     return 0

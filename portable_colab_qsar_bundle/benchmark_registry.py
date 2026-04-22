@@ -64,7 +64,8 @@ MOLECULENET_PHYSCHEM_OPTIONS: dict[str, dict[str, Any]] = {
         "target_candidates": ["expt", "target"],
         "recommended_split": "random",
         "recommended_metric": "rmse",
-        "leaderboard_section": None,
+        "leaderboard_section": "SAMPL",
+        "leaderboard_section_candidates": ["SAMPL", "FreeSolv (SAMPL)", "FreeSolv"],
         "leaderboard_url": MOLECULENET_LEADERBOARD_REPO_URL,
     },
     "lipophilicity": {

@@ -305,7 +305,7 @@ cells += [
         from pathlib import Path
         warnings.filterwarnings("ignore")
 
-        PACKAGE_PROGRESS = {"done": 0, "total": 18}
+        PACKAGE_PROGRESS = {"done": 0, "total": 23}
         SETUP_PROGRESS = {"done": 0, "total": 29}
         try:
             RUNNING_IN_COLAB = importlib.util.find_spec("google.colab") is not None
@@ -343,6 +343,29 @@ cells += [
             start = time.perf_counter()
             subprocess.check_call([sys.executable, "-m", "pip", "install", "-q", pip_name or import_name])
             elapsed = time.perf_counter() - start
+            RESTART_REQUIRED_PACKAGES.append(package_label)
+            progress_message(package_label, "installed", f"{elapsed:.1f}s")
+            return True
+
+        def ensure_optional_package(import_name, pip_name=None, label=None):
+            package_label = label or pip_name or import_name
+            if importlib.util.find_spec(import_name) is not None:
+                progress_message(package_label, "already available")
+                return False
+            print(f"[installing optional] {package_label}", flush=True)
+            start = time.perf_counter()
+            install_cmd = [sys.executable, "-m", "pip", "install", "-q", "--no-input", pip_name or import_name]
+            result = subprocess.run(install_cmd, capture_output=True, text=True)
+            elapsed = time.perf_counter() - start
+            if result.returncode != 0:
+                log_tail = ((result.stdout or "") + "\\n" + (result.stderr or "")).strip()[-500:]
+                print(
+                    f"[warn] optional package {package_label} could not be installed; continuing without it. "
+                    f"Details: {log_tail}",
+                    flush=True,
+                )
+                progress_message(package_label, "optional install skipped", f"{elapsed:.1f}s")
+                return False
             RESTART_REQUIRED_PACKAGES.append(package_label)
             progress_message(package_label, "installed", f"{elapsed:.1f}s")
             return True
@@ -620,6 +643,10 @@ cells += [
         ensure_package("umap", "umap-learn", label="umap-learn")
         ensure_package("huggingface_hub", "huggingface_hub", label="huggingface_hub")
         ensure_package("pyarrow", "pyarrow")
+        ensure_optional_package("tabpfn", "tabpfn", label="tabpfn")
+        ensure_optional_package("tabpfn_client", "tabpfn-client", label="tabpfn-client")
+        ensure_optional_package("mastml", "mastml", label="mastml")
+        ensure_optional_package("madml", "madml", label="madml")
         ensure_tdc_from_source()
         ensure_chemml_from_source()
         restart_if_needed()
@@ -698,22 +725,60 @@ cells += [
         setup_start("scikit-learn components")
         from sklearn.base import clone
         from sklearn.decomposition import PCA
-        from sklearn.ensemble import RandomForestRegressor
+        from sklearn.ensemble import ExtraTreesRegressor, HistGradientBoostingRegressor, RandomForestRegressor, VotingRegressor
         from sklearn.impute import SimpleImputer
         from sklearn.inspection import permutation_importance
         from sklearn.linear_model import ElasticNet, ElasticNetCV, Lasso, LassoCV
         from sklearn.manifold import TSNE
         from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
         from sklearn.model_selection import GroupKFold, KFold, StratifiedKFold, cross_validate, train_test_split
+        from sklearn.neighbors import KNeighborsRegressor
         from sklearn.pipeline import Pipeline
-        from sklearn.preprocessing import StandardScaler
+        from sklearn.preprocessing import FunctionTransformer, StandardScaler
         from sklearn.svm import SVR
         setup_done("scikit-learn components")
 
         setup_start("gradient boosting packages")
         from xgboost import XGBRegressor
         from catboost import CatBoostRegressor
+        try:
+            from lightgbm import LGBMRegressor
+        except Exception:
+            LGBMRegressor = None
         setup_done("gradient boosting packages")
+
+        setup_start("optional tabular foundation model")
+        TabPFNRegressor = None
+        TABPFN_REGRESSOR_SOURCE = "unavailable"
+        TABPFN_IMPORT_ERRORS = {}
+        try:
+            from tabpfn_client import TabPFNRegressor as _TabPFNClientRegressor
+
+            TabPFNRegressor = _TabPFNClientRegressor
+            TABPFN_REGRESSOR_SOURCE = "tabpfn_client"
+        except Exception as exc:
+            TABPFN_IMPORT_ERRORS["tabpfn_client"] = str(exc)
+        if TabPFNRegressor is None:
+            try:
+                from tabpfn import TabPFNRegressor as _TabPFNLocalRegressor
+
+                TabPFNRegressor = _TabPFNLocalRegressor
+                TABPFN_REGRESSOR_SOURCE = "tabpfn"
+            except Exception as exc:
+                TABPFN_IMPORT_ERRORS["tabpfn"] = str(exc)
+
+        def make_tabpfn_regressor():
+            if TabPFNRegressor is None:
+                raise RuntimeError(
+                    "TabPFNRegressor is unavailable. Import errors: "
+                    + "; ".join(f"{key}: {value}" for key, value in TABPFN_IMPORT_ERRORS.items())
+                )
+            return TabPFNRegressor()
+
+        setup_done(
+            "optional tabular foundation model",
+            f"available={'yes' if TabPFNRegressor is not None else 'no'}, source={TABPFN_REGRESSOR_SOURCE}",
+        )
 
         setup_start("ChemML modules")
         setup_done("ChemML modules", "example dataset uses direct CSV loading")
@@ -2236,7 +2301,7 @@ cells += [
                     continue
                 values.append(float(token))
             if not values:
-                values = [0.1, 0.3, 0.5, 0.7, 0.9, 1.0]
+                values = [0.3, 0.7, 1.0]
             values = sorted({float(value) for value in values if 0.0 < float(value) <= 1.0})
             if not values:
                 raise ValueError("ElasticNetCV l1_ratio values must be > 0 and <= 1.")
@@ -2266,15 +2331,15 @@ cells += [
             smiles_values=None,
             selector_method="lasso_cv",
             alpha=1.0,
-            alpha_grid_min_log10=-4,
-            alpha_grid_max_log10=0,
-            alpha_grid_size=40,
-            elasticnet_l1_ratio_grid="0.1, 0.3, 0.5, 0.7, 0.9",
+            alpha_grid_min_log10=-5,
+            alpha_grid_max_log10=-1,
+            alpha_grid_size=12,
+            elasticnet_l1_ratio_grid="0.3, 0.7",
             cv_split_strategy="random",
-            cv_folds=5,
+            cv_folds=3,
             random_seed=42,
             coefficient_threshold=1e-10,
-            max_iter=50000,
+            max_iter=10000,
             selection_mode="cyclic coordinate updates",
             max_selected_features=0,
             progress_bar=None,
@@ -2476,7 +2541,7 @@ cells += [
             alpha=1.0,
             random_seed=42,
             coefficient_threshold=1e-10,
-            max_iter=50000,
+            max_iter=10000,
             selection_mode="nonzero coefficients",
             max_selected_features=200,
         ):
@@ -3561,17 +3626,21 @@ cells += [
         # @markdown ### LassoCV and ElasticNetCV alpha grid
         selector_alpha_grid_min_log10 = -5 # @param {type:"integer"}
         selector_alpha_grid_max_log10 = -1 # @param {type:"integer"}
-        selector_alpha_grid_size = 40 # @param {type:"slider", min:10, max:80, step:5}
+        selector_alpha_grid_size = 12 # @param {type:"slider", min:6, max:80, step:1}
         # @markdown ### ElasticNetCV l1-ratio grid
-        elasticnet_l1_ratio_grid = "0.1, 0.3, 0.5, 0.7, 0.9" # @param {type:"string"}
+        elasticnet_l1_ratio_grid = "0.3, 0.7" # @param {type:"string"}
         # @markdown ### Cross-validation and convergence
-        selector_cv_folds = 5 # @param [3, 5, 10]
+        selector_cv_folds = 3 # @param [3, 5, 10]
         lasso_coefficient_threshold = 1e-10 # @param {type:"number"}
-        lasso_max_iter = 50000 # @param {type:"integer"}
+        lasso_max_iter = 10000 # @param {type:"integer"}
         lasso_coordinate_selection = "cyclic coordinate updates" # @param ["cyclic coordinate updates", "random coordinate updates"]
         estimate_selector_runtime = False # @param {type:"boolean"}
+        selector_auto_rf_by_dataset_size = True # @param {type:"boolean"}
+        selector_auto_rf_threshold_seconds = 7200.0 # @param {type:"number"}
+        selector_auto_rf_log10_slope = 1.225 # @param {type:"number"}
+        selector_auto_rf_log10_intercept = -0.658 # @param {type:"number"}
         # @markdown ### Output size and diagnostics
-        max_selected_features = 0 # @param {type:"integer"}
+        max_selected_features = 512 # @param {type:"integer"}
         random_forest_selector_trees = 500 # @param {type:"integer"}
         show_lasso_coefficient_diagnostics = True # @param {type:"boolean"}
         top_lasso_coefficients_to_show = 30 # @param {type:"slider", min:10, max:50, step:5}
@@ -3605,6 +3674,10 @@ cells += [
             "max_selected_features_mode": "10_percent_of_total_rows" if int(max_selected_features) <= 0 else "manual",
             "random_forest_selector_trees": int(random_forest_selector_trees),
             "estimate_runtime": bool(estimate_selector_runtime),
+            "selector_auto_rf_by_dataset_size": bool(selector_auto_rf_by_dataset_size),
+            "selector_auto_rf_threshold_seconds": float(selector_auto_rf_threshold_seconds),
+            "selector_auto_rf_log10_slope": float(selector_auto_rf_log10_slope),
+            "selector_auto_rf_log10_intercept": float(selector_auto_rf_log10_intercept),
             "show_diagnostics": bool(show_lasso_coefficient_diagnostics),
             "top_coefficients_to_show": int(top_lasso_coefficients_to_show),
             "enable_cache": bool(enable_feature_selector_cache),
@@ -3625,6 +3698,23 @@ cells += [
                 "ElasticNetCV will run in 4B after the train/test split: "
                 f"{int(selector_alpha_grid_size)} alpha values x {len(l1_ratio_values)} l1_ratio values x up to "
                 f"{int(selector_cv_folds)} CV folds."
+            )
+            try:
+                _threshold_seconds = float(selector_auto_rf_threshold_seconds)
+                _slope = float(selector_auto_rf_log10_slope)
+                _intercept = float(selector_auto_rf_log10_intercept)
+                if _slope > 0 and _threshold_seconds > 0:
+                    _threshold_n = float(10 ** ((math.log10(_threshold_seconds) - _intercept) / _slope))
+                    _threshold_n_text = f"{int(round(_threshold_n)):,}"
+                else:
+                    _threshold_n_text = "unknown"
+            except Exception:
+                _threshold_n_text = "unknown"
+            print(
+                "Auto selector fallback by dataset size: "
+                f"{'on' if bool(selector_auto_rf_by_dataset_size) else 'off'} "
+                f"(ElasticNetCV threshold={float(selector_auto_rf_threshold_seconds):,.0f}s, "
+                f"threshold_n~{_threshold_n_text})."
             )
         elif selected_selector_method == "lasso_cv":
             print(
@@ -3660,25 +3750,28 @@ cells += [
         model_random_seed = int(STATE.get("split_random_seed", 42))
         selector_cv_split_strategy = current_cv_split_strategy(default_strategy="random", fallback="random")
         feature_metadata = current_feature_metadata()
-        feature_dedup_threshold = 0.999
+        feature_variance_threshold = 1e-8
+        feature_binary_prevalence_min = 0.005
+        feature_binary_prevalence_max = 0.995
         X_train, X_test, feature_dedup_summary = drop_exact_and_near_duplicate_features(
             X_train,
             X_test,
-            correlation_threshold=float(feature_dedup_threshold),
+            variance_threshold=float(feature_variance_threshold),
+            binary_prevalence_min=float(feature_binary_prevalence_min),
+            binary_prevalence_max=float(feature_binary_prevalence_max),
         )
         dedup_dropped_count = int(feature_dedup_summary.get("dropped_feature_count", 0))
         if dedup_dropped_count > 0:
             print(
                 "Feature de-duplication (pre-selector/model): "
                 f"dropped {dedup_dropped_count:,} feature(s) "
-                f"({int(feature_dedup_summary.get('dropped_exact_count', 0)):,} exact, "
-                f"{int(feature_dedup_summary.get('dropped_near_count', 0)):,} near-duplicate at "
-                f"|r|>{float(feature_dedup_summary.get('correlation_threshold', feature_dedup_threshold)):.3f})."
+                f"({int(feature_dedup_summary.get('dropped_low_variance_count', 0)):,} low-variance, "
+                f"{int(feature_dedup_summary.get('dropped_binary_prevalence_count', 0)):,} binary-prevalence, "
+                f"{int(feature_dedup_summary.get('dropped_exact_count', 0)):,} exact-duplicate)."
             )
         else:
             print(
-                "Feature de-duplication (pre-selector/model): no exact/near-duplicate features were dropped "
-                f"at |r|>{float(feature_dedup_threshold):.3f}."
+                "Feature pre-filtering/de-duplication (pre-selector/model): no columns were dropped."
             )
         if str(feature_dedup_summary.get("near_duplicate_scan_error", "")).strip():
             print(
@@ -3695,14 +3788,18 @@ cells += [
                     "fixed_lasso_alpha": 1.0,
                     "alpha_grid_min_log10": -5.0,
                     "alpha_grid_max_log10": -1.0,
-                    "alpha_grid_size": 40,
-                    "elasticnet_l1_ratio_grid": "0.1, 0.3, 0.5, 0.7, 0.9",
-                    "cv_folds": 5,
+                    "alpha_grid_size": 12,
+                    "elasticnet_l1_ratio_grid": "0.3, 0.7",
+                    "cv_folds": 3,
                     "coefficient_threshold": 1e-10,
-                    "max_iter": 50000,
+                    "max_iter": 10000,
                     "selection_mode": "cyclic coordinate updates",
-                    "max_selected_features": max(1, int(math.ceil(0.10 * max(1, len(STATE.get("curated_df", [])))))),
+                    "max_selected_features": 512,
                     "random_forest_selector_trees": 500,
+                    "selector_auto_rf_by_dataset_size": True,
+                    "selector_auto_rf_threshold_seconds": 7200.0,
+                    "selector_auto_rf_log10_slope": 1.225,
+                    "selector_auto_rf_log10_intercept": -0.658,
                     "show_diagnostics": True,
                     "top_coefficients_to_show": 30,
                     "enable_cache": True,
@@ -3711,20 +3808,91 @@ cells += [
                 },
             )
         )
-        train_selector_method = str(feature_selection_config.get("method", "none")).strip().lower()
+        configured_train_selector_method = str(feature_selection_config.get("method", "none")).strip().lower()
+        train_selector_method = str(configured_train_selector_method)
         train_selector_max_features = int(feature_selection_config.get("max_selected_features", 300))
+        selector_auto_rf_large_dataset_triggered = False
+        selector_predicted_elasticnet_seconds = np.nan
+        selector_auto_rf_threshold_seconds = float(
+            feature_selection_config.get("selector_auto_rf_threshold_seconds", 7200.0)
+        )
+        selector_auto_rf_threshold_dataset_size = np.nan
+        if (
+            train_selector_method == "elasticnet_cv"
+            and bool(feature_selection_config.get("selector_auto_rf_by_dataset_size", True))
+        ):
+            try:
+                _slope = float(feature_selection_config.get("selector_auto_rf_log10_slope", 1.225))
+                _intercept = float(feature_selection_config.get("selector_auto_rf_log10_intercept", -0.658))
+                if _slope > 0 and selector_auto_rf_threshold_seconds > 0 and int(len(y_train)) > 1:
+                    selector_predicted_elasticnet_seconds = float(
+                        10 ** (_intercept + _slope * math.log10(float(len(y_train))))
+                    )
+                    selector_auto_rf_threshold_dataset_size = float(
+                        10 ** ((math.log10(selector_auto_rf_threshold_seconds) - _intercept) / _slope)
+                    )
+                    if selector_predicted_elasticnet_seconds > selector_auto_rf_threshold_seconds:
+                        selector_auto_rf_large_dataset_triggered = True
+                        train_selector_method = "random_forest_importance"
+                        threshold_n_text = (
+                            f"{int(round(selector_auto_rf_threshold_dataset_size)):,}"
+                            if np.isfinite(selector_auto_rf_threshold_dataset_size)
+                            else "unknown"
+                        )
+                        print(
+                            "Train-only selector auto-switch: "
+                            "ElasticNetCV predicted runtime exceeds threshold; "
+                            f"using random_forest_importance instead (n={len(y_train):,}, "
+                            f"estimate={selector_predicted_elasticnet_seconds:,.0f}s, "
+                            f"threshold={selector_auto_rf_threshold_seconds:,.0f}s, "
+                            f"threshold_n~{threshold_n_text})."
+                        )
+            except Exception:
+                pass
         train_selector_summary = {
             "train_only_feature_selector_method": train_selector_method,
+            "train_only_feature_selector_configured_method": configured_train_selector_method,
             "train_only_feature_selector_selected_count": int(X_train.shape[1]),
             "train_only_feature_selector_alpha": None,
             "train_only_feature_selector_l1_ratio": None,
             "train_only_feature_selector_max_features": int(train_selector_max_features),
-            "train_only_feature_dedup_threshold": float(feature_dedup_summary.get("correlation_threshold", feature_dedup_threshold)),
+            "train_only_feature_selector_auto_rf_large_dataset_triggered": bool(
+                selector_auto_rf_large_dataset_triggered
+            ),
+            "train_only_feature_selector_predicted_elasticnet_seconds": (
+                float(selector_predicted_elasticnet_seconds)
+                if np.isfinite(selector_predicted_elasticnet_seconds)
+                else np.nan
+            ),
+            "train_only_feature_selector_auto_rf_threshold_seconds": float(
+                selector_auto_rf_threshold_seconds
+            ),
+            "train_only_feature_selector_auto_rf_threshold_dataset_size": (
+                float(selector_auto_rf_threshold_dataset_size)
+                if np.isfinite(selector_auto_rf_threshold_dataset_size)
+                else np.nan
+            ),
+            "train_only_feature_dedup_threshold": float(feature_dedup_summary.get("correlation_threshold", np.nan)),
             "train_only_feature_count_before_dedup": int(feature_dedup_summary.get("original_feature_count", X_train.shape[1])),
             "train_only_feature_count_after_dedup": int(feature_dedup_summary.get("post_dedup_feature_count", X_train.shape[1])),
             "train_only_feature_dedup_dropped_count": int(feature_dedup_summary.get("dropped_feature_count", 0)),
+            "train_only_feature_dedup_low_variance_count": int(feature_dedup_summary.get("dropped_low_variance_count", 0)),
+            "train_only_feature_dedup_binary_prevalence_count": int(feature_dedup_summary.get("dropped_binary_prevalence_count", 0)),
             "train_only_feature_dedup_exact_count": int(feature_dedup_summary.get("dropped_exact_count", 0)),
             "train_only_feature_dedup_near_count": int(feature_dedup_summary.get("dropped_near_count", 0)),
+            "train_only_feature_dedup_moderate_count": int(feature_dedup_summary.get("dropped_moderate_count", 0)),
+            "train_only_feature_dedup_moderate_threshold": float(
+                feature_dedup_summary.get("moderate_correlation_threshold", np.nan)
+            ),
+            "train_only_feature_dedup_variance_threshold": float(
+                feature_dedup_summary.get("variance_threshold", feature_variance_threshold)
+            ),
+            "train_only_feature_dedup_binary_prevalence_min": float(
+                feature_dedup_summary.get("binary_prevalence_min", feature_binary_prevalence_min)
+            ),
+            "train_only_feature_dedup_binary_prevalence_max": float(
+                feature_dedup_summary.get("binary_prevalence_max", feature_binary_prevalence_max)
+            ),
             "train_only_feature_dedup_scan_warning": str(feature_dedup_summary.get("near_duplicate_scan_error", "")),
         }
         selector_cache_dir = None
@@ -3741,6 +3909,7 @@ cells += [
 
             selector_parameter_text = "|".join(
                 [
+                    configured_train_selector_method,
                     train_selector_method,
                     str(feature_selection_config.get("fixed_lasso_alpha")),
                     str(feature_selection_config.get("alpha_grid_min_log10")),
@@ -3753,6 +3922,10 @@ cells += [
                     str(feature_selection_config.get("selection_mode")),
                     str(feature_selection_config.get("max_selected_features")),
                     str(feature_selection_config.get("random_forest_selector_trees")),
+                    str(feature_selection_config.get("selector_auto_rf_by_dataset_size", True)),
+                    str(feature_selection_config.get("selector_auto_rf_threshold_seconds", 7200.0)),
+                    str(feature_selection_config.get("selector_auto_rf_log10_slope", 1.225)),
+                    str(feature_selection_config.get("selector_auto_rf_log10_intercept", -0.658)),
                     str(selector_cv_split_strategy),
                     str(model_random_seed),
                 ]
@@ -3845,19 +4018,19 @@ cells += [
             if train_selector_method in {"fixed_lasso", "lasso_cv", "elasticnet_cv"}:
                 if not cached_selector_loaded:
                     if train_selector_method == "elasticnet_cv":
-                        l1_ratio_values = parse_l1_ratio_grid(feature_selection_config.get("elasticnet_l1_ratio_grid", "0.1, 0.3, 0.5, 0.7, 0.9"))
-                        estimated_fit_units = int(feature_selection_config.get("alpha_grid_size", 40)) * len(l1_ratio_values) * min(int(feature_selection_config.get("cv_folds", 5)), len(X_train))
+                        l1_ratio_values = parse_l1_ratio_grid(feature_selection_config.get("elasticnet_l1_ratio_grid", "0.3, 0.7"))
+                        estimated_fit_units = int(feature_selection_config.get("alpha_grid_size", 12)) * len(l1_ratio_values) * min(int(feature_selection_config.get("cv_folds", 3)), len(X_train))
                         print(
                             "Running train-only ElasticNetCV selector: "
-                            f"{int(feature_selection_config.get('alpha_grid_size', 40))} alpha values x {len(l1_ratio_values)} l1_ratio values x "
-                            f"{min(int(feature_selection_config.get('cv_folds', 5)), len(X_train))} CV folds = about {estimated_fit_units:,} model fits."
+                            f"{int(feature_selection_config.get('alpha_grid_size', 12))} alpha values x {len(l1_ratio_values)} l1_ratio values x "
+                            f"{min(int(feature_selection_config.get('cv_folds', 3)), len(X_train))} CV folds = about {estimated_fit_units:,} model fits."
                         )
                     elif train_selector_method == "lasso_cv":
-                        estimated_fit_units = int(feature_selection_config.get("alpha_grid_size", 40)) * min(int(feature_selection_config.get("cv_folds", 5)), len(X_train))
+                        estimated_fit_units = int(feature_selection_config.get("alpha_grid_size", 12)) * min(int(feature_selection_config.get("cv_folds", 3)), len(X_train))
                         print(
                             "Running train-only LassoCV selector: "
-                            f"{int(feature_selection_config.get('alpha_grid_size', 40))} alpha values x "
-                            f"{min(int(feature_selection_config.get('cv_folds', 5)), len(X_train))} CV folds = about {estimated_fit_units:,} model fits."
+                            f"{int(feature_selection_config.get('alpha_grid_size', 12))} alpha values x "
+                            f"{min(int(feature_selection_config.get('cv_folds', 3)), len(X_train))} CV folds = about {estimated_fit_units:,} model fits."
                         )
                     else:
                         estimated_fit_units = 1
@@ -3876,28 +4049,28 @@ cells += [
                                 X_sample = X_train.loc[sample_idx].copy()
                                 y_sample = y_train.loc[sample_idx].to_numpy(dtype=float)
                                 warmup_alpha_grid = make_regularization_grid(
-                                    float(feature_selection_config.get("alpha_grid_min_log10", -4)),
-                                    float(feature_selection_config.get("alpha_grid_max_log10", 0)),
-                                    max(3, int(feature_selection_config.get("alpha_grid_size", 40) // 4)),
+                                    float(feature_selection_config.get("alpha_grid_min_log10", -5)),
+                                    float(feature_selection_config.get("alpha_grid_max_log10", -1)),
+                                    max(3, int(feature_selection_config.get("alpha_grid_size", 12) // 4)),
                                 )
                                 warmup_l1 = parse_l1_ratio_grid(
-                                    feature_selection_config.get("elasticnet_l1_ratio_grid", "0.1, 0.3, 0.5, 0.7, 0.9")
+                                    feature_selection_config.get("elasticnet_l1_ratio_grid", "0.3, 0.7")
                                 )
                                 if train_selector_method == "lasso_cv":
                                     warmup_l1 = [1.0]
-                                warmup_folds = max(2, int(feature_selection_config.get("cv_folds", 5)))
+                                warmup_folds = max(2, int(feature_selection_config.get("cv_folds", 3)))
                                 warmup_selector = ElasticNetCV(
                                     l1_ratio=warmup_l1,
                                     alphas=warmup_alpha_grid,
                                     cv=warmup_folds,
-                                    max_iter=int(feature_selection_config.get("max_iter", 50000)),
+                                    max_iter=int(feature_selection_config.get("max_iter", 10000)),
                                     n_jobs=-1,
                                     random_state=int(model_random_seed),
                                     selection=str(feature_selection_config.get("selection_mode", "cyclic coordinate updates")).strip().lower().startswith("random") and "random" or "cyclic",
                                 ) if train_selector_method == "elasticnet_cv" else LassoCV(
                                     alphas=warmup_alpha_grid,
                                     cv=warmup_folds,
-                                    max_iter=int(feature_selection_config.get("max_iter", 50000)),
+                                    max_iter=int(feature_selection_config.get("max_iter", 10000)),
                                     n_jobs=-1,
                                     random_state=int(model_random_seed),
                                     selection=str(feature_selection_config.get("selection_mode", "cyclic coordinate updates")).strip().lower().startswith("random") and "random" or "cyclic",
@@ -3923,15 +4096,15 @@ cells += [
                             target_values=y_train.to_numpy(dtype=float),
                             selector_method=train_selector_method,
                             alpha=float(feature_selection_config.get("fixed_lasso_alpha", 1.0)),
-                            alpha_grid_min_log10=float(feature_selection_config.get("alpha_grid_min_log10", -4)),
-                            alpha_grid_max_log10=float(feature_selection_config.get("alpha_grid_max_log10", 0)),
-                            alpha_grid_size=int(feature_selection_config.get("alpha_grid_size", 40)),
-                            elasticnet_l1_ratio_grid=str(feature_selection_config.get("elasticnet_l1_ratio_grid", "0.1, 0.3, 0.5, 0.7, 0.9")),
+                            alpha_grid_min_log10=float(feature_selection_config.get("alpha_grid_min_log10", -5)),
+                            alpha_grid_max_log10=float(feature_selection_config.get("alpha_grid_max_log10", -1)),
+                            alpha_grid_size=int(feature_selection_config.get("alpha_grid_size", 12)),
+                            elasticnet_l1_ratio_grid=str(feature_selection_config.get("elasticnet_l1_ratio_grid", "0.3, 0.7")),
                             cv_split_strategy=selector_cv_split_strategy,
-                            cv_folds=int(feature_selection_config.get("cv_folds", 5)),
+                            cv_folds=int(feature_selection_config.get("cv_folds", 3)),
                             random_seed=int(model_random_seed),
                             coefficient_threshold=float(feature_selection_config.get("coefficient_threshold", 1e-10)),
-                            max_iter=int(feature_selection_config.get("max_iter", 50000)),
+                            max_iter=int(feature_selection_config.get("max_iter", 10000)),
                             selection_mode=str(feature_selection_config.get("selection_mode", "cyclic coordinate updates")),
                             max_selected_features=int(train_selector_max_features),
                             smiles_values=smiles_train,
@@ -4147,6 +4320,194 @@ cells += [
     ),
     md(
         """
+        ### 4B.5. Configure TabPFN Authentication (PRIORLABS_API_KEY) Before 4C
+
+        TabPFN can require a Prior Labs access token. Use this helper to set `PRIORLABS_API_KEY`
+        for the current kernel session **without printing it**, then run a quick TabPFN preflight check.
+
+        If the preflight passes, `4C` can include TabPFN directly. If not, `4C` will skip TabPFN and continue with the other models.
+        """
+    ),
+    code(
+        """
+        # @title 4B.5. Set PRIORLABS_API_KEY securely and test TabPFN auth/access
+        if "STATE" not in globals():
+            raise RuntimeError("Please run step 0 first.")
+
+        from IPython.display import clear_output
+
+        def _tabpfn_api_key_present():
+            api_key = str(os.environ.get("PRIORLABS_API_KEY", "")).strip()
+            if api_key:
+                return api_key
+            return str(os.environ.get("TABPFN_API_KEY", "")).strip()
+
+        def _apply_tabpfn_access_token(api_key):
+            api_key = str(api_key or "").strip()
+            if not api_key:
+                return False, "No API key provided."
+            os.environ["PRIORLABS_API_KEY"] = api_key
+            os.environ["TABPFN_API_KEY"] = api_key
+            try:
+                from tabpfn_client import set_access_token
+
+                set_access_token(api_key)
+                return True, ""
+            except Exception as exc:
+                return False, str(exc)
+
+        def _tabpfn_auth_issue_text(exc):
+            message = str(exc).lower()
+            if "rmsnorm" in message and "torch.nn" in message:
+                return (
+                    "Your local `tabpfn` backend requires a newer PyTorch build that includes torch.nn.RMSNorm. "
+                    "Prefer `tabpfn_client` (API backend) or upgrade PyTorch in this environment."
+                )
+            auth_tokens = (
+                "priorlabs_api_key",
+                "tabpfn_api_key",
+                "forbidden",
+                "unauthorized",
+                "authentication",
+                "api key",
+                "access token",
+                "token",
+                "login",
+                "401",
+                "403",
+            )
+            if any(token in message for token in auth_tokens):
+                return "Authentication appears to be required. Set PRIORLABS_API_KEY and retry."
+            return "TabPFN preflight failed for a non-auth reason."
+
+        def _run_tabpfn_auth_check():
+            result = {
+                "api_key_present": False,
+                "access_token_set_ok": False,
+                "access_token_set_error": "",
+                "tabpfn_preflight_ok": False,
+                "tabpfn_preflight_error": "",
+                "auth_hint": "",
+                "tabpfn_source": str(globals().get("TABPFN_REGRESSOR_SOURCE", "unavailable")),
+            }
+
+            api_key = _tabpfn_api_key_present()
+            result["api_key_present"] = bool(api_key)
+            if api_key:
+                token_ok, token_error = _apply_tabpfn_access_token(api_key)
+                result["access_token_set_ok"] = bool(token_ok)
+                result["access_token_set_error"] = str(token_error or "")
+
+            try:
+                probe_model = make_tabpfn_regressor()
+                probe_X = np.asarray(
+                    [
+                        [0.0, 1.0, 2.0, 3.0],
+                        [1.0, 2.0, 3.0, 4.0],
+                        [2.0, 3.0, 4.0, 5.0],
+                        [3.0, 4.0, 5.0, 6.0],
+                        [4.0, 5.0, 6.0, 7.0],
+                        [5.0, 6.0, 7.0, 8.0],
+                    ],
+                    dtype=float,
+                )
+                probe_y = np.asarray([0.0, 1.0, 0.5, 1.5, 1.0, 2.0], dtype=float)
+                probe_model.fit(probe_X, probe_y)
+                _ = probe_model.predict(probe_X[:2])
+                result["tabpfn_preflight_ok"] = True
+            except Exception as exc:
+                result["tabpfn_preflight_error"] = str(exc)
+                result["auth_hint"] = _tabpfn_auth_issue_text(exc)
+
+            STATE["tabpfn_auth"] = dict(result)
+            STATE["tabpfn_preflight_ok"] = bool(result.get("tabpfn_preflight_ok", False))
+            return result
+
+        def _display_tabpfn_auth_result(result):
+            if result.get("tabpfn_preflight_ok"):
+                display_note(f"TabPFN preflight passed (source={result.get('tabpfn_source', 'unknown')}).")
+                return
+
+            summary_lines = []
+            if not result.get("api_key_present"):
+                summary_lines.append("No PRIORLABS_API_KEY is currently set in this kernel.")
+            if result.get("access_token_set_error"):
+                summary_lines.append(f"tabpfn_client.set_access_token failed: {result['access_token_set_error']}")
+            if result.get("tabpfn_preflight_error"):
+                summary_lines.append(f"TabPFN preflight error: {result['tabpfn_preflight_error']}")
+            if result.get("auth_hint"):
+                summary_lines.append(result["auth_hint"])
+            summary_lines.append(
+                "If needed, set PRIORLABS_API_KEY here and rerun this cell. "
+                "Then run 4C with run_tabpfn=True."
+            )
+            display_note("\\n".join(summary_lines))
+
+        if widgets is not None:
+            api_key_widget = widgets.Password(
+                description="PRIORLABS_API_KEY",
+                placeholder="paste key",
+                layout=widgets.Layout(width="520px"),
+            )
+            apply_button = widgets.Button(
+                description="Set key + test TabPFN",
+                button_style="primary",
+                tooltip="Store API key in environment and run TabPFN preflight",
+            )
+            clear_button = widgets.Button(
+                description="Clear key",
+                button_style="warning",
+                tooltip="Remove PRIORLABS_API_KEY from this kernel session",
+            )
+            auth_output = widgets.Output()
+
+            def _handle_apply(_):
+                api_key = str(api_key_widget.value or "").strip()
+                if api_key:
+                    _apply_tabpfn_access_token(api_key)
+                api_key_widget.value = ""
+                result = _run_tabpfn_auth_check()
+                with auth_output:
+                    clear_output(wait=True)
+                    _display_tabpfn_auth_result(result)
+
+            def _handle_clear(_):
+                os.environ.pop("PRIORLABS_API_KEY", None)
+                os.environ.pop("TABPFN_API_KEY", None)
+                api_key_widget.value = ""
+                result = _run_tabpfn_auth_check()
+                with auth_output:
+                    clear_output(wait=True)
+                    _display_tabpfn_auth_result(result)
+
+            apply_button.on_click(_handle_apply)
+            clear_button.on_click(_handle_clear)
+
+            display(
+                widgets.VBox(
+                    [
+                        widgets.HTML("<b>TabPFN authentication helper</b>"),
+                        widgets.HTML("Enter PRIORLABS_API_KEY below (value is hidden), then click <i>Set key + test TabPFN</i>."),
+                        api_key_widget,
+                        widgets.HBox([apply_button, clear_button]),
+                        auth_output,
+                    ]
+                )
+            )
+            with auth_output:
+                clear_output(wait=True)
+                _display_tabpfn_auth_result(_run_tabpfn_auth_check())
+        else:
+            from getpass import getpass
+
+            entered_key = getpass("Enter PRIORLABS_API_KEY (leave blank to keep current): ").strip()
+            if entered_key:
+                _apply_tabpfn_access_token(entered_key)
+            _display_tabpfn_auth_result(_run_tabpfn_auth_check())
+        """
+    ),
+    md(
+        """
         ### 4C. Conventional-Model CV Note
 
         When the train/test workflow uses **scaffold** splitting, the **outer** conventional-model evaluation still follows the scaffold groups.
@@ -4168,15 +4529,21 @@ cells += [
         # @markdown ### Other conventional models
         run_svr = True # @param {type:"boolean"}
         run_random_forest = True # @param {type:"boolean"}
+        run_extra_trees = True # @param {type:"boolean"}
+        run_hist_gradient_boosting = True # @param {type:"boolean"}
+        run_voting_knn_svr = True # @param {type:"boolean"}
+        run_tabpfn = True # @param {type:"boolean"}
+        tabpfn_max_train_rows = 1000 # @param {type:"integer"}
         run_xgboost = True # @param {type:"boolean"}
+        run_lightgbm = True # @param {type:"boolean"}
         run_catboost = True # @param {type:"boolean"}
         # @markdown ### ElasticNetCV model settings
         elasticnet_model_alpha_grid_min_log10 = -4 # @param {type:"integer"}
         elasticnet_model_alpha_grid_max_log10 = 0 # @param {type:"integer"}
-        elasticnet_model_alpha_grid_size = 40 # @param {type:"slider", min:10, max:80, step:5}
-        elasticnet_model_l1_ratio_grid = "0.4, 0.5, 0.6, 0.7, 0.9" # @param {type:"string"}
-        elasticnet_model_cv_folds = 5 # @param [3, 5, 10]
-        elasticnet_model_max_iter = 50000 # @param {type:"integer"}
+        elasticnet_model_alpha_grid_size = 12 # @param {type:"slider", min:6, max:80, step:1}
+        elasticnet_model_l1_ratio_grid = "0.4, 0.8" # @param {type:"string"}
+        elasticnet_model_cv_folds = 3 # @param [3, 5, 10]
+        elasticnet_model_max_iter = 15000 # @param {type:"integer"}
 
         if "X_train" not in STATE or "X_test" not in STATE or "traditional_feature_metadata" not in STATE:
             raise RuntimeError("Please run block 4B first to prepare the feature-selected train/test split.")
@@ -4192,6 +4559,20 @@ cells += [
         selector_cache_paths = dict(STATE.get("feature_selector_cache_paths", {}))
         train_selector_summary = dict(STATE.get("traditional_train_only_feature_selector", {}))
         training_cv_split_strategy = current_cv_split_strategy(default_strategy="random", fallback="random")
+        tabpfn_backend_source = str(globals().get("TABPFN_REGRESSOR_SOURCE", "unavailable"))
+        tabpfn_auth_state = dict(STATE.get("tabpfn_auth", {})) if isinstance(STATE.get("tabpfn_auth"), dict) else {}
+        tabpfn_preflight_ok = bool(STATE.get("tabpfn_preflight_ok", tabpfn_auth_state.get("tabpfn_preflight_ok", False)))
+        if (
+            run_tabpfn
+            and tabpfn_backend_source == "tabpfn_client"
+            and not str(os.environ.get("PRIORLABS_API_KEY", os.environ.get("TABPFN_API_KEY", ""))).strip()
+            and not tabpfn_preflight_ok
+        ):
+            print(
+                "TabPFN note: no PRIORLABS_API_KEY found in this kernel. "
+                "Run block 4B.5 to set/test authentication before 4C.",
+                flush=True,
+            )
         effective_cv_folds = None
         if use_cross_validation:
             cv, effective_cv_folds, effective_cv_split_strategy = make_qsar_cv_splitter(
@@ -4240,6 +4621,11 @@ cells += [
             n_jobs=-1,
             random_state=int(model_random_seed),
         )
+        finite_numeric_transform = FunctionTransformer(
+            np.nan_to_num,
+            kw_args={"nan": np.nan, "posinf": np.nan, "neginf": np.nan},
+            validate=False,
+        )
 
         available_models = {
             "ElasticNetCV": Pipeline(
@@ -4258,6 +4644,48 @@ cells += [
             ),
             "Random forest": RandomForestRegressor(
                 n_estimators=400, random_state=int(model_random_seed), n_jobs=-1
+            ),
+            "Extra trees": ExtraTreesRegressor(
+                n_estimators=500, random_state=int(model_random_seed), n_jobs=-1
+            ),
+            "HistGradientBoosting": Pipeline(
+                [
+                    ("finite", finite_numeric_transform),
+                    ("imputer", SimpleImputer(strategy="median")),
+                    (
+                        "model",
+                        HistGradientBoostingRegressor(
+                            learning_rate=0.05,
+                            max_iter=500,
+                            max_depth=8,
+                            random_state=int(model_random_seed),
+                        ),
+                    ),
+                ]
+            ),
+            "Voting Regressor (KNN, SVM)": VotingRegressor(
+                estimators=[
+                    (
+                        "knn",
+                        Pipeline(
+                            [
+                                ("imputer", SimpleImputer(strategy="median")),
+                                ("scaler", StandardScaler()),
+                                ("model", KNeighborsRegressor(n_neighbors=15, weights="distance")),
+                            ]
+                        ),
+                    ),
+                    (
+                        "svr",
+                        Pipeline(
+                            [
+                                ("imputer", SimpleImputer(strategy="median")),
+                                ("scaler", StandardScaler()),
+                                ("model", SVR(C=10.0, epsilon=0.1, gamma="scale")),
+                            ]
+                        ),
+                    ),
+                ]
             ),
             "XGBoost": XGBRegressor(
                 n_estimators=400,
@@ -4278,6 +4706,16 @@ cells += [
                 verbose=False,
             ),
         }
+        if LGBMRegressor is not None:
+            available_models["LightGBM"] = LGBMRegressor(
+                n_estimators=500,
+                learning_rate=0.05,
+                num_leaves=63,
+                subsample=0.9,
+                colsample_bytree=0.9,
+                random_state=int(model_random_seed),
+                n_jobs=2,
+            )
         if CatBoostRegressor is not None:
             available_models["MapLight CatBoost"] = CatBoostRegressor(
                 iterations=400,
@@ -4287,6 +4725,88 @@ cells += [
                 random_seed=int(model_random_seed),
                 verbose=False,
             )
+        def _looks_like_tabpfn_auth_issue(exc: Exception) -> bool:
+            message = str(exc).lower()
+            if "rmsnorm" in message and "torch.nn" in message:
+                return False
+            auth_tokens = (
+                "priorlabs_api_key",
+                "tabpfn_api_key",
+                "forbidden",
+                "unauthorized",
+                "authentication",
+                "api key",
+                "access token",
+                "token",
+                "login",
+            )
+            return any(token in message for token in auth_tokens)
+
+        tabpfn_skip_reason = ""
+        tabpfn_enabled = False
+        if run_tabpfn:
+            if TabPFNRegressor is None:
+                tabpfn_skip_reason = (
+                    "TabPFNRegressor requested but unavailable. "
+                    "Install `tabpfn-client` (preferred) or `tabpfn`, then rerun."
+                )
+            elif int(X_train.shape[0]) > int(tabpfn_max_train_rows):
+                tabpfn_skip_reason = (
+                    f"TabPFNRegressor skipped: training rows ({int(X_train.shape[0])}) exceed "
+                    f"tabpfn_max_train_rows ({int(tabpfn_max_train_rows)})."
+                )
+            else:
+                try:
+                    tabpfn_key = str(os.environ.get("PRIORLABS_API_KEY", os.environ.get("TABPFN_API_KEY", ""))).strip()
+                    if tabpfn_key:
+                        try:
+                            from tabpfn_client import set_access_token as _set_tabpfn_access_token
+
+                            _set_tabpfn_access_token(tabpfn_key)
+                        except Exception:
+                            pass
+                    probe_estimator = make_tabpfn_regressor()
+                    probe_X = np.asarray(
+                        [
+                            [0.0, 1.0, 2.0, 3.0],
+                            [1.0, 2.0, 3.0, 4.0],
+                            [2.0, 3.0, 4.0, 5.0],
+                            [3.0, 4.0, 5.0, 6.0],
+                            [4.0, 5.0, 6.0, 7.0],
+                            [5.0, 6.0, 7.0, 8.0],
+                        ],
+                        dtype=float,
+                    )
+                    probe_y = np.asarray([0.0, 1.0, 0.5, 1.5, 1.0, 2.0], dtype=float)
+                    probe_estimator.fit(probe_X, probe_y)
+                    _ = probe_estimator.predict(probe_X[:2])
+                    tabpfn_enabled = True
+                except Exception as tabpfn_exc:
+                    tabpfn_error_text = str(tabpfn_exc)
+                    if "rmsnorm" in tabpfn_error_text.lower() and "torch.nn" in tabpfn_error_text.lower():
+                        tabpfn_skip_reason = (
+                            "TabPFNRegressor was skipped because this environment's PyTorch is missing torch.nn.RMSNorm. "
+                            "Use the API-backed `tabpfn_client` path (set PRIORLABS_API_KEY in 4B.5), "
+                            "or upgrade PyTorch and retry."
+                        )
+                    elif _looks_like_tabpfn_auth_issue(tabpfn_exc):
+                        tabpfn_skip_reason = (
+                            "TabPFNRegressor was skipped because authentication is required for model access. "
+                            "Set `PRIORLABS_API_KEY` (for example in block 4B.5), then rerun step 0 and block 4C."
+                        )
+                    else:
+                        tabpfn_skip_reason = (
+                            "TabPFNRegressor preflight failed in this environment and will be skipped. "
+                            f"Error: {tabpfn_exc}"
+                        )
+        if tabpfn_enabled:
+            available_models["TabPFNRegressor"] = Pipeline(
+                [
+                    ("imputer", SimpleImputer(strategy="median")),
+                    ("scaler", StandardScaler()),
+                    ("model", make_tabpfn_regressor()),
+                ]
+            )
 
         selected_models = {}
         if run_elasticnet_cv:
@@ -4295,10 +4815,23 @@ cells += [
             selected_models["SVR"] = available_models["SVR"]
         if run_random_forest:
             selected_models["Random forest"] = available_models["Random forest"]
+        if run_extra_trees:
+            selected_models["Extra trees"] = available_models["Extra trees"]
+        if run_hist_gradient_boosting:
+            selected_models["HistGradientBoosting"] = available_models["HistGradientBoosting"]
+        if run_voting_knn_svr:
+            selected_models["Voting Regressor (KNN, SVM)"] = available_models["Voting Regressor (KNN, SVM)"]
+        if run_tabpfn and "TabPFNRegressor" in available_models:
+            selected_models["TabPFNRegressor"] = available_models["TabPFNRegressor"]
         if run_xgboost:
             selected_models["XGBoost"] = available_models["XGBoost"]
+        if run_lightgbm and "LightGBM" in available_models:
+            selected_models["LightGBM"] = available_models["LightGBM"]
         if run_catboost:
             selected_models["CatBoost"] = available_models["CatBoost"]
+
+        if run_tabpfn and tabpfn_skip_reason:
+            print(tabpfn_skip_reason, flush=True)
 
         maplight_feature_cols = []
         maplight_prefixes = ("maplight_morgan_", "avalon_count_", "erg_", "maplight_desc_")
@@ -4345,6 +4878,7 @@ cells += [
         metrics_rows = []
         fitted_models = {}
         predictions = {}
+        traditional_model_feature_columns = {}
         traditional_cache_paths = {}
         conventional_cache_dir = None
         conventional_dataset_label = current_dataset_cache_label()
@@ -4372,6 +4906,7 @@ cells += [
             if name == "MapLight CatBoost" and maplight_feature_cols:
                 model_X_train = STATE["X_train_unselected"].loc[:, maplight_feature_cols].reset_index(drop=True)
                 model_X_test = STATE["X_test_unselected"].loc[:, maplight_feature_cols].reset_index(drop=True)
+            traditional_model_feature_columns[name] = [str(col) for col in model_X_train.columns]
             if enable_conventional_model_cache and reuse_conventional_cached_models:
                 metadata_candidates = sorted(
                     conventional_cache_dir.glob(f"*_{conventional_dataset_label}_{model_slug}_metadata.json"),
@@ -4560,6 +5095,7 @@ cells += [
         STATE["traditional_results"] = results_df.copy()
         STATE["best_traditional_model_name"] = best_model_name
         STATE["traditional_model_cache_paths"] = traditional_cache_paths
+        STATE["traditional_model_feature_columns"] = dict(traditional_model_feature_columns)
         STATE["feature_selector_cache_paths"] = selector_cache_paths
         STATE["traditional_train_only_feature_selector"] = dict(train_selector_summary)
         if selector_cache_dir is not None:
@@ -4789,7 +5325,7 @@ cells += [
 
         By default this block now uses the prepared `4A`/`4B` split, so tuned models are evaluated on the same train/test rows and the same train-only selected features as the conventional models in `4C`. That differs from ChemML's original `ModelScreener`, which screens each representation separately with its own 90/10 random split.
 
-        The ElasticNet GA search space follows the installed ChemML AutoML implementation: alpha is searched from `1e-4` to `1e-1` on the log scale, and `l1_ratio` is chosen from `0.4, 0.5, 0.6, 0.7`. This is a model-tuning step, not a separate feature selector.
+        The ElasticNet GA search space follows the installed ChemML AutoML implementation: alpha is searched from `1e-4` to `1e-1` on the log scale, and `l1_ratio` is chosen from `0.4, 0.8`. This is a model-tuning step, not a separate feature selector.
 
         The defaults below are intentionally moderate for Colab. If you need a deeper search, increase the population size or number of generations.
         """
@@ -4798,9 +5334,6 @@ cells += [
         """
         # @title 4E. Run genetic-algorithm tuning for selected conventional models { display-mode: "form" }
         use_prepared_4b_split_for_tuning = True
-        tuning_split_strategy = "target_quartiles" # @param ["target_quartiles", "random", "scaffold", "predefined"]
-        tuning_test_fraction = 0.2 # @param {type:"slider", min:0.1, max:0.4, step:0.05}
-        tuning_random_seed = 42 # @param {type:"integer"}
         ga_cv_folds = 5 # @param [3, 5]
         ga_objective = "rmse" # @param ["rmse", "mae", "r2"]
         ga_generations = 8 # @param {type:"slider", min:3, max:20, step:1}
@@ -4892,9 +5425,6 @@ cells += [
             )
             discovered_model_names = [name for name in discovered_model_names if name]
             metadata_override_values = {
-                "tuning_split_strategy": str(representative_metadata.get("split_strategy", tuning_split_strategy)),
-                "tuning_test_fraction": float(representative_metadata.get("test_fraction", tuning_test_fraction)),
-                "tuning_random_seed": int(representative_metadata.get("random_seed", tuning_random_seed)),
                 "ga_cv_folds": int(representative_metadata.get("ga_cv_folds", ga_cv_folds)),
                 "ga_objective": str(representative_metadata.get("ga_objective", ga_objective)),
                 "ga_generations": int(representative_metadata.get("ga_generations_requested", representative_metadata.get("ga_generations_completed", ga_generations))),
@@ -4910,9 +5440,6 @@ cells += [
                 "tune_xgboost": "XGBoost" in discovered_model_names,
                 "tune_catboost": "CatBoost" in discovered_model_names,
             }
-            tuning_split_strategy = metadata_override_values["tuning_split_strategy"]
-            tuning_test_fraction = metadata_override_values["tuning_test_fraction"]
-            tuning_random_seed = metadata_override_values["tuning_random_seed"]
             ga_cv_folds = metadata_override_values["ga_cv_folds"]
             ga_objective = metadata_override_values["ga_objective"]
             ga_generations = metadata_override_values["ga_generations"]
@@ -4944,40 +5471,27 @@ cells += [
                 "that run before executing the block."
             )
 
-        if bool(use_prepared_4b_split_for_tuning):
-            required_keys = {"X_train", "X_test", "y_train", "y_test", "smiles_train", "smiles_test", "traditional_feature_metadata"}
-            missing_keys = sorted(required_keys.difference(STATE.keys()))
-            if missing_keys:
-                raise RuntimeError(
-                    "Please run blocks 4A and 4B before GA tuning. "
-                    f"Missing: {', '.join(missing_keys)}"
-                )
-            X_train = STATE["X_train"].copy()
-            X_test = STATE["X_test"].copy()
-            y_train = np.asarray(STATE["y_train"], dtype=float)
-            y_test = np.asarray(STATE["y_test"], dtype=float)
-            feature_metadata = dict(STATE["traditional_feature_metadata"])
-            tuning_split_strategy = str(STATE.get("model_split_strategy", tuning_split_strategy))
-            tuning_test_fraction = float(STATE.get("model_test_fraction", tuning_test_fraction))
-            tuning_random_seed = int(STATE.get("model_split_random_seed", tuning_random_seed))
-            print(
-                "GA tuning is using the prepared 4A/4B split and feature-selected matrix: "
-                f"strategy={tuning_split_strategy}, test_fraction={float(tuning_test_fraction):.2f}, "
-                f"train={len(X_train)}, test={len(X_test)}, features={X_train.shape[1]}",
-                flush=True,
+        required_keys = {"X_train", "X_test", "y_train", "y_test", "smiles_train", "smiles_test", "traditional_feature_metadata"}
+        missing_keys = sorted(required_keys.difference(STATE.keys()))
+        if missing_keys:
+            raise RuntimeError(
+                "Please run blocks 4A and 4B before GA tuning. "
+                f"Missing: {', '.join(missing_keys)}"
             )
-        else:
-            split_payload = apply_qsar_split(
-                split_strategy=str(tuning_split_strategy),
-                test_fraction=float(tuning_test_fraction),
-                random_seed=int(tuning_random_seed),
-                announce=True,
-            )
-            X_train = split_payload["X_train"].copy()
-            X_test = split_payload["X_test"].copy()
-            y_train = np.asarray(split_payload["y_train"], dtype=float)
-            y_test = np.asarray(split_payload["y_test"], dtype=float)
-            feature_metadata = current_feature_metadata()
+        X_train = STATE["X_train"].copy()
+        X_test = STATE["X_test"].copy()
+        y_train = np.asarray(STATE["y_train"], dtype=float)
+        y_test = np.asarray(STATE["y_test"], dtype=float)
+        feature_metadata = dict(STATE["traditional_feature_metadata"])
+        tuning_split_strategy = str(STATE.get("model_split_strategy", "target_quartiles"))
+        tuning_test_fraction = float(STATE.get("model_test_fraction", 0.2))
+        tuning_random_seed = int(STATE.get("model_split_random_seed", 42))
+        print(
+            "GA tuning is using the prepared 4A/4B split and feature-selected matrix: "
+            f"strategy={tuning_split_strategy}, test_fraction={float(tuning_test_fraction):.2f}, "
+            f"train={len(X_train)}, test={len(X_test)}, features={X_train.shape[1]}",
+            flush=True,
+        )
 
         def _rounded_float(value, digits=6):
             return float(np.round(float(value), digits))
@@ -5013,7 +5527,7 @@ cells += [
                             ElasticNet(
                                 alpha=float(np.exp(params["log_alpha"])),
                                 l1_ratio=float(params["l1_ratio"]),
-                                max_iter=50000,
+                                max_iter=15000,
                                 random_state=42,
                             ),
                         ),
@@ -5021,7 +5535,7 @@ cells += [
                 ),
                 (
                     {"log_alpha": {"uniform": [float(np.log(0.0001)), float(np.log(0.1))], "mutation": [0.0, 1.0]}},
-                    {"l1_ratio": {"choice": [0.4, 0.5, 0.6, 0.7]}},
+                    {"l1_ratio": {"choice": [0.4, 0.8]}},
                 ),
                 lambda params: {
                     "alpha": _rounded_float(np.exp(params["log_alpha"])),
@@ -5150,6 +5664,7 @@ cells += [
         tuned_rows = []
         tuned_models = {}
         tuned_predictions = {}
+        tuned_model_feature_columns = {}
         ga_histories = {}
         tuned_cache_paths = {}
         tuned_cache_dir = None
@@ -5203,6 +5718,7 @@ cells += [
             evaluation_progress.set_description(f"{model_name} initialization")
             evaluation_progress.set_postfix_str("waiting")
             build_estimator, search_space, decode_params = ga_models[model_name]
+            tuned_model_feature_columns[model_name] = [str(col) for col in X_train.columns]
             model_slug = slugify_cache_text(model_name)
             cached_model_loaded = False
             resume_state = None
@@ -5386,7 +5902,7 @@ cells += [
                 }
                 estimator = _builder(candidate_params)
                 fold_scores = []
-                for train_index, valid_index in search_cv.split(X_train, y_train):
+                for fold_idx, (train_index, valid_index) in enumerate(search_cv.split(X_train, y_train), start=1):
                     X_fold_train = X_train.iloc[train_index].copy()
                     X_fold_valid = X_train.iloc[valid_index].copy()
                     y_fold_train = y_train[train_index]
@@ -5744,6 +6260,7 @@ cells += [
         STATE["best_tuned_traditional_model_name"] = tuned_best_model_name
         STATE["tuned_traditional_ga_histories"] = ga_histories
         STATE["tuned_traditional_model_cache_paths"] = tuned_cache_paths
+        STATE["tuned_traditional_model_feature_columns"] = dict(tuned_model_feature_columns)
         if tuned_cache_dir is not None:
             STATE["tuned_traditional_model_cache_dir"] = str(tuned_cache_dir)
 
@@ -6101,7 +6618,7 @@ cells += [
         """
         # @title 5B. Train selected deep-learning models { display-mode: "form" }
         run_chemml_pytorch = True # @param {type:"boolean"}
-        run_chemml_tensorflow = True # @param {type:"boolean"}
+        run_chemml_tensorflow = False # @param {type:"boolean"}
         run_maplight_gnn = True # @param {type:"boolean"}
         chemml_hidden_layers = 2 # @param {type:"slider", min:1, max:4, step:1}
         chemml_hidden_width = 128 # @param [64, 128, 256, 512]
@@ -6644,7 +7161,7 @@ cells += [
             try:
                 from chemml.models.mlp import MLP
 
-                init_kwargs = dict(
+                base_init_kwargs = dict(
                     engine=str(metadata["engine"]),
                     nfeatures=int(chemml_options["nfeatures"]),
                     nneurons=chemml_options.get("nneurons"),
@@ -6659,12 +7176,38 @@ cells += [
                     layer_config_file=chemml_options.get("layer_config_file"),
                     opt_config=chemml_options["opt_config"],
                     random_seed=int(chemml_options["random_seed"]),
-                    path_to_file=chemml_options["path_to_file"],
+                    # Use the current cache directory to avoid stale absolute paths from prior environments.
+                    path_to_file=str(model_dir),
                 )
                 if metadata["engine"] == "pytorch":
-                    init_kwargs["layers"] = chemml_options["layers"]
-                    init_kwargs["losses"] = chemml_options.get("losses", [])
-                restored_model = MLP(**init_kwargs)
+                    base_init_kwargs["layers"] = chemml_options["layers"]
+                    base_init_kwargs["losses"] = chemml_options.get("losses", [])
+
+                opt_candidates = []
+                for candidate in [chemml_options.get("opt_config"), "Adam", "adam", None]:
+                    if candidate not in opt_candidates:
+                        opt_candidates.append(candidate)
+
+                restore_errors = []
+                for opt_candidate in opt_candidates:
+                    init_kwargs = dict(base_init_kwargs)
+                    if opt_candidate is None:
+                        init_kwargs.pop("opt_config", None)
+                    else:
+                        init_kwargs["opt_config"] = opt_candidate
+                    try:
+                        restored_model = MLP(**init_kwargs)
+                        if opt_candidate != chemml_options.get("opt_config"):
+                            print(
+                                f"Loaded cached ChemML model object for {label} with fallback optimizer config "
+                                f"`{opt_candidate}`.",
+                                flush=True,
+                            )
+                        break
+                    except Exception as exc:
+                        restore_errors.append(str(exc))
+                if restored_model is None and restore_errors:
+                    raise RuntimeError(restore_errors[-1])
             except Exception as exc:
                 print(
                     f"Cached predictions for {label} were loaded, but the full ChemML model object could not be restored ({exc}).",
@@ -8288,291 +8831,294 @@ cells += [
 
         gpu_available = bool(STATE.get("gpu_available", False))
         print("Uni-Mol V2 execution mode: GPU required")
+
         if not gpu_available:
-            raise RuntimeError(
-                "Uni-Mol V2 is configured as GPU-only in this notebook. "
-                "Enable a GPU runtime before running block 6D."
+            display_note(
+                "Uni-Mol V2 skipped: GPU runtime not detected in this kernel. "
+                "Enable a GPU runtime to run block 6D."
+            )
+            print("Skipping Uni-Mol V2 (no GPU runtime detected).", flush=True)
+            STATE["unimol_v2_last_status"] = "skipped_no_gpu"
+        else:
+            display_note(
+                "Uni-Mol V2 is the heavier 3D model. It is GPU-only in this notebook and may take substantially longer "
+                "than Uni-Mol V1. The optional compatibility filter removes molecules that fail Uni-Mol V2 featurization."
             )
 
-        display_note(
-            "Uni-Mol V2 is the heavier 3D model. It is GPU-only in this notebook and may take substantially longer "
-            "than Uni-Mol V1. The optional compatibility filter removes molecules that fail Uni-Mol V2 featurization."
-        )
-
-        try:
-            from unimol_tools import MolPredict, MolTrain
-            from unimol_tools.config import MODEL_CONFIG_V2, MODEL_CONFIG
-            from unimol_tools.weights import get_weight_dir, weight_download, weight_download_v2
-        except Exception as exc:
-            raise RuntimeError(
-                "Uni-Mol packages are not available in this environment. Run the Uni-Mol install cell first."
-            ) from exc
-
-        def ensure_unimol_weights(need_v1=False, need_v2=False, v2_size="84m"):
-            weight_dir = Path(get_weight_dir())
-            weight_dir.mkdir(parents=True, exist_ok=True)
-            print(f"Uni-Mol weight directory: {weight_dir}", flush=True)
             try:
-                if need_v1:
-                    required_v1 = [
-                        MODEL_CONFIG["weight"]["molecule_all_h"],
-                        MODEL_CONFIG["dict"]["molecule_all_h"],
-                    ]
-                    for artifact in required_v1:
+                from unimol_tools import MolPredict, MolTrain
+                from unimol_tools.config import MODEL_CONFIG_V2, MODEL_CONFIG
+                from unimol_tools.weights import get_weight_dir, weight_download, weight_download_v2
+            except Exception as exc:
+                raise RuntimeError(
+                    "Uni-Mol packages are not available in this environment. Run the Uni-Mol install cell first."
+                ) from exc
+
+            def ensure_unimol_weights(need_v1=False, need_v2=False, v2_size="84m"):
+                weight_dir = Path(get_weight_dir())
+                weight_dir.mkdir(parents=True, exist_ok=True)
+                print(f"Uni-Mol weight directory: {weight_dir}", flush=True)
+                try:
+                    if need_v1:
+                        required_v1 = [
+                            MODEL_CONFIG["weight"]["molecule_all_h"],
+                            MODEL_CONFIG["dict"]["molecule_all_h"],
+                        ]
+                        for artifact in required_v1:
+                            artifact_path = weight_dir / artifact
+                            if not artifact_path.exists():
+                                print(f"[Uni-Mol] Downloading {artifact}...", flush=True)
+                                weight_download(artifact, str(weight_dir))
+                    if need_v2:
+                        artifact = MODEL_CONFIG_V2["weight"][str(v2_size)]
                         artifact_path = weight_dir / artifact
                         if not artifact_path.exists():
                             print(f"[Uni-Mol] Downloading {artifact}...", flush=True)
-                            weight_download(artifact, str(weight_dir))
-                if need_v2:
-                    artifact = MODEL_CONFIG_V2["weight"][str(v2_size)]
-                    artifact_path = weight_dir / artifact
-                    if not artifact_path.exists():
-                        print(f"[Uni-Mol] Downloading {artifact}...", flush=True)
-                        weight_download_v2(artifact, str(weight_dir))
-            except Exception as exc:
-                raise RuntimeError(
-                    "Uni-Mol pretrained weights could not be downloaded automatically. "
-                    "Check internet access and `huggingface_hub`, or download the weights manually, "
-                    f"then place them in: {weight_dir}"
-                ) from exc
+                            weight_download_v2(artifact, str(weight_dir))
+                except Exception as exc:
+                    raise RuntimeError(
+                        "Uni-Mol pretrained weights could not be downloaded automatically. "
+                        "Check internet access and `huggingface_hub`, or download the weights manually, "
+                        f"then place them in: {weight_dir}"
+                    ) from exc
 
-        ensure_unimol_weights(need_v1=False, need_v2=True, v2_size=str(unimol_model_size))
+            ensure_unimol_weights(need_v1=False, need_v2=True, v2_size=str(unimol_model_size))
 
-        train_csv = Path(STATE["unimol_train_csv"])
-        test_csv = Path(STATE["unimol_test_csv"])
-        train_df = pd.read_csv(train_csv)
-        test_df = pd.read_csv(test_csv)
+            train_csv = Path(STATE["unimol_train_csv"])
+            test_csv = Path(STATE["unimol_test_csv"])
+            train_df = pd.read_csv(train_csv)
+            test_df = pd.read_csv(test_csv)
 
-        if filter_unimolv2_incompatible:
-            from unimol_tools.data.conformer import UniMolV2Feature
+            if filter_unimolv2_incompatible:
+                from unimol_tools.data.conformer import UniMolV2Feature
 
-            feature_extractor = UniMolV2Feature(model_name="unimolv2")
+                feature_extractor = UniMolV2Feature(model_name="unimolv2")
 
-            def is_unimol_v2_compatible(smiles):
+                def is_unimol_v2_compatible(smiles):
+                    try:
+                        feature_extractor.single_process(smiles)
+                        return True
+                    except Exception:
+                        return False
+
+                train_mask = train_df["SMILES"].astype(str).apply(is_unimol_v2_compatible)
+                test_mask = test_df["SMILES"].astype(str).apply(is_unimol_v2_compatible)
+                removed_train = int((~train_mask).sum())
+                removed_test = int((~test_mask).sum())
+                train_df = train_df.loc[train_mask].reset_index(drop=True)
+                test_df = test_df.loc[test_mask].reset_index(drop=True)
+                filtered_train_csv = train_csv.parent / "train_unimolv2_filtered.csv"
+                filtered_test_csv = train_csv.parent / "test_unimolv2_filtered.csv"
+                train_df.to_csv(filtered_train_csv, index=False)
+                test_df.to_csv(filtered_test_csv, index=False)
+                train_csv = filtered_train_csv
+                test_csv = filtered_test_csv
+                print(f"UniMol V2 compatibility filter removed {removed_train} training molecules and {removed_test} test molecules.")
+
+            ensure_global_split_signature(
+                train_df["SMILES"].astype(str),
+                test_df["SMILES"].astype(str),
+                source_label="6D Uni-Mol V2",
+            )
+
+            label = f"Uni-Mol V2 ({unimol_model_size})"
+            model_name = "unimolv2"
+            effective_unimol_use_amp = bool(unimol_use_amp and gpu_available)
+
+            unimol_rows = []
+            unimol_predictions = {}
+            unimol_model_dirs = {}
+            unimol_model_cache_paths = {}
+
+            save_dir = Path(STATE["unimol_output_dir"]) / label.lower().replace(" ", "_").replace("(", "").replace(")", "")
+            metadata_path = save_dir / "cache_metadata.json"
+            prediction_path = save_dir / "cached_predictions.csv"
+            cached_model_loaded = False
+            if reuse_unimol_cached_models and metadata_path.exists() and prediction_path.exists():
                 try:
-                    feature_extractor.single_process(smiles)
-                    return True
+                    metadata = read_cache_metadata(metadata_path)
+                    expected_metadata = {
+                        "model_name": label,
+                        "workflow": "Uni-Mol",
+                        "dataset_label": current_dataset_cache_label(),
+                        "qsar_split_strategy": str(unimol_data_split_strategy),
+                        "qsar_test_fraction": float(unimol_test_fraction),
+                        "qsar_split_random_seed": int(unimol_split_random_seed),
+                        "split": str(unimol_internal_split),
+                        "epochs": int(unimol_epochs),
+                        "learning_rate": float(unimol_learning_rate),
+                        "batch_size": int(unimol_batch_size),
+                        "early_stopping": int(unimol_early_stopping),
+                        "model_size": str(unimol_model_size),
+                        "max_atoms": int(unimol_max_atoms),
+                        "use_amp": bool(effective_unimol_use_amp),
+                    }
+                    if cache_metadata_matches(metadata, expected_metadata):
+                        loaded_splits = load_prediction_splits(
+                            prediction_path,
+                            train_df["SMILES"].astype(str),
+                            test_df["SMILES"].astype(str),
+                            allow_reorder=True,
+                        )
+                        pred_train = loaded_splits["train"]["predicted"].to_numpy(dtype=float)
+                        pred_test = loaded_splits["test"]["predicted"].to_numpy(dtype=float)
+                        cached_model_loaded = True
+                        print(f"Loaded cached Uni-Mol predictions for {label} from {save_dir}", flush=True)
                 except Exception:
-                    return False
+                    cached_model_loaded = False
 
-            train_mask = train_df["SMILES"].astype(str).apply(is_unimol_v2_compatible)
-            test_mask = test_df["SMILES"].astype(str).apply(is_unimol_v2_compatible)
-            removed_train = int((~train_mask).sum())
-            removed_test = int((~test_mask).sum())
-            train_df = train_df.loc[train_mask].reset_index(drop=True)
-            test_df = test_df.loc[test_mask].reset_index(drop=True)
-            filtered_train_csv = train_csv.parent / "train_unimolv2_filtered.csv"
-            filtered_test_csv = train_csv.parent / "test_unimolv2_filtered.csv"
-            train_df.to_csv(filtered_train_csv, index=False)
-            test_df.to_csv(filtered_test_csv, index=False)
-            train_csv = filtered_train_csv
-            test_csv = filtered_test_csv
-            print(f"UniMol V2 compatibility filter removed {removed_train} training molecules and {removed_test} test molecules.")
+            trainer_kwargs = dict(
+                task="regression",
+                data_type="molecule",
+                model_name=model_name,
+                epochs=int(unimol_epochs),
+                learning_rate=float(unimol_learning_rate),
+                batch_size=int(unimol_batch_size),
+                early_stopping=int(unimol_early_stopping),
+                metrics="mse",
+                split=str(unimol_internal_split),
+                save_path=str(save_dir),
+                num_workers=int(unimol_num_workers),
+                model_size=str(unimol_model_size),
+                max_atoms=int(unimol_max_atoms),
+                use_amp=effective_unimol_use_amp,
+            )
 
-        ensure_global_split_signature(
-            train_df["SMILES"].astype(str),
-            test_df["SMILES"].astype(str),
-            source_label="6D Uni-Mol V2",
-        )
+            if not cached_model_loaded:
+                trainer = MolTrain(**trainer_kwargs)
+                trainer.fit(str(train_csv))
 
-        label = f"Uni-Mol V2 ({unimol_model_size})"
-        model_name = "unimolv2"
-        effective_unimol_use_amp = bool(unimol_use_amp and gpu_available)
+                predictor = MolPredict(load_model=str(save_dir))
+                pred_train = np.asarray(predictor.predict(str(train_csv))).reshape(-1)
+                pred_test = np.asarray(predictor.predict(str(test_csv))).reshape(-1)
+            base_pred_train = np.asarray(pred_train, dtype=float).reshape(-1)
+            base_pred_test = np.asarray(pred_test, dtype=float).reshape(-1)
+            pred_train, pred_test, unimol_aux_fusion_payload = fit_auxiliary_fusion_head(
+                base_pred_train,
+                base_pred_test,
+                train_df["TARGET"].to_numpy(dtype=float),
+                train_df["SMILES"].astype(str).reset_index(drop=True),
+                test_df["SMILES"].astype(str).reset_index(drop=True),
+                random_seed=int(unimol_split_random_seed),
+                label=label,
+            )
+            if "unimol_aux_fusion_models" not in STATE:
+                STATE["unimol_aux_fusion_models"] = {}
+            if unimol_aux_fusion_payload is not None:
+                STATE["unimol_aux_fusion_models"][label] = unimol_aux_fusion_payload
+                print(f"{label} auxiliary fusion: enabled", flush=True)
+            else:
+                STATE["unimol_aux_fusion_models"].pop(label, None)
 
-        unimol_rows = []
-        unimol_predictions = {}
-        unimol_model_dirs = {}
-        unimol_model_cache_paths = {}
-
-        save_dir = Path(STATE["unimol_output_dir"]) / label.lower().replace(" ", "_").replace("(", "").replace(")", "")
-        metadata_path = save_dir / "cache_metadata.json"
-        prediction_path = save_dir / "cached_predictions.csv"
-        cached_model_loaded = False
-        if reuse_unimol_cached_models and metadata_path.exists() and prediction_path.exists():
-            try:
-                metadata = read_cache_metadata(metadata_path)
-                expected_metadata = {
+            row = {"Model": label, "Execution mode": "GPU"}
+            row.update(summarize_regression(train_df["TARGET"].to_numpy(dtype=float), pred_train, "Train"))
+            row.update(summarize_regression(test_df["TARGET"].to_numpy(dtype=float), pred_test, "Test"))
+            unimol_rows.append(row)
+            unimol_predictions[label] = {
+                "train": pred_train,
+                "test": pred_test,
+                "train_df": train_df.copy(),
+                "test_df": test_df.copy(),
+            }
+            unimol_model_dirs[label] = str(save_dir)
+            write_cache_metadata(
+                metadata_path,
+                {
                     "model_name": label,
                     "workflow": "Uni-Mol",
                     "dataset_label": current_dataset_cache_label(),
+                    "cache_run_name": Path(STATE["unimol_output_dir"]).name,
                     "qsar_split_strategy": str(unimol_data_split_strategy),
                     "qsar_test_fraction": float(unimol_test_fraction),
                     "qsar_split_random_seed": int(unimol_split_random_seed),
+                    "model_dir": save_dir,
+                    "train_csv": train_csv,
+                    "test_csv": test_csv,
+                    "execution_mode": "GPU",
                     "split": str(unimol_internal_split),
                     "epochs": int(unimol_epochs),
                     "learning_rate": float(unimol_learning_rate),
                     "batch_size": int(unimol_batch_size),
                     "early_stopping": int(unimol_early_stopping),
+                    "num_workers": int(unimol_num_workers),
                     "model_size": str(unimol_model_size),
                     "max_atoms": int(unimol_max_atoms),
                     "use_amp": bool(effective_unimol_use_amp),
+                    "prediction_path": prediction_path,
+                },
+            )
+            pd.DataFrame(
+                {
+                    "split": ["train"] * len(base_pred_train) + ["test"] * len(base_pred_test),
+                    "smiles": list(train_df["SMILES"].astype(str)) + list(test_df["SMILES"].astype(str)),
+                    "observed": list(train_df["TARGET"].to_numpy(dtype=float)) + list(test_df["TARGET"].to_numpy(dtype=float)),
+                    "predicted": list(base_pred_train) + list(base_pred_test),
                 }
-                if cache_metadata_matches(metadata, expected_metadata):
-                    loaded_splits = load_prediction_splits(
-                        prediction_path,
-                        train_df["SMILES"].astype(str),
-                        test_df["SMILES"].astype(str),
-                        allow_reorder=True,
-                    )
-                    pred_train = loaded_splits["train"]["predicted"].to_numpy(dtype=float)
-                    pred_test = loaded_splits["test"]["predicted"].to_numpy(dtype=float)
-                    cached_model_loaded = True
-                    print(f"Loaded cached Uni-Mol predictions for {label} from {save_dir}", flush=True)
-            except Exception:
-                cached_model_loaded = False
-
-        trainer_kwargs = dict(
-            task="regression",
-            data_type="molecule",
-            model_name=model_name,
-            epochs=int(unimol_epochs),
-            learning_rate=float(unimol_learning_rate),
-            batch_size=int(unimol_batch_size),
-            early_stopping=int(unimol_early_stopping),
-            metrics="mse",
-            split=str(unimol_internal_split),
-            save_path=str(save_dir),
-            num_workers=int(unimol_num_workers),
-            model_size=str(unimol_model_size),
-            max_atoms=int(unimol_max_atoms),
-            use_amp=effective_unimol_use_amp,
-        )
-
-        if not cached_model_loaded:
-            trainer = MolTrain(**trainer_kwargs)
-            trainer.fit(str(train_csv))
-
-            predictor = MolPredict(load_model=str(save_dir))
-            pred_train = np.asarray(predictor.predict(str(train_csv))).reshape(-1)
-            pred_test = np.asarray(predictor.predict(str(test_csv))).reshape(-1)
-        base_pred_train = np.asarray(pred_train, dtype=float).reshape(-1)
-        base_pred_test = np.asarray(pred_test, dtype=float).reshape(-1)
-        pred_train, pred_test, unimol_aux_fusion_payload = fit_auxiliary_fusion_head(
-            base_pred_train,
-            base_pred_test,
-            train_df["TARGET"].to_numpy(dtype=float),
-            train_df["SMILES"].astype(str).reset_index(drop=True),
-            test_df["SMILES"].astype(str).reset_index(drop=True),
-            random_seed=int(unimol_split_random_seed),
-            label=label,
-        )
-        if "unimol_aux_fusion_models" not in STATE:
-            STATE["unimol_aux_fusion_models"] = {}
-        if unimol_aux_fusion_payload is not None:
-            STATE["unimol_aux_fusion_models"][label] = unimol_aux_fusion_payload
-            print(f"{label} auxiliary fusion: enabled", flush=True)
-        else:
-            STATE["unimol_aux_fusion_models"].pop(label, None)
-
-        row = {"Model": label, "Execution mode": "GPU"}
-        row.update(summarize_regression(train_df["TARGET"].to_numpy(dtype=float), pred_train, "Train"))
-        row.update(summarize_regression(test_df["TARGET"].to_numpy(dtype=float), pred_test, "Test"))
-        unimol_rows.append(row)
-        unimol_predictions[label] = {
-            "train": pred_train,
-            "test": pred_test,
-            "train_df": train_df.copy(),
-            "test_df": test_df.copy(),
-        }
-        unimol_model_dirs[label] = str(save_dir)
-        write_cache_metadata(
-            metadata_path,
-            {
-                "model_name": label,
-                "workflow": "Uni-Mol",
-                "dataset_label": current_dataset_cache_label(),
-                "cache_run_name": Path(STATE["unimol_output_dir"]).name,
-                "qsar_split_strategy": str(unimol_data_split_strategy),
-                "qsar_test_fraction": float(unimol_test_fraction),
-                "qsar_split_random_seed": int(unimol_split_random_seed),
-                "model_dir": save_dir,
-                "train_csv": train_csv,
-                "test_csv": test_csv,
-                "execution_mode": "GPU",
-                "split": str(unimol_internal_split),
-                "epochs": int(unimol_epochs),
-                "learning_rate": float(unimol_learning_rate),
-                "batch_size": int(unimol_batch_size),
-                "early_stopping": int(unimol_early_stopping),
-                "num_workers": int(unimol_num_workers),
-                "model_size": str(unimol_model_size),
-                "max_atoms": int(unimol_max_atoms),
-                "use_amp": bool(effective_unimol_use_amp),
-                "prediction_path": prediction_path,
-            },
-        )
-        pd.DataFrame(
-            {
-                "split": ["train"] * len(base_pred_train) + ["test"] * len(base_pred_test),
-                "smiles": list(train_df["SMILES"].astype(str)) + list(test_df["SMILES"].astype(str)),
-                "observed": list(train_df["TARGET"].to_numpy(dtype=float)) + list(test_df["TARGET"].to_numpy(dtype=float)),
-                "predicted": list(base_pred_train) + list(base_pred_test),
-            }
-        ).to_csv(prediction_path, index=False)
-        unimol_model_cache_paths[label] = {
-            "model_dir": str(save_dir),
-            "prediction_path": str(prediction_path),
-            "metadata_path": str(metadata_path),
-        }
-
-        new_unimol_results = pd.DataFrame(unimol_rows).reset_index(drop=True)
-        previous_unimol_results = STATE.get("unimol_results")
-        if isinstance(previous_unimol_results, pd.DataFrame) and not previous_unimol_results.empty:
-            retained_unimol_results = previous_unimol_results.loc[
-                ~previous_unimol_results["Model"].astype(str).isin(new_unimol_results["Model"].astype(str))
-            ].copy()
-            unimol_results = pd.concat([retained_unimol_results, new_unimol_results], ignore_index=True)
-        else:
-            unimol_results = new_unimol_results.copy()
-        unimol_results = unimol_results.sort_values(["Test RMSE", "Test MAE"], ascending=True).reset_index(drop=True)
-        best_unimol_name = unimol_results.loc[0, "Model"]
-
-        merged_unimol_predictions = dict(STATE.get("unimol_predictions", {}))
-        merged_unimol_predictions.update(unimol_predictions)
-        merged_unimol_model_dirs = dict(STATE.get("unimol_model_dirs", {}))
-        merged_unimol_model_dirs.update(unimol_model_dirs)
-        merged_unimol_model_cache_paths = dict(STATE.get("unimol_model_cache_paths", {}))
-        merged_unimol_model_cache_paths.update(unimol_model_cache_paths)
-
-        STATE["unimol_results"] = unimol_results.copy()
-        STATE["unimol_predictions"] = merged_unimol_predictions
-        STATE["unimol_model_dirs"] = merged_unimol_model_dirs
-        STATE["unimol_model_cache_paths"] = merged_unimol_model_cache_paths
-        STATE["best_unimol_model_name"] = best_unimol_name
-
-        current_unimol_results_for_deep = new_unimol_results.copy()
-        current_unimol_results_for_deep["Workflow"] = "Uni-Mol"
-        current_unimol_model_names = list(current_unimol_results_for_deep["Model"])
-        previous_deep_results = STATE.get("deep_results")
-        if isinstance(previous_deep_results, pd.DataFrame) and not previous_deep_results.empty:
-            retained_previous_results = previous_deep_results.loc[
-                ~previous_deep_results["Model"].astype(str).isin(current_unimol_model_names)
-            ].copy()
-            merged_deep_results = pd.concat([retained_previous_results, current_unimol_results_for_deep], ignore_index=True)
-        else:
-            merged_deep_results = current_unimol_results_for_deep.copy()
-        merged_deep_results = merged_deep_results.sort_values(["Test RMSE", "Test MAE"], ascending=True).reset_index(drop=True)
-
-        merged_deep_predictions = dict(STATE.get("deep_predictions", {}))
-        for deep_model_name in unimol_predictions:
-            merged_deep_predictions[deep_model_name] = {
-                "train": np.asarray(unimol_predictions[deep_model_name]["train"], dtype=float),
-                "test": np.asarray(unimol_predictions[deep_model_name]["test"], dtype=float),
-                "train_observed": unimol_predictions[deep_model_name]["train_df"]["TARGET"].to_numpy(dtype=float),
-                "test_observed": unimol_predictions[deep_model_name]["test_df"]["TARGET"].to_numpy(dtype=float),
-                "train_smiles": unimol_predictions[deep_model_name]["train_df"]["SMILES"].astype(str).reset_index(drop=True),
-                "test_smiles": unimol_predictions[deep_model_name]["test_df"]["SMILES"].astype(str).reset_index(drop=True),
-                "workflow": "Uni-Mol",
+            ).to_csv(prediction_path, index=False)
+            unimol_model_cache_paths[label] = {
+                "model_dir": str(save_dir),
+                "prediction_path": str(prediction_path),
+                "metadata_path": str(metadata_path),
             }
 
-        STATE["deep_results"] = merged_deep_results
-        STATE["deep_predictions"] = merged_deep_predictions
-        if len(merged_deep_results):
-            STATE["best_deep_model_name"] = merged_deep_results.loc[0, "Model"]
+            new_unimol_results = pd.DataFrame(unimol_rows).reset_index(drop=True)
+            previous_unimol_results = STATE.get("unimol_results")
+            if isinstance(previous_unimol_results, pd.DataFrame) and not previous_unimol_results.empty:
+                retained_unimol_results = previous_unimol_results.loc[
+                    ~previous_unimol_results["Model"].astype(str).isin(new_unimol_results["Model"].astype(str))
+                ].copy()
+                unimol_results = pd.concat([retained_unimol_results, new_unimol_results], ignore_index=True)
+            else:
+                unimol_results = new_unimol_results.copy()
+            unimol_results = unimol_results.sort_values(["Test RMSE", "Test MAE"], ascending=True).reset_index(drop=True)
+            best_unimol_name = unimol_results.loc[0, "Model"]
 
-        print(f"Best Uni-Mol model on the held-out test set: {best_unimol_name}")
-        print(f"Uni-Mol model cache directory: {STATE['unimol_output_dir']}")
-        display_interactive_table(unimol_results.round(4), rows=min(10, len(unimol_results)))
+            merged_unimol_predictions = dict(STATE.get("unimol_predictions", {}))
+            merged_unimol_predictions.update(unimol_predictions)
+            merged_unimol_model_dirs = dict(STATE.get("unimol_model_dirs", {}))
+            merged_unimol_model_dirs.update(unimol_model_dirs)
+            merged_unimol_model_cache_paths = dict(STATE.get("unimol_model_cache_paths", {}))
+            merged_unimol_model_cache_paths.update(unimol_model_cache_paths)
+
+            STATE["unimol_results"] = unimol_results.copy()
+            STATE["unimol_predictions"] = merged_unimol_predictions
+            STATE["unimol_model_dirs"] = merged_unimol_model_dirs
+            STATE["unimol_model_cache_paths"] = merged_unimol_model_cache_paths
+            STATE["best_unimol_model_name"] = best_unimol_name
+
+            current_unimol_results_for_deep = new_unimol_results.copy()
+            current_unimol_results_for_deep["Workflow"] = "Uni-Mol"
+            current_unimol_model_names = list(current_unimol_results_for_deep["Model"])
+            previous_deep_results = STATE.get("deep_results")
+            if isinstance(previous_deep_results, pd.DataFrame) and not previous_deep_results.empty:
+                retained_previous_results = previous_deep_results.loc[
+                    ~previous_deep_results["Model"].astype(str).isin(current_unimol_model_names)
+                ].copy()
+                merged_deep_results = pd.concat([retained_previous_results, current_unimol_results_for_deep], ignore_index=True)
+            else:
+                merged_deep_results = current_unimol_results_for_deep.copy()
+            merged_deep_results = merged_deep_results.sort_values(["Test RMSE", "Test MAE"], ascending=True).reset_index(drop=True)
+
+            merged_deep_predictions = dict(STATE.get("deep_predictions", {}))
+            for deep_model_name in unimol_predictions:
+                merged_deep_predictions[deep_model_name] = {
+                    "train": np.asarray(unimol_predictions[deep_model_name]["train"], dtype=float),
+                    "test": np.asarray(unimol_predictions[deep_model_name]["test"], dtype=float),
+                    "train_observed": unimol_predictions[deep_model_name]["train_df"]["TARGET"].to_numpy(dtype=float),
+                    "test_observed": unimol_predictions[deep_model_name]["test_df"]["TARGET"].to_numpy(dtype=float),
+                    "train_smiles": unimol_predictions[deep_model_name]["train_df"]["SMILES"].astype(str).reset_index(drop=True),
+                    "test_smiles": unimol_predictions[deep_model_name]["test_df"]["SMILES"].astype(str).reset_index(drop=True),
+                    "workflow": "Uni-Mol",
+                }
+
+            STATE["deep_results"] = merged_deep_results
+            STATE["deep_predictions"] = merged_deep_predictions
+            if len(merged_deep_results):
+                STATE["best_deep_model_name"] = merged_deep_results.loc[0, "Model"]
+
+            print(f"Best Uni-Mol model on the held-out test set: {best_unimol_name}")
+            print(f"Uni-Mol model cache directory: {STATE['unimol_output_dir']}")
+            display_interactive_table(unimol_results.round(4), rows=min(10, len(unimol_results)))
         """
     ),
     code(
@@ -8634,10 +9180,11 @@ cells += [
         enable_chemprop_model_cache = True # @param {type:"boolean"}
         reuse_chemprop_cached_models = True # @param {type:"boolean"}
         chemprop_run_label = "AUTO" # @param {type:"string"}
-        run_chemprop_dmpnn = True # @param {type:"boolean"}
-        run_chemprop_cmpnn = True # @param {type:"boolean"}
+        run_chemprop_dmpnn = False # @param {type:"boolean"}
+        run_chemprop_cmpnn = False # @param {type:"boolean"}
         run_chemprop_attentivefp = True # @param {type:"boolean"}
         run_chemprop_rdkit2d_extra = False # @param {type:"boolean"}
+        run_chemprop_selected_features = True # @param {type:"boolean"}
         chemprop_epochs = 15 # @param {type:"slider", min:3, max:100, step:1}
         chemprop_batch_size = 32 # @param [16, 32, 64, 128]
         chemprop_num_workers = 0 # @param [0, 1, 2, 4]
@@ -8672,6 +9219,7 @@ cells += [
             selected_architectures,
             ensemble_size=int(chemprop_ensemble_size),
             include_rdkit2d_extra=bool(run_chemprop_rdkit2d_extra),
+            include_selected_feature_variant=bool(run_chemprop_selected_features),
         )
         if not chemprop_variant_specs:
             raise RuntimeError("No Chemprop variants were resolved from the selected options.")
@@ -8757,6 +9305,31 @@ cells += [
                     f"stderr tail:\\n{stderr_tail}"
                 )
 
+        def _align_predictions_by_smiles_occurrence(expected_smiles, actual_smiles, pred_values):
+            expected_df = pd.DataFrame({"smiles": pd.Series(expected_smiles, dtype=str).str.strip()})
+            actual_df = pd.DataFrame(
+                {
+                    "smiles": pd.Series(actual_smiles, dtype=str).str.strip(),
+                    "predicted": pd.to_numeric(pred_values, errors="coerce"),
+                }
+            )
+            expected_df["_occurrence"] = expected_df.groupby("smiles", sort=False).cumcount()
+            expected_df["_expected_row"] = np.arange(len(expected_df), dtype=int)
+            actual_df["_occurrence"] = actual_df.groupby("smiles", sort=False).cumcount()
+            merged = expected_df.merge(
+                actual_df,
+                on=["smiles", "_occurrence"],
+                how="left",
+                sort=False,
+                validate="one_to_one",
+            )
+            if merged["predicted"].isna().any():
+                return None
+            aligned = merged.sort_values("_expected_row")["predicted"].to_numpy(dtype=float)
+            if len(aligned) != len(expected_df):
+                return None
+            return np.asarray(aligned, dtype=float)
+
         def _extract_chemprop_predictions(preds_csv_path, expected_smiles):
             preds_df = pd.read_csv(preds_csv_path)
             smiles_col = None
@@ -8776,25 +9349,37 @@ cells += [
                     f"Could not identify a prediction column in Chemprop output: {list(preds_df.columns)}"
                 )
             pred_values = pd.to_numeric(preds_df[prediction_cols[0]], errors="coerce")
+
+            expected_smiles = pd.Series(expected_smiles, dtype=str).astype(str).str.strip().reset_index(drop=True)
+            if smiles_col is not None:
+                actual_smiles = preds_df[smiles_col].astype(str).str.strip().reset_index(drop=True)
+                valid_mask = pred_values.notna()
+                if not bool(valid_mask.all()):
+                    pred_values = pred_values.loc[valid_mask].reset_index(drop=True)
+                    actual_smiles = actual_smiles.loc[valid_mask].reset_index(drop=True)
+                if len(actual_smiles) == len(expected_smiles) and actual_smiles.equals(expected_smiles):
+                    return pred_values.to_numpy(dtype=float)
+                aligned = _align_predictions_by_smiles_occurrence(expected_smiles, actual_smiles, pred_values)
+                if aligned is not None:
+                    return aligned
+
             if pred_values.isna().any():
                 raise ValueError("Chemprop prediction output contains non-numeric values.")
-
-            expected_smiles = pd.Series(expected_smiles, dtype=str).reset_index(drop=True)
-            if smiles_col is not None:
-                actual_smiles = preds_df[smiles_col].astype(str).reset_index(drop=True)
-                if len(actual_smiles) == len(expected_smiles) and set(actual_smiles.tolist()) == set(expected_smiles.tolist()):
-                    aligned = (
-                        pd.DataFrame({"smiles": actual_smiles, "predicted": pred_values.to_numpy(dtype=float)})
-                        .set_index("smiles")
-                        .loc[expected_smiles.tolist(), "predicted"]
-                        .to_numpy(dtype=float)
-                    )
-                    return aligned
             if len(pred_values) != len(expected_smiles):
                 raise ValueError(
                     f"Chemprop prediction length mismatch: got {len(pred_values)} rows, expected {len(expected_smiles)}."
                 )
             return pred_values.to_numpy(dtype=float)
+
+        def _is_chemprop_descriptor_scale_error(exc):
+            message = str(exc).lower()
+            markers = [
+                "input x contains infinity",
+                "value too large for dtype",
+                "standardscaler",
+                "check_array",
+            ]
+            return any(marker in message for marker in markers)
 
         command_prefix = _resolve_chemprop_command()
         chemprop_rows = []
@@ -8811,6 +9396,9 @@ cells += [
             variant_tag = str(variant.get("variant_tag", architecture_key))
             train_extra_args = [str(item).strip() for item in list(variant.get("train_args", [])) if str(item).strip()]
             molecule_featurizers = [str(item).strip() for item in list(variant.get("featurizers", [])) if str(item).strip()]
+            chemprop_use_selected_descriptors = bool(variant.get("use_selected_descriptors", False))
+            effective_molecule_featurizers = list(molecule_featurizers)
+            descriptor_fallback_applied = False
 
             model_slug = slugify_cache_text(label)
             save_dir = chemprop_output_dir / model_slug
@@ -8820,6 +9408,41 @@ cells += [
             test_csv = save_dir / "test.csv"
             train_df.to_csv(train_csv, index=False)
             test_df.to_csv(test_csv, index=False)
+            descriptor_args_train = []
+            descriptor_args_train_predict = []
+            descriptor_args_test_predict = []
+            selected_descriptor_count = 0
+            selected_descriptor_columns_sha256 = ""
+            if chemprop_use_selected_descriptors:
+                if "X_train" not in STATE or "X_test" not in STATE:
+                    raise RuntimeError(
+                        f"{label} requested selected-feature descriptors, but 4B outputs are missing. "
+                        "Run blocks 4A and 4B first."
+                    )
+                descriptor_train_path = save_dir / "train_descriptors.npz"
+                descriptor_test_path = save_dir / "test_descriptors.npz"
+                selected_descriptor_columns = [str(col) for col in pd.DataFrame(STATE["X_train"]).columns]
+                selected_descriptor_count = int(len(selected_descriptor_columns))
+                selected_descriptor_columns_sha256 = hashlib.sha256(
+                    "||".join(selected_descriptor_columns).encode("utf-8")
+                ).hexdigest()
+                descriptor_train_values = np.nan_to_num(
+                    pd.DataFrame(STATE["X_train"]).to_numpy(dtype=np.float32, copy=True),
+                    nan=0.0,
+                    posinf=0.0,
+                    neginf=0.0,
+                )
+                descriptor_test_values = np.nan_to_num(
+                    pd.DataFrame(STATE["X_test"]).to_numpy(dtype=np.float32, copy=True),
+                    nan=0.0,
+                    posinf=0.0,
+                    neginf=0.0,
+                )
+                np.savez(descriptor_train_path, descriptor_train_values)
+                np.savez(descriptor_test_path, descriptor_test_values)
+                descriptor_args_train = ["--descriptors-path", str(descriptor_train_path)]
+                descriptor_args_train_predict = ["--descriptors-path", str(descriptor_train_path)]
+                descriptor_args_test_predict = ["--descriptors-path", str(descriptor_test_path)]
 
             metadata_path = save_dir / "cache_metadata.json"
             prediction_path = save_dir / "cached_predictions.csv"
@@ -8844,6 +9467,11 @@ cells += [
                         "variant_tag": variant_tag,
                         "train_extra_args": list(train_extra_args),
                         "molecule_featurizers": list(molecule_featurizers),
+                        "effective_molecule_featurizers": list(effective_molecule_featurizers),
+                        "rdkit2d_fallback_applied": bool(descriptor_fallback_applied),
+                        "uses_selected_descriptors": bool(chemprop_use_selected_descriptors),
+                        "selected_descriptor_count": int(selected_descriptor_count),
+                        "selected_descriptor_columns_sha256": str(selected_descriptor_columns_sha256),
                         "epochs": int(chemprop_epochs),
                         "batch_size": int(chemprop_batch_size),
                         "num_workers": int(chemprop_num_workers),
@@ -8865,56 +9493,90 @@ cells += [
                 except Exception:
                     cached_model_loaded = False
 
-            feature_args = ["--molecule-featurizers", *molecule_featurizers] if molecule_featurizers else []
+            feature_args = ["--molecule-featurizers", *effective_molecule_featurizers] if effective_molecule_featurizers else []
             if not cached_model_loaded:
-                _run_chemprop(
-                    command_prefix,
-                    [
-                        "train",
-                        "--data-path", str(train_csv),
-                        "--smiles-columns", "SMILES",
-                        "--target-columns", "TARGET",
-                        "--task-type", "regression",
-                        "--epochs", str(int(chemprop_epochs)),
-                        "--batch-size", str(int(chemprop_batch_size)),
-                        "--num-workers", str(int(chemprop_num_workers)),
-                        "--ensemble-size", str(int(chemprop_ensemble_size)),
-                        "--pytorch-seed", str(int(chemprop_random_seed)),
-                        "--data-seed", str(int(chemprop_random_seed)),
-                        "--split", str(chemprop_split_mode),
-                        "--split-sizes", "0.9", "0.1", "0.0",
-                        "--output-dir", str(save_dir),
-                        *train_extra_args,
-                        *feature_args,
-                    ],
-                    description=f"training ({label})",
-                )
-                _run_chemprop(
-                    command_prefix,
-                    [
-                        "predict",
-                        "--test-path", str(train_csv),
-                        "--smiles-columns", "SMILES",
-                        "--model-paths", str(save_dir),
-                        "--preds-path", str(train_preds_path),
-                        *feature_args,
-                    ],
-                    description=f"train-set prediction ({label})",
-                )
-                _run_chemprop(
-                    command_prefix,
-                    [
-                        "predict",
-                        "--test-path", str(test_csv),
-                        "--smiles-columns", "SMILES",
-                        "--model-paths", str(save_dir),
-                        "--preds-path", str(test_preds_path),
-                        *feature_args,
-                    ],
-                    description=f"test-set prediction ({label})",
-                )
-                base_pred_train = _extract_chemprop_predictions(train_preds_path, train_df["SMILES"].astype(str))
-                base_pred_test = _extract_chemprop_predictions(test_preds_path, test_df["SMILES"].astype(str))
+                def _train_and_predict_with_feature_args(active_feature_args, retry_suffix=""):
+                    _run_chemprop(
+                        command_prefix,
+                        [
+                            "train",
+                            "--data-path", str(train_csv),
+                            "--smiles-columns", "SMILES",
+                            "--target-columns", "TARGET",
+                            "--task-type", "regression",
+                            "--epochs", str(int(chemprop_epochs)),
+                            "--batch-size", str(int(chemprop_batch_size)),
+                            "--num-workers", str(int(chemprop_num_workers)),
+                            "--ensemble-size", str(int(chemprop_ensemble_size)),
+                            "--pytorch-seed", str(int(chemprop_random_seed)),
+                            "--data-seed", str(int(chemprop_random_seed)),
+                            "--split", str(chemprop_split_mode),
+                            "--split-sizes", "0.9", "0.1", "0.0",
+                            "--output-dir", str(save_dir),
+                            *train_extra_args,
+                            *active_feature_args,
+                            *descriptor_args_train,
+                        ],
+                        description=f"training ({label}){retry_suffix}",
+                    )
+                    _run_chemprop(
+                        command_prefix,
+                        [
+                            "predict",
+                            "--test-path", str(train_csv),
+                            "--smiles-columns", "SMILES",
+                            "--model-paths", str(save_dir),
+                            "--preds-path", str(train_preds_path),
+                            *active_feature_args,
+                            *descriptor_args_train_predict,
+                        ],
+                        description=f"train-set prediction ({label}){retry_suffix}",
+                    )
+                    _run_chemprop(
+                        command_prefix,
+                        [
+                            "predict",
+                            "--test-path", str(test_csv),
+                            "--smiles-columns", "SMILES",
+                            "--model-paths", str(save_dir),
+                            "--preds-path", str(test_preds_path),
+                            *active_feature_args,
+                            *descriptor_args_test_predict,
+                        ],
+                        description=f"test-set prediction ({label}){retry_suffix}",
+                    )
+                    return (
+                        _extract_chemprop_predictions(train_preds_path, train_df["SMILES"].astype(str)),
+                        _extract_chemprop_predictions(test_preds_path, test_df["SMILES"].astype(str)),
+                    )
+
+                try:
+                    base_pred_train, base_pred_test = _train_and_predict_with_feature_args(feature_args)
+                except Exception as exc:
+                    can_retry_without_rdkit2d = (
+                        "rdkit_2d" in {str(item).strip() for item in molecule_featurizers}
+                        and bool(feature_args)
+                        and _is_chemprop_descriptor_scale_error(exc)
+                    )
+                    if not can_retry_without_rdkit2d:
+                        raise
+                    descriptor_fallback_applied = True
+                    effective_molecule_featurizers = [
+                        item for item in molecule_featurizers if str(item).strip() != "rdkit_2d"
+                    ]
+                    feature_args = (
+                        ["--molecule-featurizers", *effective_molecule_featurizers]
+                        if effective_molecule_featurizers
+                        else []
+                    )
+                    print(
+                        "[Chemprop] detected non-finite RDKit2D descriptor values; retrying without rdkit_2d features.",
+                        flush=True,
+                    )
+                    base_pred_train, base_pred_test = _train_and_predict_with_feature_args(
+                        feature_args,
+                        retry_suffix=" (retry without rdkit_2d)",
+                    )
 
             pred_train, pred_test, chemprop_aux_fusion_payload = fit_auxiliary_fusion_head(
                 np.asarray(base_pred_train, dtype=float).reshape(-1),
@@ -8937,6 +9599,10 @@ cells += [
                 "Workflow": workflow_name,
                 "Architecture": architecture_key,
                 "Execution mode": execution_mode,
+                "Molecule featurizers": ", ".join(effective_molecule_featurizers),
+                "RDKit2D fallback applied": bool(descriptor_fallback_applied),
+                "Uses selected descriptors": bool(chemprop_use_selected_descriptors),
+                "Selected descriptor count": int(selected_descriptor_count),
             }
             row.update(summarize_regression(train_df["TARGET"].to_numpy(dtype=float), pred_train, "Train"))
             row.update(summarize_regression(test_df["TARGET"].to_numpy(dtype=float), pred_test, "Test"))
@@ -8971,6 +9637,11 @@ cells += [
                         "variant_tag": variant_tag,
                         "train_extra_args": list(train_extra_args),
                         "molecule_featurizers": list(molecule_featurizers),
+                        "effective_molecule_featurizers": list(effective_molecule_featurizers),
+                        "rdkit2d_fallback_applied": bool(descriptor_fallback_applied),
+                        "uses_selected_descriptors": bool(chemprop_use_selected_descriptors),
+                        "selected_descriptor_count": int(selected_descriptor_count),
+                        "selected_descriptor_columns_sha256": str(selected_descriptor_columns_sha256),
                         "epochs": int(chemprop_epochs),
                         "batch_size": int(chemprop_batch_size),
                         "num_workers": int(chemprop_num_workers),
@@ -9243,7 +9914,7 @@ cells += [
         drop_highly_correlated_members = True # @param {type:"boolean"}
         max_train_prediction_correlation = 0.95 # @param {type:"number"}
         include_best_conventional = True # @param {type:"boolean"}
-        include_best_tuned_conventional = False # @param {type:"boolean"}
+        include_best_tuned_conventional = True # @param {type:"boolean"}
         include_best_chemml = True # @param {type:"boolean"}
         include_best_maplight_gnn = True # @param {type:"boolean"}
         include_best_chemprop = True # @param {type:"boolean"}
@@ -9839,6 +10510,32 @@ cells += [
 
         if "best_traditional_model_name" not in STATE:
             raise RuntimeError("Please train the conventional models first.")
+        if "traditional_models" not in STATE:
+            raise RuntimeError("Traditional model objects are not available in STATE. Rerun block 4C.")
+
+        def _resolve_conventional_explanation_model():
+            best_name = str(STATE.get("best_traditional_model_name", "")).strip()
+            candidate_names = []
+            if best_name:
+                candidate_names.append(best_name)
+            conventional_results = STATE.get("traditional_results")
+            if isinstance(conventional_results, pd.DataFrame) and "Model" in conventional_results.columns:
+                for model_label in conventional_results["Model"].astype(str).tolist():
+                    if model_label not in candidate_names:
+                        candidate_names.append(model_label)
+            for candidate in candidate_names:
+                if candidate == "TabPFNRegressor":
+                    continue
+                if candidate in STATE["traditional_models"]:
+                    return candidate, (best_name == "TabPFNRegressor")
+            return None, (best_name == "TabPFNRegressor")
+
+        explanation_model_name, fell_back_from_tabpfn = _resolve_conventional_explanation_model()
+        if not explanation_model_name:
+            raise RuntimeError(
+                "Conventional explanation requires at least one non-TabPFN conventional model in this session. "
+                "TabPFN is excluded here because permutation feature importance can quickly exhaust the Prior Labs daily API budget."
+            )
 
         STATE["conventional_explanation_config"] = {
             "top_features_to_show": int(top_features_to_show),
@@ -9846,9 +10543,21 @@ cells += [
             "explanation_random_seed": int(explanation_random_seed),
             "try_shap_for_tree_models": bool(try_shap_for_tree_models),
             "permutation_repeats": int(permutation_repeats),
+            "conventional_explanation_model_name": str(explanation_model_name),
         }
 
-        print(f"Saved conventional explanation settings for: {STATE['best_traditional_model_name']}")
+        if fell_back_from_tabpfn:
+            print(
+                "Explanation model fallback: best conventional model is TabPFNRegressor, "
+                f"so explanations will use the next-best non-TabPFN model: {explanation_model_name}.",
+                flush=True,
+            )
+            display_note(
+                "TabPFN explanation safeguard: permutation importance is disabled for TabPFN because the Prior Labs API "
+                "uses a daily token budget (1,000,000 tokens per user per day; tokens ~ rows * columns * estimators) "
+                "that resets every day."
+            )
+        print(f"Saved conventional explanation settings for: {explanation_model_name}")
         print(
             f"Sample size={int(explanation_sample_size)}, top features={int(top_features_to_show)}, "
             f"permutation repeats={int(permutation_repeats)}, tree SHAP={'on' if try_shap_for_tree_models else 'off'}"
@@ -9876,8 +10585,52 @@ cells += [
 
         if "best_traditional_model_name" not in STATE:
             raise RuntimeError("Please train the conventional models first.")
+        if "traditional_models" not in STATE:
+            raise RuntimeError("Traditional model objects are not available in STATE. Rerun block 4C.")
 
-        model_name = STATE["best_traditional_model_name"]
+        model_name = str(cfg.get("conventional_explanation_model_name", STATE["best_traditional_model_name"])).strip()
+        if not model_name:
+            model_name = str(STATE["best_traditional_model_name"]).strip()
+        if model_name == "TabPFNRegressor":
+            candidate_names = []
+            conventional_results = STATE.get("traditional_results")
+            if isinstance(conventional_results, pd.DataFrame) and "Model" in conventional_results.columns:
+                candidate_names.extend(conventional_results["Model"].astype(str).tolist())
+            if str(STATE.get("best_traditional_model_name", "")).strip():
+                candidate_names.insert(0, str(STATE.get("best_traditional_model_name", "")).strip())
+            deduped_candidates = []
+            for candidate in candidate_names:
+                if candidate not in deduped_candidates:
+                    deduped_candidates.append(candidate)
+            fallback_name = None
+            for candidate in deduped_candidates:
+                if candidate == "TabPFNRegressor":
+                    continue
+                if candidate in STATE["traditional_models"]:
+                    fallback_name = candidate
+                    break
+            if fallback_name is None:
+                raise RuntimeError(
+                    "Best conventional model is TabPFNRegressor, but no non-TabPFN conventional model is available for "
+                    "feature-importance explanation. Train another conventional model in block 4C."
+                )
+            model_name = str(fallback_name)
+            print(
+                "Explanation model fallback applied: TabPFNRegressor is excluded from permutation importance. "
+                f"Using {model_name} instead.",
+                flush=True,
+            )
+            display_note(
+                "TabPFN explanation safeguard: Prior Labs API budget is 1,000,000 tokens per user per day "
+                "(tokens ~ rows * columns * estimators), and the budget resets daily."
+            )
+            cfg["conventional_explanation_model_name"] = model_name
+            STATE["conventional_explanation_config"] = dict(cfg)
+        if model_name not in STATE["traditional_models"]:
+            raise RuntimeError(
+                f"Conventional model '{model_name}' is not loaded in this session. "
+                "Rerun block 4C, then rerun block 8A."
+            )
         model = STATE["traditional_models"][model_name]
         X_test = STATE["X_test"].copy()
         y_test = np.asarray(STATE["y_test"], dtype=float)
@@ -10011,30 +10764,40 @@ cells += [
         lime_count = min(max(int(lime_instances_to_show), 1), len(X_test_scaled) - idx)
 
         pytorch_mlp = deep_models.get("ChemML MLP (PyTorch)")
+        skip_explanation = False
+        engine_model = None
         if pytorch_mlp is None:
             cache_hint = ""
             cache_info = STATE.get("deep_model_cache_paths", {}).get("ChemML MLP (PyTorch)")
             if isinstance(cache_info, dict) and cache_info.get("model_dir"):
                 cache_hint = f" Cached artifact directory: {cache_info['model_dir']}"
-            raise RuntimeError(
+            display_note(
                 "ChemML MLP (PyTorch) predictions are available, but the model object is unavailable for explanation. "
                 "This usually means cached predictions loaded while model restoration failed. "
-                "Rerun block 5B with `reuse_deep_cached_models=False` to retrain the model object in-session, then rerun this block."
+                "Trying to continue without deep explanation output. "
+                "To force a full in-session model object, rerun block 5B with `reuse_deep_cached_models=False`, then rerun this block."
                 + cache_hint
             )
-        try:
-            engine_model = pytorch_mlp.get_model()
-        except Exception as exc:
-            raise RuntimeError(
-                "Could not access the underlying PyTorch model for ChemML explanations. "
-                "Rerun block 5B with `reuse_deep_cached_models=False` and then rerun this block."
-            ) from exc
-        if engine_model is None:
-            raise RuntimeError(
-                "ChemML MLP (PyTorch) returned an empty model object. "
-                "Rerun block 5B with `reuse_deep_cached_models=False`, then rerun this block."
-            )
-        if hasattr(engine_model, "eval"):
+            skip_explanation = True
+        else:
+            try:
+                engine_model = pytorch_mlp.get_model()
+            except Exception as exc:
+                display_note(
+                    "Could not access the underlying PyTorch model for ChemML explanations. "
+                    "Skipping deep explanation output in this run. "
+                    "To force a full in-session model object, rerun block 5B with `reuse_deep_cached_models=False`, then rerun this block."
+                )
+                print(f"ChemML explanation model access error: {type(exc).__name__}: {exc}", flush=True)
+                skip_explanation = True
+            if engine_model is None:
+                display_note(
+                    "ChemML MLP (PyTorch) returned an empty model object. "
+                    "Skipping deep explanation output in this run. "
+                    "To force a full in-session model object, rerun block 5B with `reuse_deep_cached_models=False`, then rerun this block."
+                )
+                skip_explanation = True
+        if not skip_explanation and hasattr(engine_model, "eval"):
             engine_model.eval()
 
         def _display_explain_figures(figures):
@@ -10074,69 +10837,75 @@ cells += [
                     logger.setLevel(previous_levels[name])
                     logger.disabled = previous_disabled[name]
 
-        try:
-            with _quiet_explain_plotting():
-                if explanation_family == "DeepSHAP":
-                    if explanation_scope == "Local":
-                        exp = Explain(X_instance=X_test_scaled[idx], dnn_obj=engine_model, feature_names=feature_names)
-                        explanation, shap_obj = exp.DeepSHAP(X_background=background)
-                        figures = exp.plot(local=True, rel_df=explanation.copy(), max_display=int(top_deep_features_to_show), shap_obj=shap_obj)
-                        _display_explain_figures(figures)
-                        display_note(
-                            f"Rendered the **local DeepSHAP waterfall explanation** for held-out test molecule #{idx} using "
-                            f"{len(background)} background samples, following the workflow in `references/Explain_visualizations.ipynb`."
-                        )
+        if skip_explanation:
+            display_note(
+                "Deep explanation plots were skipped because the cached ChemML PyTorch model object is unavailable in-session. "
+                "Predictions remain valid; rerun block 5B with `reuse_deep_cached_models=False` if you need model-level explanations."
+            )
+        else:
+            try:
+                with _quiet_explain_plotting():
+                    if explanation_family == "DeepSHAP":
+                        if explanation_scope == "Local":
+                            exp = Explain(X_instance=X_test_scaled[idx], dnn_obj=engine_model, feature_names=feature_names)
+                            explanation, shap_obj = exp.DeepSHAP(X_background=background)
+                            figures = exp.plot(local=True, rel_df=explanation.copy(), max_display=int(top_deep_features_to_show), shap_obj=shap_obj)
+                            _display_explain_figures(figures)
+                            display_note(
+                                f"Rendered the **local DeepSHAP waterfall explanation** for held-out test molecule #{idx} using "
+                                f"{len(background)} background samples, following the workflow in `references/Explain_visualizations.ipynb`."
+                            )
+                        else:
+                            exp = Explain(X_instance=X_test_scaled[:global_sample_count], dnn_obj=engine_model, feature_names=feature_names)
+                            explanation, shap_obj = exp.DeepSHAP(X_background=background)
+                            figures = exp.plot(local=False, rel_df=explanation.copy(), max_display=int(top_deep_features_to_show), shap_obj=shap_obj)
+                            _display_explain_figures(figures)
+                            display_note(
+                                f"Rendered the **global DeepSHAP summary plot** across {global_sample_count} held-out molecules, "
+                                f"using {len(background)} background samples, following `references/Explain_visualizations.ipynb`."
+                            )
+                    elif explanation_family == "LRP":
+                        if explanation_scope == "Local":
+                            exp = Explain(X_instance=X_test_scaled[idx], dnn_obj=engine_model, feature_names=feature_names)
+                            explanation, _ = exp.LRP(strategy=str(lrp_strategy), global_relevance=False)
+                            figures = exp.plot(local=True, rel_df=explanation.copy(), max_display=int(top_deep_features_to_show))
+                            _display_explain_figures(figures)
+                            display_note(
+                                f"Rendered the **local LRP heatmap** for held-out test molecule #{idx} with the `{lrp_strategy}` strategy, "
+                                "matching the local LRP workflow in `references/Explain_visualizations.ipynb`."
+                            )
+                        else:
+                            exp = Explain(X_instance=X_test_scaled[:global_sample_count], dnn_obj=engine_model, feature_names=feature_names)
+                            _, global_scores = exp.LRP(strategy=str(lrp_strategy), global_relevance=True)
+                            figures = exp.plot(local=False, rel_df=global_scores.copy(), max_display=int(top_deep_features_to_show))
+                            _display_explain_figures(figures)
+                            display_note(
+                                f"Rendered the **global LRP relevance heatmap** across {global_sample_count} held-out molecules with the `{lrp_strategy}` strategy, "
+                                "matching the global LRP workflow in `references/Explain_visualizations.ipynb`."
+                            )
                     else:
-                        exp = Explain(X_instance=X_test_scaled[:global_sample_count], dnn_obj=engine_model, feature_names=feature_names)
-                        explanation, shap_obj = exp.DeepSHAP(X_background=background)
-                        figures = exp.plot(local=False, rel_df=explanation.copy(), max_display=int(top_deep_features_to_show), shap_obj=shap_obj)
-                        _display_explain_figures(figures)
+                        if explanation_scope != "Local":
+                            raise ValueError("ChemML's LIME visualization in this repository is local-only. Please switch the scope to Local.")
+                        exp = Explain(X_instance=X_test_scaled[idx : idx + lime_count], dnn_obj=engine_model, feature_names=feature_names)
+                        explanations = exp.LIME(training_data=X_train_scaled)
+                        lime_figures = []
+                        for local_explanation in explanations[:lime_count]:
+                            lime_figures.append(exp.plot(local=True, rel_df=local_explanation.copy(), max_display=int(top_deep_features_to_show)))
+                        _display_explain_figures(lime_figures)
                         display_note(
-                            f"Rendered the **global DeepSHAP summary plot** across {global_sample_count} held-out molecules, "
-                            f"using {len(background)} background samples, following `references/Explain_visualizations.ipynb`."
+                            f"Rendered **{min(lime_count, len(explanations))} local LIME explanation plot(s)** starting at held-out test molecule #{idx}, "
+                            "matching the LIME workflow in `references/Explain_visualizations.ipynb`."
                         )
-                elif explanation_family == "LRP":
-                    if explanation_scope == "Local":
-                        exp = Explain(X_instance=X_test_scaled[idx], dnn_obj=engine_model, feature_names=feature_names)
-                        explanation, _ = exp.LRP(strategy=str(lrp_strategy), global_relevance=False)
-                        figures = exp.plot(local=True, rel_df=explanation.copy(), max_display=int(top_deep_features_to_show))
-                        _display_explain_figures(figures)
-                        display_note(
-                            f"Rendered the **local LRP heatmap** for held-out test molecule #{idx} with the `{lrp_strategy}` strategy, "
-                            "matching the local LRP workflow in `references/Explain_visualizations.ipynb`."
-                        )
-                    else:
-                        exp = Explain(X_instance=X_test_scaled[:global_sample_count], dnn_obj=engine_model, feature_names=feature_names)
-                        _, global_scores = exp.LRP(strategy=str(lrp_strategy), global_relevance=True)
-                        figures = exp.plot(local=False, rel_df=global_scores.copy(), max_display=int(top_deep_features_to_show))
-                        _display_explain_figures(figures)
-                        display_note(
-                            f"Rendered the **global LRP relevance heatmap** across {global_sample_count} held-out molecules with the `{lrp_strategy}` strategy, "
-                            "matching the global LRP workflow in `references/Explain_visualizations.ipynb`."
-                        )
-                else:
-                    if explanation_scope != "Local":
-                        raise ValueError("ChemML's LIME visualization in this repository is local-only. Please switch the scope to Local.")
-                    exp = Explain(X_instance=X_test_scaled[idx : idx + lime_count], dnn_obj=engine_model, feature_names=feature_names)
-                    explanations = exp.LIME(training_data=X_train_scaled)
-                    lime_figures = []
-                    for local_explanation in explanations[:lime_count]:
-                        lime_figures.append(exp.plot(local=True, rel_df=local_explanation.copy(), max_display=int(top_deep_features_to_show)))
-                    _display_explain_figures(lime_figures)
-                    display_note(
-                        f"Rendered **{min(lime_count, len(explanations))} local LIME explanation plot(s)** starting at held-out test molecule #{idx}, "
-                        "matching the LIME workflow in `references/Explain_visualizations.ipynb`."
-                    )
-        except Exception as exc:
-            raise RuntimeError(
-                "ChemML explanation plotting failed in this environment. "
-                "This block now relies on the same `Explain.plot(...)` workflows used in `references/Explain_visualizations.ipynb`."
-            ) from exc
+            except Exception as exc:
+                raise RuntimeError(
+                    "ChemML explanation plotting failed in this environment. "
+                    "This block now relies on the same `Explain.plot(...)` workflows used in `references/Explain_visualizations.ipynb`."
+                ) from exc
 
-        display_note(
-            "These visualizations now use ChemML's native explanation plotting helpers from this repository rather than a generic bar-chart fallback. "
-            "For this QSAR workflow, they show which molecular features were most influential for one molecule or across a set of molecules."
-        )
+            display_note(
+                "These visualizations now use ChemML's native explanation plotting helpers from this repository rather than a generic bar-chart fallback. "
+                "For this QSAR workflow, they show which molecular features were most influential for one molecule or across a set of molecules."
+            )
         """
     ),
     md(
@@ -10247,18 +11016,20 @@ cells += [
             return requested_workflow, str(workflow_frames[requested_workflow].iloc[0]["Model"])
 
         def _predict_with_model(workflow_name, model_name, smiles_series, full_input_df):
+            from rdkit import Chem as RDKitChem
+
             smiles_series = pd.Series(smiles_series, dtype=str).reset_index(drop=True)
             canonical_smiles = []
             valid_mask = []
             invalid_reasons = []
             for smiles_text in smiles_series:
-                mol = Chem.MolFromSmiles(str(smiles_text))
+                mol = RDKitChem.MolFromSmiles(str(smiles_text))
                 if mol is None:
                     canonical_smiles.append(None)
                     valid_mask.append(False)
                     invalid_reasons.append("Invalid SMILES")
                 else:
-                    canonical_smiles.append(Chem.MolToSmiles(mol))
+                    canonical_smiles.append(RDKitChem.MolToSmiles(mol))
                     valid_mask.append(True)
                     invalid_reasons.append("")
             result_df = pd.DataFrame(
@@ -10286,6 +11057,30 @@ cells += [
                 aux_source = full_input_df.loc[result_df["valid_smiles"], aux_columns].reset_index(drop=True)
                 aux_feature_df = build_auxiliary_feature_matrix(aux_source, aux_columns)
 
+            def _safe_state_feature_columns(state_key):
+                payload = STATE.get(state_key, {})
+                if not isinstance(payload, dict):
+                    return []
+                columns = payload.get(model_name, [])
+                if not columns:
+                    return []
+                return [str(col) for col in columns]
+
+            def _extract_feature_names_from_estimator(estimator):
+                if estimator is None:
+                    return []
+                names = getattr(estimator, "feature_names_in_", None)
+                if names is not None:
+                    return [str(col) for col in list(names)]
+                named_steps = getattr(estimator, "named_steps", None)
+                if isinstance(named_steps, dict):
+                    for step_name in reversed(list(named_steps.keys())):
+                        step_estimator = named_steps.get(step_name)
+                        names = getattr(step_estimator, "feature_names_in_", None)
+                        if names is not None:
+                            return [str(col) for col in list(names)]
+                return []
+
             if workflow_name == "Conventional ML":
                 if "traditional_models" not in STATE or model_name not in STATE["traditional_models"]:
                     raise RuntimeError(f"Conventional model '{model_name}' is not loaded in this session.")
@@ -10296,7 +11091,12 @@ cells += [
                 )
                 if not aux_feature_df.empty:
                     feature_df = pd.concat([feature_df.reset_index(drop=True), aux_feature_df.reset_index(drop=True)], axis=1)
-                feature_df = align_feature_matrix_to_training_columns(feature_df, STATE["feature_names"])
+                expected_columns = (
+                    _safe_state_feature_columns("traditional_model_feature_columns")
+                    or _extract_feature_names_from_estimator(model)
+                    or [str(col) for col in STATE["feature_names"]]
+                )
+                feature_df = align_feature_matrix_to_training_columns(feature_df, expected_columns)
                 predictions = np.asarray(model.predict(feature_df)).reshape(-1)
             elif workflow_name == "Tuned conventional ML":
                 if "tuned_traditional_models" not in STATE or model_name not in STATE["tuned_traditional_models"]:
@@ -10308,7 +11108,12 @@ cells += [
                 )
                 if not aux_feature_df.empty:
                     feature_df = pd.concat([feature_df.reset_index(drop=True), aux_feature_df.reset_index(drop=True)], axis=1)
-                feature_df = align_feature_matrix_to_training_columns(feature_df, STATE["feature_names"])
+                expected_columns = (
+                    _safe_state_feature_columns("tuned_traditional_model_feature_columns")
+                    or _extract_feature_names_from_estimator(model)
+                    or [str(col) for col in STATE["feature_names"]]
+                )
+                feature_df = align_feature_matrix_to_training_columns(feature_df, expected_columns)
                 predictions = np.asarray(model.predict(feature_df)).reshape(-1)
             elif workflow_name == "ChemML deep learning":
                 if "deep_models" not in STATE or model_name not in STATE["deep_models"]:
@@ -10336,7 +11141,7 @@ cells += [
                     raise RuntimeError(
                         "MapLight + GNN requires `molfeat` and its DGL/PyTorch dependencies."
                     ) from exc
-                from rdkit import Chem, RDLogger
+                from rdkit import RDLogger
 
                 RDLogger.DisableLog("rdApp.*")
                 config = dict(STATE.get("maplight_gnn_feature_config", {}))
@@ -10424,6 +11229,31 @@ cells += [
                         "Run block 6E to install/reinstall Chemprop and retry."
                     )
 
+                def _align_predictions_by_smiles_occurrence(expected_smiles, actual_smiles, pred_values):
+                    expected_df = pd.DataFrame({"smiles": pd.Series(expected_smiles, dtype=str).str.strip()})
+                    actual_df = pd.DataFrame(
+                        {
+                            "smiles": pd.Series(actual_smiles, dtype=str).str.strip(),
+                            "predicted": pd.to_numeric(pred_values, errors="coerce"),
+                        }
+                    )
+                    expected_df["_occurrence"] = expected_df.groupby("smiles", sort=False).cumcount()
+                    expected_df["_expected_row"] = np.arange(len(expected_df), dtype=int)
+                    actual_df["_occurrence"] = actual_df.groupby("smiles", sort=False).cumcount()
+                    merged = expected_df.merge(
+                        actual_df,
+                        on=["smiles", "_occurrence"],
+                        how="left",
+                        sort=False,
+                        validate="one_to_one",
+                    )
+                    if merged["predicted"].isna().any():
+                        return None
+                    aligned = merged.sort_values("_expected_row")["predicted"].to_numpy(dtype=float)
+                    if len(aligned) != len(expected_df):
+                        return None
+                    return np.asarray(aligned, dtype=float)
+
                 def _extract_chemprop_predictions(preds_csv_path, expected_smiles):
                     preds_df = pd.read_csv(preds_csv_path)
                     smiles_col = None
@@ -10443,20 +11273,22 @@ cells += [
                             f"Could not identify a prediction column in Chemprop output: {list(preds_df.columns)}"
                         )
                     pred_values = pd.to_numeric(preds_df[prediction_cols[0]], errors="coerce")
+
+                    expected_smiles = pd.Series(expected_smiles, dtype=str).astype(str).str.strip().reset_index(drop=True)
+                    if smiles_col is not None:
+                        actual_smiles = preds_df[smiles_col].astype(str).str.strip().reset_index(drop=True)
+                        valid_mask = pred_values.notna()
+                        if not bool(valid_mask.all()):
+                            pred_values = pred_values.loc[valid_mask].reset_index(drop=True)
+                            actual_smiles = actual_smiles.loc[valid_mask].reset_index(drop=True)
+                        if len(actual_smiles) == len(expected_smiles) and actual_smiles.equals(expected_smiles):
+                            return pred_values.to_numpy(dtype=float)
+                        aligned = _align_predictions_by_smiles_occurrence(expected_smiles, actual_smiles, pred_values)
+                        if aligned is not None:
+                            return aligned
+
                     if pred_values.isna().any():
                         raise ValueError("Chemprop prediction output contains non-numeric values.")
-
-                    expected_smiles = pd.Series(expected_smiles, dtype=str).reset_index(drop=True)
-                    if smiles_col is not None:
-                        actual_smiles = preds_df[smiles_col].astype(str).reset_index(drop=True)
-                        if len(actual_smiles) == len(expected_smiles) and set(actual_smiles.tolist()) == set(expected_smiles.tolist()):
-                            aligned = (
-                                pd.DataFrame({"smiles": actual_smiles, "predicted": pred_values.to_numpy(dtype=float)})
-                                .set_index("smiles")
-                                .loc[expected_smiles.tolist(), "predicted"]
-                                .to_numpy(dtype=float)
-                            )
-                            return aligned
                     if len(pred_values) != len(expected_smiles):
                         raise ValueError(
                             f"Chemprop prediction length mismatch: got {len(pred_values)} rows, expected {len(expected_smiles)}."
@@ -10503,6 +11335,7 @@ cells += [
                     raise RuntimeError("No ensemble artifacts are available in this session. Run block 7A first.")
                 member_predictions = []
                 weight_df = STATE["ensemble_weight_table"].copy()
+                ensemble_input_df = full_input_df.loc[result_df["valid_smiles"]].reset_index(drop=True)
                 for member_name in STATE["ensemble_prediction_columns"]:
                     if member_name.startswith("Tuned "):
                         member_workflow = "Tuned conventional ML"
@@ -10517,7 +11350,7 @@ cells += [
                         member_model_name = member_name
                     else:
                         raise RuntimeError(f"Could not resolve ensemble member '{member_name}' for prediction.")
-                    member_result = _predict_with_model(member_workflow, member_model_name, valid_smiles, input_df)
+                    member_result = _predict_with_model(member_workflow, member_model_name, valid_smiles, ensemble_input_df)
                     member_predictions.append(member_result.loc[member_result["valid_smiles"], "prediction"].to_numpy(dtype=float))
                 member_matrix = np.column_stack(member_predictions)
                 ensemble_meta_model = STATE.get("ensemble_meta_model")
@@ -10631,11 +11464,11 @@ cells += [
 
         X_train = pd.DataFrame(STATE["X_train"]).copy()
         X_test = pd.DataFrame(STATE["X_test"]).copy()
-        expected_columns = list(STATE["feature_names"])
-        if list(X_train.columns) != expected_columns:
-            X_train.columns = expected_columns
-        if list(X_test.columns) != expected_columns:
-            X_test.columns = expected_columns
+        expected_columns = [str(col) for col in X_train.columns]
+        if not expected_columns and "feature_names" in STATE:
+            expected_columns = [str(col) for col in STATE["feature_names"]]
+        X_train = align_feature_matrix_to_training_columns(X_train, expected_columns)
+        X_test = align_feature_matrix_to_training_columns(X_test, expected_columns)
 
         prediction_feature_df, _ = build_feature_matrix_from_smiles(
             prediction_df.loc[valid_prediction_rows, "canonical_smiles"].astype(str).tolist(),
@@ -10794,7 +11627,7 @@ cells += [
     code(
         """
         # @title 9D. Fit and apply the MAST-ML / MADML applicability-domain workflow { display-mode: "form" }
-        install_mastml_if_missing = False # @param {type:"boolean"}
+        install_mastml_if_missing = True # @param {type:"boolean"}
         mastml_random_forest_estimators = 300 # @param {type:"slider", min:100, max:600, step:50}
         mastml_n_repeats = 1 # @param {type:"slider", min:1, max:3, step:1}
         mastml_bins = 10 # @param {type:"slider", min:5, max:20, step:1}
@@ -11007,15 +11840,23 @@ cells += [
             )
 
         training_feature_df = pd.DataFrame(STATE["X_train"]).copy()
-        if list(training_feature_df.columns) != list(STATE["feature_names"]):
-            training_feature_df.columns = list(STATE["feature_names"])
+        expected_training_columns = [str(col) for col in training_feature_df.columns]
+        if not expected_training_columns and "feature_names" in STATE:
+            expected_training_columns = [str(col) for col in STATE["feature_names"]]
+        training_feature_df = align_feature_matrix_to_training_columns(
+            training_feature_df,
+            expected_training_columns,
+        )
         training_target = pd.Series(np.asarray(STATE["y_train"], dtype=float), name="target")
 
         prediction_feature_df, _ = build_feature_matrix_from_smiles(
             latest_prediction_results.loc[valid_prediction_rows, "canonical_smiles"].astype(str).tolist(),
             **_mastml_prediction_feature_build_kwargs(),
         )
-        prediction_feature_df = align_feature_matrix_to_training_columns(prediction_feature_df, STATE["feature_names"])
+        prediction_feature_df = align_feature_matrix_to_training_columns(
+            prediction_feature_df,
+            expected_training_columns,
+        )
 
         mastml_params = {
             "n_repeats": int(mastml_n_repeats),
@@ -11512,11 +12353,74 @@ cells += [
             if "ad_consensus_concern" in plot_df.columns
             else ("mastml_overall_concern" if "mastml_overall_concern" in plot_df.columns else None)
         )
+        concern_color_map = {
+            "Low concern": "#2ca02c",
+            "Moderate concern": "#ffbf00",
+            "High concern": "#d62728",
+        }
         concern_interpret_col_for_plot = (
             "ad_consensus_interpretation"
             if "ad_consensus_interpretation" in plot_df.columns
             else ("mastml_interpretation" if "mastml_interpretation" in plot_df.columns else None)
         )
+
+        if concern_col_for_plot is not None and concern_col_for_plot in plot_df.columns:
+            concern_counts_df = (
+                plot_df[concern_col_for_plot]
+                .astype(str)
+                .value_counts(dropna=False)
+                .rename_axis("Concern")
+                .reset_index(name="Count")
+            )
+            concern_counts_df["Percent"] = (
+                100.0
+                * concern_counts_df["Count"].astype(float)
+                / max(1.0, float(concern_counts_df["Count"].sum()))
+            )
+            concern_bar_fig = px.bar(
+                concern_counts_df,
+                x="Concern",
+                y="Count",
+                color="Concern",
+                text="Percent",
+                title="Applicability-domain concern distribution",
+                color_discrete_map=concern_color_map,
+            )
+            concern_bar_fig.update_traces(texttemplate="%{text:.1f}%", textposition="outside")
+            concern_bar_fig.update_layout(showlegend=False)
+            show_plotly(concern_bar_fig)
+
+        if (
+            "ad_method_support_count" in plot_df.columns
+            and "ad_method_available_count" in plot_df.columns
+        ):
+            support_counts_df = (
+                plot_df.assign(
+                    support_label=plot_df["ad_method_support_count"].astype(int).astype(str)
+                    + "/"
+                    + plot_df["ad_method_available_count"].astype(int).astype(str)
+                )
+                .groupby("support_label", dropna=False)
+                .size()
+                .reset_index(name="Count")
+            )
+            support_counts_df["support_ratio_sort"] = support_counts_df["support_label"].str.split("/").apply(
+                lambda parts: (float(parts[0]) / max(float(parts[1]), 1.0)) if len(parts) == 2 else -1.0
+            )
+            support_counts_df = support_counts_df.sort_values(
+                ["support_ratio_sort", "support_label"],
+                ascending=[False, False],
+            )
+            support_bar_fig = px.bar(
+                support_counts_df,
+                x="support_label",
+                y="Count",
+                text="Count",
+                title="AD method support ratio across molecules",
+                labels={"support_label": "Methods supporting in-domain"},
+            )
+            support_bar_fig.update_traces(textposition="outside")
+            show_plotly(support_bar_fig)
 
         if concern_col_for_plot is not None and "mastml_kde_dissimilarity" in plot_df.columns and "mastml_internal_rf_uncertainty_calibrated" in plot_df.columns:
             hover_data_map = {
@@ -11536,13 +12440,158 @@ cells += [
                 symbol=concern_col_for_plot,
                 hover_data=hover_data_map,
                 title="Applicability domain concern: dissimilarity vs calibrated uncertainty",
-                color_discrete_map={
-                    "Low concern": "#2ca02c",
-                    "Moderate concern": "#ffbf00",
-                    "High concern": "#d62728",
-                },
+                color_discrete_map=concern_color_map,
             )
             show_plotly(scatter_fig)
+
+        if "ad_knn_mean_distance" in plot_df.columns:
+            knn_color = concern_col_for_plot if concern_col_for_plot in plot_df.columns else None
+            knn_hist = px.histogram(
+                plot_df,
+                x="ad_knn_mean_distance",
+                color=knn_color,
+                nbins=40,
+                marginal="box",
+                title="kNN distance distribution with in-domain threshold",
+                color_discrete_map=concern_color_map,
+                hover_data=["canonical_smiles"] if "canonical_smiles" in plot_df.columns else None,
+            )
+            if "ad_knn_train_threshold" in plot_df.columns:
+                knn_threshold_values = pd.to_numeric(plot_df["ad_knn_train_threshold"], errors="coerce").dropna()
+                if not knn_threshold_values.empty:
+                    knn_hist.add_vline(
+                        x=float(knn_threshold_values.iloc[0]),
+                        line_dash="dash",
+                        line_color="#1f77b4",
+                        annotation_text="kNN threshold",
+                        annotation_position="top right",
+                    )
+            show_plotly(knn_hist)
+
+        if "ad_mahalanobis_distance" in plot_df.columns:
+            mahal_color = concern_col_for_plot if concern_col_for_plot in plot_df.columns else None
+            mahal_hist = px.histogram(
+                plot_df,
+                x="ad_mahalanobis_distance",
+                color=mahal_color,
+                nbins=40,
+                marginal="box",
+                title="Mahalanobis distance distribution with in-domain threshold",
+                color_discrete_map=concern_color_map,
+                hover_data=["canonical_smiles"] if "canonical_smiles" in plot_df.columns else None,
+            )
+            if "ad_mahalanobis_train_threshold" in plot_df.columns:
+                mahal_threshold_values = pd.to_numeric(plot_df["ad_mahalanobis_train_threshold"], errors="coerce").dropna()
+                if not mahal_threshold_values.empty:
+                    mahal_hist.add_vline(
+                        x=float(mahal_threshold_values.iloc[0]),
+                        line_dash="dash",
+                        line_color="#1f77b4",
+                        annotation_text="Mahalanobis threshold",
+                        annotation_position="top right",
+                    )
+            show_plotly(mahal_hist)
+
+        if "ad_knn_mean_distance" in plot_df.columns and "ad_mahalanobis_distance" in plot_df.columns:
+            hover_cols = {
+                "canonical_smiles": True,
+                "prediction": ":.4f",
+                "ad_knn_mean_distance": ":.4f",
+                "ad_mahalanobis_distance": ":.4f",
+            }
+            if concern_interpret_col_for_plot is not None:
+                hover_cols[concern_interpret_col_for_plot] = True
+            knn_mahal_fig = px.scatter(
+                plot_df,
+                x="ad_knn_mean_distance",
+                y="ad_mahalanobis_distance",
+                color=concern_col_for_plot if concern_col_for_plot in plot_df.columns else None,
+                symbol=concern_col_for_plot if concern_col_for_plot in plot_df.columns else None,
+                title="kNN vs Mahalanobis AD distance diagnostics",
+                hover_data=hover_cols,
+                color_discrete_map=concern_color_map,
+            )
+            if "ad_knn_train_threshold" in plot_df.columns:
+                knn_threshold_values = pd.to_numeric(plot_df["ad_knn_train_threshold"], errors="coerce").dropna()
+                if not knn_threshold_values.empty:
+                    knn_mahal_fig.add_vline(
+                        x=float(knn_threshold_values.iloc[0]),
+                        line_dash="dash",
+                        line_color="#1f77b4",
+                    )
+            if "ad_mahalanobis_train_threshold" in plot_df.columns:
+                mahal_threshold_values = pd.to_numeric(plot_df["ad_mahalanobis_train_threshold"], errors="coerce").dropna()
+                if not mahal_threshold_values.empty:
+                    knn_mahal_fig.add_hline(
+                        y=float(mahal_threshold_values.iloc[0]),
+                        line_dash="dash",
+                        line_color="#1f77b4",
+                    )
+            show_plotly(knn_mahal_fig)
+
+        try:
+            from sklearn.decomposition import PCA
+
+            train_plot_cap = 3000
+            training_for_projection = training_feature_df.copy()
+            if len(training_for_projection) > train_plot_cap:
+                training_for_projection = training_for_projection.sample(
+                    n=train_plot_cap,
+                    random_state=42,
+                ).reset_index(drop=True)
+            prediction_for_projection = prediction_feature_df.copy().reset_index(drop=True)
+            if (
+                training_for_projection.shape[1] == prediction_for_projection.shape[1]
+                and training_for_projection.shape[1] > 1
+                and len(training_for_projection) > 1
+                and len(prediction_for_projection) > 0
+            ):
+                projection_scaler = StandardScaler()
+                combined_matrix = np.vstack(
+                    [
+                        training_for_projection.to_numpy(dtype=np.float32),
+                        prediction_for_projection.to_numpy(dtype=np.float32),
+                    ]
+                )
+                combined_scaled = projection_scaler.fit_transform(combined_matrix)
+                combined_scaled = np.nan_to_num(combined_scaled, copy=False, nan=0.0, posinf=0.0, neginf=0.0)
+                pca_model = PCA(n_components=2, random_state=42)
+                projection = pca_model.fit_transform(combined_scaled)
+                train_count = int(len(training_for_projection))
+                train_proj = projection[:train_count]
+                pred_proj = projection[train_count:]
+                coverage_df = pd.DataFrame(
+                    {
+                        "pc1": np.concatenate([train_proj[:, 0], pred_proj[:, 0]]),
+                        "pc2": np.concatenate([train_proj[:, 1], pred_proj[:, 1]]),
+                        "point_type": ["Training chemistry"] * train_count + ["Predicted molecules"] * len(pred_proj),
+                    }
+                )
+                if concern_col_for_plot is not None and concern_col_for_plot in plot_df.columns and len(pred_proj) == len(plot_df):
+                    coverage_df["Concern"] = [""] * train_count + plot_df[concern_col_for_plot].astype(str).tolist()
+                else:
+                    coverage_df["Concern"] = [""] * len(coverage_df)
+                coverage_fig = px.scatter(
+                    coverage_df,
+                    x="pc1",
+                    y="pc2",
+                    color="point_type",
+                    symbol="point_type",
+                    opacity=0.7,
+                    title="Chemistry-space coverage (PCA projection of training vs predicted molecules)",
+                    hover_data=["Concern"] if coverage_df["Concern"].astype(str).str.len().gt(0).any() else None,
+                )
+                variance_ratio = getattr(pca_model, "explained_variance_ratio_", np.array([np.nan, np.nan], dtype=float))
+                if len(variance_ratio) >= 2:
+                    coverage_fig.update_xaxes(title=f"PC1 ({float(variance_ratio[0]) * 100:.1f}% variance)")
+                    coverage_fig.update_yaxes(title=f"PC2 ({float(variance_ratio[1]) * 100:.1f}% variance)")
+                show_plotly(coverage_fig)
+        except Exception as projection_exc:
+            print(
+                "PCA chemistry-space coverage visualization was skipped: "
+                f"{type(projection_exc).__name__}: {projection_exc}",
+                flush=True,
+            )
 
         if ad_rule_columns:
             ad_rule_counts = (
