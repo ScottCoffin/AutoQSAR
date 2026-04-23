@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import itertools
 import json
 import time
 import uuid
@@ -74,6 +75,336 @@ CHEMPROP_ARCHITECTURE_REGISTRY = {
         "notes": "AttentiveFP-style Chemprop proxy with atom messages plus descriptor fusion.",
     },
 }
+
+
+def _cfa_normalize_vector(values: np.ndarray, epsilon: float = 1e-12) -> np.ndarray:
+    arr = np.asarray(values, dtype=float).reshape(-1)
+    if arr.size == 0:
+        return arr
+    finite = np.isfinite(arr)
+    if not finite.any():
+        return np.zeros_like(arr, dtype=float)
+    min_val = float(np.nanmin(arr[finite]))
+    max_val = float(np.nanmax(arr[finite]))
+    span = max_val - min_val
+    if not np.isfinite(span) or abs(span) <= float(epsilon):
+        return np.zeros_like(arr, dtype=float)
+    out = (arr - min_val) / span
+    out = np.where(np.isfinite(out), out, 0.0)
+    return out
+
+
+def _cfa_metric_value(y_true: np.ndarray, y_pred: np.ndarray, metric: str = "mae") -> float:
+    truth = np.asarray(y_true, dtype=float).reshape(-1)
+    pred = np.asarray(y_pred, dtype=float).reshape(-1)
+    if truth.shape[0] != pred.shape[0]:
+        raise ValueError("CFA metric inputs must have the same number of rows.")
+    metric_key = str(metric or "mae").strip().lower()
+    if metric_key == "rmse":
+        return float(np.sqrt(np.mean(np.square(truth - pred))))
+    return float(np.mean(np.abs(truth - pred)))
+
+
+def _cfa_score_to_rank(values: np.ndarray, *, descending: bool = True) -> np.ndarray:
+    arr = np.asarray(values, dtype=float).reshape(-1)
+    if arr.size == 0:
+        return arr
+    series = pd.Series(arr)
+    ranked = series.rank(method="average", ascending=not bool(descending))
+    return np.asarray(ranked, dtype=float).reshape(-1)
+
+
+def _cfa_fit_rank_calibration(
+    rank_signal_train: np.ndarray,
+    y_train: np.ndarray,
+    *,
+    epsilon: float = 1e-12,
+) -> tuple[float, float, float]:
+    signal_train = np.asarray(rank_signal_train, dtype=float).reshape(-1)
+    target = np.asarray(y_train, dtype=float).reshape(-1)
+    if signal_train.shape[0] != target.shape[0]:
+        raise ValueError("Rank calibration inputs must align with y_train.")
+    finite_mask = np.isfinite(signal_train) & np.isfinite(target)
+    if int(finite_mask.sum()) < 2:
+        fallback = float(np.nanmean(target)) if np.isfinite(np.nanmean(target)) else 0.0
+        return 0.0, float(fallback), float(fallback)
+    x = signal_train[finite_mask]
+    y = target[finite_mask]
+    x_mean = float(np.mean(x))
+    y_mean = float(np.mean(y))
+    denom = float(np.sum((x - x_mean) ** 2))
+    if abs(denom) <= float(epsilon):
+        return 0.0, float(y_mean), float(y_mean)
+    slope = float(np.sum((x - x_mean) * (y - y_mean)) / denom)
+    intercept = float(y_mean - slope * x_mean)
+    return float(slope), float(intercept), float(y_mean)
+
+
+def _cfa_calibrate_rank_signal(
+    rank_signal_train: np.ndarray,
+    rank_signal_predict: np.ndarray,
+    y_train: np.ndarray,
+    *,
+    epsilon: float = 1e-12,
+) -> tuple[np.ndarray, np.ndarray]:
+    """Map rank-space fusion signals to score-space via 1D least-squares calibration."""
+    signal_train = np.asarray(rank_signal_train, dtype=float).reshape(-1)
+    signal_predict = np.asarray(rank_signal_predict, dtype=float).reshape(-1)
+    slope, intercept, y_fill = _cfa_fit_rank_calibration(
+        signal_train,
+        np.asarray(y_train, dtype=float).reshape(-1),
+        epsilon=float(epsilon),
+    )
+    pred_train = slope * signal_train + intercept
+    pred_predict = slope * signal_predict + intercept
+    pred_train = np.where(np.isfinite(pred_train), pred_train, y_fill)
+    pred_predict = np.where(np.isfinite(pred_predict), pred_predict, y_fill)
+    return pred_train, pred_predict
+
+
+def _cfa_coerce_prediction_map(prediction_map: dict[str, Any] | pd.DataFrame) -> dict[str, np.ndarray]:
+    if isinstance(prediction_map, pd.DataFrame):
+        if prediction_map.empty:
+            return {}
+        return {
+            str(col): np.asarray(prediction_map[col], dtype=float).reshape(-1)
+            for col in prediction_map.columns
+        }
+    out: dict[str, np.ndarray] = {}
+    for key, values in dict(prediction_map or {}).items():
+        name = str(key).strip()
+        if not name:
+            continue
+        out[name] = np.asarray(values, dtype=float).reshape(-1)
+    return out
+
+
+def run_cfa_regression_fusion(
+    train_prediction_map: dict[str, Any] | pd.DataFrame,
+    test_prediction_map: dict[str, Any] | pd.DataFrame,
+    y_train: np.ndarray | pd.Series,
+    *,
+    min_models: int = 2,
+    max_models: int | None = 4,
+    optimize_metric: str = "mae",
+    epsilon: float = 1e-12,
+    include_rank_combinations: bool = True,
+    rank_prefer_when_diverse: bool = True,
+    rank_diversity_threshold: float = 0.15,
+    rank_metric_discount: float = 0.98,
+) -> dict[str, Any]:
+    """Run a lightweight CFA-style combinatorial fusion search for regression.
+
+    This follows the core CFA concept (combinatorial score fusion with
+    performance-strength and diversity-strength weighting), adapted to operate
+    on already-produced train/test prediction vectors from existing models.
+    """
+    train_map = _cfa_coerce_prediction_map(train_prediction_map)
+    test_map = _cfa_coerce_prediction_map(test_prediction_map)
+    common_models = [name for name in sorted(train_map.keys()) if name in test_map]
+    if not common_models:
+        raise ValueError("CFA fusion requires at least one model with both train and test predictions.")
+
+    y_train_arr = np.asarray(y_train, dtype=float).reshape(-1)
+    train_lengths = {name: int(np.asarray(train_map[name]).shape[0]) for name in common_models}
+    test_lengths = {name: int(np.asarray(test_map[name]).shape[0]) for name in common_models}
+    if any(length != int(y_train_arr.shape[0]) for length in train_lengths.values()):
+        raise ValueError("CFA train predictions must align exactly with y_train length.")
+    unique_test_lengths = sorted(set(test_lengths.values()))
+    if len(unique_test_lengths) != 1:
+        raise ValueError("CFA test predictions must all have the same number of rows.")
+
+    n_models = len(common_models)
+    min_models = int(max(1, min_models))
+    max_models = int(max_models) if max_models is not None else n_models
+    max_models = max(min_models, min(max_models, n_models))
+    if n_models < min_models:
+        raise ValueError(
+            f"CFA fusion requires at least {int(min_models)} base models; found {int(n_models)}."
+        )
+
+    train_matrix = np.column_stack([np.asarray(train_map[name], dtype=float).reshape(-1) for name in common_models])
+    test_matrix = np.column_stack([np.asarray(test_map[name], dtype=float).reshape(-1) for name in common_models])
+
+    # Performance strength: lower train error means higher contribution weight.
+    base_train_metric = np.asarray(
+        [_cfa_metric_value(y_train_arr, train_matrix[:, idx], metric=optimize_metric) for idx in range(n_models)],
+        dtype=float,
+    )
+    performance_strength = 1.0 / np.maximum(base_train_metric, float(epsilon))
+
+    # Diversity strength: average pairwise distance to other model score profiles.
+    diversity_strength = np.zeros((n_models,), dtype=float)
+    if n_models > 1:
+        normalized_sorted = np.column_stack(
+            [
+                _cfa_normalize_vector(np.sort(train_matrix[:, idx]), epsilon=float(epsilon))
+                for idx in range(n_models)
+            ]
+        )
+        for idx in range(n_models):
+            distances = []
+            for jdx in range(n_models):
+                if jdx == idx:
+                    continue
+                distances.append(float(np.mean(np.square(normalized_sorted[:, idx] - normalized_sorted[:, jdx]))))
+            diversity_strength[idx] = float(np.mean(distances)) if distances else 0.0
+    if not np.any(np.isfinite(diversity_strength)) or float(np.nanmax(np.abs(diversity_strength))) <= float(epsilon):
+        diversity_strength = np.ones((n_models,), dtype=float)
+
+    pairwise_cd = np.zeros((n_models, n_models), dtype=float)
+    if n_models > 1:
+        normalized_sorted = np.column_stack(
+            [
+                _cfa_normalize_vector(np.sort(train_matrix[:, idx]), epsilon=float(epsilon))
+                for idx in range(n_models)
+            ]
+        )
+        for idx in range(n_models):
+            for jdx in range(idx + 1, n_models):
+                cd_value = float(np.mean(np.square(normalized_sorted[:, idx] - normalized_sorted[:, jdx])))
+                pairwise_cd[idx, jdx] = cd_value
+                pairwise_cd[jdx, idx] = cd_value
+
+    candidates: list[dict[str, Any]] = []
+
+    def _safe_weights(raw_weights: np.ndarray) -> np.ndarray:
+        weights = np.asarray(raw_weights, dtype=float).reshape(-1)
+        weights = np.where(np.isfinite(weights), weights, 0.0)
+        total = float(np.sum(weights))
+        if not np.isfinite(total) or abs(total) <= float(epsilon):
+            return np.ones_like(weights, dtype=float) / max(1, len(weights))
+        return weights / total
+
+    for subset_size in range(min_models, max_models + 1):
+        for subset in itertools.combinations(range(n_models), subset_size):
+            subset_idx = np.asarray(subset, dtype=int)
+            subset_models = [common_models[idx] for idx in subset_idx]
+            subset_train = train_matrix[:, subset_idx]
+            subset_diversity_values = pairwise_cd[np.ix_(subset_idx, subset_idx)]
+            if subset_size > 1:
+                subset_diversity_mean = float(np.mean(subset_diversity_values[np.triu_indices(subset_size, k=1)]))
+            else:
+                subset_diversity_mean = 0.0
+            score_variants = {
+                "score_ac": np.ones((subset_size,), dtype=float),
+                "score_wcp": performance_strength[subset_idx],
+                "score_wcds": diversity_strength[subset_idx],
+            }
+            rank_variants = {
+                "rank_ac": np.ones((subset_size,), dtype=float),
+                "rank_wcp": performance_strength[subset_idx],
+                "rank_wcds": diversity_strength[subset_idx],
+            }
+
+            for variant_name, raw_weights in score_variants.items():
+                weights = _safe_weights(raw_weights)
+                fused_train = np.dot(subset_train, weights)
+                fused_test = np.dot(test_matrix[:, subset_idx], weights)
+                metric_value = _cfa_metric_value(y_train_arr, fused_train, metric=optimize_metric)
+                adjusted_metric = float(metric_value)
+                candidates.append(
+                    {
+                        "variant": str(variant_name),
+                        "combination_space": "score",
+                        "n_models": int(subset_size),
+                        "models": "|".join(subset_models),
+                        "train_metric": float(metric_value),
+                        "adjusted_metric": float(adjusted_metric),
+                        "subset_diversity_mean": float(subset_diversity_mean),
+                        "rank_calibration_slope": np.nan,
+                        "rank_calibration_intercept": np.nan,
+                        "rank_descending": np.nan,
+                        "weights": {name: float(weight) for name, weight in zip(subset_models, weights)},
+                        "pred_train": np.asarray(fused_train, dtype=float).reshape(-1),
+                        "pred_test": np.asarray(fused_test, dtype=float).reshape(-1),
+                    }
+                )
+
+            if bool(include_rank_combinations):
+                subset_rank_train = np.column_stack(
+                    [_cfa_score_to_rank(train_matrix[:, idx], descending=True) for idx in subset_idx]
+                )
+                subset_rank_test = np.column_stack(
+                    [_cfa_score_to_rank(test_matrix[:, idx], descending=True) for idx in subset_idx]
+                )
+                for variant_name, raw_weights in rank_variants.items():
+                    weights = _safe_weights(raw_weights)
+                    fused_rank_train = np.dot(subset_rank_train, weights)
+                    fused_rank_test = np.dot(subset_rank_test, weights)
+                    # Lower rank value means stronger score; invert before calibration.
+                    rank_signal_train = -np.asarray(fused_rank_train, dtype=float).reshape(-1)
+                    rank_signal_test = -np.asarray(fused_rank_test, dtype=float).reshape(-1)
+                    slope, intercept, _y_fill = _cfa_fit_rank_calibration(
+                        rank_signal_train,
+                        y_train_arr,
+                        epsilon=float(epsilon),
+                    )
+                    fused_train = slope * rank_signal_train + intercept
+                    fused_test = slope * rank_signal_test + intercept
+                    metric_value = _cfa_metric_value(y_train_arr, fused_train, metric=optimize_metric)
+                    adjusted_metric = float(metric_value)
+                    if bool(rank_prefer_when_diverse) and float(subset_diversity_mean) >= float(rank_diversity_threshold):
+                        adjusted_metric = float(metric_value) * float(rank_metric_discount)
+                    candidates.append(
+                        {
+                            "variant": str(variant_name),
+                            "combination_space": "rank",
+                            "n_models": int(subset_size),
+                            "models": "|".join(subset_models),
+                            "train_metric": float(metric_value),
+                            "adjusted_metric": float(adjusted_metric),
+                            "subset_diversity_mean": float(subset_diversity_mean),
+                            "rank_calibration_slope": float(slope),
+                            "rank_calibration_intercept": float(intercept),
+                            "rank_descending": True,
+                            "weights": {name: float(weight) for name, weight in zip(subset_models, weights)},
+                            "pred_train": np.asarray(fused_train, dtype=float).reshape(-1),
+                            "pred_test": np.asarray(fused_test, dtype=float).reshape(-1),
+                        }
+                    )
+
+    if not candidates:
+        raise RuntimeError("CFA fusion candidate generation returned no combinations.")
+
+    candidates_df = pd.DataFrame(candidates)
+    candidates_df = candidates_df.sort_values(
+        by=["adjusted_metric", "train_metric", "n_models", "combination_space", "variant", "models"],
+        ascending=[True, True, True, True, True, True],
+        kind="stable",
+    ).reset_index(drop=True)
+    best = dict(candidates_df.iloc[0].to_dict())
+    best_models = str(best["models"]).split("|")
+    weights_map = dict(best["weights"])
+    best_train = np.asarray(best["pred_train"], dtype=float).reshape(-1)
+    best_test = np.asarray(best["pred_test"], dtype=float).reshape(-1)
+    # Drop large arrays from candidate table to keep artifacts compact.
+    candidates_df = candidates_df.drop(columns=["pred_train", "pred_test"], errors="ignore")
+
+    return {
+        "pred_train": np.asarray(best_train, dtype=float).reshape(-1),
+        "pred_test": np.asarray(best_test, dtype=float).reshape(-1),
+        "selected_models": list(best_models),
+        "variant": str(best["variant"]),
+        "combination_space": str(best.get("combination_space", "score")),
+        "optimize_metric": str(optimize_metric),
+        "train_metric": float(best["train_metric"]),
+        "adjusted_metric": float(best.get("adjusted_metric", best["train_metric"])),
+        "subset_diversity_mean": float(best.get("subset_diversity_mean", np.nan)),
+        "rank_calibration_slope": float(best.get("rank_calibration_slope", np.nan)),
+        "rank_calibration_intercept": float(best.get("rank_calibration_intercept", np.nan)),
+        "rank_descending": bool(best.get("rank_descending", True)) if str(best.get("combination_space", "score")) == "rank" else np.nan,
+        "weights": {name: float(weights_map[name]) for name in best_models},
+        "candidate_table": candidates_df.copy(),
+        "base_strengths": pd.DataFrame(
+            {
+                "model": common_models,
+                "train_metric": base_train_metric,
+                "performance_strength": performance_strength,
+                "diversity_strength": diversity_strength,
+            }
+        ),
+    }
 
 
 def list_supported_chemprop_architectures() -> list[str]:

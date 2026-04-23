@@ -7,7 +7,8 @@ physchem, and Polaris ADME Fang splits). It builds
 molecular features, runs the train/test split plus train-only ElasticNetCV
 feature selection, evaluates conventional models, optionally runs a small GA
 tuning pass, runs deep workflows (ChemML backends, Chemprop v2 graph variants,
-and MapLight + GNN), builds an optional ensemble over available members, and
+and MapLight + GNN), optionally runs CFA combinatorial fusion over conventional
+predictions, builds an optional ensemble over available members, and
 writes cross-dataset performance tables.
 """
 
@@ -42,7 +43,7 @@ import sys
 import numpy as np
 import pandas as pd
 from sklearn.base import clone
-from sklearn.ensemble import ExtraTreesRegressor, HistGradientBoostingRegressor, RandomForestRegressor, VotingRegressor
+from sklearn.ensemble import AdaBoostRegressor, ExtraTreesRegressor, HistGradientBoostingRegressor, RandomForestRegressor, VotingRegressor
 from sklearn.impute import SimpleImputer
 from sklearn.linear_model import ElasticNet, ElasticNetCV, RidgeCV
 from sklearn.metrics import make_scorer, mean_absolute_error, mean_squared_error, r2_score
@@ -52,23 +53,34 @@ from sklearn.neural_network import MLPRegressor
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import FunctionTransformer, StandardScaler
 from sklearn.svm import SVR
+from sklearn.tree import DecisionTreeRegressor
 
 from rdkit import Chem, RDLogger
 
 RDLogger.DisableLog("rdApp.warning")
 
+# Reduce TensorFlow/absl startup noise when optional backends are imported.
+os.environ.setdefault("TF_CPP_MIN_LOG_LEVEL", "3")
+os.environ.setdefault("TF_ENABLE_ONEDNN_OPTS", "0")
+os.environ.setdefault("ABSL_LOGGING_STDERR_THRESHOLD", "3")
+os.environ.setdefault("ABSL_MIN_LOG_LEVEL", "3")
+os.environ.setdefault("GLOG_minloglevel", "3")
+
 try:
     from portable_colab_qsar_bundle.qsar_workflow_core import (
         build_feature_matrix_from_smiles,
         drop_exact_and_near_duplicate_features,
+        make_maplight_classic_matrix,
         make_qsar_cv_splitter,
         make_reusable_inner_cv_splitter,
+        run_cfa_regression_fusion,
         resolve_chemprop_architecture_specs,
         scaffold_train_test_split,
         target_quartile_labels,
     )
     from portable_colab_qsar_bundle.benchmark_registry import (
         CHEMML_EXAMPLE_OPTIONS,
+        FREESOLV_EXPANDED_SCALED_OPTION,
         MOLECULENET_LEADERBOARD_README_URL,
         MOLECULENET_PHYSCHEM_OPTIONS,
         POLARIS_ADME_OPTIONS,
@@ -81,14 +93,17 @@ except ModuleNotFoundError:
     from portable_colab_qsar_bundle.qsar_workflow_core import (
         build_feature_matrix_from_smiles,
         drop_exact_and_near_duplicate_features,
+        make_maplight_classic_matrix,
         make_qsar_cv_splitter,
         make_reusable_inner_cv_splitter,
+        run_cfa_regression_fusion,
         resolve_chemprop_architecture_specs,
         scaffold_train_test_split,
         target_quartile_labels,
     )
     from portable_colab_qsar_bundle.benchmark_registry import (
         CHEMML_EXAMPLE_OPTIONS,
+        FREESOLV_EXPANDED_SCALED_OPTION,
         MOLECULENET_LEADERBOARD_README_URL,
         MOLECULENET_PHYSCHEM_OPTIONS,
         POLARIS_ADME_OPTIONS,
@@ -436,9 +451,9 @@ def prepare_tabpfn_auth(args: argparse.Namespace) -> tuple[bool, str]:
     return False, f"TabPFN authentication/setup failed: {token_error or probe_error}"
 
 
-TABPFN_DAILY_TOKEN_BUDGET = 1_000_000
+TABPFN_DAILY_TOKEN_BUDGET = 100_000_000
 TABPFN_DAILY_RESET_NOTE = (
-    "Prior Labs TabPFN API budget: 1,000,000 tokens per user per day "
+    "Prior Labs TabPFN API budget: 100,000,000 tokens per user per day "
     "(tokens ~ rows * columns * estimators), with a daily reset."
 )
 
@@ -530,6 +545,7 @@ class DatasetSpec:
     leaderboard_url: str | None = None
     leaderboard_summary: dict[str, Any] | None = None
     predefined_split_column: str | None = None
+    auxiliary_feature_columns: list[str] | None = None
 
 
 @dataclass
@@ -643,8 +659,410 @@ def benchmark_config_signature(args: argparse.Namespace) -> str:
     return json.dumps(config, sort_keys=True, default=str)
 
 
+STAGE23_RESUME_CACHE_VERSION = 1
+SHARED_FEATURE_MATRIX_CACHE_VERSION = 1
+MAPLIGHT_CLASSIC_PREFIXES = ("maplight_morgan_", "avalon_count_", "erg_", "maplight_desc_")
+MAPLIGHT_CATBOOST_LABEL_LEGACY = "MapLight CatBoost"
+MAPLIGHT_GNN_LABEL_LEGACY = "MapLight + GNN (CatBoost)"
+MAPLIGHT_CATBOOST_LABEL_STRICT = "MapLight CatBoost (Strict Parity)"
+MAPLIGHT_GNN_LABEL_STRICT = "MapLight + GNN (CatBoost, Strict Parity)"
+MAPLIGHT_PARITY_SEEDS_DEFAULT = [1, 2, 3, 4, 5]
+_MAPLIGHT_EMBEDDER_CACHE: dict[str, tuple[Callable[[list[str]], list[Any]], str]] = {}
+
+
+def _stable_float_text(value: Any) -> str:
+    try:
+        value_float = float(value)
+        if not np.isfinite(value_float):
+            return "nan"
+        return f"{value_float:.12g}"
+    except Exception:
+        return str(value)
+
+
+def dataset_content_signature(
+    canonical_smiles: pd.Series,
+    target_values: pd.Series,
+    predefined_split: pd.Series | None = None,
+) -> str:
+    smiles_series = pd.Series(canonical_smiles, dtype=str).str.strip().reset_index(drop=True)
+    target_series = pd.Series(target_values, dtype=float).reset_index(drop=True)
+    split_series = None
+    if predefined_split is not None:
+        split_series = pd.Series(predefined_split, dtype=str).str.strip().str.lower().reset_index(drop=True)
+        if len(split_series) != len(smiles_series):
+            split_series = None
+
+    hasher = hashlib.sha256()
+    for idx in range(len(smiles_series)):
+        hasher.update(str(smiles_series.iloc[idx]).encode("utf-8", errors="replace"))
+        hasher.update(b"\t")
+        hasher.update(_stable_float_text(target_series.iloc[idx]).encode("utf-8", errors="replace"))
+        if split_series is not None:
+            hasher.update(b"\t")
+            hasher.update(str(split_series.iloc[idx]).encode("utf-8", errors="replace"))
+        hasher.update(b"\n")
+    return hasher.hexdigest()
+
+
+def stage23_resume_signature(
+    *,
+    args: argparse.Namespace,
+    spec: "DatasetSpec",
+    canonical_df: pd.DataFrame,
+    input_meta: dict[str, Any],
+    predefined_split: pd.Series | None,
+) -> tuple[str, dict[str, Any]]:
+    payload = {
+        "cache_version": int(STAGE23_RESUME_CACHE_VERSION),
+        "dataset_name": str(spec.name),
+        "dataset_source": str(spec.source),
+        "dataset_rows": int(len(canonical_df)),
+        "dataset_content_hash": dataset_content_signature(
+            canonical_df["canonical_smiles"],
+            canonical_df["target"],
+            predefined_split=predefined_split,
+        ),
+        "target_transform": str(input_meta.get("target_transform", "")),
+        "smiles_column": str(input_meta.get("smiles_column", "")),
+        "target_column": str(input_meta.get("target_column", "")),
+        "feature_families": list(DEFAULT_BENCHMARK_FEATURE_FAMILIES),
+        "fingerprint_bits": int(getattr(args, "fingerprint_bits", 1024)),
+        "enable_persistent_feature_store": bool(getattr(args, "enable_persistent_feature_store", True)),
+        "reuse_persistent_feature_store": bool(getattr(args, "reuse_persistent_feature_store", True)),
+        "persistent_feature_store_path": str(getattr(args, "persistent_feature_store_path", "AUTO")),
+        "split_strategy_requested": str(getattr(args, "split_strategy", "target_quartiles")),
+        "test_fraction": float(getattr(args, "test_fraction", 0.2)),
+        "random_seed": int(getattr(args, "random_seed", 13)),
+        "selector_method": str(getattr(args, "selector_method", "elasticnet_cv")),
+        "selector_l1_ratio_grid": str(getattr(args, "selector_l1_ratio_grid", "")),
+        "selector_alpha_min_log10": float(getattr(args, "selector_alpha_min_log10", -5)),
+        "selector_alpha_max_log10": float(getattr(args, "selector_alpha_max_log10", -1)),
+        "selector_alpha_grid_size": int(getattr(args, "selector_alpha_grid_size", 12)),
+        "selector_cv_folds": int(getattr(args, "selector_cv_folds", 3)),
+        "selector_max_iter": int(getattr(args, "selector_max_iter", 10000)),
+        "selector_coefficient_threshold": float(getattr(args, "selector_coefficient_threshold", 1e-10)),
+        "selector_auto_rf_by_dataset_size": bool(getattr(args, "selector_auto_rf_by_dataset_size", True)),
+        "selector_auto_rf_threshold_seconds": float(getattr(args, "selector_auto_rf_threshold_seconds", 7200.0)),
+        "selector_auto_rf_log10_slope": float(getattr(args, "selector_auto_rf_log10_slope", 1.225)),
+        "selector_auto_rf_log10_intercept": float(getattr(args, "selector_auto_rf_log10_intercept", -0.658)),
+        "selector_elasticnet_timeout_seconds": float(getattr(args, "selector_elasticnet_timeout_seconds", 7200.0)),
+        "selector_rf_fallback_n_estimators": int(getattr(args, "selector_rf_fallback_n_estimators", 400)),
+        "max_selected_features": int(getattr(args, "max_selected_features", 512)),
+        "dedup_variance_threshold": 1e-8,
+        "dedup_binary_prevalence_min": 0.005,
+        "dedup_binary_prevalence_max": 0.995,
+        "predefined_split_column": str(spec.predefined_split_column or ""),
+    }
+    signature = hashlib.sha256(
+        json.dumps(payload, sort_keys=True, default=str).encode("utf-8")
+    ).hexdigest()
+    return signature, payload
+
+
+def stage23_resume_cache_path(dataset_dir: Path) -> Path:
+    return dataset_dir / "stage23_resume_cache.pkl"
+
+
+def load_stage23_resume_cache(dataset_dir: Path, expected_signature: str) -> dict[str, Any] | None:
+    cache_path = stage23_resume_cache_path(dataset_dir)
+    if not cache_path.exists():
+        return None
+    try:
+        with cache_path.open("rb") as handle:
+            payload = pickle.load(handle)
+    except Exception:
+        return None
+    if not isinstance(payload, dict):
+        return None
+    if int(payload.get("cache_version", -1)) != int(STAGE23_RESUME_CACHE_VERSION):
+        return None
+    if str(payload.get("stage23_signature", "")).strip() != str(expected_signature).strip():
+        return None
+    required_keys = {
+        "split",
+        "X_train_selected",
+        "X_test_selected",
+        "feature_meta",
+        "selector_meta",
+        "feature_dedup_meta",
+        "maplight_feature_cols",
+        "cv_strategy_for_workflows",
+    }
+    if not required_keys.issubset(set(payload.keys())):
+        return None
+    return payload
+
+
+def write_stage23_resume_cache(
+    dataset_dir: Path,
+    *,
+    stage23_signature_value: str,
+    signature_payload: dict[str, Any],
+    split: dict[str, Any],
+    X_train_selected: pd.DataFrame,
+    X_test_selected: pd.DataFrame,
+    feature_meta: dict[str, Any],
+    selector_meta: dict[str, Any],
+    feature_dedup_meta: dict[str, Any],
+    maplight_feature_cols: list[str],
+    cv_strategy_for_workflows: str,
+) -> None:
+    payload = {
+        "cache_version": int(STAGE23_RESUME_CACHE_VERSION),
+        "stage23_signature": str(stage23_signature_value),
+        "signature_payload": dict(signature_payload),
+        "split": {
+            "X_train": split["X_train"].copy(),
+            "X_test": split["X_test"].copy(),
+            "y_train": pd.Series(split["y_train"]).reset_index(drop=True),
+            "y_test": pd.Series(split["y_test"]).reset_index(drop=True),
+            "smiles_train": pd.Series(split["smiles_train"], dtype=str).reset_index(drop=True),
+            "smiles_test": pd.Series(split["smiles_test"], dtype=str).reset_index(drop=True),
+            "split_strategy_used": str(split.get("split_strategy_used", "")),
+            "split_signature": dict(split.get("split_signature", {})),
+        },
+        "X_train_selected": X_train_selected.copy(),
+        "X_test_selected": X_test_selected.copy(),
+        "feature_meta": dict(feature_meta),
+        "selector_meta": dict(selector_meta),
+        "feature_dedup_meta": dict(feature_dedup_meta),
+        "maplight_feature_cols": [str(col) for col in list(maplight_feature_cols)],
+        "cv_strategy_for_workflows": str(cv_strategy_for_workflows),
+        "created_at": local_timestamp_text(),
+    }
+    cache_path = stage23_resume_cache_path(dataset_dir)
+    try:
+        with cache_path.open("wb") as handle:
+            pickle.dump(payload, handle, protocol=pickle.HIGHEST_PROTOCOL)
+    except Exception as exc:
+        print(f"[warn] failed to write stage 2/3 resume cache for {dataset_dir.name}: {exc}", flush=True)
+
+
+def default_shared_feature_matrix_cache_path() -> Path:
+    return Path(__file__).resolve().parents[1] / "model_cache" / "benchmark_feature_matrix_cache"
+
+
+def resolve_shared_feature_matrix_cache_path(cache_path: str | Path = "AUTO") -> Path:
+    path_text = str(cache_path).strip()
+    if not path_text or path_text.upper() == "AUTO":
+        return default_shared_feature_matrix_cache_path()
+    return Path(path_text)
+
+
+def shared_feature_matrix_signature(
+    *,
+    smiles_values: pd.Series,
+    selected_families: list[str],
+    radius: int,
+    n_bits: int,
+) -> tuple[str, dict[str, Any]]:
+    smiles_series = pd.Series(smiles_values, dtype=str).reset_index(drop=True)
+    payload = {
+        "cache_version": int(SHARED_FEATURE_MATRIX_CACHE_VERSION),
+        "feature_families": [str(item) for item in list(selected_families)],
+        "radius": int(radius),
+        "fingerprint_bits": int(n_bits),
+        "n_rows": int(len(smiles_series)),
+        "smiles_hash": smiles_hash(smiles_series),
+    }
+    signature = hashlib.sha256(
+        json.dumps(payload, sort_keys=True, default=str).encode("utf-8")
+    ).hexdigest()
+    return signature, payload
+
+
+def shared_feature_matrix_cache_file(cache_root: Path, signature: str) -> Path:
+    return Path(cache_root) / f"{str(signature).strip()}.pkl"
+
+
+def load_shared_feature_matrix_cache(
+    cache_root: Path,
+    signature: str,
+) -> tuple[pd.DataFrame, dict[str, Any]] | None:
+    cache_file = shared_feature_matrix_cache_file(cache_root, signature)
+    if not cache_file.exists():
+        return None
+    try:
+        with cache_file.open("rb") as handle:
+            payload = pickle.load(handle)
+    except Exception:
+        return None
+    if not isinstance(payload, dict):
+        return None
+    if int(payload.get("cache_version", -1)) != int(SHARED_FEATURE_MATRIX_CACHE_VERSION):
+        return None
+    if str(payload.get("signature", "")).strip() != str(signature).strip():
+        return None
+    feature_matrix = payload.get("feature_matrix")
+    feature_meta = payload.get("feature_meta")
+    if not isinstance(feature_matrix, pd.DataFrame):
+        return None
+    if not isinstance(feature_meta, dict):
+        feature_meta = {}
+    feature_meta = dict(feature_meta)
+    feature_meta["shared_feature_matrix_cache_hit"] = True
+    feature_meta["shared_feature_matrix_cache_file"] = str(cache_file)
+    return feature_matrix.copy(), feature_meta
+
+
+def write_shared_feature_matrix_cache(
+    cache_root: Path,
+    signature: str,
+    signature_payload: dict[str, Any],
+    feature_matrix: pd.DataFrame,
+    feature_meta: dict[str, Any],
+) -> None:
+    cache_root = Path(cache_root)
+    cache_root.mkdir(parents=True, exist_ok=True)
+    cache_file = shared_feature_matrix_cache_file(cache_root, signature)
+    payload = {
+        "cache_version": int(SHARED_FEATURE_MATRIX_CACHE_VERSION),
+        "signature": str(signature),
+        "signature_payload": dict(signature_payload),
+        "feature_matrix": feature_matrix.copy(),
+        "feature_meta": dict(feature_meta),
+        "created_at": local_timestamp_text(),
+    }
+    try:
+        with cache_file.open("wb") as handle:
+            pickle.dump(payload, handle, protocol=pickle.HIGHEST_PROTOCOL)
+    except Exception as exc:
+        print(f"[warn] failed to write shared feature matrix cache ({cache_file}): {exc}", flush=True)
+
+
 def parse_comma_list(text: Any) -> list[str]:
     return [str(token).strip() for token in str(text or "").split(",") if str(token).strip()]
+
+
+def _normalize_workflow_label(workflow_name: Any) -> str:
+    return str(workflow_name or "").strip().lower()
+
+
+def cfa_source_workflow_filter(args: argparse.Namespace) -> set[str] | None:
+    tokens = [_normalize_workflow_label(token) for token in parse_comma_list(getattr(args, "cfa_source_workflows", "all"))]
+    tokens = [token for token in tokens if token]
+    if not tokens or any(token in {"all", "*", "any"} for token in tokens):
+        return None
+    return set(tokens)
+
+
+def maplight_catboost_model_label(args: argparse.Namespace) -> str:
+    if bool(getattr(args, "maplight_leaderboard_parity_mode", True)):
+        return MAPLIGHT_CATBOOST_LABEL_STRICT
+    return MAPLIGHT_CATBOOST_LABEL_LEGACY
+
+
+def maplight_gnn_model_label(args: argparse.Namespace) -> str:
+    if bool(getattr(args, "maplight_leaderboard_parity_mode", True)):
+        return MAPLIGHT_GNN_LABEL_STRICT
+    return MAPLIGHT_GNN_LABEL_LEGACY
+
+
+def maplight_parity_seed_values(args: argparse.Namespace) -> list[int]:
+    seed_text = str(getattr(args, "maplight_parity_seeds", "")).strip()
+    values: list[int] = []
+    for token in parse_comma_list(seed_text):
+        try:
+            values.append(int(token))
+        except Exception:
+            continue
+    if not values:
+        values = list(MAPLIGHT_PARITY_SEEDS_DEFAULT)
+    # Preserve input ordering but drop duplicates.
+    deduped: list[int] = []
+    seen: set[int] = set()
+    for seed_value in values:
+        if seed_value in seen:
+            continue
+        seen.add(seed_value)
+        deduped.append(int(seed_value))
+    return deduped
+
+
+def build_maplight_parity_matrix(smiles_values: pd.Series, args: argparse.Namespace) -> pd.DataFrame:
+    smiles_series = pd.Series(smiles_values, dtype=str).reset_index(drop=True)
+    matrix = make_maplight_classic_matrix(
+        smiles_series.tolist(),
+        radius=2,
+        n_bits=int(getattr(args, "fingerprint_bits", 1024)),
+    )
+    if not isinstance(matrix, pd.DataFrame):
+        matrix = pd.DataFrame(matrix)
+    matrix = matrix.apply(pd.to_numeric, errors="coerce")
+    matrix.replace([np.inf, -np.inf], np.nan, inplace=True)
+    matrix.reset_index(drop=True, inplace=True)
+    return matrix
+
+
+def evaluate_maplight_seeded_catboost(
+    *,
+    model_name: str,
+    workflow_name: str,
+    X_train: pd.DataFrame,
+    X_test: pd.DataFrame,
+    y_train: pd.Series,
+    y_test: pd.Series,
+    seed_values: list[int],
+    feature_source: str,
+    primary_metric: str = "mae",
+) -> tuple[dict[str, Any], np.ndarray, np.ndarray]:
+    if CatBoostRegressor is None:
+        raise RuntimeError("CatBoost is unavailable.")
+    if not seed_values:
+        raise ValueError("MapLight parity requires at least one seed.")
+
+    train_preds: list[np.ndarray] = []
+    test_preds: list[np.ndarray] = []
+    for seed_value in seed_values:
+        estimator = Pipeline(
+            [
+                ("imputer", SimpleImputer(strategy="median")),
+                ("scaler", StandardScaler()),
+                (
+                    "model",
+                    CatBoostRegressor(
+                        loss_function="MAE",
+                        eval_metric="MAE",
+                        random_seed=int(seed_value),
+                        verbose=False,
+                    ),
+                ),
+            ]
+        )
+        fitted = clone(estimator)
+        fitted.fit(X_train, y_train)
+        train_preds.append(np.asarray(fitted.predict(X_train), dtype=float).reshape(-1))
+        test_preds.append(np.asarray(fitted.predict(X_test), dtype=float).reshape(-1))
+
+    pred_train = np.mean(np.vstack(train_preds), axis=0)
+    pred_test = np.mean(np.vstack(test_preds), axis=0)
+    primary_metric_value = compute_primary_metric(str(primary_metric), y_test, pred_test)
+    row: dict[str, Any] = {
+        "model": str(model_name),
+        "workflow": str(workflow_name),
+        "cv_folds": int(max(1, len(seed_values))),
+        "cv_split_strategy": "seed_ensemble_no_cv",
+        "cv_r2": np.nan,
+        "cv_rmse": np.nan,
+        "cv_mae": np.nan,
+        "primary_metric": str(primary_metric),
+        "cv_primary": np.nan,
+        "primary_metric_value": float(primary_metric_value),
+        "maplight_parity_mode": "strict",
+        "maplight_seed_count": int(len(seed_values)),
+        "maplight_seed_values": ",".join(str(int(seed_value)) for seed_value in seed_values),
+        "maplight_loss_function": "MAE",
+        "maplight_scaler": "StandardScaler",
+        "maplight_feature_source": str(feature_source),
+    }
+    row.update(regression_metrics(y_train, pred_train, y_test, pred_test))
+    row = add_leaderboard_reference_columns(
+        row,
+        primary_metric=str(primary_metric),
+        primary_metric_value=float(primary_metric_value),
+    )
+    return row, pred_train, pred_test
 
 
 def discover_recent_benchmark_runs(root: Path, *, exclude_dir: Path | None = None) -> list[Path]:
@@ -717,6 +1135,87 @@ def load_run_metrics_dataframe(run_dir: Path) -> pd.DataFrame:
     if not rows:
         return pd.DataFrame()
     return pd.concat(rows, ignore_index=True)
+
+
+def _error_rank_from_metrics(metrics_df: pd.DataFrame) -> pd.Series:
+    if metrics_df.empty or "error" not in metrics_df.columns:
+        return pd.Series(0, index=metrics_df.index, dtype=int)
+    error_series = metrics_df["error"].fillna("").astype(str).str.strip().str.lower()
+    has_error = error_series.ne("") & ~error_series.isin({"nan", "none"})
+    return has_error.astype(int)
+
+
+def _status_rank_from_metrics(metrics_df: pd.DataFrame) -> pd.Series:
+    if metrics_df.empty or "status" not in metrics_df.columns:
+        return pd.Series(0, index=metrics_df.index, dtype=int)
+    status_series = metrics_df["status"].fillna("").astype(str).str.strip().str.lower()
+    is_bad_status = status_series.str.startswith("skipped") | status_series.str.contains("error", regex=False)
+    return is_bad_status.astype(int)
+
+
+def _rmse_rank_from_metrics(metrics_df: pd.DataFrame) -> pd.Series:
+    if metrics_df.empty:
+        return pd.Series(np.inf, index=metrics_df.index, dtype=float)
+    for candidate in ["test_rmse", "rmse", "primary_metric_value", "cv_rmse", "train_rmse"]:
+        if candidate in metrics_df.columns:
+            values = pd.to_numeric(metrics_df[candidate], errors="coerce")
+            return values.fillna(np.inf)
+    return pd.Series(np.inf, index=metrics_df.index, dtype=float)
+
+
+def deduplicate_metrics_rows(metrics_df: pd.DataFrame) -> pd.DataFrame:
+    if metrics_df.empty:
+        return metrics_df.copy()
+    working = metrics_df.copy()
+    if "dataset" not in working.columns or "model" not in working.columns:
+        return working
+    if "workflow" not in working.columns:
+        working["workflow"] = ""
+    working["dataset"] = working["dataset"].fillna("").astype(str).str.strip()
+    working["model"] = working["model"].fillna("").astype(str).str.strip()
+    working["workflow"] = working["workflow"].fillna("").astype(str).str.strip()
+    working = working.loc[working["dataset"].ne("") & working["model"].ne("")].copy()
+    if working.empty:
+        return working
+    working["_error_rank"] = _error_rank_from_metrics(working)
+    working["_status_rank"] = _status_rank_from_metrics(working)
+    working["_rmse_rank"] = _rmse_rank_from_metrics(working)
+    working["_row_order"] = np.arange(len(working), dtype=int)
+    # Prefer: non-error rows, then non-skipped status rows, then finite/lower RMSE, then latest row.
+    working = working.sort_values(
+        by=["dataset", "model", "workflow", "_error_rank", "_status_rank", "_rmse_rank", "_row_order"],
+        ascending=[True, True, True, True, True, True, False],
+    )
+    deduped = working.groupby(["dataset", "model", "workflow"], as_index=False, dropna=False).first()
+    deduped = deduped.drop(columns=["_error_rank", "_status_rank", "_rmse_rank", "_row_order"], errors="ignore")
+    return deduped
+
+
+def build_summary_from_dataset_metrics(output_dir: Path) -> pd.DataFrame:
+    rows: list[pd.DataFrame] = []
+    for metrics_path in sorted(Path(output_dir).glob("*/metrics.csv")):
+        try:
+            dataset_df = pd.read_csv(metrics_path)
+        except Exception:
+            continue
+        if dataset_df.empty:
+            continue
+        dataset_name = metrics_path.parent.name
+        if "dataset" not in dataset_df.columns:
+            dataset_df.insert(0, "dataset", dataset_name)
+        else:
+            dataset_df["dataset"] = dataset_df["dataset"].where(
+                dataset_df["dataset"].astype(str).str.strip().ne(""),
+                dataset_name,
+            )
+        rows.append(dataset_df)
+    if not rows:
+        return pd.DataFrame()
+    combined = pd.concat(rows, ignore_index=True, sort=False)
+    combined = deduplicate_metrics_rows(combined)
+    if not combined.empty and {"dataset", "model", "workflow"}.issubset(set(combined.columns)):
+        combined = combined.sort_values(["dataset", "model", "workflow"], kind="stable").reset_index(drop=True)
+    return combined
 
 
 def error_mask(metrics_df: pd.DataFrame) -> pd.Series:
@@ -943,9 +1442,9 @@ def load_chemml_datasets() -> list[DatasetSpec]:
             if name == "organic_density":
                 frame = None
                 try:
-                    from chemml.datasets.base import load_organic_density
-
-                    smiles_df, target_df, _ = load_organic_density()
+                    with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+                        from chemml.datasets.base import load_organic_density
+                        smiles_df, target_df, _ = load_organic_density()
                     frame = pd.concat([smiles_df.reset_index(drop=True), target_df.reset_index(drop=True)], axis=1)
                 except Exception:
                     import importlib.util
@@ -960,9 +1459,9 @@ def load_chemml_datasets() -> list[DatasetSpec]:
             elif name == "cep_homo":
                 frame = None
                 try:
-                    from chemml.datasets.base import load_cep_homo
-
-                    smiles_df, target_df = load_cep_homo()
+                    with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+                        from chemml.datasets.base import load_cep_homo
+                        smiles_df, target_df = load_cep_homo()
                     frame = pd.concat([smiles_df.reset_index(drop=True), target_df.reset_index(drop=True)], axis=1)
                 except Exception:
                     import importlib.util
@@ -975,9 +1474,9 @@ def load_chemml_datasets() -> list[DatasetSpec]:
                 target = infer_column(list(frame.columns), ["homo", "HOMO", "target", "TARGET"]) or frame.columns[-1]
                 datasets.append(DatasetSpec("chemml_cep_homo", "ChemML bundled dataset: cep_homo", frame, "smiles", target))
             elif name == "xyz_polarizability":
-                from chemml.datasets.base import load_xyz_polarizability
-
-                molecules, target_df = load_xyz_polarizability()
+                with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+                    from chemml.datasets.base import load_xyz_polarizability
+                    molecules, target_df = load_xyz_polarizability()
                 smiles_values = []
                 for idx, molecule in enumerate(molecules):
                     smiles_value = getattr(molecule, "smiles", None)
@@ -990,7 +1489,14 @@ def load_chemml_datasets() -> list[DatasetSpec]:
             else:
                 raise ValueError(f"Unknown ChemML example: {name}")
         except Exception as exc:
-            print(f"[skip] ChemML {name}: {exc}")
+            exc_text = str(exc)
+            if name == "xyz_polarizability" and "openbabel" in exc_text.lower():
+                print(
+                    "[info] ChemML xyz_polarizability dataset unavailable (optional OpenBabel dependency missing); continuing.",
+                    flush=True,
+                )
+            else:
+                print(f"[skip] ChemML {name}: {exc_text}")
     return datasets
 
 
@@ -1100,6 +1606,178 @@ def download_csv_with_cache(url: str, destination: Path) -> pd.DataFrame:
     if not destination.exists():
         urllib.request.urlretrieve(url, destination)
     return pd.read_csv(destination, low_memory=False)
+
+
+def _normalize_freesolv_split_label(value: Any) -> str:
+    text = str(value or "").strip().lower()
+    if text in {"train", "training", "validation", "valid", "val"}:
+        return "train"
+    if text in {"test", "testing", "holdout"}:
+        return "test"
+    return ""
+
+
+def extract_freesolv_expanded_scaled_paper_summary(workbook_path: Path) -> dict[str, Any] | None:
+    try:
+        model_benchmarking = pd.read_excel(workbook_path, sheet_name=str(FREESOLV_EXPANDED_SCALED_OPTION.get("sheet_name", "Model Benchmarking")))
+    except Exception:
+        return None
+    if model_benchmarking is None or model_benchmarking.empty or model_benchmarking.shape[1] < 13:
+        return None
+
+    metrics_block = model_benchmarking.iloc[:, 10:13].copy()
+    metrics_block.columns = ["r2", "mae", "percent_ard"]
+    metrics_numeric = metrics_block.apply(pd.to_numeric, errors="coerce")
+
+    non_scaled_idx = metrics_numeric["mae"].dropna().index.min()
+    if non_scaled_idx is None:
+        return None
+
+    scaled_idx = None
+    label_series = model_benchmarking.iloc[:, 10].astype(str)
+    for idx, label_text in label_series.items():
+        normalized = str(label_text).strip().lower()
+        if "ln(-" in normalized and "1/t" in normalized:
+            following = metrics_numeric.loc[idx + 1 :, "mae"].dropna()
+            if not following.empty:
+                scaled_idx = int(following.index[0])
+            break
+    if scaled_idx is None:
+        numeric_indices = list(metrics_numeric["mae"].dropna().index)
+        if len(numeric_indices) >= 2:
+            scaled_idx = int(numeric_indices[1])
+        else:
+            scaled_idx = int(non_scaled_idx)
+
+    references: list[dict[str, Any]] = []
+    for model_name, idx in [
+        ("Temperature-Dependent Model (scaled; ln(-Δsolvgpuresat) vs 1/T)", int(scaled_idx)),
+        ("Temperature-Dependent Model (non-scaled features)", int(non_scaled_idx)),
+    ]:
+        row = metrics_numeric.loc[idx]
+        mae = float(row["mae"]) if pd.notna(row["mae"]) else np.nan
+        r2 = float(row["r2"]) if pd.notna(row["r2"]) else np.nan
+        if not np.isfinite(mae):
+            continue
+        model_text = model_name if not np.isfinite(r2) else f"{model_name} (R2={r2:.4f})"
+        references.append(
+            {
+                "rank": "",
+                "model": model_text,
+                "metric_name": "MAE / kcal mol-1",
+                "metric_value": f"{mae:.6f}",
+            }
+        )
+
+    if not references:
+        return None
+    references = sorted(
+        references,
+        key=lambda item: parse_first_float(item.get("metric_value")) if parse_first_float(item.get("metric_value")) is not None else float("inf"),
+    )
+    for rank_idx, entry in enumerate(references, start=1):
+        entry["rank"] = str(rank_idx)
+
+    best = references[0]
+    return {
+        "url": str(FREESOLV_EXPANDED_SCALED_OPTION.get("benchmark_url", "")).strip(),
+        "rank": str(best.get("rank", "1")),
+        "model": str(best.get("model", "")).strip(),
+        "metric_name": "MAE / kcal mol-1",
+        "metric_value": str(best.get("metric_value", "")).strip(),
+        "dataset_split": "training/validation/test (paper split; benchmark uses test holdout)",
+        "top10": references[:10],
+        "source": "literature_xlsx",
+    }
+
+
+def load_freesolv_expanded_scaled_dataset(path: str = "./data/free_solv") -> list[DatasetSpec]:
+    datasets: list[DatasetSpec] = []
+    source_file = Path(str(FREESOLV_EXPANDED_SCALED_OPTION.get("source_file", "")).strip())
+    workbook_name = source_file.name if source_file.name else "1-s2.0-S0378381225000068-mmc1.xlsx"
+    workbook_path = Path(path) / workbook_name
+    if not workbook_path.exists():
+        candidate = source_file if source_file.is_absolute() else Path(".") / source_file
+        if candidate.exists():
+            workbook_path = candidate
+    if not workbook_path.exists():
+        print(
+            f"[skip] {FREESOLV_EXPANDED_SCALED_OPTION.get('dataset_name', 'freesolv_expanded_scaled_2025')}: "
+            f"workbook not found at {workbook_path}"
+        )
+        return datasets
+
+    benchmark_sheet = str(FREESOLV_EXPANDED_SCALED_OPTION.get("sheet_name", "Model Benchmarking"))
+    split_sheet = str(FREESOLV_EXPANDED_SCALED_OPTION.get("split_sheet_name", "Temperature-Dependent Model"))
+    try:
+        benchmark_df = pd.read_excel(workbook_path, sheet_name=benchmark_sheet)
+        split_df = pd.read_excel(workbook_path, sheet_name=split_sheet)
+    except Exception as exc:
+        print(f"[skip] {FREESOLV_EXPANDED_SCALED_OPTION.get('dataset_name', 'freesolv_expanded_scaled_2025')}: {exc}")
+        return datasets
+
+    if benchmark_df.shape[1] < 8 or split_df.shape[1] < 5:
+        print(f"[skip] {FREESOLV_EXPANDED_SCALED_OPTION.get('dataset_name', 'freesolv_expanded_scaled_2025')}: workbook schema is not compatible.")
+        return datasets
+
+    # Scaled benchmark block (columns F-H in the supplemental workbook):
+    # SMILES, 1/T, ln(-Δsolvgpuresat).
+    frame = pd.DataFrame(
+        {
+            "smiles": benchmark_df.iloc[:, 5],
+            "inverse_temperature_k_inv": pd.to_numeric(benchmark_df.iloc[:, 6], errors="coerce"),
+            "target": pd.to_numeric(benchmark_df.iloc[:, 7], errors="coerce"),
+            "temperature_k": pd.to_numeric(benchmark_df.iloc[:, 1], errors="coerce"),
+        }
+    )
+    frame = frame.dropna(subset=["smiles", "inverse_temperature_k_inv", "target", "temperature_k"]).copy()
+    frame["smiles"] = frame["smiles"].astype(str).str.strip()
+    frame = frame.loc[~frame["smiles"].str.lower().isin({"", "none", "nan", "smiles"})].copy()
+
+    split_frame = pd.DataFrame(
+        {
+            "smiles": split_df.iloc[:, 0],
+            "temperature_k": pd.to_numeric(split_df.iloc[:, 1], errors="coerce"),
+            "subset_raw": split_df.iloc[:, 4],
+        }
+    )
+    split_frame = split_frame.dropna(subset=["smiles", "temperature_k", "subset_raw"]).copy()
+    split_frame["smiles"] = split_frame["smiles"].astype(str).str.strip()
+    split_frame = split_frame.loc[~split_frame["smiles"].str.lower().isin({"", "none", "nan", "smiles"})].copy()
+    split_frame["__benchmark_split"] = split_frame["subset_raw"].apply(_normalize_freesolv_split_label)
+    split_frame = split_frame.loc[split_frame["__benchmark_split"].isin({"train", "test"})].copy()
+
+    frame["__join_key"] = frame["smiles"].astype(str) + "|" + frame["temperature_k"].round(6).astype(str)
+    split_frame["__join_key"] = split_frame["smiles"].astype(str) + "|" + split_frame["temperature_k"].round(6).astype(str)
+    split_lookup = split_frame[["__join_key", "__benchmark_split"]].drop_duplicates(subset=["__join_key"], keep="first")
+    frame = frame.merge(split_lookup, on="__join_key", how="left")
+    frame = frame.dropna(subset=["__benchmark_split"]).copy()
+    frame = frame.drop(columns=["__join_key", "temperature_k"], errors="ignore")
+    frame = frame.reset_index(drop=True)
+
+    if frame.empty:
+        print(f"[skip] {FREESOLV_EXPANDED_SCALED_OPTION.get('dataset_name', 'freesolv_expanded_scaled_2025')}: no valid rows after split alignment.")
+        return datasets
+
+    summary = extract_freesolv_expanded_scaled_paper_summary(workbook_path)
+    datasets.append(
+        DatasetSpec(
+            name=str(FREESOLV_EXPANDED_SCALED_OPTION.get("dataset_name", "freesolv_expanded_scaled_2025")),
+            source=str(FREESOLV_EXPANDED_SCALED_OPTION.get("source_label", "Expanded Free Solvation Energy dataset (scaled)")),
+            frame=frame,
+            smiles_column="smiles",
+            target_column="target",
+            recommended_split=str(FREESOLV_EXPANDED_SCALED_OPTION.get("recommended_split", "predefined")),
+            recommended_metric=str(FREESOLV_EXPANDED_SCALED_OPTION.get("recommended_metric", "mae")),
+            benchmark_suite=str(FREESOLV_EXPANDED_SCALED_OPTION.get("benchmark_suite", "literature")),
+            benchmark_id=str(FREESOLV_EXPANDED_SCALED_OPTION.get("benchmark_id", "freesolv_expanded_scaled_2025")),
+            leaderboard_url=str(FREESOLV_EXPANDED_SCALED_OPTION.get("benchmark_url", "")),
+            leaderboard_summary=summary,
+            predefined_split_column="__benchmark_split",
+            auxiliary_feature_columns=["inverse_temperature_k_inv"],
+        )
+    )
+    return datasets
 
 
 def load_moleculenet_physchem_datasets(path: str = "./data/moleculenet") -> list[DatasetSpec]:
@@ -1373,6 +2051,8 @@ def fetch_polaris_leaderboard_best(leaderboard_url: str, timeout: int = 20) -> d
 
 
 def attach_leaderboard_summary(spec: DatasetSpec) -> DatasetSpec:
+    if isinstance(spec.leaderboard_summary, dict) and spec.leaderboard_summary:
+        return spec
     summary: dict[str, Any] | None = None
     try:
         if spec.benchmark_suite == "tdc" and spec.benchmark_id:
@@ -2514,6 +3194,63 @@ def regression_metrics(y_train, pred_train, y_test, pred_test) -> dict[str, floa
     }
 
 
+def add_leaderboard_reference_columns(
+    row: dict[str, Any],
+    *,
+    primary_metric: str,
+    primary_metric_value: float,
+) -> dict[str, Any]:
+    leaderboard_summary = (CURRENT_DATASET_SPEC.leaderboard_summary if CURRENT_DATASET_SPEC is not None else None) or {}
+    row["leaderboard_model"] = leaderboard_summary.get("model", "")
+    row["leaderboard_metric_name"] = leaderboard_summary.get("metric_name", "")
+    row["leaderboard_metric_value"] = leaderboard_summary.get("metric_value", "")
+    row["leaderboard_rank"] = leaderboard_summary.get("rank", "")
+    row["leaderboard_url"] = leaderboard_summary.get(
+        "url",
+        CURRENT_DATASET_SPEC.leaderboard_url if CURRENT_DATASET_SPEC is not None else "",
+    )
+    top10_entries = leaderboard_summary.get("top10", [])
+    row["leaderboard_top10_count"] = int(len(top10_entries)) if isinstance(top10_entries, list) else 0
+    row["leaderboard_top10_json"] = json.dumps(top10_entries, default=str) if isinstance(top10_entries, list) else "[]"
+    leaderboard_metric_norm = normalize_benchmark_metric(leaderboard_summary.get("metric_name"), fallback="")
+    leaderboard_value = parse_first_float(leaderboard_summary.get("metric_value"))
+    if leaderboard_metric_norm and leaderboard_value is not None and leaderboard_metric_norm == str(primary_metric).strip().lower():
+        row["leaderboard_metric_normalized"] = leaderboard_metric_norm
+        row["leaderboard_metric_reference"] = float(leaderboard_value)
+        row["leaderboard_delta_primary"] = float(primary_metric_value - leaderboard_value)
+        row["leaderboard_lower_is_better"] = metric_lower_is_better(leaderboard_metric_norm)
+    else:
+        row["leaderboard_metric_normalized"] = leaderboard_metric_norm
+        row["leaderboard_metric_reference"] = np.nan
+        row["leaderboard_delta_primary"] = np.nan
+        row["leaderboard_lower_is_better"] = metric_lower_is_better(leaderboard_metric_norm)
+    if isinstance(top10_entries, list) and top10_entries:
+        comparable_values = [
+            parse_first_float(entry.get("metric_value"))
+            for entry in top10_entries
+            if isinstance(entry, dict)
+            and normalize_benchmark_metric(entry.get("metric_name"), fallback=leaderboard_metric_norm) == leaderboard_metric_norm
+        ]
+        comparable_values = [value for value in comparable_values if value is not None]
+        if comparable_values and leaderboard_metric_norm == str(primary_metric).strip().lower():
+            top10_best = min(comparable_values) if metric_lower_is_better(leaderboard_metric_norm) else max(comparable_values)
+            row["leaderboard_top10_best_reference"] = float(top10_best)
+            row["leaderboard_delta_top10_best"] = float(primary_metric_value - float(top10_best))
+        else:
+            row["leaderboard_top10_best_reference"] = np.nan
+            row["leaderboard_delta_top10_best"] = np.nan
+    else:
+        row["leaderboard_top10_best_reference"] = np.nan
+        row["leaderboard_delta_top10_best"] = np.nan
+    rank_columns = estimate_rank_columns_for_row(
+        primary_metric=str(primary_metric),
+        primary_value=float(primary_metric_value),
+        leaderboard_summary=leaderboard_summary,
+    )
+    row.update(rank_columns)
+    return row
+
+
 def conventional_models(
     args: argparse.Namespace,
     X_train: pd.DataFrame,
@@ -2599,7 +3336,12 @@ def conventional_models(
                         ]
                     ),
                 ),
-            ]
+                ]
+            ),
+        "AdaBoost": AdaBoostRegressor(
+            n_estimators=500,
+            learning_rate=0.05,
+            random_state=args.random_seed,
         ),
         "Tabular MLP": Pipeline(
             [
@@ -2650,14 +3392,19 @@ def conventional_models(
             random_seed=args.random_seed,
             verbose=False,
         )
-        models["MapLight CatBoost"] = CatBoostRegressor(
-            iterations=400,
-            depth=6,
-            learning_rate=0.05,
-            loss_function="RMSE",
-            random_seed=args.random_seed,
-            verbose=False,
-        )
+        if bool(getattr(args, "maplight_leaderboard_parity_mode", True)):
+            # Strict parity mode uses MAE + scaling + 5-seed averaging in the
+            # dedicated MapLight evaluation block.
+            models[maplight_catboost_model_label(args)] = None
+        else:
+            models[MAPLIGHT_CATBOOST_LABEL_LEGACY] = CatBoostRegressor(
+                iterations=400,
+                depth=6,
+                learning_rate=0.05,
+                loss_function="RMSE",
+                random_seed=args.random_seed,
+                verbose=False,
+            )
     if (
         bool(getattr(args, "run_tabpfn", False))
         and TabPFNRegressor is not None
@@ -2745,50 +3492,11 @@ def evaluate_model(
     }
     row.update(regression_metrics(y_train, pred_train, y_test, pred_test))
     row["primary_metric_value"] = primary_test_value
-    leaderboard_summary = (CURRENT_DATASET_SPEC.leaderboard_summary if CURRENT_DATASET_SPEC is not None else None) or {}
-    row["leaderboard_model"] = leaderboard_summary.get("model", "")
-    row["leaderboard_metric_name"] = leaderboard_summary.get("metric_name", "")
-    row["leaderboard_metric_value"] = leaderboard_summary.get("metric_value", "")
-    row["leaderboard_rank"] = leaderboard_summary.get("rank", "")
-    row["leaderboard_url"] = leaderboard_summary.get("url", CURRENT_DATASET_SPEC.leaderboard_url if CURRENT_DATASET_SPEC is not None else "")
-    top10_entries = leaderboard_summary.get("top10", [])
-    row["leaderboard_top10_count"] = int(len(top10_entries)) if isinstance(top10_entries, list) else 0
-    row["leaderboard_top10_json"] = json.dumps(top10_entries, default=str) if isinstance(top10_entries, list) else "[]"
-    leaderboard_metric_norm = normalize_benchmark_metric(leaderboard_summary.get("metric_name"), fallback="")
-    leaderboard_value = parse_first_float(leaderboard_summary.get("metric_value"))
-    if leaderboard_metric_norm and leaderboard_value is not None and leaderboard_metric_norm == str(primary_metric).strip().lower():
-        row["leaderboard_metric_normalized"] = leaderboard_metric_norm
-        row["leaderboard_metric_reference"] = float(leaderboard_value)
-        row["leaderboard_delta_primary"] = float(primary_test_value - leaderboard_value)
-        row["leaderboard_lower_is_better"] = metric_lower_is_better(leaderboard_metric_norm)
-    else:
-        row["leaderboard_metric_normalized"] = leaderboard_metric_norm
-        row["leaderboard_metric_reference"] = np.nan
-        row["leaderboard_delta_primary"] = np.nan
-        row["leaderboard_lower_is_better"] = metric_lower_is_better(leaderboard_metric_norm)
-    if isinstance(top10_entries, list) and top10_entries:
-        comparable_values = [
-            parse_first_float(entry.get("metric_value"))
-            for entry in top10_entries
-            if isinstance(entry, dict) and normalize_benchmark_metric(entry.get("metric_name"), fallback=leaderboard_metric_norm) == leaderboard_metric_norm
-        ]
-        comparable_values = [value for value in comparable_values if value is not None]
-        if comparable_values and leaderboard_metric_norm == str(primary_metric).strip().lower():
-            top10_best = min(comparable_values) if metric_lower_is_better(leaderboard_metric_norm) else max(comparable_values)
-            row["leaderboard_top10_best_reference"] = float(top10_best)
-            row["leaderboard_delta_top10_best"] = float(primary_test_value - float(top10_best))
-        else:
-            row["leaderboard_top10_best_reference"] = np.nan
-            row["leaderboard_delta_top10_best"] = np.nan
-    else:
-        row["leaderboard_top10_best_reference"] = np.nan
-        row["leaderboard_delta_top10_best"] = np.nan
-    rank_columns = estimate_rank_columns_for_row(
-        primary_metric=str(primary_metric),
-        primary_value=float(primary_test_value),
-        leaderboard_summary=leaderboard_summary,
+    row = add_leaderboard_reference_columns(
+        row,
+        primary_metric=primary_metric,
+        primary_metric_value=primary_test_value,
     )
-    row.update(rank_columns)
     step = fitted.named_steps.get("model") if hasattr(fitted, "named_steps") else fitted
     if hasattr(step, "alpha_") or hasattr(step, "alpha"):
         row["model_alpha"] = float(getattr(step, "alpha_", getattr(step, "alpha", np.nan)))
@@ -3030,7 +3738,15 @@ def _suppress_maplight_store_probe_noise():
             logger.disabled = disabled
 
 
+def default_maplight_pretrained_cache_dir() -> Path:
+    return Path(__file__).resolve().parents[1] / "model_cache" / "maplight_gnn_pretrained"
+
+
 def _build_maplight_gnn_embedder(kind: str = "gin_supervised_masking") -> tuple[Callable[[list[str]], list[Any]], str]:
+    cache_key = str(kind).strip().lower()
+    if cache_key in _MAPLIGHT_EMBEDDER_CACHE:
+        return _MAPLIGHT_EMBEDDER_CACHE[cache_key]
+
     _patch_torchdata_dill_available()
     from molfeat.trans.pretrained import PretrainedDGLTransformer
 
@@ -3041,7 +3757,9 @@ def _build_maplight_gnn_embedder(kind: str = "gin_supervised_masking") -> tuple[
         def _embed_with_molfeat(smiles_values: list[str]):
             return transformer(smiles_values)
 
-        return _embed_with_molfeat, "molfeat-store"
+        result = (_embed_with_molfeat, "molfeat-store")
+        _MAPLIGHT_EMBEDDER_CACHE[cache_key] = result
+        return result
     except Exception as primary_exc:
         if not _is_maplight_store_access_error(primary_exc):
             raise
@@ -3055,7 +3773,17 @@ def _build_maplight_gnn_embedder(kind: str = "gin_supervised_masking") -> tuple[
             import torch
             from torch.utils.data import DataLoader
 
-            fallback_model = dgllife.model.load_pretrained(kind)
+            pretrained_cache_dir = default_maplight_pretrained_cache_dir()
+            pretrained_cache_dir.mkdir(parents=True, exist_ok=True)
+            os.environ.setdefault("DGL_DOWNLOAD_DIR", str(pretrained_cache_dir.resolve()))
+            cached_weight_file = pretrained_cache_dir / f"{kind}_pre_trained.pth"
+            if cached_weight_file.exists():
+                print(
+                    f"MapLight + GNN note: reusing cached pretrained weights at {cached_weight_file}.",
+                    flush=True,
+                )
+            with contextlib.chdir(pretrained_cache_dir):
+                fallback_model = dgllife.model.load_pretrained(kind)
             fallback_model.eval()
             pooling = PretrainedDGLTransformer.get_pooling("mean")
 
@@ -3098,7 +3826,9 @@ def _build_maplight_gnn_embedder(kind: str = "gin_supervised_masking") -> tuple[
                         out.append(None)
                 return out
 
-            return _embed_with_dgllife, "dgllife-direct"
+            result = (_embed_with_dgllife, "dgllife-direct")
+            _MAPLIGHT_EMBEDDER_CACHE[cache_key] = result
+            return result
         except Exception as fallback_exc:
             raise RuntimeError(
                 "MapLight + GNN could not load pretrained GIN weights. "
@@ -4112,6 +4842,7 @@ def selected_conventional_model_names(args: argparse.Namespace) -> list[str]:
         "Extra trees",
         "HistGradientBoosting",
         "Voting Regressor (KNN, SVM)",
+        "AdaBoost",
         "Tabular MLP",
     ]
     if XGBRegressor is not None:
@@ -4120,10 +4851,186 @@ def selected_conventional_model_names(args: argparse.Namespace) -> list[str]:
         names.append("LightGBM")
     if CatBoostRegressor is not None:
         names.append("CatBoost")
-        names.append("MapLight CatBoost")
+        names.append(maplight_catboost_model_label(args))
     if bool(getattr(args, "run_tabpfn", False)) and TabPFNRegressor is not None:
         names.append("TabPFNRegressor")
     return names
+
+
+def _row_has_error_text(row: dict[str, Any]) -> bool:
+    error_text = str(row.get("error", "")).strip().lower()
+    return bool(error_text and error_text not in {"nan", "none"})
+
+
+def successful_model_names_from_metrics_rows(metrics_rows: list[dict[str, Any]]) -> set[str]:
+    return {
+        str(row.get("model", "")).strip()
+        for row in metrics_rows
+        if str(row.get("model", "")).strip() and not _row_has_error_text(row)
+    }
+
+
+def expected_model_targets_for_args(args: argparse.Namespace) -> tuple[set[str], bool]:
+    expected_names: set[str] = set(selected_conventional_model_names(args))
+    if bool(getattr(args, "run_cfa", False)):
+        expected_names.add("CFA (Combinatorial Fusion)")
+    requested_ga_models = parse_comma_list(
+        getattr(args, "ga_models_resolved", getattr(args, "ga_models", ""))
+    )
+    expected_names.update({f"{model_name} GA" for model_name in requested_ga_models})
+    if bool(getattr(args, "run_chemml_pytorch", False)):
+        expected_names.add("ChemML MLP (PyTorch)")
+    if bool(getattr(args, "run_chemml_tensorflow", False)):
+        expected_names.add("ChemML MLP (TensorFlow)")
+    if bool(getattr(args, "run_chemprop_mpnn", False)):
+        expected_names.update(
+            {
+                str(spec.get("label", "")).strip()
+                for spec in chemprop_variant_specs(args)
+                if str(spec.get("label", "")).strip()
+            }
+        )
+    if bool(getattr(args, "run_unimol_v1", False)):
+        expected_names.add("Uni-Mol V1")
+    if bool(getattr(args, "run_maplight_gnn", False)):
+        expected_names.add(maplight_gnn_model_label(args))
+    return expected_names, bool(getattr(args, "run_ensemble", False))
+
+
+def missing_requested_models_for_dataset(
+    metrics_rows: list[dict[str, Any]],
+    args: argparse.Namespace,
+) -> tuple[list[str], bool]:
+    completed_names = successful_model_names_from_metrics_rows(metrics_rows)
+    expected_names, ensemble_expected = expected_model_targets_for_args(args)
+    missing = sorted(name for name in expected_names if name not in completed_names)
+    ensemble_completed = any(
+        is_ensemble_result_row(row.get("model", ""), row.get("workflow", ""))
+        and not _row_has_error_text(row)
+        for row in metrics_rows
+    )
+    missing_ensemble = bool(ensemble_expected and not ensemble_completed)
+    return missing, missing_ensemble
+
+
+def has_successful_ensemble_result(metrics_rows: list[dict[str, Any]]) -> bool:
+    return any(
+        is_ensemble_result_row(row.get("model", ""), row.get("workflow", ""))
+        and not _row_has_error_text(row)
+        for row in metrics_rows
+    )
+
+
+def model_stage_type_label(model_name: str) -> str:
+    text = str(model_name or "").strip()
+    lower = text.lower()
+    if lower == "ensemble" or lower.startswith("ensemble ("):
+        return "Ensemble"
+    if lower.startswith("cfa (") or lower == "cfa":
+        return "CFA fusion"
+    if text.endswith(" GA"):
+        return "GA tuned conventional"
+    if lower.startswith("chemml mlp"):
+        return "ChemML deep learning"
+    if lower.startswith("chemprop v2"):
+        return "Chemprop deep learning"
+    if lower.startswith("uni-mol"):
+        return "Uni-Mol deep learning"
+    if lower.startswith("maplight + gnn"):
+        return "MapLight + GNN deep learning"
+    return "Conventional ML"
+
+
+def build_resume_execution_plan(
+    datasets: list["DatasetSpec"],
+    output_dir: Path,
+    args: argparse.Namespace,
+) -> dict[str, Any]:
+    datasets_pending = 0
+    datasets_reused = 0
+    model_counter: Counter[str] = Counter()
+    type_counter: Counter[str] = Counter()
+
+    for spec in datasets:
+        dataset_id = slugify(spec.name)
+        dataset_dir = output_dir / dataset_id
+        completed_result = load_completed_dataset_result(dataset_dir)
+        metrics_rows: list[dict[str, Any]] = []
+        if completed_result is not None:
+            metrics_rows = list(completed_result.metrics_rows)
+        elif dataset_dir.exists():
+            metrics_rows, _prediction_tables, _ga_history_tables = load_partial_dataset_artifacts(dataset_dir)
+
+        missing_models, missing_ensemble = missing_requested_models_for_dataset(metrics_rows, args)
+        pending_models = list(missing_models)
+        if (
+            bool(getattr(args, "run_ensemble", False))
+            and bool(missing_models)
+            and has_successful_ensemble_result(metrics_rows)
+        ):
+            if "Ensemble" not in pending_models:
+                pending_models.append("Ensemble")
+            missing_ensemble = True
+        if bool(getattr(args, "run_ensemble", False)) and bool(getattr(args, "rebuild_ensemble", False)):
+            if "Ensemble" not in pending_models:
+                pending_models.append("Ensemble")
+            missing_ensemble = True
+        elif missing_ensemble and "Ensemble" not in pending_models:
+            pending_models.append("Ensemble")
+
+        if completed_result is not None and not bool(getattr(args, "revisit_completed_datasets", False)) and not pending_models:
+            datasets_reused += 1
+            continue
+
+        if pending_models:
+            datasets_pending += 1
+            for model_name in pending_models:
+                model_text = str(model_name).strip()
+                if not model_text:
+                    continue
+                model_counter[model_text] += 1
+                type_counter[model_stage_type_label(model_text)] += 1
+
+    return {
+        "datasets_total": int(len(datasets)),
+        "datasets_pending": int(datasets_pending),
+        "datasets_reused": int(datasets_reused),
+        "model_counter": model_counter,
+        "type_counter": type_counter,
+        "total_model_stage_executions": int(sum(model_counter.values())),
+    }
+
+
+def print_resume_execution_plan(plan: dict[str, Any]) -> None:
+    datasets_total = int(plan.get("datasets_total", 0))
+    datasets_pending = int(plan.get("datasets_pending", 0))
+    datasets_reused = int(plan.get("datasets_reused", 0))
+    total_model_stage_executions = int(plan.get("total_model_stage_executions", 0))
+    type_counter = Counter(plan.get("type_counter", {}))
+    model_counter = Counter(plan.get("model_counter", {}))
+
+    print(
+        "Resume execution plan: "
+        f"{datasets_pending}/{datasets_total} dataset(s) require model execution; "
+        f"{datasets_reused} dataset(s) can be reused as-completed.",
+        flush=True,
+    )
+    print(
+        f"Planned model-stage executions across pending datasets: {total_model_stage_executions}",
+        flush=True,
+    )
+    if type_counter:
+        type_summary = ", ".join(
+            f"{stage_type}={int(count)}"
+            for stage_type, count in sorted(type_counter.items(), key=lambda item: (-item[1], item[0]))
+        )
+        print(f"Planned stage types: {type_summary}", flush=True)
+    if model_counter:
+        top_models = ", ".join(
+            f"{name}={int(count)}"
+            for name, count in sorted(model_counter.items(), key=lambda item: (-item[1], item[0]))[:12]
+        )
+        print(f"Most frequent pending models: {top_models}", flush=True)
 
 
 def chemprop_variant_specs(args: argparse.Namespace) -> list[dict[str, Any]]:
@@ -4157,16 +5064,49 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
     completed_result = load_completed_dataset_result(dataset_dir)
     if completed_result is not None:
         prefix = f"[{dataset_position}/{dataset_total}] " if dataset_position is not None and dataset_total is not None else ""
-        if not bool(getattr(args, "revisit_completed_datasets", False)) and not rebuild_ensemble_requested:
+        missing_models, missing_ensemble = missing_requested_models_for_dataset(
+            completed_result.metrics_rows,
+            args,
+        )
+        auto_rebuild_for_missing_coverage = bool(
+            bool(getattr(args, "run_ensemble", False))
+            and bool(missing_models)
+            and has_successful_ensemble_result(completed_result.metrics_rows)
+            and not rebuild_ensemble_requested
+        )
+        if auto_rebuild_for_missing_coverage:
+            rebuild_ensemble_requested = True
+            print(
+                f"[resume] {dataset_id}: base-model coverage is incomplete and a prior ensemble exists; "
+                "ensemble will be rebuilt after missing stages finish.",
+                flush=True,
+            )
+        has_missing_targets = bool(missing_models or missing_ensemble)
+        if (
+            not bool(getattr(args, "revisit_completed_datasets", False))
+            and not rebuild_ensemble_requested
+            and not has_missing_targets
+        ):
             print(f"\n{prefix}{dataset_id}: already completed in {format_seconds(completed_result.elapsed_seconds)}; reusing saved outputs")
             return completed_result
-        if rebuild_ensemble_requested and not bool(getattr(args, "revisit_completed_datasets", False)):
+        if has_missing_targets and not bool(getattr(args, "revisit_completed_datasets", False)) and not rebuild_ensemble_requested:
+            missing_label = ", ".join(missing_models[:6]) + (" ..." if len(missing_models) > 6 else "")
+            if missing_ensemble:
+                missing_label = (missing_label + ", ensemble").strip(", ")
+            print(
+                f"\n{prefix}{dataset_id}: previously completed in {format_seconds(completed_result.elapsed_seconds)}; "
+                f"resuming missing requested model stages ({missing_label}).",
+                flush=True,
+            )
+        elif rebuild_ensemble_requested and not bool(getattr(args, "revisit_completed_datasets", False)):
             print(
                 f"\n{prefix}{dataset_id}: previously completed in {format_seconds(completed_result.elapsed_seconds)}; "
                 "revisiting to rebuild the ensemble.",
                 flush=True,
             )
-        else:
+        if rebuild_ensemble_requested and not bool(getattr(args, "revisit_completed_datasets", False)):
+            pass
+        elif not has_missing_targets:
             print(
                 f"\n{prefix}{dataset_id}: previously completed in {format_seconds(completed_result.elapsed_seconds)}; "
                 "revisiting to run any newly requested model stages.",
@@ -4181,8 +5121,16 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
         + int(bool(getattr(args, "run_unimol_v1", False)))
         + int(bool(args.run_maplight_gnn))
     )
+    requested_cfa_stage = int(bool(getattr(args, "run_cfa", False)))
     requested_ensemble_stage = int(bool(args.run_ensemble))
-    total_stages = 3 + len(selected_conventional_model_names(args)) + len(requested_ga_models) + requested_deep_stages + requested_ensemble_stage
+    total_stages = (
+        3
+        + len(selected_conventional_model_names(args))
+        + requested_cfa_stage
+        + len(requested_ga_models)
+        + requested_deep_stages
+        + requested_ensemble_stage
+    )
     step_runtime_csv_path = dataset_dir / "step_runtime.csv"
     step_runtime_json_path = dataset_dir / "step_runtime.json"
     stage_records: list[dict[str, Any]] = []
@@ -4276,14 +5224,24 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
 
     metrics_rows, prediction_tables, ga_history_tables = load_partial_dataset_artifacts(dataset_dir)
     prediction_payloads = rebuild_prediction_payloads(prediction_tables)
-    def _row_has_error(row: dict[str, Any]) -> bool:
-        error_text = str(row.get("error", "")).strip().lower()
-        return bool(error_text and error_text not in {"nan", "none"})
+    if (
+        bool(getattr(args, "run_ensemble", False))
+        and bool(metrics_rows)
+        and not rebuild_ensemble_requested
+    ):
+        partial_missing_models, _partial_missing_ensemble = missing_requested_models_for_dataset(metrics_rows, args)
+        if bool(partial_missing_models) and has_successful_ensemble_result(metrics_rows):
+            rebuild_ensemble_requested = True
+            print(
+                f"[resume] {dataset_id}: detected missing model coverage with an existing ensemble row in checkpoint artifacts; "
+                "ensemble outputs will be rebuilt.",
+                flush=True,
+            )
 
     completed_model_names = {
         str(row.get("model", "")).strip()
         for row in metrics_rows
-        if str(row.get("model", "")).strip() and not _row_has_error(row)
+        if str(row.get("model", "")).strip() and not _row_has_error_text(row)
     }
     if rebuild_ensemble_requested:
         original_metric_count = len(metrics_rows)
@@ -4318,7 +5276,7 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
         completed_model_names = {
             str(row.get("model", "")).strip()
             for row in metrics_rows
-            if str(row.get("model", "")).strip() and not _row_has_error(row)
+            if str(row.get("model", "")).strip() and not _row_has_error_text(row)
         }
 
         removed_cached_files: list[str] = []
@@ -4390,73 +5348,179 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
     if args.row_limit and len(df) > args.row_limit:
         df = df.sample(n=args.row_limit, random_state=args.random_seed).reset_index(drop=True)
 
-    stage_message(2, "building molecular features")
-    X, feature_meta = build_feature_matrix_from_smiles(
-        df["canonical_smiles"].tolist(),
-        selected_feature_families=list(DEFAULT_BENCHMARK_FEATURE_FAMILIES),
-        radius=2,
-        n_bits=args.fingerprint_bits,
-        enable_persistent_feature_store=args.enable_persistent_feature_store,
-        reuse_persistent_feature_store=args.reuse_persistent_feature_store,
-        persistent_feature_store_path=args.persistent_feature_store_path,
-    )
-    y = df["target"].astype(float).reset_index(drop=True)
-    smiles = df["canonical_smiles"].reset_index(drop=True)
-
-    if len(df) < args.minimum_rows:
-        print(f"[skip] {dataset_id}: only {len(df)} valid rows after feature generation")
-        _set_active_stage_status("skipped")
-        _close_active_stage(default_status="skipped")
-        _write_stage_runtime_outputs()
-        write_dataset_status(dataset_dir, {"status": "skipped", "reason": "too_few_rows_after_features", "n_rows": int(len(df))})
-        return DatasetRunResult([], [], [], "skipped", time.time() - start)
-
-    selector_args = argparse.Namespace(**vars(args))
-    if selector_args.max_selected_features <= 0:
-        selector_args.max_selected_features = max(1, math.ceil(0.10 * len(y)))
-    stage_message(3, "splitting data and selecting features")
     predefined_split = None
     if spec.predefined_split_column and spec.predefined_split_column in df.columns:
         predefined_split = df[spec.predefined_split_column].reset_index(drop=True)
-    split = split_data(X, y, smiles, args, predefined_split=predefined_split)
-    split["X_train"], split["X_test"], feature_dedup_meta = drop_exact_and_near_duplicate_features(
-        split["X_train"],
-        split["X_test"],
-        variance_threshold=1e-8,
-        binary_prevalence_min=0.005,
-        binary_prevalence_max=0.995,
+    selector_args = argparse.Namespace(**vars(args))
+    if selector_args.max_selected_features <= 0:
+        selector_args.max_selected_features = max(1, math.ceil(0.10 * len(df)))
+    stage23_signature_value, stage23_signature_payload = stage23_resume_signature(
+        args=selector_args,
+        spec=spec,
+        canonical_df=df,
+        input_meta=input_meta,
+        predefined_split=predefined_split,
     )
-    dedup_dropped_count = int(feature_dedup_meta.get("dropped_feature_count", 0))
-    if dedup_dropped_count > 0:
+    stage23_cache_payload = load_stage23_resume_cache(dataset_dir, expected_signature=stage23_signature_value)
+    maplight_parity_mode = bool(getattr(args, "maplight_leaderboard_parity_mode", True))
+    maplight_seed_values = maplight_parity_seed_values(args)
+    maplight_direct_X_train = pd.DataFrame()
+    maplight_direct_X_test = pd.DataFrame()
+    shared_feature_cache_enabled = bool(getattr(args, "enable_shared_feature_matrix_cache", True))
+    shared_feature_cache_reuse = bool(getattr(args, "reuse_shared_feature_matrix_cache", True))
+    shared_feature_cache_path = resolve_shared_feature_matrix_cache_path(
+        getattr(args, "shared_feature_matrix_cache_path", "AUTO")
+    )
+
+    if stage23_cache_payload is not None:
+        stage_message(2, "building molecular features (cached)")
+        _set_active_stage_status("resumed_cache")
         print(
-            "[feature-dedup] dropped "
-            f"{dedup_dropped_count:,} feature(s) before selector/model fitting "
-            f"({int(feature_dedup_meta.get('dropped_low_variance_count', 0)):,} low-variance, "
-            f"{int(feature_dedup_meta.get('dropped_binary_prevalence_count', 0)):,} binary-prevalence, "
-            f"{int(feature_dedup_meta.get('dropped_exact_count', 0)):,} exact-duplicate).",
+            f"[resume] {dataset_id}: stage 2/3 cache hit (signature match); "
+            "reusing split + selected feature matrices.",
             flush=True,
         )
-    if str(feature_dedup_meta.get("near_duplicate_scan_error", "")).strip():
+        split_payload = dict(stage23_cache_payload.get("split", {}))
+        split = {
+            "X_train": pd.DataFrame(split_payload.get("X_train")).copy(),
+            "X_test": pd.DataFrame(split_payload.get("X_test")).copy(),
+            "y_train": pd.Series(split_payload.get("y_train"), dtype=float).reset_index(drop=True),
+            "y_test": pd.Series(split_payload.get("y_test"), dtype=float).reset_index(drop=True),
+            "smiles_train": pd.Series(split_payload.get("smiles_train"), dtype=str).reset_index(drop=True),
+            "smiles_test": pd.Series(split_payload.get("smiles_test"), dtype=str).reset_index(drop=True),
+            "split_strategy_used": str(split_payload.get("split_strategy_used", "")),
+            "split_signature": dict(split_payload.get("split_signature", {})),
+        }
+        feature_meta = dict(stage23_cache_payload.get("feature_meta", {}))
+        X_train = pd.DataFrame(stage23_cache_payload.get("X_train_selected")).copy()
+        X_test = pd.DataFrame(stage23_cache_payload.get("X_test_selected")).copy()
+        selector_meta = dict(stage23_cache_payload.get("selector_meta", {}))
+        feature_dedup_meta = dict(stage23_cache_payload.get("feature_dedup_meta", {}))
+        maplight_feature_cols = [str(col) for col in stage23_cache_payload.get("maplight_feature_cols", [])]
+        cv_strategy_for_workflows = str(stage23_cache_payload.get("cv_strategy_for_workflows", "random"))
+        stage_message(3, "splitting data and selecting features (cached)")
+        _set_active_stage_status("resumed_cache")
         print(
-            "[feature-dedup] near-duplicate scan warning: "
-            f"{str(feature_dedup_meta.get('near_duplicate_scan_error')).strip()}",
+            f"[resume] {dataset_id}: restored {int(X_train.shape[1]):,} selected features from stage 2/3 cache.",
             flush=True,
         )
-    cv_strategy_for_workflows = effective_cv_split_strategy(split["split_strategy_used"])
-    X_train, X_test, selector_meta = select_features(
-        split["X_train"],
-        split["X_test"],
-        split["y_train"],
-        split["smiles_train"],
-        selector_args,
-        split_strategy_for_cv=cv_strategy_for_workflows,
-    )
-    write_selector_outputs(dataset_dir, selector_meta)
-    write_feature_dedup_outputs(dataset_dir, feature_dedup_meta)
-    maplight_prefixes = ("maplight_morgan_", "avalon_count_", "erg_", "maplight_desc_")
-    maplight_feature_cols = [
-        col for col in split["X_train"].columns if str(col).startswith(maplight_prefixes)
-    ]
+        write_selector_outputs(dataset_dir, selector_meta)
+        write_feature_dedup_outputs(dataset_dir, feature_dedup_meta)
+    else:
+        stage_message(2, "building molecular features")
+        shared_signature, shared_signature_payload = shared_feature_matrix_signature(
+            smiles_values=df["canonical_smiles"],
+            selected_families=list(DEFAULT_BENCHMARK_FEATURE_FAMILIES),
+            radius=2,
+            n_bits=int(args.fingerprint_bits),
+        )
+        shared_cache_hit = False
+        X = pd.DataFrame()
+        feature_meta: dict[str, Any] = {}
+        if shared_feature_cache_enabled and shared_feature_cache_reuse:
+            loaded = load_shared_feature_matrix_cache(shared_feature_cache_path, shared_signature)
+            if loaded is not None:
+                X, feature_meta = loaded
+                shared_cache_hit = True
+                print(
+                    f"[feature-cache] {dataset_id}: loaded shared feature matrix cache "
+                    f"({len(X):,} rows, {int(X.shape[1]):,} columns) from {shared_feature_cache_path}.",
+                    flush=True,
+                )
+        if not shared_cache_hit:
+            X, feature_meta = build_feature_matrix_from_smiles(
+                df["canonical_smiles"].tolist(),
+                selected_feature_families=list(DEFAULT_BENCHMARK_FEATURE_FAMILIES),
+                radius=2,
+                n_bits=args.fingerprint_bits,
+                enable_persistent_feature_store=args.enable_persistent_feature_store,
+                reuse_persistent_feature_store=args.reuse_persistent_feature_store,
+                persistent_feature_store_path=args.persistent_feature_store_path,
+            )
+            feature_meta = dict(feature_meta)
+            feature_meta["shared_feature_matrix_cache_hit"] = False
+            feature_meta["shared_feature_matrix_cache_file"] = str(
+                shared_feature_matrix_cache_file(shared_feature_cache_path, shared_signature)
+            )
+            if shared_feature_cache_enabled:
+                write_shared_feature_matrix_cache(
+                    shared_feature_cache_path,
+                    shared_signature,
+                    shared_signature_payload,
+                    X,
+                    feature_meta,
+                )
+        y = df["target"].astype(float).reset_index(drop=True)
+        smiles = df["canonical_smiles"].reset_index(drop=True)
+
+        if len(df) < args.minimum_rows:
+            print(f"[skip] {dataset_id}: only {len(df)} valid rows after feature generation")
+            _set_active_stage_status("skipped")
+            _close_active_stage(default_status="skipped")
+            _write_stage_runtime_outputs()
+            write_dataset_status(dataset_dir, {"status": "skipped", "reason": "too_few_rows_after_features", "n_rows": int(len(df))})
+            return DatasetRunResult([], [], [], "skipped", time.time() - start)
+
+        stage_message(3, "splitting data and selecting features")
+        split = split_data(X, y, smiles, args, predefined_split=predefined_split)
+        split["X_train"], split["X_test"], feature_dedup_meta = drop_exact_and_near_duplicate_features(
+            split["X_train"],
+            split["X_test"],
+            variance_threshold=1e-8,
+            binary_prevalence_min=0.005,
+            binary_prevalence_max=0.995,
+        )
+        dedup_dropped_count = int(feature_dedup_meta.get("dropped_feature_count", 0))
+        if dedup_dropped_count > 0:
+            print(
+                "[feature-dedup] dropped "
+                f"{dedup_dropped_count:,} feature(s) before selector/model fitting "
+                f"({int(feature_dedup_meta.get('dropped_low_variance_count', 0)):,} low-variance, "
+                f"{int(feature_dedup_meta.get('dropped_binary_prevalence_count', 0)):,} binary-prevalence, "
+                f"{int(feature_dedup_meta.get('dropped_exact_count', 0)):,} exact-duplicate).",
+                flush=True,
+            )
+        if str(feature_dedup_meta.get("near_duplicate_scan_error", "")).strip():
+            print(
+                "[feature-dedup] near-duplicate scan warning: "
+                f"{str(feature_dedup_meta.get('near_duplicate_scan_error')).strip()}",
+                flush=True,
+            )
+        cv_strategy_for_workflows = effective_cv_split_strategy(split["split_strategy_used"])
+        X_train, X_test, selector_meta = select_features(
+            split["X_train"],
+            split["X_test"],
+            split["y_train"],
+            split["smiles_train"],
+            selector_args,
+            split_strategy_for_cv=cv_strategy_for_workflows,
+        )
+        write_selector_outputs(dataset_dir, selector_meta)
+        write_feature_dedup_outputs(dataset_dir, feature_dedup_meta)
+        maplight_feature_cols = [
+            col for col in split["X_train"].columns if str(col).startswith(MAPLIGHT_CLASSIC_PREFIXES)
+        ]
+        write_stage23_resume_cache(
+            dataset_dir,
+            stage23_signature_value=stage23_signature_value,
+            signature_payload=stage23_signature_payload,
+            split=split,
+            X_train_selected=X_train,
+            X_test_selected=X_test,
+            feature_meta=feature_meta,
+            selector_meta=selector_meta,
+            feature_dedup_meta=feature_dedup_meta,
+            maplight_feature_cols=maplight_feature_cols,
+            cv_strategy_for_workflows=cv_strategy_for_workflows,
+        )
+
+    if maplight_parity_mode:
+        # Build MapLight classic features directly from split SMILES so parity
+        # mode is not affected by global feature de-duplication/pruning.
+        maplight_direct_X_train = build_maplight_parity_matrix(split["smiles_train"], args)
+        maplight_direct_X_test = build_maplight_parity_matrix(split["smiles_test"], args)
+        if list(maplight_direct_X_test.columns) != list(maplight_direct_X_train.columns):
+            maplight_direct_X_test = maplight_direct_X_test.reindex(columns=list(maplight_direct_X_train.columns), fill_value=np.nan)
 
     base_meta = {
         "dataset": dataset_id,
@@ -4523,6 +5587,8 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
         "feature_store_shard_format": feature_meta.get("feature_store_shard_format", ""),
         "feature_store_cached_rows": feature_meta.get("cached_rows_loaded", np.nan),
         "feature_store_generated_rows": feature_meta.get("generated_rows_added", np.nan),
+        "shared_feature_matrix_cache_hit": bool(feature_meta.get("shared_feature_matrix_cache_hit", False)),
+        "shared_feature_matrix_cache_file": str(feature_meta.get("shared_feature_matrix_cache_file", "")),
         "representation_key": feature_meta.get("representation_key", ""),
     }
 
@@ -4546,8 +5612,22 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
                 f"--tabpfn-max-train-rows={int(getattr(args, 'tabpfn_max_train_rows', 1000))}.",
                 flush=True,
             )
+            if "TabPFNRegressor" not in completed_model_names:
+                tabpfn_skip_row = {
+                    **base_meta,
+                    "model": "TabPFNRegressor",
+                    "workflow": "conventional",
+                    "status": "skipped_tabpfn_max_train_rows",
+                    "tabpfn_max_train_rows": int(getattr(args, "tabpfn_max_train_rows", 1000)),
+                    "tabpfn_train_rows": int(X_train.shape[0]),
+                    "elapsed_seconds": round(time.time() - start, 3),
+                }
+                metrics_rows.append(tabpfn_skip_row)
+                completed_model_names.add("TabPFNRegressor")
+                persist_partial("conventional:TabPFNRegressor:skipped_max_train_rows")
     elasticnet_cv_meta = model_bundle.pop("_elasticnet_cv_meta", {})
     model_items = list(model_bundle.items())
+    maplight_catboost_label = maplight_catboost_model_label(args)
     for model_name, estimator in model_items:
         if str(model_name) in completed_model_names:
             stage_message(stage_index, f"conventional model {model_name} (cached)")
@@ -4578,17 +5658,25 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
             stage_index += 1
             continue
         stage_message(stage_index, f"conventional model {model_name}")
-        if model_name == "MapLight CatBoost":
-            if not maplight_feature_cols:
-                print(f"[skip] {dataset_id} {model_name}: MapLight classic features were not found in the feature matrix")
-                stage_index += 1
-                continue
-            model_X_train = split["X_train"].loc[:, maplight_feature_cols].reset_index(drop=True)
-            model_X_test = split["X_test"].loc[:, maplight_feature_cols].reset_index(drop=True)
+        if model_name == maplight_catboost_label:
+            if maplight_parity_mode:
+                if maplight_direct_X_train.empty:
+                    print(f"[skip] {dataset_id} {model_name}: strict parity MapLight features are unavailable")
+                    stage_index += 1
+                    continue
+                model_X_train = maplight_direct_X_train
+                model_X_test = maplight_direct_X_test
+            else:
+                if not maplight_feature_cols:
+                    print(f"[skip] {dataset_id} {model_name}: MapLight classic features were not found in the feature matrix")
+                    stage_index += 1
+                    continue
+                model_X_train = split["X_train"].loc[:, maplight_feature_cols].reset_index(drop=True)
+                model_X_test = split["X_test"].loc[:, maplight_feature_cols].reset_index(drop=True)
         else:
             model_X_train = X_train
             model_X_test = X_test
-        if model_name == "TabPFNRegressor":
+        if model_name == "TabPFNRegressor" and str(TABPFN_REGRESSOR_SOURCE).strip().lower() == "tabpfn_client":
             estimated_tokens = estimate_tabpfn_tokens(
                 rows=int(model_X_train.shape[0]),
                 columns=int(model_X_train.shape[1]),
@@ -4596,8 +5684,10 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
             )
             if estimated_tokens > TABPFN_DAILY_TOKEN_BUDGET:
                 skip_reason = (
-                    f"Skipped TabPFNRegressor: estimated usage {estimated_tokens:,} tokens exceeds "
-                    f"daily budget {TABPFN_DAILY_TOKEN_BUDGET:,}. {TABPFN_DAILY_RESET_NOTE}"
+                    "Preflight budget guard skipped TabPFNRegressor: estimated usage "
+                    f"{estimated_tokens:,} tokens exceeds configured API budget guardrail "
+                    f"{TABPFN_DAILY_TOKEN_BUDGET:,}. This is an estimate, not an API-denied request. "
+                    f"{TABPFN_DAILY_RESET_NOTE}"
                 )
                 print(f"[skip] {dataset_id} TabPFNRegressor: {skip_reason}", flush=True)
                 row = {
@@ -4616,17 +5706,30 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
                 stage_index += 1
                 continue
         try:
-            row, pred_train, pred_test = evaluate_model(
-                model_name,
-                estimator,
-                model_X_train,
-                model_X_test,
-                split["y_train"],
-                split["y_test"],
-                split["smiles_train"],
-                args,
-                split_strategy_for_cv=cv_strategy_for_workflows,
-            )
+            if model_name == maplight_catboost_label and maplight_parity_mode:
+                row, pred_train, pred_test = evaluate_maplight_seeded_catboost(
+                    model_name=model_name,
+                    workflow_name="conventional",
+                    X_train=model_X_train,
+                    X_test=model_X_test,
+                    y_train=split["y_train"],
+                    y_test=split["y_test"],
+                    seed_values=maplight_seed_values,
+                    feature_source="direct_maplight_classic_from_smiles_no_dedup",
+                    primary_metric="mae",
+                )
+            else:
+                row, pred_train, pred_test = evaluate_model(
+                    model_name,
+                    estimator,
+                    model_X_train,
+                    model_X_test,
+                    split["y_train"],
+                    split["y_test"],
+                    split["smiles_train"],
+                    args,
+                    split_strategy_for_cv=cv_strategy_for_workflows,
+                )
         except Exception as exc:
             error_text = str(exc)
             if model_name == "TabPFNRegressor" and is_tabpfn_token_limit_error(error_text):
@@ -4869,7 +5972,7 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
             stage_index += 1
 
     if bool(args.run_maplight_gnn):
-        maplight_label = "MapLight + GNN (CatBoost)"
+        maplight_label = maplight_gnn_model_label(args)
         if maplight_label in completed_model_names:
             stage_message(stage_index, f"deep model {maplight_label} (cached)")
             stage_index += 1
@@ -4879,7 +5982,11 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
                 row = {"model": maplight_label, "workflow": "MapLight + GNN", "error": "CatBoost is unavailable"}
                 metrics_rows.append({**base_meta, **row, "elapsed_seconds": round(time.time() - start, 3)})
                 completed_model_names.add(maplight_label)
-            elif not maplight_feature_cols:
+            elif maplight_parity_mode and maplight_direct_X_train.empty:
+                row = {"model": maplight_label, "workflow": "MapLight + GNN", "error": "MapLight strict parity features are unavailable"}
+                metrics_rows.append({**base_meta, **row, "elapsed_seconds": round(time.time() - start, 3)})
+                completed_model_names.add(maplight_label)
+            elif (not maplight_parity_mode) and (not maplight_feature_cols):
                 row = {"model": maplight_label, "workflow": "MapLight + GNN", "error": "MapLight classic features are unavailable"}
                 metrics_rows.append({**base_meta, **row, "elapsed_seconds": round(time.time() - start, 3)})
                 completed_model_names.add(maplight_label)
@@ -4899,36 +6006,55 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
                     train_fill = np.where(np.isfinite(train_fill), train_fill, 0.0)
                     emb_train = np.where(np.isfinite(emb_train), emb_train, train_fill)
                     emb_test = np.where(np.isfinite(emb_test), emb_test, train_fill)
-                    maplight_base_train = split["X_train"].loc[:, maplight_feature_cols].to_numpy(dtype=float)
-                    maplight_base_test = split["X_test"].loc[:, maplight_feature_cols].to_numpy(dtype=float)
+                    if maplight_parity_mode:
+                        maplight_base_train = maplight_direct_X_train.to_numpy(dtype=float)
+                        maplight_base_test = maplight_direct_X_test.to_numpy(dtype=float)
+                        maplight_columns = [str(col) for col in maplight_direct_X_train.columns]
+                    else:
+                        maplight_base_train = split["X_train"].loc[:, maplight_feature_cols].to_numpy(dtype=float)
+                        maplight_base_test = split["X_test"].loc[:, maplight_feature_cols].to_numpy(dtype=float)
+                        maplight_columns = list(maplight_feature_cols)
                     gnn_feature_names = [f"gin_emb_{idx:03d}" for idx in range(int(emb_train.shape[1]))]
                     fusion_train = pd.DataFrame(
                         np.concatenate([maplight_base_train, emb_train], axis=1),
-                        columns=list(maplight_feature_cols) + gnn_feature_names,
+                        columns=maplight_columns + gnn_feature_names,
                     )
                     fusion_test = pd.DataFrame(
                         np.concatenate([maplight_base_test, emb_test], axis=1),
-                        columns=list(maplight_feature_cols) + gnn_feature_names,
+                        columns=maplight_columns + gnn_feature_names,
                     )
-                    maplight_estimator = CatBoostRegressor(
-                        iterations=400,
-                        depth=6,
-                        learning_rate=0.05,
-                        loss_function="RMSE",
-                        random_seed=args.random_seed,
-                        verbose=False,
-                    )
-                    row, pred_train, pred_test = evaluate_model(
-                        maplight_label,
-                        maplight_estimator,
-                        fusion_train,
-                        fusion_test,
-                        split["y_train"],
-                        split["y_test"],
-                        split["smiles_train"],
-                        args,
-                        split_strategy_for_cv=cv_strategy_for_workflows,
-                    )
+                    if maplight_parity_mode:
+                        row, pred_train, pred_test = evaluate_maplight_seeded_catboost(
+                            model_name=maplight_label,
+                            workflow_name="MapLight + GNN",
+                            X_train=fusion_train,
+                            X_test=fusion_test,
+                            y_train=split["y_train"],
+                            y_test=split["y_test"],
+                            seed_values=maplight_seed_values,
+                            feature_source="direct_maplight_classic_plus_gnn_no_dedup",
+                            primary_metric="mae",
+                        )
+                    else:
+                        maplight_estimator = CatBoostRegressor(
+                            iterations=400,
+                            depth=6,
+                            learning_rate=0.05,
+                            loss_function="RMSE",
+                            random_seed=args.random_seed,
+                            verbose=False,
+                        )
+                        row, pred_train, pred_test = evaluate_model(
+                            maplight_label,
+                            maplight_estimator,
+                            fusion_train,
+                            fusion_test,
+                            split["y_train"],
+                            split["y_test"],
+                            split["smiles_train"],
+                            args,
+                            split_strategy_for_cv=cv_strategy_for_workflows,
+                        )
                     row["workflow"] = "MapLight + GNN"
                     row["maplight_embedding_backend"] = str(embedding_backend)
                     row["maplight_embedding_kind"] = str(args.maplight_gnn_kind)
@@ -4955,6 +6081,127 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
                         pred_test=pred_test,
                     )
             persist_partial("deep:MapLight+GNN")
+            stage_index += 1
+
+    cfa_label = "CFA (Combinatorial Fusion)"
+    if bool(getattr(args, "run_cfa", False)):
+        if cfa_label in completed_model_names:
+            stage_message(stage_index, "CFA combinatorial fusion (cached)")
+            stage_index += 1
+        else:
+            stage_message(stage_index, "CFA combinatorial fusion")
+            allowed_workflows = cfa_source_workflow_filter(args)
+            cfa_base_payloads = {
+                name: payload
+                for name, payload in prediction_payloads.items()
+                if allowed_workflows is None
+                or _normalize_workflow_label(payload.get("workflow", "")) in allowed_workflows
+            }
+            min_required_models = int(max(1, int(getattr(args, "cfa_min_models", 2))))
+            if len(cfa_base_payloads) < min_required_models:
+                available_workflows = sorted(
+                    {
+                        str(payload.get("workflow", "")).strip()
+                        for payload in prediction_payloads.values()
+                        if str(payload.get("workflow", "")).strip()
+                    }
+                )
+                workflow_filter_text = (
+                    "all"
+                    if allowed_workflows is None
+                    else ", ".join(sorted(allowed_workflows))
+                )
+                skip_reason = (
+                    "CFA skipped: not enough successfully predicted models after source-workflow filtering "
+                    f"({len(cfa_base_payloads)} available; requires >= {min_required_models}; "
+                    f"filter={workflow_filter_text}; available_workflows={available_workflows})."
+                )
+                print(f"[skip] {dataset_id} {cfa_label}: {skip_reason}", flush=True)
+                row = {
+                    "model": cfa_label,
+                    "workflow": "cfa",
+                    "status": "skipped_insufficient_models",
+                    "cfa_skip_reason": skip_reason,
+                }
+                pred_train, pred_test = np.array([]), np.array([])
+            else:
+                try:
+                    cfa_result = run_cfa_regression_fusion(
+                        train_prediction_map={name: payload["train"] for name, payload in cfa_base_payloads.items()},
+                        test_prediction_map={name: payload["test"] for name, payload in cfa_base_payloads.items()},
+                        y_train=split["y_train"],
+                        min_models=min_required_models,
+                        max_models=int(max(1, int(getattr(args, "cfa_max_models", 4)))),
+                        optimize_metric=str(getattr(args, "cfa_optimize_metric", "mae")),
+                        include_rank_combinations=bool(getattr(args, "cfa_include_rank_combinations", True)),
+                        rank_prefer_when_diverse=bool(getattr(args, "cfa_rank_prefer_when_diverse", True)),
+                        rank_diversity_threshold=float(getattr(args, "cfa_rank_diversity_threshold", 0.15)),
+                        rank_metric_discount=float(getattr(args, "cfa_rank_metric_discount", 0.98)),
+                    )
+                    pred_train = np.asarray(cfa_result["pred_train"], dtype=float).reshape(-1)
+                    pred_test = np.asarray(cfa_result["pred_test"], dtype=float).reshape(-1)
+                    primary_metric = (
+                        normalize_benchmark_metric(CURRENT_DATASET_SPEC.recommended_metric, fallback="rmse")
+                        if CURRENT_DATASET_SPEC is not None and CURRENT_DATASET_SPEC.recommended_metric
+                        else "rmse"
+                    )
+                    primary_value = compute_primary_metric(primary_metric, split["y_test"], pred_test)
+                    row = {
+                        "model": cfa_label,
+                        "workflow": "cfa",
+                        "cv_folds": np.nan,
+                        "cv_split_strategy": "",
+                        "cv_r2": np.nan,
+                        "cv_rmse": np.nan,
+                        "cv_mae": np.nan,
+                        "primary_metric": primary_metric,
+                        "cv_primary": np.nan,
+                        "primary_metric_value": float(primary_value),
+                        "cfa_variant": str(cfa_result.get("variant", "")),
+                        "cfa_combination_space": str(cfa_result.get("combination_space", "")),
+                        "cfa_optimize_metric": str(cfa_result.get("optimize_metric", "")),
+                        "cfa_train_metric": float(cfa_result.get("train_metric", np.nan)),
+                        "cfa_adjusted_metric": float(cfa_result.get("adjusted_metric", np.nan)),
+                        "cfa_subset_diversity_mean": float(cfa_result.get("subset_diversity_mean", np.nan)),
+                        "cfa_selected_models": "; ".join([str(name) for name in cfa_result.get("selected_models", [])]),
+                        "cfa_weights_json": json.dumps(cfa_result.get("weights", {}), default=float),
+                        "cfa_candidate_count": int(len(cfa_result.get("candidate_table", []))),
+                    }
+                    row.update(regression_metrics(split["y_train"], pred_train, split["y_test"], pred_test))
+                    row = add_leaderboard_reference_columns(
+                        row,
+                        primary_metric=primary_metric,
+                        primary_metric_value=float(primary_value),
+                    )
+                    candidate_df = cfa_result.get("candidate_table")
+                    if isinstance(candidate_df, pd.DataFrame) and not candidate_df.empty:
+                        candidate_df.to_csv(dataset_dir / "cfa_candidate_table.csv", index=False)
+                    strengths_df = cfa_result.get("base_strengths")
+                    if isinstance(strengths_df, pd.DataFrame) and not strengths_df.empty:
+                        strengths_df.to_csv(dataset_dir / "cfa_base_strengths.csv", index=False)
+                except Exception as exc:
+                    row = {"model": cfa_label, "workflow": "cfa", "error": str(exc)}
+                    pred_train, pred_test = np.array([]), np.array([])
+            row = {**base_meta, **row, "elapsed_seconds": round(time.time() - start, 3)}
+            metrics_rows.append(row)
+            completed_model_names.add(cfa_label)
+            if len(pred_train):
+                prediction_tables.extend(
+                    [
+                        prediction_frame(dataset_id, cfa_label, "cfa", "train", split["smiles_train"], split["y_train"], pred_train),
+                        prediction_frame(dataset_id, cfa_label, "cfa", "test", split["smiles_test"], split["y_test"], pred_test),
+                    ]
+                )
+                prediction_payloads[cfa_label] = prediction_payload(
+                    workflow="CFA fusion",
+                    train_smiles=split["smiles_train"],
+                    test_smiles=split["smiles_test"],
+                    y_train=split["y_train"],
+                    y_test=split["y_test"],
+                    pred_train=pred_train,
+                    pred_test=pred_test,
+                )
+            persist_partial("cfa")
             stage_index += 1
 
     if bool(args.run_ensemble):
@@ -5524,6 +6771,26 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--enable-persistent-feature-store", action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument("--reuse-persistent-feature-store", action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument("--persistent-feature-store-path", default="AUTO")
+    parser.add_argument(
+        "--enable-shared-feature-matrix-cache",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help=(
+            "Cache fully built benchmark feature matrices (post family assembly, pre split/selection) "
+            "for cross-run reuse."
+        ),
+    )
+    parser.add_argument(
+        "--reuse-shared-feature-matrix-cache",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="Reuse shared feature matrix cache entries before generating new feature matrices.",
+    )
+    parser.add_argument(
+        "--shared-feature-matrix-cache-path",
+        default="AUTO",
+        help="Shared cache directory for full feature matrices. AUTO resolves to model_cache/benchmark_feature_matrix_cache.",
+    )
 
     parser.add_argument("--selector-method", choices=["elasticnet_cv", "none"], default="elasticnet_cv")
     parser.add_argument("--selector-l1-ratio-grid", default="0.3,0.7")
@@ -5630,6 +6897,66 @@ def parse_args() -> argparse.Namespace:
         default=1000,
         help="Maximum training rows allowed for TabPFNRegressor (CPU guardrail).",
     )
+    parser.add_argument(
+        "--run-cfa",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help=(
+            "Run CFA (Combinatorial Fusion Analysis) as an additional model stage "
+            "that fuses predictions from selected workflow sources using CFA-style performance/diversity weighting."
+        ),
+    )
+    parser.add_argument(
+        "--cfa-min-models",
+        type=int,
+        default=2,
+        help="Minimum number of base models required to run CFA fusion.",
+    )
+    parser.add_argument(
+        "--cfa-max-models",
+        type=int,
+        default=4,
+        help="Maximum number of base models per CFA candidate combination.",
+    )
+    parser.add_argument(
+        "--cfa-optimize-metric",
+        choices=["mae", "rmse"],
+        default="mae",
+        help="Train-side metric used to select the best CFA fusion candidate.",
+    )
+    parser.add_argument(
+        "--cfa-source-workflows",
+        default="all",
+        help=(
+            "Comma-separated workflow labels to allow as CFA base models. "
+            "Use 'all' to include every successful workflow prediction available before ensembling "
+            "(e.g., Conventional ML, Tuned conventional ML, ChemML deep learning, Chemprop v2, MapLight + GNN, Uni-Mol)."
+        ),
+    )
+    parser.add_argument(
+        "--cfa-include-rank-combinations",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="Enable CFA rank-combination families (AC/WCP/WCDS) in addition to score combinations.",
+    )
+    parser.add_argument(
+        "--cfa-rank-prefer-when-diverse",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="Apply a small train-metric preference to rank-based candidates when model diversity exceeds threshold.",
+    )
+    parser.add_argument(
+        "--cfa-rank-diversity-threshold",
+        type=float,
+        default=0.15,
+        help="Diversity threshold for rank-combination preference.",
+    )
+    parser.add_argument(
+        "--cfa-rank-metric-discount",
+        type=float,
+        default=0.98,
+        help="Multiplicative train-metric discount applied to rank candidates when diversity threshold is met.",
+    )
     parser.add_argument("--run-chemprop-mpnn", action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument("--run-chemprop-dmpnn", action=argparse.BooleanOptionalAction, default=False)
     parser.add_argument("--run-chemprop-cmpnn", action=argparse.BooleanOptionalAction, default=False)
@@ -5657,6 +6984,21 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--unimol-num-workers", type=int, default=0)
     parser.add_argument("--unimol-reuse-model-cache", action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument("--run-maplight-gnn", action=argparse.BooleanOptionalAction, default=True)
+    parser.add_argument(
+        "--maplight-leaderboard-parity-mode",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help=(
+            "Enable strict MapLight leaderboard parity mode for MapLight CatBoost and MapLight + GNN: "
+            "MAE objective, StandardScaler, 5-seed averaging, and direct MapLight features built from split SMILES "
+            "(no feature-dedup pruning on MapLight columns)."
+        ),
+    )
+    parser.add_argument(
+        "--maplight-parity-seeds",
+        default="1,2,3,4,5",
+        help="Comma-separated seed list for strict MapLight parity mode.",
+    )
     parser.add_argument("--chemml-hidden-layers", type=int, default=2)
     parser.add_argument("--chemml-hidden-width", type=int, default=256)
     parser.add_argument("--chemml-training-epochs", type=int, default=80)
@@ -5773,17 +7115,24 @@ def main() -> int:
     args.gpu_available = bool(gpu_available)
     if getattr(args, "run_unimol_v1", None) is None:
         args.run_unimol_v1 = bool(gpu_available)
-        print(
-            "Uni-Mol V1 default resolved from GPU detection: "
-            f"{'on' if bool(args.run_unimol_v1) else 'off'} (gpu_detected={'yes' if gpu_available else 'no'}).",
-            flush=True,
-        )
     elif bool(args.run_unimol_v1) and not gpu_available:
         print(
             "Uni-Mol V1 was explicitly enabled without detected GPU; attempting CPU fallback.",
             flush=True,
         )
     root = Path(__file__).resolve().parents[1]
+    if str(getattr(args, "persistent_feature_store_path", "AUTO")).strip().upper() == "AUTO":
+        args.persistent_feature_store_path = str((root / "model_cache" / "feature_store_parquet").resolve())
+    if str(getattr(args, "shared_feature_matrix_cache_path", "AUTO")).strip().upper() == "AUTO":
+        args.shared_feature_matrix_cache_path = str(
+            (root / "model_cache" / "benchmark_feature_matrix_cache").resolve()
+        )
+    if bool(getattr(args, "enable_persistent_feature_store", True)):
+        Path(str(args.persistent_feature_store_path)).mkdir(parents=True, exist_ok=True)
+    if bool(getattr(args, "enable_shared_feature_matrix_cache", True)):
+        Path(str(args.shared_feature_matrix_cache_path)).mkdir(parents=True, exist_ok=True)
+    default_maplight_pretrained_cache_dir().mkdir(parents=True, exist_ok=True)
+
     resolved_ga_models, ga_resolution = resolve_requested_ga_models(
         args,
         root,
@@ -5867,8 +7216,12 @@ def main() -> int:
     datasets = order_datasets_smallest_first(datasets)
 
     tabpfn_budget_estimate = None
-    if bool(getattr(args, "run_tabpfn", False)):
+    if bool(getattr(args, "run_tabpfn", False)) and str(TABPFN_REGRESSOR_SOURCE).strip().lower() == "tabpfn_client":
         tabpfn_budget_estimate = estimate_tabpfn_daily_dataset_capacity(datasets, args)
+
+    resume_plan = None
+    if bool(getattr(args, "resume", False)):
+        resume_plan = build_resume_execution_plan(datasets, output_dir, args)
 
     if args.dry_run:
         selector_threshold_size = elasticnet_selector_timeout_dataset_size_threshold(
@@ -5885,6 +7238,19 @@ def main() -> int:
         print(f"Benchmark profile: {args.benchmark_profile}")
         print(f"Default molecular feature families: {', '.join(DEFAULT_BENCHMARK_FEATURE_FAMILIES)}")
         print(
+            "Persistent feature store: "
+            f"{'on' if bool(getattr(args, 'enable_persistent_feature_store', True)) else 'off'} "
+            f"(reuse={'on' if bool(getattr(args, 'reuse_persistent_feature_store', True)) else 'off'}, "
+            f"path={args.persistent_feature_store_path})"
+        )
+        print(
+            "Shared feature matrix cache: "
+            f"{'on' if bool(getattr(args, 'enable_shared_feature_matrix_cache', True)) else 'off'} "
+            f"(reuse={'on' if bool(getattr(args, 'reuse_shared_feature_matrix_cache', True)) else 'off'}, "
+            f"path={args.shared_feature_matrix_cache_path})"
+        )
+        print(f"MapLight pretrained cache dir: {default_maplight_pretrained_cache_dir()}")
+        print(
             "Selector auto-RF by dataset size: "
             f"{'on' if bool(args.selector_auto_rf_by_dataset_size) else 'off'} "
             f"(threshold={float(args.selector_auto_rf_threshold_seconds):,.0f}s, threshold_n~{selector_threshold_size_text})"
@@ -5893,6 +7259,24 @@ def main() -> int:
             "GA models for this run: "
             + (", ".join(parse_comma_list(getattr(args, "ga_models_resolved", ""))) if parse_comma_list(getattr(args, "ga_models_resolved", "")) else "(none)")
         )
+        print(
+            "CFA stage: "
+            f"{'on' if bool(getattr(args, 'run_cfa', False)) else 'off'} "
+            f"(min_models={int(getattr(args, 'cfa_min_models', 2))}, max_models={int(getattr(args, 'cfa_max_models', 4))}, "
+            f"opt_metric={str(getattr(args, 'cfa_optimize_metric', 'mae'))}, "
+            f"sources={str(getattr(args, 'cfa_source_workflows', 'all'))}, "
+            f"rank={'on' if bool(getattr(args, 'cfa_include_rank_combinations', True)) else 'off'}, "
+            f"rank_pref={'on' if bool(getattr(args, 'cfa_rank_prefer_when_diverse', True)) else 'off'}, "
+            f"rank_threshold={float(getattr(args, 'cfa_rank_diversity_threshold', 0.15)):.3f}, "
+            f"rank_discount={float(getattr(args, 'cfa_rank_metric_discount', 0.98)):.3f})"
+        )
+        print(
+            "MapLight parity mode: "
+            f"{'strict' if bool(getattr(args, 'maplight_leaderboard_parity_mode', True)) else 'legacy'} "
+            f"(seeds={','.join(str(seed) for seed in maplight_parity_seed_values(args))})"
+        )
+        if resume_plan is not None:
+            print_resume_execution_plan(resume_plan)
         if tabpfn_budget_estimate is not None:
             print(
                 "TabPFN daily-budget estimate: "
@@ -5940,6 +7324,13 @@ def main() -> int:
                     flush=True,
                 )
 
+    if bool(getattr(args, "run_tabpfn", False)) and str(TABPFN_REGRESSOR_SOURCE).strip().lower() == "tabpfn_client":
+        tabpfn_budget_estimate = estimate_tabpfn_daily_dataset_capacity(datasets, args)
+    else:
+        tabpfn_budget_estimate = None
+    if bool(getattr(args, "resume", False)):
+        resume_plan = build_resume_execution_plan(datasets, output_dir, args)
+
     output_dir.mkdir(parents=True, exist_ok=True)
     config = vars(args).copy()
     config["output_dir"] = str(output_dir)
@@ -5965,6 +7356,19 @@ def main() -> int:
     print(f"Benchmark profile: {args.benchmark_profile}")
     print(f"Default molecular feature families: {', '.join(DEFAULT_BENCHMARK_FEATURE_FAMILIES)}")
     print(
+        "Persistent feature store: "
+        f"{'on' if bool(getattr(args, 'enable_persistent_feature_store', True)) else 'off'} "
+        f"(reuse={'on' if bool(getattr(args, 'reuse_persistent_feature_store', True)) else 'off'}, "
+        f"path={args.persistent_feature_store_path})"
+    )
+    print(
+        "Shared feature matrix cache: "
+        f"{'on' if bool(getattr(args, 'enable_shared_feature_matrix_cache', True)) else 'off'} "
+        f"(reuse={'on' if bool(getattr(args, 'reuse_shared_feature_matrix_cache', True)) else 'off'}, "
+        f"path={args.shared_feature_matrix_cache_path})"
+    )
+    print(f"MapLight pretrained cache dir: {default_maplight_pretrained_cache_dir()}")
+    print(
         "Selector auto-RF by dataset size: "
         f"{'on' if bool(args.selector_auto_rf_by_dataset_size) else 'off'} "
         f"(threshold={float(args.selector_auto_rf_threshold_seconds):,.0f}s, threshold_n~{selector_threshold_size_text})"
@@ -5984,6 +7388,26 @@ def main() -> int:
         "GA models for this run: "
         + (", ".join(parse_comma_list(getattr(args, "ga_models_resolved", ""))) if parse_comma_list(getattr(args, "ga_models_resolved", "")) else "(none)")
     )
+    print(
+        "CFA stage: "
+        f"{'on' if bool(getattr(args, 'run_cfa', False)) else 'off'} "
+        f"(min_models={int(getattr(args, 'cfa_min_models', 2))}, max_models={int(getattr(args, 'cfa_max_models', 4))}, "
+        f"opt_metric={str(getattr(args, 'cfa_optimize_metric', 'mae'))}, "
+        f"sources={str(getattr(args, 'cfa_source_workflows', 'all'))}, "
+        f"rank={'on' if bool(getattr(args, 'cfa_include_rank_combinations', True)) else 'off'}, "
+        f"rank_pref={'on' if bool(getattr(args, 'cfa_rank_prefer_when_diverse', True)) else 'off'}, "
+        f"rank_threshold={float(getattr(args, 'cfa_rank_diversity_threshold', 0.15)):.3f}, "
+        f"rank_discount={float(getattr(args, 'cfa_rank_metric_discount', 0.98)):.3f})"
+    )
+    print(
+        "MapLight parity mode: "
+        f"{'strict' if bool(getattr(args, 'maplight_leaderboard_parity_mode', True)) else 'legacy'} "
+        f"(seeds={','.join(str(seed) for seed in maplight_parity_seed_values(args))})"
+    )
+    if resume_plan is not None:
+        print_resume_execution_plan(resume_plan)
+    if bool(getattr(args, "run_tabpfn", False)):
+        print(f"TabPFN backend source: {TABPFN_REGRESSOR_SOURCE}")
     print(
         "Uni-Mol V1 stage: "
         f"{'on' if bool(getattr(args, 'run_unimol_v1', False)) else 'off'} "
@@ -6026,7 +7450,9 @@ def main() -> int:
             f"ETA {format_seconds(eta)}"
         )
 
-    summary = pd.DataFrame(all_metrics) if all_metrics else pd.DataFrame()
+    summary = build_summary_from_dataset_metrics(output_dir)
+    if summary.empty and all_metrics:
+        summary = deduplicate_metrics_rows(pd.DataFrame(all_metrics))
     if not summary.empty:
         summary.to_csv(output_dir / "summary_metrics.csv", index=False)
         leaderboard_comparison_df = leaderboard_comparison_by_dataset(summary)

@@ -150,6 +150,19 @@ POLARIS_ADME_OPTIONS: dict[str, dict[str, Any]] = {
     },
 }
 
+FREESOLV_EXPANDED_SCALED_OPTION: dict[str, Any] = {
+    "dataset_name": "freesolv_expanded_scaled_2025",
+    "source_label": "Expanded Free Solvation Energy dataset (Marques & Muller 2025, scaled benchmark set)",
+    "source_file": "data/free_solv/1-s2.0-S0378381225000068-mmc1.xlsx",
+    "sheet_name": "Model Benchmarking",
+    "split_sheet_name": "Temperature-Dependent Model",
+    "benchmark_id": "freesolv_expanded_scaled_2025",
+    "benchmark_suite": "literature",
+    "benchmark_url": "https://www.sciencedirect.com/science/article/pii/S0378381225000068",
+    "recommended_split": "predefined",
+    "recommended_metric": "mae",
+}
+
 
 def notebook_example_dataset_options() -> list[str]:
     options: list[str] = [

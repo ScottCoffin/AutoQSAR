@@ -725,7 +725,7 @@ cells += [
         setup_start("scikit-learn components")
         from sklearn.base import clone
         from sklearn.decomposition import PCA
-        from sklearn.ensemble import ExtraTreesRegressor, HistGradientBoostingRegressor, RandomForestRegressor, VotingRegressor
+        from sklearn.ensemble import AdaBoostRegressor, ExtraTreesRegressor, HistGradientBoostingRegressor, RandomForestRegressor, VotingRegressor
         from sklearn.impute import SimpleImputer
         from sklearn.inspection import permutation_importance
         from sklearn.linear_model import ElasticNet, ElasticNetCV, Lasso, LassoCV
@@ -1173,6 +1173,7 @@ cells += [
             make_qsar_cv_splitter,
             make_reusable_inner_cv_splitter,
             normalize_selected_feature_families,
+            run_cfa_regression_fusion,
             resolve_chemprop_architecture_specs,
             scaffold_train_test_split,
             target_quartile_labels,
@@ -4515,6 +4516,33 @@ cells += [
         One exception is the **inner** tuning loop inside `ElasticNetCV`: scikit-learn does not provide a way to pass scaffold groups into that nested internal CV. In that case, the notebook falls back to **random K-folds for the inner ElasticNetCV tuning only**, while keeping the outer scaffold-based evaluation unchanged.
         """
     ),
+    md(
+        """
+        ### 4C.1. CFA (Combinatorial Fusion Analysis) Option
+
+        This notebook can run a **CFA-style fusion stage** after conventional models are trained.
+        It evaluates combinatorial model subsets and selects the best fusion on train-side error.
+        The implementation now evaluates both **score-space** and **rank-space** combinations:
+
+        - `AC` (average combination)
+        - `WCP` (weighted by performance strength)
+        - `WCDS` (weighted by cognitive-diversity strength)
+
+        For diverse model subsets, rank-space variants can be preferred over score-space
+        variants (consistent with CFA findings for heterogeneous base-model pools).
+        For broader diversity, this workflow now includes `AdaBoost` as an additional base model.
+
+        References:
+
+        - CFA repository: https://github.com/mquazi/cfanalysis
+        - CFA manuscript (ChemRxiv): https://chemrxiv.org/doi/full/10.26434/chemrxiv-2023-dh70x
+        - Journal article: https://doi.org/10.1186/s13321-023-00799-6
+
+        Suggested citation:
+        Jiang N, Quazi M, Schweikert C, Hsu DF, Oprea TI, Sirimulla S.
+        *Enhancing ADMET Property Models Performance through Combinatorial Fusion Analysis*.
+        """
+    ),
     code(
         """
         # @title 4C. Train conventional ML models and show an interactive metrics table { display-mode: "form" }
@@ -4532,6 +4560,15 @@ cells += [
         run_extra_trees = True # @param {type:"boolean"}
         run_hist_gradient_boosting = True # @param {type:"boolean"}
         run_voting_knn_svr = True # @param {type:"boolean"}
+        run_adaboost = True # @param {type:"boolean"}
+        run_cfa = True # @param {type:"boolean"}
+        cfa_min_models = 2 # @param {type:"integer"}
+        cfa_max_models = 4 # @param {type:"integer"}
+        cfa_optimize_metric = "mae" # @param ["mae", "rmse"]
+        cfa_include_rank_combinations = True # @param {type:"boolean"}
+        cfa_rank_prefer_when_diverse = True # @param {type:"boolean"}
+        cfa_rank_diversity_threshold = 0.15 # @param {type:"number"}
+        cfa_rank_metric_discount = 0.98 # @param {type:"number"}
         run_tabpfn = True # @param {type:"boolean"}
         tabpfn_max_train_rows = 1000 # @param {type:"integer"}
         run_xgboost = True # @param {type:"boolean"}
@@ -4687,6 +4724,11 @@ cells += [
                     ),
                 ]
             ),
+            "AdaBoost": AdaBoostRegressor(
+                n_estimators=500,
+                learning_rate=0.05,
+                random_state=int(model_random_seed),
+            ),
             "XGBoost": XGBRegressor(
                 n_estimators=400,
                 max_depth=6,
@@ -4821,6 +4863,8 @@ cells += [
             selected_models["HistGradientBoosting"] = available_models["HistGradientBoosting"]
         if run_voting_knn_svr:
             selected_models["Voting Regressor (KNN, SVM)"] = available_models["Voting Regressor (KNN, SVM)"]
+        if run_adaboost:
+            selected_models["AdaBoost"] = available_models["AdaBoost"]
         if run_tabpfn and "TabPFNRegressor" in available_models:
             selected_models["TabPFNRegressor"] = available_models["TabPFNRegressor"]
         if run_xgboost:
@@ -5081,6 +5125,169 @@ cells += [
                 }
         model_progress.close()
 
+        cfa_label = "CFA (Combinatorial Fusion)"
+        if run_cfa:
+            conventional_prediction_map = {
+                name: payload
+                for name, payload in predictions.items()
+                if name in fitted_models and "train" in payload and "test" in payload
+            }
+            min_required_models = max(2, int(cfa_min_models))
+            max_allowed_models = max(min_required_models, int(cfa_max_models))
+            if len(conventional_prediction_map) < min_required_models:
+                print(
+                    f"{cfa_label} skipped: only {len(conventional_prediction_map)} conventional model(s) "
+                    f"with predictions are available (need >= {min_required_models}).",
+                    flush=True,
+                )
+            else:
+                try:
+                    cfa_result = run_cfa_regression_fusion(
+                        train_prediction_map={name: payload["train"] for name, payload in conventional_prediction_map.items()},
+                        test_prediction_map={name: payload["test"] for name, payload in conventional_prediction_map.items()},
+                        y_train=y_train,
+                        min_models=min_required_models,
+                        max_models=max_allowed_models,
+                        optimize_metric=str(cfa_optimize_metric),
+                        include_rank_combinations=bool(cfa_include_rank_combinations),
+                        rank_prefer_when_diverse=bool(cfa_rank_prefer_when_diverse),
+                        rank_diversity_threshold=float(cfa_rank_diversity_threshold),
+                        rank_metric_discount=float(cfa_rank_metric_discount),
+                    )
+                    cfa_pred_train = np.asarray(cfa_result["pred_train"], dtype=float).reshape(-1)
+                    cfa_pred_test = np.asarray(cfa_result["pred_test"], dtype=float).reshape(-1)
+                    cfa_row = {
+                        "Model": cfa_label,
+                        "Workflow": "CFA fusion",
+                        "CV R2": np.nan,
+                        "CV RMSE": np.nan,
+                        "CV MAE": np.nan,
+                        "CFA Variant": str(cfa_result.get("variant", "")),
+                        "CFA Combination Space": str(cfa_result.get("combination_space", "score")),
+                        "CFA Optimize Metric": str(cfa_result.get("optimize_metric", "")),
+                        "CFA Train Metric": float(cfa_result.get("train_metric", np.nan)),
+                        "CFA Adjusted Metric": float(cfa_result.get("adjusted_metric", np.nan)),
+                        "CFA Subset Diversity Mean": float(cfa_result.get("subset_diversity_mean", np.nan)),
+                        "CFA Selected Models": "; ".join([str(name) for name in cfa_result.get("selected_models", [])]),
+                        "CFA Candidate Count": int(len(cfa_result.get("candidate_table", []))),
+                    }
+                    cfa_row.update(summarize_regression(y_train, cfa_pred_train, "Train"))
+                    cfa_row.update(summarize_regression(y_test, cfa_pred_test, "Test"))
+                    metrics_rows.append(cfa_row)
+                    predictions[cfa_label] = {"train": cfa_pred_train, "test": cfa_pred_test}
+
+                    class _CFAFusionRegressor:
+                        def __init__(
+                            self,
+                            member_names,
+                            weights,
+                            member_models,
+                            member_feature_columns,
+                            combination_space="score",
+                            rank_descending=True,
+                            rank_calibration_slope=np.nan,
+                            rank_calibration_intercept=np.nan,
+                        ):
+                            self.member_names = list(member_names)
+                            self.weights = np.asarray(weights, dtype=float).reshape(-1)
+                            self.member_models = dict(member_models)
+                            self.member_feature_columns = {
+                                str(name): [str(col) for col in cols]
+                                for name, cols in dict(member_feature_columns).items()
+                            }
+                            self.combination_space = str(combination_space or "score").strip().lower()
+                            self.rank_descending = bool(rank_descending)
+                            self.rank_calibration_slope = float(rank_calibration_slope) if np.isfinite(rank_calibration_slope) else np.nan
+                            self.rank_calibration_intercept = float(rank_calibration_intercept) if np.isfinite(rank_calibration_intercept) else np.nan
+                            self.feature_names_in_ = np.asarray(
+                                sorted(
+                                    {
+                                        str(col)
+                                        for cols in self.member_feature_columns.values()
+                                        for col in cols
+                                    }
+                                ),
+                                dtype=object,
+                            )
+
+                        def predict(self, X):
+                            X_df = pd.DataFrame(X).copy()
+                            member_predictions = []
+                            for member_name in self.member_names:
+                                member_model = self.member_models[member_name]
+                                member_cols = self.member_feature_columns.get(member_name, [])
+                                if member_cols:
+                                    member_X = align_feature_matrix_to_training_columns(X_df, member_cols)
+                                else:
+                                    member_X = X_df
+                                member_predictions.append(np.asarray(member_model.predict(member_X)).reshape(-1))
+                            stacked = np.column_stack(member_predictions)
+                            if self.combination_space == "rank":
+                                rank_matrix = np.column_stack(
+                                    [
+                                        pd.Series(stacked[:, idx]).rank(
+                                            method="average",
+                                            ascending=not self.rank_descending,
+                                        ).to_numpy(dtype=float)
+                                        for idx in range(stacked.shape[1])
+                                    ]
+                                )
+                                fused_rank = np.dot(rank_matrix, self.weights).reshape(-1)
+                                rank_signal = -fused_rank if self.rank_descending else fused_rank
+                                if np.isfinite(self.rank_calibration_slope) and np.isfinite(self.rank_calibration_intercept):
+                                    return (self.rank_calibration_slope * rank_signal + self.rank_calibration_intercept).reshape(-1)
+                            return np.dot(stacked, self.weights).reshape(-1)
+
+                    cfa_members = [str(name) for name in cfa_result.get("selected_models", [])]
+                    cfa_weights = [
+                        float(cfa_result.get("weights", {}).get(member_name, 0.0))
+                        for member_name in cfa_members
+                    ]
+                    cfa_member_models = {member_name: fitted_models[member_name] for member_name in cfa_members}
+                    cfa_member_columns = {
+                        member_name: [str(col) for col in traditional_model_feature_columns.get(member_name, [])]
+                        for member_name in cfa_members
+                    }
+                    fitted_models[cfa_label] = _CFAFusionRegressor(
+                        cfa_members,
+                        cfa_weights,
+                        cfa_member_models,
+                        cfa_member_columns,
+                        combination_space=str(cfa_result.get("combination_space", "score")),
+                        rank_descending=bool(cfa_result.get("rank_descending", True)),
+                        rank_calibration_slope=float(cfa_result.get("rank_calibration_slope", np.nan)),
+                        rank_calibration_intercept=float(cfa_result.get("rank_calibration_intercept", np.nan)),
+                    )
+                    cfa_union_columns = sorted(
+                        {
+                            str(col)
+                            for cols in cfa_member_columns.values()
+                            for col in cols
+                        }
+                    )
+                    traditional_model_feature_columns[cfa_label] = cfa_union_columns or [str(col) for col in X_train.columns]
+
+                    STATE["cfa_summary"] = {
+                        "variant": str(cfa_result.get("variant", "")),
+                        "combination_space": str(cfa_result.get("combination_space", "score")),
+                        "optimize_metric": str(cfa_result.get("optimize_metric", "")),
+                        "train_metric": float(cfa_result.get("train_metric", np.nan)),
+                        "adjusted_metric": float(cfa_result.get("adjusted_metric", np.nan)),
+                        "subset_diversity_mean": float(cfa_result.get("subset_diversity_mean", np.nan)),
+                        "rank_calibration_slope": float(cfa_result.get("rank_calibration_slope", np.nan)),
+                        "rank_calibration_intercept": float(cfa_result.get("rank_calibration_intercept", np.nan)),
+                        "selected_models": list(cfa_members),
+                        "weights": {str(k): float(v) for k, v in dict(cfa_result.get("weights", {})).items()},
+                        "candidate_count": int(len(cfa_result.get("candidate_table", []))),
+                    }
+                    print(
+                        f"Added {cfa_label}: space={STATE['cfa_summary'].get('combination_space', 'score')}, variant={STATE['cfa_summary']['variant']}, "
+                        f"selected_models={', '.join(cfa_members)}",
+                        flush=True,
+                    )
+                except Exception as cfa_exc:
+                    print(f"{cfa_label} skipped due to runtime error: {cfa_exc}", flush=True)
+
         results_df = pd.DataFrame(metrics_rows).sort_values(["Test RMSE", "Test MAE"], ascending=True).reset_index(drop=True)
         best_model_name = results_df.loc[0, "Model"]
 
@@ -5103,7 +5310,10 @@ cells += [
         if conventional_cache_dir is not None:
             STATE["traditional_model_cache_dir"] = str(conventional_cache_dir)
 
-        print(f"Ran {len(selected_models)} conventional model(s): {', '.join(selected_models.keys())}")
+        ran_model_names = list(selected_models.keys())
+        if cfa_label in predictions:
+            ran_model_names.append(cfa_label)
+        print(f"Ran {len(ran_model_names)} conventional/fusion model(s): {', '.join(ran_model_names)}")
         if use_cross_validation:
             print(f"Cross-validation enabled with {effective_cv_folds} folds using {effective_cv_split_strategy}.")
         else:
@@ -9907,7 +10117,7 @@ cells += [
         """
         # @title 7A. Build an optional ensemble from trained models { display-mode: "form" }
         build_ensemble = True # @param {type:"boolean"}
-        ensemble_method = "OOF Stacking (RidgeCV)" # @param ["OOF Stacking (RidgeCV)", "Simple average", "Weighted average (inverse train RMSE)"]
+        ensemble_method = "OOF Stacking (RidgeCV)" # @param ["OOF Stacking (RidgeCV)", "CFA Fusion (Score+Rank, diversity-aware)", "Simple average", "Weighted average (inverse train RMSE)"]
         stacking_cv_folds = 5 # @param [3, 5, 10]
         stacking_random_seed = 42 # @param {type:"integer"}
         exclude_negative_test_r2_members = True # @param {type:"boolean"}
@@ -10282,8 +10492,46 @@ cells += [
             meta_model = None
             ensemble_method_label = str(ensemble_method)
             ensemble_intercept = 0.0
+            ensemble_cfa_result = None
 
-            if ensemble_method == "OOF Stacking (RidgeCV)":
+            if ensemble_method == "CFA Fusion (Score+Rank, diversity-aware)":
+                ensemble_cfa_result = run_cfa_regression_fusion(
+                    train_prediction_map=aligned_train[prediction_columns].copy(),
+                    test_prediction_map=aligned_test[prediction_columns].copy(),
+                    y_train=y_meta_train,
+                    min_models=2,
+                    max_models=max(2, int(len(prediction_columns))),
+                    optimize_metric="mae",
+                    include_rank_combinations=True,
+                    rank_prefer_when_diverse=True,
+                    rank_diversity_threshold=0.15,
+                    rank_metric_discount=0.98,
+                )
+                prediction_columns = [
+                    str(name)
+                    for name in list(ensemble_cfa_result.get("selected_models", []))
+                    if str(name) in payloads
+                ]
+                if len(prediction_columns) < 2:
+                    raise RuntimeError(
+                        "CFA fusion selected fewer than two member models after alignment filtering."
+                    )
+                ensemble_train_pred = np.asarray(ensemble_cfa_result["pred_train"], dtype=float).reshape(-1)
+                ensemble_test_pred = np.asarray(ensemble_cfa_result["pred_test"], dtype=float).reshape(-1)
+                combination_space = str(ensemble_cfa_result.get("combination_space", "score"))
+                variant_name = str(ensemble_cfa_result.get("variant", ""))
+                ensemble_method_label = f"CFA ({combination_space}:{variant_name})"
+                weight_df = pd.DataFrame(
+                    {
+                        "Model": prediction_columns,
+                        "Weight": [
+                            float(ensemble_cfa_result.get("weights", {}).get(model_name, np.nan))
+                            for model_name in prediction_columns
+                        ],
+                        "Workflow": [payloads[name]["workflow"] for name in prediction_columns],
+                    }
+                )
+            elif ensemble_method == "OOF Stacking (RidgeCV)":
                 n_splits = int(min(max(2, int(stacking_cv_folds)), len(aligned_train)))
                 if n_splits < 2:
                     raise ValueError("At least two aligned training molecules are required for OOF stacking.")
@@ -10368,6 +10616,22 @@ cells += [
             STATE["ensemble_meta_model"] = meta_model
             STATE["ensemble_meta_intercept"] = float(ensemble_intercept)
             STATE["ensemble_member_filter_notes"] = list(member_filter_notes)
+            if ensemble_cfa_result is not None:
+                candidate_table = ensemble_cfa_result.get("candidate_table")
+                STATE["ensemble_cfa_candidate_table"] = (
+                    candidate_table.copy()
+                    if isinstance(candidate_table, pd.DataFrame)
+                    else pd.DataFrame()
+                )
+                STATE["ensemble_cfa_summary"] = {
+                    "variant": str(ensemble_cfa_result.get("variant", "")),
+                    "combination_space": str(ensemble_cfa_result.get("combination_space", "")),
+                    "optimize_metric": str(ensemble_cfa_result.get("optimize_metric", "")),
+                    "train_metric": float(ensemble_cfa_result.get("train_metric", np.nan)),
+                    "adjusted_metric": float(ensemble_cfa_result.get("adjusted_metric", np.nan)),
+                    "subset_diversity_mean": float(ensemble_cfa_result.get("subset_diversity_mean", np.nan)),
+                    "selected_models": list(prediction_columns),
+                }
 
             print(f"Ensemble built from {len(prediction_columns)} model(s): {', '.join(prediction_columns)}")
             print(f"Train overlap used: {len(aligned_train)} molecules")
@@ -10375,6 +10639,15 @@ cells += [
             if ensemble_method == "OOF Stacking (RidgeCV)":
                 print(f"Ensemble strategy: {ensemble_method_label}")
                 print(f"Meta-model intercept: {ensemble_intercept:.6f}")
+            if ensemble_method == "CFA Fusion (Score+Rank, diversity-aware)" and ensemble_cfa_result is not None:
+                print(
+                    "CFA strategy details: "
+                    f"space={ensemble_cfa_result.get('combination_space', 'score')}, "
+                    f"variant={ensemble_cfa_result.get('variant', '')}, "
+                    f"train_metric={float(ensemble_cfa_result.get('train_metric', np.nan)):.6f}, "
+                    f"adjusted_metric={float(ensemble_cfa_result.get('adjusted_metric', np.nan)):.6f}, "
+                    f"subset_diversity_mean={float(ensemble_cfa_result.get('subset_diversity_mean', np.nan)):.6f}"
+                )
             if fallback_used:
                 print(
                     "Ensemble alignment fallback was used: members were merged by canonical SMILES across train+test predictions, "
@@ -10392,6 +10665,11 @@ cells += [
             if ensemble_method == "OOF Stacking (RidgeCV)":
                 ensemble_note += (
                     " This run used OOF stacking for the second-level combiner to reduce overfitting risk in ensemble calibration."
+                )
+            elif ensemble_method == "CFA Fusion (Score+Rank, diversity-aware)":
+                ensemble_note += (
+                    " This run used CFA combinatorial fusion across selected members, evaluating score and rank combination families "
+                    "and favoring rank-space candidates when model diversity was high."
                 )
             if fallback_used:
                 ensemble_note += (
