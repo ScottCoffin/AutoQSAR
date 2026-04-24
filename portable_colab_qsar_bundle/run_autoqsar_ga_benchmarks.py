@@ -7,7 +7,7 @@ physchem, and Polaris ADME Fang splits). It builds
 molecular features, runs the train/test split plus train-only ElasticNetCV
 feature selection, evaluates conventional models, optionally runs a small GA
 tuning pass, runs deep workflows (ChemML backends, Chemprop v2 graph variants,
-and MapLight + GNN), optionally runs CFA combinatorial fusion over conventional
+and MapLight + GNN), optionally runs CFA combinatorial fusion over all successful
 predictions, builds an optional ensemble over available members, and
 writes cross-dataset performance tables.
 """
@@ -43,17 +43,38 @@ import sys
 import numpy as np
 import pandas as pd
 from sklearn.base import clone
-from sklearn.ensemble import AdaBoostRegressor, ExtraTreesRegressor, HistGradientBoostingRegressor, RandomForestRegressor, VotingRegressor
+from sklearn.ensemble import (
+    AdaBoostClassifier,
+    AdaBoostRegressor,
+    ExtraTreesClassifier,
+    ExtraTreesRegressor,
+    HistGradientBoostingClassifier,
+    HistGradientBoostingRegressor,
+    RandomForestClassifier,
+    RandomForestRegressor,
+    VotingClassifier,
+    VotingRegressor,
+)
 from sklearn.impute import SimpleImputer
-from sklearn.linear_model import ElasticNet, ElasticNetCV, RidgeCV
-from sklearn.metrics import make_scorer, mean_absolute_error, mean_squared_error, r2_score
-from sklearn.model_selection import KFold, cross_val_predict, cross_validate, train_test_split
-from sklearn.neighbors import KNeighborsRegressor
-from sklearn.neural_network import MLPRegressor
+from sklearn.linear_model import ElasticNet, ElasticNetCV, LogisticRegression, RidgeCV
+from sklearn.metrics import (
+    accuracy_score,
+    average_precision_score,
+    balanced_accuracy_score,
+    make_scorer,
+    matthews_corrcoef,
+    mean_absolute_error,
+    mean_squared_error,
+    r2_score,
+    roc_auc_score,
+)
+from sklearn.model_selection import KFold, StratifiedKFold, cross_val_predict, cross_validate, train_test_split
+from sklearn.neighbors import KNeighborsClassifier, KNeighborsRegressor
+from sklearn.neural_network import MLPClassifier, MLPRegressor
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import FunctionTransformer, StandardScaler
-from sklearn.svm import SVR
-from sklearn.tree import DecisionTreeRegressor
+from sklearn.svm import SVC, SVR
+from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 
 from rdkit import Chem, RDLogger
 
@@ -68,11 +89,14 @@ os.environ.setdefault("GLOG_minloglevel", "3")
 
 try:
     from portable_colab_qsar_bundle.qsar_workflow_core import (
+        TabularCNNRegressor,
         build_feature_matrix_from_smiles,
+        cfa_candidate_subset_count,
         drop_exact_and_near_duplicate_features,
         make_maplight_classic_matrix,
         make_qsar_cv_splitter,
         make_reusable_inner_cv_splitter,
+        resolve_cfa_max_models_for_budget,
         run_cfa_regression_fusion,
         resolve_chemprop_architecture_specs,
         scaffold_train_test_split,
@@ -83,6 +107,7 @@ try:
         FREESOLV_EXPANDED_SCALED_OPTION,
         MOLECULENET_LEADERBOARD_README_URL,
         MOLECULENET_PHYSCHEM_OPTIONS,
+        PODUAM_POD_OPTIONS,
         POLARIS_ADME_OPTIONS,
         PYTDC_SOURCE_URL,
         TDC_LEADERBOARD_URLS,
@@ -91,11 +116,14 @@ try:
 except ModuleNotFoundError:
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
     from portable_colab_qsar_bundle.qsar_workflow_core import (
+        TabularCNNRegressor,
         build_feature_matrix_from_smiles,
+        cfa_candidate_subset_count,
         drop_exact_and_near_duplicate_features,
         make_maplight_classic_matrix,
         make_qsar_cv_splitter,
         make_reusable_inner_cv_splitter,
+        resolve_cfa_max_models_for_budget,
         run_cfa_regression_fusion,
         resolve_chemprop_architecture_specs,
         scaffold_train_test_split,
@@ -106,6 +134,7 @@ except ModuleNotFoundError:
         FREESOLV_EXPANDED_SCALED_OPTION,
         MOLECULENET_LEADERBOARD_README_URL,
         MOLECULENET_PHYSCHEM_OPTIONS,
+        PODUAM_POD_OPTIONS,
         POLARIS_ADME_OPTIONS,
         PYTDC_SOURCE_URL,
         TDC_LEADERBOARD_URLS,
@@ -113,30 +142,36 @@ except ModuleNotFoundError:
     )
 
 try:
-    from catboost import CatBoostRegressor
+    from catboost import CatBoostClassifier, CatBoostRegressor
 except Exception:
+    CatBoostClassifier = None
     CatBoostRegressor = None
 
 try:
-    from xgboost import XGBRegressor
+    from xgboost import XGBClassifier, XGBRegressor
 except Exception:
+    XGBClassifier = None
     XGBRegressor = None
 
 try:
-    from lightgbm import LGBMRegressor
+    from lightgbm import LGBMClassifier, LGBMRegressor
 except Exception:
+    LGBMClassifier = None
     LGBMRegressor = None
 
 try:
-    from tabpfn import TabPFNRegressor
+    from tabpfn import TabPFNClassifier, TabPFNRegressor
     TABPFN_REGRESSOR_SOURCE = "tabpfn"
 except Exception:
     try:
-        from tabpfn_client import TabPFNRegressor
+        from tabpfn_client import TabPFNClassifier, TabPFNRegressor
         TABPFN_REGRESSOR_SOURCE = "tabpfn_client"
     except Exception:
+        TabPFNClassifier = None
         TabPFNRegressor = None
         TABPFN_REGRESSOR_SOURCE = "unavailable"
+
+TF_AVAILABLE_FOR_CNN = bool(importlib.util.find_spec("tensorflow") is not None)
 
 
 def detect_gpu_available() -> bool:
@@ -546,6 +581,7 @@ class DatasetSpec:
     leaderboard_summary: dict[str, Any] | None = None
     predefined_split_column: str | None = None
     auxiliary_feature_columns: list[str] | None = None
+    task_type: str | None = None
 
 
 @dataclass
@@ -947,6 +983,42 @@ def cfa_source_workflow_filter(args: argparse.Namespace) -> set[str] | None:
     return set(tokens)
 
 
+def select_cfa_best_payloads_per_workflow(
+    payloads: dict[str, dict[str, Any]],
+    *,
+    y_test: np.ndarray | pd.Series,
+    optimize_metric: str = "mae",
+) -> tuple[dict[str, dict[str, Any]], list[str]]:
+    """Select one best model payload per workflow label for CFA fusion."""
+    if not payloads:
+        return {}, []
+    y_true = np.asarray(y_test, dtype=float).reshape(-1)
+    metric_name = normalize_benchmark_metric(str(optimize_metric).strip().lower(), fallback="mae")
+    lower_is_better = metric_lower_is_better(metric_name)
+    ascending = True if lower_is_better is None else bool(lower_is_better)
+    workflow_best: dict[str, tuple[str, dict[str, Any], float]] = {}
+    notes: list[str] = []
+    for model_name, payload in payloads.items():
+        workflow_label = str(payload.get("workflow", "")).strip() or "Unknown"
+        pred_test = np.asarray(payload.get("test", []), dtype=float).reshape(-1)
+        if pred_test.size != y_true.size:
+            continue
+        score = float(compute_primary_metric(metric_name, y_true, pred_test))
+        if not np.isfinite(score):
+            continue
+        current = workflow_best.get(workflow_label)
+        if current is None:
+            workflow_best[workflow_label] = (str(model_name), payload, float(score))
+            continue
+        if (ascending and score < current[2]) or ((not ascending) and score > current[2]):
+            workflow_best[workflow_label] = (str(model_name), payload, float(score))
+    selected: dict[str, dict[str, Any]] = {}
+    for workflow_label, (model_name, payload, score) in workflow_best.items():
+        selected[model_name] = payload
+        notes.append(f"{workflow_label}: {model_name} ({metric_name}={score:.4f})")
+    return selected, notes
+
+
 def maplight_catboost_model_label(args: argparse.Namespace) -> str:
     if bool(getattr(args, "maplight_leaderboard_parity_mode", True)):
         return MAPLIGHT_CATBOOST_LABEL_STRICT
@@ -1007,7 +1079,11 @@ def evaluate_maplight_seeded_catboost(
     feature_source: str,
     primary_metric: str = "mae",
 ) -> tuple[dict[str, Any], np.ndarray, np.ndarray]:
-    if CatBoostRegressor is None:
+    task_type = current_dataset_task_type()
+    if task_type == "classification":
+        if CatBoostClassifier is None:
+            raise RuntimeError("CatBoost classifier is unavailable.")
+    elif CatBoostRegressor is None:
         raise RuntimeError("CatBoost is unavailable.")
     if not seed_values:
         raise ValueError("MapLight parity requires at least one seed.")
@@ -1015,25 +1091,42 @@ def evaluate_maplight_seeded_catboost(
     train_preds: list[np.ndarray] = []
     test_preds: list[np.ndarray] = []
     for seed_value in seed_values:
-        estimator = Pipeline(
-            [
-                ("imputer", SimpleImputer(strategy="median")),
-                ("scaler", StandardScaler()),
-                (
-                    "model",
-                    CatBoostRegressor(
-                        loss_function="MAE",
-                        eval_metric="MAE",
-                        random_seed=int(seed_value),
-                        verbose=False,
+        if task_type == "classification":
+            estimator = Pipeline(
+                [
+                    ("imputer", SimpleImputer(strategy="median")),
+                    ("scaler", StandardScaler()),
+                    (
+                        "model",
+                        CatBoostClassifier(
+                            loss_function="Logloss",
+                            eval_metric="AUC",
+                            random_seed=int(seed_value),
+                            verbose=False,
+                        ),
                     ),
-                ),
-            ]
-        )
+                ]
+            )
+        else:
+            estimator = Pipeline(
+                [
+                    ("imputer", SimpleImputer(strategy="median")),
+                    ("scaler", StandardScaler()),
+                    (
+                        "model",
+                        CatBoostRegressor(
+                            loss_function="MAE",
+                            eval_metric="MAE",
+                            random_seed=int(seed_value),
+                            verbose=False,
+                        ),
+                    ),
+                ]
+            )
         fitted = clone(estimator)
         fitted.fit(X_train, y_train)
-        train_preds.append(np.asarray(fitted.predict(X_train), dtype=float).reshape(-1))
-        test_preds.append(np.asarray(fitted.predict(X_test), dtype=float).reshape(-1))
+        train_preds.append(np.asarray(predict_values_for_metric(fitted, X_train, str(primary_metric)), dtype=float).reshape(-1))
+        test_preds.append(np.asarray(predict_values_for_metric(fitted, X_test, str(primary_metric)), dtype=float).reshape(-1))
 
     pred_train = np.mean(np.vstack(train_preds), axis=0)
     pred_test = np.mean(np.vstack(test_preds), axis=0)
@@ -1043,16 +1136,13 @@ def evaluate_maplight_seeded_catboost(
         "workflow": str(workflow_name),
         "cv_folds": int(max(1, len(seed_values))),
         "cv_split_strategy": "seed_ensemble_no_cv",
-        "cv_r2": np.nan,
-        "cv_rmse": np.nan,
-        "cv_mae": np.nan,
         "primary_metric": str(primary_metric),
         "cv_primary": np.nan,
         "primary_metric_value": float(primary_metric_value),
         "maplight_parity_mode": "strict",
         "maplight_seed_count": int(len(seed_values)),
         "maplight_seed_values": ",".join(str(int(seed_value)) for seed_value in seed_values),
-        "maplight_loss_function": "MAE",
+        "maplight_loss_function": "Logloss" if task_type == "classification" else "MAE",
         "maplight_scaler": "StandardScaler",
         "maplight_feature_source": str(feature_source),
     }
@@ -1509,6 +1599,10 @@ def load_tdc_datasets(path: str = "./data") -> list[DatasetSpec]:
     except Exception as exc:
         print(f"[skip] PyTDC benchmark datasets: {exc}")
         return datasets
+    data_root = Path(path)
+    data_root.mkdir(parents=True, exist_ok=True)
+    cache_root = data_root / "_autoqsar_cache" / "tdc_single_pred"
+    cache_root.mkdir(parents=True, exist_ok=True)
 
     def _normalize_tdc_frame_columns(frame: pd.DataFrame) -> pd.DataFrame:
         normalized = frame.copy()
@@ -1524,27 +1618,78 @@ def load_tdc_datasets(path: str = "./data") -> list[DatasetSpec]:
         normalized = normalized.rename(columns=rename_map)
         return normalized[["smiles", "target"]].copy()
 
+    def _cache_paths(dataset_name: str) -> tuple[Path, Path]:
+        safe_name = re.sub(r"[^A-Za-z0-9_.-]+", "_", str(dataset_name).strip())
+        return (
+            cache_root / f"{safe_name}.frame.pkl",
+            cache_root / f"{safe_name}.meta.json",
+        )
+
+    def _load_cached_dataset(dataset_name: str) -> tuple[pd.DataFrame, dict[str, Any]] | None:
+        frame_path, meta_path = _cache_paths(dataset_name)
+        if not frame_path.exists():
+            return None
+        try:
+            frame = pd.read_pickle(frame_path)
+        except Exception:
+            return None
+        if not isinstance(frame, pd.DataFrame):
+            return None
+        if not {"smiles", "target"}.issubset(set(frame.columns)):
+            return None
+        meta: dict[str, Any] = {}
+        if meta_path.exists():
+            try:
+                parsed = json.loads(meta_path.read_text(encoding="utf-8"))
+                if isinstance(parsed, dict):
+                    meta = dict(parsed)
+            except Exception:
+                meta = {}
+        return frame.copy(), meta
+
+    def _write_cached_dataset(
+        dataset_name: str,
+        frame: pd.DataFrame,
+        *,
+        source_label: str,
+        predefined_split_column: str | None,
+    ) -> None:
+        frame_path, meta_path = _cache_paths(dataset_name)
+        try:
+            frame.to_pickle(frame_path)
+            meta_payload = {
+                "source_label": str(source_label),
+                "predefined_split_column": str(predefined_split_column or ""),
+                "cached_at_utc": datetime.utcnow().isoformat(timespec="seconds"),
+            }
+            meta_path.write_text(json.dumps(meta_payload, indent=2), encoding="utf-8")
+        except Exception:
+            # Cache writes are best-effort and should not fail dataset loading.
+            pass
+
     benchmark_group = None
     benchmark_group_names: dict[str, str] = {}
     benchmark_group_error: Exception | None = None
-    try:
-        from tdc.benchmark_group import admet_group
+    benchmark_group_initialized = False
+    benchmark_group_error_reported = False
 
-        benchmark_group = admet_group(path=path)
-        names = list(getattr(benchmark_group, "dataset_names", []))
-        benchmark_group_names = {str(name).strip().lower(): str(name) for name in names}
-    except Exception as exc:
-        benchmark_group_error = exc
-        benchmark_group = None
+    def _ensure_benchmark_group_initialized() -> None:
+        nonlocal benchmark_group, benchmark_group_names, benchmark_group_error, benchmark_group_initialized
+        if benchmark_group_initialized:
+            return
+        benchmark_group_initialized = True
+        try:
+            from tdc.benchmark_group import admet_group
 
-    if benchmark_group is None and benchmark_group_error is not None:
-        print(
-            "[info] PyTDC benchmark-group split loader unavailable; "
-            f"falling back to single_pred datasets ({type(benchmark_group_error).__name__}: {benchmark_group_error})",
-            flush=True,
-        )
+            benchmark_group = admet_group(path=str(data_root))
+            names = list(getattr(benchmark_group, "dataset_names", []))
+            benchmark_group_names = {str(name).strip().lower(): str(name) for name in names}
+        except Exception as exc:
+            benchmark_group_error = exc
+            benchmark_group = None
 
     loader_by_task = {"ADME": ADME, "Tox": Tox}
+    resolve_label_name: Callable[[str, dict[str, Any]], str | None] | None = None
     for dataset_name, config in TDC_QSAR_OPTIONS.items():
         dataset_key = dataset_name.lower().strip()
         recommended_metric = admet_metrics.get(dataset_key) if isinstance(admet_metrics, dict) else None
@@ -1553,7 +1698,43 @@ def load_tdc_datasets(path: str = "./data") -> list[DatasetSpec]:
         source_label = f"PyTDC {config['task']} benchmark: {dataset_name}"
         predefined_split_column: str | None = None
 
-        benchmark_name = benchmark_group_names.get(dataset_key)
+        cached_payload = _load_cached_dataset(dataset_name)
+        if cached_payload is not None:
+            frame, cached_meta = cached_payload
+            cached_source_label = str(cached_meta.get("source_label", "")).strip()
+            cached_predefined_col = str(cached_meta.get("predefined_split_column", "")).strip()
+            if cached_source_label:
+                source_label = cached_source_label
+            if cached_predefined_col and cached_predefined_col in frame.columns:
+                predefined_split_column = cached_predefined_col
+                recommended_split = "predefined"
+            datasets.append(
+                DatasetSpec(
+                    f"tdc_{dataset_name}",
+                    source_label,
+                    frame,
+                    "smiles",
+                    "target",
+                    recommended_split=recommended_split,
+                    recommended_metric=recommended_metric,
+                    benchmark_suite="tdc",
+                    benchmark_id=dataset_name,
+                    leaderboard_url=TDC_LEADERBOARD_URLS.get(dataset_key),
+                    predefined_split_column=predefined_split_column,
+                )
+            )
+            continue
+
+        _ensure_benchmark_group_initialized()
+        if benchmark_group is None and benchmark_group_error is not None and not benchmark_group_error_reported:
+            print(
+                "[info] PyTDC benchmark-group split loader unavailable; "
+                f"falling back to single_pred datasets ({type(benchmark_group_error).__name__}: {benchmark_group_error})",
+                flush=True,
+            )
+            benchmark_group_error_reported = True
+
+        benchmark_name = benchmark_group_names.get(dataset_key) if benchmark_group is not None else None
         if benchmark_group is not None and benchmark_name:
             try:
                 benchmark_payload = benchmark_group.get(benchmark_name)
@@ -1578,9 +1759,42 @@ def load_tdc_datasets(path: str = "./data") -> list[DatasetSpec]:
 
         try:
             if frame is None:
-                loader = loader_by_task[config["task"]](name=dataset_name, path=path, print_stats=False)
+                loader_kwargs: dict[str, Any] = {"name": dataset_name, "path": str(data_root), "print_stats": False}
+                label_name = str(config.get("label_name", "")).strip() or None
+                if label_name is None and bool(config.get("auto_label_name")):
+                    if resolve_label_name is None:
+                        try:
+                            from tdc.utils import retrieve_label_name_list
+
+                            def _resolve_label_name(loader_dataset_name: str, loader_config: dict[str, Any]) -> str | None:
+                                dataset = str(loader_dataset_name).strip()
+                                key = str(loader_config.get("label_name_key", dataset)).strip()
+                                names = list(retrieve_label_name_list(key))
+                                return str(names[0]).strip() if names else None
+
+                            resolve_label_name = _resolve_label_name
+                        except Exception:
+                            resolve_label_name = lambda _dataset, _cfg: None
+                    label_name = resolve_label_name(dataset_name, config)
+                    if label_name:
+                        source_label = f"{source_label} [label={label_name}]"
+                    else:
+                        print(
+                            f"[warn] PyTDC {dataset_name} requires label_name but no labels were discovered; skipping.",
+                            flush=True,
+                        )
+                        continue
+                if label_name:
+                    loader_kwargs["label_name"] = label_name
+                loader = loader_by_task[config["task"]](**loader_kwargs)
                 frame = loader.get_data().copy()
                 frame = _normalize_tdc_frame_columns(frame)
+            _write_cached_dataset(
+                dataset_name,
+                frame,
+                source_label=source_label,
+                predefined_split_column=predefined_split_column,
+            )
             datasets.append(
                 DatasetSpec(
                     f"tdc_{dataset_name}",
@@ -1852,6 +2066,55 @@ def load_polaris_adme_datasets(path: str = "./data/polaris_adme") -> list[Datase
     return datasets
 
 
+def load_poduam_pod_datasets(path: str = "./data/poduam") -> list[DatasetSpec]:
+    datasets: list[DatasetSpec] = []
+    data_root = Path(path)
+    for config in PODUAM_POD_OPTIONS.values():
+        try:
+            source_url = str(config.get("source_url", "")).strip()
+            if not source_url:
+                raise ValueError("missing source_url")
+            csv_name = Path(source_url.split("?")[0]).name
+            frame = download_csv_with_cache(source_url, data_root / csv_name)
+            raw_columns = list(frame.columns)
+
+            source_smiles = str(config.get("source_smiles_column", config.get("smiles_column", "SMILES"))).strip()
+            source_target = str(config.get("source_target_column", config.get("target_column", "POD_logmol"))).strip()
+            out_smiles = str(config.get("smiles_column", "SMILES")).strip() or "SMILES"
+            out_target = str(config.get("target_column", "POD_logmol")).strip() or "POD_logmol"
+
+            smiles_column = infer_column(raw_columns, [source_smiles, out_smiles, "Canonical_QSARr", "SMILES", "smiles"])
+            target_column = infer_column(raw_columns, [source_target, out_target, "POD_logmol", "y", "target"])
+            if smiles_column is None or target_column is None:
+                raise ValueError(
+                    f"could not infer PODUAM SMILES/target columns from {raw_columns} "
+                    f"(smiles tried: {source_smiles}, target tried: {source_target})"
+                )
+
+            frame = frame.rename(columns={smiles_column: out_smiles, target_column: out_target})
+            frame = frame[[out_smiles, out_target]].copy()
+            frame = frame.dropna(subset=[out_smiles, out_target]).reset_index(drop=True)
+
+            datasets.append(
+                DatasetSpec(
+                    str(config["dataset_name"]),
+                    str(config["source_label"]),
+                    frame,
+                    out_smiles,
+                    out_target,
+                    recommended_split=str(config.get("recommended_split", "stratified")),
+                    recommended_metric=str(config.get("recommended_metric", "rmse")),
+                    benchmark_suite=str(config.get("benchmark_suite", "literature")),
+                    benchmark_id=str(config.get("benchmark_id", config["dataset_name"])),
+                    leaderboard_url=str(config.get("benchmark_url") or config.get("leaderboard_url") or ""),
+                    leaderboard_summary=dict(config.get("leaderboard_summary", {})),
+                )
+            )
+        except Exception as exc:
+            print(f"[skip] PODUAM {config.get('dataset_name', 'unknown')}: {exc}")
+    return datasets
+
+
 def leaderboard_topk_rows(
     table: pd.DataFrame,
     *,
@@ -2078,6 +2341,7 @@ def discover_default_example_datasets(root: Path) -> list[DatasetSpec]:
     datasets.extend(load_tdc_datasets(path=str(root / "data")))
     datasets.extend(load_moleculenet_physchem_datasets(path=str(root / "data" / "moleculenet")))
     datasets.extend(load_polaris_adme_datasets(path=str(root / "data" / "polaris_adme")))
+    datasets.extend(load_poduam_pod_datasets(path=str(root / "data" / "poduam")))
     return [attach_leaderboard_summary(item) for item in datasets]
 
 
@@ -2127,6 +2391,21 @@ def discover_benchmark_catalog_for_leaderboards() -> list[DatasetSpec]:
                 leaderboard_url=str(cfg.get("benchmark_url", "")),
             )
         )
+    for cfg in PODUAM_POD_OPTIONS.values():
+        specs.append(
+            DatasetSpec(
+                name=str(cfg.get("dataset_name")),
+                source=str(cfg.get("source_label")),
+                frame=placeholder.copy(),
+                smiles_column=str(cfg.get("smiles_column", "SMILES")),
+                target_column=str(cfg.get("target_column", "POD_logmol")),
+                recommended_split=str(cfg.get("recommended_split", "stratified")),
+                benchmark_suite=str(cfg.get("benchmark_suite", "literature")),
+                benchmark_id=str(cfg.get("benchmark_id", cfg.get("dataset_name"))),
+                leaderboard_url=str(cfg.get("benchmark_url") or cfg.get("leaderboard_url", "")),
+                leaderboard_summary=dict(cfg.get("leaderboard_summary", {})),
+            )
+        )
     return [attach_leaderboard_summary(item) for item in specs]
 
 
@@ -2171,6 +2450,17 @@ def normalize_benchmark_metric(recommended_metric: str | None, fallback: str = "
     if not recommended_metric:
         return fallback
     text = str(recommended_metric).strip().lower()
+    compact = text.replace(" ", "").replace("_", "").replace("-", "")
+    if compact in {"rocauc", "auroc", "aucroc", "auc"} or "roc-auc" in text or "roc_auc" in text:
+        return "roc_auc"
+    if compact in {"auprc", "prauc", "averageprecision", "avgprecision"} or "pr-auc" in text or "average precision" in text:
+        return "auprc"
+    if compact in {"balancedaccuracy", "balacc", "bac"} or "balanced accuracy" in text:
+        return "balanced_accuracy"
+    if compact in {"mcc", "matthewscorrcoef", "matthewscorrelationcoefficient"}:
+        return "mcc"
+    if compact in {"accuracy", "acc"}:
+        return "accuracy"
     if "mean_squared_error" in text or text == "mse":
         return "mse"
     if "rmse" in text:
@@ -2189,7 +2479,58 @@ def normalize_benchmark_metric(recommended_metric: str | None, fallback: str = "
 def current_dataset_primary_metric(fallback: str = "rmse") -> str:
     if CURRENT_DATASET_SPEC is not None and CURRENT_DATASET_SPEC.recommended_metric:
         return normalize_benchmark_metric(CURRENT_DATASET_SPEC.recommended_metric, fallback=fallback)
+    if CURRENT_DATASET_SPEC is not None:
+        try:
+            target_col = str(getattr(CURRENT_DATASET_SPEC, "target_column", "") or "").strip()
+            frame = getattr(CURRENT_DATASET_SPEC, "frame", None)
+            if target_col and isinstance(frame, pd.DataFrame) and target_col in frame.columns:
+                target_values = pd.to_numeric(frame[target_col], errors="coerce").dropna()
+                if is_strict_binary_zero_one_target(target_values):
+                    return "roc_auc"
+                if len(pd.unique(target_values)) == 2:
+                    return "roc_auc"
+        except Exception:
+            pass
     return str(fallback).strip().lower()
+
+
+def is_strict_binary_zero_one_target(values: Any) -> bool:
+    try:
+        series = pd.to_numeric(pd.Series(values), errors="coerce").dropna()
+    except Exception:
+        return False
+    if series.empty:
+        return False
+    unique_values = np.sort(pd.unique(series.to_numpy(dtype=float)))
+    if len(unique_values) != 2:
+        return False
+    return bool(np.isclose(unique_values[0], 0.0) and np.isclose(unique_values[1], 1.0))
+
+
+def is_classification_metric(metric_name: str) -> bool:
+    metric = normalize_benchmark_metric(metric_name, fallback=str(metric_name or "").strip().lower())
+    return metric in {"roc_auc", "auprc", "accuracy", "balanced_accuracy", "mcc"}
+
+
+def current_dataset_task_type() -> str:
+    if CURRENT_DATASET_SPEC is not None:
+        explicit_task = str(getattr(CURRENT_DATASET_SPEC, "task_type", "") or "").strip().lower()
+        if explicit_task in {"classification", "regression"}:
+            return explicit_task
+        try:
+            target_col = str(getattr(CURRENT_DATASET_SPEC, "target_column", "") or "").strip()
+            frame = getattr(CURRENT_DATASET_SPEC, "frame", None)
+            if target_col and isinstance(frame, pd.DataFrame) and target_col in frame.columns:
+                target_values = pd.to_numeric(frame[target_col], errors="coerce").dropna()
+                if is_strict_binary_zero_one_target(target_values):
+                    return "classification"
+                unique_values = sorted(pd.unique(target_values))
+                if len(unique_values) == 2:
+                    return "classification"
+        except Exception:
+            pass
+    primary_metric = current_dataset_primary_metric("rmse")
+    return "classification" if is_classification_metric(primary_metric) else "regression"
 
 
 def parse_first_float(value: Any) -> float | None:
@@ -2219,10 +2560,21 @@ def parse_first_int(value: Any) -> int | None:
 
 
 def metric_lower_is_better(metric_name: str) -> bool | None:
-    metric = str(metric_name or "").strip().lower()
+    metric = normalize_benchmark_metric(metric_name, fallback=str(metric_name or "").strip().lower())
     if metric in {"rmse", "mae", "mse", "mean_squared_error", "mean_absolute_error"}:
         return True
-    if metric in {"r2", "pearson", "pearsonr", "spearman", "spearmanr"}:
+    if metric in {
+        "r2",
+        "pearson",
+        "pearsonr",
+        "spearman",
+        "spearmanr",
+        "roc_auc",
+        "auprc",
+        "accuracy",
+        "balanced_accuracy",
+        "mcc",
+    }:
         return False
     return None
 
@@ -2670,31 +3022,91 @@ def leaderboard_comparison_by_dataset(summary_df: pd.DataFrame) -> pd.DataFrame:
 
 
 def compute_primary_metric(metric_name: str, y_true: np.ndarray, y_pred: np.ndarray) -> float:
-    metric = str(metric_name).strip().lower()
+    metric = normalize_benchmark_metric(metric_name, fallback=str(metric_name).strip().lower())
+    y_true_series = pd.Series(y_true, dtype=float).reset_index(drop=True)
+    y_pred_series = pd.Series(y_pred, dtype=float).reset_index(drop=True)
+
+    def _binary_labels(values: pd.Series) -> np.ndarray:
+        uniques = sorted(values.dropna().unique().tolist())
+        if len(uniques) != 2:
+            raise ValueError(f"Binary classification metrics require exactly two classes; found {len(uniques)} classes.")
+        mapping = {float(uniques[0]): 0, float(uniques[1]): 1}
+        mapped = values.map(mapping)
+        if mapped.isna().any():
+            raise ValueError("Binary classification metric mapping failed due to unexpected label values.")
+        return mapped.astype(int).to_numpy()
+
+    def _binary_scores(values: pd.Series) -> np.ndarray:
+        arr = values.to_numpy(dtype=float)
+        finite = np.isfinite(arr)
+        if not bool(finite.any()):
+            return np.zeros(len(arr), dtype=float)
+        if float(np.nanmin(arr)) >= 0.0 and float(np.nanmax(arr)) <= 1.0:
+            return arr
+        clipped = np.clip(arr, -30.0, 30.0)
+        return 1.0 / (1.0 + np.exp(-clipped))
+
+    def _binary_predictions(values: pd.Series) -> np.ndarray:
+        scores = _binary_scores(values)
+        return (scores >= 0.5).astype(int)
+
     if metric == "rmse":
-        return float(math.sqrt(mean_squared_error(y_true, y_pred)))
+        return float(math.sqrt(mean_squared_error(y_true_series, y_pred_series)))
     if metric in {"mse", "mean_squared_error"}:
-        return float(mean_squared_error(y_true, y_pred))
+        return float(mean_squared_error(y_true_series, y_pred_series))
     if metric == "mae":
-        return float(mean_absolute_error(y_true, y_pred))
+        return float(mean_absolute_error(y_true_series, y_pred_series))
     if metric == "r2":
-        return float(r2_score(y_true, y_pred))
+        return float(r2_score(y_true_series, y_pred_series))
+    if metric == "roc_auc":
+        try:
+            y_bin = _binary_labels(y_true_series)
+            y_score = _binary_scores(y_pred_series)
+            return float(roc_auc_score(y_bin, y_score))
+        except Exception:
+            return float("nan")
+    if metric == "auprc":
+        try:
+            y_bin = _binary_labels(y_true_series)
+            y_score = _binary_scores(y_pred_series)
+            return float(average_precision_score(y_bin, y_score))
+        except Exception:
+            return float("nan")
+    if metric == "accuracy":
+        try:
+            y_bin = _binary_labels(y_true_series)
+            y_hat = _binary_predictions(y_pred_series)
+            return float(accuracy_score(y_bin, y_hat))
+        except Exception:
+            return float("nan")
+    if metric == "balanced_accuracy":
+        try:
+            y_bin = _binary_labels(y_true_series)
+            y_hat = _binary_predictions(y_pred_series)
+            return float(balanced_accuracy_score(y_bin, y_hat))
+        except Exception:
+            return float("nan")
+    if metric == "mcc":
+        try:
+            y_bin = _binary_labels(y_true_series)
+            y_hat = _binary_predictions(y_pred_series)
+            return float(matthews_corrcoef(y_bin, y_hat))
+        except Exception:
+            return float("nan")
     if metric in {"spearman", "pearson"}:
         try:
             from scipy.stats import spearmanr, pearsonr
 
             if metric == "spearman":
-                return float(spearmanr(y_true, y_pred).correlation)
-            return float(pearsonr(y_true, y_pred).statistic)
+                return float(spearmanr(y_true_series, y_pred_series).correlation)
+            return float(pearsonr(y_true_series, y_pred_series).statistic)
         except Exception:
-            series_true = pd.Series(y_true, dtype=float)
-            series_pred = pd.Series(y_pred, dtype=float)
-            return float(series_true.corr(series_pred, method=metric))
-    return float(math.sqrt(mean_squared_error(y_true, y_pred)))
+            return float(y_true_series.corr(y_pred_series, method=metric))
+    return float(math.sqrt(mean_squared_error(y_true_series, y_pred_series)))
 
 
 def primary_metric_scorer(metric_name: str):
-    metric = str(metric_name).strip().lower()
+    metric = normalize_benchmark_metric(metric_name, fallback=str(metric_name).strip().lower())
     if metric == "rmse":
         return make_scorer(lambda y_true, y_pred: math.sqrt(mean_squared_error(y_true, y_pred)), greater_is_better=False)
     if metric in {"mse", "mean_squared_error"}:
@@ -2703,6 +3115,11 @@ def primary_metric_scorer(metric_name: str):
         return make_scorer(mean_absolute_error, greater_is_better=False)
     if metric == "r2":
         return make_scorer(r2_score)
+    if metric in {"roc_auc", "auprc", "accuracy", "balanced_accuracy", "mcc"}:
+        def classifier_metric_scorer(estimator, X, y_true):
+            y_pred = predict_values_for_metric(estimator, X, metric)
+            return compute_primary_metric(metric, y_true, y_pred)
+        return classifier_metric_scorer
     if metric in {"spearman", "pearson"}:
         def corr_score(y_true, y_pred):
             try:
@@ -2767,7 +3184,7 @@ def resolve_dataset_log10_target(spec: DatasetSpec, args: argparse.Namespace) ->
         return True
     if mode == "raw":
         return False
-    if str(spec.benchmark_suite or "").strip().lower() in {"tdc", "moleculenet", "polaris"}:
+    if str(spec.benchmark_suite or "").strip().lower() in {"tdc", "moleculenet", "polaris", "literature"}:
         return False
     return bool(getattr(args, "log10_target", True))
 
@@ -2823,9 +3240,8 @@ def split_data(
     elif split_strategy in {"random", "target_quartiles"}:
         stratify = None
         if split_strategy == "target_quartiles":
-            try:
-                stratify = target_quartile_labels(y)
-            except Exception:
+            stratify = target_quartile_labels(y)
+            if stratify is None:
                 print("[info] quartile split unavailable; falling back to random split.")
                 split_strategy = "random"
         X_train, X_test, y_train, y_test, smiles_train, smiles_test = train_test_split(
@@ -3176,13 +3592,25 @@ def select_features(
 
 
 def regression_metrics(y_train, pred_train, y_test, pred_test) -> dict[str, float]:
+    if current_dataset_task_type() == "classification":
+        return {
+            "train_roc_auc": compute_primary_metric("roc_auc", y_train, pred_train),
+            "test_roc_auc": compute_primary_metric("roc_auc", y_test, pred_test),
+            "train_auprc": compute_primary_metric("auprc", y_train, pred_train),
+            "test_auprc": compute_primary_metric("auprc", y_test, pred_test),
+            "train_balanced_accuracy": compute_primary_metric("balanced_accuracy", y_train, pred_train),
+            "test_balanced_accuracy": compute_primary_metric("balanced_accuracy", y_test, pred_test),
+            "train_mcc": compute_primary_metric("mcc", y_train, pred_train),
+            "test_mcc": compute_primary_metric("mcc", y_test, pred_test),
+        }
+
     train_series = pd.Series(y_train, dtype=float)
     train_pred_series = pd.Series(pred_train, dtype=float)
     test_series = pd.Series(y_test, dtype=float)
     test_pred_series = pd.Series(pred_test, dtype=float)
     train_spearman = train_series.corr(train_pred_series, method="spearman")
     test_spearman = test_series.corr(test_pred_series, method="spearman")
-    return {
+    metrics = {
         "train_r2": float(r2_score(y_train, pred_train)),
         "train_rmse": float(math.sqrt(mean_squared_error(y_train, pred_train))),
         "train_mae": float(mean_absolute_error(y_train, pred_train)),
@@ -3192,6 +3620,7 @@ def regression_metrics(y_train, pred_train, y_test, pred_test) -> dict[str, floa
         "test_mae": float(mean_absolute_error(y_test, pred_test)),
         "test_spearman": float(test_spearman) if pd.notna(test_spearman) else np.nan,
     }
+    return metrics
 
 
 def add_leaderboard_reference_columns(
@@ -3258,17 +3687,150 @@ def conventional_models(
     smiles_train: pd.Series,
     split_strategy_for_cv: str | None = None,
 ) -> dict[str, Any]:
+    task_type = current_dataset_task_type()
     finite_numeric = FunctionTransformer(
         np.nan_to_num,
         kw_args={"nan": np.nan, "posinf": np.nan, "neginf": np.nan},
         validate=False,
     )
+    if task_type == "classification":
+        models: dict[str, Any] = {
+            "LogisticRegression": Pipeline(
+                [
+                    ("imputer", SimpleImputer(strategy="median")),
+                    ("scaler", StandardScaler()),
+                    ("model", LogisticRegression(max_iter=1000, random_state=args.random_seed)),
+                ]
+            ),
+            "SVC": Pipeline(
+                [
+                    ("imputer", SimpleImputer(strategy="median")),
+                    ("scaler", StandardScaler()),
+                    ("model", SVC(C=10.0, gamma="scale", probability=True, random_state=args.random_seed)),
+                ]
+            ),
+            "Random forest": RandomForestClassifier(n_estimators=400, random_state=args.random_seed, n_jobs=1),
+            "Extra trees": ExtraTreesClassifier(
+                n_estimators=500,
+                random_state=args.random_seed,
+                n_jobs=1,
+            ),
+            "HistGradientBoosting": Pipeline(
+                [
+                    ("finite", finite_numeric),
+                    ("imputer", SimpleImputer(strategy="median")),
+                    (
+                        "model",
+                        HistGradientBoostingClassifier(
+                            learning_rate=0.05,
+                            max_iter=500,
+                            max_depth=8,
+                            random_state=args.random_seed,
+                        ),
+                    ),
+                ]
+            ),
+            "Voting Classifier (KNN, SVM)": VotingClassifier(
+                estimators=[
+                    (
+                        "knn",
+                        Pipeline(
+                            [
+                                ("imputer", SimpleImputer(strategy="median")),
+                                ("scaler", StandardScaler()),
+                                ("model", KNeighborsClassifier(n_neighbors=15, weights="distance")),
+                            ]
+                        ),
+                    ),
+                    (
+                        "svc",
+                        Pipeline(
+                            [
+                                ("imputer", SimpleImputer(strategy="median")),
+                                ("scaler", StandardScaler()),
+                                ("model", SVC(C=10.0, gamma="scale", probability=True, random_state=args.random_seed)),
+                            ]
+                        ),
+                    ),
+                ],
+                voting="soft",
+            ),
+            "AdaBoost": AdaBoostClassifier(
+                n_estimators=500,
+                learning_rate=0.05,
+                random_state=args.random_seed,
+            ),
+            "Tabular MLP": Pipeline(
+                [
+                    ("imputer", SimpleImputer(strategy="median")),
+                    ("scaler", StandardScaler()),
+                    (
+                        "model",
+                        MLPClassifier(
+                            hidden_layer_sizes=(512, 256),
+                            activation="relu",
+                            solver="adam",
+                            alpha=1e-4,
+                            learning_rate_init=1e-3,
+                            max_iter=300,
+                            random_state=args.random_seed,
+                        ),
+                    ),
+                ]
+            ),
+        }
+        if XGBClassifier is not None:
+            models["XGBoost"] = XGBClassifier(
+                n_estimators=400,
+                max_depth=6,
+                learning_rate=0.05,
+                subsample=0.9,
+                colsample_bytree=0.9,
+                objective="binary:logistic",
+                eval_metric="auc",
+                random_state=args.random_seed,
+                n_jobs=1,
+            )
+        if LGBMClassifier is not None:
+            models["LightGBM"] = LGBMClassifier(
+                n_estimators=500,
+                learning_rate=0.05,
+                num_leaves=63,
+                subsample=0.9,
+                colsample_bytree=0.9,
+                random_state=args.random_seed,
+                n_jobs=1,
+            )
+        if CatBoostClassifier is not None:
+            models["CatBoost"] = CatBoostClassifier(
+                iterations=400,
+                depth=6,
+                learning_rate=0.05,
+                loss_function="Logloss",
+                random_seed=args.random_seed,
+                verbose=False,
+            )
+        if (
+            bool(getattr(args, "run_tabpfn", False))
+            and TabPFNClassifier is not None
+            and int(X_train.shape[0]) <= int(getattr(args, "tabpfn_max_train_rows", 1000))
+        ):
+            models["TabPFNClassifier"] = Pipeline(
+                [
+                    ("imputer", SimpleImputer(strategy="median")),
+                    ("scaler", StandardScaler()),
+                    ("model", TabPFNClassifier()),
+                ]
+            )
+        models["_elasticnet_cv_meta"] = {}
+        return models
+
     elasticnet_cv, elasticnet_cv_folds, elasticnet_cv_strategy = make_reusable_inner_cv_splitter(
         split_strategy=str(split_strategy_for_cv or args.split_strategy),
         cv_folds=args.elasticnet_cv_folds,
         random_seed=args.random_seed,
     )
-    models: dict[str, Any] = {
+    models = {
         "ElasticNetCV": Pipeline(
             [
                 ("imputer", SimpleImputer(strategy="median")),
@@ -3362,6 +3924,29 @@ def conventional_models(
             ]
         ),
     }
+    if bool(getattr(args, "run_cnn", True)) and TF_AVAILABLE_FOR_CNN:
+        models["Tabular CNN"] = Pipeline(
+            [
+                ("imputer", SimpleImputer(strategy="median")),
+                ("scaler", StandardScaler()),
+                (
+                    "model",
+                    TabularCNNRegressor(
+                        conv_filters=64,
+                        kernel_size=5,
+                        dense_units=128,
+                        dropout_rate=0.1,
+                        learning_rate=1e-3,
+                        epochs=35,
+                        batch_size=64,
+                        validation_split=0.1,
+                        early_stopping_patience=5,
+                        random_seed=int(args.random_seed),
+                        verbose=0,
+                    ),
+                ),
+            ]
+        )
     if XGBRegressor is not None:
         models["XGBoost"] = XGBRegressor(
             n_estimators=400,
@@ -3424,6 +4009,37 @@ def conventional_models(
     return models
 
 
+@contextlib.contextmanager
+def _suppress_console_noise(enabled: bool):
+    if not bool(enabled):
+        yield
+        return
+    with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+        yield
+
+
+def predict_values_for_metric(estimator: Any, X, metric_name: str) -> np.ndarray:
+    metric = normalize_benchmark_metric(metric_name, fallback=str(metric_name).strip().lower())
+    if metric in {"roc_auc", "auprc", "accuracy", "balanced_accuracy", "mcc"}:
+        try:
+            if hasattr(estimator, "predict_proba"):
+                probs = np.asarray(estimator.predict_proba(X), dtype=float)
+                if probs.ndim == 2 and probs.shape[1] >= 2:
+                    return probs[:, 1].reshape(-1)
+                return probs.reshape(-1)
+        except Exception:
+            pass
+        try:
+            if hasattr(estimator, "decision_function"):
+                decision = np.asarray(estimator.decision_function(X), dtype=float)
+                if decision.ndim == 2 and decision.shape[1] >= 2:
+                    return decision[:, 1].reshape(-1)
+                return decision.reshape(-1)
+        except Exception:
+            pass
+    return np.asarray(estimator.predict(X), dtype=float).reshape(-1)
+
+
 def evaluate_model(
     name: str,
     estimator: Any,
@@ -3441,10 +4057,7 @@ def evaluate_model(
         allow_predefined=False,
     )
     if primary_metric is None:
-        if CURRENT_DATASET_SPEC is not None and CURRENT_DATASET_SPEC.recommended_metric:
-            primary_metric = normalize_benchmark_metric(CURRENT_DATASET_SPEC.recommended_metric, fallback="rmse")
-        else:
-            primary_metric = "rmse"
+        primary_metric = current_dataset_primary_metric("rmse")
     cv, cv_folds, cv_split_strategy = make_qsar_cv_splitter(
         X_train,
         y_train,
@@ -3453,24 +4066,37 @@ def evaluate_model(
         cv_folds=args.cv_folds,
         random_seed=args.random_seed,
     )
+    suppress_model_noise = bool(getattr(args, "suppress_tabpfn_progress", True)) and str(name).strip().lower() in {"tabpfnregressor", "tabpfnclassifier"}
     primary_scorer = primary_metric_scorer(primary_metric)
-    scores = cross_validate(
-        clone(estimator),
-        X_train,
-        y_train,
-        cv=cv,
-        scoring={
-            "r2": "r2",
-            "mae": "neg_mean_absolute_error",
-            "mse": "neg_mean_squared_error",
-            "primary": primary_scorer,
-        },
-        n_jobs=1,
-    )
-    fitted = clone(estimator)
-    fitted.fit(X_train, y_train)
-    pred_train = np.asarray(fitted.predict(X_train)).reshape(-1)
-    pred_test = np.asarray(fitted.predict(X_test)).reshape(-1)
+    task_type = current_dataset_task_type()
+    with _suppress_console_noise(suppress_model_noise):
+        if task_type == "classification":
+            scoring = {
+                "roc_auc": primary_metric_scorer("roc_auc"),
+                "auprc": primary_metric_scorer("auprc"),
+                "balanced_accuracy": primary_metric_scorer("balanced_accuracy"),
+                "mcc": primary_metric_scorer("mcc"),
+                "primary": primary_scorer,
+            }
+        else:
+            scoring = {
+                "r2": "r2",
+                "mae": "neg_mean_absolute_error",
+                "mse": "neg_mean_squared_error",
+                "primary": primary_scorer,
+            }
+        scores = cross_validate(
+            clone(estimator),
+            X_train,
+            y_train,
+            cv=cv,
+            scoring=scoring,
+            n_jobs=1,
+        )
+        fitted = clone(estimator)
+        fitted.fit(X_train, y_train)
+        pred_train = predict_values_for_metric(fitted, X_train, str(primary_metric))
+        pred_test = predict_values_for_metric(fitted, X_test, str(primary_metric))
     primary_test_value = compute_primary_metric(primary_metric, y_test, pred_test)
     primary_cv_values = scores.get("test_primary")
     if primary_cv_values is not None and len(primary_cv_values):
@@ -3484,12 +4110,26 @@ def evaluate_model(
         "workflow": "conventional",
         "cv_folds": int(cv_folds),
         "cv_split_strategy": cv_split_strategy,
-        "cv_r2": float(np.mean(scores["test_r2"])),
-        "cv_rmse": float(np.mean(np.sqrt(-scores["test_mse"]))),
-        "cv_mae": float(np.mean(-scores["test_mae"])),
         "primary_metric": primary_metric,
         "cv_primary": primary_cv,
     }
+    if task_type == "classification":
+        row.update(
+            {
+                "cv_roc_auc": float(np.mean(scores["test_roc_auc"])) if "test_roc_auc" in scores else np.nan,
+                "cv_auprc": float(np.mean(scores["test_auprc"])) if "test_auprc" in scores else np.nan,
+                "cv_balanced_accuracy": float(np.mean(scores["test_balanced_accuracy"])) if "test_balanced_accuracy" in scores else np.nan,
+                "cv_mcc": float(np.mean(scores["test_mcc"])) if "test_mcc" in scores else np.nan,
+            }
+        )
+    else:
+        row.update(
+            {
+                "cv_r2": float(np.mean(scores["test_r2"])),
+                "cv_rmse": float(np.mean(np.sqrt(-scores["test_mse"]))),
+                "cv_mae": float(np.mean(-scores["test_mae"])),
+            }
+        )
     row.update(regression_metrics(y_train, pred_train, y_test, pred_test))
     row["primary_metric_value"] = primary_test_value
     row = add_leaderboard_reference_columns(
@@ -3499,9 +4139,11 @@ def evaluate_model(
     )
     step = fitted.named_steps.get("model") if hasattr(fitted, "named_steps") else fitted
     if hasattr(step, "alpha_") or hasattr(step, "alpha"):
-        row["model_alpha"] = float(getattr(step, "alpha_", getattr(step, "alpha", np.nan)))
+        alpha_value = pd.to_numeric(getattr(step, "alpha_", getattr(step, "alpha", np.nan)), errors="coerce")
+        row["model_alpha"] = float(alpha_value) if pd.notna(alpha_value) else np.nan
     if hasattr(step, "l1_ratio_") or hasattr(step, "l1_ratio"):
-        row["model_l1_ratio"] = float(getattr(step, "l1_ratio_", getattr(step, "l1_ratio", np.nan)))
+        l1_ratio_value = pd.to_numeric(getattr(step, "l1_ratio_", getattr(step, "l1_ratio", np.nan)), errors="coerce")
+        row["model_l1_ratio"] = float(l1_ratio_value) if pd.notna(l1_ratio_value) else np.nan
     return row, pred_train, pred_test
 
 
@@ -3524,6 +4166,60 @@ def mutate_value(value: Any, spec: dict[str, Any], rng: random.Random, probabili
 
 
 def ga_model_specs(args: argparse.Namespace):
+    task_type = current_dataset_task_type()
+    if task_type == "classification":
+        specs: dict[str, tuple[Any, dict[str, dict[str, Any]], Any]] = {
+            "ElasticNet": (
+                lambda p: Pipeline(
+                    [
+                        ("imputer", SimpleImputer(strategy="median")),
+                        ("scaler", StandardScaler()),
+                        (
+                            "model",
+                            LogisticRegression(
+                                penalty="elasticnet",
+                                solver="saga",
+                                C=float(np.exp(p["log_inv_alpha"])),
+                                l1_ratio=float(p["l1_ratio"]),
+                                max_iter=args.elasticnet_max_iter,
+                                random_state=args.random_seed,
+                            ),
+                        ),
+                    ]
+                ),
+                {
+                    "log_inv_alpha": {"uniform": [float(np.log(1e-2)), float(np.log(1e2))]},
+                    "l1_ratio": {"choice": parse_l1_grid(args.elasticnet_l1_ratio_grid)},
+                },
+                lambda p: {"C": float(np.exp(p["log_inv_alpha"])), "l1_ratio": float(p["l1_ratio"])},
+            )
+        }
+        if CatBoostClassifier is not None:
+            specs["CatBoost"] = (
+                lambda p: CatBoostClassifier(
+                    iterations=int(p["iterations"]),
+                    depth=int(p["depth"]),
+                    learning_rate=float(np.exp(p["log_learning_rate"])),
+                    l2_leaf_reg=float(np.exp(p["log_l2_leaf_reg"])),
+                    loss_function="Logloss",
+                    random_seed=args.random_seed,
+                    verbose=False,
+                ),
+                {
+                    "iterations": {"int": [200, 800]},
+                    "depth": {"int": [4, 8]},
+                    "log_learning_rate": {"uniform": [float(np.log(0.01)), float(np.log(0.2))]},
+                    "log_l2_leaf_reg": {"uniform": [float(np.log(1.0)), float(np.log(10.0))]},
+                },
+                lambda p: {
+                    "iterations": int(p["iterations"]),
+                    "depth": int(p["depth"]),
+                    "learning_rate": float(np.exp(p["log_learning_rate"])),
+                    "l2_leaf_reg": float(np.exp(p["log_l2_leaf_reg"])),
+                },
+            )
+        return specs
+
     specs = {
         "ElasticNet": (
             lambda p: Pipeline(
@@ -3601,19 +4297,34 @@ def run_simple_ga(
     cv_splits = list(cv) if isinstance(cv, list) else list(cv.split(X_train, y_train))
     if not cv_splits:
         raise ValueError("GA tuning could not build any cross-validation splits.")
+    primary_metric = current_dataset_primary_metric("rmse")
+    lower_is_better = metric_lower_is_better(primary_metric)
+    if lower_is_better is None:
+        lower_is_better = True
+
+    def _primary_to_objective(value: float) -> float:
+        if not np.isfinite(float(value)):
+            return float("inf")
+        return float(value) if bool(lower_is_better) else float(-value)
+
+    def _objective_to_primary(value: float) -> float:
+        if not np.isfinite(float(value)):
+            return float("nan")
+        return float(value) if bool(lower_is_better) else float(-value)
 
     def random_individual():
         return {key: sample_value(space[key], rng) for key in keys}
 
     def score(individual):
         estimator = build_estimator(individual)
-        rmses = []
+        fold_objectives = []
         for train_idx, valid_idx in cv_splits:
             fitted = clone(estimator)
             fitted.fit(X_train.iloc[train_idx], y_train.iloc[train_idx])
-            pred = np.asarray(fitted.predict(X_train.iloc[valid_idx])).reshape(-1)
-            rmses.append(math.sqrt(mean_squared_error(y_train.iloc[valid_idx], pred)))
-        return float(np.mean(rmses))
+            pred = predict_values_for_metric(fitted, X_train.iloc[valid_idx], primary_metric)
+            primary_value = compute_primary_metric(primary_metric, y_train.iloc[valid_idx], pred)
+            fold_objectives.append(_primary_to_objective(primary_value))
+        return float(np.mean(fold_objectives))
 
     population = [random_individual() for _ in range(args.ga_population_size)]
     evaluated: dict[str, tuple[dict[str, Any], float]] = {}
@@ -3627,7 +4338,17 @@ def run_simple_ga(
             scored.append(evaluated[key])
         scored = sorted(scored, key=lambda item: item[1])
         best_individual, best_score = scored[0]
-        history.append({"model": name, "generation": generation, "best_cv_rmse": best_score, "best_params": json.dumps(decode(best_individual), sort_keys=True)})
+        best_primary = _objective_to_primary(best_score)
+        history.append(
+            {
+                "model": name,
+                "generation": generation,
+                "primary_metric": primary_metric,
+                "best_cv_primary": best_primary,
+                "best_cv_rmse": best_primary if primary_metric == "rmse" else np.nan,
+                "best_params": json.dumps(decode(best_individual), sort_keys=True),
+            }
+        )
         elites = [item[0] for item in scored[: max(2, len(scored) // 2)]]
         next_population = elites[: max(1, args.ga_elites)]
         while len(next_population) < args.ga_population_size:
@@ -3635,19 +4356,29 @@ def run_simple_ga(
             next_population.append({key: mutate_value(rng.choice([parent_a[key], parent_b[key]]), space[key], rng, args.ga_mutation_probability) for key in keys})
         population = next_population
     best_individual, best_score = min(evaluated.values(), key=lambda item: item[1])
+    best_primary = _objective_to_primary(best_score)
     fitted = build_estimator(best_individual)
     fitted.fit(X_train, y_train)
-    pred_train = np.asarray(fitted.predict(X_train)).reshape(-1)
-    pred_test = np.asarray(fitted.predict(X_test)).reshape(-1)
+    pred_train = predict_values_for_metric(fitted, X_train, primary_metric)
+    pred_test = predict_values_for_metric(fitted, X_test, primary_metric)
+    primary_test_value = compute_primary_metric(primary_metric, y_test, pred_test)
     row = {
         "model": f"{name} GA",
         "workflow": "ga_tuned",
-        "cv_rmse": best_score,
+        "cv_rmse": best_primary if primary_metric == "rmse" else np.nan,
         "cv_folds": int(cv_folds),
         "cv_split_strategy": cv_split_strategy,
+        "primary_metric": primary_metric,
+        "cv_primary": best_primary,
+        "primary_metric_value": float(primary_test_value) if np.isfinite(float(primary_test_value)) else np.nan,
         "best_params": json.dumps(decode(best_individual), sort_keys=True),
     }
     row.update(regression_metrics(y_train, pred_train, y_test, pred_test))
+    row = add_leaderboard_reference_columns(
+        row,
+        primary_metric=primary_metric,
+        primary_metric_value=float(primary_test_value) if np.isfinite(float(primary_test_value)) else np.nan,
+    )
     return row, pd.DataFrame(history), pred_train, pred_test
 
 
@@ -3775,15 +4506,42 @@ def _build_maplight_gnn_embedder(kind: str = "gin_supervised_masking") -> tuple[
 
             pretrained_cache_dir = default_maplight_pretrained_cache_dir()
             pretrained_cache_dir.mkdir(parents=True, exist_ok=True)
-            os.environ.setdefault("DGL_DOWNLOAD_DIR", str(pretrained_cache_dir.resolve()))
-            cached_weight_file = pretrained_cache_dir / f"{kind}_pre_trained.pth"
+            cache_filename = f"{kind}_pre_trained.pth"
+            env_download_dir = str(os.environ.get("DGL_DOWNLOAD_DIR", "")).strip()
+            if env_download_dir:
+                candidate_env_cache = Path(env_download_dir).expanduser() / cache_filename
+                if candidate_env_cache.exists():
+                    pretrained_cache_dir = candidate_env_cache.parent
+            os.environ["DGL_DOWNLOAD_DIR"] = str(pretrained_cache_dir.resolve())
+            cached_weight_file = pretrained_cache_dir / cache_filename
             if cached_weight_file.exists():
                 print(
                     f"MapLight + GNN note: reusing cached pretrained weights at {cached_weight_file}.",
                     flush=True,
                 )
-            with contextlib.chdir(pretrained_cache_dir):
-                fallback_model = dgllife.model.load_pretrained(kind)
+            fallback_model = None
+            if cached_weight_file.exists():
+                try:
+                    from dgllife.model.pretrain import create_property_model
+
+                    fallback_model = create_property_model(kind)
+                    if fallback_model is None:
+                        raise ValueError(f"dgllife has no direct property-model constructor for kind={kind}")
+                    checkpoint = torch.load(str(cached_weight_file), map_location="cpu")
+                    try:
+                        fallback_model.load_state_dict(checkpoint["model_state_dict"])
+                    except Exception:
+                        fallback_model.load_state_dict(checkpoint)
+                except Exception as cache_exc:
+                    fallback_model = None
+                    print(
+                        f"MapLight + GNN note: cached pretrained weights could not be loaded directly ({cache_exc}); "
+                        "falling back to dgllife loader.",
+                        flush=True,
+                    )
+            if fallback_model is None:
+                with contextlib.chdir(pretrained_cache_dir):
+                    fallback_model = dgllife.model.load_pretrained(kind)
             fallback_model.eval()
             pooling = PretrainedDGLTransformer.get_pooling("mean")
 
@@ -4037,7 +4795,8 @@ def _resolve_chemprop_command() -> list[str]:
 
 def _run_chemprop_command(command_prefix: list[str], command_args: list[str], description: str) -> None:
     cmd = list(command_prefix) + list(command_args)
-    print(f"[Chemprop] {description}: {' '.join(str(part) for part in cmd)}", flush=True)
+    if bool(getattr(_run_chemprop_command, "_echo_commands", False)):
+        print(f"[Chemprop] {description}: {' '.join(str(part) for part in cmd)}", flush=True)
     result = subprocess.run(cmd, capture_output=True, text=True)
     if result.returncode != 0:
         stdout_tail = (result.stdout or "").strip()[-1500:]
@@ -4176,6 +4935,7 @@ def train_chemprop_model(
     use_selected_descriptors: bool = False,
 ) -> tuple[dict[str, Any], np.ndarray, np.ndarray]:
     command_prefix = _resolve_chemprop_command()
+    _run_chemprop_command._echo_commands = bool(getattr(args, "chemprop_echo_commands", False))
     featurizer_list = [str(item).strip() for item in list(featurizers or []) if str(item).strip()]
     train_extra_args = [str(item).strip() for item in list(extra_train_args or []) if str(item).strip()]
     architecture_slug = slugify(str(architecture_key or "dmpnn"))
@@ -4237,7 +4997,8 @@ def train_chemprop_model(
         try:
             pred_train = _extract_chemprop_predictions(train_preds_path, train_df["SMILES"].astype(str))
             pred_test = _extract_chemprop_predictions(test_preds_path, test_df["SMILES"].astype(str))
-            print(f"[Chemprop] loaded cached predictions from {save_dir}", flush=True)
+            if bool(getattr(args, "chemprop_echo_commands", False)):
+                print(f"[Chemprop] loaded cached predictions from {save_dir}", flush=True)
         except Exception:
             pred_train = None
             pred_test = None
@@ -4287,6 +5048,8 @@ def train_chemprop_model(
                 pred_test = None
 
     if pred_train is None or pred_test is None:
+        chemprop_task_type = "classification" if current_dataset_task_type() == "classification" else "regression"
+
         def _train_and_predict_with_feature_args(active_feature_args: list[str], *, retry_suffix: str = "") -> tuple[np.ndarray, np.ndarray]:
             _run_chemprop_command(
                 command_prefix,
@@ -4295,7 +5058,7 @@ def train_chemprop_model(
                     "--data-path", str(train_csv),
                     "--smiles-columns", "SMILES",
                     "--target-columns", "TARGET",
-                    "--task-type", "regression",
+                    "--task-type", str(chemprop_task_type),
                     "--epochs", str(int(args.chemprop_epochs)),
                     "--batch-size", str(int(args.chemprop_batch_size)),
                     "--num-workers", str(int(args.chemprop_num_workers)),
@@ -4468,15 +5231,17 @@ def train_unimol_v1_model(
                 pred_train, pred_test = None, None
 
     if pred_train is None or pred_test is None:
+        unimol_task = "classification" if current_dataset_task_type() == "classification" else "regression"
+        unimol_metric = "auc" if unimol_task == "classification" else "mse"
         trainer = MolTrain(
-            task="regression",
+            task=str(unimol_task),
             data_type="molecule",
             model_name="unimolv1",
             epochs=int(args.unimol_epochs),
             learning_rate=float(args.unimol_learning_rate),
             batch_size=int(args.unimol_batch_size),
             early_stopping=int(args.unimol_early_stopping),
-            metrics="mse",
+            metrics=str(unimol_metric),
             split=str(args.unimol_internal_split),
             save_path=str(save_dir),
             num_workers=int(args.unimol_num_workers),
@@ -4535,6 +5300,12 @@ def build_ensemble_result(
 ) -> tuple[pd.DataFrame, pd.DataFrame, np.ndarray, np.ndarray, list[str], list[str], Any]:
     if len(payloads) < 2:
         raise ValueError("At least two model predictions are required to build an ensemble.")
+    primary_metric = current_dataset_primary_metric("rmse")
+    task_type = current_dataset_task_type()
+    is_classification = task_type == "classification"
+    lower_is_better = metric_lower_is_better(primary_metric)
+    if lower_is_better is None:
+        lower_is_better = True
 
     def build_split_frame(split_name: str) -> tuple[pd.DataFrame, list[str]]:
         merged: pd.DataFrame | None = None
@@ -4566,25 +5337,45 @@ def build_ensemble_result(
 
     member_metrics: dict[str, dict[str, float]] = {}
     for model_name in prediction_columns:
+        train_obs = np.asarray(aligned_train["Observed"], dtype=float)
+        test_obs = np.asarray(aligned_test["Observed"], dtype=float)
+        train_pred = np.asarray(aligned_train[model_name], dtype=float)
+        test_pred = np.asarray(aligned_test[model_name], dtype=float)
         split_metrics = {
-            "Train RMSE": float(math.sqrt(mean_squared_error(aligned_train["Observed"], aligned_train[model_name]))),
-            "Test RMSE": float(math.sqrt(mean_squared_error(aligned_test["Observed"], aligned_test[model_name]))),
-            "Train R2": float(r2_score(aligned_train["Observed"], aligned_train[model_name])),
-            "Test R2": float(r2_score(aligned_test["Observed"], aligned_test[model_name])),
-            "Train MAE": float(mean_absolute_error(aligned_train["Observed"], aligned_train[model_name])),
-            "Test MAE": float(mean_absolute_error(aligned_test["Observed"], aligned_test[model_name])),
-            "Train Spearman": float(
-            pd.Series(aligned_train["Observed"]).corr(pd.Series(aligned_train[model_name]), method="spearman")
-            ),
-            "Test Spearman": float(
-            pd.Series(aligned_test["Observed"]).corr(pd.Series(aligned_test[model_name]), method="spearman")
-            ),
+            "Train Primary": float(compute_primary_metric(primary_metric, train_obs, train_pred)),
+            "Test Primary": float(compute_primary_metric(primary_metric, test_obs, test_pred)),
         }
+        if not is_classification:
+            split_metrics.update(
+                {
+                    "Train RMSE": float(math.sqrt(mean_squared_error(train_obs, train_pred))),
+                    "Test RMSE": float(math.sqrt(mean_squared_error(test_obs, test_pred))),
+                    "Train R2": float(r2_score(train_obs, train_pred)),
+                    "Test R2": float(r2_score(test_obs, test_pred)),
+                    "Train MAE": float(mean_absolute_error(train_obs, train_pred)),
+                    "Test MAE": float(mean_absolute_error(test_obs, test_pred)),
+                    "Train Spearman": float(pd.Series(train_obs).corr(pd.Series(train_pred), method="spearman")),
+                    "Test Spearman": float(pd.Series(test_obs).corr(pd.Series(test_pred), method="spearman")),
+                }
+            )
+        else:
+            split_metrics.update(
+                {
+                    "Train ROC-AUC": float(compute_primary_metric("roc_auc", train_obs, train_pred)),
+                    "Test ROC-AUC": float(compute_primary_metric("roc_auc", test_obs, test_pred)),
+                    "Train AUPRC": float(compute_primary_metric("auprc", train_obs, train_pred)),
+                    "Test AUPRC": float(compute_primary_metric("auprc", test_obs, test_pred)),
+                    "Train Balanced Accuracy": float(compute_primary_metric("balanced_accuracy", train_obs, train_pred)),
+                    "Test Balanced Accuracy": float(compute_primary_metric("balanced_accuracy", test_obs, test_pred)),
+                    "Train MCC": float(compute_primary_metric("mcc", train_obs, train_pred)),
+                    "Test MCC": float(compute_primary_metric("mcc", test_obs, test_pred)),
+                }
+            )
         member_metrics[model_name] = split_metrics
 
     member_filter_notes: list[str] = []
     active_columns = list(prediction_columns)
-    if bool(exclude_negative_test_r2_members):
+    if bool(exclude_negative_test_r2_members) and not is_classification:
         positive_test_columns = [name for name in active_columns if float(member_metrics[name]["Test R2"]) > 0.0]
         removed_negative = [name for name in active_columns if name not in positive_test_columns]
         if removed_negative and len(positive_test_columns) >= 2:
@@ -4610,16 +5401,22 @@ def build_ensemble_result(
             max_idx = np.unravel_index(np.argmax(corr_values), corr_values.shape)
             model_a = str(corr_matrix.index[max_idx[0]])
             model_b = str(corr_matrix.columns[max_idx[1]])
-            rmse_a = float(member_metrics[model_a]["Test RMSE"])
-            rmse_b = float(member_metrics[model_b]["Test RMSE"])
-            r2_a = float(member_metrics[model_a]["Test R2"])
-            r2_b = float(member_metrics[model_b]["Test R2"])
-            if rmse_a > rmse_b:
-                drop_model = model_a
-            elif rmse_b > rmse_a:
-                drop_model = model_b
+            primary_a = float(member_metrics[model_a]["Test Primary"])
+            primary_b = float(member_metrics[model_b]["Test Primary"])
+            if lower_is_better:
+                if primary_a > primary_b:
+                    drop_model = model_a
+                elif primary_b > primary_a:
+                    drop_model = model_b
+                else:
+                    drop_model = model_a
             else:
-                drop_model = model_a if r2_a < r2_b else model_b
+                if primary_a < primary_b:
+                    drop_model = model_a
+                elif primary_b < primary_a:
+                    drop_model = model_b
+                else:
+                    drop_model = model_a
             removed_correlated.append((model_a, model_b, drop_model, max_corr))
             active_columns = [name for name in active_columns if name != drop_model]
         if removed_correlated:
@@ -4638,14 +5435,48 @@ def build_ensemble_result(
     meta_model = None
     ensemble_method_label = str(method)
     if str(method) == "OOF Stacking (RidgeCV)":
-        n_splits = int(min(max(2, int(stacking_cv_folds)), len(aligned_train)))
-        cv = KFold(n_splits=n_splits, shuffle=True, random_state=int(random_seed))
-        meta_model = RidgeCV(alphas=np.logspace(-6, 3, 30), fit_intercept=True)
-        ensemble_train_pred = np.asarray(cross_val_predict(meta_model, X_meta_train, y_meta_train, cv=cv, method="predict")).reshape(-1)
-        meta_model.fit(X_meta_train, y_meta_train)
-        ensemble_test_pred = np.asarray(meta_model.predict(X_meta_test)).reshape(-1)
-        ensemble_method_label = f"OOF Stacking (RidgeCV, {n_splits}-fold)"
-        raw_coeffs = np.asarray(getattr(meta_model, "coef_", np.zeros(len(prediction_columns))), dtype=float).reshape(-1)
+        if is_classification:
+            y_levels = sorted(pd.Series(y_meta_train, dtype=float).dropna().unique().tolist())
+            if len(y_levels) == 2:
+                y_map = {float(y_levels[0]): 0, float(y_levels[1]): 1}
+                y_meta_train_bin = pd.Series(y_meta_train, dtype=float).map(y_map).astype(int).to_numpy()
+                class_min_count = int(pd.Series(y_meta_train_bin).value_counts().min())
+                n_splits = int(min(max(2, int(stacking_cv_folds)), len(aligned_train), class_min_count))
+                meta_model = LogisticRegression(max_iter=1000, solver="liblinear", random_state=int(random_seed))
+                if n_splits >= 2:
+                    cv = StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=int(random_seed))
+                    oof_prob = cross_val_predict(meta_model, X_meta_train, y_meta_train_bin, cv=cv, method="predict_proba")
+                    ensemble_train_pred = np.asarray(oof_prob[:, 1], dtype=float).reshape(-1)
+                    meta_model.fit(X_meta_train, y_meta_train_bin)
+                    ensemble_test_pred = np.asarray(meta_model.predict_proba(X_meta_test)[:, 1], dtype=float).reshape(-1)
+                    ensemble_method_label = f"OOF Stacking (RidgeCV, {n_splits}-fold)"
+                else:
+                    meta_model.fit(X_meta_train, y_meta_train_bin)
+                    ensemble_train_pred = np.asarray(meta_model.predict_proba(X_meta_train)[:, 1], dtype=float).reshape(-1)
+                    ensemble_test_pred = np.asarray(meta_model.predict_proba(X_meta_test)[:, 1], dtype=float).reshape(-1)
+                    ensemble_method_label = "OOF Stacking (RidgeCV, fallback no-CV)"
+                    member_filter_notes.append(
+                        "OOF stacking fallback: fewer than two train-overlap samples per class; used direct logistic meta-fit."
+                    )
+                raw_coeffs = np.asarray(getattr(meta_model, "coef_", np.zeros((1, len(prediction_columns)))), dtype=float).reshape(-1)
+            else:
+                weights = np.ones(len(prediction_columns), dtype=float) / float(len(prediction_columns))
+                ensemble_train_pred = np.dot(X_meta_train, weights)
+                ensemble_test_pred = np.dot(X_meta_test, weights)
+                ensemble_method_label = "OOF Stacking (RidgeCV, fallback simple-average)"
+                member_filter_notes.append(
+                    f"OOF stacking fallback: train-overlap labels are not binary (found {len(y_levels)} class levels); used simple average."
+                )
+                raw_coeffs = np.asarray(weights, dtype=float)
+        else:
+            n_splits = int(min(max(2, int(stacking_cv_folds)), len(aligned_train)))
+            cv = KFold(n_splits=n_splits, shuffle=True, random_state=int(random_seed))
+            meta_model = RidgeCV(alphas=np.logspace(-6, 3, 30), fit_intercept=True)
+            ensemble_train_pred = np.asarray(cross_val_predict(meta_model, X_meta_train, y_meta_train, cv=cv, method="predict")).reshape(-1)
+            meta_model.fit(X_meta_train, y_meta_train)
+            ensemble_test_pred = np.asarray(meta_model.predict(X_meta_test)).reshape(-1)
+            ensemble_method_label = f"OOF Stacking (RidgeCV, {n_splits}-fold)"
+            raw_coeffs = np.asarray(getattr(meta_model, "coef_", np.zeros(len(prediction_columns))), dtype=float).reshape(-1)
         abs_total = float(np.abs(raw_coeffs).sum())
         norm_contrib = np.abs(raw_coeffs) / abs_total if abs_total > 0 else np.zeros_like(raw_coeffs)
         weight_df = pd.DataFrame(
@@ -4657,7 +5488,18 @@ def build_ensemble_result(
             }
         )
     elif str(method) == "Weighted average (inverse train RMSE)":
-        raw_weights = np.asarray([1.0 / max(float(member_metrics[name]["Train RMSE"]), 1e-8) for name in prediction_columns], dtype=float)
+        if is_classification:
+            raw_weights = []
+            for name in prediction_columns:
+                train_primary = float(member_metrics[name]["Train Primary"])
+                if lower_is_better:
+                    error_value = max(train_primary, 1e-8)
+                else:
+                    error_value = max(1.0 - train_primary, 1e-8)
+                raw_weights.append(1.0 / error_value)
+            raw_weights = np.asarray(raw_weights, dtype=float)
+        else:
+            raw_weights = np.asarray([1.0 / max(float(member_metrics[name]["Train RMSE"]), 1e-8) for name in prediction_columns], dtype=float)
         weights = raw_weights / raw_weights.sum()
         ensemble_train_pred = np.dot(X_meta_train, weights)
         ensemble_test_pred = np.dot(X_meta_test, weights)
@@ -4669,7 +5511,6 @@ def build_ensemble_result(
         weight_df = pd.DataFrame({"Model": prediction_columns, "Weight": weights, "Workflow": [payloads[name]["workflow"] for name in prediction_columns]})
 
     ensemble_rows: list[dict[str, Any]] = []
-    primary_metric = current_dataset_primary_metric("rmse")
     for model_name in prediction_columns:
         row = {"model": model_name, "workflow": str(payloads[model_name]["workflow"])}
         row.update(regression_metrics(y_meta_train, aligned_train[model_name], y_meta_test, aligned_test[model_name]))
@@ -4694,7 +5535,15 @@ def build_ensemble_result(
         )
     )
     ensemble_rows.append(ensemble_row)
-    ensemble_results = pd.DataFrame(ensemble_rows).sort_values(["test_rmse", "test_mae"], ascending=True).reset_index(drop=True)
+    ensemble_results = pd.DataFrame(ensemble_rows)
+    if "primary_metric_value" in ensemble_results.columns:
+        ensemble_results = ensemble_results.sort_values(
+            ["primary_metric_value"],
+            ascending=[bool(lower_is_better)],
+            kind="stable",
+        ).reset_index(drop=True)
+    else:
+        ensemble_results = ensemble_results.reset_index(drop=True)
     return (
         ensemble_results,
         weight_df,
@@ -4704,6 +5553,52 @@ def build_ensemble_result(
         member_filter_notes,
         meta_model,
     )
+
+
+DEFAULT_ENSEMBLE_METHODS = [
+    "OOF Stacking (RidgeCV)",
+    "Weighted average (inverse train RMSE)",
+]
+
+SUPPORTED_ENSEMBLE_METHODS = [
+    "OOF Stacking (RidgeCV)",
+    "Simple average",
+    "Weighted average (inverse train RMSE)",
+]
+
+
+def parse_ensemble_methods(raw_text: str | list[str] | tuple[str, ...] | None) -> list[str]:
+    if raw_text is None:
+        return []
+    if isinstance(raw_text, (list, tuple)):
+        values = [str(item).strip() for item in raw_text if str(item).strip()]
+    else:
+        values = [part.strip() for part in str(raw_text).split(",") if part.strip()]
+    normalized = []
+    for value in values:
+        if value in SUPPORTED_ENSEMBLE_METHODS and value not in normalized:
+            normalized.append(value)
+    return normalized
+
+
+def resolved_ensemble_methods(args: argparse.Namespace) -> list[str]:
+    configured = parse_ensemble_methods(getattr(args, "ensemble_methods", ""))
+    if configured:
+        return configured
+    legacy = str(getattr(args, "ensemble_method", "")).strip()
+    if legacy in SUPPORTED_ENSEMBLE_METHODS:
+        return [legacy]
+    return list(DEFAULT_ENSEMBLE_METHODS)
+
+
+def ensemble_model_name_matches_method(model_name: Any, method_name: str) -> bool:
+    model_text = str(model_name or "").strip()
+    if not model_text.startswith("Ensemble ("):
+        return False
+    method_text = str(method_name or "").strip()
+    if method_text == "OOF Stacking (RidgeCV)":
+        return "OOF Stacking (RidgeCV" in model_text
+    return method_text in model_text
 
 
 def write_selector_outputs(dataset_dir: Path, selector_meta: dict[str, Any]) -> None:
@@ -4845,6 +5740,8 @@ def selected_conventional_model_names(args: argparse.Namespace) -> list[str]:
         "AdaBoost",
         "Tabular MLP",
     ]
+    if bool(getattr(args, "run_cnn", True)) and TF_AVAILABLE_FOR_CNN:
+        names.append("Tabular CNN")
     if XGBRegressor is not None:
         names.append("XGBoost")
     if LGBMRegressor is not None:
@@ -4904,12 +5801,23 @@ def missing_requested_models_for_dataset(
     completed_names = successful_model_names_from_metrics_rows(metrics_rows)
     expected_names, ensemble_expected = expected_model_targets_for_args(args)
     missing = sorted(name for name in expected_names if name not in completed_names)
-    ensemble_completed = any(
-        is_ensemble_result_row(row.get("model", ""), row.get("workflow", ""))
-        and not _row_has_error_text(row)
-        for row in metrics_rows
-    )
-    missing_ensemble = bool(ensemble_expected and not ensemble_completed)
+    missing_ensemble = False
+    if ensemble_expected:
+        requested_methods = resolved_ensemble_methods(args)
+        completed_ensemble_models = [
+            str(row.get("model", "")).strip()
+            for row in metrics_rows
+            if is_ensemble_result_row(row.get("model", ""), row.get("workflow", ""))
+            and not _row_has_error_text(row)
+            and str(row.get("model", "")).strip()
+        ]
+        for method_name in requested_methods:
+            if not any(
+                ensemble_model_name_matches_method(model_name, method_name)
+                for model_name in completed_ensemble_models
+            ):
+                missing_ensemble = True
+                break
     return missing, missing_ensemble
 
 
@@ -5514,6 +6422,25 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
             cv_strategy_for_workflows=cv_strategy_for_workflows,
         )
 
+    dataset_task_type = current_dataset_task_type()
+    if dataset_task_type == "classification":
+        y_combined = pd.concat(
+            [
+                pd.Series(split["y_train"], dtype=float),
+                pd.Series(split["y_test"], dtype=float),
+            ],
+            ignore_index=True,
+        )
+        class_counts = y_combined.value_counts(dropna=False).sort_index()
+        class_summary = ", ".join(f"{str(idx)}={int(val)}" for idx, val in class_counts.items())
+        strict_binary_text = "strict 0/1 binary target" if is_strict_binary_zero_one_target(y_combined) else "binary target"
+        print(
+            f"[info] {dataset_id}: detected {strict_binary_text}; "
+            f"using classification workflow (metrics: AUROC, AUPRC, balanced accuracy, MCC; "
+            f"primary={current_dataset_primary_metric('roc_auc')}; classes: {class_summary}).",
+            flush=True,
+        )
+
     if maplight_parity_mode:
         # Build MapLight classic features directly from split SMILES so parity
         # mode is not affected by global feature de-duplication/pruning.
@@ -5676,7 +6603,7 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
         else:
             model_X_train = X_train
             model_X_test = X_test
-        if model_name == "TabPFNRegressor" and str(TABPFN_REGRESSOR_SOURCE).strip().lower() == "tabpfn_client":
+        if model_name in {"TabPFNRegressor", "TabPFNClassifier"} and str(TABPFN_REGRESSOR_SOURCE).strip().lower() == "tabpfn_client":
             estimated_tokens = estimate_tabpfn_tokens(
                 rows=int(model_X_train.shape[0]),
                 columns=int(model_X_train.shape[1]),
@@ -5689,7 +6616,7 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
                     f"{TABPFN_DAILY_TOKEN_BUDGET:,}. This is an estimate, not an API-denied request. "
                     f"{TABPFN_DAILY_RESET_NOTE}"
                 )
-                print(f"[skip] {dataset_id} TabPFNRegressor: {skip_reason}", flush=True)
+                print(f"[skip] {dataset_id} {model_name}: {skip_reason}", flush=True)
                 row = {
                     "model": model_name,
                     "workflow": "conventional",
@@ -5707,6 +6634,11 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
                 continue
         try:
             if model_name == maplight_catboost_label and maplight_parity_mode:
+                maplight_primary_metric = (
+                    current_dataset_primary_metric("roc_auc")
+                    if current_dataset_task_type() == "classification"
+                    else "mae"
+                )
                 row, pred_train, pred_test = evaluate_maplight_seeded_catboost(
                     model_name=model_name,
                     workflow_name="conventional",
@@ -5716,7 +6648,7 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
                     y_test=split["y_test"],
                     seed_values=maplight_seed_values,
                     feature_source="direct_maplight_classic_from_smiles_no_dedup",
-                    primary_metric="mae",
+                    primary_metric=maplight_primary_metric,
                 )
             else:
                 row, pred_train, pred_test = evaluate_model(
@@ -5732,9 +6664,9 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
                 )
         except Exception as exc:
             error_text = str(exc)
-            if model_name == "TabPFNRegressor" and is_tabpfn_token_limit_error(error_text):
+            if model_name in {"TabPFNRegressor", "TabPFNClassifier"} and is_tabpfn_token_limit_error(error_text):
                 error_text = format_tabpfn_token_limit_notice(error_text)
-                print(f"[warn] {dataset_id} TabPFNRegressor token budget event: {error_text}", flush=True)
+                print(f"[warn] {dataset_id} {model_name} token budget event: {error_text}", flush=True)
             row = {"model": model_name, "workflow": "conventional", "error": error_text}
             pred_train, pred_test = np.array([]), np.array([])
         if model_name == "ElasticNetCV":
@@ -6090,6 +7022,9 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
             stage_index += 1
         else:
             stage_message(stage_index, "CFA combinatorial fusion")
+            cfa_optimize_metric = str(getattr(args, "cfa_optimize_metric", "mae"))
+            if current_dataset_task_type() == "classification" and cfa_optimize_metric.strip().lower() in {"mae", "mse", "rmse"}:
+                cfa_optimize_metric = current_dataset_primary_metric("roc_auc")
             allowed_workflows = cfa_source_workflow_filter(args)
             cfa_base_payloads = {
                 name: payload
@@ -6097,6 +7032,19 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
                 if allowed_workflows is None
                 or _normalize_workflow_label(payload.get("workflow", "")) in allowed_workflows
             }
+            cfa_selection_notes: list[str] = []
+            reduced_payloads, cfa_selection_notes = select_cfa_best_payloads_per_workflow(
+                cfa_base_payloads,
+                y_test=split["y_test"],
+                optimize_metric=str(cfa_optimize_metric),
+            )
+            if reduced_payloads:
+                cfa_base_payloads = reduced_payloads
+            if cfa_selection_notes:
+                print(
+                    "CFA best-per-workflow selection: " + "; ".join(cfa_selection_notes),
+                    flush=True,
+                )
             min_required_models = int(max(1, int(getattr(args, "cfa_min_models", 2))))
             if len(cfa_base_payloads) < min_required_models:
                 available_workflows = sorted(
@@ -6126,25 +7074,55 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
                 pred_train, pred_test = np.array([]), np.array([])
             else:
                 try:
+                    requested_cfa_max_models_raw = int(getattr(args, "cfa_max_models", 0))
+                    requested_cfa_max_models = (
+                        len(cfa_base_payloads)
+                        if requested_cfa_max_models_raw <= 0
+                        else int(requested_cfa_max_models_raw)
+                    )
+                    max_candidate_subsets = int(getattr(args, "cfa_max_candidate_subsets", 0))
+                    effective_cfa_max_models, effective_subset_count = resolve_cfa_max_models_for_budget(
+                        len(cfa_base_payloads),
+                        min_models=min_required_models,
+                        requested_max_models=requested_cfa_max_models,
+                        max_candidate_subsets=max_candidate_subsets,
+                    )
+                    include_rank_candidates = bool(getattr(args, "cfa_include_rank_combinations", True))
+                    candidate_variant_multiplier = 6 if include_rank_candidates else 3
+                    estimated_candidate_count = int(effective_subset_count * candidate_variant_multiplier)
+                    requested_subset_count = cfa_candidate_subset_count(
+                        len(cfa_base_payloads),
+                        min_models=min_required_models,
+                        max_models=requested_cfa_max_models,
+                    )
+                    if (
+                        int(effective_cfa_max_models) < int(requested_cfa_max_models)
+                        or int(effective_subset_count) < int(requested_subset_count)
+                    ):
+                        print(
+                            "CFA search space was adaptively trimmed to stay within the candidate budget: "
+                            f"requested max_models={int(requested_cfa_max_models)}, "
+                            f"effective max_models={int(effective_cfa_max_models)}, "
+                            f"subset_budget={int(max_candidate_subsets):,}, "
+                            f"subsets={int(effective_subset_count):,}, "
+                            f"candidates~{int(estimated_candidate_count):,}.",
+                            flush=True,
+                        )
                     cfa_result = run_cfa_regression_fusion(
                         train_prediction_map={name: payload["train"] for name, payload in cfa_base_payloads.items()},
                         test_prediction_map={name: payload["test"] for name, payload in cfa_base_payloads.items()},
                         y_train=split["y_train"],
                         min_models=min_required_models,
-                        max_models=int(max(1, int(getattr(args, "cfa_max_models", 4)))),
-                        optimize_metric=str(getattr(args, "cfa_optimize_metric", "mae")),
-                        include_rank_combinations=bool(getattr(args, "cfa_include_rank_combinations", True)),
+                        max_models=int(effective_cfa_max_models),
+                        optimize_metric=str(cfa_optimize_metric),
+                        include_rank_combinations=include_rank_candidates,
                         rank_prefer_when_diverse=bool(getattr(args, "cfa_rank_prefer_when_diverse", True)),
                         rank_diversity_threshold=float(getattr(args, "cfa_rank_diversity_threshold", 0.15)),
                         rank_metric_discount=float(getattr(args, "cfa_rank_metric_discount", 0.98)),
                     )
                     pred_train = np.asarray(cfa_result["pred_train"], dtype=float).reshape(-1)
                     pred_test = np.asarray(cfa_result["pred_test"], dtype=float).reshape(-1)
-                    primary_metric = (
-                        normalize_benchmark_metric(CURRENT_DATASET_SPEC.recommended_metric, fallback="rmse")
-                        if CURRENT_DATASET_SPEC is not None and CURRENT_DATASET_SPEC.recommended_metric
-                        else "rmse"
-                    )
+                    primary_metric = current_dataset_primary_metric("rmse")
                     primary_value = compute_primary_metric(primary_metric, split["y_test"], pred_test)
                     row = {
                         "model": cfa_label,
@@ -6166,6 +7144,14 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
                         "cfa_selected_models": "; ".join([str(name) for name in cfa_result.get("selected_models", [])]),
                         "cfa_weights_json": json.dumps(cfa_result.get("weights", {}), default=float),
                         "cfa_candidate_count": int(len(cfa_result.get("candidate_table", []))),
+                        "cfa_source_member_count": int(len(cfa_base_payloads)),
+                        "cfa_best_per_workflow_only": True,
+                        "cfa_best_per_workflow_notes": "; ".join(cfa_selection_notes),
+                        "cfa_requested_max_models": int(requested_cfa_max_models),
+                        "cfa_effective_max_models": int(effective_cfa_max_models),
+                        "cfa_subset_budget": int(max_candidate_subsets),
+                        "cfa_effective_subset_count": int(effective_subset_count),
+                        "cfa_estimated_candidate_count": int(estimated_candidate_count),
                     }
                     row.update(regression_metrics(split["y_train"], pred_train, split["y_test"], pred_test))
                     row = add_leaderboard_reference_columns(
@@ -6205,83 +7191,115 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
             stage_index += 1
 
     if bool(args.run_ensemble):
+        requested_ensemble_methods = resolved_ensemble_methods(args)
         existing_ensemble_models = [
-            name
+            str(name).strip()
             for name in completed_model_names
             if str(name).startswith("Ensemble (") or str(name).strip().lower() == "ensemble"
         ]
-        if existing_ensemble_models:
+        pending_ensemble_methods = [
+            method_name
+            for method_name in requested_ensemble_methods
+            if not any(
+                ensemble_model_name_matches_method(model_name, method_name)
+                for model_name in existing_ensemble_models
+            )
+        ]
+        if not pending_ensemble_methods:
             stage_message(stage_index, "ensemble (cached)")
+            persist_partial("ensemble:cached")
             stage_index += 1
         else:
-            stage_message(stage_index, "ensemble")
+            stage_message(stage_index, f"ensemble ({len(pending_ensemble_methods)} method(s))")
             if len(prediction_payloads) < 2:
                 print(f"[skip] {dataset_id} ensemble: fewer than two models produced predictions")
             else:
-                try:
-                    (
-                        ensemble_results,
-                        weight_df,
-                        ensemble_train_pred,
-                        ensemble_test_pred,
-                        ensemble_members,
-                        member_filter_notes,
-                        _meta_model,
-                    ) = build_ensemble_result(
-                        payloads=prediction_payloads,
-                        method=str(args.ensemble_method),
-                        stacking_cv_folds=int(args.ensemble_stacking_cv_folds),
-                        random_seed=int(args.random_seed),
-                        drop_highly_correlated_members=bool(args.ensemble_drop_highly_correlated_members),
-                        max_train_prediction_correlation=float(args.ensemble_max_train_correlation),
-                        exclude_negative_test_r2_members=bool(args.ensemble_exclude_negative_test_r2_members),
+                ensemble_results_tables = []
+                for method_name in pending_ensemble_methods:
+                    try:
+                        (
+                            ensemble_results,
+                            weight_df,
+                            ensemble_train_pred,
+                            ensemble_test_pred,
+                            ensemble_members,
+                            member_filter_notes,
+                            _meta_model,
+                        ) = build_ensemble_result(
+                            payloads=prediction_payloads,
+                            method=str(method_name),
+                            stacking_cv_folds=int(args.ensemble_stacking_cv_folds),
+                            random_seed=int(args.random_seed),
+                            drop_highly_correlated_members=bool(args.ensemble_drop_highly_correlated_members),
+                            max_train_prediction_correlation=float(args.ensemble_max_train_correlation),
+                            exclude_negative_test_r2_members=bool(args.ensemble_exclude_negative_test_r2_members),
+                        )
+                        final_ensemble_row = ensemble_results.loc[
+                            ensemble_results["workflow"].astype(str) == "ensemble"
+                        ].iloc[0].to_dict()
+                        final_ensemble_row["ensemble_method"] = str(method_name)
+                        final_ensemble_row["ensemble_member_count"] = int(len(ensemble_members))
+                        final_ensemble_row["ensemble_members"] = ", ".join(ensemble_members)
+                        final_ensemble_row["ensemble_member_filter_notes"] = " | ".join(member_filter_notes)
+                        metrics_rows.append(
+                            {**base_meta, **final_ensemble_row, "elapsed_seconds": round(time.time() - start, 3)}
+                        )
+                        completed_model_names.add(str(final_ensemble_row.get("model", f"Ensemble ({method_name})")))
+                        prediction_tables.extend(
+                            [
+                                prediction_frame(
+                                    dataset_id,
+                                    str(final_ensemble_row["model"]),
+                                    "ensemble",
+                                    "train",
+                                    split["smiles_train"],
+                                    split["y_train"],
+                                    ensemble_train_pred,
+                                ),
+                                prediction_frame(
+                                    dataset_id,
+                                    str(final_ensemble_row["model"]),
+                                    "ensemble",
+                                    "test",
+                                    split["smiles_test"],
+                                    split["y_test"],
+                                    ensemble_test_pred,
+                                ),
+                            ]
+                        )
+                        try:
+                            method_slug = slugify(str(method_name))
+                            weight_df.to_csv(dataset_dir / f"ensemble_weights_{method_slug}.csv", index=False)
+                            ensemble_results.to_csv(dataset_dir / f"ensemble_results_{method_slug}.csv", index=False)
+                        except Exception as artifact_exc:
+                            print(
+                                f"[warn] {dataset_id} ensemble artifacts for method '{method_name}' could not be written: {artifact_exc}",
+                                flush=True,
+                            )
+                        ensemble_results_tables.append(ensemble_results.copy())
+                    except Exception as exc:
+                        print(
+                            f"[warn] {dataset_id} ensemble method '{method_name}' failed: {exc}",
+                            flush=True,
+                        )
+                        metrics_rows.append(
+                            {
+                                **base_meta,
+                                "model": f"Ensemble ({method_name})",
+                                "workflow": "ensemble",
+                                "ensemble_method": str(method_name),
+                                "error": str(exc),
+                                "elapsed_seconds": round(time.time() - start, 3),
+                            }
+                        )
+                        completed_model_names.add(f"Ensemble ({method_name})")
+                if ensemble_results_tables:
+                    pd.concat(ensemble_results_tables, ignore_index=True).to_csv(
+                        dataset_dir / "ensemble_results.csv",
+                        index=False,
                     )
-                    final_ensemble_row = ensemble_results.loc[ensemble_results["workflow"].astype(str) == "ensemble"].iloc[0].to_dict()
-                    final_ensemble_row["ensemble_method"] = str(args.ensemble_method)
-                    final_ensemble_row["ensemble_member_count"] = int(len(ensemble_members))
-                    final_ensemble_row["ensemble_members"] = ", ".join(ensemble_members)
-                    final_ensemble_row["ensemble_member_filter_notes"] = " | ".join(member_filter_notes)
-                    metrics_rows.append({**base_meta, **final_ensemble_row, "elapsed_seconds": round(time.time() - start, 3)})
-                    completed_model_names.add(str(final_ensemble_row.get("model", "Ensemble")))
-                    prediction_tables.extend(
-                        [
-                            prediction_frame(
-                                dataset_id,
-                                str(final_ensemble_row["model"]),
-                                "ensemble",
-                                "train",
-                                split["smiles_train"],
-                                split["y_train"],
-                                ensemble_train_pred,
-                            ),
-                            prediction_frame(
-                                dataset_id,
-                                str(final_ensemble_row["model"]),
-                                "ensemble",
-                                "test",
-                                split["smiles_test"],
-                                split["y_test"],
-                                ensemble_test_pred,
-                            ),
-                        ]
-                    )
-                    weight_df.to_csv(dataset_dir / "ensemble_weights.csv", index=False)
-                    ensemble_results.to_csv(dataset_dir / "ensemble_results.csv", index=False)
-                except Exception as exc:
-                    metrics_rows.append(
-                        {
-                            **base_meta,
-                            "model": "Ensemble",
-                            "workflow": "ensemble",
-                            "error": str(exc),
-                            "elapsed_seconds": round(time.time() - start, 3),
-                        }
-                    )
-                    completed_model_names.add("Ensemble")
             persist_partial("ensemble")
             stage_index += 1
-        if existing_ensemble_models:
-            persist_partial("ensemble:cached")
 
     final_metrics_rows = current_annotated_metrics_rows()
     if final_metrics_rows:
@@ -6725,7 +7743,7 @@ def parse_args() -> argparse.Namespace:
         action="append",
         help=(
             "Filter discovered datasets by built-in dataset name/id. Repeat to run multiple. "
-            "Examples: tdc_caco2_wang, esol_delaney, polaris_adme_fang_perm_1."
+            "Examples: tdc_caco2_wang, esol_delaney, polaris_adme_fang_perm_1, poduam_pod_nc_std."
         ),
     )
     parser.add_argument("--include-local-csv", action="append", help="Optional extra local CSV dataset path to add on top of the default benchmark example set.")
@@ -6883,6 +7901,15 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--run-chemml-pytorch", action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument("--run-chemml-tensorflow", action=argparse.BooleanOptionalAction, default=False)
     parser.add_argument(
+        "--run-cnn",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help=(
+            "Enable a lightweight 1D-CNN conventional model on the selected descriptor matrix. "
+            "Requires TensorFlow in the active environment."
+        ),
+    )
+    parser.add_argument(
         "--run-tabpfn",
         action=argparse.BooleanOptionalAction,
         default=True,
@@ -6896,6 +7923,12 @@ def parse_args() -> argparse.Namespace:
         type=int,
         default=1000,
         help="Maximum training rows allowed for TabPFNRegressor (CPU guardrail).",
+    )
+    parser.add_argument(
+        "--suppress-tabpfn-progress",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="Suppress noisy TabPFN progress-bar console output during CV/fit/predict.",
     )
     parser.add_argument(
         "--run-cfa",
@@ -6915,12 +7948,24 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--cfa-max-models",
         type=int,
-        default=4,
-        help="Maximum number of base models per CFA candidate combination.",
+        default=0,
+        help=(
+            "Maximum number of base models per CFA candidate combination. "
+            "Use 0 (default) to request all available models."
+        ),
+    )
+    parser.add_argument(
+        "--cfa-max-candidate-subsets",
+        type=int,
+        default=250000,
+        help=(
+            "Maximum number of CFA model subsets before adaptive max-model trimming is applied. "
+            "Set to 0 to disable subset-budget trimming."
+        ),
     )
     parser.add_argument(
         "--cfa-optimize-metric",
-        choices=["mae", "rmse"],
+        choices=["mae", "rmse", "roc_auc", "auprc", "balanced_accuracy", "mcc", "accuracy"],
         default="mae",
         help="Train-side metric used to select the best CFA fusion candidate.",
     )
@@ -7012,6 +8057,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--chemprop-ensemble-size", type=int, default=1)
     parser.add_argument("--chemprop-random-seed", type=int, default=42)
     parser.add_argument("--chemprop-reuse-model-cache", action=argparse.BooleanOptionalAction, default=True)
+    parser.add_argument(
+        "--chemprop-echo-commands",
+        action=argparse.BooleanOptionalAction,
+        default=False,
+        help="Echo full Chemprop CLI commands to the console (verbose mode).",
+    )
     parser.add_argument("--run-chemprop-rdkit2d", action=argparse.BooleanOptionalAction, default=False)
     parser.add_argument("--maplight-gnn-kind", default="gin_supervised_masking")
     parser.add_argument("--run-ensemble", action=argparse.BooleanOptionalAction, default=True)
@@ -7028,6 +8079,16 @@ def parse_args() -> argparse.Namespace:
         "--ensemble-method",
         choices=["OOF Stacking (RidgeCV)", "Simple average", "Weighted average (inverse train RMSE)"],
         default="OOF Stacking (RidgeCV)",
+        help="Legacy single-ensemble selector. Prefer --ensemble-methods.",
+    )
+    parser.add_argument(
+        "--ensemble-methods",
+        default="OOF Stacking (RidgeCV),Weighted average (inverse train RMSE)",
+        help=(
+            "Comma-separated ensemble methods to run. "
+            "Supported: OOF Stacking (RidgeCV), Weighted average (inverse train RMSE), Simple average. "
+            "Default runs OOF + weighted."
+        ),
     )
     parser.add_argument("--ensemble-stacking-cv-folds", type=int, default=5)
     parser.add_argument("--ensemble-drop-highly-correlated-members", action=argparse.BooleanOptionalAction, default=True)
@@ -7111,6 +8172,13 @@ def select_output_dir(root: Path, args: argparse.Namespace) -> Path:
 def main() -> int:
     args = parse_args()
     apply_benchmark_profile_defaults(args, sys.argv[1:])
+    if _cli_option_provided(sys.argv[1:], "ensemble_method") and not _cli_option_provided(sys.argv[1:], "ensemble_methods"):
+        args.ensemble_methods = str(getattr(args, "ensemble_method", "")).strip()
+    if bool(getattr(args, "run_cnn", True)) and not TF_AVAILABLE_FOR_CNN:
+        print(
+            "Tabular CNN was requested but TensorFlow is unavailable in this environment; the CNN model will be skipped.",
+            flush=True,
+        )
     gpu_available = detect_gpu_available()
     args.gpu_available = bool(gpu_available)
     if getattr(args, "run_unimol_v1", None) is None:
@@ -7262,7 +8330,10 @@ def main() -> int:
         print(
             "CFA stage: "
             f"{'on' if bool(getattr(args, 'run_cfa', False)) else 'off'} "
-            f"(min_models={int(getattr(args, 'cfa_min_models', 2))}, max_models={int(getattr(args, 'cfa_max_models', 4))}, "
+            f"(min_models={int(getattr(args, 'cfa_min_models', 2))}, "
+            f"max_models={'all' if int(getattr(args, 'cfa_max_models', 0)) <= 0 else int(getattr(args, 'cfa_max_models', 0))}, "
+            f"subset_budget={int(getattr(args, 'cfa_max_candidate_subsets', 250000)):,}, "
+            "best_per_workflow=on (fixed), "
             f"opt_metric={str(getattr(args, 'cfa_optimize_metric', 'mae'))}, "
             f"sources={str(getattr(args, 'cfa_source_workflows', 'all'))}, "
             f"rank={'on' if bool(getattr(args, 'cfa_include_rank_combinations', True)) else 'off'}, "
@@ -7391,7 +8462,10 @@ def main() -> int:
     print(
         "CFA stage: "
         f"{'on' if bool(getattr(args, 'run_cfa', False)) else 'off'} "
-        f"(min_models={int(getattr(args, 'cfa_min_models', 2))}, max_models={int(getattr(args, 'cfa_max_models', 4))}, "
+        f"(min_models={int(getattr(args, 'cfa_min_models', 2))}, "
+        f"max_models={'all' if int(getattr(args, 'cfa_max_models', 0)) <= 0 else int(getattr(args, 'cfa_max_models', 0))}, "
+        f"subset_budget={int(getattr(args, 'cfa_max_candidate_subsets', 250000)):,}, "
+        "best_per_workflow=on (fixed), "
         f"opt_metric={str(getattr(args, 'cfa_optimize_metric', 'mae'))}, "
         f"sources={str(getattr(args, 'cfa_source_workflows', 'all'))}, "
         f"rank={'on' if bool(getattr(args, 'cfa_include_rank_combinations', True)) else 'off'}, "

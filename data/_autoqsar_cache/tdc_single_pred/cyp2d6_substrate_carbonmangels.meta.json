@@ -1,0 +1,5 @@
+{
+  "source_label": "PyTDC ADME benchmark group: cyp2d6_substrate_carbonmangels (official train_val/test split)",
+  "predefined_split_column": "__benchmark_split",
+  "cached_at_utc": "2026-04-24T21:45:44"
+}

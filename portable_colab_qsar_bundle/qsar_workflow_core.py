@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import itertools
 import json
+import math
 import time
 import uuid
 from pathlib import Path
@@ -15,6 +16,8 @@ from rdkit.Chem import AllChem, Descriptors, MACCSkeys, rdReducedGraphs, rdMolDe
 from rdkit.Chem.Scaffolds import MurckoScaffold
 from rdkit.Avalon import pyAvalonTools
 from rdkit.ML.Descriptors.MoleculeDescriptors import MolecularDescriptorCalculator
+from sklearn.base import BaseEstimator, RegressorMixin
+from sklearn.metrics import average_precision_score, balanced_accuracy_score, matthews_corrcoef, roc_auc_score
 from sklearn.model_selection import GroupKFold, KFold, StratifiedKFold, train_test_split
 
 try:
@@ -77,6 +80,146 @@ CHEMPROP_ARCHITECTURE_REGISTRY = {
 }
 
 
+class TabularCNNRegressor(BaseEstimator, RegressorMixin):
+    """Lightweight 1D-CNN regressor for tabular molecular descriptors.
+
+    The model treats each feature vector as a 1D signal and applies small
+    convolutional blocks before dense regression heads. It is intentionally
+    compact so it can run on CPU.
+    """
+
+    def __init__(
+        self,
+        conv_filters: int = 64,
+        kernel_size: int = 5,
+        dense_units: int = 128,
+        dropout_rate: float = 0.1,
+        learning_rate: float = 1e-3,
+        epochs: int = 40,
+        batch_size: int = 64,
+        validation_split: float = 0.1,
+        early_stopping_patience: int = 5,
+        random_seed: int = 42,
+        verbose: int = 0,
+    ):
+        self.conv_filters = int(conv_filters)
+        self.kernel_size = int(kernel_size)
+        self.dense_units = int(dense_units)
+        self.dropout_rate = float(dropout_rate)
+        self.learning_rate = float(learning_rate)
+        self.epochs = int(epochs)
+        self.batch_size = int(batch_size)
+        self.validation_split = float(validation_split)
+        self.early_stopping_patience = int(early_stopping_patience)
+        self.random_seed = int(random_seed)
+        self.verbose = int(verbose)
+        self.model_ = None
+        self.history_ = None
+        self.n_features_in_ = None
+
+    def _build_model(self, n_features: int):
+        import tensorflow as tf
+
+        model = tf.keras.Sequential(
+            [
+                tf.keras.layers.Input(shape=(int(n_features), 1)),
+                tf.keras.layers.Conv1D(
+                    filters=int(max(8, self.conv_filters)),
+                    kernel_size=int(max(1, self.kernel_size)),
+                    padding="same",
+                    activation="relu",
+                ),
+                tf.keras.layers.Conv1D(
+                    filters=int(max(8, self.conv_filters)),
+                    kernel_size=int(max(1, self.kernel_size)),
+                    padding="same",
+                    activation="relu",
+                ),
+                tf.keras.layers.GlobalMaxPooling1D(),
+                tf.keras.layers.Dense(int(max(8, self.dense_units)), activation="relu"),
+                tf.keras.layers.Dropout(float(min(max(self.dropout_rate, 0.0), 0.8))),
+                tf.keras.layers.Dense(1),
+            ]
+        )
+        model.compile(
+            optimizer=tf.keras.optimizers.Adam(learning_rate=float(max(self.learning_rate, 1e-6))),
+            loss="mse",
+        )
+        return model
+
+    def fit(self, X, y):
+        import tensorflow as tf
+
+        X_arr = np.ascontiguousarray(np.asarray(X, dtype=np.float32))
+        y_arr = np.asarray(y, dtype=np.float32).reshape(-1)
+        if X_arr.ndim != 2:
+            raise ValueError("TabularCNNRegressor expects a 2D feature matrix.")
+        if X_arr.shape[0] < 2:
+            raise ValueError("TabularCNNRegressor requires at least two training rows.")
+
+        tf.keras.utils.set_random_seed(int(self.random_seed))
+
+        self.n_features_in_ = int(X_arr.shape[1])
+        self.model_ = self._build_model(self.n_features_in_)
+        X_seq = X_arr[:, :, None]
+
+        validation_split = float(min(max(self.validation_split, 0.0), 0.3))
+        if X_arr.shape[0] < max(20, int(self.batch_size) * 2):
+            validation_split = 0.0
+
+        callbacks = []
+        if validation_split > 0.0 and int(self.early_stopping_patience) > 0:
+            callbacks.append(
+                tf.keras.callbacks.EarlyStopping(
+                    monitor="val_loss",
+                    patience=int(self.early_stopping_patience),
+                    restore_best_weights=True,
+                )
+            )
+
+        history = self.model_.fit(
+            X_seq,
+            y_arr,
+            epochs=int(max(1, self.epochs)),
+            batch_size=int(max(8, self.batch_size)),
+            validation_split=validation_split,
+            callbacks=callbacks,
+            verbose=int(self.verbose),
+        )
+        self.history_ = dict(history.history)
+        return self
+
+    def predict(self, X):
+        import tensorflow as tf
+
+        if self.model_ is None:
+            raise RuntimeError(
+                "TabularCNNRegressor model object is unavailable in this session. "
+                "Retrain the model to restore prediction support."
+            )
+        X_arr = np.ascontiguousarray(np.asarray(X, dtype=np.float32))
+        if X_arr.ndim != 2:
+            raise ValueError("TabularCNNRegressor expects a 2D feature matrix.")
+        if self.n_features_in_ is not None and int(X_arr.shape[1]) != int(self.n_features_in_):
+            raise ValueError(
+                f"TabularCNNRegressor expected {int(self.n_features_in_)} features but received {int(X_arr.shape[1])}."
+            )
+        X_seq = X_arr[:, :, None]
+        try:
+            # Prefer eager forward-pass to avoid repeated tf.function retracing
+            # warnings during many small predict calls inside CV loops.
+            preds = self.model_(X_seq, training=False)
+            if tf.is_tensor(preds):
+                preds = preds.numpy()
+        except Exception:
+            preds = self.model_.predict(
+                X_seq,
+                batch_size=int(max(8, self.batch_size)),
+                verbose=0,
+            )
+        return np.asarray(preds, dtype=float).reshape(-1)
+
+
 def _cfa_normalize_vector(values: np.ndarray, epsilon: float = 1e-12) -> np.ndarray:
     arr = np.asarray(values, dtype=float).reshape(-1)
     if arr.size == 0:
@@ -100,8 +243,70 @@ def _cfa_metric_value(y_true: np.ndarray, y_pred: np.ndarray, metric: str = "mae
     if truth.shape[0] != pred.shape[0]:
         raise ValueError("CFA metric inputs must have the same number of rows.")
     metric_key = str(metric or "mae").strip().lower()
+    metric_key = metric_key.replace(" ", "_").replace("-", "_")
+
+    def _binary_labels(values: np.ndarray) -> np.ndarray:
+        series = pd.Series(values, dtype=float)
+        uniques = sorted(series.dropna().unique().tolist())
+        if len(uniques) != 2:
+            raise ValueError("Binary classification metrics require exactly two classes.")
+        mapping = {float(uniques[0]): 0, float(uniques[1]): 1}
+        mapped = series.map(mapping)
+        if mapped.isna().any():
+            raise ValueError("Binary classification labels could not be encoded.")
+        return mapped.astype(int).to_numpy()
+
+    def _binary_scores(values: np.ndarray) -> np.ndarray:
+        arr = np.asarray(values, dtype=float).reshape(-1)
+        finite = np.isfinite(arr)
+        if not bool(finite.any()):
+            return np.zeros_like(arr, dtype=float)
+        if float(np.nanmin(arr)) >= 0.0 and float(np.nanmax(arr)) <= 1.0:
+            return arr
+        clipped = np.clip(arr, -30.0, 30.0)
+        return 1.0 / (1.0 + np.exp(-clipped))
+
+    def _binary_predictions(values: np.ndarray) -> np.ndarray:
+        return (_binary_scores(values) >= 0.5).astype(int)
+
     if metric_key == "rmse":
         return float(np.sqrt(np.mean(np.square(truth - pred))))
+    if metric_key in {"roc_auc", "auroc", "auc"}:
+        try:
+            y_bin = _binary_labels(truth)
+            score = float(roc_auc_score(y_bin, _binary_scores(pred)))
+            return float(1.0 - score)
+        except Exception:
+            return 1.0
+    if metric_key in {"auprc", "average_precision", "pr_auc"}:
+        try:
+            y_bin = _binary_labels(truth)
+            score = float(average_precision_score(y_bin, _binary_scores(pred)))
+            return float(1.0 - score)
+        except Exception:
+            return 1.0
+    if metric_key in {"accuracy"}:
+        try:
+            y_bin = _binary_labels(truth)
+            score = float(np.mean(_binary_predictions(pred) == y_bin))
+            return float(1.0 - score)
+        except Exception:
+            return 1.0
+    if metric_key in {"balanced_accuracy", "balanced_acc", "bal_acc", "bac"}:
+        try:
+            y_bin = _binary_labels(truth)
+            score = float(balanced_accuracy_score(y_bin, _binary_predictions(pred)))
+            return float(1.0 - score)
+        except Exception:
+            return 1.0
+    if metric_key in {"mcc", "matthews_corrcoef", "matthews_correlation_coefficient"}:
+        try:
+            y_bin = _binary_labels(truth)
+            score = float(matthews_corrcoef(y_bin, _binary_predictions(pred)))
+            score01 = 0.5 * (score + 1.0)
+            return float(1.0 - score01)
+        except Exception:
+            return 1.0
     return float(np.mean(np.abs(truth - pred)))
 
 
@@ -185,7 +390,7 @@ def run_cfa_regression_fusion(
     y_train: np.ndarray | pd.Series,
     *,
     min_models: int = 2,
-    max_models: int | None = 4,
+    max_models: int | None = None,
     optimize_metric: str = "mae",
     epsilon: float = 1e-12,
     include_rank_combinations: bool = True,
@@ -407,6 +612,56 @@ def run_cfa_regression_fusion(
     }
 
 
+def cfa_candidate_subset_count(
+    n_models: int,
+    min_models: int = 2,
+    max_models: int | None = None,
+) -> int:
+    n_models = int(max(0, n_models))
+    if n_models <= 0:
+        return 0
+    min_models = int(max(1, min_models))
+    if max_models is None:
+        max_models = n_models
+    max_models = int(max(min_models, min(max_models, n_models)))
+    total = 0
+    for subset_size in range(min_models, max_models + 1):
+        total += int(math.comb(n_models, subset_size))
+    return int(total)
+
+
+def resolve_cfa_max_models_for_budget(
+    n_models: int,
+    *,
+    min_models: int = 2,
+    requested_max_models: int | None = None,
+    max_candidate_subsets: int | None = None,
+) -> tuple[int, int]:
+    """Resolve the largest max_models that satisfies subset budget constraints.
+
+    Returns:
+        (effective_max_models, resulting_subset_count)
+    """
+    n_models = int(max(0, n_models))
+    if n_models <= 0:
+        return 0, 0
+    min_models = int(max(1, min_models))
+    requested = int(requested_max_models) if requested_max_models is not None else n_models
+    requested = int(max(min_models, min(requested, n_models)))
+    if max_candidate_subsets is None or int(max_candidate_subsets) <= 0:
+        count = cfa_candidate_subset_count(n_models, min_models=min_models, max_models=requested)
+        return int(requested), int(count)
+    budget = int(max_candidate_subsets)
+    effective = int(requested)
+    while effective >= min_models:
+        count = cfa_candidate_subset_count(n_models, min_models=min_models, max_models=effective)
+        if count <= budget or effective <= min_models:
+            return int(effective), int(count)
+        effective -= 1
+    count = cfa_candidate_subset_count(n_models, min_models=min_models, max_models=min_models)
+    return int(min_models), int(count)
+
+
 def list_supported_chemprop_architectures() -> list[str]:
     return list(CHEMPROP_ARCHITECTURE_REGISTRY.keys())
 
@@ -618,13 +873,23 @@ class TargetQuartileStratifiedKFold:
     def split(self, X, y, groups=None):
         X_frame = pd.DataFrame(X).reset_index(drop=True)
         y_series = pd.Series(y, dtype=float).reset_index(drop=True)
-        labels = target_quartile_labels(y_series, q=self.q)
-        max_supported_folds = int(labels.value_counts(dropna=True).min())
-        effective_folds = min(int(self.n_splits), max_supported_folds)
-        if effective_folds < 2:
-            raise ValueError("Target-quartile CV requires at least two samples per quartile bin in the training data.")
-        splitter = StratifiedKFold(n_splits=int(effective_folds), shuffle=True, random_state=int(self.random_state))
-        yield from splitter.split(X_frame, labels)
+        try:
+            labels = target_quartile_labels(y_series, q=self.q)
+            max_supported_folds = int(labels.value_counts(dropna=True).min())
+            effective_folds = min(int(self.n_splits), max_supported_folds)
+            if effective_folds < 2:
+                raise ValueError("Target-quartile CV requires at least two samples per quartile bin in the training data.")
+            splitter = StratifiedKFold(n_splits=int(effective_folds), shuffle=True, random_state=int(self.random_state))
+            yield from splitter.split(X_frame, labels)
+            return
+        except Exception:
+            # Some ADME/Tox labels are effectively binary/low-variance in a
+            # given train split; fall back to random CV instead of failing.
+            fallback_folds = min(int(self.n_splits), len(X_frame))
+            if fallback_folds < 2:
+                raise ValueError("Random CV fallback requires at least 2 samples.")
+            fallback = KFold(n_splits=int(fallback_folds), shuffle=True, random_state=int(self.random_state))
+            yield from fallback.split(X_frame, y_series)
 
 
 def make_qsar_cv_splitter(X, y, smiles, split_strategy="random", cv_folds=5, random_seed=42):
@@ -641,13 +906,17 @@ def make_qsar_cv_splitter(X, y, smiles, split_strategy="random", cv_folds=5, ran
         return splitter, int(requested_folds), "random"
 
     if split_strategy == "target_quartiles":
-        labels = target_quartile_labels(y_series, q=4)
-        max_supported_folds = int(labels.value_counts(dropna=True).min())
-        effective_folds = min(requested_folds, max_supported_folds)
-        if effective_folds < 2:
-            raise ValueError("Target-quartile CV requires at least two samples per quartile bin in the training data.")
-        splitter = StratifiedKFold(n_splits=int(effective_folds), shuffle=True, random_state=int(random_seed))
-        return list(splitter.split(X_frame, labels)), int(effective_folds), "target_quartiles"
+        try:
+            labels = target_quartile_labels(y_series, q=4)
+            max_supported_folds = int(labels.value_counts(dropna=True).min())
+            effective_folds = min(requested_folds, max_supported_folds)
+            if effective_folds < 2:
+                raise ValueError("Target-quartile CV requires at least two samples per quartile bin in the training data.")
+            splitter = StratifiedKFold(n_splits=int(effective_folds), shuffle=True, random_state=int(random_seed))
+            return list(splitter.split(X_frame, labels)), int(effective_folds), "target_quartiles"
+        except Exception:
+            splitter = KFold(n_splits=requested_folds, shuffle=True, random_state=int(random_seed))
+            return splitter, int(requested_folds), "random_fallback_from_target_quartiles"
 
     if split_strategy == "scaffold":
         groups = smiles_series.map(murcko_scaffold_key)

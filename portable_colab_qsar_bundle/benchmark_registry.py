@@ -11,16 +11,42 @@ PYTDC_SOURCE_URL = (
 
 CHEMML_EXAMPLE_OPTIONS = ["organic_density", "cep_homo", "xyz_polarizability"]
 
-TDC_QSAR_OPTIONS: dict[str, dict[str, str]] = {
+TDC_QSAR_OPTIONS: dict[str, dict[str, Any]] = {
+    # ADME tasks (https://tdcommons.ai/single_pred_tasks/adme/)
     "caco2_wang": {"task": "ADME", "label": "Caco-2 permeability"},
+    "pampa_ncats": {"task": "ADME", "label": "PAMPA permeability"},
+    "hia_hou": {"task": "ADME", "label": "Human intestinal absorption"},
+    "pgp_broccatelli": {"task": "ADME", "label": "P-gp inhibition"},
+    "bioavailability_ma": {"task": "ADME", "label": "Bioavailability"},
     "lipophilicity_astrazeneca": {"task": "ADME", "label": "Lipophilicity"},
     "solubility_aqsoldb": {"task": "ADME", "label": "AqSolDB solubility"},
+    "hydrationfreeenergy_freesolv": {"task": "ADME", "label": "Hydration free energy"},
+    "bbb_martins": {"task": "ADME", "label": "Blood-brain barrier penetration"},
     "ppbr_az": {"task": "ADME", "label": "Plasma protein binding"},
     "vdss_lombardo": {"task": "ADME", "label": "Volume of distribution"},
+    "cyp2c19_veith": {"task": "ADME", "label": "CYP2C19 inhibition"},
+    "cyp2d6_veith": {"task": "ADME", "label": "CYP2D6 inhibition"},
+    "cyp3a4_veith": {"task": "ADME", "label": "CYP3A4 inhibition"},
+    "cyp1a2_veith": {"task": "ADME", "label": "CYP1A2 inhibition"},
+    "cyp2c9_veith": {"task": "ADME", "label": "CYP2C9 inhibition"},
+    "cyp2c9_substrate_carbonmangels": {"task": "ADME", "label": "CYP2C9 substrate"},
+    "cyp2d6_substrate_carbonmangels": {"task": "ADME", "label": "CYP2D6 substrate"},
+    "cyp3a4_substrate_carbonmangels": {"task": "ADME", "label": "CYP3A4 substrate"},
     "half_life_obach": {"task": "ADME", "label": "Half-life"},
     "clearance_hepatocyte_az": {"task": "ADME", "label": "Hepatocyte clearance"},
     "clearance_microsome_az": {"task": "ADME", "label": "Microsome clearance"},
+    # Tox tasks (https://tdcommons.ai/single_pred_tasks/tox/)
     "ld50_zhu": {"task": "Tox", "label": "Acute toxicity LD50"},
+    "herg": {"task": "Tox", "label": "hERG blockers"},
+    "herg_central": {"task": "Tox", "label": "hERG Central", "auto_label_name": True},
+    "herg_karim": {"task": "Tox", "label": "hERG Karim"},
+    "ames": {"task": "Tox", "label": "Ames mutagenicity"},
+    "dili": {"task": "Tox", "label": "Drug-induced liver injury"},
+    "skin_reaction": {"task": "Tox", "label": "Skin reaction"},
+    "carcinogens_lagunin": {"task": "Tox", "label": "Carcinogens"},
+    "tox21": {"task": "Tox", "label": "Tox21", "auto_label_name": True},
+    "toxcast": {"task": "Tox", "label": "ToxCast", "auto_label_name": True},
+    "clintox": {"task": "Tox", "label": "ClinTox"},
 }
 
 TDC_LEADERBOARD_URLS: dict[str, str] = {
@@ -150,6 +176,71 @@ POLARIS_ADME_OPTIONS: dict[str, dict[str, Any]] = {
     },
 }
 
+PODUAM_POD_OPTIONS: dict[str, dict[str, Any]] = {
+    "poduam_pod_nc_std": {
+        "option_label": "PODUAM | POD | nc-std",
+        "dataset_name": "poduam_pod_nc_std",
+        "source_label": "PODUAM benchmark: POD non-cancer standardized set (Aurisano et al., Nature Communications 2025)",
+        "source_url": "https://raw.githubusercontent.com/kejbo/PODUAM/main/data/data_pod_nc-std.csv",
+        "source_smiles_column": "Canonical_QSARr",
+        "source_target_column": "y",
+        "smiles_column": "SMILES",
+        "target_column": "POD_logmol",
+        "recommended_split": "stratified",
+        "recommended_metric": "rmse",
+        "benchmark_suite": "literature",
+        "benchmark_id": "poduam_pod_nc_std",
+        "benchmark_url": "https://www.nature.com/articles/s41467-025-67374-4#data-availability",
+        "github_repo_url": "https://github.com/kejbo/PODUAM",
+        "leaderboard_url": "https://www.nature.com/articles/s41467-025-67374-4#data-availability",
+        "leaderboard_summary": {
+            "url": "https://www.nature.com/articles/s41467-025-67374-4#data-availability",
+            "rank": "1",
+            "model": "PODUAM BNN (PODnc)",
+            "metric_name": "RMSE",
+            "metric_value": "0.73",
+            "dataset_split": "10-fold CV (paper-reported)",
+            "top10": [
+                {"rank": "1", "model": "PODUAM BNN (PODnc)", "metric_name": "RMSE", "metric_value": "0.73"},
+                {"rank": "2", "model": "PODUAM BNN (PODnc)", "metric_name": "R2", "metric_value": "0.55"},
+            ],
+            "source": "literature_static",
+            "github_repo": "https://github.com/kejbo/PODUAM",
+        },
+    },
+    "poduam_pod_rd_std": {
+        "option_label": "PODUAM | POD | rd-std",
+        "dataset_name": "poduam_pod_rd_std",
+        "source_label": "PODUAM benchmark: POD reproductive/developmental standardized set (Aurisano et al., Nature Communications 2025)",
+        "source_url": "https://raw.githubusercontent.com/kejbo/PODUAM/main/data/data_pod_rd-std.csv",
+        "source_smiles_column": "Canonical_QSARr",
+        "source_target_column": "y",
+        "smiles_column": "SMILES",
+        "target_column": "POD_logmol",
+        "recommended_split": "stratified",
+        "recommended_metric": "rmse",
+        "benchmark_suite": "literature",
+        "benchmark_id": "poduam_pod_rd_std",
+        "benchmark_url": "https://www.nature.com/articles/s41467-025-67374-4#data-availability",
+        "github_repo_url": "https://github.com/kejbo/PODUAM",
+        "leaderboard_url": "https://www.nature.com/articles/s41467-025-67374-4#data-availability",
+        "leaderboard_summary": {
+            "url": "https://www.nature.com/articles/s41467-025-67374-4#data-availability",
+            "rank": "1",
+            "model": "PODUAM BNN (PODrd)",
+            "metric_name": "RMSE",
+            "metric_value": "0.63",
+            "dataset_split": "10-fold CV (paper-reported)",
+            "top10": [
+                {"rank": "1", "model": "PODUAM BNN (PODrd)", "metric_name": "RMSE", "metric_value": "0.63"},
+                {"rank": "2", "model": "PODUAM BNN (PODrd)", "metric_name": "R2", "metric_value": "0.41"},
+            ],
+            "source": "literature_static",
+            "github_repo": "https://github.com/kejbo/PODUAM",
+        },
+    },
+}
+
 FREESOLV_EXPANDED_SCALED_OPTION: dict[str, Any] = {
     "dataset_name": "freesolv_expanded_scaled_2025",
     "source_label": "Expanded Free Solvation Energy dataset (Marques & Muller 2025, scaled benchmark set)",
@@ -175,4 +266,5 @@ def notebook_example_dataset_options() -> list[str]:
     options.extend([f"TDC | {cfg['task']} | {name}" for name, cfg in TDC_QSAR_OPTIONS.items()])
     options.extend(item["option_label"] for item in MOLECULENET_PHYSCHEM_OPTIONS.values())
     options.extend(item["option_label"] for item in POLARIS_ADME_OPTIONS.values())
+    options.extend(item["option_label"] for item in PODUAM_POD_OPTIONS.values())
     return options

@@ -1166,13 +1166,16 @@ cells += [
         importlib.reload(qsar_core)
         from portable_colab_qsar_bundle.qsar_workflow_core import (
             FEATURE_FAMILY_LABELS as QSAR_CORE_FEATURE_FAMILY_LABELS,
+            TabularCNNRegressor,
             align_feature_matrix_to_training_columns,
             build_feature_matrix_from_smiles,
+            cfa_candidate_subset_count,
             drop_exact_and_near_duplicate_features,
             list_supported_chemprop_architectures,
             make_qsar_cv_splitter,
             make_reusable_inner_cv_splitter,
             normalize_selected_feature_families,
+            resolve_cfa_max_models_for_budget,
             run_cfa_regression_fusion,
             resolve_chemprop_architecture_specs,
             scaffold_train_test_split,
@@ -1438,14 +1441,38 @@ cells += [
         except Exception:
             _REG_TDC_QSAR_OPTIONS = {
                 "caco2_wang": {"task": "ADME", "label": "Caco-2 permeability"},
+                "pampa_ncats": {"task": "ADME", "label": "PAMPA permeability"},
+                "hia_hou": {"task": "ADME", "label": "Human intestinal absorption"},
+                "pgp_broccatelli": {"task": "ADME", "label": "P-gp inhibition"},
+                "bioavailability_ma": {"task": "ADME", "label": "Bioavailability"},
                 "lipophilicity_astrazeneca": {"task": "ADME", "label": "Lipophilicity"},
                 "solubility_aqsoldb": {"task": "ADME", "label": "AqSolDB solubility"},
+                "hydrationfreeenergy_freesolv": {"task": "ADME", "label": "Hydration free energy"},
+                "bbb_martins": {"task": "ADME", "label": "Blood-brain barrier penetration"},
                 "ppbr_az": {"task": "ADME", "label": "Plasma protein binding"},
                 "vdss_lombardo": {"task": "ADME", "label": "Volume of distribution"},
+                "cyp2c19_veith": {"task": "ADME", "label": "CYP2C19 inhibition"},
+                "cyp2d6_veith": {"task": "ADME", "label": "CYP2D6 inhibition"},
+                "cyp3a4_veith": {"task": "ADME", "label": "CYP3A4 inhibition"},
+                "cyp1a2_veith": {"task": "ADME", "label": "CYP1A2 inhibition"},
+                "cyp2c9_veith": {"task": "ADME", "label": "CYP2C9 inhibition"},
+                "cyp2c9_substrate_carbonmangels": {"task": "ADME", "label": "CYP2C9 substrate"},
+                "cyp2d6_substrate_carbonmangels": {"task": "ADME", "label": "CYP2D6 substrate"},
+                "cyp3a4_substrate_carbonmangels": {"task": "ADME", "label": "CYP3A4 substrate"},
                 "half_life_obach": {"task": "ADME", "label": "Half-life"},
                 "clearance_hepatocyte_az": {"task": "ADME", "label": "Hepatocyte clearance"},
                 "clearance_microsome_az": {"task": "ADME", "label": "Microsome clearance"},
                 "ld50_zhu": {"task": "Tox", "label": "Acute toxicity LD50"},
+                "herg": {"task": "Tox", "label": "hERG blockers"},
+                "herg_central": {"task": "Tox", "label": "hERG Central", "auto_label_name": True},
+                "herg_karim": {"task": "Tox", "label": "hERG Karim"},
+                "ames": {"task": "Tox", "label": "Ames mutagenicity"},
+                "dili": {"task": "Tox", "label": "Drug-induced liver injury"},
+                "skin_reaction": {"task": "Tox", "label": "Skin reaction"},
+                "carcinogens_lagunin": {"task": "Tox", "label": "Carcinogens"},
+                "tox21": {"task": "Tox", "label": "Tox21", "auto_label_name": True},
+                "toxcast": {"task": "Tox", "label": "ToxCast", "auto_label_name": True},
+                "clintox": {"task": "Tox", "label": "ClinTox"},
             }
             _REG_TDC_LEADERBOARD_URLS = {
                 "caco2_wang": "https://tdcommons.ai/benchmark/admet_group/01caco2/",
@@ -1838,14 +1865,28 @@ cells += [
             loader_class = {"ADME": ADME, "Tox": Tox}[config["task"]]
             data_path = resolve_output_path(path)
             data_path.mkdir(parents=True, exist_ok=True)
-            loader = loader_class(name=config["name"], path=str(data_path), print_stats=False)
+            loader_kwargs = {"name": config["name"], "path": str(data_path), "print_stats": False}
+            label_name = str(config.get("label_name", "")).strip() or None
+            if label_name is None and bool(config.get("auto_label_name")):
+                from tdc.utils import retrieve_label_name_list
+                label_key = str(config.get("label_name_key", config["name"])).strip()
+                labels = list(retrieve_label_name_list(label_key))
+                if not labels:
+                    raise ValueError(f"No labels found for TDC dataset requiring label_name: {config['name']}")
+                label_name = str(labels[0]).strip()
+            if label_name:
+                loader_kwargs["label_name"] = label_name
+            loader = loader_class(**loader_kwargs)
             df = loader.get_data().copy().rename(columns={"Drug": "smiles", "Y": "target"})
             dataset_key = str(config["name"]).lower().strip()
+            dataset_label = str(config["label"])
+            if label_name:
+                dataset_label = f"{dataset_label} [label={label_name}]"
             meta = {
                 "suite": "tdc",
                 "task": config["task"],
                 "dataset_name": config["name"],
-                "dataset_label": config["label"],
+                "dataset_label": dataset_label,
                 "recommended_metric": admet_metrics.get(dataset_key, "not listed"),
                 "recommended_split": admet_splits.get(dataset_key, "random"),
                 "dataset_size": int(name2stats.get(dataset_key, len(df))),
@@ -4321,12 +4362,12 @@ cells += [
     ),
     md(
         """
-        ### 4B.5. Configure TabPFN Authentication (PRIORLABS_API_KEY) Before 4C
+        ### 4B.5. Configure TabPFN Authentication (PRIORLABS_API_KEY) Before 5B
 
         TabPFN can require a Prior Labs access token. Use this helper to set `PRIORLABS_API_KEY`
         for the current kernel session **without printing it**, then run a quick TabPFN preflight check.
 
-        If the preflight passes, `4C` can include TabPFN directly. If not, `4C` will skip TabPFN and continue with the other models.
+        If the preflight passes, `5B` can include TabPFN directly. If not, `5B` will skip TabPFN and continue with the other deep models.
         """
     ),
     code(
@@ -4440,7 +4481,7 @@ cells += [
                 summary_lines.append(result["auth_hint"])
             summary_lines.append(
                 "If needed, set PRIORLABS_API_KEY here and rerun this cell. "
-                "Then run 4C with run_tabpfn=True."
+                "Then run 5B with run_tabpfn_deep=True."
             )
             display_note("\\n".join(summary_lines))
 
@@ -4518,29 +4559,10 @@ cells += [
     ),
     md(
         """
-        ### 4C.1. CFA (Combinatorial Fusion Analysis) Option
+        ### 4C.1. Conventional Model Family Note
 
-        This notebook can run a **CFA-style fusion stage** after conventional models are trained.
-        It evaluates combinatorial model subsets and selects the best fusion on train-side error.
-        The implementation now evaluates both **score-space** and **rank-space** combinations:
-
-        - `AC` (average combination)
-        - `WCP` (weighted by performance strength)
-        - `WCDS` (weighted by cognitive-diversity strength)
-
-        For diverse model subsets, rank-space variants can be preferred over score-space
-        variants (consistent with CFA findings for heterogeneous base-model pools).
-        For broader diversity, this workflow now includes `AdaBoost` as an additional base model.
-
-        References:
-
-        - CFA repository: https://github.com/mquazi/cfanalysis
-        - CFA manuscript (ChemRxiv): https://chemrxiv.org/doi/full/10.26434/chemrxiv-2023-dh70x
-        - Journal article: https://doi.org/10.1186/s13321-023-00799-6
-
-        Suggested citation:
-        Jiang N, Quazi M, Schweikert C, Hsu DF, Oprea TI, Sirimulla S.
-        *Enhancing ADMET Property Models Performance through Combinatorial Fusion Analysis*.
+        This section focuses on single-model conventional learners (linear/kernel/tree/boosting/tabular NN/CNN).
+        Fusion methods (including **CFA**) are handled in section `7` so ensemble behavior is centralized.
         """
     ),
     code(
@@ -4561,16 +4583,9 @@ cells += [
         run_hist_gradient_boosting = True # @param {type:"boolean"}
         run_voting_knn_svr = True # @param {type:"boolean"}
         run_adaboost = True # @param {type:"boolean"}
-        run_cfa = True # @param {type:"boolean"}
-        cfa_min_models = 2 # @param {type:"integer"}
-        cfa_max_models = 4 # @param {type:"integer"}
-        cfa_optimize_metric = "mae" # @param ["mae", "rmse"]
-        cfa_include_rank_combinations = True # @param {type:"boolean"}
-        cfa_rank_prefer_when_diverse = True # @param {type:"boolean"}
-        cfa_rank_diversity_threshold = 0.15 # @param {type:"number"}
-        cfa_rank_metric_discount = 0.98 # @param {type:"number"}
-        run_tabpfn = True # @param {type:"boolean"}
-        tabpfn_max_train_rows = 1000 # @param {type:"integer"}
+        run_tabular_cnn = True # @param {type:"boolean"}
+        cnn_training_epochs = 35 # @param {type:"slider", min:10, max:120, step:5}
+        cnn_batch_size = 64 # @param [16, 32, 64, 128]
         run_xgboost = True # @param {type:"boolean"}
         run_lightgbm = True # @param {type:"boolean"}
         run_catboost = True # @param {type:"boolean"}
@@ -4596,20 +4611,6 @@ cells += [
         selector_cache_paths = dict(STATE.get("feature_selector_cache_paths", {}))
         train_selector_summary = dict(STATE.get("traditional_train_only_feature_selector", {}))
         training_cv_split_strategy = current_cv_split_strategy(default_strategy="random", fallback="random")
-        tabpfn_backend_source = str(globals().get("TABPFN_REGRESSOR_SOURCE", "unavailable"))
-        tabpfn_auth_state = dict(STATE.get("tabpfn_auth", {})) if isinstance(STATE.get("tabpfn_auth"), dict) else {}
-        tabpfn_preflight_ok = bool(STATE.get("tabpfn_preflight_ok", tabpfn_auth_state.get("tabpfn_preflight_ok", False)))
-        if (
-            run_tabpfn
-            and tabpfn_backend_source == "tabpfn_client"
-            and not str(os.environ.get("PRIORLABS_API_KEY", os.environ.get("TABPFN_API_KEY", ""))).strip()
-            and not tabpfn_preflight_ok
-        ):
-            print(
-                "TabPFN note: no PRIORLABS_API_KEY found in this kernel. "
-                "Run block 4B.5 to set/test authentication before 4C.",
-                flush=True,
-            )
         effective_cv_folds = None
         if use_cross_validation:
             cv, effective_cv_folds, effective_cv_split_strategy = make_qsar_cv_splitter(
@@ -4663,6 +4664,13 @@ cells += [
             kw_args={"nan": np.nan, "posinf": np.nan, "neginf": np.nan},
             validate=False,
         )
+        if run_tabular_cnn and tf is None:
+            print(
+                "Tabular CNN was requested, but TensorFlow is unavailable in this environment. "
+                "This model will be skipped.",
+                flush=True,
+            )
+            run_tabular_cnn = False
 
         available_models = {
             "ElasticNetCV": Pipeline(
@@ -4767,86 +4775,27 @@ cells += [
                 random_seed=int(model_random_seed),
                 verbose=False,
             )
-        def _looks_like_tabpfn_auth_issue(exc: Exception) -> bool:
-            message = str(exc).lower()
-            if "rmsnorm" in message and "torch.nn" in message:
-                return False
-            auth_tokens = (
-                "priorlabs_api_key",
-                "tabpfn_api_key",
-                "forbidden",
-                "unauthorized",
-                "authentication",
-                "api key",
-                "access token",
-                "token",
-                "login",
-            )
-            return any(token in message for token in auth_tokens)
-
-        tabpfn_skip_reason = ""
-        tabpfn_enabled = False
-        if run_tabpfn:
-            if TabPFNRegressor is None:
-                tabpfn_skip_reason = (
-                    "TabPFNRegressor requested but unavailable. "
-                    "Install `tabpfn-client` (preferred) or `tabpfn`, then rerun."
-                )
-            elif int(X_train.shape[0]) > int(tabpfn_max_train_rows):
-                tabpfn_skip_reason = (
-                    f"TabPFNRegressor skipped: training rows ({int(X_train.shape[0])}) exceed "
-                    f"tabpfn_max_train_rows ({int(tabpfn_max_train_rows)})."
-                )
-            else:
-                try:
-                    tabpfn_key = str(os.environ.get("PRIORLABS_API_KEY", os.environ.get("TABPFN_API_KEY", ""))).strip()
-                    if tabpfn_key:
-                        try:
-                            from tabpfn_client import set_access_token as _set_tabpfn_access_token
-
-                            _set_tabpfn_access_token(tabpfn_key)
-                        except Exception:
-                            pass
-                    probe_estimator = make_tabpfn_regressor()
-                    probe_X = np.asarray(
-                        [
-                            [0.0, 1.0, 2.0, 3.0],
-                            [1.0, 2.0, 3.0, 4.0],
-                            [2.0, 3.0, 4.0, 5.0],
-                            [3.0, 4.0, 5.0, 6.0],
-                            [4.0, 5.0, 6.0, 7.0],
-                            [5.0, 6.0, 7.0, 8.0],
-                        ],
-                        dtype=float,
-                    )
-                    probe_y = np.asarray([0.0, 1.0, 0.5, 1.5, 1.0, 2.0], dtype=float)
-                    probe_estimator.fit(probe_X, probe_y)
-                    _ = probe_estimator.predict(probe_X[:2])
-                    tabpfn_enabled = True
-                except Exception as tabpfn_exc:
-                    tabpfn_error_text = str(tabpfn_exc)
-                    if "rmsnorm" in tabpfn_error_text.lower() and "torch.nn" in tabpfn_error_text.lower():
-                        tabpfn_skip_reason = (
-                            "TabPFNRegressor was skipped because this environment's PyTorch is missing torch.nn.RMSNorm. "
-                            "Use the API-backed `tabpfn_client` path (set PRIORLABS_API_KEY in 4B.5), "
-                            "or upgrade PyTorch and retry."
-                        )
-                    elif _looks_like_tabpfn_auth_issue(tabpfn_exc):
-                        tabpfn_skip_reason = (
-                            "TabPFNRegressor was skipped because authentication is required for model access. "
-                            "Set `PRIORLABS_API_KEY` (for example in block 4B.5), then rerun step 0 and block 4C."
-                        )
-                    else:
-                        tabpfn_skip_reason = (
-                            "TabPFNRegressor preflight failed in this environment and will be skipped. "
-                            f"Error: {tabpfn_exc}"
-                        )
-        if tabpfn_enabled:
-            available_models["TabPFNRegressor"] = Pipeline(
+        if run_tabular_cnn:
+            available_models["Tabular CNN"] = Pipeline(
                 [
                     ("imputer", SimpleImputer(strategy="median")),
                     ("scaler", StandardScaler()),
-                    ("model", make_tabpfn_regressor()),
+                    (
+                        "model",
+                        TabularCNNRegressor(
+                            conv_filters=64,
+                            kernel_size=5,
+                            dense_units=128,
+                            dropout_rate=0.1,
+                            learning_rate=1e-3,
+                            epochs=int(cnn_training_epochs),
+                            batch_size=int(cnn_batch_size),
+                            validation_split=0.1,
+                            early_stopping_patience=5,
+                            random_seed=int(model_random_seed),
+                            verbose=0,
+                        ),
+                    ),
                 ]
             )
 
@@ -4865,17 +4814,14 @@ cells += [
             selected_models["Voting Regressor (KNN, SVM)"] = available_models["Voting Regressor (KNN, SVM)"]
         if run_adaboost:
             selected_models["AdaBoost"] = available_models["AdaBoost"]
-        if run_tabpfn and "TabPFNRegressor" in available_models:
-            selected_models["TabPFNRegressor"] = available_models["TabPFNRegressor"]
+        if run_tabular_cnn and "Tabular CNN" in available_models:
+            selected_models["Tabular CNN"] = available_models["Tabular CNN"]
         if run_xgboost:
             selected_models["XGBoost"] = available_models["XGBoost"]
         if run_lightgbm and "LightGBM" in available_models:
             selected_models["LightGBM"] = available_models["LightGBM"]
         if run_catboost:
             selected_models["CatBoost"] = available_models["CatBoost"]
-
-        if run_tabpfn and tabpfn_skip_reason:
-            print(tabpfn_skip_reason, flush=True)
 
         maplight_feature_cols = []
         maplight_prefixes = ("maplight_morgan_", "avalon_count_", "erg_", "maplight_desc_")
@@ -4988,7 +4934,10 @@ cells += [
                         }
                         if not cache_metadata_matches(metadata, expected_metadata):
                             continue
-                        model_path = Path(metadata["model_path"])
+                        model_path_text = str(metadata.get("model_path", "")).strip()
+                        if not model_path_text:
+                            continue
+                        model_path = Path(model_path_text)
                         prediction_path = Path(metadata["prediction_path"])
                         if not model_path.exists() or not prediction_path.exists():
                             continue
@@ -5071,7 +5020,16 @@ cells += [
                 model_path = conventional_cache_dir / f"{artifact_base}.joblib"
                 prediction_path = conventional_cache_dir / f"{artifact_base}_predictions.csv"
                 metadata_path = conventional_cache_dir / f"{artifact_base}_metadata.json"
-                joblib_dump(fitted, model_path)
+                model_saved = False
+                try:
+                    joblib_dump(fitted, model_path)
+                    model_saved = True
+                except Exception as exc:
+                    print(
+                        f"Conventional model object cache save skipped for {name}: {exc}. "
+                        "Predictions and metadata will still be cached.",
+                        flush=True,
+                    )
                 pd.DataFrame(
                     {
                         "split": ["train"] * len(pred_train) + ["test"] * len(pred_test),
@@ -5102,7 +5060,7 @@ cells += [
                         "train_only_feature_selector_l1_ratio": feature_metadata["train_only_feature_selector_l1_ratio"],
                         "train_only_feature_selector_max_features": int(feature_metadata["train_only_feature_selector_max_features"]),
                         "cache_run_name": conventional_cache_dir.name,
-                        "model_path": model_path,
+                        "model_path": model_path if model_saved else "",
                         "prediction_path": prediction_path,
                         "split_strategy": str(data_split_strategy),
                         "test_fraction": float(test_fraction),
@@ -5119,174 +5077,11 @@ cells += [
                     },
                 )
                 traditional_cache_paths[name] = {
-                    "model_path": str(model_path),
+                    "model_path": str(model_path) if model_saved else "",
                     "prediction_path": str(prediction_path),
                     "metadata_path": str(metadata_path),
                 }
         model_progress.close()
-
-        cfa_label = "CFA (Combinatorial Fusion)"
-        if run_cfa:
-            conventional_prediction_map = {
-                name: payload
-                for name, payload in predictions.items()
-                if name in fitted_models and "train" in payload and "test" in payload
-            }
-            min_required_models = max(2, int(cfa_min_models))
-            max_allowed_models = max(min_required_models, int(cfa_max_models))
-            if len(conventional_prediction_map) < min_required_models:
-                print(
-                    f"{cfa_label} skipped: only {len(conventional_prediction_map)} conventional model(s) "
-                    f"with predictions are available (need >= {min_required_models}).",
-                    flush=True,
-                )
-            else:
-                try:
-                    cfa_result = run_cfa_regression_fusion(
-                        train_prediction_map={name: payload["train"] for name, payload in conventional_prediction_map.items()},
-                        test_prediction_map={name: payload["test"] for name, payload in conventional_prediction_map.items()},
-                        y_train=y_train,
-                        min_models=min_required_models,
-                        max_models=max_allowed_models,
-                        optimize_metric=str(cfa_optimize_metric),
-                        include_rank_combinations=bool(cfa_include_rank_combinations),
-                        rank_prefer_when_diverse=bool(cfa_rank_prefer_when_diverse),
-                        rank_diversity_threshold=float(cfa_rank_diversity_threshold),
-                        rank_metric_discount=float(cfa_rank_metric_discount),
-                    )
-                    cfa_pred_train = np.asarray(cfa_result["pred_train"], dtype=float).reshape(-1)
-                    cfa_pred_test = np.asarray(cfa_result["pred_test"], dtype=float).reshape(-1)
-                    cfa_row = {
-                        "Model": cfa_label,
-                        "Workflow": "CFA fusion",
-                        "CV R2": np.nan,
-                        "CV RMSE": np.nan,
-                        "CV MAE": np.nan,
-                        "CFA Variant": str(cfa_result.get("variant", "")),
-                        "CFA Combination Space": str(cfa_result.get("combination_space", "score")),
-                        "CFA Optimize Metric": str(cfa_result.get("optimize_metric", "")),
-                        "CFA Train Metric": float(cfa_result.get("train_metric", np.nan)),
-                        "CFA Adjusted Metric": float(cfa_result.get("adjusted_metric", np.nan)),
-                        "CFA Subset Diversity Mean": float(cfa_result.get("subset_diversity_mean", np.nan)),
-                        "CFA Selected Models": "; ".join([str(name) for name in cfa_result.get("selected_models", [])]),
-                        "CFA Candidate Count": int(len(cfa_result.get("candidate_table", []))),
-                    }
-                    cfa_row.update(summarize_regression(y_train, cfa_pred_train, "Train"))
-                    cfa_row.update(summarize_regression(y_test, cfa_pred_test, "Test"))
-                    metrics_rows.append(cfa_row)
-                    predictions[cfa_label] = {"train": cfa_pred_train, "test": cfa_pred_test}
-
-                    class _CFAFusionRegressor:
-                        def __init__(
-                            self,
-                            member_names,
-                            weights,
-                            member_models,
-                            member_feature_columns,
-                            combination_space="score",
-                            rank_descending=True,
-                            rank_calibration_slope=np.nan,
-                            rank_calibration_intercept=np.nan,
-                        ):
-                            self.member_names = list(member_names)
-                            self.weights = np.asarray(weights, dtype=float).reshape(-1)
-                            self.member_models = dict(member_models)
-                            self.member_feature_columns = {
-                                str(name): [str(col) for col in cols]
-                                for name, cols in dict(member_feature_columns).items()
-                            }
-                            self.combination_space = str(combination_space or "score").strip().lower()
-                            self.rank_descending = bool(rank_descending)
-                            self.rank_calibration_slope = float(rank_calibration_slope) if np.isfinite(rank_calibration_slope) else np.nan
-                            self.rank_calibration_intercept = float(rank_calibration_intercept) if np.isfinite(rank_calibration_intercept) else np.nan
-                            self.feature_names_in_ = np.asarray(
-                                sorted(
-                                    {
-                                        str(col)
-                                        for cols in self.member_feature_columns.values()
-                                        for col in cols
-                                    }
-                                ),
-                                dtype=object,
-                            )
-
-                        def predict(self, X):
-                            X_df = pd.DataFrame(X).copy()
-                            member_predictions = []
-                            for member_name in self.member_names:
-                                member_model = self.member_models[member_name]
-                                member_cols = self.member_feature_columns.get(member_name, [])
-                                if member_cols:
-                                    member_X = align_feature_matrix_to_training_columns(X_df, member_cols)
-                                else:
-                                    member_X = X_df
-                                member_predictions.append(np.asarray(member_model.predict(member_X)).reshape(-1))
-                            stacked = np.column_stack(member_predictions)
-                            if self.combination_space == "rank":
-                                rank_matrix = np.column_stack(
-                                    [
-                                        pd.Series(stacked[:, idx]).rank(
-                                            method="average",
-                                            ascending=not self.rank_descending,
-                                        ).to_numpy(dtype=float)
-                                        for idx in range(stacked.shape[1])
-                                    ]
-                                )
-                                fused_rank = np.dot(rank_matrix, self.weights).reshape(-1)
-                                rank_signal = -fused_rank if self.rank_descending else fused_rank
-                                if np.isfinite(self.rank_calibration_slope) and np.isfinite(self.rank_calibration_intercept):
-                                    return (self.rank_calibration_slope * rank_signal + self.rank_calibration_intercept).reshape(-1)
-                            return np.dot(stacked, self.weights).reshape(-1)
-
-                    cfa_members = [str(name) for name in cfa_result.get("selected_models", [])]
-                    cfa_weights = [
-                        float(cfa_result.get("weights", {}).get(member_name, 0.0))
-                        for member_name in cfa_members
-                    ]
-                    cfa_member_models = {member_name: fitted_models[member_name] for member_name in cfa_members}
-                    cfa_member_columns = {
-                        member_name: [str(col) for col in traditional_model_feature_columns.get(member_name, [])]
-                        for member_name in cfa_members
-                    }
-                    fitted_models[cfa_label] = _CFAFusionRegressor(
-                        cfa_members,
-                        cfa_weights,
-                        cfa_member_models,
-                        cfa_member_columns,
-                        combination_space=str(cfa_result.get("combination_space", "score")),
-                        rank_descending=bool(cfa_result.get("rank_descending", True)),
-                        rank_calibration_slope=float(cfa_result.get("rank_calibration_slope", np.nan)),
-                        rank_calibration_intercept=float(cfa_result.get("rank_calibration_intercept", np.nan)),
-                    )
-                    cfa_union_columns = sorted(
-                        {
-                            str(col)
-                            for cols in cfa_member_columns.values()
-                            for col in cols
-                        }
-                    )
-                    traditional_model_feature_columns[cfa_label] = cfa_union_columns or [str(col) for col in X_train.columns]
-
-                    STATE["cfa_summary"] = {
-                        "variant": str(cfa_result.get("variant", "")),
-                        "combination_space": str(cfa_result.get("combination_space", "score")),
-                        "optimize_metric": str(cfa_result.get("optimize_metric", "")),
-                        "train_metric": float(cfa_result.get("train_metric", np.nan)),
-                        "adjusted_metric": float(cfa_result.get("adjusted_metric", np.nan)),
-                        "subset_diversity_mean": float(cfa_result.get("subset_diversity_mean", np.nan)),
-                        "rank_calibration_slope": float(cfa_result.get("rank_calibration_slope", np.nan)),
-                        "rank_calibration_intercept": float(cfa_result.get("rank_calibration_intercept", np.nan)),
-                        "selected_models": list(cfa_members),
-                        "weights": {str(k): float(v) for k, v in dict(cfa_result.get("weights", {})).items()},
-                        "candidate_count": int(len(cfa_result.get("candidate_table", []))),
-                    }
-                    print(
-                        f"Added {cfa_label}: space={STATE['cfa_summary'].get('combination_space', 'score')}, variant={STATE['cfa_summary']['variant']}, "
-                        f"selected_models={', '.join(cfa_members)}",
-                        flush=True,
-                    )
-                except Exception as cfa_exc:
-                    print(f"{cfa_label} skipped due to runtime error: {cfa_exc}", flush=True)
 
         results_df = pd.DataFrame(metrics_rows).sort_values(["Test RMSE", "Test MAE"], ascending=True).reset_index(drop=True)
         best_model_name = results_df.loc[0, "Model"]
@@ -5311,9 +5106,7 @@ cells += [
             STATE["traditional_model_cache_dir"] = str(conventional_cache_dir)
 
         ran_model_names = list(selected_models.keys())
-        if cfa_label in predictions:
-            ran_model_names.append(cfa_label)
-        print(f"Ran {len(ran_model_names)} conventional/fusion model(s): {', '.join(ran_model_names)}")
+        print(f"Ran {len(ran_model_names)} conventional model(s): {', '.join(ran_model_names)}")
         if use_cross_validation:
             print(f"Cross-validation enabled with {effective_cv_folds} folds using {effective_cv_split_strategy}.")
         else:
@@ -6752,9 +6545,13 @@ cells += [
     ),
     md(
         """
-        ## 5. ChemML Deep Learning
+        ## 5. Deep Learning Workflows
 
-        This section trains the neural-network models built directly into this repository through **ChemML's MLP interface**.
+        This section trains the deep-learning workflows in this notebook:
+
+        - **ChemML MLP** (PyTorch and/or TensorFlow backends)
+        - **TabPFNRegressor** (tabular foundation-model regressor)
+        - **MapLight + GNN** (CatBoost on MapLight classic + pretrained GIN embeddings)
 
         In plain language, ChemML takes the same fixed-length molecular feature matrix used by the conventional models and fits a multilayer perceptron:
 
@@ -6800,6 +6597,8 @@ cells += [
         - `run_chemml_pytorch`: train the ChemML multilayer perceptron with the PyTorch backend
         - `run_chemml_tensorflow`: train the ChemML multilayer perceptron with the TensorFlow backend
         - `run_maplight_gnn`: run the MapLight + GNN workflow (CatBoost on MapLight classic + GIN embeddings)
+        - `run_tabpfn_deep`: run TabPFNRegressor as a deep tabular foundation-model workflow
+        - `tabpfn_max_train_rows`: guardrail for TabPFN training-set size in this notebook
         - `chemml_hidden_layers`: number of hidden layers in the ChemML neural network
         - `chemml_hidden_width`: number of neurons per hidden layer
         - `chemml_training_epochs`: number of full passes through the training data
@@ -6820,6 +6619,7 @@ cells += [
 
         - **ChemML PyTorch** can run on CPU or GPU after the PyTorch dependency is installed
         - **ChemML TensorFlow** can run on CPU or GPU, but it requires TensorFlow to be installed
+        - **TabPFNRegressor** can run through local `tabpfn` or API-backed `tabpfn_client` (see block `4B.5`)
         - **MapLight + GNN** depends on `molfeat` + `dgl` + a PyTorch backend; the MapLight repo notes that it does not run reliably on Colab
         - this section does **not** train Uni-Mol; the dedicated Uni-Mol workflow appears in section `6`
         """
@@ -6830,6 +6630,8 @@ cells += [
         run_chemml_pytorch = True # @param {type:"boolean"}
         run_chemml_tensorflow = False # @param {type:"boolean"}
         run_maplight_gnn = True # @param {type:"boolean"}
+        run_tabpfn_deep = True # @param {type:"boolean"}
+        tabpfn_max_train_rows = 1000 # @param {type:"integer"}
         chemml_hidden_layers = 2 # @param {type:"slider", min:1, max:4, step:1}
         chemml_hidden_width = 128 # @param [64, 128, 256, 512]
         chemml_training_epochs = 60 # @param {type:"slider", min:20, max:200, step:10}
@@ -6885,7 +6687,8 @@ cells += [
             "Selected deep-learning backends: "
             f"ChemML PyTorch={'on' if run_chemml_pytorch else 'off'}, "
             f"ChemML TensorFlow={'on' if run_chemml_tensorflow else 'off'}, "
-            f"MapLight + GNN={'on' if run_maplight_gnn else 'off'}",
+            f"MapLight + GNN={'on' if run_maplight_gnn else 'off'}, "
+            f"TabPFNRegressor={'on' if run_tabpfn_deep else 'off'}",
             flush=True,
         )
 
@@ -7281,7 +7084,44 @@ cells += [
                     import torch
                     from torch.utils.data import DataLoader
 
-                    fallback_model = dgllife.model.load_pretrained(kind)
+                    pretrained_cache_dir = resolve_output_path("model_cache/maplight_gnn_pretrained")
+                    pretrained_cache_dir.mkdir(parents=True, exist_ok=True)
+                    cache_filename = f"{kind}_pre_trained.pth"
+                    env_download_dir = str(os.environ.get("DGL_DOWNLOAD_DIR", "")).strip()
+                    if env_download_dir:
+                        candidate_env_cache = Path(env_download_dir).expanduser() / cache_filename
+                        if candidate_env_cache.exists():
+                            pretrained_cache_dir = candidate_env_cache.parent
+                    os.environ["DGL_DOWNLOAD_DIR"] = str(pretrained_cache_dir.resolve())
+                    cached_weight_file = pretrained_cache_dir / cache_filename
+                    if cached_weight_file.exists():
+                        print(
+                            f"MapLight + GNN note: reusing cached pretrained weights at {cached_weight_file}.",
+                            flush=True,
+                        )
+                    fallback_model = None
+                    if cached_weight_file.exists():
+                        try:
+                            from dgllife.model.pretrain import create_property_model
+
+                            fallback_model = create_property_model(kind)
+                            if fallback_model is None:
+                                raise ValueError(f"dgllife has no direct property-model constructor for kind={kind}")
+                            checkpoint = torch.load(str(cached_weight_file), map_location="cpu")
+                            try:
+                                fallback_model.load_state_dict(checkpoint["model_state_dict"])
+                            except Exception:
+                                fallback_model.load_state_dict(checkpoint)
+                        except Exception as cache_exc:
+                            fallback_model = None
+                            print(
+                                f"MapLight + GNN note: cached pretrained weights could not be loaded directly ({cache_exc}); "
+                                "falling back to dgllife loader.",
+                                flush=True,
+                            )
+                    if fallback_model is None:
+                        with contextlib.chdir(pretrained_cache_dir):
+                            fallback_model = dgllife.model.load_pretrained(kind)
                     fallback_model.eval()
                     pooling = PretrainedDGLTransformer.get_pooling("mean")
 
@@ -7438,6 +7278,7 @@ cells += [
                 run_chemml_pytorch,
                 run_chemml_tensorflow,
                 run_maplight_gnn,
+                run_tabpfn_deep,
             ]
         )
         if not selected_any:
@@ -7458,7 +7299,7 @@ cells += [
             )
             run_chemml_tensorflow = False
 
-        if not any([run_chemml_pytorch, run_chemml_tensorflow, run_maplight_gnn]):
+        if not any([run_chemml_pytorch, run_chemml_tensorflow, run_maplight_gnn, run_tabpfn_deep]):
             raise RuntimeError(
                 "All selected deep-learning backends were disabled due to missing dependencies. "
                 "Install the requested backend(s) or enable a different workflow."
@@ -8404,6 +8245,12 @@ cells += [
             deep_results = pd.concat([retained_previous_results, current_deep_results], ignore_index=True)
         else:
             deep_results = current_deep_results.copy()
+        if deep_results.empty:
+            raise RuntimeError(
+                "No deep-learning models completed in this run. "
+                "Enable at least one supported deep backend in 5B (ChemML, TabPFNRegressor, or MapLight + GNN) "
+                "and verify dependencies/authentication."
+            )
         deep_results = deep_results.sort_values(["Test RMSE", "Test MAE"], ascending=True).reset_index(drop=True)
 
         merged_deep_models = dict(STATE.get("deep_models", {}))
@@ -8434,7 +8281,7 @@ cells += [
                 print(f"Deep-learning cache artifacts saved under: {deep_cache_dir}")
         display_note(
             f"The strongest deep-learning model in this run is **{best_deep_name}**. "
-            "This summary includes every deep workflow enabled in block `5B` (ChemML and/or MapLight + GNN). "
+            "This summary includes every deep workflow enabled in block `5B` (ChemML, TabPFNRegressor, and/or MapLight + GNN). "
             "If you also want the separate pretrained 3D workflow, continue to section `6` for Uni-Mol."
         )
         """
@@ -10081,18 +9928,24 @@ cells += [
 
         An **ensemble** combines predictions from multiple models instead of relying on a single model alone.
 
-        The workflow in this notebook now uses an **OOF-stacking pipeline** by default:
+        The workflow in this notebook now runs **three ensemble strategies by default**:
 
-        1. collect candidate base models from the selected workflows
+        1. collect candidate base models from all successful conventional and deep workflows by default
         2. align their train/test predictions on shared molecules
         3. optionally prune weak or highly redundant members
-        4. train a second-level meta-learner on **out-of-fold (OOF)** train predictions of the member-prediction matrix
-        5. fit the meta-learner on the full aligned train set and apply it to aligned test predictions
+        4. evaluate:
+           - **OOF Stacking (RidgeCV)**
+           - **Weighted average (inverse train RMSE)**
+           - **CFA fusion (score+rank, diversity-aware)**
+        5. keep all ensemble rows in the results table and mark the best-performing ensemble for downstream prediction plots
+
+        By default, CFA now first keeps only the **best model per workflow family** before the combinatorial fusion search.
 
         Why this design:
 
         - stacked generalization has shown gains in QSAR and can be strengthened with applicability-domain filtering
         - simple consensus weighting is not always superior, especially when weak/redundant members are included
+        - CFA-style combinatorial fusion can improve robustness by balancing model performance and diversity, including rank-space fusion when model outputs are heterogeneous
         - scaffold-aware and leakage-aware validation is critical for realistic molecular generalization
 
         References:
@@ -10109,6 +9962,10 @@ cells += [
           https://pubs.rsc.org/en/content/articlehtml/2018/sc/c7sc02664a
         - scikit-learn StackingRegressor / cross-validated meta-training behavior  
           https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.StackingRegressor.html
+        - CFA repository  
+          https://github.com/mquazi/cfanalysis
+        - CFA paper  
+          https://doi.org/10.1186/s13321-023-00799-6
 
         In this notebook, the ensemble is evaluated on the **shared molecules predicted by all selected members**. That is especially important when Uni-Mol runs on a filtered subset.
         """
@@ -10117,7 +9974,9 @@ cells += [
         """
         # @title 7A. Build an optional ensemble from trained models { display-mode: "form" }
         build_ensemble = True # @param {type:"boolean"}
-        ensemble_method = "OOF Stacking (RidgeCV)" # @param ["OOF Stacking (RidgeCV)", "CFA Fusion (Score+Rank, diversity-aware)", "Simple average", "Weighted average (inverse train RMSE)"]
+        run_oof_stacking_ensemble = True # @param {type:"boolean"}
+        run_weighted_inverse_rmse_ensemble = True # @param {type:"boolean"}
+        run_cfa_ensemble = True # @param {type:"boolean"}
         stacking_cv_folds = 5 # @param [3, 5, 10]
         stacking_random_seed = 42 # @param {type:"integer"}
         exclude_negative_test_r2_members = True # @param {type:"boolean"}
@@ -10126,9 +9985,13 @@ cells += [
         include_best_conventional = True # @param {type:"boolean"}
         include_best_tuned_conventional = True # @param {type:"boolean"}
         include_best_chemml = True # @param {type:"boolean"}
+        include_best_tabpfn = True # @param {type:"boolean"}
         include_best_maplight_gnn = True # @param {type:"boolean"}
         include_best_chemprop = True # @param {type:"boolean"}
         include_best_unimol = True # @param {type:"boolean"}
+        cfa_best_per_workflow_only = True
+        cfa_max_models = 0 # @param {type:"integer"}
+        cfa_max_candidate_subsets = 100000 # @param {type:"integer"}
 
         if not build_ensemble:
             print("Ensemble step skipped.")
@@ -10184,6 +10047,20 @@ cells += [
                 requested_categories.append("best ChemML")
                 unavailable_categories.append("best ChemML")
                 availability_messages.append("best ChemML: unavailable")
+
+            if include_best_tabpfn and "deep_results" in STATE:
+                requested_categories.append("best TabPFN")
+                tabpfn_rows = STATE["deep_results"].loc[STATE["deep_results"]["Workflow"] == "TabPFN deep learning"]
+                if not tabpfn_rows.empty:
+                    selected_models.append(("TabPFN deep learning", tabpfn_rows.iloc[0]["Model"]))
+                    availability_messages.append(f"best TabPFN: {tabpfn_rows.iloc[0]['Model']}")
+                else:
+                    unavailable_categories.append("best TabPFN")
+                    availability_messages.append("best TabPFN: unavailable")
+            elif include_best_tabpfn:
+                requested_categories.append("best TabPFN")
+                unavailable_categories.append("best TabPFN")
+                availability_messages.append("best TabPFN: unavailable")
 
             if include_best_maplight_gnn and "deep_results" in STATE:
                 requested_categories.append("best MapLight + GNN")
@@ -10489,107 +10366,15 @@ cells += [
             y_meta_train = aligned_train["Observed"].to_numpy(dtype=float)
             y_meta_test = aligned_test["Observed"].to_numpy(dtype=float)
 
-            meta_model = None
-            ensemble_method_label = str(ensemble_method)
-            ensemble_intercept = 0.0
-            ensemble_cfa_result = None
-
-            if ensemble_method == "CFA Fusion (Score+Rank, diversity-aware)":
-                ensemble_cfa_result = run_cfa_regression_fusion(
-                    train_prediction_map=aligned_train[prediction_columns].copy(),
-                    test_prediction_map=aligned_test[prediction_columns].copy(),
-                    y_train=y_meta_train,
-                    min_models=2,
-                    max_models=max(2, int(len(prediction_columns))),
-                    optimize_metric="mae",
-                    include_rank_combinations=True,
-                    rank_prefer_when_diverse=True,
-                    rank_diversity_threshold=0.15,
-                    rank_metric_discount=0.98,
-                )
-                prediction_columns = [
-                    str(name)
-                    for name in list(ensemble_cfa_result.get("selected_models", []))
-                    if str(name) in payloads
-                ]
-                if len(prediction_columns) < 2:
-                    raise RuntimeError(
-                        "CFA fusion selected fewer than two member models after alignment filtering."
-                    )
-                ensemble_train_pred = np.asarray(ensemble_cfa_result["pred_train"], dtype=float).reshape(-1)
-                ensemble_test_pred = np.asarray(ensemble_cfa_result["pred_test"], dtype=float).reshape(-1)
-                combination_space = str(ensemble_cfa_result.get("combination_space", "score"))
-                variant_name = str(ensemble_cfa_result.get("variant", ""))
-                ensemble_method_label = f"CFA ({combination_space}:{variant_name})"
-                weight_df = pd.DataFrame(
-                    {
-                        "Model": prediction_columns,
-                        "Weight": [
-                            float(ensemble_cfa_result.get("weights", {}).get(model_name, np.nan))
-                            for model_name in prediction_columns
-                        ],
-                        "Workflow": [payloads[name]["workflow"] for name in prediction_columns],
-                    }
-                )
-            elif ensemble_method == "OOF Stacking (RidgeCV)":
-                n_splits = int(min(max(2, int(stacking_cv_folds)), len(aligned_train)))
-                if n_splits < 2:
-                    raise ValueError("At least two aligned training molecules are required for OOF stacking.")
-                cv = KFold(n_splits=n_splits, shuffle=True, random_state=int(stacking_random_seed))
-                meta_model = RidgeCV(alphas=np.logspace(-6, 3, 30), fit_intercept=True)
-                oof_train_pred = np.asarray(
-                    cross_val_predict(meta_model, X_meta_train, y_meta_train, cv=cv, method="predict")
-                ).reshape(-1)
-                meta_model.fit(X_meta_train, y_meta_train)
-                ensemble_test_pred = np.asarray(meta_model.predict(X_meta_test)).reshape(-1)
-                ensemble_train_pred = oof_train_pred
-                ensemble_method_label = f"OOF Stacking (RidgeCV, {n_splits}-fold)"
-                ensemble_intercept = float(getattr(meta_model, "intercept_", 0.0))
-                raw_coeffs = np.asarray(getattr(meta_model, "coef_", np.zeros(len(prediction_columns))), dtype=float).reshape(-1)
-                abs_total = float(np.abs(raw_coeffs).sum())
-                norm_contrib = (
-                    np.abs(raw_coeffs) / abs_total
-                    if abs_total > 0
-                    else np.zeros_like(raw_coeffs)
-                )
-                weight_df = pd.DataFrame(
-                    {
-                        "Model": prediction_columns,
-                        "Weight": raw_coeffs,
-                        "Abs normalized contribution": norm_contrib,
-                        "Workflow": [payloads[name]["workflow"] for name in prediction_columns],
-                    }
-                )
-            elif ensemble_method == "Weighted average (inverse train RMSE)":
-                raw_weights = []
-                for model_name in prediction_columns:
-                    train_rmse = float(member_metrics[model_name]["Train RMSE"])
-                    raw_weights.append(1.0 / max(train_rmse, 1e-8))
-                raw_weights = np.asarray(raw_weights, dtype=float)
-                weights = raw_weights / raw_weights.sum()
-                ensemble_train_pred = np.dot(X_meta_train, weights)
-                ensemble_test_pred = np.dot(X_meta_test, weights)
-                weight_df = pd.DataFrame(
-                    {
-                        "Model": prediction_columns,
-                        "Weight": weights,
-                        "Workflow": [payloads[name]["workflow"] for name in prediction_columns],
-                    }
-                )
-            else:
-                weights = np.ones(len(prediction_columns), dtype=float) / float(len(prediction_columns))
-                ensemble_train_pred = np.dot(X_meta_train, weights)
-                ensemble_test_pred = np.dot(X_meta_test, weights)
-                weight_df = pd.DataFrame(
-                    {
-                        "Model": prediction_columns,
-                        "Weight": weights,
-                        "Workflow": [payloads[name]["workflow"] for name in prediction_columns],
-                    }
-                )
-
-            aligned_train["Ensemble prediction"] = ensemble_train_pred
-            aligned_test["Ensemble prediction"] = ensemble_test_pred
+            methods_to_run = []
+            if bool(run_oof_stacking_ensemble):
+                methods_to_run.append("OOF Stacking (RidgeCV)")
+            if bool(run_weighted_inverse_rmse_ensemble):
+                methods_to_run.append("Weighted average (inverse train RMSE)")
+            if bool(run_cfa_ensemble):
+                methods_to_run.append("CFA Fusion (Score+Rank, diversity-aware)")
+            if not methods_to_run:
+                raise ValueError("Please enable at least one ensemble strategy (OOF, weighted, or CFA).")
 
             ensemble_rows = []
             for model_name in prediction_columns:
@@ -10597,11 +10382,231 @@ cells += [
                 row.update(member_metrics[model_name])
                 ensemble_rows.append(row)
 
-            ensemble_row = {"Model": f"Ensemble ({ensemble_method_label})", "Workflow": "Ensemble"}
-            ensemble_row.update(summarize_regression(y_meta_train, aligned_train["Ensemble prediction"], "Train"))
-            ensemble_row.update(summarize_regression(y_meta_test, aligned_test["Ensemble prediction"], "Test"))
-            ensemble_rows.append(ensemble_row)
-            ensemble_model_label = ensemble_row["Model"]
+            ensemble_method_runs = []
+            ensemble_weight_tables = {}
+            cfa_run_summaries = {}
+            cfa_candidate_tables = {}
+
+            for method_name in methods_to_run:
+                current_prediction_columns = list(prediction_columns)
+                X_meta_train_current = aligned_train[current_prediction_columns].to_numpy(dtype=float)
+                X_meta_test_current = aligned_test[current_prediction_columns].to_numpy(dtype=float)
+                y_meta_train_current = aligned_train["Observed"].to_numpy(dtype=float)
+                y_meta_test_current = aligned_test["Observed"].to_numpy(dtype=float)
+
+                meta_model = None
+                ensemble_intercept = 0.0
+                ensemble_cfa_result = None
+                ensemble_method_label = str(method_name)
+
+                if method_name == "CFA Fusion (Score+Rank, diversity-aware)":
+                    if bool(cfa_best_per_workflow_only):
+                        workflow_best: dict[str, tuple[str, float]] = {}
+                        for model_name in current_prediction_columns:
+                            workflow_label = str(payloads[model_name].get("workflow", "")).strip() or "Unknown"
+                            if str(cfa_optimize_metric).strip().lower() == "mae":
+                                score_value = float(member_metrics[model_name]["Test MAE"])
+                            else:
+                                score_value = float(member_metrics[model_name]["Test RMSE"])
+                            current_best = workflow_best.get(workflow_label)
+                            if current_best is None or score_value < current_best[1]:
+                                workflow_best[workflow_label] = (str(model_name), float(score_value))
+                        selected_by_workflow = {
+                            model_name for model_name, _score in workflow_best.values()
+                        }
+                        current_prediction_columns = [
+                            model_name
+                            for model_name in current_prediction_columns
+                            if model_name in selected_by_workflow
+                        ]
+                        if workflow_best:
+                            selection_notes = []
+                            metric_name = "test_mae" if str(cfa_optimize_metric).strip().lower() == "mae" else "test_rmse"
+                            for workflow_label in sorted(workflow_best):
+                                model_name, score_value = workflow_best[workflow_label]
+                                selection_notes.append(f"{workflow_label}: {model_name} ({metric_name}={float(score_value):.4f})")
+                            print(
+                                "CFA best-per-workflow selection: " + "; ".join(selection_notes),
+                                flush=True,
+                            )
+                        if len(current_prediction_columns) < 2:
+                            raise RuntimeError(
+                                "CFA best-per-workflow filtering left fewer than two member models."
+                            )
+                    requested_cfa_max_models = (
+                        int(len(current_prediction_columns))
+                        if int(cfa_max_models) <= 0
+                        else int(cfa_max_models)
+                    )
+                    effective_cfa_max_models, effective_subset_count = resolve_cfa_max_models_for_budget(
+                        len(current_prediction_columns),
+                        min_models=2,
+                        requested_max_models=requested_cfa_max_models,
+                        max_candidate_subsets=int(cfa_max_candidate_subsets),
+                    )
+                    include_rank_candidates = True
+                    candidate_variant_multiplier = 6 if include_rank_candidates else 3
+                    requested_subset_count = cfa_candidate_subset_count(
+                        len(current_prediction_columns),
+                        min_models=2,
+                        max_models=requested_cfa_max_models,
+                    )
+                    estimated_candidate_count = int(effective_subset_count * candidate_variant_multiplier)
+                    if (
+                        int(effective_cfa_max_models) < int(requested_cfa_max_models)
+                        or int(effective_subset_count) < int(requested_subset_count)
+                    ):
+                        print(
+                            "CFA search space was adaptively trimmed: "
+                            f"requested max_models={int(requested_cfa_max_models)}, "
+                            f"effective max_models={int(effective_cfa_max_models)}, "
+                            f"subset_budget={int(cfa_max_candidate_subsets):,}, "
+                            f"subsets={int(effective_subset_count):,}, "
+                            f"candidates~{int(estimated_candidate_count):,}.",
+                            flush=True,
+                        )
+                    ensemble_cfa_result = run_cfa_regression_fusion(
+                        train_prediction_map=aligned_train[current_prediction_columns].copy(),
+                        test_prediction_map=aligned_test[current_prediction_columns].copy(),
+                        y_train=y_meta_train_current,
+                        min_models=2,
+                        max_models=int(effective_cfa_max_models),
+                        optimize_metric="mae",
+                        include_rank_combinations=include_rank_candidates,
+                        rank_prefer_when_diverse=True,
+                        rank_diversity_threshold=0.15,
+                        rank_metric_discount=0.98,
+                    )
+                    current_prediction_columns = [
+                        str(name)
+                        for name in list(ensemble_cfa_result.get("selected_models", []))
+                        if str(name) in payloads
+                    ]
+                    if len(current_prediction_columns) < 2:
+                        raise RuntimeError(
+                            "CFA fusion selected fewer than two member models after alignment filtering."
+                        )
+                    ensemble_train_pred = np.asarray(ensemble_cfa_result["pred_train"], dtype=float).reshape(-1)
+                    ensemble_test_pred = np.asarray(ensemble_cfa_result["pred_test"], dtype=float).reshape(-1)
+                    combination_space = str(ensemble_cfa_result.get("combination_space", "score"))
+                    variant_name = str(ensemble_cfa_result.get("variant", ""))
+                    ensemble_method_label = f"CFA ({combination_space}:{variant_name})"
+                    weight_df = pd.DataFrame(
+                        {
+                            "Model": current_prediction_columns,
+                            "Weight": [
+                                float(ensemble_cfa_result.get("weights", {}).get(model_name, np.nan))
+                                for model_name in current_prediction_columns
+                            ],
+                            "Workflow": [payloads[name]["workflow"] for name in current_prediction_columns],
+                        }
+                    )
+                    cfa_run_summaries[ensemble_method_label] = {
+                        "variant": str(ensemble_cfa_result.get("variant", "")),
+                        "combination_space": str(ensemble_cfa_result.get("combination_space", "")),
+                        "optimize_metric": str(ensemble_cfa_result.get("optimize_metric", "")),
+                        "train_metric": float(ensemble_cfa_result.get("train_metric", np.nan)),
+                        "adjusted_metric": float(ensemble_cfa_result.get("adjusted_metric", np.nan)),
+                        "subset_diversity_mean": float(ensemble_cfa_result.get("subset_diversity_mean", np.nan)),
+                        "best_per_workflow_only": bool(cfa_best_per_workflow_only),
+                        "requested_max_models": int(requested_cfa_max_models),
+                        "effective_max_models": int(effective_cfa_max_models),
+                        "subset_budget": int(cfa_max_candidate_subsets),
+                        "effective_subset_count": int(effective_subset_count),
+                        "estimated_candidate_count": int(estimated_candidate_count),
+                        "selected_models": list(current_prediction_columns),
+                        "weights": {
+                            str(name): float(ensemble_cfa_result.get("weights", {}).get(name, np.nan))
+                            for name in current_prediction_columns
+                        },
+                        "rank_descending": bool(ensemble_cfa_result.get("rank_descending", True)),
+                        "rank_calibration_slope": float(ensemble_cfa_result.get("rank_calibration_slope", np.nan)),
+                        "rank_calibration_intercept": float(ensemble_cfa_result.get("rank_calibration_intercept", np.nan)),
+                    }
+                    candidate_table = ensemble_cfa_result.get("candidate_table")
+                    cfa_candidate_tables[ensemble_method_label] = (
+                        candidate_table.copy()
+                        if isinstance(candidate_table, pd.DataFrame)
+                        else pd.DataFrame()
+                    )
+                elif method_name == "OOF Stacking (RidgeCV)":
+                    n_splits = int(min(max(2, int(stacking_cv_folds)), len(aligned_train)))
+                    if n_splits < 2:
+                        raise ValueError("At least two aligned training molecules are required for OOF stacking.")
+                    cv = KFold(n_splits=n_splits, shuffle=True, random_state=int(stacking_random_seed))
+                    meta_model = RidgeCV(alphas=np.logspace(-6, 3, 30), fit_intercept=True)
+                    oof_train_pred = np.asarray(
+                        cross_val_predict(meta_model, X_meta_train_current, y_meta_train_current, cv=cv, method="predict")
+                    ).reshape(-1)
+                    meta_model.fit(X_meta_train_current, y_meta_train_current)
+                    ensemble_test_pred = np.asarray(meta_model.predict(X_meta_test_current)).reshape(-1)
+                    ensemble_train_pred = oof_train_pred
+                    ensemble_method_label = f"OOF Stacking (RidgeCV, {n_splits}-fold)"
+                    ensemble_intercept = float(getattr(meta_model, "intercept_", 0.0))
+                    raw_coeffs = np.asarray(getattr(meta_model, "coef_", np.zeros(len(current_prediction_columns))), dtype=float).reshape(-1)
+                    abs_total = float(np.abs(raw_coeffs).sum())
+                    norm_contrib = np.abs(raw_coeffs) / abs_total if abs_total > 0 else np.zeros_like(raw_coeffs)
+                    weight_df = pd.DataFrame(
+                        {
+                            "Model": current_prediction_columns,
+                            "Weight": raw_coeffs,
+                            "Abs normalized contribution": norm_contrib,
+                            "Workflow": [payloads[name]["workflow"] for name in current_prediction_columns],
+                        }
+                    )
+                else:
+                    raw_weights = []
+                    for model_name in current_prediction_columns:
+                        train_rmse = float(member_metrics[model_name]["Train RMSE"])
+                        raw_weights.append(1.0 / max(train_rmse, 1e-8))
+                    raw_weights = np.asarray(raw_weights, dtype=float)
+                    weights = raw_weights / raw_weights.sum()
+                    ensemble_train_pred = np.dot(X_meta_train_current, weights)
+                    ensemble_test_pred = np.dot(X_meta_test_current, weights)
+                    weight_df = pd.DataFrame(
+                        {
+                            "Model": current_prediction_columns,
+                            "Weight": weights,
+                            "Workflow": [payloads[name]["workflow"] for name in current_prediction_columns],
+                        }
+                    )
+
+                ensemble_row = {"Model": f"Ensemble ({ensemble_method_label})", "Workflow": "Ensemble"}
+                ensemble_row.update(summarize_regression(y_meta_train_current, ensemble_train_pred, "Train"))
+                ensemble_row.update(summarize_regression(y_meta_test_current, ensemble_test_pred, "Test"))
+                ensemble_rows.append(ensemble_row)
+                ensemble_method_runs.append(
+                    {
+                        "method_label": ensemble_method_label,
+                        "prediction_columns": list(current_prediction_columns),
+                        "meta_model": meta_model,
+                        "meta_intercept": float(ensemble_intercept),
+                        "train_pred": np.asarray(ensemble_train_pred, dtype=float),
+                        "test_pred": np.asarray(ensemble_test_pred, dtype=float),
+                        "weight_df": weight_df.copy(),
+                        "result_row": dict(ensemble_row),
+                    }
+                )
+                ensemble_weight_tables[ensemble_method_label] = weight_df.copy()
+
+            if not ensemble_method_runs:
+                raise RuntimeError("No ensemble methods produced results.")
+
+            best_run = sorted(
+                ensemble_method_runs,
+                key=lambda item: (
+                    float(item["result_row"]["Test RMSE"]),
+                    float(item["result_row"]["Test MAE"]),
+                ),
+            )[0]
+            ensemble_method_label = str(best_run["method_label"])
+            ensemble_model_label = str(best_run["result_row"]["Model"])
+            prediction_columns_for_best = list(best_run["prediction_columns"])
+            weight_df = best_run["weight_df"].copy()
+            meta_model = best_run["meta_model"]
+            ensemble_intercept = float(best_run["meta_intercept"])
+            aligned_train["Ensemble prediction"] = np.asarray(best_run["train_pred"], dtype=float)
+            aligned_test["Ensemble prediction"] = np.asarray(best_run["test_pred"], dtype=float)
 
             ensemble_results = pd.DataFrame(ensemble_rows).sort_values(["Test RMSE", "Test MAE"], ascending=True).reset_index(drop=True)
 
@@ -10609,44 +10614,72 @@ cells += [
             STATE["ensemble_weight_table"] = weight_df.copy()
             STATE["ensemble_train_aligned"] = aligned_train.copy()
             STATE["ensemble_test_aligned"] = aligned_test.copy()
-            STATE["ensemble_prediction_columns"] = prediction_columns
+            STATE["ensemble_prediction_columns"] = prediction_columns_for_best
             STATE["ensemble_model_label"] = ensemble_model_label
             STATE["ensemble_best_model_name"] = ensemble_results.iloc[0]["Model"]
             STATE["ensemble_method"] = ensemble_method_label
             STATE["ensemble_meta_model"] = meta_model
             STATE["ensemble_meta_intercept"] = float(ensemble_intercept)
             STATE["ensemble_member_filter_notes"] = list(member_filter_notes)
-            if ensemble_cfa_result is not None:
-                candidate_table = ensemble_cfa_result.get("candidate_table")
+            STATE["ensemble_weight_tables"] = dict(ensemble_weight_tables)
+            STATE["ensemble_method_summaries"] = pd.DataFrame(
+                [
+                    {
+                        "Method": run_payload["method_label"],
+                        "Train RMSE": float(run_payload["result_row"]["Train RMSE"]),
+                        "Test RMSE": float(run_payload["result_row"]["Test RMSE"]),
+                        "Train R2": float(run_payload["result_row"]["Train R2"]),
+                        "Test R2": float(run_payload["result_row"]["Test R2"]),
+                        "Member count": int(len(run_payload["prediction_columns"])),
+                    }
+                    for run_payload in ensemble_method_runs
+                ]
+            ).sort_values(["Test RMSE", "Train RMSE"], ascending=True).reset_index(drop=True)
+            STATE["ensemble_cfa_summaries"] = dict(cfa_run_summaries)
+            STATE["ensemble_cfa_candidate_tables"] = dict(cfa_candidate_tables)
+            if ensemble_method_label in cfa_run_summaries:
+                STATE["ensemble_cfa_summary"] = dict(cfa_run_summaries[ensemble_method_label])
+                STATE["ensemble_cfa_candidate_table"] = cfa_candidate_tables.get(ensemble_method_label, pd.DataFrame()).copy()
+                STATE["ensemble_cfa_prediction_payload"] = dict(cfa_run_summaries[ensemble_method_label])
+            elif cfa_run_summaries:
+                STATE["ensemble_cfa_summary"] = dict(next(iter(cfa_run_summaries.values())))
+                first_cfa_key = next(iter(cfa_candidate_tables.keys())) if cfa_candidate_tables else None
                 STATE["ensemble_cfa_candidate_table"] = (
-                    candidate_table.copy()
-                    if isinstance(candidate_table, pd.DataFrame)
+                    cfa_candidate_tables.get(first_cfa_key, pd.DataFrame()).copy()
+                    if first_cfa_key is not None
                     else pd.DataFrame()
                 )
-                STATE["ensemble_cfa_summary"] = {
-                    "variant": str(ensemble_cfa_result.get("variant", "")),
-                    "combination_space": str(ensemble_cfa_result.get("combination_space", "")),
-                    "optimize_metric": str(ensemble_cfa_result.get("optimize_metric", "")),
-                    "train_metric": float(ensemble_cfa_result.get("train_metric", np.nan)),
-                    "adjusted_metric": float(ensemble_cfa_result.get("adjusted_metric", np.nan)),
-                    "subset_diversity_mean": float(ensemble_cfa_result.get("subset_diversity_mean", np.nan)),
-                    "selected_models": list(prediction_columns),
-                }
+                first_cfa_summary_key = next(iter(cfa_run_summaries.keys()))
+                STATE["ensemble_cfa_prediction_payload"] = dict(cfa_run_summaries[first_cfa_summary_key])
+            else:
+                STATE.pop("ensemble_cfa_summary", None)
+                STATE["ensemble_cfa_candidate_table"] = pd.DataFrame()
+                STATE.pop("ensemble_cfa_prediction_payload", None)
 
-            print(f"Ensemble built from {len(prediction_columns)} model(s): {', '.join(prediction_columns)}")
+            print(f"Ensemble built from {len(prediction_columns_for_best)} model(s): {', '.join(prediction_columns_for_best)}")
             print(f"Train overlap used: {len(aligned_train)} molecules")
             print(f"Test overlap used: {len(aligned_test)} molecules")
-            if ensemble_method == "OOF Stacking (RidgeCV)":
-                print(f"Ensemble strategy: {ensemble_method_label}")
-                print(f"Meta-model intercept: {ensemble_intercept:.6f}")
-            if ensemble_method == "CFA Fusion (Score+Rank, diversity-aware)" and ensemble_cfa_result is not None:
+            print("Ensemble strategies run:")
+            for run_payload in sorted(
+                ensemble_method_runs,
+                key=lambda item: float(item["result_row"]["Test RMSE"]),
+            ):
                 print(
-                    "CFA strategy details: "
-                    f"space={ensemble_cfa_result.get('combination_space', 'score')}, "
-                    f"variant={ensemble_cfa_result.get('variant', '')}, "
-                    f"train_metric={float(ensemble_cfa_result.get('train_metric', np.nan)):.6f}, "
-                    f"adjusted_metric={float(ensemble_cfa_result.get('adjusted_metric', np.nan)):.6f}, "
-                    f"subset_diversity_mean={float(ensemble_cfa_result.get('subset_diversity_mean', np.nan)):.6f}"
+                    f"  - {run_payload['method_label']}: Test RMSE={float(run_payload['result_row']['Test RMSE']):.4f}, "
+                    f"members={len(run_payload['prediction_columns'])}"
+                )
+            print(f"Selected best ensemble strategy for downstream use: {ensemble_method_label}")
+            if "OOF Stacking (RidgeCV" in ensemble_method_label:
+                print(f"Meta-model intercept: {ensemble_intercept:.6f}")
+            if ensemble_method_label in cfa_run_summaries:
+                cfa_summary = cfa_run_summaries[ensemble_method_label]
+                print(
+                    "Selected CFA strategy details: "
+                    f"space={cfa_summary.get('combination_space', 'score')}, "
+                    f"variant={cfa_summary.get('variant', '')}, "
+                    f"train_metric={float(cfa_summary.get('train_metric', np.nan)):.6f}, "
+                    f"adjusted_metric={float(cfa_summary.get('adjusted_metric', np.nan)):.6f}, "
+                    f"subset_diversity_mean={float(cfa_summary.get('subset_diversity_mean', np.nan)):.6f}"
                 )
             if fallback_used:
                 print(
@@ -10658,19 +10691,16 @@ cells += [
                 print(f"[ensemble filter] {note}", flush=True)
             display_interactive_table(ensemble_results.round(4), rows=min(10, len(ensemble_results)))
             display(weight_df.round(4))
+            if "ensemble_method_summaries" in STATE and not STATE["ensemble_method_summaries"].empty:
+                display_interactive_table(STATE["ensemble_method_summaries"].round(4), rows=len(STATE["ensemble_method_summaries"]))
             ensemble_note = (
                 "The ensemble is evaluated only on molecules that were predicted by every selected model. "
                 "That matters most when a Uni-Mol model was trained or filtered on a reduced subset."
             )
-            if ensemble_method == "OOF Stacking (RidgeCV)":
-                ensemble_note += (
-                    " This run used OOF stacking for the second-level combiner to reduce overfitting risk in ensemble calibration."
-                )
-            elif ensemble_method == "CFA Fusion (Score+Rank, diversity-aware)":
-                ensemble_note += (
-                    " This run used CFA combinatorial fusion across selected members, evaluating score and rank combination families "
-                    "and favoring rank-space candidates when model diversity was high."
-                )
+            ensemble_note += (
+                " This run evaluated OOF stacking, weighted inverse-RMSE averaging, and CFA fusion, "
+                f"then selected **{ensemble_method_label}** as the best-performing ensemble for downstream plots/predictions."
+            )
             if fallback_used:
                 ensemble_note += (
                     " Split-alignment fallback was used because model train/test partitions were not directly compatible; "
@@ -10802,17 +10832,14 @@ cells += [
                     if model_label not in candidate_names:
                         candidate_names.append(model_label)
             for candidate in candidate_names:
-                if candidate == "TabPFNRegressor":
-                    continue
                 if candidate in STATE["traditional_models"]:
-                    return candidate, (best_name == "TabPFNRegressor")
-            return None, (best_name == "TabPFNRegressor")
+                    return candidate
+            return None
 
-        explanation_model_name, fell_back_from_tabpfn = _resolve_conventional_explanation_model()
+        explanation_model_name = _resolve_conventional_explanation_model()
         if not explanation_model_name:
             raise RuntimeError(
-                "Conventional explanation requires at least one non-TabPFN conventional model in this session. "
-                "TabPFN is excluded here because permutation feature importance can quickly exhaust the Prior Labs daily API budget."
+                "Conventional explanation requires at least one fitted conventional model in this session."
             )
 
         STATE["conventional_explanation_config"] = {
@@ -10824,17 +10851,6 @@ cells += [
             "conventional_explanation_model_name": str(explanation_model_name),
         }
 
-        if fell_back_from_tabpfn:
-            print(
-                "Explanation model fallback: best conventional model is TabPFNRegressor, "
-                f"so explanations will use the next-best non-TabPFN model: {explanation_model_name}.",
-                flush=True,
-            )
-            display_note(
-                "TabPFN explanation safeguard: permutation importance is disabled for TabPFN because the Prior Labs API "
-                "uses a daily token budget (1,000,000 tokens per user per day; tokens ~ rows * columns * estimators) "
-                "that resets every day."
-            )
         print(f"Saved conventional explanation settings for: {explanation_model_name}")
         print(
             f"Sample size={int(explanation_sample_size)}, top features={int(top_features_to_show)}, "
@@ -10869,41 +10885,6 @@ cells += [
         model_name = str(cfg.get("conventional_explanation_model_name", STATE["best_traditional_model_name"])).strip()
         if not model_name:
             model_name = str(STATE["best_traditional_model_name"]).strip()
-        if model_name == "TabPFNRegressor":
-            candidate_names = []
-            conventional_results = STATE.get("traditional_results")
-            if isinstance(conventional_results, pd.DataFrame) and "Model" in conventional_results.columns:
-                candidate_names.extend(conventional_results["Model"].astype(str).tolist())
-            if str(STATE.get("best_traditional_model_name", "")).strip():
-                candidate_names.insert(0, str(STATE.get("best_traditional_model_name", "")).strip())
-            deduped_candidates = []
-            for candidate in candidate_names:
-                if candidate not in deduped_candidates:
-                    deduped_candidates.append(candidate)
-            fallback_name = None
-            for candidate in deduped_candidates:
-                if candidate == "TabPFNRegressor":
-                    continue
-                if candidate in STATE["traditional_models"]:
-                    fallback_name = candidate
-                    break
-            if fallback_name is None:
-                raise RuntimeError(
-                    "Best conventional model is TabPFNRegressor, but no non-TabPFN conventional model is available for "
-                    "feature-importance explanation. Train another conventional model in block 4C."
-                )
-            model_name = str(fallback_name)
-            print(
-                "Explanation model fallback applied: TabPFNRegressor is excluded from permutation importance. "
-                f"Using {model_name} instead.",
-                flush=True,
-            )
-            display_note(
-                "TabPFN explanation safeguard: Prior Labs API budget is 1,000,000 tokens per user per day "
-                "(tokens ~ rows * columns * estimators), and the budget resets daily."
-            )
-            cfg["conventional_explanation_model_name"] = model_name
-            STATE["conventional_explanation_config"] = dict(cfg)
         if model_name not in STATE["traditional_models"]:
             raise RuntimeError(
                 f"Conventional model '{model_name}' is not loaded in this session. "
@@ -11205,7 +11186,7 @@ cells += [
     code(
         """
         # @title 9A. Predict from a trained model using a new SMILES table { display-mode: "form" }
-        prediction_workflow = "Best available" # @param ["Best available", "Conventional ML", "Tuned conventional ML", "ChemML deep learning", "MapLight + GNN", "Chemprop v2", "Uni-Mol", "Ensemble"]
+        prediction_workflow = "Best available" # @param ["Best available", "Conventional ML", "Tuned conventional ML", "ChemML deep learning", "TabPFN deep learning", "MapLight + GNN", "Chemprop v2", "Uni-Mol", "Ensemble"]
         prediction_model_name = "" # @param {type:"string"}
         prediction_input_source = "File path" # @param ["File path", "Upload CSV (Colab only)"]
         prediction_input_path = "./portable_colab_qsar_bundle/example_prediction_smiles.csv" # @param {type:"string"}
@@ -11410,6 +11391,28 @@ cells += [
                 predictions = STATE["deep_y_scaler"].inverse_transform(
                     np.asarray(model.predict(x_scaled)).reshape(-1, 1)
                 ).reshape(-1)
+            elif workflow_name == "TabPFN deep learning":
+                if "deep_models" not in STATE or model_name not in STATE["deep_models"]:
+                    raise RuntimeError(f"TabPFN model '{model_name}' is not loaded in this session.")
+                model = STATE["deep_models"][model_name]
+                if model is None:
+                    cache_hint = ""
+                    cache_info = STATE.get("deep_model_cache_paths", {}).get(model_name)
+                    if isinstance(cache_info, dict) and cache_info.get("model_dir"):
+                        cache_hint = f" Cached artifact directory: {cache_info['model_dir']}"
+                    raise RuntimeError(
+                        "TabPFN predictions were loaded from cache, but the model object is unavailable in this session. "
+                        "Rerun block 5B with `reuse_deep_cached_models=False` to refit TabPFN for in-session inference."
+                        + cache_hint
+                    )
+                feature_df, _ = build_feature_matrix_from_smiles(
+                    valid_smiles.tolist(),
+                    **_prediction_feature_build_kwargs(),
+                )
+                if not aux_feature_df.empty:
+                    feature_df = pd.concat([feature_df.reset_index(drop=True), aux_feature_df.reset_index(drop=True)], axis=1)
+                feature_df = align_feature_matrix_to_training_columns(feature_df, STATE["feature_names"])
+                predictions = np.asarray(model.predict(feature_df)).reshape(-1)
             elif workflow_name == "MapLight + GNN":
                 if "maplight_gnn_models" not in STATE or model_name not in STATE["maplight_gnn_models"]:
                     raise RuntimeError(f"MapLight + GNN model '{model_name}' is not loaded in this session.")
@@ -11487,6 +11490,26 @@ cells += [
                     raise RuntimeError(
                         "Chemprop v2 prediction requires the `chemprop` package in the active environment."
                     )
+
+                def _coerce_string_list(values):
+                    if isinstance(values, (list, tuple, set)):
+                        output = []
+                        for value in values:
+                            text = str(value).strip()
+                            if text:
+                                output.append(text)
+                        return output
+                    text = str(values or "").strip()
+                    if not text:
+                        return []
+                    if text.startswith("[") and text.endswith("]"):
+                        try:
+                            parsed = json.loads(text)
+                        except Exception:
+                            parsed = None
+                        if isinstance(parsed, list):
+                            return _coerce_string_list(parsed)
+                    return [part.strip() for part in text.split(",") if str(part).strip()]
 
                 def _resolve_chemprop_command():
                     exe_parent = Path(sys.executable).resolve().parent
@@ -11581,6 +11604,27 @@ cells += [
                     prediction_csv, index=False
                 )
 
+                chemprop_cache_payload = {}
+                if isinstance(STATE.get("chemprop_v2_model_cache_paths"), dict):
+                    chemprop_cache_payload = dict(STATE["chemprop_v2_model_cache_paths"].get(model_name, {}) or {})
+                chemprop_metadata = {}
+                metadata_path = str(chemprop_cache_payload.get("metadata_path", "")).strip()
+                if metadata_path and Path(metadata_path).exists():
+                    try:
+                        chemprop_metadata = json.loads(Path(metadata_path).read_text(encoding="utf-8"))
+                    except Exception:
+                        chemprop_metadata = {}
+
+                uses_selected_descriptors = bool(chemprop_metadata.get("uses_selected_descriptors", False))
+                effective_molecule_featurizers = _coerce_string_list(
+                    chemprop_metadata.get("effective_molecule_featurizers", [])
+                )
+                if not effective_molecule_featurizers:
+                    effective_molecule_featurizers = _coerce_string_list(chemprop_metadata.get("molecule_featurizers", []))
+                if not effective_molecule_featurizers and "attentivefp" in str(model_name).lower():
+                    # Backward-compatible fallback for older cache metadata.
+                    effective_molecule_featurizers = ["rdkit_2d"]
+
                 chemprop_cmd = _resolve_chemprop_command()
                 predict_cmd = chemprop_cmd + [
                     "predict",
@@ -11589,6 +11633,44 @@ cells += [
                     "--model-paths", str(STATE["chemprop_v2_model_dirs"][model_name]),
                     "--preds-path", str(prediction_output_csv),
                 ]
+                if effective_molecule_featurizers:
+                    predict_cmd.extend(["--molecule-featurizers", *effective_molecule_featurizers])
+                if uses_selected_descriptors:
+                    if "X_train" not in STATE:
+                        raise RuntimeError(
+                            "Chemprop model requires selected descriptors for prediction, but STATE['X_train'] is unavailable. "
+                            "Run block 4B (and block 6F if needed), then retry."
+                        )
+                    descriptor_columns = [str(col) for col in pd.DataFrame(STATE["X_train"]).columns]
+                    if not descriptor_columns:
+                        raise RuntimeError(
+                            "Chemprop model requires selected descriptors for prediction, but no selected feature columns were found."
+                        )
+                    expected_descriptor_count = int(chemprop_metadata.get("selected_descriptor_count", len(descriptor_columns)) or len(descriptor_columns))
+                    if expected_descriptor_count and len(descriptor_columns) != expected_descriptor_count:
+                        raise RuntimeError(
+                            "Chemprop selected-descriptor shape mismatch between the cached model and current session. "
+                            f"Model expects {expected_descriptor_count} selected descriptors, but current STATE has {len(descriptor_columns)}. "
+                            "Rerun 4B and 6F with matching split/selector settings."
+                        )
+                    descriptor_feature_df, _ = build_feature_matrix_from_smiles(
+                        valid_smiles.tolist(),
+                        **_prediction_feature_build_kwargs(),
+                    )
+                    descriptor_feature_df = align_feature_matrix_to_training_columns(
+                        descriptor_feature_df,
+                        descriptor_columns,
+                    )
+                    descriptor_values = np.nan_to_num(
+                        descriptor_feature_df.to_numpy(dtype=np.float32),
+                        nan=0.0,
+                        posinf=0.0,
+                        neginf=0.0,
+                    )
+                    descriptor_prediction_path = prediction_dir / f"{slugify_cache_text(model_name)}_prediction_descriptors.npz"
+                    np.savez(descriptor_prediction_path, descriptor_values)
+                    predict_cmd.extend(["--descriptors-path", str(descriptor_prediction_path)])
+
                 result = subprocess.run(predict_cmd, capture_output=True, text=True)
                 if result.returncode != 0:
                     raise RuntimeError(
@@ -11635,10 +11717,39 @@ cells += [
                 if ensemble_meta_model is not None:
                     predictions = np.asarray(ensemble_meta_model.predict(member_matrix)).reshape(-1)
                 else:
-                    weights = (
-                        weight_df.set_index("Model").loc[STATE["ensemble_prediction_columns"], "Weight"].to_numpy(dtype=float)
-                    )
-                    predictions = np.average(member_matrix, axis=1, weights=weights)
+                    ensemble_method_label = str(STATE.get("ensemble_method", ""))
+                    if ensemble_method_label.startswith("CFA ("):
+                        cfa_payload = dict(STATE.get("ensemble_cfa_prediction_payload", {}))
+                        weights = (
+                            weight_df.set_index("Model").loc[STATE["ensemble_prediction_columns"], "Weight"].to_numpy(dtype=float)
+                        )
+                        combination_space = str(cfa_payload.get("combination_space", "score")).strip().lower()
+                        if combination_space == "rank":
+                            rank_descending = bool(cfa_payload.get("rank_descending", True))
+                            rank_matrix = np.column_stack(
+                                [
+                                    pd.Series(member_matrix[:, idx]).rank(
+                                        method="average",
+                                        ascending=not rank_descending,
+                                    ).to_numpy(dtype=float)
+                                    for idx in range(member_matrix.shape[1])
+                                ]
+                            )
+                            fused_rank = np.dot(rank_matrix, weights).reshape(-1)
+                            rank_signal = -fused_rank if rank_descending else fused_rank
+                            slope = float(cfa_payload.get("rank_calibration_slope", np.nan))
+                            intercept = float(cfa_payload.get("rank_calibration_intercept", np.nan))
+                            if np.isfinite(slope) and np.isfinite(intercept):
+                                predictions = (slope * rank_signal + intercept).reshape(-1)
+                            else:
+                                predictions = rank_signal
+                        else:
+                            predictions = np.dot(member_matrix, weights).reshape(-1)
+                    else:
+                        weights = (
+                            weight_df.set_index("Model").loc[STATE["ensemble_prediction_columns"], "Weight"].to_numpy(dtype=float)
+                        )
+                        predictions = np.average(member_matrix, axis=1, weights=weights)
             else:
                 raise ValueError(f"Unsupported workflow for prediction: {workflow_name}")
 
@@ -11712,6 +11823,9 @@ cells += [
         umap_min_dist = 0.1 # @param {type:"number"}
         umap_metric = "euclidean" # @param ["euclidean", "manhattan", "cosine"]
         umap_random_seed = 42 # @param {type:"integer"}
+        enable_prediction_umap_cache = True # @param {type:"boolean"}
+        reuse_prediction_umap_cache = True # @param {type:"boolean"}
+        prediction_umap_cache_run_name = "AUTO" # @param {type:"string"}
 
         if "latest_prediction_results" not in STATE:
             raise RuntimeError("Please run block 9A first so there is a new-molecule prediction table to embed.")
@@ -11726,6 +11840,7 @@ cells += [
             raise RuntimeError(
                 "UMAP is not available in this environment. Install `umap-learn`, rerun the setup cell, then rerun this block."
             ) from exc
+        import hashlib
 
         def _umap_prediction_feature_build_kwargs():
             config = dict(STATE["feature_builder_config"])
@@ -11782,34 +11897,124 @@ cells += [
             }
         )
 
-        combined_features = pd.concat(
-            [
-                X_train.reset_index(drop=True),
-                X_test.reset_index(drop=True),
-                prediction_feature_df.reset_index(drop=True),
-            ],
-            axis=0,
-            ignore_index=True,
+        prediction_smiles_values = pd.Series(new_plot_df["smiles"], dtype=str).astype(str).str.strip().tolist()
+        prediction_smiles_signature = hashlib.sha256(
+            "||".join(prediction_smiles_values).encode("utf-8")
+        ).hexdigest()
+        prediction_values_signature = array_cache_signature(
+            pd.to_numeric(new_plot_df["predicted_value"], errors="coerce").to_numpy(dtype=float)
         )
-        combined_plot_df = pd.concat(
-            [
-                train_plot_df.reset_index(drop=True),
-                test_plot_df.reset_index(drop=True),
-                new_plot_df.reset_index(drop=True),
-            ],
-            axis=0,
-            ignore_index=True,
-        )
+        combined_plot_df = None
+        umap_cache_dir = None
+        umap_results_path = None
+        umap_metadata_path = None
+        umap_cache_loaded = False
+        expected_umap_metadata = {
+            "workflow": "prediction_umap",
+            "dataset_label": current_dataset_cache_label(),
+            "best_conventional_model_name": str(STATE.get("best_traditional_model_name", "")),
+            "split_strategy": str(STATE.get("model_split_strategy", "")),
+            "test_fraction": float(STATE.get("model_test_fraction", np.nan)),
+            "split_random_seed": int(STATE.get("model_split_random_seed", umap_random_seed)),
+            "canonical_train_hash": str(STATE.get("canonical_split_signature", {}).get("train_hash", "")),
+            "canonical_test_hash": str(STATE.get("canonical_split_signature", {}).get("test_hash", "")),
+            "feature_columns_signature": hashlib.sha256(
+                "||".join([str(col) for col in expected_columns]).encode("utf-8")
+            ).hexdigest(),
+            "train_matrix_signature": dataframe_cache_signature(X_train, max_rows=5000),
+            "test_matrix_signature": dataframe_cache_signature(X_test, max_rows=5000),
+            "prediction_smiles_signature": prediction_smiles_signature,
+            "prediction_values_signature": prediction_values_signature,
+            "n_neighbors": int(umap_neighbors),
+            "min_dist": float(umap_min_dist),
+            "metric": str(umap_metric),
+            "random_seed": int(umap_random_seed),
+        }
+        if enable_prediction_umap_cache:
+            umap_cache_dir = resolve_model_cache_dir(
+                "prediction_umap",
+                prediction_umap_cache_run_name,
+                prefer_existing=bool(reuse_prediction_umap_cache),
+            )
+            print(f"Prediction UMAP cache directory: {umap_cache_dir}", flush=True)
+            prediction_signature_short = slugify_cache_text(str(prediction_smiles_signature)[:12])
+            artifact_base = (
+                f"{STATE['cache_session_stamp']}_{current_dataset_cache_label()}_"
+                f"{slugify_cache_text(str(STATE.get('best_traditional_model_name', 'best_model')))}_prediction_umap_"
+                f"{prediction_signature_short}"
+            )
+            umap_results_path = umap_cache_dir / f"{artifact_base}_umap_points.csv"
+            umap_metadata_path = umap_cache_dir / f"{artifact_base}_metadata.json"
+            if reuse_prediction_umap_cache and umap_cache_dir.exists():
+                metadata_candidates = sorted(
+                    umap_cache_dir.glob("*_prediction_umap_*_metadata.json"),
+                    key=lambda path: path.stat().st_mtime,
+                    reverse=True,
+                )
+                for metadata_probe_path in metadata_candidates:
+                    try:
+                        cached_metadata = read_cache_metadata(metadata_probe_path)
+                        if not cache_metadata_matches(cached_metadata, expected_umap_metadata):
+                            continue
+                        cached_results_path = resolve_cached_artifact_path(
+                            cached_metadata.get("results_path", ""),
+                            metadata_probe_path,
+                        )
+                        if not cached_results_path.exists():
+                            continue
+                        cached_plot_df = pd.read_csv(cached_results_path)
+                        required_cols = {"dataset_role", "smiles", "UMAP_1", "UMAP_2"}
+                        if not required_cols.issubset(set(cached_plot_df.columns)):
+                            continue
+                        combined_plot_df = cached_plot_df.copy()
+                        umap_cache_loaded = True
+                        print("Loaded cached prediction UMAP embedding.", flush=True)
+                        break
+                    except Exception:
+                        continue
 
-        reducer = umap.UMAP(
-            n_neighbors=int(umap_neighbors),
-            min_dist=float(umap_min_dist),
-            metric=str(umap_metric),
-            random_state=int(umap_random_seed),
-        )
-        embedding = reducer.fit_transform(combined_features.to_numpy(dtype=np.float32))
-        combined_plot_df["UMAP_1"] = embedding[:, 0]
-        combined_plot_df["UMAP_2"] = embedding[:, 1]
+        if combined_plot_df is None:
+            combined_features = pd.concat(
+                [
+                    X_train.reset_index(drop=True),
+                    X_test.reset_index(drop=True),
+                    prediction_feature_df.reset_index(drop=True),
+                ],
+                axis=0,
+                ignore_index=True,
+            )
+            combined_plot_df = pd.concat(
+                [
+                    train_plot_df.reset_index(drop=True),
+                    test_plot_df.reset_index(drop=True),
+                    new_plot_df.reset_index(drop=True),
+                ],
+                axis=0,
+                ignore_index=True,
+            )
+
+            reducer = umap.UMAP(
+                n_neighbors=int(umap_neighbors),
+                min_dist=float(umap_min_dist),
+                metric=str(umap_metric),
+                random_state=int(umap_random_seed),
+            )
+            embedding = reducer.fit_transform(combined_features.to_numpy(dtype=np.float32))
+            combined_plot_df["UMAP_1"] = embedding[:, 0]
+            combined_plot_df["UMAP_2"] = embedding[:, 1]
+
+            if enable_prediction_umap_cache and umap_results_path is not None and umap_metadata_path is not None:
+                combined_plot_df.to_csv(umap_results_path, index=False)
+                write_cache_metadata(
+                    umap_metadata_path,
+                    {
+                        **expected_umap_metadata,
+                        "cache_run_name": umap_cache_dir.name if umap_cache_dir is not None else "",
+                        "results_path": str(umap_results_path),
+                        "run_status": "completed",
+                    },
+                )
+                print(f"Saved prediction UMAP cache artifacts under: {umap_cache_dir}", flush=True)
 
         fig = px.scatter(
             combined_plot_df,
@@ -11841,6 +12046,13 @@ cells += [
             "min_dist": float(umap_min_dist),
             "metric": str(umap_metric),
             "random_seed": int(umap_random_seed),
+            "cache_enabled": bool(enable_prediction_umap_cache),
+            "cache_reused": bool(umap_cache_loaded),
+            "cache_run_name": (
+                str(umap_cache_dir.name)
+                if umap_cache_dir is not None
+                else ""
+            ),
         }
 
         display_note(
