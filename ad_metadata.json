@@ -1,0 +1,21 @@
+{
+  "n_training_chemicals": 667,
+  "n_features": 1033,
+  "feature_types": {
+    "rdkit_descriptors": true,
+    "morgan_fingerprint": true
+  },
+  "morgan_radius": 2,
+  "morgan_n_bits": 1024,
+  "knn_neighbors": 5,
+  "knn_quantile": 0.95,
+  "mahalanobis_quantile": 0.975,
+  "low_concern_support_ratio": 0.75,
+  "use_mastml": false,
+  "mastml_output_dir": ".cache/mastml_applicability_domain",
+  "mastml_random_forest_estimators": 300,
+  "mastml_n_repeats": 1,
+  "mastml_bins": 10,
+  "mastml_kernel": "epanechnikov",
+  "mastml_bandwidth": null
+}
