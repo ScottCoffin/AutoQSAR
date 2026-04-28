@@ -5,7 +5,9 @@
       "Bash(python3 -c \"import json; nb = json.load\\(open\\('Convo_nets.ipynb'\\)\\); [print\\(c['source'][0] if c['cell_type']=='code' else ''\\) for c in nb['cells'][:20]]\")",
       "WebFetch(domain:github.com)",
       "WebFetch(domain:raw.githubusercontent.com)",
-      "WebFetch(domain:api.github.com)"
+      "WebFetch(domain:api.github.com)",
+      "Bash(awk 'NR>=7305 && NR<=7640' \"c:/Users/scott/AutoQSAR/portable_colab_qsar_bundle/build_colab_qsar_tutorial.py\")",
+      "Bash(awk 'NR>=7000 && NR<=7280' \"c:/Users/scott/AutoQSAR/portable_colab_qsar_bundle/build_colab_qsar_tutorial.py\")"
     ]
   }
 }
