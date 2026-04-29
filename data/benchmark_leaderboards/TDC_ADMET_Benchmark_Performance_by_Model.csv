@@ -1,0 +1,191 @@
+Dataset,Task_Category,Metric,Direction,Model,Score_Mean,Score_StdDev,TDC_Rank,Paper_Short,Year,Reference,DOI_or_URL
+caco2_wang,Absorption,MAE,lower_better,CaliciBoost,0.256,0.006,1,Murtada et al.,2025,J Cheminform,10.1186/s13321-025-01137-7
+caco2_wang,Absorption,MAE,lower_better,MaxQsaring,0.275,0.007,1,Xu et al.,2025,J Pharm Anal 15(12):101411,10.1016/j.jpha.2025.101411
+caco2_wang,Absorption,MAE,lower_better,MapLight+GNN,0.276,0.005,1,Walters et al.,2023,arXiv:2310.00174,https://arxiv.org/abs/2310.00174
+caco2_wang,Absorption,MAE,lower_better,ADMETboost (XGBoost),0.288,0.011,1,Tian et al.,2022,J Mol Model 28:408,10.1007/s00894-022-05373-8
+caco2_wang,Absorption,MAE,lower_better,Meta-model (NIST),0.296,0.011,,Padi et al.,2023,bioRxiv 2023.12.05.570279,10.1101/2023.12.05.570279
+caco2_wang,Absorption,MAE,lower_better,Auto-ADMET (MTE),0.296,0.006,,Li et al.,2025,ChemRxiv preprint,10.26434/chemrxiv-2025-2p12l-v2
+caco2_wang,Absorption,MAE,lower_better,MiniMol (GINE),0.324,0.012,7,Kläser et al.,2024,ICML Workshop 2024; arXiv:2404.14986,https://arxiv.org/abs/2404.14986
+caco2_wang,Absorption,MAE,lower_better,MolE,0.329,0.008,,Méndez-Lucio et al.,2024,Nat Commun 15:10021,10.1038/s41467-024-53751-y
+caco2_wang,Absorption,MAE,lower_better,CFA (MCFP),0.335,,,Boral et al.,2023,ChemRxiv preprint,https://chemrxiv.org/engage/chemrxiv/article-details/6563ec17cf8b3c3cd73212b3
+caco2_wang,Absorption,MAE,lower_better,MolGPS (3B),0.386,,,Sypetkowski et al.,2024,NeurIPS 2024,https://proceedings.neurips.cc/paper_files/paper/2024/file/2345275663a15ee92a06bc957be54a2c-Paper-Conference.pdf
+hia_hou,Absorption,AUROC,higher_better,MiniMol (GINE),0.994,0.003,1,Kläser et al.,2024,ICML Workshop 2024; arXiv:2404.14986,https://arxiv.org/abs/2404.14986
+hia_hou,Absorption,AUROC,higher_better,MaxQsaring,0.993,0.004,1,Xu et al.,2025,J Pharm Anal 15(12):101411,10.1016/j.jpha.2025.101411
+hia_hou,Absorption,AUROC,higher_better,QW-MTL,0.990,0.002,1,arXiv:2509.04601,2025,arXiv:2509.04601,https://arxiv.org/abs/2509.04601
+hia_hou,Absorption,AUROC,higher_better,ADMETboost (XGBoost),0.987,0.002,1,Tian et al.,2022,J Mol Model 28:408,10.1007/s00894-022-05373-8
+hia_hou,Absorption,AUROC,higher_better,Meta-model (NIST),0.985,0.002,,Padi et al.,2023,bioRxiv 2023.12.05.570279,10.1101/2023.12.05.570279
+hia_hou,Absorption,AUROC,higher_better,MolE,0.984,0.005,,Méndez-Lucio et al.,2024,Nat Commun 15:10021,10.1038/s41467-024-53751-y
+hia_hou,Absorption,AUROC,higher_better,MolGPS (3B),0.980,,,Sypetkowski et al.,2024,NeurIPS 2024,https://proceedings.neurips.cc/paper_files/paper/2024/file/2345275663a15ee92a06bc957be54a2c-Paper-Conference.pdf
+hia_hou,Absorption,AUROC,higher_better,Auto-ADMET (MTE),0.976,0.006,,Li et al.,2025,ChemRxiv preprint,10.26434/chemrxiv-2025-2p12l-v2
+pgp_broccatelli,Absorption,AUROC,higher_better,MiniMol (GINE),0.994,0.002,1,Kläser et al.,2024,ICML Workshop 2024; arXiv:2404.14986,https://arxiv.org/abs/2404.14986
+pgp_broccatelli,Absorption,AUROC,higher_better,MolGPS (3B),0.948,,,Sypetkowski et al.,2024,NeurIPS 2024,https://proceedings.neurips.cc/paper_files/paper/2024/file/2345275663a15ee92a06bc957be54a2c-Paper-Conference.pdf
+pgp_broccatelli,Absorption,AUROC,higher_better,MaxQsaring,0.943,0.006,1,Xu et al.,2025,J Pharm Anal 15(12):101411,10.1016/j.jpha.2025.101411
+pgp_broccatelli,Absorption,AUROC,higher_better,MolE,0.930,0.005,,Méndez-Lucio et al.,2024,Nat Commun 15:10021,10.1038/s41467-024-53751-y
+pgp_broccatelli,Absorption,AUROC,higher_better,Auto-ADMET (MTE),0.922,0.010,,Li et al.,2025,ChemRxiv preprint,10.26434/chemrxiv-2025-2p12l-v2
+pgp_broccatelli,Absorption,AUROC,higher_better,Meta-model (NIST),0.918,0.001,,Padi et al.,2023,bioRxiv 2023.12.05.570279,10.1101/2023.12.05.570279
+pgp_broccatelli,Absorption,AUROC,higher_better,QW-MTL,0.915,0.013,8,arXiv:2509.04601,2025,arXiv:2509.04601,https://arxiv.org/abs/2509.04601
+pgp_broccatelli,Absorption,AUROC,higher_better,ADMETboost (XGBoost),0.911,0.002,4,Tian et al.,2022,J Mol Model 28:408,10.1007/s00894-022-05373-8
+bioavailability_ma,Absorption,AUROC,higher_better,MaxQsaring,0.748,0.019,1,Xu et al.,2025,J Pharm Anal 15(12):101411,10.1016/j.jpha.2025.101411
+bioavailability_ma,Absorption,AUROC,higher_better,Auto-ADMET (MTE),0.720,0.026,,Li et al.,2025,ChemRxiv preprint,10.26434/chemrxiv-2025-2p12l-v2
+bioavailability_ma,Absorption,AUROC,higher_better,Meta-model (NIST),0.709,0.005,,Padi et al.,2023,bioRxiv 2023.12.05.570279,10.1101/2023.12.05.570279
+bioavailability_ma,Absorption,AUROC,higher_better,MolGPS (3B),0.701,,,Sypetkowski et al.,2024,NeurIPS 2024,https://proceedings.neurips.cc/paper_files/paper/2024/file/2345275663a15ee92a06bc957be54a2c-Paper-Conference.pdf
+bioavailability_ma,Absorption,AUROC,higher_better,ADMETboost (XGBoost),0.700,0.010,1,Tian et al.,2022,J Mol Model 28:408,10.1007/s00894-022-05373-8
+bioavailability_ma,Absorption,AUROC,higher_better,MiniMol (GINE),0.699,0.008,6,Kläser et al.,2024,ICML Workshop 2024; arXiv:2404.14986,https://arxiv.org/abs/2404.14986
+bioavailability_ma,Absorption,AUROC,higher_better,QW-MTL,0.695,0.017,6,arXiv:2509.04601,2025,arXiv:2509.04601,https://arxiv.org/abs/2509.04601
+bioavailability_ma,Absorption,AUROC,higher_better,MolE,0.640,0.046,,Méndez-Lucio et al.,2024,Nat Commun 15:10021,10.1038/s41467-024-53751-y
+lipophilicity_astrazeneca,Absorption,MAE,lower_better,MolE,0.406,0.009,1,Méndez-Lucio et al.,2024,Nat Commun 15:10021,10.1038/s41467-024-53751-y
+lipophilicity_astrazeneca,Absorption,MAE,lower_better,MaxQsaring,0.408,0.010,1,Xu et al.,2025,J Pharm Anal 15(12):101411,10.1016/j.jpha.2025.101411
+lipophilicity_astrazeneca,Absorption,MAE,lower_better,Auto-ADMET (MTE),0.438,0.006,,Li et al.,2025,ChemRxiv preprint,10.26434/chemrxiv-2025-2p12l-v2
+lipophilicity_astrazeneca,Absorption,MAE,lower_better,MiniMol (GINE),0.455,0.001,1,Kläser et al.,2024,ICML Workshop 2024; arXiv:2404.14986,https://arxiv.org/abs/2404.14986
+lipophilicity_astrazeneca,Absorption,MAE,lower_better,Meta-model (NIST),0.521,0.004,,Padi et al.,2023,bioRxiv 2023.12.05.570279,10.1101/2023.12.05.570279
+lipophilicity_astrazeneca,Absorption,MAE,lower_better,ADMETboost (XGBoost),0.533,0.005,1,Tian et al.,2022,J Mol Model 28:408,10.1007/s00894-022-05373-8
+lipophilicity_astrazeneca,Absorption,MAE,lower_better,MolGPS (3B),1.404,,,Sypetkowski et al.,2024,NeurIPS 2024,https://proceedings.neurips.cc/paper_files/paper/2024/file/2345275663a15ee92a06bc957be54a2c-Paper-Conference.pdf
+solubility_aqsoldb,Absorption,MAE,lower_better,MolGPS (3B),0.557,,,Sypetkowski et al.,2024,NeurIPS 2024,https://proceedings.neurips.cc/paper_files/paper/2024/file/2345275663a15ee92a06bc957be54a2c-Paper-Conference.pdf
+solubility_aqsoldb,Absorption,MAE,lower_better,ADMETboost (XGBoost),0.727,0.004,1,Tian et al.,2022,J Mol Model 28:408,10.1007/s00894-022-05373-8
+solubility_aqsoldb,Absorption,MAE,lower_better,Meta-model (NIST),0.731,0.003,,Padi et al.,2023,bioRxiv 2023.12.05.570279,10.1101/2023.12.05.570279
+solubility_aqsoldb,Absorption,MAE,lower_better,MaxQsaring,0.738,0.008,1,Xu et al.,2025,J Pharm Anal 15(12):101411,10.1016/j.jpha.2025.101411
+solubility_aqsoldb,Absorption,MAE,lower_better,MiniMol (GINE),0.750,0.012,1,Kläser et al.,2024,ICML Workshop 2024; arXiv:2404.14986,https://arxiv.org/abs/2404.14986
+solubility_aqsoldb,Absorption,MAE,lower_better,Auto-ADMET (MTE),0.766,0.012,,Li et al.,2025,ChemRxiv preprint,10.26434/chemrxiv-2025-2p12l-v2
+solubility_aqsoldb,Absorption,MAE,lower_better,MolE,0.776,0.019,,Méndez-Lucio et al.,2024,Nat Commun 15:10021,10.1038/s41467-024-53751-y
+bbb_martins,Distribution,AUROC,higher_better,MolGPS (3B),0.941,,,Sypetkowski et al.,2024,NeurIPS 2024,https://proceedings.neurips.cc/paper_files/paper/2024/file/2345275663a15ee92a06bc957be54a2c-Paper-Conference.pdf
+bbb_martins,Distribution,AUROC,higher_better,MaxQsaring,0.916,0.006,1,Xu et al.,2025,J Pharm Anal 15(12):101411,10.1016/j.jpha.2025.101411
+bbb_martins,Distribution,AUROC,higher_better,QW-MTL,0.910,0.002,5,arXiv:2509.04601,2025,arXiv:2509.04601,https://arxiv.org/abs/2509.04601
+bbb_martins,Distribution,AUROC,higher_better,Auto-ADMET (MTE),0.908,0.004,,Li et al.,2025,ChemRxiv preprint,10.26434/chemrxiv-2025-2p12l-v2
+bbb_martins,Distribution,AUROC,higher_better,Meta-model (NIST),0.906,0.004,,Padi et al.,2023,bioRxiv 2023.12.05.570279,10.1101/2023.12.05.570279
+bbb_martins,Distribution,AUROC,higher_better,ADMETboost (XGBoost),0.905,0.001,1,Tian et al.,2022,J Mol Model 28:408,10.1007/s00894-022-05373-8
+bbb_martins,Distribution,AUROC,higher_better,MolE,0.903,0.003,,Méndez-Lucio et al.,2024,Nat Commun 15:10021,10.1038/s41467-024-53751-y
+ppbr_az,Distribution,MAE,lower_better,MolGPS (3B),0.679,,,Sypetkowski et al.,2024,NeurIPS 2024,https://proceedings.neurips.cc/paper_files/paper/2024/file/2345275663a15ee92a06bc957be54a2c-Paper-Conference.pdf
+ppbr_az,Distribution,MAE,lower_better,MolE,7.229,0.168,1,Méndez-Lucio et al.,2024,Nat Commun 15:10021,10.1038/s41467-024-53751-y
+ppbr_az,Distribution,MAE,lower_better,MaxQsaring,7.506,0.130,1,Xu et al.,2025,J Pharm Anal 15(12):101411,10.1016/j.jpha.2025.101411
+ppbr_az,Distribution,MAE,lower_better,Auto-ADMET (MTE),7.848,0.133,,Li et al.,2025,ChemRxiv preprint,10.26434/chemrxiv-2025-2p12l-v2
+ppbr_az,Distribution,MAE,lower_better,Meta-model (NIST),8.148,0.172,,Padi et al.,2023,bioRxiv 2023.12.05.570279,10.1101/2023.12.05.570279
+ppbr_az,Distribution,MAE,lower_better,ADMETboost (XGBoost),8.251,0.115,1,Tian et al.,2022,J Mol Model 28:408,10.1007/s00894-022-05373-8
+vdss_lombardo,Distribution,Spearman,higher_better,MolGPS (3B),0.942,,,Sypetkowski et al.,2024,NeurIPS 2024,https://proceedings.neurips.cc/paper_files/paper/2024/file/2345275663a15ee92a06bc957be54a2c-Paper-Conference.pdf
+vdss_lombardo,Distribution,Spearman,higher_better,MaxQsaring,0.693,0.007,1,Xu et al.,2025,J Pharm Anal 15(12):101411,10.1016/j.jpha.2025.101411
+vdss_lombardo,Distribution,Spearman,higher_better,MolE,0.644,0.013,1,Méndez-Lucio et al.,2024,Nat Commun 15:10021,10.1038/s41467-024-53751-y
+vdss_lombardo,Distribution,Spearman,higher_better,ADMETboost (XGBoost),0.612,0.018,1,Tian et al.,2022,J Mol Model 28:408,10.1007/s00894-022-05373-8
+vdss_lombardo,Distribution,Spearman,higher_better,Meta-model (NIST),0.579,0.023,,Padi et al.,2023,bioRxiv 2023.12.05.570279,10.1101/2023.12.05.570279
+vdss_lombardo,Distribution,Spearman,higher_better,Auto-ADMET (MTE),0.524,0.022,,Li et al.,2025,ChemRxiv preprint,10.26434/chemrxiv-2025-2p12l-v2
+cyp2c9_veith,Metabolism,AUPRC,higher_better,MaxQsaring,0.877,0.003,1,Xu et al.,2025,J Pharm Anal 15(12):101411,10.1016/j.jpha.2025.101411
+cyp2c9_veith,Metabolism,AUPRC,higher_better,MolGPS (3B),0.838,,,Sypetkowski et al.,2024,NeurIPS 2024,https://proceedings.neurips.cc/paper_files/paper/2024/file/2345275663a15ee92a06bc957be54a2c-Paper-Conference.pdf
+cyp2c9_veith,Metabolism,AUPRC,higher_better,ADMETboost (XGBoost),0.794,0.004,1,Tian et al.,2022,J Mol Model 28:408,10.1007/s00894-022-05373-8
+cyp2c9_veith,Metabolism,AUPRC,higher_better,Meta-model (NIST),0.791,0.003,,Padi et al.,2023,bioRxiv 2023.12.05.570279,10.1101/2023.12.05.570279
+cyp2c9_veith,Metabolism,AUPRC,higher_better,MolE,0.782,0.001,,Méndez-Lucio et al.,2024,Nat Commun 15:10021,10.1038/s41467-024-53751-y
+cyp2c9_veith,Metabolism,AUPRC,higher_better,QW-MTL,0.770,0.006,8,arXiv:2509.04601,2025,arXiv:2509.04601,https://arxiv.org/abs/2509.04601
+cyp2d6_veith,Metabolism,AUPRC,higher_better,MaxQsaring,0.811,0.003,1,Xu et al.,2025,J Pharm Anal 15(12):101411,10.1016/j.jpha.2025.101411
+cyp2d6_veith,Metabolism,AUPRC,higher_better,ADMETboost (XGBoost),0.721,0.003,1,Tian et al.,2022,J Mol Model 28:408,10.1007/s00894-022-05373-8
+cyp2d6_veith,Metabolism,AUPRC,higher_better,Meta-model (NIST),0.721,0.003,,Padi et al.,2023,bioRxiv 2023.12.05.570279,10.1101/2023.12.05.570279
+cyp2d6_veith,Metabolism,AUPRC,higher_better,QW-MTL,0.693,0.009,5,arXiv:2509.04601,2025,arXiv:2509.04601,https://arxiv.org/abs/2509.04601
+cyp2d6_veith,Metabolism,AUPRC,higher_better,MolE,0.679,0.006,1,Méndez-Lucio et al.,2024,Nat Commun 15:10021,10.1038/s41467-024-53751-y
+cyp2d6_veith,Metabolism,AUPRC,higher_better,MolGPS (3B),0.464,,,Sypetkowski et al.,2024,NeurIPS 2024,https://proceedings.neurips.cc/paper_files/paper/2024/file/2345275663a15ee92a06bc957be54a2c-Paper-Conference.pdf
+cyp3a4_veith,Metabolism,AUPRC,higher_better,MaxQsaring,0.923,0.001,1,Xu et al.,2025,J Pharm Anal 15(12):101411,10.1016/j.jpha.2025.101411
+cyp3a4_veith,Metabolism,AUPRC,higher_better,ADMETboost (XGBoost),0.877,0.002,1,Tian et al.,2022,J Mol Model 28:408,10.1007/s00894-022-05373-8
+cyp3a4_veith,Metabolism,AUPRC,higher_better,QW-MTL,0.877,0.003,5,arXiv:2509.04601,2025,arXiv:2509.04601,https://arxiv.org/abs/2509.04601
+cyp3a4_veith,Metabolism,AUPRC,higher_better,Meta-model (NIST),0.877,0.002,,Padi et al.,2023,bioRxiv 2023.12.05.570279,10.1101/2023.12.05.570279
+cyp3a4_veith,Metabolism,AUPRC,higher_better,MolE,0.876,0.002,1,Méndez-Lucio et al.,2024,Nat Commun 15:10021,10.1038/s41467-024-53751-y
+cyp3a4_veith,Metabolism,AUPRC,higher_better,MolGPS (3B),0.750,,,Sypetkowski et al.,2024,NeurIPS 2024,https://proceedings.neurips.cc/paper_files/paper/2024/file/2345275663a15ee92a06bc957be54a2c-Paper-Conference.pdf
+cyp2c9_substrate_carbonmangels,Metabolism,AUPRC,higher_better,MaxQsaring,0.450,0.015,1,Xu et al.,2025,J Pharm Anal 15(12):101411,10.1016/j.jpha.2025.101411
+cyp2c9_substrate_carbonmangels,Metabolism,AUPRC,higher_better,QW-MTL,0.446,0.023,1,arXiv:2509.04601,2025,arXiv:2509.04601,https://arxiv.org/abs/2509.04601
+cyp2c9_substrate_carbonmangels,Metabolism,AUPRC,higher_better,MolE,0.409,0.014,,Méndez-Lucio et al.,2024,Nat Commun 15:10021,10.1038/s41467-024-53751-y
+cyp2c9_substrate_carbonmangels,Metabolism,AUPRC,higher_better,Auto-ADMET (MTE),0.397,0.042,,Li et al.,2025,ChemRxiv preprint,10.26434/chemrxiv-2025-2p12l-v2
+cyp2c9_substrate_carbonmangels,Metabolism,AUPRC,higher_better,ADMETboost (XGBoost),0.387,0.018,1,Tian et al.,2022,J Mol Model 28:408,10.1007/s00894-022-05373-8
+cyp2c9_substrate_carbonmangels,Metabolism,AUPRC,higher_better,Meta-model (NIST),0.360,0.022,,Padi et al.,2023,bioRxiv 2023.12.05.570279,10.1101/2023.12.05.570279
+cyp2d6_substrate_carbonmangels,Metabolism,AUPRC,higher_better,MaxQsaring,0.766,0.008,1,Xu et al.,2025,J Pharm Anal 15(12):101411,10.1016/j.jpha.2025.101411
+cyp2d6_substrate_carbonmangels,Metabolism,AUPRC,higher_better,QW-MTL,0.725,0.021,2,arXiv:2509.04601,2025,arXiv:2509.04601,https://arxiv.org/abs/2509.04601
+cyp2d6_substrate_carbonmangels,Metabolism,AUPRC,higher_better,Auto-ADMET (MTE),0.707,0.008,,Li et al.,2025,ChemRxiv preprint,10.26434/chemrxiv-2025-2p12l-v2
+cyp2d6_substrate_carbonmangels,Metabolism,AUPRC,higher_better,MolE,0.692,0.017,1,Méndez-Lucio et al.,2024,Nat Commun 15:10021,10.1038/s41467-024-53751-y
+cyp2d6_substrate_carbonmangels,Metabolism,AUPRC,higher_better,ADMETboost (XGBoost),0.648,0.023,3,Tian et al.,2022,J Mol Model 28:408,10.1007/s00894-022-05373-8
+cyp2d6_substrate_carbonmangels,Metabolism,AUPRC,higher_better,Meta-model (NIST),0.622,0.022,,Padi et al.,2023,bioRxiv 2023.12.05.570279,10.1101/2023.12.05.570279
+cyp2d6_substrate_carbonmangels,Metabolism,AUPRC,higher_better,MolGPS (3B),0.570,,,Sypetkowski et al.,2024,NeurIPS 2024,https://proceedings.neurips.cc/paper_files/paper/2024/file/2345275663a15ee92a06bc957be54a2c-Paper-Conference.pdf
+cyp3a4_substrate_carbonmangels,Metabolism,AUROC,higher_better,MolE,0.692,0.019,1,Méndez-Lucio et al.,2024,Nat Commun 15:10021,10.1038/s41467-024-53751-y
+cyp3a4_substrate_carbonmangels,Metabolism,AUROC,higher_better,MaxQsaring,0.685,0.007,1,Xu et al.,2025,J Pharm Anal 15(12):101411,10.1016/j.jpha.2025.101411
+cyp3a4_substrate_carbonmangels,Metabolism,AUROC,higher_better,Meta-model (NIST),0.683,0.004,,Padi et al.,2023,bioRxiv 2023.12.05.570279,10.1101/2023.12.05.570279
+cyp3a4_substrate_carbonmangels,Metabolism,AUROC,higher_better,ADMETboost (XGBoost),0.680,0.005,1,Tian et al.,2022,J Mol Model 28:408,10.1007/s00894-022-05373-8
+cyp3a4_substrate_carbonmangels,Metabolism,AUROC,higher_better,MolGPS (3B),0.680,,,Sypetkowski et al.,2024,NeurIPS 2024,https://proceedings.neurips.cc/paper_files/paper/2024/file/2345275663a15ee92a06bc957be54a2c-Paper-Conference.pdf
+cyp3a4_substrate_carbonmangels,Metabolism,AUROC,higher_better,QW-MTL,0.660,0.016,2,arXiv:2509.04601,2025,arXiv:2509.04601,https://arxiv.org/abs/2509.04601
+cyp3a4_substrate_carbonmangels,Metabolism,AUROC,higher_better,Auto-ADMET (MTE),0.651,0.022,,Li et al.,2025,ChemRxiv preprint,10.26434/chemrxiv-2025-2p12l-v2
+half_life_obach,Excretion,Spearman,higher_better,MolGPS (3B),0.649,,,Sypetkowski et al.,2024,NeurIPS 2024,https://proceedings.neurips.cc/paper_files/paper/2024/file/2345275663a15ee92a06bc957be54a2c-Paper-Conference.pdf
+half_life_obach,Excretion,Spearman,higher_better,MolE,0.578,0.032,1,Méndez-Lucio et al.,2024,Nat Commun 15:10021,10.1038/s41467-024-53751-y
+half_life_obach,Excretion,Spearman,higher_better,MaxQsaring,0.578,0.011,1,Xu et al.,2025,J Pharm Anal 15(12):101411,10.1016/j.jpha.2025.101411
+half_life_obach,Excretion,Spearman,higher_better,ADMETboost (XGBoost),0.396,0.027,1,Tian et al.,2022,J Mol Model 28:408,10.1007/s00894-022-05373-8
+half_life_obach,Excretion,Spearman,higher_better,Auto-ADMET (MTE),0.374,0.049,,Li et al.,2025,ChemRxiv preprint,10.26434/chemrxiv-2025-2p12l-v2
+half_life_obach,Excretion,Spearman,higher_better,Meta-model (NIST),0.177,0.080,,Padi et al.,2023,bioRxiv 2023.12.05.570279,10.1101/2023.12.05.570279
+clearance_hepatocyte_az,Excretion,Spearman,higher_better,MolGPS (3B),0.633,,,Sypetkowski et al.,2024,NeurIPS 2024,https://proceedings.neurips.cc/paper_files/paper/2024/file/2345275663a15ee92a06bc957be54a2c-Paper-Conference.pdf
+clearance_hepatocyte_az,Excretion,Spearman,higher_better,MaxQsaring,0.512,0.029,1,Xu et al.,2025,J Pharm Anal 15(12):101411,10.1016/j.jpha.2025.101411
+clearance_hepatocyte_az,Excretion,Spearman,higher_better,Auto-ADMET (MTE),0.457,0.022,,Li et al.,2025,ChemRxiv preprint,10.26434/chemrxiv-2025-2p12l-v2
+clearance_hepatocyte_az,Excretion,Spearman,higher_better,MolE,0.456,0.027,1,Méndez-Lucio et al.,2024,Nat Commun 15:10021,10.1038/s41467-024-53751-y
+clearance_hepatocyte_az,Excretion,Spearman,higher_better,ADMETboost (XGBoost),0.420,0.011,2,Tian et al.,2022,J Mol Model 28:408,10.1007/s00894-022-05373-8
+clearance_hepatocyte_az,Excretion,Spearman,higher_better,Meta-model (NIST),0.419,0.013,,Padi et al.,2023,bioRxiv 2023.12.05.570279,10.1101/2023.12.05.570279
+clearance_microsome_az,Excretion,Spearman,higher_better,MiniMol (GINE),0.652,0.007,1,Kläser et al.,2024,ICML Workshop 2024; arXiv:2404.14986,https://arxiv.org/abs/2404.14986
+clearance_microsome_az,Excretion,Spearman,higher_better,MaxQsaring,0.634,0.014,1,Xu et al.,2025,J Pharm Anal 15(12):101411,10.1016/j.jpha.2025.101411
+clearance_microsome_az,Excretion,Spearman,higher_better,MolE,0.632,0.008,1,Méndez-Lucio et al.,2024,Nat Commun 15:10021,10.1038/s41467-024-53751-y
+clearance_microsome_az,Excretion,Spearman,higher_better,MolGPS (3B),0.631,,,Sypetkowski et al.,2024,NeurIPS 2024,https://proceedings.neurips.cc/paper_files/paper/2024/file/2345275663a15ee92a06bc957be54a2c-Paper-Conference.pdf
+clearance_microsome_az,Excretion,Spearman,higher_better,Auto-ADMET (MTE),0.597,0.013,,Li et al.,2025,ChemRxiv preprint,10.26434/chemrxiv-2025-2p12l-v2
+clearance_microsome_az,Excretion,Spearman,higher_better,ADMETboost (XGBoost),0.587,0.006,1,Tian et al.,2022,J Mol Model 28:408,10.1007/s00894-022-05373-8
+clearance_microsome_az,Excretion,Spearman,higher_better,Meta-model (NIST),0.576,0.007,,Padi et al.,2023,bioRxiv 2023.12.05.570279,10.1101/2023.12.05.570279
+ld50_zhu,Toxicity,MAE,lower_better,MolGPS (3B),0.292,,,Sypetkowski et al.,2024,NeurIPS 2024,https://proceedings.neurips.cc/paper_files/paper/2024/file/2345275663a15ee92a06bc957be54a2c-Paper-Conference.pdf
+ld50_zhu,Toxicity,MAE,lower_better,MaxQsaring,0.559,0.002,2,Xu et al.,2025,J Pharm Anal 15(12):101411,10.1016/j.jpha.2025.101411
+ld50_zhu,Toxicity,MAE,lower_better,MiniMol (GINE),0.588,0.010,3,Kläser et al.,2024,ICML Workshop 2024; arXiv:2404.14986,https://arxiv.org/abs/2404.14986
+ld50_zhu,Toxicity,MAE,lower_better,ADMETboost (XGBoost),0.602,0.006,1,Tian et al.,2022,J Mol Model 28:408,10.1007/s00894-022-05373-8
+ld50_zhu,Toxicity,MAE,lower_better,MolE,0.602,0.016,,Méndez-Lucio et al.,2024,Nat Commun 15:10021,10.1038/s41467-024-53751-y
+ld50_zhu,Toxicity,MAE,lower_better,Meta-model (NIST),0.605,0.003,,Padi et al.,2023,bioRxiv 2023.12.05.570279,10.1101/2023.12.05.570279
+herg,Toxicity,AUROC,higher_better,MaxQsaring,0.880,0.008,1,Xu et al.,2025,J Pharm Anal 15(12):101411,10.1016/j.jpha.2025.101411
+herg,Toxicity,AUROC,higher_better,MolGPS (3B),0.864,,,Sypetkowski et al.,2024,NeurIPS 2024,https://proceedings.neurips.cc/paper_files/paper/2024/file/2345275663a15ee92a06bc957be54a2c-Paper-Conference.pdf
+herg,Toxicity,AUROC,higher_better,MiniMol (GINE),0.849,0.007,6,Kläser et al.,2024,ICML Workshop 2024; arXiv:2404.14986,https://arxiv.org/abs/2404.14986
+herg,Toxicity,AUROC,higher_better,QW-MTL,0.847,0.013,4,arXiv:2509.04601,2025,arXiv:2509.04601,https://arxiv.org/abs/2509.04601
+herg,Toxicity,AUROC,higher_better,MolE,0.835,0.018,,Méndez-Lucio et al.,2024,Nat Commun 15:10021,10.1038/s41467-024-53751-y
+herg,Toxicity,AUROC,higher_better,Meta-model (NIST),0.809,0.008,,Padi et al.,2023,bioRxiv 2023.12.05.570279,10.1101/2023.12.05.570279
+herg,Toxicity,AUROC,higher_better,ADMETboost (XGBoost),0.806,0.005,3,Tian et al.,2022,J Mol Model 28:408,10.1007/s00894-022-05373-8
+ames,Toxicity,AUROC,higher_better,QW-MTL,0.912,0.002,3,arXiv:2509.04601,2025,arXiv:2509.04601,https://arxiv.org/abs/2509.04601
+ames,Toxicity,AUROC,higher_better,Meta-model (NIST),0.861,0.002,,Padi et al.,2023,bioRxiv 2023.12.05.570279,10.1101/2023.12.05.570279
+ames,Toxicity,AUROC,higher_better,ADMETboost (XGBoost),0.859,0.002,1,Tian et al.,2022,J Mol Model 28:408,10.1007/s00894-022-05373-8
+ames,Toxicity,AUROC,higher_better,MaxQsaring,0.858,0.001,2,Xu et al.,2025,J Pharm Anal 15(12):101411,10.1016/j.jpha.2025.101411
+ames,Toxicity,AUROC,higher_better,MolGPS (3B),0.857,,,Sypetkowski et al.,2024,NeurIPS 2024,https://proceedings.neurips.cc/paper_files/paper/2024/file/2345275663a15ee92a06bc957be54a2c-Paper-Conference.pdf
+ames,Toxicity,AUROC,higher_better,MiniMol (GINE),0.856,0.001,5,Kläser et al.,2024,ICML Workshop 2024; arXiv:2404.14986,https://arxiv.org/abs/2404.14986
+ames,Toxicity,AUROC,higher_better,MolE,0.834,0.015,,Méndez-Lucio et al.,2024,Nat Commun 15:10021,10.1038/s41467-024-53751-y
+dili,Toxicity,AUROC,higher_better,Meta-model (NIST),0.945,0.006,,Padi et al.,2023,bioRxiv 2023.12.05.570279,10.1101/2023.12.05.570279
+dili,Toxicity,AUROC,higher_better,MiniMol (GINE),0.944,0.007,1,Kläser et al.,2024,ICML Workshop 2024; arXiv:2404.14986,https://arxiv.org/abs/2404.14986
+dili,Toxicity,AUROC,higher_better,ADMETboost (XGBoost),0.933,0.011,1,Tian et al.,2022,J Mol Model 28:408,10.1007/s00894-022-05373-8
+dili,Toxicity,AUROC,higher_better,MaxQsaring,0.921,0.017,2,Xu et al.,2025,J Pharm Anal 15(12):101411,10.1016/j.jpha.2025.101411
+dili,Toxicity,AUROC,higher_better,QW-MTL,0.890,0.007,1,arXiv:2509.04601,2025,arXiv:2509.04601,https://arxiv.org/abs/2509.04601
+dili,Toxicity,AUROC,higher_better,MolE,0.852,0.022,,Méndez-Lucio et al.,2024,Nat Commun 15:10021,10.1038/s41467-024-53751-y
+skin_reaction,Toxicity,AUROC,higher_better,FATE-Tox (MTL),0.741,0.008,1,Ha et al.,2025,J Cheminform 17:74,10.1186/s13321-025-01012-5
+skin_reaction,Toxicity,AUROC,higher_better,FATE-Tox (STL),0.733,0.006,2,Ha et al.,2025,J Cheminform 17:74,10.1186/s13321-025-01012-5
+skin_reaction,Toxicity,AUROC,higher_better,SVM,0.731,0.000,3,Ha et al.,2025,J Cheminform 17:74,10.1186/s13321-025-01012-5
+skin_reaction,Toxicity,AUROC,higher_better,ET (single-conf),0.724,0.004,,Cremer et al.,2023,Chem Res Toxicol 36:1561,10.1021/acs.chemrestox.3c00032
+skin_reaction,Toxicity,AUROC,higher_better,Uni-Mol,0.695,0.048,4,Ha et al.,2025,J Cheminform 17:74,10.1186/s13321-025-01012-5
+skin_reaction,Toxicity,AUROC,higher_better,RF,0.677,0.021,5,Ha et al.,2025,J Cheminform 17:74,10.1186/s13321-025-01012-5
+skin_reaction,Toxicity,AUROC,higher_better,MAT,0.659,0.011,6,Ha et al.,2025,J Cheminform 17:74,10.1186/s13321-025-01012-5
+skin_reaction,Toxicity,AUROC,higher_better,Molformer,0.643,0.016,7,Ha et al.,2025,J Cheminform 17:74,10.1186/s13321-025-01012-5
+skin_reaction,Toxicity,AUROC,higher_better,GraphMVP,0.613,0.035,8,Ha et al.,2025,J Cheminform 17:74,10.1186/s13321-025-01012-5
+skin_reaction,Toxicity,AUROC,higher_better,MLP,0.499,0.138,9,Ha et al.,2025,J Cheminform 17:74,10.1186/s13321-025-01012-5
+skin_reaction,Toxicity,AUROC,higher_better,MolCLR,0.451,0.062,10,Ha et al.,2025,J Cheminform 17:74,10.1186/s13321-025-01012-5
+carcinogens_lagunin,Toxicity,AUROC,higher_better,FATE-Tox (MTL),0.848,0.003,1,Ha et al.,2025,J Cheminform 17:74,10.1186/s13321-025-01012-5
+carcinogens_lagunin,Toxicity,AUROC,higher_better,FATE-Tox (STL),0.842,0.021,2,Ha et al.,2025,J Cheminform 17:74,10.1186/s13321-025-01012-5
+carcinogens_lagunin,Toxicity,AUROC,higher_better,MAT,0.830,0.035,3,Ha et al.,2025,J Cheminform 17:74,10.1186/s13321-025-01012-5
+carcinogens_lagunin,Toxicity,AUROC,higher_better,Uni-Mol,0.822,0.035,4,Ha et al.,2025,J Cheminform 17:74,10.1186/s13321-025-01012-5
+carcinogens_lagunin,Toxicity,AUROC,higher_better,GraphMVP,0.795,0.047,5,Ha et al.,2025,J Cheminform 17:74,10.1186/s13321-025-01012-5
+carcinogens_lagunin,Toxicity,AUROC,higher_better,SVM,0.783,0.001,6,Ha et al.,2025,J Cheminform 17:74,10.1186/s13321-025-01012-5
+carcinogens_lagunin,Toxicity,AUROC,higher_better,MLP,0.783,0.002,7,Ha et al.,2025,J Cheminform 17:74,10.1186/s13321-025-01012-5
+carcinogens_lagunin,Toxicity,AUROC,higher_better,RF,0.751,0.032,8,Ha et al.,2025,J Cheminform 17:74,10.1186/s13321-025-01012-5
+carcinogens_lagunin,Toxicity,AUROC,higher_better,MolCLR,0.740,0.038,9,Ha et al.,2025,J Cheminform 17:74,10.1186/s13321-025-01012-5
+carcinogens_lagunin,Toxicity,AUROC,higher_better,Molformer,0.730,0.002,10,Ha et al.,2025,J Cheminform 17:74,10.1186/s13321-025-01012-5
+tox21,Toxicity,AUROC,higher_better,PrismNet,0.867,0.014,1,Adv Sci 2026,2026,Adv Sci 13:e17579,10.1002/advs.202517579
+tox21,Toxicity,AUROC,higher_better,MolGraph-xLSTM,0.851,0.006,2,Sun et al.,2025,Commun Chem 8:286,10.1038/s42004-025-01683-z
+tox21,Toxicity,AUROC,higher_better,DMPNN,0.849,0.006,3,Sun et al.,2025,Commun Chem 8:286,10.1038/s42004-025-01683-z
+tox21,Toxicity,AUROC,higher_better,HiGNN,0.844,0.006,4,Sun et al.,2025,Commun Chem 8:286,10.1038/s42004-025-01683-z
+tox21,Toxicity,AUROC,higher_better,DeeperGCN,0.840,0.010,5,Sun et al.,2025,Commun Chem 8:286,10.1038/s42004-025-01683-z
+tox21,Toxicity,AUROC,higher_better,FP-GNN,0.833,0.004,6,Sun et al.,2025,Commun Chem 8:286,10.1038/s42004-025-01683-z
+clintox,Toxicity,AUROC,higher_better,PrismNet,0.996,0.003,1,Adv Sci 2026,2026,Adv Sci 13:e17579,10.1002/advs.202517579
+clintox,Toxicity,AUROC,higher_better,MolGraph-xLSTM,0.897,0.008,2,Sun et al.,2025,Commun Chem 8:286,10.1038/s42004-025-01683-z
+clintox,Toxicity,AUROC,higher_better,DMPNN,0.895,0.010,3,Sun et al.,2025,Commun Chem 8:286,10.1038/s42004-025-01683-z
+clintox,Toxicity,AUROC,higher_better,DeeperGCN,0.892,0.048,4,Sun et al.,2025,Commun Chem 8:286,10.1038/s42004-025-01683-z
+clintox,Toxicity,AUROC,higher_better,HiGNN,0.889,0.026,5,Sun et al.,2025,Commun Chem 8:286,10.1038/s42004-025-01683-z
+clintox,Toxicity,AUROC,higher_better,FP-GNN,0.732,0.068,6,Sun et al.,2025,Commun Chem 8:286,10.1038/s42004-025-01683-z
+toxcast,Toxicity,AUROC,higher_better,PrismNet,0.714,0.001,1,Adv Sci 2026,2026,Adv Sci 13:e17579,10.1002/advs.202517579
+hydrationfreeenergy_freesolv,ADME,RMSE,lower_better,PrismNet,0.654,0.046,1,Adv Sci 2026,2026,Adv Sci 13:e17579,10.1002/advs.202517579
+hydrationfreeenergy_freesolv,ADME,RMSE,lower_better,MolGraph-xLSTM,1.024,0.076,2,Sun et al.,2025,Commun Chem 8:286,10.1038/s42004-025-01683-z
+hydrationfreeenergy_freesolv,ADME,RMSE,lower_better,HiGNN,1.068,0.092,3,Sun et al.,2025,Commun Chem 8:286,10.1038/s42004-025-01683-z
+hydrationfreeenergy_freesolv,ADME,RMSE,lower_better,FP-GNN,1.106,0.195,4,Sun et al.,2025,Commun Chem 8:286,10.1038/s42004-025-01683-z
+hydrationfreeenergy_freesolv,ADME,RMSE,lower_better,DMPNN,1.211,0.120,5,Sun et al.,2025,Commun Chem 8:286,10.1038/s42004-025-01683-z
+hydrationfreeenergy_freesolv,ADME,RMSE,lower_better,DeeperGCN,1.261,0.022,6,Sun et al.,2025,Commun Chem 8:286,10.1038/s42004-025-01683-z
