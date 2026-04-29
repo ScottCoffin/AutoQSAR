@@ -7971,6 +7971,21 @@ cells += [
                     X_fit = X_train_tabpfn
                     y_fit = y_train_tabpfn
 
+                _TABPFN_MAX_COLS = 2000
+                if X_fit.shape[1] > _TABPFN_MAX_COLS:
+                    print(
+                        f"[TabPFN] Feature matrix has {X_fit.shape[1]} columns; "
+                        f"truncating to first {_TABPFN_MAX_COLS} for TabPFN.",
+                        flush=True,
+                    )
+                    _tabpfn_cols = list(X_fit.columns[:_TABPFN_MAX_COLS])
+                    X_fit = X_fit[_tabpfn_cols].reset_index(drop=True)
+                    X_train_tabpfn = X_train_tabpfn[_tabpfn_cols].reset_index(drop=True)
+                    X_test_tabpfn = X_test_tabpfn[_tabpfn_cols].reset_index(drop=True)
+                else:
+                    _tabpfn_cols = list(X_fit.columns)
+                STATE["tabpfn_feature_columns"] = _tabpfn_cols
+
                 _tabpfn_preds = None
                 try:
                     print(f"[TabPFN] Fitting ({tabpfn_exec_source})...", flush=True)
@@ -11492,7 +11507,10 @@ cells += [
                 )
                 if not aux_feature_df.empty:
                     feature_df = pd.concat([feature_df.reset_index(drop=True), aux_feature_df.reset_index(drop=True)], axis=1)
-                feature_df = align_feature_matrix_to_training_columns(feature_df, STATE["feature_names"])
+                _tabpfn_train_cols = STATE.get("tabpfn_feature_columns") or list(STATE["feature_names"])
+                feature_df = align_feature_matrix_to_training_columns(feature_df, _tabpfn_train_cols)
+                if feature_df.shape[1] > 2000:
+                    feature_df = feature_df.iloc[:, :2000]
                 predictions = np.asarray(model.predict(feature_df)).reshape(-1)
             elif workflow_name == "MapLight + GNN":
                 if "maplight_gnn_models" not in STATE or model_name not in STATE["maplight_gnn_models"]:

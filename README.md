@@ -57,3 +57,78 @@ This may take 15 to 30 minutes depending on your machine and internet connection
 ```bat
 conda activate autoqsar-py311
 ```
+
+# Operation
+## Interactive Jupyter Notebook
+
+## Benchmarking
+In a powershell terminal, run:
+
+```powershell
+$py="~\.conda\envs\autoqsar-py311\python.exe"
+$out="benchmark_results\benchmark_name_date"
+& $py portable_colab_qsar_bundle\run_autoqsar_ga_benchmarks.py `
+  --output-dir $out `
+  --resume
+```
+
+### TabPFN authentication (optional)
+
+`TabPFNRegressor` is included in the benchmark by default. Authentication requirements depend on which backend is active:
+
+| Backend | When used | Auth required |
+|---|---|---|
+| `tabpfn` (local) | GPU available | HuggingFace token + Prior Labs license (browser, first run only — cached after) |
+| `tabpfn_client` (API) | CPU-only | Prior Labs API key |
+
+#### Local backend (`tabpfn`) — HuggingFace token + Prior Labs license
+
+First use requires two one-time steps: providing a HuggingFace token (for model download) and accepting the Prior Labs license (browser flow). After that, everything is cached and no token or browser interaction is needed again.
+
+**One-time setup:**
+
+1. Create a HuggingFace token at <https://huggingface.co/settings/tokens> (read access is sufficient)
+2. Either log in once via CLI (stores the token permanently):
+   ```powershell
+   huggingface-cli login
+   ```
+   Or set `HF_TOKEN` before running:
+   ```powershell
+   # PowerShell — current session
+   $env:HF_TOKEN = "hf_your_token_here"
+
+   # PowerShell — persist across sessions
+   [System.Environment]::SetEnvironmentVariable("HF_TOKEN","hf_your_token_here","User")
+   ```
+   ```bash
+   # bash / zsh
+   export HF_TOKEN="hf_your_token_here"
+   ```
+3. Run the benchmark. The script will print:
+   ```
+   [TabPFN] Verifying local backend. On first use a browser will open for Prior Labs license acceptance — please complete it, then return here.
+   ```
+   A browser will open to the Prior Labs license page. Accept the license there. The terminal will show a prompt `Enter your API key (or press Enter to keep waiting):` — ignore it and complete the browser step. Once accepted, the license token is cached and this flow never runs again.
+
+#### API backend (`tabpfn_client`) — Prior Labs API key
+
+Set `PRIORLABS_API_KEY` in your shell before running:
+
+```powershell
+# PowerShell — set for the current session
+$env:PRIORLABS_API_KEY = "your_key_here"
+
+# PowerShell — persist across sessions (current user)
+[System.Environment]::SetEnvironmentVariable("PRIORLABS_API_KEY","[your_key_here]","User")
+```
+
+```bash
+# bash / zsh
+export PRIORLABS_API_KEY="your_key_here"
+```
+
+Keys are obtained from <https://priorlabs.ai/> (free tier available).
+
+**Interactive prompt**
+
+If the relevant token is not set and the script is run in an interactive terminal, you will be prompted once before any datasets are processed. Press **Enter** without typing anything to skip TabPFN — the benchmark will continue with all other models unaffected.
