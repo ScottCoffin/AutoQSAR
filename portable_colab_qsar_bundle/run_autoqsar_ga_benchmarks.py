@@ -87,6 +87,15 @@ os.environ.setdefault("ABSL_LOGGING_STDERR_THRESHOLD", "3")
 os.environ.setdefault("ABSL_MIN_LOG_LEVEL", "3")
 os.environ.setdefault("GLOG_minloglevel", "3")
 
+# Point Open Babel to its data files when installed via openbabel-wheel (pip).
+# The wheel bundles data under <pkg>/bin/data/ but doesn't set BABEL_DATADIR.
+if "BABEL_DATADIR" not in os.environ:
+    _ob_spec = importlib.util.find_spec("openbabel")
+    if _ob_spec and _ob_spec.origin:
+        _ob_data = Path(_ob_spec.origin).parent / "bin" / "data"
+        if _ob_data.is_dir():
+            os.environ["BABEL_DATADIR"] = str(_ob_data)
+
 try:
     from portable_colab_qsar_bundle.qsar_workflow_core import (
         TabularCNNRegressor,
@@ -401,6 +410,41 @@ def configure_tabpfn_access_token_from_env() -> tuple[bool, str]:
         return False, str(exc)
 
 
+def _patch_select_for_windows_stdin() -> None:
+    """Prevent WinError 10038 when tabpfn polls sys.stdin via select.select on Windows.
+
+    tabpfn/browser_auth.py uses select.select([sys.stdin], [], [], 0.5) inside
+    _poll_for_token to allow keyboard cancellation during browser-based Prior Labs
+    license auth.  On Windows, select.select does not accept non-socket file
+    descriptors and raises OSError: [WinError 10038] immediately — crashing the
+    entire auth flow before the user can complete the browser step.
+
+    This patch replaces stdin entries in the rlist with a short sleep so the poll
+    loop can continue waiting for the localhost browser callback.  Idempotent; no-op
+    on non-Windows platforms.
+    """
+    if sys.platform != "win32":
+        return
+    import select as _sel
+    if getattr(_sel, "_win_stdin_patched", False):
+        return
+    _orig_select = _sel.select
+    _stdin_set = frozenset(x for x in (sys.stdin, getattr(sys, "__stdin__", None)) if x is not None)
+
+    def _win_safe_select(rlist, wlist, xlist, timeout=None):
+        safe_r = [r for r in rlist if r not in _stdin_set]
+        if len(safe_r) == len(rlist):
+            return _orig_select(rlist, wlist, xlist, timeout)
+        if safe_r:
+            return _orig_select(safe_r, wlist, xlist, timeout)
+        import time
+        time.sleep(min(float(timeout or 0.5), 0.5))
+        return [], [], []
+
+    _sel.select = _win_safe_select
+    _sel._win_stdin_patched = True
+
+
 def _probe_tabpfn_runtime_ready() -> tuple[bool, str]:
     if TabPFNRegressor is None:
         return False, "TabPFNRegressor is unavailable."
@@ -425,11 +469,206 @@ def _probe_tabpfn_runtime_ready() -> tuple[bool, str]:
         return False, str(exc)
 
 
+def _get_effective_hf_token() -> str:
+    """Return HuggingFace token from env var or huggingface_hub's stored credential."""
+    token = str(os.environ.get("HF_TOKEN", os.environ.get("HUGGING_FACE_HUB_TOKEN", ""))).strip()
+    if token:
+        return token
+    try:
+        from huggingface_hub import get_token
+        stored = get_token()
+        if stored:
+            return str(stored).strip()
+    except Exception:
+        pass
+    return ""
+
+
+def _is_tabpfn_model_cached() -> bool:
+    """Check whether tabpfn model weights exist in the local HuggingFace cache."""
+    try:
+        hf_cache = Path(
+            os.environ.get("HF_HOME", Path.home() / ".cache" / "huggingface")
+        ) / "hub"
+        if hf_cache.is_dir():
+            for item in hf_cache.iterdir():
+                if "tabpfn" in item.name.lower() or "prior-labs" in item.name.lower():
+                    return True
+    except Exception:
+        pass
+    return False
+
+
+def _prepare_tabpfn_local_auth() -> tuple[bool, str]:
+    """Handle HuggingFace auth for the local `tabpfn` backend.
+
+    The local tabpfn package downloads model weights from HuggingFace on first use
+    and requires accepting the Prior Labs license via a browser flow.  Subsequent
+    runs use the local cache and need neither a token nor browser interaction.
+
+    On Windows, tabpfn's browser-auth poll loop crashes with WinError 10038
+    (select.select on non-socket stdin) before the user can complete the browser
+    step.  _patch_select_for_windows_stdin() is applied here so the loop keeps
+    running and can detect the browser callback normally.
+    """
+    # Must patch before any probe — the browser-auth poll loop runs inside fit().
+    _patch_select_for_windows_stdin()
+
+    hf_token = _get_effective_hf_token()
+
+    if hf_token:
+        os.environ.setdefault("HF_TOKEN", hf_token)
+        try:
+            import huggingface_hub
+            huggingface_hub.login(token=hf_token, add_to_git_credential=False)
+        except Exception:
+            pass
+        print(
+            "[TabPFN] Verifying local backend. On first use a browser will open for "
+            "Prior Labs license acceptance — please complete it, then return here.",
+            flush=True,
+        )
+        probe_ok, probe_error = _probe_tabpfn_runtime_ready()
+        if probe_ok:
+            return True, "TabPFN local backend ready (HuggingFace token authenticated)."
+        if is_tabpfn_token_limit_error(probe_error):
+            return False, format_tabpfn_token_limit_notice(probe_error)
+        return False, (
+            "TabPFN local backend preflight failed after HuggingFace authentication. "
+            "Ensure you have accepted the model license at "
+            "https://huggingface.co/prior-labs/TabPFN-v2  "
+            f"Error: {probe_error}"
+        )
+
+    # No token — safe to probe if weights already cached (no HF download needed),
+    # but Prior Labs license browser flow may still be required on first run.
+    if _is_tabpfn_model_cached():
+        print(
+            "[TabPFN] Model weights found in cache. On first use a browser will open for "
+            "Prior Labs license acceptance — please complete it, then return here.",
+            flush=True,
+        )
+        probe_ok, probe_error = _probe_tabpfn_runtime_ready()
+        if probe_ok:
+            return True, "TabPFN local backend ready (model already cached locally)."
+        if is_tabpfn_token_limit_error(probe_error):
+            return False, format_tabpfn_token_limit_notice(probe_error)
+        return False, f"TabPFN local backend preflight failed: {probe_error}"
+
+    # No token, no cache — must collect HF token before probing; without it the
+    # HuggingFace download step inside fit() will fail even after license acceptance.
+    _hf_auth_prompt = (
+        "TabPFN local backend needs a HuggingFace token to download model weights (first-time only).\n"
+        "  1. Accept the license at: https://huggingface.co/prior-labs/TabPFN-v2\n"
+        "  2. Get a token at:        https://huggingface.co/settings/tokens\n"
+        "Enter your HuggingFace token (input hidden), or press Enter to skip TabPFN: "
+    )
+    if sys.stdin is not None and sys.stdin.isatty():
+        try:
+            entered = getpass.getpass(_hf_auth_prompt).strip()
+        except Exception:
+            entered = ""
+        if not entered:
+            return False, "No HuggingFace token provided. TabPFN will be disabled for this run."
+        os.environ["HF_TOKEN"] = entered
+        try:
+            import huggingface_hub
+            huggingface_hub.login(token=entered, add_to_git_credential=False)
+        except Exception:
+            pass
+        print(
+            "[TabPFN] Downloading model weights. A browser will open for Prior Labs license "
+            "acceptance — please complete it, then return here (one-time setup).",
+            flush=True,
+        )
+        probe_ok, probe_error = _probe_tabpfn_runtime_ready()
+        if probe_ok:
+            return True, "TabPFN local backend ready after HuggingFace authentication."
+        return False, (
+            "TabPFN local backend preflight failed after authentication. "
+            "Ensure you have accepted the model license at "
+            "https://huggingface.co/prior-labs/TabPFN-v2  "
+            f"Error: {probe_error}"
+        )
+    else:
+        return False, (
+            "TabPFN local backend needs a HuggingFace token (HF_TOKEN) to download model weights. "
+            "Set HF_TOKEN, accept the license at https://huggingface.co/prior-labs/TabPFN-v2, "
+            "and re-run. TabPFN will be disabled for this run."
+        )
+
+
 def prepare_tabpfn_auth(args: argparse.Namespace) -> tuple[bool, str]:
+    # TabPFN requires different authentication depending on the active backend:
+    #
+    # LOCAL BACKEND (tabpfn, used automatically when a GPU is available):
+    #   Needs a HuggingFace token to download model weights on first use only.
+    #   After the first download the model is cached and no token is needed.
+    #   Steps:
+    #     1. Accept the model license at https://huggingface.co/prior-labs/TabPFN-v2
+    #     2. Get a token at https://huggingface.co/settings/tokens
+    #     3. Set HF_TOKEN before running:
+    #          bash/zsh:    export HF_TOKEN="hf_your_token_here"
+    #          PowerShell:  $env:HF_TOKEN = "hf_your_token_here"
+    #   Alternatively, run `huggingface-cli login` once to store the token permanently.
+    #
+    # API BACKEND (tabpfn_client, used when no GPU is available):
+    #   Needs a Prior Labs API key.
+    #   Set PRIORLABS_API_KEY before running:
+    #     bash/zsh:    export PRIORLABS_API_KEY="your_key_here"
+    #     PowerShell:  $env:PRIORLABS_API_KEY = "your_key_here"
+    #   Keys are obtained from https://priorlabs.ai/ (free tier available).
+    #
+    # In both cases, if the relevant variable is absent and the script runs in a
+    # terminal, you will be prompted once before any datasets are processed.
+    # Press Enter at the prompt to skip TabPFNRegressor; the benchmark continues
+    # with all other models unaffected.
     if not bool(getattr(args, "run_tabpfn", False)):
         return True, "TabPFN is disabled for this run."
-    if str(TABPFN_REGRESSOR_SOURCE).strip().lower() != "tabpfn_client":
-        return True, f"TabPFN backend source: {TABPFN_REGRESSOR_SOURCE} (no Prior Labs token setup required)."
+    if TabPFNRegressor is None:
+        return False, "TabPFNRegressor is unavailable (import failed)."
+
+    source = str(TABPFN_REGRESSOR_SOURCE).strip().lower()
+
+    if source == "tabpfn":
+        return _prepare_tabpfn_local_auth()
+
+    if source != "tabpfn_client":
+        return False, f"Unknown TabPFN backend source: {TABPFN_REGRESSOR_SOURCE}. TabPFN will be disabled."
+
+    # --- tabpfn_client (Prior Labs API) path ---
+    has_env_key = bool(str(os.environ.get("PRIORLABS_API_KEY", os.environ.get("TABPFN_API_KEY", ""))).strip())
+
+    if not has_env_key:
+        if sys.stdin is not None and sys.stdin.isatty():
+            # Interactive terminal: ask for the key BEFORE any probe so the
+            # tabpfn-client OAuth browser flow is never triggered unintentionally.
+            try:
+                entered = getpass.getpass(
+                    "TabPFN is enabled and no PRIORLABS_API_KEY/TABPFN_API_KEY was found.\n"
+                    "Enter your Prior Labs API key (input hidden), or press Enter to skip TabPFN: "
+                ).strip()
+            except Exception:
+                entered = ""
+            if entered:
+                os.environ["PRIORLABS_API_KEY"] = entered
+            else:
+                return False, (
+                    "No PRIORLABS_API_KEY/TABPFN_API_KEY was provided. "
+                    "TabPFN will be disabled for this run."
+                )
+        else:
+            # Non-interactive (piped / CI): probe for a locally cached client token
+            # before giving up — avoids triggering the browser OAuth flow.
+            probe_ok, probe_error = _probe_tabpfn_runtime_ready()
+            if probe_ok:
+                return True, "TabPFN preflight passed using an existing local client token."
+            if is_tabpfn_token_limit_error(probe_error):
+                return False, format_tabpfn_token_limit_notice(probe_error)
+            return False, (
+                "No PRIORLABS_API_KEY/TABPFN_API_KEY was provided and no existing local client token "
+                "could be used. TabPFN will be disabled for this run."
+            )
 
     token_ok, token_error = configure_tabpfn_access_token_from_env()
     if token_ok:
@@ -443,39 +682,6 @@ def prepare_tabpfn_auth(args: argparse.Namespace) -> tuple[bool, str]:
         return False, (
             "TabPFN access token was loaded from environment, but runtime preflight failed. "
             f"Error: {probe_error}"
-        )
-
-    has_env_key = bool(str(os.environ.get("PRIORLABS_API_KEY", os.environ.get("TABPFN_API_KEY", ""))).strip())
-    if not has_env_key:
-        probe_ok, probe_error = _probe_tabpfn_runtime_ready()
-        if probe_ok:
-            return True, "TabPFN preflight passed using an existing local client token."
-        if is_tabpfn_token_limit_error(probe_error):
-            return False, format_tabpfn_token_limit_notice(probe_error)
-        if sys.stdin is not None and sys.stdin.isatty():
-            try:
-                entered = getpass.getpass(
-                    "TabPFN is enabled and no PRIORLABS_API_KEY/TABPFN_API_KEY was found. "
-                    "Enter Prior Labs API key (input hidden), or press Enter to disable TabPFN for this run: "
-                ).strip()
-            except Exception:
-                entered = ""
-            if entered:
-                os.environ["PRIORLABS_API_KEY"] = entered
-                token_ok, token_error = configure_tabpfn_access_token_from_env()
-                if token_ok:
-                    probe_ok, probe_error = _probe_tabpfn_runtime_ready()
-                    if probe_ok:
-                        return True, "TabPFN authentication verified from interactively provided API key."
-                    if is_tabpfn_token_limit_error(probe_error):
-                        return False, format_tabpfn_token_limit_notice(
-                            f"TabPFN runtime preflight hit a token limit after interactive key setup. Error: {probe_error}"
-                        )
-                    return False, f"TabPFN runtime preflight failed after interactive key setup: {probe_error}"
-                return False, f"TabPFN authentication/setup failed after interactive key entry: {token_error}"
-        return False, (
-            "No PRIORLABS_API_KEY/TABPFN_API_KEY was provided and no existing local client token could be used. "
-            "TabPFN will be disabled for this run."
         )
 
     probe_ok, probe_error = _probe_tabpfn_runtime_ready()
@@ -704,6 +910,34 @@ MAPLIGHT_CATBOOST_LABEL_STRICT = "MapLight CatBoost (Strict Parity)"
 MAPLIGHT_GNN_LABEL_STRICT = "MapLight + GNN (CatBoost, Strict Parity)"
 MAPLIGHT_PARITY_SEEDS_DEFAULT = [1, 2, 3, 4, 5]
 _MAPLIGHT_EMBEDDER_CACHE: dict[str, tuple[Callable[[list[str]], list[Any]], str]] = {}
+
+
+def _install_dgl_graphbolt_import_shim() -> None:
+    """Allow importing DGL when its optional GraphBolt binary is missing.
+
+    DGL imports ``dgl.distributed`` from its package ``__init__`` on the PyTorch
+    backend, and that path imports ``dgl.graphbolt`` unconditionally.  Some
+    Windows wheels ship GraphBolt binaries only for a subset of torch versions;
+    MapLight's molecular GNN path does not use GraphBolt, so a minimal placeholder
+    module is enough to keep the usable DGL APIs importable.
+    """
+    if "dgl.graphbolt" in sys.modules:
+        return
+    try:
+        import torch
+
+        torch_version = str(getattr(torch, "__version__", "")).split("+", 1)[0]
+    except Exception:
+        torch_version = ""
+    if not torch_version:
+        return
+    for site_path in map(Path, sys.path):
+        candidate = site_path / "dgl" / "graphbolt" / f"graphbolt_pytorch_{torch_version}.dll"
+        if candidate.parent.is_dir() and not candidate.exists():
+            import types
+
+            sys.modules["dgl.graphbolt"] = types.ModuleType("dgl.graphbolt")
+            return
 
 
 def _stable_float_text(value: Any) -> str:
@@ -4450,6 +4684,18 @@ def _is_maplight_store_access_error(exc: Exception) -> bool:
     return any(marker in message for marker in markers)
 
 
+def _is_maplight_gnn_dependency_error(exc: Exception) -> bool:
+    message = f"{type(exc).__name__}: {exc}".lower()
+    markers = [
+        "dgl",
+        "dgllife",
+        "graphbolt",
+        "pretrained gin weights",
+        "cannot find dgl c++ graphbolt library",
+    ]
+    return any(marker in message for marker in markers)
+
+
 @contextlib.contextmanager
 def _suppress_maplight_store_probe_noise():
     noisy_loggers = ("gcsfs", "fsspec", "google.auth", "google.cloud")
@@ -4479,6 +4725,7 @@ def _build_maplight_gnn_embedder(kind: str = "gin_supervised_masking") -> tuple[
         return _MAPLIGHT_EMBEDDER_CACHE[cache_key]
 
     _patch_torchdata_dill_available()
+    _install_dgl_graphbolt_import_shim()
     from molfeat.trans.pretrained import PretrainedDGLTransformer
 
     try:
@@ -5759,11 +6006,17 @@ def _row_has_error_text(row: dict[str, Any]) -> bool:
     return bool(error_text and error_text not in {"nan", "none"})
 
 
+def _row_is_terminal_skip(row: dict[str, Any]) -> bool:
+    status_text = str(row.get("status", "")).strip().lower()
+    return status_text.startswith("skipped")
+
+
 def successful_model_names_from_metrics_rows(metrics_rows: list[dict[str, Any]]) -> set[str]:
     return {
         str(row.get("model", "")).strip()
         for row in metrics_rows
-        if str(row.get("model", "")).strip() and not _row_has_error_text(row)
+        if str(row.get("model", "")).strip()
+        and (not _row_has_error_text(row) or _row_is_terminal_skip(row))
     }
 
 
@@ -6149,7 +6402,8 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
     completed_model_names = {
         str(row.get("model", "")).strip()
         for row in metrics_rows
-        if str(row.get("model", "")).strip() and not _row_has_error_text(row)
+        if str(row.get("model", "")).strip()
+        and (not _row_has_error_text(row) or _row_is_terminal_skip(row))
     }
     if rebuild_ensemble_requested:
         original_metric_count = len(metrics_rows)
@@ -6184,7 +6438,8 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
         completed_model_names = {
             str(row.get("model", "")).strip()
             for row in metrics_rows
-            if str(row.get("model", "")).strip() and not _row_has_error_text(row)
+            if str(row.get("model", "")).strip()
+            and (not _row_has_error_text(row) or _row_is_terminal_skip(row))
         }
 
         removed_cached_files: list[str] = []
@@ -6992,6 +7247,8 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
                     row["maplight_embedding_kind"] = str(args.maplight_gnn_kind)
                 except Exception as exc:
                     row = {"model": maplight_label, "workflow": "MapLight + GNN", "error": str(exc)}
+                    if _is_maplight_gnn_dependency_error(exc):
+                        row["status"] = "skipped_maplight_gnn_dependency_unavailable"
                     pred_train, pred_test = np.array([]), np.array([])
                 row = {**base_meta, **row, "elapsed_seconds": round(time.time() - start, 3)}
                 metrics_rows.append(row)

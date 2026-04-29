@@ -1,0 +1,22 @@
+name: autoqsar-py311
+channels:
+  - defaults
+dependencies:
+  - bzip2=1.0.8
+  - ca-certificates=2026.3.19
+  - libexpat=2.7.5
+  - libffi=3.4.4
+  - libzlib=1.3.1
+  - openssl=3.5.6
+  - packaging=26.0
+  - python=3.11.15
+  - sqlite=3.51.2
+  - tk=8.6.15
+  - ucrt=10.0.22621.0
+  - vc=14.3
+  - vc14_runtime=14.44.35208
+  - vs2015_runtime=14.44.35208
+  - pip
+  - wheel=0.46.3
+  - xz=5.8.2
+  - zlib=1.3.1

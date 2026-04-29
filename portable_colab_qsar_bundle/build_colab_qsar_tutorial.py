@@ -635,7 +635,7 @@ cells += [
         ensure_package("lime", "lime")
         ensure_package("openpyxl", "openpyxl")
         ensure_package("future", "future")
-        ensure_package("mordred", "mordred")
+        ensure_package("mordred", "mordredcommunity", label="mordred")
         ensure_package("seaborn", "seaborn")
         ensure_package("lxml", "lxml")
         ensure_package("fuzzywuzzy", "fuzzywuzzy")
@@ -749,6 +749,7 @@ cells += [
 
         setup_start("optional tabular foundation model")
         TabPFNRegressor = None
+        TabPFNLocalRegressor = None
         TABPFN_REGRESSOR_SOURCE = "unavailable"
         TABPFN_IMPORT_ERRORS = {}
         try:
@@ -758,26 +759,39 @@ cells += [
             TABPFN_REGRESSOR_SOURCE = "tabpfn_client"
         except Exception as exc:
             TABPFN_IMPORT_ERRORS["tabpfn_client"] = str(exc)
-        if TabPFNRegressor is None:
-            try:
-                from tabpfn import TabPFNRegressor as _TabPFNLocalRegressor
+        try:
+            from tabpfn import TabPFNRegressor as _TabPFNLocalRegressor
 
+            TabPFNLocalRegressor = _TabPFNLocalRegressor
+            if TabPFNRegressor is None:
                 TabPFNRegressor = _TabPFNLocalRegressor
                 TABPFN_REGRESSOR_SOURCE = "tabpfn"
-            except Exception as exc:
-                TABPFN_IMPORT_ERRORS["tabpfn"] = str(exc)
+        except Exception as exc:
+            TABPFN_IMPORT_ERRORS["tabpfn"] = str(exc)
 
-        def make_tabpfn_regressor():
+        def make_tabpfn_regressor(force_local=False, device=None):
+            if force_local:
+                if TabPFNLocalRegressor is None:
+                    raise RuntimeError(
+                        "Local TabPFNRegressor (tabpfn package) is unavailable. "
+                        + ("Import error: " + TABPFN_IMPORT_ERRORS.get("tabpfn", "unknown"))
+                    )
+                kwargs = {"device": device} if device is not None else {}
+                return TabPFNLocalRegressor(**kwargs)
             if TabPFNRegressor is None:
                 raise RuntimeError(
                     "TabPFNRegressor is unavailable. Import errors: "
                     + "; ".join(f"{key}: {value}" for key, value in TABPFN_IMPORT_ERRORS.items())
                 )
+            if device is not None and TABPFN_REGRESSOR_SOURCE == "tabpfn":
+                return TabPFNRegressor(device=device)
             return TabPFNRegressor()
 
         setup_done(
             "optional tabular foundation model",
-            f"available={'yes' if TabPFNRegressor is not None else 'no'}, source={TABPFN_REGRESSOR_SOURCE}",
+            f"available={'yes' if TabPFNRegressor is not None else 'no'}, "
+            f"local={'yes' if TabPFNLocalRegressor is not None else 'no'}, "
+            f"source={TABPFN_REGRESSOR_SOURCE}",
         )
 
         setup_start("ChemML modules")
@@ -4405,6 +4419,12 @@ cells += [
                     "Your local `tabpfn` backend requires a newer PyTorch build that includes torch.nn.RMSNorm. "
                     "Prefer `tabpfn_client` (API backend) or upgrade PyTorch in this environment."
                 )
+            if ("version" in message and "too old" in message) or "client version" in message:
+                return (
+                    "The `tabpfn-client` package is too old for the current Prior Labs API. "
+                    "Upgrade with: pip install --upgrade tabpfn-client tabpfn-common-utils\\n"
+                    "Alternatively, enable `run_tabpfn_local` in block 5B to run TabPFN locally without the API."
+                )
             auth_tokens = (
                 "priorlabs_api_key",
                 "tabpfn_api_key",
@@ -4481,7 +4501,8 @@ cells += [
                 summary_lines.append(result["auth_hint"])
             summary_lines.append(
                 "If needed, set PRIORLABS_API_KEY here and rerun this cell. "
-                "Then run 5B with run_tabpfn_deep=True."
+                "Then run 5B with run_tabpfn_deep=True.\\n"
+                "To skip the API entirely, enable `run_tabpfn_local` in block 5B."
             )
             display_note("\\n".join(summary_lines))
 
@@ -5352,9 +5373,9 @@ cells += [
         upload_previous_ga_run_source = False # @param {type:"boolean"}
         tune_elasticnet = True # @param {type:"boolean"}
         tune_svr = False # @param {type:"boolean"}
-        tune_random_forest = False # @param {type:"boolean"}
+        tune_random_forest = True # @param {type:"boolean"}
         tune_xgboost = False # @param {type:"boolean"}
-        tune_catboost = True # @param {type:"boolean"}
+        tune_catboost = False # @param {type:"boolean"}
 
         if "feature_matrix" not in STATE:
             raise RuntimeError("Please build the molecular feature matrix first.")
@@ -6180,10 +6201,19 @@ cells += [
             best_history, best_raw_params = ga.search(
                 n_generations=remaining_generations,
                 early_stopping=int(ga_early_stopping),
-                progress_callback=ga_progress_callback,
-                progress_desc=f"{model_name} generations",
-                show_progress_bar=False,
             )
+            # chemml GeneticAlgorithm.search() has no callback support; simulate
+            # generation_complete events from the returned history so progress bars
+            # and checkpoints are updated correctly after the run.
+            for _gen_idx, _row in best_history.iterrows():
+                ga_progress_callback({
+                    "event": "generation_complete",
+                    "generation": resume_generation_offset + _gen_idx + 1,
+                    "best_individual": _row["Best_individual"],
+                    "best_fitness": _row["Fitness_values"],
+                    "elapsed_hours": _row["Time (hours)"],
+                    "generation_evaluations_completed": evaluation_progress.total,
+                })
             if resume_history_prefix is not None:
                 best_history = pd.concat([resume_history_prefix, best_history], ignore_index=True)
             if generation_progress.n < len(best_history):
@@ -6471,11 +6501,11 @@ cells += [
     code(
         """
         # @title 4G. Plot GA convergence history for tuned conventional models { display-mode: "form" }
-        show_ga_history_elasticnet = False # @param {type:"boolean"}
+        show_ga_history_elasticnet = True # @param {type:"boolean"}
         show_ga_history_svr = False # @param {type:"boolean"}
         show_ga_history_random_forest = True # @param {type:"boolean"}
-        show_ga_history_xgboost = True # @param {type:"boolean"}
-        show_ga_history_catboost = True # @param {type:"boolean"}
+        show_ga_history_xgboost = False # @param {type:"boolean"}
+        show_ga_history_catboost = False # @param {type:"boolean"}
 
         if "tuned_traditional_ga_histories" not in STATE or not STATE["tuned_traditional_ga_histories"]:
             raise RuntimeError("Please run block 4E first so GA tuning histories are available.")
@@ -6598,6 +6628,7 @@ cells += [
         - `run_chemml_tensorflow`: train the ChemML multilayer perceptron with the TensorFlow backend
         - `run_maplight_gnn`: run the MapLight + GNN workflow (CatBoost on MapLight classic + GIN embeddings)
         - `run_tabpfn_deep`: run TabPFNRegressor as a deep tabular foundation-model workflow
+        - `run_tabpfn_local`: when enabled, use the local `tabpfn` package for inference instead of the Prior Labs API; useful when no API key is available or when `tabpfn-client` gives a version error
         - `tabpfn_max_train_rows`: guardrail for TabPFN training-set size in this notebook
         - `chemml_hidden_layers`: number of hidden layers in the ChemML neural network
         - `chemml_hidden_width`: number of neurons per hidden layer
@@ -6619,7 +6650,7 @@ cells += [
 
         - **ChemML PyTorch** can run on CPU or GPU after the PyTorch dependency is installed
         - **ChemML TensorFlow** can run on CPU or GPU, but it requires TensorFlow to be installed
-        - **TabPFNRegressor** can run through local `tabpfn` or API-backed `tabpfn_client` (see block `4B.5`)
+        - **TabPFNRegressor** can run through local `tabpfn` (enable `run_tabpfn_local`) or API-backed `tabpfn_client` (set key in block `4B.5`); if the API gives a version error, use local mode
         - **MapLight + GNN** depends on `molfeat` + `dgl` + a PyTorch backend; the MapLight repo notes that it does not run reliably on Colab
         - this section does **not** train Uni-Mol; the dedicated Uni-Mol workflow appears in section `6`
         """
@@ -6631,6 +6662,7 @@ cells += [
         run_chemml_tensorflow = False # @param {type:"boolean"}
         run_maplight_gnn = True # @param {type:"boolean"}
         run_tabpfn_deep = True # @param {type:"boolean"}
+        run_tabpfn_local = False # @param {type:"boolean"}
         tabpfn_max_train_rows = 1000 # @param {type:"integer"}
         chemml_hidden_layers = 2 # @param {type:"slider", min:1, max:4, step:1}
         chemml_hidden_width = 128 # @param [64, 128, 256, 512]
@@ -6688,7 +6720,8 @@ cells += [
             f"ChemML PyTorch={'on' if run_chemml_pytorch else 'off'}, "
             f"ChemML TensorFlow={'on' if run_chemml_tensorflow else 'off'}, "
             f"MapLight + GNN={'on' if run_maplight_gnn else 'off'}, "
-            f"TabPFNRegressor={'on' if run_tabpfn_deep else 'off'}",
+            f"TabPFNRegressor={'on' if run_tabpfn_deep else 'off'}"
+            + (f" (local inference)" if run_tabpfn_deep and run_tabpfn_local else " (API)" if run_tabpfn_deep else ""),
             flush=True,
         )
 
@@ -6806,72 +6839,32 @@ cells += [
                 except Exception:
                     return
             torch_base = torch_version.split("+", 1)[0]
+            _torch_is_cuda_build = "+cu" in torch_version.lower()
             effective_torch_base = torch_base
             if torch_base not in available_versions:
-                target_torch = available_versions[-1]
-                print(
-                    "MapLight + GNN compatibility check: "
-                    f"installed torch={torch_base}, but DGL provides GraphBolt binaries for {available_versions}.",
-                    flush=True,
-                )
-                print(
-                    "Installing a CPU PyTorch build compatible with installed DGL: "
-                    f"torch=={target_torch}",
-                    flush=True,
-                )
+                if _torch_is_cuda_build:
+                    print(
+                        f"[MapLight] torch={torch_base} (CUDA build) has no matching DGL GraphBolt binary "
+                        f"({available_versions}); skipping torch reinstall to preserve CUDA. "
+                        "MapLight + GNN will run without GraphBolt acceleration.",
+                        flush=True,
+                    )
+                else:
+                    target_torch = available_versions[-1]
+                    print(
+                        "MapLight + GNN compatibility check: "
+                        f"installed torch={torch_base}, but DGL provides GraphBolt binaries for {available_versions}.",
+                        flush=True,
+                    )
+                    print(
+                        "Installing a CPU PyTorch build compatible with installed DGL: "
+                        f"torch=={target_torch}",
+                        flush=True,
+                    )
 
-                install_attempts = [
-                    (
-                        "PyTorch CPU index (no deps)",
-                        [
-                            sys.executable,
-                            "-m",
-                            "pip",
-                            "install",
-                            "-q",
-                            "--force-reinstall",
-                            "--no-deps",
-                            "--index-url",
-                            "https://download.pytorch.org/whl/cpu",
-                            f"torch=={target_torch}",
-                        ],
-                    ),
-                    (
-                        "Default pip index (no deps)",
-                        [
-                            sys.executable,
-                            "-m",
-                            "pip",
-                            "install",
-                            "-q",
-                            "--force-reinstall",
-                            "--no-deps",
-                            f"torch=={target_torch}",
-                        ],
-                    ),
-                ]
-                _run_pip_repair(
-                    install_attempts,
-                    (
-                        "MapLight + GNN local CPU setup failed while trying to align PyTorch with DGL GraphBolt binaries.\\n"
-                        "Please run manually in this environment:\\n"
-                        f"{sys.executable} -m pip install --force-reinstall --no-deps --index-url https://download.pytorch.org/whl/cpu torch=={target_torch}\\n"
-                        "Then restart the kernel, rerun step 0, and rerun block 5B.\\n"
-                    ),
-                )
-                repaired_components.append(f"torch=={target_torch}")
-                effective_torch_base = target_torch
-
-            numpy_version = str(getattr(np, "__version__", "0"))
-            if _version_key(numpy_version) >= (2, 0, 0):
-                print(
-                    f"MapLight + GNN compatibility check: installed numpy={numpy_version}; installing numpy<2 for DGL compatibility.",
-                    flush=True,
-                )
-                _run_pip_repair(
-                    [
+                    install_attempts = [
                         (
-                            "Default pip index",
+                            "PyTorch CPU index (no deps)",
                             [
                                 sys.executable,
                                 "-m",
@@ -6879,55 +6872,37 @@ cells += [
                                 "install",
                                 "-q",
                                 "--force-reinstall",
-                                "numpy<2",
+                                "--no-deps",
+                                "--index-url",
+                                "https://download.pytorch.org/whl/cpu",
+                                f"torch=={target_torch}",
                             ],
-                        )
-                    ],
-                    (
-                        "MapLight + GNN local CPU setup failed while trying to align NumPy with DGL.\\n"
-                        "Please run manually in this environment:\\n"
-                        f"{sys.executable} -m pip install --force-reinstall 'numpy<2'\\n"
-                        "Then restart the kernel, rerun step 0, and rerun block 5B.\\n"
-                    ),
-                )
-                repaired_components.append("numpy<2")
-
-            mordred_spec = importlib.util.find_spec("mordred")
-            if mordred_spec is not None:
-                try:
-                    import networkx as _nx
-
-                    nx_version = str(getattr(_nx, "__version__", "0"))
-                except Exception:
-                    nx_version = "0"
-                if _version_key(nx_version) >= (3, 0, 0):
-                    print(
-                        f"MapLight + GNN compatibility check: installed networkx={nx_version}; installing networkx<3 for Mordred compatibility.",
-                        flush=True,
-                    )
-                    _run_pip_repair(
-                        [
-                            (
-                                "Default pip index",
-                                [
-                                    sys.executable,
-                                    "-m",
-                                    "pip",
-                                    "install",
-                                    "-q",
-                                    "--force-reinstall",
-                                    "networkx<3,>=2.8.8",
-                                ],
-                            )
-                        ],
+                        ),
                         (
-                            "MapLight + GNN local CPU setup failed while trying to align networkx for Mordred compatibility.\\n"
+                            "Default pip index (no deps)",
+                            [
+                                sys.executable,
+                                "-m",
+                                "pip",
+                                "install",
+                                "-q",
+                                "--force-reinstall",
+                                "--no-deps",
+                                f"torch=={target_torch}",
+                            ],
+                        ),
+                    ]
+                    _run_pip_repair(
+                        install_attempts,
+                        (
+                            "MapLight + GNN local CPU setup failed while trying to align PyTorch with DGL GraphBolt binaries.\\n"
                             "Please run manually in this environment:\\n"
-                            f"{sys.executable} -m pip install --force-reinstall 'networkx<3,>=2.8.8'\\n"
+                            f"{sys.executable} -m pip install --force-reinstall --no-deps --index-url https://download.pytorch.org/whl/cpu torch=={target_torch}\\n"
                             "Then restart the kernel, rerun step 0, and rerun block 5B.\\n"
                         ),
                     )
-                    repaired_components.append("networkx<3")
+                    repaired_components.append(f"torch=={target_torch}")
+                    effective_torch_base = target_torch
 
             if _patch_torchdata_dill_available():
                 print(
@@ -7953,6 +7928,126 @@ cells += [
                     row.update(summarize_regression(y_train_maplight, pred_train, "Train"))
                     row.update(summarize_regression(y_test_maplight, pred_test, "Test"))
                     deep_rows.append(row)
+
+        if run_tabpfn_deep:
+            tabpfn_label = "TabPFN (Regressor)"
+            tabpfn_exec_source = "tabpfn (local)" if bool(run_tabpfn_local) else str(TABPFN_REGRESSOR_SOURCE)
+            tabpfn_device = ("cuda" if gpu_available else "cpu") if bool(run_tabpfn_local) else None
+            tabpfn_model = None
+            try:
+                tabpfn_model = make_tabpfn_regressor(force_local=bool(run_tabpfn_local), device=tabpfn_device)
+            except RuntimeError as exc:
+                print(f"[skip] TabPFN unavailable: {exc}", flush=True)
+                display_note(
+                    f"TabPFN was enabled but the required package is unavailable: {exc}\\n"
+                    "Run block 4B.5 to check TabPFN preflight status."
+                )
+
+            if tabpfn_model is not None and not bool(run_tabpfn_local):
+                if not bool(STATE.get("tabpfn_preflight_ok", False)):
+                    display_note(
+                        "TabPFN was enabled but the API preflight failed in block 4B.5. "
+                        "Set PRIORLABS_API_KEY in block 4B.5 and rerun, "
+                        "or enable `run_tabpfn_local` to use local inference without the API."
+                    )
+                    tabpfn_model = None
+
+            if tabpfn_model is not None:
+                X_train_tabpfn = split_payload["X_train"]
+                X_test_tabpfn = split_payload["X_test"]
+                y_train_tabpfn = np.asarray(split_payload["y_train"], dtype=float)
+                y_test_tabpfn = np.asarray(split_payload["y_test"], dtype=float)
+
+                if int(tabpfn_max_train_rows) > 0 and len(X_train_tabpfn) > int(tabpfn_max_train_rows):
+                    rng = np.random.RandomState(int(deep_random_seed))
+                    subset_idx = rng.choice(len(X_train_tabpfn), int(tabpfn_max_train_rows), replace=False)
+                    X_fit = X_train_tabpfn.iloc[subset_idx].reset_index(drop=True)
+                    y_fit = y_train_tabpfn[subset_idx]
+                    print(
+                        f"[TabPFN] Subsampled training set: {len(X_train_tabpfn)} → {int(tabpfn_max_train_rows)} rows.",
+                        flush=True,
+                    )
+                else:
+                    X_fit = X_train_tabpfn
+                    y_fit = y_train_tabpfn
+
+                _TABPFN_MAX_COLS = 2000
+                if X_fit.shape[1] > _TABPFN_MAX_COLS:
+                    print(
+                        f"[TabPFN] Feature matrix has {X_fit.shape[1]} columns; "
+                        f"truncating to first {_TABPFN_MAX_COLS} for TabPFN.",
+                        flush=True,
+                    )
+                    _tabpfn_cols = list(X_fit.columns[:_TABPFN_MAX_COLS])
+                    X_fit = X_fit[_tabpfn_cols].reset_index(drop=True)
+                    X_train_tabpfn = X_train_tabpfn[_tabpfn_cols].reset_index(drop=True)
+                    X_test_tabpfn = X_test_tabpfn[_tabpfn_cols].reset_index(drop=True)
+                else:
+                    _tabpfn_cols = list(X_fit.columns)
+                STATE["tabpfn_feature_columns"] = _tabpfn_cols
+
+                _tabpfn_preds = None
+                try:
+                    print(f"[TabPFN] Fitting ({tabpfn_exec_source})...", flush=True)
+                    tabpfn_model.fit(X_fit, y_fit)
+                    _tabpfn_preds = (
+                        np.asarray(tabpfn_model.predict(X_train_tabpfn)).reshape(-1),
+                        np.asarray(tabpfn_model.predict(X_test_tabpfn)).reshape(-1),
+                    )
+                except Exception as exc:
+                    _exc_lower = str(exc).lower()
+                    if bool(run_tabpfn_local) and gpu_available and any(
+                        kw in _exc_lower for kw in ("cuda", "out of memory", "nccl", "nvrtc", "device")
+                    ):
+                        print(f"[TabPFN] GPU error ({exc!r}); retrying with device='cpu'...", flush=True)
+                        try:
+                            tabpfn_model = make_tabpfn_regressor(force_local=True, device="cpu")
+                            tabpfn_exec_source = "tabpfn (local, CPU fallback)"
+                            print("[TabPFN] Fitting (CPU fallback)...", flush=True)
+                            tabpfn_model.fit(X_fit, y_fit)
+                            _tabpfn_preds = (
+                                np.asarray(tabpfn_model.predict(X_train_tabpfn)).reshape(-1),
+                                np.asarray(tabpfn_model.predict(X_test_tabpfn)).reshape(-1),
+                            )
+                        except Exception as exc2:
+                            print(f"[skip] TabPFN CPU fallback also failed: {exc2}", flush=True)
+                            display_note(
+                                f"TabPFN failed on GPU and CPU fallback: {exc2}\\n"
+                                "Check your tabpfn and PyTorch installation."
+                            )
+                    else:
+                        print(f"[skip] TabPFN training failed: {exc}", flush=True)
+                        display_note(
+                            f"TabPFN training failed: {exc}\\n"
+                            "If using the API backend, verify PRIORLABS_API_KEY in block 4B.5 or enable `run_tabpfn_local`."
+                        )
+
+                if _tabpfn_preds is not None:
+                    train_pred_tabpfn, test_pred_tabpfn = _tabpfn_preds
+                    deep_models[tabpfn_label] = tabpfn_model
+                    deep_predictions[tabpfn_label] = {
+                        "train": train_pred_tabpfn,
+                        "test": test_pred_tabpfn,
+                        "train_observed": y_train_tabpfn,
+                        "test_observed": y_test_tabpfn,
+                        "train_smiles": split_payload["smiles_train"].astype(str).reset_index(drop=True),
+                        "test_smiles": split_payload["smiles_test"].astype(str).reset_index(drop=True),
+                        "workflow": "TabPFN deep learning",
+                    }
+                    _tabpfn_exec_mode = (
+                        "CPU fallback" if "CPU fallback" in tabpfn_exec_source
+                        else ("GPU" if gpu_available else "CPU") if bool(run_tabpfn_local)
+                        else "API"
+                    )
+                    row = {"Model": tabpfn_label, "Workflow": "TabPFN deep learning"}
+                    row["Execution mode"] = _tabpfn_exec_mode
+                    row["CV R2"] = np.nan
+                    row["CV RMSE"] = np.nan
+                    row["CV MAE"] = np.nan
+                    row.update(summarize_regression(y_train_tabpfn, train_pred_tabpfn, "Train"))
+                    row.update(summarize_regression(y_test_tabpfn, test_pred_tabpfn, "Test"))
+                    deep_rows.append(row)
+                    print(f"[TabPFN] Training complete (source={tabpfn_exec_source}).", flush=True)
 
         if run_unimolv1 or run_unimolv2:
             try:
@@ -9989,7 +10084,8 @@ cells += [
         include_best_maplight_gnn = True # @param {type:"boolean"}
         include_best_chemprop = True # @param {type:"boolean"}
         include_best_unimol = True # @param {type:"boolean"}
-        cfa_best_per_workflow_only = True
+        cfa_best_per_workflow_only = True # @param {type:"boolean"}
+        cfa_optimize_metric = "rmse" # @param ["rmse", "mae"]
         cfa_max_models = 0 # @param {type:"integer"}
         cfa_max_candidate_subsets = 100000 # @param {type:"integer"}
 
@@ -11411,7 +11507,10 @@ cells += [
                 )
                 if not aux_feature_df.empty:
                     feature_df = pd.concat([feature_df.reset_index(drop=True), aux_feature_df.reset_index(drop=True)], axis=1)
-                feature_df = align_feature_matrix_to_training_columns(feature_df, STATE["feature_names"])
+                _tabpfn_train_cols = STATE.get("tabpfn_feature_columns") or list(STATE["feature_names"])
+                feature_df = align_feature_matrix_to_training_columns(feature_df, _tabpfn_train_cols)
+                if feature_df.shape[1] > 2000:
+                    feature_df = feature_df.iloc[:, :2000]
                 predictions = np.asarray(model.predict(feature_df)).reshape(-1)
             elif workflow_name == "MapLight + GNN":
                 if "maplight_gnn_models" not in STATE or model_name not in STATE["maplight_gnn_models"]:
