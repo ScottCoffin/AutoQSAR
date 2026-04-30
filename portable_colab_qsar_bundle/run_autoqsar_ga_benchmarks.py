@@ -799,6 +799,82 @@ class DatasetRunResult:
     elapsed_seconds: float
 
 
+def _catalog_text(value: Any) -> str:
+    if value is None:
+        return ""
+    text = str(value).strip()
+    if text.lower() in {"", "nan", "none", "null"}:
+        return ""
+    return text
+
+
+def load_benchmark_catalog_metadata(data_root: Path) -> dict[str, dict[str, Any]]:
+    """Load curated benchmark metadata used to align runs with SOTA references.
+
+    PyTDC does not expose split/metric metadata for every single-prediction task.
+    The repository catalog fills those gaps for datasets with literature or
+    MoleculeNet reference rows, so benchmark runs use comparable split/metric
+    choices instead of falling back to the generic CLI defaults.
+    """
+
+    catalog_path = Path(data_root) / "benchmark_dataset_catalog.csv"
+    if not catalog_path.exists():
+        return {}
+    try:
+        catalog_df = pd.read_csv(catalog_path, dtype=str, keep_default_na=False)
+    except Exception as exc:
+        print(f"[warn] benchmark catalog metadata could not be loaded from {catalog_path}: {exc}", flush=True)
+        return {}
+
+    metadata_by_dataset: dict[str, dict[str, Any]] = {}
+    for _, row in catalog_df.iterrows():
+        dataset_name = _catalog_text(row.get("dataset"))
+        if not dataset_name:
+            continue
+        leaderboard_metric = _catalog_text(row.get("leaderboard_metric_name"))
+        recommended_metric = _catalog_text(row.get("recommended_metric"))
+        if recommended_metric.lower() == "tdc_default_admet_metric" and leaderboard_metric:
+            recommended_metric = leaderboard_metric
+
+        leaderboard_summary: dict[str, Any] = {}
+        top_model = _catalog_text(row.get("leaderboard_top_model"))
+        top_metric_value = _catalog_text(row.get("leaderboard_top_metric_value"))
+        top_rank = _catalog_text(row.get("leaderboard_top_rank")) or "1"
+        dataset_split = _catalog_text(row.get("leaderboard_dataset_split"))
+        leaderboard_url = _catalog_text(row.get("leaderboard_url")) or _catalog_text(row.get("benchmark_url"))
+        reference_source = _catalog_text(row.get("leaderboard_reference_source"))
+        if top_model and leaderboard_metric and top_metric_value:
+            top10_entries: list[dict[str, Any]] = []
+            top10_text = _catalog_text(row.get("leaderboard_top10_json"))
+            if top10_text:
+                try:
+                    parsed = json.loads(top10_text)
+                    if isinstance(parsed, list):
+                        top10_entries = parsed
+                except Exception:
+                    top10_entries = []
+            leaderboard_summary = {
+                "url": leaderboard_url,
+                "rank": top_rank,
+                "model": top_model,
+                "metric_name": leaderboard_metric,
+                "metric_value": top_metric_value,
+                "dataset_split": dataset_split,
+                "top10": top10_entries,
+                "source": reference_source,
+            }
+
+        metadata_by_dataset[dataset_name.lower()] = {
+            "recommended_split": _catalog_text(row.get("recommended_split")),
+            "recommended_metric": recommended_metric,
+            "leaderboard_url": leaderboard_url,
+            "leaderboard_summary": leaderboard_summary,
+            "leaderboard_dataset_split": dataset_split,
+            "leaderboard_reference_source": reference_source,
+        }
+    return metadata_by_dataset
+
+
 def slugify(text: str) -> str:
     return "_".join("".join(ch.lower() if ch.isalnum() else "_" for ch in str(text)).split("_")) or "dataset"
 
@@ -1837,6 +1913,38 @@ def load_tdc_datasets(path: str = "./data") -> list[DatasetSpec]:
     data_root.mkdir(parents=True, exist_ok=True)
     cache_root = data_root / "_autoqsar_cache" / "tdc_single_pred"
     cache_root.mkdir(parents=True, exist_ok=True)
+    catalog_metadata = load_benchmark_catalog_metadata(data_root)
+
+    def _catalog_metadata_for_dataset(dataset_name: str) -> dict[str, Any]:
+        key = str(dataset_name).strip().lower()
+        return catalog_metadata.get(f"tdc_{key}", {}) or catalog_metadata.get(key, {})
+
+    def _apply_catalog_sota_defaults(
+        dataset_name: str,
+        recommended_split: str | None,
+        recommended_metric: str | None,
+        leaderboard_url: str | None,
+        leaderboard_summary: dict[str, Any] | None,
+    ) -> tuple[str | None, str | None, str | None, dict[str, Any] | None]:
+        catalog_meta = _catalog_metadata_for_dataset(dataset_name)
+        if not catalog_meta:
+            return recommended_split, recommended_metric, leaderboard_url, leaderboard_summary
+        catalog_split = _catalog_text(catalog_meta.get("recommended_split"))
+        catalog_metric = _catalog_text(catalog_meta.get("recommended_metric"))
+        catalog_url = _catalog_text(catalog_meta.get("leaderboard_url"))
+        catalog_summary = catalog_meta.get("leaderboard_summary")
+        if not _catalog_text(recommended_split) and catalog_split:
+            recommended_split = catalog_split
+        if (
+            not _catalog_text(recommended_metric)
+            or _catalog_text(recommended_metric).lower() == "tdc_default_admet_metric"
+        ) and catalog_metric:
+            recommended_metric = catalog_metric
+        if not _catalog_text(leaderboard_url) and catalog_url:
+            leaderboard_url = catalog_url
+        if not leaderboard_summary and isinstance(catalog_summary, dict) and catalog_summary:
+            leaderboard_summary = dict(catalog_summary)
+        return recommended_split, recommended_metric, leaderboard_url, leaderboard_summary
 
     def _normalize_tdc_frame_columns(frame: pd.DataFrame) -> pd.DataFrame:
         normalized = frame.copy()
@@ -1928,6 +2036,8 @@ def load_tdc_datasets(path: str = "./data") -> list[DatasetSpec]:
         dataset_key = dataset_name.lower().strip()
         recommended_metric = admet_metrics.get(dataset_key) if isinstance(admet_metrics, dict) else None
         recommended_split = admet_splits.get(dataset_key) if isinstance(admet_splits, dict) else None
+        leaderboard_url = TDC_LEADERBOARD_URLS.get(dataset_key)
+        leaderboard_summary: dict[str, Any] | None = None
         frame: pd.DataFrame | None = None
         source_label = f"PyTDC {config['task']} benchmark: {dataset_name}"
         predefined_split_column: str | None = None
@@ -1942,6 +2052,13 @@ def load_tdc_datasets(path: str = "./data") -> list[DatasetSpec]:
             if cached_predefined_col and cached_predefined_col in frame.columns:
                 predefined_split_column = cached_predefined_col
                 recommended_split = "predefined"
+            recommended_split, recommended_metric, leaderboard_url, leaderboard_summary = _apply_catalog_sota_defaults(
+                dataset_name,
+                recommended_split,
+                recommended_metric,
+                leaderboard_url,
+                leaderboard_summary,
+            )
             datasets.append(
                 DatasetSpec(
                     f"tdc_{dataset_name}",
@@ -1953,7 +2070,8 @@ def load_tdc_datasets(path: str = "./data") -> list[DatasetSpec]:
                     recommended_metric=recommended_metric,
                     benchmark_suite="tdc",
                     benchmark_id=dataset_name,
-                    leaderboard_url=TDC_LEADERBOARD_URLS.get(dataset_key),
+                    leaderboard_url=leaderboard_url,
+                    leaderboard_summary=leaderboard_summary,
                     predefined_split_column=predefined_split_column,
                 )
             )
@@ -2029,6 +2147,13 @@ def load_tdc_datasets(path: str = "./data") -> list[DatasetSpec]:
                 source_label=source_label,
                 predefined_split_column=predefined_split_column,
             )
+            recommended_split, recommended_metric, leaderboard_url, leaderboard_summary = _apply_catalog_sota_defaults(
+                dataset_name,
+                recommended_split,
+                recommended_metric,
+                leaderboard_url,
+                leaderboard_summary,
+            )
             datasets.append(
                 DatasetSpec(
                     f"tdc_{dataset_name}",
@@ -2040,7 +2165,8 @@ def load_tdc_datasets(path: str = "./data") -> list[DatasetSpec]:
                     recommended_metric=recommended_metric,
                     benchmark_suite="tdc",
                     benchmark_id=dataset_name,
-                    leaderboard_url=TDC_LEADERBOARD_URLS.get(dataset_key),
+                    leaderboard_url=leaderboard_url,
+                    leaderboard_summary=leaderboard_summary,
                     predefined_split_column=predefined_split_column,
                 )
             )
@@ -4274,6 +4400,127 @@ def predict_values_for_metric(estimator: Any, X, metric_name: str) -> np.ndarray
     return np.asarray(estimator.predict(X), dtype=float).reshape(-1)
 
 
+def timed_predict_values_for_metric(estimator: Any, X, metric_name: str) -> tuple[np.ndarray, float]:
+    start_time = time.perf_counter()
+    values = predict_values_for_metric(estimator, X, metric_name)
+    return values, float(time.perf_counter() - start_time)
+
+
+def inference_timing_columns(
+    *,
+    train_seconds: float | None,
+    test_seconds: float | None,
+    n_train: int,
+    n_test: int,
+    source: str,
+) -> dict[str, Any]:
+    train_value = float(train_seconds) if train_seconds is not None and np.isfinite(train_seconds) else np.nan
+    test_value = float(test_seconds) if test_seconds is not None and np.isfinite(test_seconds) else np.nan
+    total_value = np.nan
+    if np.isfinite(train_value) or np.isfinite(test_value):
+        total_value = float((train_value if np.isfinite(train_value) else 0.0) + (test_value if np.isfinite(test_value) else 0.0))
+    total_molecules = int(n_train) + int(n_test)
+    test_per_1000 = float(test_value / max(int(n_test), 1) * 1000.0) if np.isfinite(test_value) else np.nan
+    total_per_1000 = float(total_value / max(total_molecules, 1) * 1000.0) if np.isfinite(total_value) else np.nan
+    return {
+        "train_inference_seconds": train_value,
+        "test_inference_seconds": test_value,
+        "inference_seconds": total_value,
+        "train_inference_molecules": int(n_train),
+        "test_inference_molecules": int(n_test),
+        "inference_molecules": int(total_molecules),
+        "test_inference_seconds_per_1000_molecules": test_per_1000,
+        "inference_seconds_per_1000_molecules": total_per_1000,
+        "inference_timing_source": str(source),
+    }
+
+
+def dense_mlp_parameter_count(n_features: int, hidden_layers: list[int] | tuple[int, ...], output_units: int = 1) -> int:
+    widths = [int(width) for width in list(hidden_layers)]
+    layer_widths = [int(n_features), *widths, int(output_units)]
+    total = 0
+    for in_width, out_width in zip(layer_widths[:-1], layer_widths[1:]):
+        total += int(in_width) * int(out_width) + int(out_width)
+    return int(total)
+
+
+def unwrap_estimator_model(estimator: Any) -> Any:
+    if hasattr(estimator, "named_steps"):
+        named_steps = getattr(estimator, "named_steps", {})
+        if isinstance(named_steps, dict) and "model" in named_steps:
+            return named_steps["model"]
+    return estimator
+
+
+def count_trainable_parameters(model: Any) -> tuple[float, str]:
+    model_obj = unwrap_estimator_model(model)
+    if model_obj is None:
+        return np.nan, "unavailable"
+
+    coefs = getattr(model_obj, "coefs_", None)
+    intercepts = getattr(model_obj, "intercepts_", None)
+    if coefs is not None:
+        total = int(sum(np.asarray(arr).size for arr in coefs))
+        if intercepts is not None:
+            total += int(sum(np.asarray(arr).size for arr in intercepts))
+        return float(total), "sklearn_mlp_coefs"
+
+    if hasattr(model_obj, "count_params"):
+        try:
+            return float(int(model_obj.count_params())), "keras_count_params"
+        except Exception:
+            pass
+
+    for attr_name in ["model_", "model", "network", "net", "module", "classifier", "regressor"]:
+        child = getattr(model_obj, attr_name, None)
+        if child is not None and child is not model_obj:
+            value, source = count_trainable_parameters(child)
+            if np.isfinite(value):
+                return value, f"{attr_name}.{source}"
+
+    if hasattr(model_obj, "parameters"):
+        try:
+            total = 0
+            for parameter in model_obj.parameters():
+                requires_grad = bool(getattr(parameter, "requires_grad", True))
+                if requires_grad:
+                    total += int(parameter.numel())
+            if total > 0:
+                return float(total), "torch_parameters"
+        except Exception:
+            pass
+
+    return np.nan, "unavailable"
+
+
+def count_torch_parameters_from_checkpoint_dir(model_dir: Path) -> tuple[float, str]:
+    try:
+        import torch
+    except Exception:
+        return np.nan, "torch_unavailable"
+    candidates: list[Path] = []
+    for pattern in ["*.pt", "*.pth", "*.ckpt", "*.pkl"]:
+        candidates.extend(Path(model_dir).rglob(pattern))
+    for candidate in sorted(candidates, key=lambda p: p.stat().st_size if p.exists() else 0, reverse=True):
+        try:
+            payload = torch.load(str(candidate), map_location="cpu")
+        except Exception:
+            continue
+        state_dict = None
+        if isinstance(payload, dict):
+            for key in ["state_dict", "model_state_dict", "model"]:
+                if key in payload and isinstance(payload[key], dict):
+                    state_dict = payload[key]
+                    break
+            if state_dict is None and all(hasattr(value, "numel") for value in payload.values()):
+                state_dict = payload
+        if state_dict:
+            total = int(sum(int(value.numel()) for value in state_dict.values() if hasattr(value, "numel")))
+            if total > 0:
+                return float(total), f"checkpoint:{candidate.relative_to(model_dir)}"
+    return np.nan, "checkpoint_unavailable"
+
+
 def evaluate_model(
     name: str,
     estimator: Any,
@@ -4329,8 +4576,8 @@ def evaluate_model(
         )
         fitted = clone(estimator)
         fitted.fit(X_train, y_train)
-        pred_train = predict_values_for_metric(fitted, X_train, str(primary_metric))
-        pred_test = predict_values_for_metric(fitted, X_test, str(primary_metric))
+        pred_train, train_inference_seconds = timed_predict_values_for_metric(fitted, X_train, str(primary_metric))
+        pred_test, test_inference_seconds = timed_predict_values_for_metric(fitted, X_test, str(primary_metric))
     primary_test_value = compute_primary_metric(primary_metric, y_test, pred_test)
     primary_cv_values = scores.get("test_primary")
     if primary_cv_values is not None and len(primary_cv_values):
@@ -4366,6 +4613,18 @@ def evaluate_model(
         )
     row.update(regression_metrics(y_train, pred_train, y_test, pred_test))
     row["primary_metric_value"] = primary_test_value
+    row.update(
+        inference_timing_columns(
+            train_seconds=train_inference_seconds,
+            test_seconds=test_inference_seconds,
+            n_train=len(y_train),
+            n_test=len(y_test),
+            source="fitted_estimator_predict",
+        )
+    )
+    parameter_count, parameter_source = count_trainable_parameters(fitted)
+    row["model_trainable_parameters"] = parameter_count
+    row["model_parameter_count_source"] = parameter_source
     row = add_leaderboard_reference_columns(
         row,
         primary_metric=primary_metric,
@@ -4593,8 +4852,8 @@ def run_simple_ga(
     best_primary = _objective_to_primary(best_score)
     fitted = build_estimator(best_individual)
     fitted.fit(X_train, y_train)
-    pred_train = predict_values_for_metric(fitted, X_train, primary_metric)
-    pred_test = predict_values_for_metric(fitted, X_test, primary_metric)
+    pred_train, train_inference_seconds = timed_predict_values_for_metric(fitted, X_train, primary_metric)
+    pred_test, test_inference_seconds = timed_predict_values_for_metric(fitted, X_test, primary_metric)
     primary_test_value = compute_primary_metric(primary_metric, y_test, pred_test)
     row = {
         "model": f"{name} GA",
@@ -4608,6 +4867,18 @@ def run_simple_ga(
         "best_params": json.dumps(decode(best_individual), sort_keys=True),
     }
     row.update(regression_metrics(y_train, pred_train, y_test, pred_test))
+    row.update(
+        inference_timing_columns(
+            train_seconds=train_inference_seconds,
+            test_seconds=test_inference_seconds,
+            n_train=len(y_train),
+            n_test=len(y_test),
+            source="fitted_ga_estimator_predict",
+        )
+    )
+    parameter_count, parameter_source = count_trainable_parameters(fitted)
+    row["model_trainable_parameters"] = parameter_count
+    row["model_parameter_count_source"] = parameter_source
     row = add_leaderboard_reference_columns(
         row,
         primary_metric=primary_metric,
@@ -4883,7 +5154,7 @@ def _fit_chemml_mlp(
     epochs: int,
     batch_size: int,
     random_seed: int,
-) -> tuple[Any, np.ndarray, np.ndarray]:
+) -> tuple[Any, np.ndarray, np.ndarray, float, float]:
     from chemml.models.mlp import MLP
 
     x_scaler_local = StandardScaler()
@@ -4908,9 +5179,13 @@ def _fit_chemml_mlp(
         random_seed=int(random_seed),
     )
     mlp.fit(X_fit_scaled, y_fit_scaled)
+    fit_predict_start = time.perf_counter()
     fit_pred = y_scaler_local.inverse_transform(np.asarray(mlp.predict(X_fit_scaled)).reshape(-1, 1)).reshape(-1)
+    fit_predict_seconds = float(time.perf_counter() - fit_predict_start)
+    predict_start = time.perf_counter()
     predict_pred = y_scaler_local.inverse_transform(np.asarray(mlp.predict(X_predict_scaled)).reshape(-1, 1)).reshape(-1)
-    return mlp, np.asarray(fit_pred, dtype=float), np.asarray(predict_pred, dtype=float)
+    predict_seconds = float(time.perf_counter() - predict_start)
+    return mlp, np.asarray(fit_pred, dtype=float), np.asarray(predict_pred, dtype=float), fit_predict_seconds, predict_seconds
 
 
 def _compute_cv_metrics_from_oof(y_true: np.ndarray, oof_pred: np.ndarray) -> dict[str, float]:
@@ -4940,7 +5215,7 @@ def train_chemml_model(
     args: argparse.Namespace,
     split_strategy_for_cv: str,
 ) -> tuple[dict[str, Any], np.ndarray, np.ndarray]:
-    _, pred_train, pred_test = _fit_chemml_mlp(
+    _, pred_train, pred_test, train_inference_seconds, test_inference_seconds = _fit_chemml_mlp(
         engine_name=engine_name,
         X_fit_raw=X_train.to_numpy(dtype=np.float32),
         y_fit_raw=y_train.to_numpy(dtype=np.float32),
@@ -4972,7 +5247,7 @@ def train_chemml_model(
         oof_predictions = np.full(len(y_train_arr), np.nan, dtype=float)
         splits = list(cv_splitter) if isinstance(cv_splitter, list) else list(cv_splitter.split(X_train, y_train_arr))
         for fold_idx, (fit_idx, val_idx) in enumerate(splits):
-            _fold_model, _fit_pred, fold_val_pred = _fit_chemml_mlp(
+            _fold_model, _fit_pred, fold_val_pred, _fold_fit_seconds, _fold_predict_seconds = _fit_chemml_mlp(
                 engine_name=engine_name,
                 X_fit_raw=X_train.iloc[fit_idx].to_numpy(dtype=np.float32),
                 y_fit_raw=y_train.iloc[fit_idx].to_numpy(dtype=np.float32),
@@ -5010,6 +5285,23 @@ def train_chemml_model(
         "cv_primary": cv_primary if pd.notna(cv_primary) else (cv_rmse if primary_metric == "rmse" else np.nan),
     }
     row.update(regression_metrics(y_train, pred_train, y_test, pred_test))
+    row.update(
+        inference_timing_columns(
+            train_seconds=train_inference_seconds,
+            test_seconds=test_inference_seconds,
+            n_train=len(y_train),
+            n_test=len(y_test),
+            source="chemml_mlp_predict",
+        )
+    )
+    row["model_trainable_parameters"] = float(
+        dense_mlp_parameter_count(
+            int(X_train.shape[1]),
+            [int(args.chemml_hidden_width)] * int(args.chemml_hidden_layers),
+            output_units=1,
+        )
+    )
+    row["model_parameter_count_source"] = "chemml_mlp_architecture"
     row["primary_metric_value"] = float(
         compute_primary_metric(
             primary_metric,
@@ -5040,11 +5332,13 @@ def _resolve_chemprop_command() -> list[str]:
     )
 
 
-def _run_chemprop_command(command_prefix: list[str], command_args: list[str], description: str) -> None:
+def _run_chemprop_command(command_prefix: list[str], command_args: list[str], description: str) -> float:
     cmd = list(command_prefix) + list(command_args)
     if bool(getattr(_run_chemprop_command, "_echo_commands", False)):
         print(f"[Chemprop] {description}: {' '.join(str(part) for part in cmd)}", flush=True)
+    start_time = time.perf_counter()
     result = subprocess.run(cmd, capture_output=True, text=True)
+    elapsed_seconds = float(time.perf_counter() - start_time)
     if result.returncode != 0:
         stdout_tail = (result.stdout or "").strip()[-1500:]
         stderr_tail = (result.stderr or "").strip()[-1500:]
@@ -5054,6 +5348,7 @@ def _run_chemprop_command(command_prefix: list[str], command_args: list[str], de
             f"stdout tail:\n{stdout_tail}\n\n"
             f"stderr tail:\n{stderr_tail}"
         )
+    return elapsed_seconds
 
 
 def _align_predictions_by_smiles_occurrence(
@@ -5233,6 +5528,9 @@ def train_chemprop_model(
 
     pred_train: np.ndarray | None = None
     pred_test: np.ndarray | None = None
+    train_inference_seconds = np.nan
+    test_inference_seconds = np.nan
+    inference_timing_source = "cached_predictions_no_timing"
     feature_args: list[str] = []
     if featurizer_list:
         feature_args = ["--molecule-featurizers", *featurizer_list]
@@ -5261,7 +5559,7 @@ def train_chemprop_model(
         if bool(args.chemprop_reuse_model_cache):
             try:
                 _remove_stale_prediction_file(train_preds_path)
-                _run_chemprop_command(
+                train_inference_seconds = _run_chemprop_command(
                     command_prefix,
                     [
                         "predict",
@@ -5275,7 +5573,7 @@ def train_chemprop_model(
                     description="train-set prediction (cached model)",
                 )
                 _remove_stale_prediction_file(test_preds_path)
-                _run_chemprop_command(
+                test_inference_seconds = _run_chemprop_command(
                     command_prefix,
                     [
                         "predict",
@@ -5288,6 +5586,7 @@ def train_chemprop_model(
                     ],
                     description="test-set prediction (cached model)",
                 )
+                inference_timing_source = "chemprop_predict_cli_cached_model"
                 pred_train = _extract_chemprop_predictions(train_preds_path, train_df["SMILES"].astype(str))
                 pred_test = _extract_chemprop_predictions(test_preds_path, test_df["SMILES"].astype(str))
             except Exception:
@@ -5297,7 +5596,7 @@ def train_chemprop_model(
     if pred_train is None or pred_test is None:
         chemprop_task_type = "classification" if current_dataset_task_type() == "classification" else "regression"
 
-        def _train_and_predict_with_feature_args(active_feature_args: list[str], *, retry_suffix: str = "") -> tuple[np.ndarray, np.ndarray]:
+        def _train_and_predict_with_feature_args(active_feature_args: list[str], *, retry_suffix: str = "") -> tuple[np.ndarray, np.ndarray, float, float]:
             _run_chemprop_command(
                 command_prefix,
                 [
@@ -5322,7 +5621,7 @@ def train_chemprop_model(
                 description=f"training{retry_suffix}",
             )
             _remove_stale_prediction_file(train_preds_path)
-            _run_chemprop_command(
+            local_train_inference_seconds = _run_chemprop_command(
                 command_prefix,
                 [
                     "predict",
@@ -5336,7 +5635,7 @@ def train_chemprop_model(
                 description=f"train-set prediction{retry_suffix}",
             )
             _remove_stale_prediction_file(test_preds_path)
-            _run_chemprop_command(
+            local_test_inference_seconds = _run_chemprop_command(
                 command_prefix,
                 [
                     "predict",
@@ -5352,10 +5651,13 @@ def train_chemprop_model(
             return (
                 _extract_chemprop_predictions(train_preds_path, train_df["SMILES"].astype(str)),
                 _extract_chemprop_predictions(test_preds_path, test_df["SMILES"].astype(str)),
+                float(local_train_inference_seconds),
+                float(local_test_inference_seconds),
             )
 
         try:
-            pred_train, pred_test = _train_and_predict_with_feature_args(feature_args)
+            pred_train, pred_test, train_inference_seconds, test_inference_seconds = _train_and_predict_with_feature_args(feature_args)
+            inference_timing_source = "chemprop_predict_cli_after_train"
         except Exception as exc:
             can_retry_without_rdkit2d = (
                 "rdkit_2d" in {item.strip() for item in featurizer_list}
@@ -5371,10 +5673,11 @@ def train_chemprop_model(
                 "[Chemprop] detected non-finite RDKit2D descriptor values; retrying training without rdkit_2d features.",
                 flush=True,
             )
-            pred_train, pred_test = _train_and_predict_with_feature_args(
+            pred_train, pred_test, train_inference_seconds, test_inference_seconds = _train_and_predict_with_feature_args(
                 feature_args,
                 retry_suffix=" (retry without rdkit_2d)",
             )
+            inference_timing_source = "chemprop_predict_cli_after_train_retry"
 
     pred_train = np.asarray(pred_train, dtype=float).reshape(-1)
     pred_test = np.asarray(pred_test, dtype=float).reshape(-1)
@@ -5416,6 +5719,18 @@ def train_chemprop_model(
         "chemprop_selected_descriptor_columns_sha256": str(selected_descriptor_columns_sha256),
     }
     row.update(regression_metrics(y_train, pred_train, y_test, pred_test))
+    row.update(
+        inference_timing_columns(
+            train_seconds=train_inference_seconds,
+            test_seconds=test_inference_seconds,
+            n_train=len(y_train),
+            n_test=len(y_test),
+            source=inference_timing_source,
+        )
+    )
+    parameter_count, parameter_source = count_torch_parameters_from_checkpoint_dir(save_dir)
+    row["model_trainable_parameters"] = parameter_count
+    row["model_parameter_count_source"] = f"chemprop_{parameter_source}"
     row["primary_metric_value"] = float(
         compute_primary_metric(
             primary_metric,
@@ -5467,6 +5782,9 @@ def train_unimol_v1_model(
 
     pred_train: np.ndarray | None = None
     pred_test: np.ndarray | None = None
+    train_inference_seconds = np.nan
+    test_inference_seconds = np.nan
+    inference_timing_source = "cached_predictions_no_timing"
     if bool(getattr(args, "unimol_reuse_model_cache", True)):
         if train_pred_cache.exists() and test_pred_cache.exists():
             try:
@@ -5495,8 +5813,13 @@ def train_unimol_v1_model(
         )
         trainer.fit(str(train_csv))
         predictor = MolPredict(load_model=str(save_dir))
+        train_predict_start = time.perf_counter()
         pred_train = np.asarray(predictor.predict(str(train_csv))).reshape(-1)
+        train_inference_seconds = float(time.perf_counter() - train_predict_start)
+        test_predict_start = time.perf_counter()
         pred_test = np.asarray(predictor.predict(str(test_csv))).reshape(-1)
+        test_inference_seconds = float(time.perf_counter() - test_predict_start)
+        inference_timing_source = "unimol_predict"
         try:
             np.save(train_pred_cache, np.asarray(pred_train, dtype=float))
             np.save(test_pred_cache, np.asarray(pred_test, dtype=float))
@@ -5525,6 +5848,18 @@ def train_unimol_v1_model(
         "unimol_num_workers": int(args.unimol_num_workers),
     }
     row.update(regression_metrics(y_train, pred_train, y_test, pred_test))
+    row.update(
+        inference_timing_columns(
+            train_seconds=train_inference_seconds,
+            test_seconds=test_inference_seconds,
+            n_train=len(y_train),
+            n_test=len(y_test),
+            source=inference_timing_source,
+        )
+    )
+    parameter_count, parameter_source = count_torch_parameters_from_checkpoint_dir(save_dir)
+    row["model_trainable_parameters"] = parameter_count
+    row["model_parameter_count_source"] = f"unimol_{parameter_source}"
     row["primary_metric_value"] = float(
         compute_primary_metric(
             primary_metric,

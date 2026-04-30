@@ -1,0 +1,54 @@
+Dataset,Metric,Direction,Model,Score_Mean,Score_StdDev,Rank,Split,Paper_Short,Year,Reference,DOI_or_URL,Notes
+esol_delaney,RMSE,lower_better,PrismNet,0.558,0.027,1,scaffold,Adv Sci 2026,2026,Adv Sci 13:e17579,10.1002/advs.202517579,Current SOTA
+esol_delaney,RMSE,lower_better,HiGNN,0.570,0.061,2,scaffold,Sun et al.,2025,Commun Chem 8:286 (MolGraph-xLSTM paper Table 2),10.1038/s42004-025-01683-z,
+esol_delaney,RMSE,lower_better,DMPNN,0.575,0.073,3,scaffold,Sun et al.,2025,Commun Chem 8:286 (MolGraph-xLSTM paper Table 2),10.1038/s42004-025-01683-z,
+esol_delaney,RMSE,lower_better,MGPhyche,0.608,0.013,4,scaffold,PrismNet Table 1,2026,Adv Sci 13:e17579,10.1002/advs.202517579,
+esol_delaney,RMSE,lower_better,DeeperGCN,0.615,0.044,5,scaffold,Sun et al.,2025,Commun Chem 8:286 (MolGraph-xLSTM paper Table 2),10.1038/s42004-025-01683-z,
+esol_delaney,RMSE,lower_better,AutoQSAR (TabPFN),0.621,,6,scaffold,This work,2026,—,—,Your score
+esol_delaney,RMSE,lower_better,FP-GNN,0.658,0.006,7,scaffold,Sun et al.,2025,Commun Chem 8:286 (MolGraph-xLSTM paper Table 2),10.1038/s42004-025-01683-z,
+esol_delaney,RMSE,lower_better,MV-Mol,0.670,0.019,8,scaffold,PrismNet Table 1,2026,Adv Sci 13:e17579,10.1002/advs.202517579,
+esol_delaney,RMSE,lower_better,KCL,0.732,,9,scaffold,PrismNet Table 1,2026,Adv Sci 13:e17579,10.1002/advs.202517579,
+esol_delaney,RMSE,lower_better,BiLSTM,0.743,0.038,10,scaffold,Sun et al.,2025,Commun Chem 8:286 (MolGraph-xLSTM paper Table 2),10.1038/s42004-025-01683-z,
+esol_delaney,RMSE,lower_better,InstructMol,0.761,0.043,11,scaffold,PrismNet Table 1,2026,Adv Sci 13:e17579,10.1002/advs.202517579,
+esol_delaney,RMSE,lower_better,GEM,0.798,0.029,12,scaffold,PrismNet Table 1,2026,Adv Sci 13:e17579,10.1002/advs.202517579,
+esol_delaney,RMSE,lower_better,KPGT,0.803,0.008,13,scaffold,PrismNet Table 1,2026,Adv Sci 13:e17579,10.1002/advs.202517579,
+esol_delaney,RMSE,lower_better,S-CGIB,0.816,0.019,14,scaffold,PrismNet Table 1,2026,Adv Sci 13:e17579,10.1002/advs.202517579,
+esol_delaney,RMSE,lower_better,MOL-AE,0.830,,15,scaffold,PrismNet Table 1,2026,Adv Sci 13:e17579,10.1002/advs.202517579,
+esol_delaney,RMSE,lower_better,GRAPHMSL,0.843,0.094,16,scaffold,PrismNet Table 1,2026,Adv Sci 13:e17579,10.1002/advs.202517579,
+esol_delaney,RMSE,lower_better,AutoML,0.843,0.062,17,scaffold,Sun et al.,2025,Commun Chem 8:286 (MolGraph-xLSTM paper Table 2),10.1038/s42004-025-01683-z,
+esol_delaney,RMSE,lower_better,PremuNet,0.851,0.038,18,scaffold,PrismNet Table 1,2026,Adv Sci 13:e17579,10.1002/advs.202517579,
+esol_delaney,RMSE,lower_better,MvMRL,0.856,0.088,19,scaffold,PrismNet Table 1,2026,Adv Sci 13:e17579,10.1002/advs.202517579,
+esol_delaney,RMSE,lower_better,HimGNN,0.870,0.154,20,scaffold,PrismNet Table 1,2026,Adv Sci 13:e17579,10.1002/advs.202517579,
+esol_delaney,RMSE,lower_better,TransFoxMol,0.869,0.035,21,scaffold,PrismNet Table 1,2026,Adv Sci 13:e17579,10.1002/advs.202517579,
+esol_delaney,RMSE,lower_better,GCN (MoleculeNet),0.885,0.029,22,scaffold,Wu et al.,2018,MoleculeNet Chem Sci 9:513,10.1039/C7SC02664A,Original 2017 baseline
+esol_delaney,RMSE,lower_better,SimSGT,0.917,0.028,23,scaffold,PrismNet Table 1,2026,Adv Sci 13:e17579,10.1002/advs.202517579,
+esol_delaney,RMSE,lower_better,3D INFOMAX,0.894,0.028,24,scaffold,PrismNet Table 1,2026,Adv Sci 13:e17579,10.1002/advs.202517579,
+esol_delaney,RMSE,lower_better,TransFoxMol (xLSTM paper),0.930,0.261,25,scaffold,Sun et al.,2025,Commun Chem 8:286,10.1038/s42004-025-01683-z,
+esol_delaney,RMSE,lower_better,3D PGT,1.061,,26,scaffold,PrismNet Table 1,2026,Adv Sci 13:e17579,10.1002/advs.202517579,
+esol_delaney,RMSE,lower_better,MESPool,1.276,0.246,27,scaffold,PrismNet Table 1,2026,Adv Sci 13:e17579,10.1002/advs.202517579,
+esol_delaney,RMSE,lower_better,Random Forest (MoleculeNet),1.741,0.026,28,scaffold,Wu et al.,2018,MoleculeNet Chem Sci 9:513,10.1039/C7SC02664A,Original 2017 baseline
+lipophilicity,RMSE,lower_better,PrismNet,0.549,0.017,1,scaffold,Adv Sci 2026,2026,Adv Sci 13:e17579,10.1002/advs.202517579,Current SOTA
+lipophilicity,RMSE,lower_better,GRAPHMSL,0.562,0.005,2,scaffold,PrismNet Table 1,2026,Adv Sci 13:e17579,10.1002/advs.202517579,
+lipophilicity,RMSE,lower_better,MV-Mol,0.566,0.007,3,scaffold,PrismNet Table 1,2026,Adv Sci 13:e17579,10.1002/advs.202517579,
+lipophilicity,RMSE,lower_better,InstructMol,0.582,0.010,4,scaffold,PrismNet Table 1,2026,Adv Sci 13:e17579,10.1002/advs.202517579,
+lipophilicity,RMSE,lower_better,GEM + MolRuleLoss,0.587,,5,scaffold,arXiv:2511.08314,2025,arXiv:2511.08314,https://arxiv.org/abs/2511.08314,GEM with physics-rule loss
+lipophilicity,RMSE,lower_better,AutoQSAR (Ensemble),0.595,,6,scaffold,This work,2026,—,—,Your score
+lipophilicity,RMSE,lower_better,KPGT,0.600,0.010,7,scaffold,PrismNet Table 1,2026,Adv Sci 13:e17579,10.1002/advs.202517579,
+lipophilicity,RMSE,lower_better,MOL-AE,0.607,,8,scaffold,PrismNet Table 1,2026,Adv Sci 13:e17579,10.1002/advs.202517579,
+lipophilicity,RMSE,lower_better,FP-GNN,0.610,0.028,9,scaffold,Sun et al.,2025,Commun Chem 8:286 (MolGraph-xLSTM paper Table 2),10.1038/s42004-025-01683-z,
+lipophilicity,RMSE,lower_better,HimGNN,0.632,0.016,10,scaffold,PrismNet Table 1,2026,Adv Sci 13:e17579,10.1002/advs.202517579,
+lipophilicity,RMSE,lower_better,TransFoxMol,0.633,0.016,11,scaffold,PrismNet Table 1,2026,Adv Sci 13:e17579,10.1002/advs.202517579,
+lipophilicity,RMSE,lower_better,DeeperGCN,0.645,0.048,12,scaffold,Sun et al.,2025,Commun Chem 8:286 (MolGraph-xLSTM paper Table 2),10.1038/s42004-025-01683-z,
+lipophilicity,RMSE,lower_better,DMPNN (xLSTM paper),0.553,0.033,13,scaffold,Sun et al.,2025,Commun Chem 8:286 (MolGraph-xLSTM paper Table 2),10.1038/s42004-025-01683-z,
+lipophilicity,RMSE,lower_better,GEM,0.660,0.008,14,scaffold,PrismNet Table 1,2026,Adv Sci 13:e17579,10.1002/advs.202517579,
+lipophilicity,RMSE,lower_better,MvMRL,0.686,0.037,15,scaffold,PrismNet Table 1,2026,Adv Sci 13:e17579,10.1002/advs.202517579,
+lipophilicity,RMSE,lower_better,3D PGT,0.687,,16,scaffold,PrismNet Table 1,2026,Adv Sci 13:e17579,10.1002/advs.202517579,
+lipophilicity,RMSE,lower_better,SimSGT,0.695,0.012,17,scaffold,PrismNet Table 1,2026,Adv Sci 13:e17579,10.1002/advs.202517579,
+lipophilicity,RMSE,lower_better,3D INFOMAX,0.695,0.012,18,scaffold,PrismNet Table 1,2026,Adv Sci 13:e17579,10.1002/advs.202517579,
+lipophilicity,RMSE,lower_better,MESPool,0.708,0.042,19,scaffold,PrismNet Table 1,2026,Adv Sci 13:e17579,10.1002/advs.202517579,
+lipophilicity,RMSE,lower_better,PremuNet,0.730,0.010,20,scaffold,PrismNet Table 1,2026,Adv Sci 13:e17579,10.1002/advs.202517579,
+lipophilicity,RMSE,lower_better,S-CGIB,0.762,0.042,21,scaffold,PrismNet Table 1,2026,Adv Sci 13:e17579,10.1002/advs.202517579,
+lipophilicity,RMSE,lower_better,GCN (MoleculeNet),0.781,0.040,22,scaffold,Wu et al.,2018,MoleculeNet Chem Sci 9:513,10.1039/C7SC02664A,Original 2017 baseline
+lipophilicity,RMSE,lower_better,BiLSTM,0.779,0.031,23,scaffold,Sun et al.,2025,Commun Chem 8:286 (MolGraph-xLSTM paper Table 2),10.1038/s42004-025-01683-z,
+lipophilicity,RMSE,lower_better,AutoML (xLSTM paper),0.792,0.043,24,scaffold,Sun et al.,2025,Commun Chem 8:286 (MolGraph-xLSTM paper Table 2),10.1038/s42004-025-01683-z,
+lipophilicity,RMSE,lower_better,Random Forest (MoleculeNet),0.962,0.003,25,scaffold,Wu et al.,2018,MoleculeNet Chem Sci 9:513,10.1039/C7SC02664A,Original 2017 baseline
