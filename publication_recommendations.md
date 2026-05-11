@@ -108,18 +108,18 @@ The targeted recommendations were cross-referenced against `portable_colab_qsar_
 
 | Recommendation | Notebook status | Remaining publication gap |
 |---|---|---|
-| Multi-seed TDC-22 evaluation | **Not implemented** | Current outputs summarize one benchmark run, not 5-seed official TDC `admet_group` results. |
+| Multi-seed TDC-22 evaluation | **Not implemented** | Official TDC-22 train/test splits are already being used for the 22 admet_group datasets in the current workflow. The missing piece is full 5-seed workflow execution and mean +/- std aggregation across seeds 1-5, using TDC-compatible evaluation outputs. |
 | Computational cost comparison | **Implemented** | Runner now emits inference-only timing and neural parameter-count fields for future benchmark artifacts; notebook builds a manuscript-oriented model-family cost table with current-run wall-clock time, hardware notes, parameter-count notes, inference-time fields, and MolGPS/MolE/ADMET-AI comparator rows. Existing benchmark artifacts still lack the newly added timing/parameter fields until rerun. |
-| Updated leaderboard references | **Partially implemented** | Notebook compares against cached/manual references, but TDC-22 should include MaxQsaring where available. |
-| Ablation/component contribution | **Partially implemented** | Notebook groups model families and ensemble-vs-base performance, but does not compute staged marginal gains from conventional-only to full pipeline. |
+| Updated leaderboard references | **Implemented from local curated references** | Notebook now combines run references, MaxQsaring-containing TDC ADMET references, and current ESOL/Lipophilicity literature references into publication comparison artifacts. |
+| Ablation/component contribution | **Implemented from existing metrics** | Notebook now computes staged best-achievable performance from conventional ML through MapLight, deep backends, CFA, and ensemble/full-pipeline stages. |
 | Per-dataset best-model breakdown | **Implemented** | Notebook now reports win counts by family, a pie chart, a family-by-dataset rank heatmap, and a winning-model table. |
-| Dataset difficulty stratification | **Not implemented** | Notebook does not correlate relative rank with dataset size, class balance, scaffold diversity, or intrinsic difficulty. |
+| Dataset difficulty stratification | **Implemented from existing artifacts** | Notebook now builds dataset descriptors, class balance, optional RDKit scaffold diversity, rank/difficulty summaries, and descriptor/outcome correlations. |
 | Feature-family importance | **Implemented with artifact fallback** | Notebook now reports feature-family importance shares and ranks by dataset. It uses `model_feature_importances.csv` when future runs provide it and falls back to selector coefficient/importances for existing artifacts. |
-| Ensemble value-add deep dive | **Partially implemented** | Notebook compares regression ensembles vs. best base model. Add classification analysis, ensemble ranks when not winning, and dataset-profile patterns. |
+| Ensemble value-add deep dive | **Implemented from existing metrics** | Notebook now reports primary-metric-aware CFA/ensemble value-add for regression and classification, including top-3 rates, wins, base-model deltas, and competitive base-model counts. |
 | Head-to-head with ADMET-AI | **Not implemented** | No ADMET-AI supplementary-result comparison is currently included. |
 | Applicability-domain calibration | **Not implemented in summary notebook** | Existing workflow may produce AD diagnostics, but the summary notebook does not aggregate uncertainty/AD score vs. actual error. |
 | Temporal robustness | **Not implemented** | No scaffold-vs-temporal comparison is currently included. |
-| Reproducibility audit | **Not implemented** | No Zenodo/data-availability package checklist is currently represented. |
+| Reproducibility audit | **Implemented as manifest/checklist** | Notebook now creates dataset-level artifact checksums, split-hash coverage, repo-file checksums, and a Zenodo-ready archive file list. |
 | Classification metric expansion | **Implemented** | The summary notebook now uses dataset-specific primary classification metrics: the designated TDC CYP tasks rank by `test_auprc`, while other classification datasets use declared primary metrics or AUROC fallback. AUROC, AUPRC, balanced accuracy, and MCC remain visible as secondary metrics. |
 
 ### Completed in `benchmark_results_summary.ipynb`
@@ -129,30 +129,89 @@ The targeted recommendations were cross-referenced against `portable_colab_qsar_
 - **Publication-grade computational cost table**: Added a model-family cost comparison table with AutoQSAR current-run runtimes and hardware/parameter notes, plus MolGPS, MolE, and ADMET-AI comparator rows. Future reruns will populate the new inference and parameter-count fields.
 - **Per-dataset best-model breakdown**: Added win counts by model family, a pie chart, rank-by-family heatmap, and winning-model table.
 - **Feature-family importance analysis**: Added feature-family importance summaries and heatmaps. The notebook consumes future per-model importance artifacts when present and otherwise uses selector coefficient/importances as a fallback for the current run.
+- **Ensemble value-add context**: Added primary-metric-aware CFA/ensemble comparisons against the best base model, including classification and regression summaries, top-3 rates, and per-dataset deltas.
+- **Component ablation from existing metrics**: Added staged cumulative performance analysis for conventional ML, MapLight classic features, neural/deep backends, CFA, and full ensemble pipeline.
+- **Dataset difficulty stratification**: Added dataset descriptor, class-balance, optional scaffold-diversity, winning-family, and descriptor/outcome correlation summaries.
+- **Reproducibility audit and archive manifest**: Added artifact presence checks, SHA-256 checksums, split hashes, git metadata, repo-file manifest, and a data-availability statement.
+- **Updated leaderboard reference audit**: Added publication reference tables combining run references, curated TDC ADMET references including MaxQsaring, and current ESOL/Lipophilicity literature references.
 
-### Remaining Critical Additions
+### Implemented No-Rerun Publication Analyses
 
-1. **Multi-seed evaluation for TDC-22 official splits**: Rerun all 22 TDC ADMET Benchmark Group datasets using official `admet_group` scaffold splits with seeds 1-5. Report mean +/- standard deviation for the primary metric per dataset and use paired tests, such as Wilcoxon signed-rank, against published baselines where comparisons are valid.
+These items are implemented from existing benchmark artifacts and notebook logic without rerunning model training. The notebook writes publication-ready CSV artifacts into the selected benchmark run directory when rerun.
 
-2. **Updated leaderboard references**: Add MaxQsaring references across TDC-22 where available and keep ESOL/Lipophilicity aligned with current published benchmarks rather than legacy MoleculeNet-only baselines. Regenerate `leaderboard_top10_reference.csv` and `leaderboard_comparison_by_dataset.csv` after updating references.
+1. **Ensemble value-add context**: Extend the current ensemble diagnostics beyond regression win counts.
+   - Status: implemented in `benchmark_results_summary.ipynb`.
+   - Output artifacts: `publication_ensemble_value_add_summary.csv`, `publication_ensemble_value_add_by_dataset.csv`.
+   - Source artifacts: per-dataset `metrics.csv`, `predictions.csv`, and the notebook's existing best-model/rank tables.
+   - Step 1: Identify ensemble and CFA rows using `workflow` and model-name patterns.
+   - Step 2: For each dataset, compute the best base-model score, best ensemble/CFA score, delta vs. best base, and rank of each ensemble/CFA row.
+   - Step 3: Split results by task type so classification and regression are summarized separately using each dataset's primary metric.
+   - Step 4: Count how often ensembles/CFA win, how often they are top-3, and how often they underperform the best base model.
+   - Step 5: Add a manuscript-ready table and compact figure in `benchmark_results_summary.ipynb`; update this file when complete.
 
-### Remaining Strong Additions
+2. **Component ablation from existing metrics**: Compute staged best-achievable performance per dataset from already-run model families.
+   - Status: implemented in `benchmark_results_summary.ipynb`.
+   - Output artifacts: `publication_component_ablation_summary.csv`, `publication_component_ablation_by_dataset.csv`.
+   - Source artifacts: existing per-model metric rows and architecture-family mappings in `benchmark_results_summary.ipynb`.
+   - Step 1: Define ordered stages: conventional ML only; conventional ML plus MapLight classic features; plus neural/deep backends; plus CFA/ensemble fusion; full pipeline.
+   - Step 2: Map each model/workflow row to one or more stages based on `workflow`, `model`, and architecture-family labels.
+   - Step 3: For each dataset and stage, calculate the best primary metric available up to that stage.
+   - Step 4: Calculate marginal improvement from the previous stage using metric directionality.
+   - Step 5: Add a waterfall or cumulative-improvement figure plus a table of stage win/improvement counts.
 
-3. **Component ablation from existing metrics**: Compute staged best-achievable performance per dataset for conventional ML only, conventional ML plus MapLight features, plus deep learning backends, plus CFA/ensemble fusion, and full pipeline. This can be derived from existing per-model metrics if model-to-stage mapping is made explicit.
+3. **Dataset difficulty stratification**: Relate performance patterns to dataset characteristics.
+   - Status: implemented in `benchmark_results_summary.ipynb`.
+   - Output artifacts: `publication_dataset_difficulty_stratification.csv`, `publication_dataset_difficulty_correlations.csv`, `publication_winning_family_difficulty_profile.csv`.
+   - Source artifacts: dataset-level metrics, split sizes, task type, predictions, benchmark catalog metadata, and SMILES in prediction artifacts.
+   - Step 1: Build a dataset descriptor table with `n_train`, `n_test`, task type, primary metric, best observed score, and leaderboard delta where available.
+   - Step 2: For classification datasets, compute class balance from observed labels in train/test predictions or source labels.
+   - Step 3: Compute optional scaffold diversity from test/train SMILES using RDKit Bemis-Murcko scaffolds; this is feature analysis only, not a benchmark rerun.
+   - Step 4: Join descriptors to winning model family and rank/delta summaries.
+   - Step 5: Add scatterplots and correlation tables, such as dataset size vs. leaderboard delta colored by winning family.
 
-4. **Dataset difficulty stratification**: Add dataset descriptors and correlate AutoQSAR rank or leaderboard delta with dataset size, task type, class balance, scaffold diversity, and best observed score across all models. Use this to identify where conventional ML, GNNs, TabPFN, MapLight+GNN, CFA, or ensembles tend to win.
+4. **Reproducibility audit and archive manifest**: Build the data-availability checklist from existing outputs.
+   - Status: implemented in `benchmark_results_summary.ipynb`.
+   - Output artifacts: `publication_reproducibility_manifest.csv`, `publication_reproducibility_repo_files.csv`, `publication_reproducibility_summary.csv`, `publication_zenodo_archive_dataset_file_list.csv`, `publication_data_availability_statement.txt`.
+   - Source artifacts: `run_config.json`, per-dataset metrics/predictions/selected features, leaderboard references, environment files, and git metadata.
+   - Step 1: Generate a manifest of required files and mark present/missing status for each dataset.
+   - Step 2: Record git commit hash, run timestamp, configured seeds, split hashes, input file checksums, and benchmark artifact checksums.
+   - Step 3: Add a notebook/report table summarizing reproducibility coverage and known gaps.
+   - Step 4: Prepare a Zenodo-ready file list and data-availability statement.
+   - Step 5: Archive upload and DOI minting can happen later; the manifest/checklist does not require rerunning benchmarks.
 
-5. **Ensemble value-add context**: Extend the current ensemble diagnostics beyond regression win counts. Report gains on the datasets where CFA/ensembles win, classification value-add, typical ensemble rank when not best, number of competitive base models, and dataset features associated with ensemble benefit.
+5. **Updated leaderboard references**: Improve comparison accuracy without rerunning AutoQSAR.
+   - Status: implemented in `benchmark_results_summary.ipynb` using local curated reference tables.
+   - Output artifacts: `publication_leaderboard_top10_reference.csv`, `publication_leaderboard_comparison_by_dataset.csv`, `publication_leaderboard_reference_audit.csv`.
+   - Source artifacts: `data/benchmark_dataset_catalog.csv`, `leaderboard_top10_reference.json`, `leaderboard_top10_reference.csv`, and current literature/reference tables.
+   - Step 1: Add MaxQsaring references across TDC-22 where available.
+   - Step 2: Replace legacy MoleculeNet-only ESOL and Lipophilicity comparators with current published references.
+   - Step 3: Regenerate `leaderboard_top10_reference.csv` and `leaderboard_comparison_by_dataset.csv`.
+   - Step 4: Rerun only the summary notebook cells that consume reference tables.
+   - Step 5: Update claims in this recommendations document if rank estimates change.
 
-### Remaining Optional Additions
+### Lower Priority No-Rerun or External-Curation Items
 
-6. **Head-to-head with ADMET-AI**: Compare AutoQSAR against ADMET-AI supplementary metrics on overlapping TDC datasets using the same split protocol. Report win/loss/tie counts and per-dataset deltas.
+6. **Head-to-head with ADMET-AI**: This does not require rerunning AutoQSAR, but it does require importing and normalizing ADMET-AI supplementary metrics.
+   - Step 1: Download or manually curate ADMET-AI results for overlapping TDC ADMET benchmark datasets.
+   - Step 2: Normalize dataset names, metrics, split assumptions, and metric directionality.
+   - Step 3: Join against AutoQSAR best-per-dataset results using the same primary metric.
+   - Step 4: Report win/loss/tie counts and per-dataset deltas.
 
-7. **Applicability-domain calibration**: Aggregate AD/uncertainty diagnostics against held-out errors. Report Spearman correlation between uncertainty and absolute error, high-error flagging rate, and calibration plots.
+7. **Applicability-domain calibration**: This is only no-rerun if per-molecule uncertainty or AD scores are already present in artifacts.
+   - Step 1: Search benchmark outputs for uncertainty, AD, UMAP, distance-to-training, or prediction-interval columns.
+   - Step 2: If available, join those fields to held-out prediction errors.
+   - Step 3: Compute Spearman correlation between uncertainty/AD score and absolute error.
+   - Step 4: Report high-error flagging rate and calibration plots.
+   - Step 5: If no AD/uncertainty artifacts exist, defer this until the workflow emits those diagnostics.
 
-8. **Temporal robustness check**: For datasets with temporal metadata or predefined temporal splits, compare scaffold-split and temporal-split performance. This is especially useful for Polaris ADME endpoints.
+### Items That Require New Benchmark Runs
 
-9. **Reproducibility audit and archive**: Prepare a Zenodo archive containing metrics, predictions, selected features, run configs, exact environment files, git commit hash, random seeds, and checksums for input data files.
+8. **Multi-seed evaluation for TDC-22 official splits**: Official TDC-22 train/test splits are already used where `admet_group` is available, but the current workflow is not a full 5-seed benchmark.
+   - Required work: rerun all 22 TDC ADMET Benchmark Group datasets with seeds 1-5, aggregate mean +/- standard deviation, and optionally apply paired tests against published baselines.
+   - Implementation note: add a workflow-level seed loop or a dedicated TDC-22 multi-seed driver. The existing `maplight_parity_seeds` setting is not a substitute because it only applies to the MapLight parity path.
+
+9. **Temporal robustness check**: Requires new scaffold-vs-temporal split comparisons.
+   - Required work: identify datasets with temporal metadata or predefined temporal splits, rerun the affected model evaluations on temporal splits, and compare performance degradation against the current split protocol.
 
 ---
 
