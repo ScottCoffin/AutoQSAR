@@ -213,11 +213,14 @@ __marimo__/
 # AutoQSAR generated benchmark/runtime artifacts
 tmp/
 .autoqsar_tmp/
+logs/
 data/*.zip
 # large pickled models are too big to push to GitHub
-*.pkl 
+*.pkl
 *.ckpt
 **/benchmark_results/
 gin_supervised_masking_pre_trained.pth
 **/trainer_logs/
 **/events.out.tfevents*
+# Timestamped leaderboard snapshots written by benchmark runs (keep _latest.csv tracked)
+data/benchmark_leaderboards/leaderboard_top10_reference_????????_??????.csv

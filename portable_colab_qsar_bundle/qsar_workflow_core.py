@@ -785,7 +785,16 @@ def murcko_scaffold_key(smiles_text):
     mol = Chem.MolFromSmiles(smiles_text)
     if mol is None:
         return f"INVALID::{smiles_text}"
-    scaffold = MurckoScaffold.MurckoScaffoldSmiles(mol=mol, includeChirality=False)
+    mol_for_scaffold = Chem.Mol(mol)
+    Chem.RemoveStereochemistry(mol_for_scaffold)
+    try:
+        scaffold = MurckoScaffold.MurckoScaffoldSmiles(mol=mol_for_scaffold, includeChirality=False)
+    except Exception:
+        try:
+            fallback_smiles = Chem.MolToSmiles(mol_for_scaffold, canonical=True, isomericSmiles=False)
+        except Exception:
+            fallback_smiles = smiles_text
+        return f"SCAFFOLD_ERROR::{fallback_smiles}"
     return scaffold or f"NO_SCAFFOLD::{smiles_text}"
 
 
