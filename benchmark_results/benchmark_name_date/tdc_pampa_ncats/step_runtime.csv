@@ -1,0 +1,21 @@
+dataset,stage_index,total_stages,stage_label,started_at,started_epoch,status,ended_at,ended_epoch,duration_seconds
+tdc_pampa_ncats,1,23,loading PyTDC ADME benchmark: pampa_ncats,2026-05-06 12:55:11 Pacific Daylight Time,1778097311.8221574,completed,2026-05-06 12:55:12 Pacific Daylight Time,1778097312.824675,1.003
+tdc_pampa_ncats,2,23,building molecular features,2026-05-06 12:55:12 Pacific Daylight Time,1778097312.824675,completed,2026-05-06 12:55:13 Pacific Daylight Time,1778097313.392885,0.568
+tdc_pampa_ncats,3,23,splitting data and selecting features,2026-05-06 12:55:13 Pacific Daylight Time,1778097313.392885,completed,2026-05-06 13:05:44 Pacific Daylight Time,1778097944.3269277,630.934
+tdc_pampa_ncats,4,23,conventional model LogisticRegression (cached),2026-05-06 13:05:44 Pacific Daylight Time,1778097944.3269277,completed,2026-05-06 13:05:44 Pacific Daylight Time,1778097944.329929,0.003
+tdc_pampa_ncats,5,23,conventional model SVC (cached),2026-05-06 13:05:44 Pacific Daylight Time,1778097944.329929,completed,2026-05-06 13:05:44 Pacific Daylight Time,1778097944.3325543,0.003
+tdc_pampa_ncats,6,23,conventional model Random forest (cached),2026-05-06 13:05:44 Pacific Daylight Time,1778097944.3325543,completed,2026-05-06 13:05:44 Pacific Daylight Time,1778097944.3345625,0.002
+tdc_pampa_ncats,7,23,conventional model Extra trees (cached),2026-05-06 13:05:44 Pacific Daylight Time,1778097944.3345625,completed,2026-05-06 13:05:44 Pacific Daylight Time,1778097944.3365626,0.002
+tdc_pampa_ncats,8,23,conventional model HistGradientBoosting (cached),2026-05-06 13:05:44 Pacific Daylight Time,1778097944.3365626,completed,2026-05-06 13:05:44 Pacific Daylight Time,1778097944.3395607,0.003
+tdc_pampa_ncats,9,23,"conventional model Voting Classifier (KNN, SVM) (cached)",2026-05-06 13:05:44 Pacific Daylight Time,1778097944.3395607,completed,2026-05-06 13:05:44 Pacific Daylight Time,1778097944.341564,0.002
+tdc_pampa_ncats,10,23,conventional model AdaBoost (cached),2026-05-06 13:05:44 Pacific Daylight Time,1778097944.341564,completed,2026-05-06 13:05:44 Pacific Daylight Time,1778097944.3445616,0.003
+tdc_pampa_ncats,11,23,conventional model Tabular MLP (cached),2026-05-06 13:05:44 Pacific Daylight Time,1778097944.3445616,completed,2026-05-06 13:05:44 Pacific Daylight Time,1778097944.346563,0.002
+tdc_pampa_ncats,12,23,conventional model XGBoost (cached),2026-05-06 13:05:44 Pacific Daylight Time,1778097944.346563,completed,2026-05-06 13:05:44 Pacific Daylight Time,1778097944.3485622,0.002
+tdc_pampa_ncats,13,23,conventional model CatBoost (cached),2026-05-06 13:05:44 Pacific Daylight Time,1778097944.3485622,completed,2026-05-06 13:05:44 Pacific Daylight Time,1778097944.3515618,0.003
+tdc_pampa_ncats,14,23,deep model ChemML MLP (PyTorch) (cached),2026-05-06 13:05:44 Pacific Daylight Time,1778097944.3515618,completed,2026-05-06 13:05:44 Pacific Daylight Time,1778097944.354561,0.003
+tdc_pampa_ncats,15,23,"deep model Chemprop v2 (AttentiveFP, ensemble=1)",2026-05-06 13:05:44 Pacific Daylight Time,1778097944.354561,completed,2026-05-06 13:07:12 Pacific Daylight Time,1778098032.1668239,87.812
+tdc_pampa_ncats,16,23,"deep model Chemprop v2 (AttentiveFP + Selected descriptors, ensemble=1)",2026-05-06 13:07:12 Pacific Daylight Time,1778098032.1668239,completed,2026-05-06 13:08:14 Pacific Daylight Time,1778098094.6200173,62.453
+tdc_pampa_ncats,17,23,deep model Uni-Mol V1 (cached),2026-05-06 13:08:14 Pacific Daylight Time,1778098094.6200173,completed,2026-05-06 13:08:14 Pacific Daylight Time,1778098094.623293,0.003
+tdc_pampa_ncats,18,23,"deep model MapLight + GNN (CatBoost, Strict Parity) (cached)",2026-05-06 13:08:14 Pacific Daylight Time,1778098094.623293,completed,2026-05-06 13:08:14 Pacific Daylight Time,1778098094.6252935,0.002
+tdc_pampa_ncats,19,23,CFA combinatorial fusion (cached),2026-05-06 13:08:14 Pacific Daylight Time,1778098094.6252935,completed,2026-05-06 13:08:14 Pacific Daylight Time,1778098094.6287842,0.003
+tdc_pampa_ncats,20,23,ensemble (2 method(s)),2026-05-06 13:08:14 Pacific Daylight Time,1778098094.6287842,completed,2026-05-06 13:08:15 Pacific Daylight Time,1778098095.8159325,1.187

@@ -1,0 +1,9 @@
+{
+  "status": "completed",
+  "dataset": "tdc_cyp2c9_substrate_carbonmangels",
+  "source": "PyTDC ADME benchmark group: cyp2c9_substrate_carbonmangels (official train_val/test split)",
+  "completed_at": "2026-05-06 10:40:23",
+  "elapsed_seconds": 225.496,
+  "n_metrics_rows": 29,
+  "n_stage_records": 21
+}

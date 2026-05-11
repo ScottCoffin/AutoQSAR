@@ -1,0 +1,9 @@
+{
+  "status": "completed",
+  "dataset": "tdc_pgp_broccatelli",
+  "source": "PyTDC ADME benchmark group: pgp_broccatelli (official train_val/test split)",
+  "completed_at": "2026-05-06 11:02:11",
+  "elapsed_seconds": 330.169,
+  "n_metrics_rows": 26,
+  "n_stage_records": 21
+}

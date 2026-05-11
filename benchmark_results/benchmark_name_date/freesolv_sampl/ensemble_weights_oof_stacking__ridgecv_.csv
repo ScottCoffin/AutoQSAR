@@ -1,0 +1,7 @@
+Model,Weight,Abs normalized contribution,Workflow
+AdaBoost,-0.002586104962227981,0.002576196132061635,conventional
+Tabular CNN,0.00032803362804498015,0.0003267767457619239,conventional
+"Chemprop v2 (AttentiveFP, ensemble=1)",2.0974390561476985e-05,2.08940258133512e-05,Chemprop v2
+"Chemprop v2 (AttentiveFP + Selected descriptors, ensemble=1)",1.9036701529320192e-05,1.89637611633503e-05,Chemprop v2
+Uni-Mol V1,0.0014271801249256272,0.0014217117910098648,Uni-Mol
+CFA (Combinatorial Fusion),0.9994649729035282,0.9956354575441899,cfa

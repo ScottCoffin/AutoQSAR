@@ -1,0 +1,10 @@
+Model,Weight,Workflow
+LogisticRegression,0.028903360493227507,Conventional ML
+HistGradientBoosting,0.04441432162913626,Conventional ML
+"Voting Classifier (KNN, SVM)",0.47887207688640815,Conventional ML
+AdaBoost,0.02133594997493682,Conventional ML
+XGBoost,0.11133549639678725,Conventional ML
+CatBoost,0.03427078028980701,Conventional ML
+Uni-Mol V1,0.040536691325582484,Uni-Mol
+"MapLight + GNN (CatBoost, Strict Parity)",0.07160916613743955,MapLight + GNN
+CFA (Combinatorial Fusion),0.16872215686667488,CFA fusion

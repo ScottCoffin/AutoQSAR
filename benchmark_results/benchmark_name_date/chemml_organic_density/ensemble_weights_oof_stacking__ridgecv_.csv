@@ -1,0 +1,6 @@
+Model,Weight,Abs normalized contribution,Workflow
+Random forest,0.07808691434553694,0.07366582536085872,conventional
+AdaBoost,-0.021667937332047416,0.02044115202669506,conventional
+TabPFNRegressor,0.9122696535748034,0.8606191901100975,conventional
+"Chemprop v2 (AttentiveFP, ensemble=1)",-0.016365763979869996,0.015439174685573183,Chemprop v2
+Uni-Mol V1,0.0316251987682854,0.029834657816775554,Uni-Mol

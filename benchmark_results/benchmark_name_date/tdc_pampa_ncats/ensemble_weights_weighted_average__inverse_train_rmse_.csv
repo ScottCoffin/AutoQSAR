@@ -1,0 +1,11 @@
+Model,Weight,Workflow
+LogisticRegression,8.401439040576573e-08,conventional
+SVC,1.7518396029806026e-07,conventional
+Random forest,9.457373066419137e-08,conventional
+Extra trees,0.9999992165860417,conventional
+AdaBoost,2.8192940449007845e-08,conventional
+XGBoost,1.5514504319504347e-07,conventional
+CatBoost,8.852883330613114e-08,conventional
+Uni-Mol V1,3.2579513807238855e-08,Uni-Mol
+CFA (Combinatorial Fusion),5.208650102486421e-08,cfa
+"MapLight + GNN (CatBoost, Strict Parity)",7.310904521795243e-08,MapLight + GNN

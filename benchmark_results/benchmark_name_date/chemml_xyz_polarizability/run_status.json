@@ -1,0 +1,9 @@
+{
+  "status": "completed",
+  "dataset": "chemml_xyz_polarizability",
+  "source": "ChemML bundled dataset: xyz_polarizability",
+  "completed_at": "2026-05-04 12:05:40",
+  "elapsed_seconds": 81.375,
+  "n_metrics_rows": 33,
+  "n_stage_records": 23
+}
