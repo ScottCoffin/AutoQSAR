@@ -1,0 +1,9 @@
+{
+  "status": "completed",
+  "dataset": "tdc_clearance_hepatocyte_az",
+  "source": "PyTDC ADME benchmark group: clearance_hepatocyte_az (official train_val/test split)",
+  "completed_at": "2026-05-04 13:14:51",
+  "elapsed_seconds": 163.646,
+  "n_metrics_rows": 24,
+  "n_stage_records": 23
+}

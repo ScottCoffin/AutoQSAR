@@ -1,0 +1,13 @@
+Model,Weight,Workflow
+LogisticRegression,0.028848623607678474,Conventional ML
+SVC,0.15674123848361513,Conventional ML
+Extra trees,0.2362963078298935,Conventional ML
+HistGradientBoosting,0.06485998597793398,Conventional ML
+AdaBoost,0.02260011951533975,Conventional ML
+Tabular MLP,0.048097335241988,Conventional ML
+XGBoost,0.0801957941758916,Conventional ML
+CatBoost,0.03463524769479441,Conventional ML
+ChemML MLP (PyTorch),0.18539432990910645,ChemML deep learning
+Uni-Mol V1,0.041536073541622545,Uni-Mol
+"MapLight + GNN (CatBoost, Strict Parity)",0.05669808512528864,MapLight + GNN
+CFA (Combinatorial Fusion),0.04409685889684749,CFA fusion

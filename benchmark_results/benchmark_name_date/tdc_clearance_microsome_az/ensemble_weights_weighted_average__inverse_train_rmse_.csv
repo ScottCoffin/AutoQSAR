@@ -1,0 +1,13 @@
+Model,Weight,Workflow
+SVR,0.02717484263904092,conventional
+Random forest,0.07920172677233851,conventional
+HistGradientBoosting,0.26941283433456803,conventional
+"Voting Regressor (KNN, SVM)",0.05431345196528413,conventional
+AdaBoost,0.027262503595009823,conventional
+CatBoost,0.0720607893434181,conventional
+MapLight CatBoost (Strict Parity),0.047516631535004634,conventional
+TabPFNRegressor,0.17884476988065934,conventional
+"Chemprop v2 (AttentiveFP, ensemble=1)",0.024685683932565563,Chemprop v2
+"Chemprop v2 (AttentiveFP + Selected descriptors, ensemble=1)",0.12632091826409594,Chemprop v2
+Uni-Mol V1,0.033691729143756274,Uni-Mol
+"MapLight + GNN (CatBoost, Strict Parity)",0.059514118594258605,MapLight + GNN

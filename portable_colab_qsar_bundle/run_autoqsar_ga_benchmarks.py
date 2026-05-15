@@ -87,6 +87,7 @@ os.environ.setdefault("ABSL_LOGGING_STDERR_THRESHOLD", "3")
 os.environ.setdefault("ABSL_MIN_LOG_LEVEL", "3")
 os.environ.setdefault("GLOG_minloglevel", "3")
 
+<<<<<<< HEAD
 
 def load_repo_dotenv() -> list[Path]:
     """Load repo-local .env values before optional API-backed models initialize."""
@@ -151,11 +152,72 @@ def tabpfn_backend_status_text() -> str:
 # Point Open Babel to its data files when installed via openbabel-wheel (pip).
 # The wheel bundles data under <pkg>/bin/data/ but doesn't set BABEL_DATADIR.
 if "BABEL_DATADIR" not in os.environ:
+=======
+def _openbabel_data_dir_is_usable(path_like: Any) -> bool:
+    if not path_like:
+        return False
+    try:
+        path = Path(path_like)
+    except TypeError:
+        return False
+    return path.is_dir() and (path / "ring-fragments-index.txt").is_file()
+
+
+def _find_openbabel_data_dir_under(prefix: Path) -> Path | None:
+    try:
+        for match in prefix.rglob("ring-fragments-index.txt"):
+            parent = match.parent
+            if _openbabel_data_dir_is_usable(parent):
+                return parent
+    except Exception:
+        return None
+    return None
+
+
+def _configure_openbabel_data_dir() -> None:
+    if _openbabel_data_dir_is_usable(os.environ.get("BABEL_DATADIR")):
+        return
+
+    candidates: list[Path] = []
+>>>>>>> b7cd42c7321f23c1661f3fb43a0cbbd6198be21e
     _ob_spec = importlib.util.find_spec("openbabel")
     if _ob_spec and _ob_spec.origin:
-        _ob_data = Path(_ob_spec.origin).parent / "bin" / "data"
-        if _ob_data.is_dir():
-            os.environ["BABEL_DATADIR"] = str(_ob_data)
+        package_dir = Path(_ob_spec.origin).resolve().parent
+        candidates.extend(
+            [
+                package_dir / "bin" / "data",  # openbabel-wheel
+                package_dir / "data",
+                package_dir.parent / "data",
+            ]
+        )
+
+    prefixes = [Path(sys.prefix)]
+    conda_prefix = os.environ.get("CONDA_PREFIX")
+    if conda_prefix:
+        prefixes.append(Path(conda_prefix))
+    for prefix in prefixes:
+        candidates.extend(
+            [
+                prefix / "Library" / "share" / "openbabel" / "3.1.0",
+                prefix / "Library" / "share" / "openbabel",
+                prefix / "share" / "openbabel" / "3.1.0",
+                prefix / "share" / "openbabel",
+            ]
+        )
+
+    for candidate in candidates:
+        if _openbabel_data_dir_is_usable(candidate):
+            os.environ["BABEL_DATADIR"] = str(candidate)
+            return
+
+    for prefix in prefixes:
+        discovered = _find_openbabel_data_dir_under(prefix)
+        if discovered is not None:
+            os.environ["BABEL_DATADIR"] = str(discovered)
+            return
+
+
+_configure_openbabel_data_dir()
 
 try:
     from portable_colab_qsar_bundle.qsar_workflow_core import (
@@ -836,7 +898,7 @@ def estimate_tabpfn_daily_dataset_capacity(
     for spec in datasets:
         n_rows = int(len(spec.frame))
         est_train_rows = max(1, int(round(n_rows * (1.0 - float(getattr(args, "test_fraction", 0.2))))))
-        max_features_cfg = int(getattr(args, "max_selected_features", 512))
+        max_features_cfg = int(getattr(args, "max_selected_features", 0))
         if max_features_cfg > 0:
             est_columns = int(max_features_cfg)
         else:
@@ -1211,7 +1273,7 @@ def stage23_resume_signature(
         "selector_auto_rf_log10_intercept": float(getattr(args, "selector_auto_rf_log10_intercept", -0.658)),
         "selector_elasticnet_timeout_seconds": float(getattr(args, "selector_elasticnet_timeout_seconds", 7200.0)),
         "selector_rf_fallback_n_estimators": int(getattr(args, "selector_rf_fallback_n_estimators", 400)),
-        "max_selected_features": int(getattr(args, "max_selected_features", 512)),
+        "max_selected_features": int(getattr(args, "max_selected_features", 0)),
         "dedup_variance_threshold": 1e-8,
         "dedup_binary_prevalence_min": 0.005,
         "dedup_binary_prevalence_max": 0.995,
@@ -2055,6 +2117,13 @@ def load_chemml_datasets() -> list[DatasetSpec]:
                 target = infer_column(list(frame.columns), ["homo", "HOMO", "target", "TARGET"]) or frame.columns[-1]
                 datasets.append(DatasetSpec("chemml_cep_homo", "ChemML bundled dataset: cep_homo", frame, "smiles", target))
             elif name == "xyz_polarizability":
+                if not _openbabel_data_dir_is_usable(os.environ.get("BABEL_DATADIR")):
+                    print(
+                        "[info] ChemML xyz_polarizability dataset unavailable "
+                        "(Open Babel data files missing; install openbabel from conda-forge); continuing.",
+                        flush=True,
+                    )
+                    continue
                 with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
                     from chemml.datasets.base import load_xyz_polarizability
                     molecules, target_df = load_xyz_polarizability()
@@ -7098,8 +7167,6 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
     if spec.predefined_split_column and spec.predefined_split_column in df.columns:
         predefined_split = df[spec.predefined_split_column].reset_index(drop=True)
     selector_args = argparse.Namespace(**vars(args))
-    if selector_args.max_selected_features <= 0:
-        selector_args.max_selected_features = max(1, math.ceil(0.10 * len(df)))
     stage23_signature_value, stage23_signature_payload = stage23_resume_signature(
         args=selector_args,
         spec=spec,
@@ -8741,7 +8808,12 @@ def parse_args() -> argparse.Namespace:
         default=True,
         help="Skip the conventional ElasticNetCV training stage when selector ElasticNetCV timed out.",
     )
-    parser.add_argument("--max-selected-features", type=int, default=512, help="0 means auto cap at 10%% of valid molecules; positive values override.")
+    parser.add_argument(
+        "--max-selected-features",
+        type=int,
+        default=0,
+        help="0 means auto cap at ceil(10%% of training rows); positive values override.",
+    )
 
     parser.add_argument("--cv-folds", type=int, default=5)
     parser.add_argument("--elasticnet-l1-ratio-grid", default="0.4,0.8")

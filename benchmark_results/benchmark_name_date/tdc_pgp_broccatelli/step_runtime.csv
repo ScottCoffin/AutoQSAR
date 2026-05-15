@@ -1,0 +1,22 @@
+dataset,stage_index,total_stages,stage_label,started_at,started_epoch,status,ended_at,ended_epoch,duration_seconds
+tdc_pgp_broccatelli,1,23,loading PyTDC ADME benchmark group: pgp_broccatelli (official train_val/test split),2026-05-06 10:56:41 Pacific Daylight Time,1778090201.8258154,completed,2026-05-06 10:56:42 Pacific Daylight Time,1778090202.5097666,0.684
+tdc_pgp_broccatelli,2,23,building molecular features,2026-05-06 10:56:42 Pacific Daylight Time,1778090202.5097666,completed,2026-05-06 10:56:42 Pacific Daylight Time,1778090202.748696,0.239
+tdc_pgp_broccatelli,3,23,splitting data and selecting features,2026-05-06 10:56:42 Pacific Daylight Time,1778090202.748696,completed,2026-05-06 10:59:51 Pacific Daylight Time,1778090391.2785094,188.53
+tdc_pgp_broccatelli,4,23,conventional model LogisticRegression (cached),2026-05-06 10:59:51 Pacific Daylight Time,1778090391.2785094,completed,2026-05-06 10:59:51 Pacific Daylight Time,1778090391.283506,0.005
+tdc_pgp_broccatelli,5,23,conventional model SVC (cached),2026-05-06 10:59:51 Pacific Daylight Time,1778090391.283506,completed,2026-05-06 10:59:51 Pacific Daylight Time,1778090391.286983,0.003
+tdc_pgp_broccatelli,6,23,conventional model Random forest (cached),2026-05-06 10:59:51 Pacific Daylight Time,1778090391.286983,completed,2026-05-06 10:59:51 Pacific Daylight Time,1778090391.2899804,0.003
+tdc_pgp_broccatelli,7,23,conventional model Extra trees (cached),2026-05-06 10:59:51 Pacific Daylight Time,1778090391.2899804,completed,2026-05-06 10:59:51 Pacific Daylight Time,1778090391.292981,0.003
+tdc_pgp_broccatelli,8,23,conventional model HistGradientBoosting (cached),2026-05-06 10:59:51 Pacific Daylight Time,1778090391.292981,completed,2026-05-06 10:59:51 Pacific Daylight Time,1778090391.2949817,0.002
+tdc_pgp_broccatelli,9,23,"conventional model Voting Classifier (KNN, SVM) (cached)",2026-05-06 10:59:51 Pacific Daylight Time,1778090391.2949817,completed,2026-05-06 10:59:51 Pacific Daylight Time,1778090391.298356,0.003
+tdc_pgp_broccatelli,10,23,conventional model AdaBoost (cached),2026-05-06 10:59:51 Pacific Daylight Time,1778090391.298356,completed,2026-05-06 10:59:51 Pacific Daylight Time,1778090391.302366,0.004
+tdc_pgp_broccatelli,11,23,conventional model Tabular MLP (cached),2026-05-06 10:59:51 Pacific Daylight Time,1778090391.302366,completed,2026-05-06 10:59:51 Pacific Daylight Time,1778090391.3053672,0.003
+tdc_pgp_broccatelli,12,23,conventional model XGBoost (cached),2026-05-06 10:59:51 Pacific Daylight Time,1778090391.3053672,completed,2026-05-06 10:59:51 Pacific Daylight Time,1778090391.3073637,0.002
+tdc_pgp_broccatelli,13,23,conventional model CatBoost (cached),2026-05-06 10:59:51 Pacific Daylight Time,1778090391.3073637,completed,2026-05-06 10:59:51 Pacific Daylight Time,1778090391.310758,0.003
+tdc_pgp_broccatelli,14,23,conventional model TabPFNClassifier (cached),2026-05-06 10:59:51 Pacific Daylight Time,1778090391.310758,completed,2026-05-06 10:59:51 Pacific Daylight Time,1778090391.314885,0.004
+tdc_pgp_broccatelli,15,23,deep model ChemML MLP (PyTorch) (cached),2026-05-06 10:59:51 Pacific Daylight Time,1778090391.314885,completed,2026-05-06 10:59:51 Pacific Daylight Time,1778090391.3178833,0.003
+tdc_pgp_broccatelli,16,23,"deep model Chemprop v2 (AttentiveFP, ensemble=1)",2026-05-06 10:59:51 Pacific Daylight Time,1778090391.3178833,completed,2026-05-06 11:01:04 Pacific Daylight Time,1778090464.709898,73.392
+tdc_pgp_broccatelli,17,23,"deep model Chemprop v2 (AttentiveFP + Selected descriptors, ensemble=1)",2026-05-06 11:01:04 Pacific Daylight Time,1778090464.709898,completed,2026-05-06 11:02:10 Pacific Daylight Time,1778090530.7215424,66.012
+tdc_pgp_broccatelli,18,23,deep model Uni-Mol V1 (cached),2026-05-06 11:02:10 Pacific Daylight Time,1778090530.7215424,completed,2026-05-06 11:02:10 Pacific Daylight Time,1778090530.724548,0.003
+tdc_pgp_broccatelli,19,23,"deep model MapLight + GNN (CatBoost, Strict Parity) (cached)",2026-05-06 11:02:10 Pacific Daylight Time,1778090530.724548,completed,2026-05-06 11:02:10 Pacific Daylight Time,1778090530.7268734,0.002
+tdc_pgp_broccatelli,20,23,CFA combinatorial fusion (cached),2026-05-06 11:02:10 Pacific Daylight Time,1778090530.7268734,completed,2026-05-06 11:02:10 Pacific Daylight Time,1778090530.7298765,0.003
+tdc_pgp_broccatelli,21,23,ensemble (2 method(s)),2026-05-06 11:02:10 Pacific Daylight Time,1778090530.7298765,completed,2026-05-06 11:02:11 Pacific Daylight Time,1778090531.722916,0.993

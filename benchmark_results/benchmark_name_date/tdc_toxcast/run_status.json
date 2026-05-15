@@ -1,0 +1,9 @@
+{
+  "status": "completed",
+  "dataset": "tdc_toxcast",
+  "source": "PyTDC Tox benchmark: toxcast [label=ACEA_T47D_80hr_Negative]",
+  "completed_at": "2026-05-06 12:15:31",
+  "elapsed_seconds": 3005.983,
+  "n_metrics_rows": 26,
+  "n_stage_records": 20
+}

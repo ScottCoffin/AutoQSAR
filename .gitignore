@@ -215,9 +215,27 @@ tmp/
 .autoqsar_tmp/
 data/*.zip
 # large pickled models are too big to push to GitHub
-*.pkl 
+*.pkl
 *.ckpt
-**/benchmark_results/
+# Keep lightweight CSVs/JSONs in benchmark runs (needed by benchmark_results_summary.ipynb)
+# Ignore heavy model artifacts by subdirectory and extension
+**/benchmark_results/**/chemprop_v2/
+**/benchmark_results/**/unimol_v1/
+**/benchmark_results/**/chemml_deep_learning/
+**/benchmark_results/**/conventional_ml/
+**/benchmark_results/**/tuned_conventional_ml/
+**/benchmark_results/*/*/predictions.csv
+**/benchmark_results/**/*.npy
+**/benchmark_results/**/*.npz
+**/benchmark_results/**/*.sdf
+**/benchmark_results/**/*.h5
+**/benchmark_results/**/*.pth
+**/benchmark_results/**/*.pt
+**/benchmark_results/**/*.joblib
+**/benchmark_results/**/*.ss
+**/benchmark_results/**/*.dat
+**/benchmark_results/**/*.data
+**/benchmark_results/**/*.result
 gin_supervised_masking_pre_trained.pth
 **/trainer_logs/
 **/events.out.tfevents*

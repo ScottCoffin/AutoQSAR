@@ -1,0 +1,21 @@
+dataset,stage_index,total_stages,stage_label,started_at,started_epoch,status,ended_at,ended_epoch,duration_seconds
+tdc_cyp1a2_veith,1,23,loading PyTDC ADME benchmark: cyp1a2_veith,2026-05-06 19:28:05 Pacific Daylight Time,1778120885.042405,completed,2026-05-06 19:28:09 Pacific Daylight Time,1778120889.009056,3.967
+tdc_cyp1a2_veith,2,23,building molecular features,2026-05-06 19:28:09 Pacific Daylight Time,1778120889.009056,completed,2026-05-06 19:28:09 Pacific Daylight Time,1778120889.936357,0.927
+tdc_cyp1a2_veith,3,23,splitting data and selecting features,2026-05-06 19:28:09 Pacific Daylight Time,1778120889.9374304,completed,2026-05-06 21:32:22 Pacific Daylight Time,1778128342.3111324,7452.374
+tdc_cyp1a2_veith,4,23,conventional model LogisticRegression,2026-05-06 21:32:22 Pacific Daylight Time,1778128342.3111324,completed,2026-05-06 21:32:43 Pacific Daylight Time,1778128363.1167667,20.806
+tdc_cyp1a2_veith,5,23,conventional model SVC,2026-05-06 21:32:43 Pacific Daylight Time,1778128363.1167667,completed,2026-05-06 22:16:16 Pacific Daylight Time,1778130976.0924847,2612.976
+tdc_cyp1a2_veith,6,23,conventional model Random forest,2026-05-06 22:16:16 Pacific Daylight Time,1778130976.0924847,completed,2026-05-06 22:19:24 Pacific Daylight Time,1778131164.6222072,188.53
+tdc_cyp1a2_veith,7,23,conventional model Extra trees,2026-05-06 22:19:24 Pacific Daylight Time,1778131164.6222072,completed,2026-05-06 22:22:35 Pacific Daylight Time,1778131355.0243008,190.402
+tdc_cyp1a2_veith,8,23,conventional model HistGradientBoosting,2026-05-06 22:22:35 Pacific Daylight Time,1778131355.0243008,completed,2026-05-06 22:24:32 Pacific Daylight Time,1778131472.703649,117.679
+tdc_cyp1a2_veith,9,23,"conventional model Voting Classifier (KNN, SVM)",2026-05-06 22:24:32 Pacific Daylight Time,1778131472.703649,completed,2026-05-06 23:12:21 Pacific Daylight Time,1778134341.2574391,2868.554
+tdc_cyp1a2_veith,10,23,conventional model AdaBoost,2026-05-06 23:12:21 Pacific Daylight Time,1778134341.2574391,completed,2026-05-06 23:22:00 Pacific Daylight Time,1778134920.0211391,578.764
+tdc_cyp1a2_veith,11,23,conventional model Tabular MLP,2026-05-06 23:22:00 Pacific Daylight Time,1778134920.0211391,completed,2026-05-06 23:28:35 Pacific Daylight Time,1778135315.4016464,395.381
+tdc_cyp1a2_veith,12,23,conventional model XGBoost,2026-05-06 23:28:35 Pacific Daylight Time,1778135315.4016464,completed,2026-05-06 23:30:32 Pacific Daylight Time,1778135432.8811233,117.479
+tdc_cyp1a2_veith,13,23,conventional model CatBoost,2026-05-06 23:30:32 Pacific Daylight Time,1778135432.8811233,completed,2026-05-06 23:31:22 Pacific Daylight Time,1778135482.4412818,49.56
+tdc_cyp1a2_veith,14,23,deep model ChemML MLP (PyTorch),2026-05-06 23:31:22 Pacific Daylight Time,1778135482.4412818,completed,2026-05-06 23:37:12 Pacific Daylight Time,1778135832.0992308,349.658
+tdc_cyp1a2_veith,15,23,"deep model Chemprop v2 (AttentiveFP, ensemble=1)",2026-05-06 23:37:12 Pacific Daylight Time,1778135832.0992308,completed,2026-05-06 23:41:03 Pacific Daylight Time,1778136063.091944,230.993
+tdc_cyp1a2_veith,16,23,"deep model Chemprop v2 (AttentiveFP + Selected descriptors, ensemble=1)",2026-05-06 23:41:03 Pacific Daylight Time,1778136063.091944,completed,2026-05-06 23:42:03 Pacific Daylight Time,1778136123.479271,60.387
+tdc_cyp1a2_veith,17,23,deep model Uni-Mol V1,2026-05-06 23:42:03 Pacific Daylight Time,1778136123.479271,completed,2026-05-07 06:18:11 Pacific Daylight Time,1778159891.3602102,23767.881
+tdc_cyp1a2_veith,18,23,"deep model MapLight + GNN (CatBoost, Strict Parity)",2026-05-07 06:18:11 Pacific Daylight Time,1778159891.3602102,completed,2026-05-07 06:31:10 Pacific Daylight Time,1778160670.7019186,779.342
+tdc_cyp1a2_veith,19,23,CFA combinatorial fusion,2026-05-07 06:31:10 Pacific Daylight Time,1778160670.7019186,completed,2026-05-07 06:31:12 Pacific Daylight Time,1778160672.0730674,1.371
+tdc_cyp1a2_veith,20,23,ensemble (2 method(s)),2026-05-07 06:31:12 Pacific Daylight Time,1778160672.0740767,completed,2026-05-07 06:31:15 Pacific Daylight Time,1778160675.8523326,3.778

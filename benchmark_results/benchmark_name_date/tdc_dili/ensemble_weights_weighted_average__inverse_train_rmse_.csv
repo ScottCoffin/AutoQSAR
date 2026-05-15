@@ -1,0 +1,6 @@
+Model,Weight,Workflow
+Random forest,0.3333332423758679,conventional
+AdaBoost,5.4514791502546254e-08,conventional
+CatBoost,0.3333332423758679,conventional
+Uni-Mol V1,2.1835760464979677e-07,Uni-Mol
+CFA (Combinatorial Fusion),0.3333332423758679,cfa

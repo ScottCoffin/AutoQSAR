@@ -1,0 +1,3 @@
+dataset,stage_index,total_stages,stage_label,started_at,started_epoch,status,ended_at,ended_epoch,duration_seconds
+tdc_herg_central,1,23,loading PyTDC Tox benchmark: herg_central [label=hERG_at_1uM],2026-05-09 12:36:39 Pacific Daylight Time,1778355399.0689304,completed,2026-05-09 12:38:12 Pacific Daylight Time,1778355492.9090478,93.84
+tdc_herg_central,2,23,building molecular features,2026-05-09 12:38:12 Pacific Daylight Time,1778355492.9090478,running,2026-05-09 12:38:12 Pacific Daylight Time,1778355492.9099264,0.001

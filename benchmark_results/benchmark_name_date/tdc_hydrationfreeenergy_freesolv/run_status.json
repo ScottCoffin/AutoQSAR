@@ -1,0 +1,9 @@
+{
+  "status": "completed",
+  "dataset": "tdc_hydrationfreeenergy_freesolv",
+  "source": "PyTDC ADME benchmark: hydrationfreeenergy_freesolv",
+  "completed_at": "2026-05-04 12:34:25",
+  "elapsed_seconds": 129.42,
+  "n_metrics_rows": 23,
+  "n_stage_records": 23
+}

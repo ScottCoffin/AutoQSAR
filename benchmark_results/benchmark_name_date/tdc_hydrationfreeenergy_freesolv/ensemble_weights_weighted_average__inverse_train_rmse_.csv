@@ -1,0 +1,8 @@
+Model,Weight,Workflow
+Random forest,0.12894842254353295,conventional
+AdaBoost,0.050202270013571165,conventional
+Tabular CNN,0.038817689573658595,conventional
+ChemML MLP (PyTorch),0.14800909786816727,ChemML deep learning
+"Chemprop v2 (AttentiveFP, ensemble=1)",0.10391029910716822,Chemprop v2
+Uni-Mol V1,0.11226687224699142,Uni-Mol
+CFA (Combinatorial Fusion),0.41784534864691036,cfa
