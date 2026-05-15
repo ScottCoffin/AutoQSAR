@@ -37,7 +37,7 @@ import urllib.request
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any, Callable, Sequence
 import sys
 
 import numpy as np
@@ -86,6 +86,67 @@ os.environ.setdefault("TF_ENABLE_ONEDNN_OPTS", "0")
 os.environ.setdefault("ABSL_LOGGING_STDERR_THRESHOLD", "3")
 os.environ.setdefault("ABSL_MIN_LOG_LEVEL", "3")
 os.environ.setdefault("GLOG_minloglevel", "3")
+
+
+def load_repo_dotenv() -> list[Path]:
+    """Load repo-local .env values before optional API-backed models initialize."""
+    candidates: list[Path] = []
+    for candidate in (Path.cwd() / ".env", Path(__file__).resolve().parents[1] / ".env"):
+        candidate = candidate.resolve()
+        if candidate not in candidates:
+            candidates.append(candidate)
+
+    loaded: list[Path] = []
+    try:
+        from dotenv import load_dotenv
+
+        for candidate in candidates:
+            if candidate.exists():
+                if load_dotenv(dotenv_path=candidate, override=False):
+                    loaded.append(candidate)
+        return loaded
+    except Exception:
+        pass
+
+    # Fallback for minimal environments if python-dotenv is absent.
+    for candidate in candidates:
+        if not candidate.exists():
+            continue
+        try:
+            for raw_line in candidate.read_text(encoding="utf-8").splitlines():
+                line = raw_line.strip()
+                if not line or line.startswith("#") or "=" not in line:
+                    continue
+                key, value = line.split("=", 1)
+                key = key.strip()
+                if not key or key in os.environ:
+                    continue
+                os.environ[key] = value.strip().strip('"').strip("'")
+            loaded.append(candidate)
+        except Exception:
+            continue
+    return loaded
+
+
+LOADED_DOTENV_PATHS = load_repo_dotenv()
+
+
+def priorlabs_api_key_available() -> bool:
+    return bool(str(os.environ.get("PRIORLABS_API_KEY", os.environ.get("TABPFN_API_KEY", ""))).strip())
+
+
+def dotenv_status_text() -> str:
+    if not LOADED_DOTENV_PATHS:
+        return "none"
+    return ", ".join(str(path) for path in LOADED_DOTENV_PATHS)
+
+
+def tabpfn_backend_status_text() -> str:
+    source = str(TABPFN_REGRESSOR_SOURCE).strip()
+    if source.lower() == "unavailable" and priorlabs_api_key_available():
+        return "tabpfn_client (PRIORLABS_API_KEY available; package will be auto-installed/imported before training if needed)"
+    return source
+
 
 # Point Open Babel to its data files when installed via openbabel-wheel (pip).
 # The wheel bundles data under <pkg>/bin/data/ but doesn't set BABEL_DATADIR.
@@ -168,17 +229,30 @@ except Exception:
     LGBMClassifier = None
     LGBMRegressor = None
 
-try:
-    from tabpfn import TabPFNClassifier, TabPFNRegressor
-    TABPFN_REGRESSOR_SOURCE = "tabpfn"
-except Exception:
+if priorlabs_api_key_available():
     try:
         from tabpfn_client import TabPFNClassifier, TabPFNRegressor
         TABPFN_REGRESSOR_SOURCE = "tabpfn_client"
     except Exception:
-        TabPFNClassifier = None
-        TabPFNRegressor = None
-        TABPFN_REGRESSOR_SOURCE = "unavailable"
+        try:
+            from tabpfn import TabPFNClassifier, TabPFNRegressor
+            TABPFN_REGRESSOR_SOURCE = "tabpfn"
+        except Exception:
+            TabPFNClassifier = None
+            TabPFNRegressor = None
+            TABPFN_REGRESSOR_SOURCE = "unavailable"
+else:
+    try:
+        from tabpfn import TabPFNClassifier, TabPFNRegressor
+        TABPFN_REGRESSOR_SOURCE = "tabpfn"
+    except Exception:
+        try:
+            from tabpfn_client import TabPFNClassifier, TabPFNRegressor
+            TABPFN_REGRESSOR_SOURCE = "tabpfn_client"
+        except Exception:
+            TabPFNClassifier = None
+            TabPFNRegressor = None
+            TABPFN_REGRESSOR_SOURCE = "unavailable"
 
 TF_AVAILABLE_FOR_CNN = bool(importlib.util.find_spec("tensorflow") is not None)
 
@@ -311,23 +385,40 @@ def ensure_tdc_from_source() -> bool:
 
 
 def ensure_tabpfn_installed(prefer_local_backend: bool = False) -> bool:
+    global TabPFNClassifier
     global TabPFNRegressor
     global TABPFN_REGRESSOR_SOURCE
     current_source = str(TABPFN_REGRESSOR_SOURCE).strip().lower()
-    if TabPFNRegressor is not None and not (prefer_local_backend and current_source != "tabpfn"):
-        return True
+    prefer_api_backend = priorlabs_api_key_available()
+    if TabPFNRegressor is not None:
+        if prefer_api_backend and current_source != "tabpfn_client":
+            pass
+        elif prefer_local_backend and not prefer_api_backend and current_source != "tabpfn":
+            pass
+        else:
+            return True
 
-    backend_order = ["tabpfn", "tabpfn_client"] if prefer_local_backend else ["tabpfn", "tabpfn_client"]
-    if current_source == "tabpfn_client" and not prefer_local_backend:
+    if prefer_api_backend:
         backend_order = ["tabpfn_client", "tabpfn"]
+    elif prefer_local_backend:
+        backend_order = ["tabpfn", "tabpfn_client"]
+    elif current_source == "tabpfn_client":
+        backend_order = ["tabpfn_client", "tabpfn"]
+    else:
+        backend_order = ["tabpfn", "tabpfn_client"]
+
+    if not prefer_api_backend and not prefer_local_backend and current_source in backend_order:
+        backend_order = [current_source] + [backend for backend in backend_order if backend != current_source]
+    if TabPFNRegressor is not None and backend_order and current_source == backend_order[0]:
+        return True
 
     install_messages = {
         "tabpfn": "local tabpfn backend",
         "tabpfn_client": "tabpfn-client API backend",
     }
     import_targets = {
-        "tabpfn": ("tabpfn", "TabPFNRegressor"),
-        "tabpfn_client": ("tabpfn_client", "TabPFNRegressor"),
+        "tabpfn": ("tabpfn", "TabPFNRegressor", "TabPFNClassifier"),
+        "tabpfn_client": ("tabpfn_client", "TabPFNRegressor", "TabPFNClassifier"),
     }
     install_targets = {
         "tabpfn": "tabpfn",
@@ -335,10 +426,11 @@ def ensure_tabpfn_installed(prefer_local_backend: bool = False) -> bool:
     }
 
     for backend in backend_order:
-        module_name, class_name = import_targets[backend]
+        module_name, regressor_class_name, classifier_class_name = import_targets[backend]
         try:
             module = importlib.import_module(module_name)
-            TabPFNRegressor = getattr(module, class_name)
+            TabPFNRegressor = getattr(module, regressor_class_name)
+            TabPFNClassifier = getattr(module, classifier_class_name, None)
             TABPFN_REGRESSOR_SOURCE = backend
             return True
         except Exception:
@@ -360,7 +452,8 @@ def ensure_tabpfn_installed(prefer_local_backend: bool = False) -> bool:
             importlib.invalidate_caches()
         try:
             module = importlib.import_module(module_name)
-            TabPFNRegressor = getattr(module, class_name)
+            TabPFNRegressor = getattr(module, regressor_class_name)
+            TabPFNClassifier = getattr(module, classifier_class_name, None)
             TABPFN_REGRESSOR_SOURCE = backend
             return True
         except Exception:
@@ -601,7 +694,11 @@ def _prepare_tabpfn_local_auth() -> tuple[bool, str]:
 def prepare_tabpfn_auth(args: argparse.Namespace) -> tuple[bool, str]:
     # TabPFN requires different authentication depending on the active backend:
     #
-    # LOCAL BACKEND (tabpfn, used automatically when a GPU is available):
+    # If PRIORLABS_API_KEY is present in the environment or repo .env, the API
+    # backend is preferred by default, including on systems where local tabpfn is
+    # installed.
+    #
+    # LOCAL BACKEND (tabpfn, used when no Prior Labs API key is present):
     #   Needs a HuggingFace token to download model weights on first use only.
     #   After the first download the model is cached and no token is needed.
     #   Steps:
@@ -612,7 +709,7 @@ def prepare_tabpfn_auth(args: argparse.Namespace) -> tuple[bool, str]:
     #          PowerShell:  $env:HF_TOKEN = "hf_your_token_here"
     #   Alternatively, run `huggingface-cli login` once to store the token permanently.
     #
-    # API BACKEND (tabpfn_client, used when no GPU is available):
+    # API BACKEND (tabpfn_client, default when PRIORLABS_API_KEY is available):
     #   Needs a Prior Labs API key.
     #   Set PRIORLABS_API_KEY before running:
     #     bash/zsh:    export PRIORLABS_API_KEY="your_key_here"
@@ -1051,6 +1148,21 @@ def dataset_content_signature(
     return hasher.hexdigest()
 
 
+def auxiliary_feature_content_signature(frame: pd.DataFrame, columns: Sequence[str]) -> str:
+    selected_columns = [str(column) for column in columns if str(column) in frame.columns]
+    if not selected_columns:
+        return ""
+    hasher = hashlib.sha256()
+    for column in selected_columns:
+        hasher.update(str(column).encode("utf-8", errors="replace"))
+        hasher.update(b"\n")
+        values = pd.to_numeric(frame[column], errors="coerce").reset_index(drop=True)
+        for value in values:
+            hasher.update(_stable_float_text(value).encode("utf-8", errors="replace"))
+            hasher.update(b"\n")
+    return hasher.hexdigest()
+
+
 def stage23_resume_signature(
     *,
     args: argparse.Namespace,
@@ -1068,6 +1180,11 @@ def stage23_resume_signature(
             canonical_df["canonical_smiles"],
             canonical_df["target"],
             predefined_split=predefined_split,
+        ),
+        "auxiliary_feature_columns": list(input_meta.get("auxiliary_feature_columns", [])),
+        "auxiliary_feature_content_hash": auxiliary_feature_content_signature(
+            canonical_df,
+            input_meta.get("auxiliary_feature_columns", []),
         ),
         "target_transform": str(input_meta.get("target_transform", "")),
         "smiles_column": str(input_meta.get("smiles_column", "")),
@@ -1831,6 +1948,70 @@ def discover_local_datasets(root: Path, explicit_paths: list[str] | None = None)
             print(f"[skip] {path}: could not infer SMILES/target columns")
             continue
         datasets.append(DatasetSpec(path.stem, str(path), frame, smiles_column, target_column))
+    return datasets
+
+
+def discover_pfas_aux_workbook_datasets(workbook_path: Path, include_sheets: list[str] | None = None) -> list[DatasetSpec]:
+    """Load PFAS TK auxiliary-feature workbook sheets as predefined-split datasets."""
+    path = Path(workbook_path)
+    if not path.exists():
+        raise FileNotFoundError(f"PFAS auxiliary workbook not found: {path}")
+    selected = {str(sheet).strip() for sheet in include_sheets or [] if str(sheet).strip()}
+    xls = pd.ExcelFile(path)
+    datasets: list[DatasetSpec] = []
+    identifier_columns = {
+        "target",
+        "smiles_subset",
+        "split",
+        "QSAR_READY_SMILES",
+        "SMILES",
+        "smiles",
+        "canonical_smiles",
+        "TARGET_log10",
+        "target_value",
+    }
+    for sheet_name in xls.sheet_names:
+        if sheet_name.lower() == "manifest":
+            continue
+        if selected and sheet_name not in selected:
+            continue
+        frame = pd.read_excel(path, sheet_name=sheet_name)
+        required = {"split", "QSAR_READY_SMILES", "TARGET_log10"}
+        missing = sorted(required - set(frame.columns))
+        if missing:
+            print(f"[skip] {path.name}:{sheet_name}: missing required columns {missing}")
+            continue
+        auxiliary_columns = []
+        for column in frame.columns:
+            if column in identifier_columns:
+                continue
+            numeric = pd.to_numeric(frame[column], errors="coerce")
+            if numeric.notna().any():
+                frame[column] = numeric
+                auxiliary_columns.append(str(column))
+        target_label = str(frame["target"].dropna().iloc[0]) if "target" in frame.columns and frame["target"].notna().any() else sheet_name
+        subset_label = str(frame["smiles_subset"].dropna().iloc[0]) if "smiles_subset" in frame.columns and frame["smiles_subset"].notna().any() else sheet_name
+        datasets.append(
+            DatasetSpec(
+                name=str(sheet_name),
+                source=f"PFAS auxiliary workbook: {path.name}::{sheet_name}",
+                frame=frame,
+                smiles_column="QSAR_READY_SMILES",
+                target_column="TARGET_log10",
+                recommended_split="predefined",
+                recommended_metric="rmse",
+                benchmark_suite="pfas_aux_workbook",
+                benchmark_id=str(sheet_name),
+                predefined_split_column="split",
+                auxiliary_feature_columns=auxiliary_columns,
+                task_type="regression",
+                leaderboard_summary={
+                    "target": target_label,
+                    "smiles_subset": subset_label,
+                    "auxiliary_feature_count": len(auxiliary_columns),
+                },
+            )
+        )
     return datasets
 
 
@@ -3503,12 +3684,21 @@ def canonicalize_frame(spec: DatasetSpec, log10_target: bool) -> tuple[pd.DataFr
     include_predefined_split = bool(spec.predefined_split_column and spec.predefined_split_column in spec.frame.columns)
     if include_predefined_split:
         keep_columns.append(str(spec.predefined_split_column))
+    auxiliary_columns = [
+        str(column)
+        for column in list(spec.auxiliary_feature_columns or [])
+        if str(column) in spec.frame.columns and str(column) not in keep_columns
+    ]
+    keep_columns.extend(auxiliary_columns)
     df = spec.frame[keep_columns].copy()
     rename_map = {spec.smiles_column: "smiles", spec.target_column: "target"}
     if include_predefined_split:
         rename_map[str(spec.predefined_split_column)] = "__predefined_split"
     df = df.rename(columns=rename_map)
     df["target"] = pd.to_numeric(df["target"], errors="coerce")
+    for column in auxiliary_columns:
+        if column in df.columns:
+            df[column] = pd.to_numeric(df[column], errors="coerce")
     if "__predefined_split" in df.columns:
         df = df.replace([np.inf, -np.inf], np.nan).dropna(subset=["smiles", "target", "__predefined_split"])
     else:
@@ -3535,7 +3725,13 @@ def canonicalize_frame(spec: DatasetSpec, log10_target: bool) -> tuple[pd.DataFr
         else:
             df["target"] = np.log10(df["target"].astype(float))
             transform = "log10"
-    return df, {"target_transform": transform, "smiles_column": spec.smiles_column, "target_column": spec.target_column}
+    return df, {
+        "target_transform": transform,
+        "smiles_column": spec.smiles_column,
+        "target_column": spec.target_column,
+        "auxiliary_feature_columns": auxiliary_columns,
+        "auxiliary_feature_count": len(auxiliary_columns),
+    }
 
 
 def resolve_dataset_log10_target(spec: DatasetSpec, args: argparse.Namespace) -> bool:
@@ -3544,7 +3740,7 @@ def resolve_dataset_log10_target(spec: DatasetSpec, args: argparse.Namespace) ->
         return True
     if mode == "raw":
         return False
-    if str(spec.benchmark_suite or "").strip().lower() in {"tdc", "moleculenet", "polaris", "literature"}:
+    if str(spec.benchmark_suite or "").strip().lower() in {"tdc", "moleculenet", "polaris", "literature", "pfas_aux_workbook"}:
         return False
     return bool(getattr(args, "log10_target", True))
 
@@ -4888,15 +5084,19 @@ def run_simple_ga(
 
 
 def prediction_frame(dataset: str, model: str, workflow: str, split: str, smiles: pd.Series, observed: pd.Series, predicted: np.ndarray) -> pd.DataFrame:
+    smiles_series = pd.Series(smiles, dtype=str).reset_index(drop=True)
+    observed_values = pd.Series(observed, dtype=float).reset_index(drop=True)
+    predicted_values = pd.Series(np.asarray(predicted, dtype=float).reshape(-1), dtype=float).reset_index(drop=True)
     return pd.DataFrame(
         {
             "dataset": dataset,
             "model": model,
             "workflow": workflow,
             "split": split,
-            "smiles": smiles.to_numpy(),
-            "observed": observed.to_numpy(dtype=float),
-            "predicted": np.asarray(predicted, dtype=float),
+            "row_index": np.arange(len(predicted_values), dtype=int),
+            "smiles": smiles_series.to_numpy(),
+            "observed": observed_values.to_numpy(dtype=float),
+            "predicted": predicted_values.to_numpy(dtype=float),
         }
     )
 
@@ -4911,14 +5111,18 @@ def prediction_payload(
     pred_train: np.ndarray,
     pred_test: np.ndarray,
 ) -> dict[str, Any]:
+    train_pred = np.asarray(pred_train, dtype=float).reshape(-1)
+    test_pred = np.asarray(pred_test, dtype=float).reshape(-1)
     return {
         "workflow": str(workflow),
         "train_smiles": pd.Series(train_smiles, dtype=str).reset_index(drop=True),
         "test_smiles": pd.Series(test_smiles, dtype=str).reset_index(drop=True),
         "train_observed": np.asarray(y_train, dtype=float).reshape(-1),
         "test_observed": np.asarray(y_test, dtype=float).reshape(-1),
-        "train": np.asarray(pred_train, dtype=float).reshape(-1),
-        "test": np.asarray(pred_test, dtype=float).reshape(-1),
+        "train": train_pred,
+        "test": test_pred,
+        "train_row_id": np.arange(len(train_pred), dtype=int),
+        "test_row_id": np.arange(len(test_pred), dtype=int),
     }
 
 
@@ -5892,19 +6096,44 @@ def build_ensemble_result(
     def build_split_frame(split_name: str) -> tuple[pd.DataFrame, list[str]]:
         merged: pd.DataFrame | None = None
         prediction_columns: list[str] = []
+        row_id_key = f"{split_name}_row_id"
+        alignment_key = "row_id" if all(row_id_key in payload for payload in payloads.values()) else "SMILES"
         for model_name, payload in payloads.items():
+            smiles_values = pd.Series(payload[f"{split_name}_smiles"], dtype=str).str.strip().reset_index(drop=True)
+            observed_values = np.asarray(payload[f"{split_name}_observed"], dtype=float).reshape(-1)
+            predicted_values = np.asarray(payload[split_name], dtype=float).reshape(-1)
+            row_ids = (
+                np.asarray(payload[row_id_key], dtype=int).reshape(-1)
+                if row_id_key in payload
+                else np.arange(len(predicted_values), dtype=int)
+            )
+            lengths = {
+                "smiles": len(smiles_values),
+                "observed": len(observed_values),
+                "predicted": len(predicted_values),
+                "row_id": len(row_ids),
+            }
+            if len(set(lengths.values())) != 1:
+                raise ValueError(
+                    f"Prediction payload length mismatch for {model_name} {split_name}: "
+                    + ", ".join(f"{key}={value}" for key, value in lengths.items())
+                )
             split_df = pd.DataFrame(
                 {
-                    "SMILES": pd.Series(payload[f"{split_name}_smiles"], dtype=str).str.strip(),
-                    "Observed": np.asarray(payload[f"{split_name}_observed"], dtype=float),
-                    str(model_name): np.asarray(payload[split_name], dtype=float),
+                    "row_id": row_ids,
+                    "SMILES": smiles_values,
+                    "Observed": observed_values,
+                    str(model_name): predicted_values,
                 }
             )
-            split_df = split_df.drop_duplicates(subset=["SMILES"], keep="first")
+            split_df = split_df.drop_duplicates(subset=[alignment_key], keep="first")
             if merged is None:
                 merged = split_df
             else:
-                merged = merged.merge(split_df, on=["SMILES"], how="inner", suffixes=("", "__new_obs"))
+                merge_columns = [alignment_key]
+                if alignment_key == "row_id":
+                    merge_columns.append("SMILES")
+                merged = merged.merge(split_df, on=merge_columns, how="inner", suffixes=("", "__new_obs"))
                 if "Observed__new_obs" in merged.columns:
                     merged = merged.drop(columns=["Observed__new_obs"])
             prediction_columns.append(str(model_name))
@@ -6278,7 +6507,16 @@ def rebuild_prediction_payloads(prediction_tables: list[pd.DataFrame]) -> dict[s
             if split_df.empty:
                 continue
             split_df["smiles"] = split_df["smiles"].astype(str).str.strip()
-            split_df = split_df.drop_duplicates(subset=["smiles"], keep="first")
+            split_df["observed"] = pd.to_numeric(split_df["observed"], errors="coerce")
+            split_df["predicted"] = pd.to_numeric(split_df["predicted"], errors="coerce")
+            valid_smiles = ~split_df["smiles"].str.lower().isin({"", "nan", "none", "null"})
+            split_df = split_df.loc[
+                valid_smiles & split_df["observed"].notna() & split_df["predicted"].notna()
+            ].copy()
+            if split_df.empty:
+                continue
+            dedup_columns = ["row_index"] if "row_index" in split_df.columns and split_df["row_index"].notna().all() else ["smiles"]
+            split_df = split_df.drop_duplicates(subset=dedup_columns, keep="first")
             split_tables[split_name] = split_df
         if "train" not in split_tables or "test" not in split_tables:
             continue
@@ -6290,6 +6528,16 @@ def rebuild_prediction_payloads(prediction_tables: list[pd.DataFrame]) -> dict[s
             "test_observed": split_tables["test"]["observed"].to_numpy(dtype=float),
             "train": split_tables["train"]["predicted"].to_numpy(dtype=float),
             "test": split_tables["test"]["predicted"].to_numpy(dtype=float),
+            "train_row_id": (
+                split_tables["train"]["row_index"].to_numpy(dtype=int)
+                if "row_index" in split_tables["train"].columns and split_tables["train"]["row_index"].notna().all()
+                else np.arange(len(split_tables["train"]), dtype=int)
+            ),
+            "test_row_id": (
+                split_tables["test"]["row_index"].to_numpy(dtype=int)
+                if "row_index" in split_tables["test"].columns and split_tables["test"]["row_index"].notna().all()
+                else np.arange(len(split_tables["test"]), dtype=int)
+            ),
         }
     return payloads
 
@@ -6950,6 +7198,27 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
                 )
         y = df["target"].astype(float).reset_index(drop=True)
         smiles = df["canonical_smiles"].reset_index(drop=True)
+        auxiliary_columns = [
+            str(column)
+            for column in list(spec.auxiliary_feature_columns or [])
+            if str(column) in df.columns
+        ]
+        if auxiliary_columns:
+            aux_df = (
+                df[auxiliary_columns]
+                .apply(pd.to_numeric, errors="coerce")
+                .reset_index(drop=True)
+                .add_prefix("aux__")
+            )
+            X = pd.concat([X.reset_index(drop=True), aux_df], axis=1)
+            feature_meta = dict(feature_meta)
+            feature_meta["auxiliary_feature_columns"] = list(auxiliary_columns)
+            feature_meta["auxiliary_feature_count"] = int(aux_df.shape[1])
+            feature_meta["feature_count_with_auxiliary"] = int(X.shape[1])
+            print(
+                f"[aux-features] {dataset_id}: appended {int(aux_df.shape[1]):,} auxiliary feature column(s).",
+                flush=True,
+            )
 
         if len(df) < args.minimum_rows:
             print(f"[skip] {dataset_id}: only {len(df)} valid rows after feature generation")
@@ -7100,6 +7369,9 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
         ),
         "selected_feature_families_json": json.dumps(feature_meta.get("selected_feature_families", []), default=str),
         "built_feature_families_json": json.dumps(feature_meta.get("built_feature_families", []), default=str),
+        "auxiliary_feature_columns_json": json.dumps(feature_meta.get("auxiliary_feature_columns", []), default=str),
+        "auxiliary_feature_count": int(feature_meta.get("auxiliary_feature_count", 0) or 0),
+        "feature_count_with_auxiliary": int(feature_meta.get("feature_count_with_auxiliary", X.shape[1]) or X.shape[1]),
         "feature_store_path": feature_meta.get("feature_store_path", ""),
         "feature_store_shard_format": feature_meta.get("feature_store_shard_format", ""),
         "feature_store_cached_rows": feature_meta.get("cached_rows_loaded", np.nan),
@@ -8325,6 +8597,20 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--dataset", action="append", help="CSV dataset path. Repeat to override the default notebook example set with local CSVs only.")
     parser.add_argument(
+        "--pfas-aux-workbook",
+        type=Path,
+        default=None,
+        help=(
+            "Run PFAS TK auxiliary-feature workbook sheets as predefined-split datasets. "
+            "Each non-manifest sheet must contain split, QSAR_READY_SMILES, TARGET_log10, and auxiliary feature columns."
+        ),
+    )
+    parser.add_argument(
+        "--pfas-aux-sheet",
+        action="append",
+        help="Specific sheet from --pfas-aux-workbook to run. Repeat for multiple sheets.",
+    )
+    parser.add_argument(
         "--refresh-leaderboards-only",
         action=argparse.BooleanOptionalAction,
         default=False,
@@ -8854,7 +9140,11 @@ def main() -> int:
             print(f"Shared cache CSV: {root / 'data' / 'benchmark_leaderboards' / 'leaderboard_top10_reference_latest.csv'}")
         return 0
 
-    if args.dataset:
+    if args.pfas_aux_workbook:
+        datasets = discover_pfas_aux_workbook_datasets(args.pfas_aux_workbook, include_sheets=args.pfas_aux_sheet)
+        args.split_strategy = "predefined"
+        args.target_transform = "raw"
+    elif args.dataset:
         datasets = discover_local_datasets(root, args.dataset)
     else:
         datasets = discover_default_example_datasets(root)
@@ -8896,6 +9186,12 @@ def main() -> int:
         )
         print(f"Planned output directory: {output_dir}")
         print(f"Benchmark profile: {args.benchmark_profile}")
+        print(f".env loaded: {dotenv_status_text()}")
+        print(
+            "Prior Labs API key: "
+            f"{'available' if priorlabs_api_key_available() else 'not found'} "
+            "(PRIORLABS_API_KEY/TABPFN_API_KEY)"
+        )
         print(f"Default molecular feature families: {', '.join(DEFAULT_BENCHMARK_FEATURE_FAMILIES)}")
         print(
             "Persistent feature store: "
@@ -8940,6 +9236,8 @@ def main() -> int:
         )
         if resume_plan is not None:
             print_resume_execution_plan(resume_plan)
+        if bool(getattr(args, "run_tabpfn", False)):
+            print(f"TabPFN backend source: {tabpfn_backend_status_text()}")
         if tabpfn_budget_estimate is not None:
             print(
                 "TabPFN daily-budget estimate: "
@@ -9017,6 +9315,12 @@ def main() -> int:
         else "unknown"
     )
     print(f"Benchmark profile: {args.benchmark_profile}")
+    print(f".env loaded: {dotenv_status_text()}")
+    print(
+        "Prior Labs API key: "
+        f"{'available' if priorlabs_api_key_available() else 'not found'} "
+        "(PRIORLABS_API_KEY/TABPFN_API_KEY)"
+    )
     print(f"Default molecular feature families: {', '.join(DEFAULT_BENCHMARK_FEATURE_FAMILIES)}")
     print(
         "Persistent feature store: "
@@ -9073,7 +9377,7 @@ def main() -> int:
     if resume_plan is not None:
         print_resume_execution_plan(resume_plan)
     if bool(getattr(args, "run_tabpfn", False)):
-        print(f"TabPFN backend source: {TABPFN_REGRESSOR_SOURCE}")
+        print(f"TabPFN backend source: {tabpfn_backend_status_text()}")
     print(
         "Uni-Mol V1 stage: "
         f"{'on' if bool(getattr(args, 'run_unimol_v1', False)) else 'off'} "

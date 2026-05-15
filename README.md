@@ -431,6 +431,127 @@ python portable_colab_qsar_bundle\run_autoqsar_ga_benchmarks.py `
 The runner is designed for long runs. Use `--resume` and a stable `--output-dir`
 so completed datasets and compatible intermediate artifacts can be reused.
 
+## Running The PFAS Auxiliary Workbook Benchmark
+
+The PFAS auxiliary-feature workbook is handled by the main benchmark runner, so
+it uses the same model-discovery, optional-backend availability checks, CUDA
+behavior, reporting, CFA, ensemble, and resume logic as the other AutoQSAR
+benchmarks.
+
+```text
+data/modeling_datasets_aux_features.xlsx
+```
+
+Each non-`manifest` sheet is treated as one distinct dataset, where the sheet
+name encodes the target and SMILES subset, for example `HLe_invivo_pfas_tsca` or
+`VDss_nonpfas_struct`. The runner preserves the sheet's predefined `split`
+column, uses `QSAR_READY_SMILES` and `TARGET_log10`, builds molecular features
+through `portable_colab_qsar_bundle/qsar_workflow_core.py`, appends the exact
+numeric auxiliary features in the sheet as `aux__*` columns, and evaluates
+regression models on the supplied train/test split. The workbook target is
+treated as already log10-transformed, so the runner uses `target_transform=raw`
+for these datasets.
+
+Basic full run:
+
+```powershell
+conda activate autoqsar-py311
+python portable_colab_qsar_bundle\run_autoqsar_ga_benchmarks.py `
+  --pfas-aux-workbook data\modeling_datasets_aux_features.xlsx `
+  --output-dir benchmark_results\pfas_aux_qsar_full `
+  --resume
+```
+
+Use a dry run to confirm sheet discovery and planned model stages before
+training:
+
+```powershell
+python portable_colab_qsar_bundle\run_autoqsar_ga_benchmarks.py `
+  --pfas-aux-workbook data\modeling_datasets_aux_features.xlsx `
+  --pfas-aux-sheet VDss_pfas_tsca `
+  --dry-run
+```
+
+Re-running the same command with the same `--output-dir --resume` reuses
+completed datasets and compatible intermediate artifacts. This supports
+resuming after interruption, running one sheet first, and then expanding to the
+remaining sheets without rerunning completed work.
+
+Run or resume one sheet:
+
+```powershell
+python portable_colab_qsar_bundle\run_autoqsar_ga_benchmarks.py `
+  --pfas-aux-workbook data\modeling_datasets_aux_features.xlsx `
+  --pfas-aux-sheet VDss_pfas_tsca `
+  --output-dir benchmark_results\pfas_aux_qsar_full `
+  --resume
+```
+
+Run a lower-cost smoke test before a full run:
+
+```powershell
+python portable_colab_qsar_bundle\run_autoqsar_ga_benchmarks.py `
+  --pfas-aux-workbook data\modeling_datasets_aux_features.xlsx `
+  --pfas-aux-sheet VDss_pfas_tsca `
+  --output-dir benchmark_results\pfas_aux_qsar_smoke `
+  --row-limit 40 `
+  --fingerprint-bits 128 `
+  --benchmark-profile cost_optimized `
+  --no-run-tabpfn `
+  --no-run-cnn `
+  --no-run-chemprop-mpnn `
+  --no-run-maplight-gnn `
+  --no-run-cfa `
+  --no-run-ensemble
+```
+
+Useful PFAS workbook controls:
+
+| Option | Purpose |
+|---|---|
+| `--pfas-aux-workbook PATH` | Load workbook sheets as predefined-split PFAS auxiliary datasets. |
+| `--pfas-aux-sheet SHEET` | Run one workbook sheet. Repeat for multiple sheets. |
+| `--output-dir PATH` | Stable run directory for resume and combined outputs. |
+| `--resume/--no-resume` | Resume compatible incomplete runs or force a fresh run. |
+| `--benchmark-profile PROFILE` | Select the same benchmark profile behavior used by the standard runner. |
+| `--ga-mode`, `--ga-models` | Control GA feature-selection stages. |
+| `--run-tabpfn/--no-run-tabpfn` | Enable or disable TabPFNRegressor. |
+| `--run-chemprop-mpnn/--no-run-chemprop-mpnn` | Enable or disable Chemprop MPNN. |
+| `--run-chemprop-attentivefp/--no-run-chemprop-attentivefp` | Enable or disable Chemprop AttentiveFP. |
+| `--run-unimol-v1/--no-run-unimol-v1` | Override Uni-Mol V1 auto behavior. |
+| `--run-maplight-gnn/--no-run-maplight-gnn` | Enable or disable MapLight plus GNN stages. |
+| `--run-cfa/--no-run-cfa` | Enable or disable CFA fusion. |
+| `--run-ensemble/--no-run-ensemble` | Enable or disable standard ensembles. |
+
+The full command uses the same model plan as `run_autoqsar_ga_benchmarks.py`.
+Conventional models, CatBoost/XGBoost, ChemML MLP, Chemprop, MapLight/GNN,
+Uni-Mol, TabPFN, CFA, and ensemble stages are run or skipped according to the
+installed packages, CUDA availability, benchmark profile, and explicit
+`--run-*` / `--no-run-*` flags.
+
+The main PFAS workbook outputs are:
+
+| File | Meaning |
+|---|---|
+| `summary_metrics.csv` | Combined model metrics across workbook datasets and benchmark stages. |
+| `predictions.csv` | Combined train/test observed and predicted log10 target values. |
+| `run_config.json` and `run_complete.json` | Runner configuration and completion metadata. |
+| `<dataset>/` | Per-dataset benchmark artifacts written by the standard runner. |
+| `model_cache/` | Reusable feature-store and shared feature-matrix caches. |
+
+After a run, open the summary notebook:
+
+```text
+portable_colab_qsar_bundle/pfas_aux_qsar_results_summary.ipynb
+```
+
+It auto-detects the latest compatible PFAS auxiliary run from
+`run_autoqsar_ga_benchmarks.py --pfas-aux-workbook` unless `RUN_DIR` is set in
+the first code cell. The notebook builds a model-performance table for each
+dataset, identifies the best model per sheet by test RMSE, reports run metadata
+and stale-output warnings, and plots one faceted log10 actual-versus-predicted
+test-set scatterplot for the best model in each workbook dataset.
+
 ## Datasets And Benchmark Registry
 
 The shared benchmark registry lives in:
@@ -518,10 +639,30 @@ on the backend:
 
 | Backend | When used | Authentication |
 |---|---|---|
-| `tabpfn` local backend | GPU available | Hugging Face token plus one-time Prior Labs license flow. |
-| `tabpfn_client` API backend | CPU-only fallback | Prior Labs API key. |
+| `tabpfn_client` API backend | Default when `PRIORLABS_API_KEY` is available in `.env` or the shell environment | Prior Labs API key. |
+| `tabpfn` local backend | Used when no Prior Labs API key is available and local TabPFN is selected | Hugging Face token plus one-time Prior Labs license flow. |
 
-For local TabPFN model download, set a Hugging Face token:
+The benchmark runner loads a repo-root `.env` file automatically before TabPFN
+backend selection. The preferred local setup is:
+
+```text
+PRIORLABS_API_KEY=your_key_here
+```
+
+With that key present, `run_autoqsar_ga_benchmarks.py` uses the Prior Labs
+`tabpfn_client` backend by default and applies the key before the TabPFN
+preflight. The runner prints whether `.env` was loaded and whether a Prior Labs
+key was found, but it does not print the key value.
+
+If you prefer to set the key in PowerShell instead of `.env`:
+
+```powershell
+$env:PRIORLABS_API_KEY = "your_key_here"
+[System.Environment]::SetEnvironmentVariable("PRIORLABS_API_KEY", "your_key_here", "User")
+```
+
+For local TabPFN model download without the API backend, set a Hugging Face
+token:
 
 ```powershell
 huggingface-cli login
@@ -532,13 +673,6 @@ or:
 ```powershell
 $env:HF_TOKEN = "hf_your_token_here"
 [System.Environment]::SetEnvironmentVariable("HF_TOKEN", "hf_your_token_here", "User")
-```
-
-For the API backend:
-
-```powershell
-$env:PRIORLABS_API_KEY = "your_key_here"
-[System.Environment]::SetEnvironmentVariable("PRIORLABS_API_KEY", "your_key_here", "User")
 ```
 
 If credentials are missing in an interactive terminal, the benchmark runner
