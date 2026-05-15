@@ -1,0 +1,43 @@
+{
+  "created_at": "2026-05-14T17:13:32",
+  "script": "C:\\Users\\Scott.Coffin\\OneDrive - California OEHHA\\R_new\\AutoQSAR\\portable_colab_qsar_bundle\\run_pfas_aux_qsar_workbook.py",
+  "workbook": "C:\\Users\\Scott.Coffin\\OneDrive - California OEHHA\\R_new\\AutoQSAR\\data\\modeling_datasets_aux_features.xlsx",
+  "workbook_sha256": "bbc7d40dc39d1785ca020fee71fe9ea59988e3de9f3c159c589fdf7c9735e9c8",
+  "output_dir": "C:\\Users\\Scott.Coffin\\OneDrive - California OEHHA\\R_new\\AutoQSAR\\benchmark_results\\pfas_aux_qsar_20260514_171325",
+  "sheets": [
+    "HLe_invivo_pfas_tsca",
+    "VDss_pfas_tsca",
+    "HLe_invivo_nonpfas_tsca",
+    "VDss_nonpfas_tsca",
+    "HLe_invivo_pfas_struct",
+    "VDss_pfas_struct",
+    "HLe_invivo_nonpfas_struct",
+    "VDss_nonpfas_struct"
+  ],
+  "models": [
+    "catboost",
+    "elasticnet",
+    "extra_trees",
+    "hist_gradient_boosting",
+    "knn_distance",
+    "random_forest",
+    "ridge_cv",
+    "svr_rbf",
+    "xgboost"
+  ],
+  "feature_families": [
+    "morgan",
+    "ecfp6",
+    "fcfp6",
+    "layered",
+    "atom_pair",
+    "topological_torsion",
+    "rdk_path",
+    "maccs",
+    "rdkit",
+    "maplight"
+  ],
+  "feature_store": "C:\\Users\\Scott.Coffin\\OneDrive - California OEHHA\\R_new\\AutoQSAR\\model_cache\\feature_store_parquet",
+  "fast": false,
+  "random_seed": 42
+}

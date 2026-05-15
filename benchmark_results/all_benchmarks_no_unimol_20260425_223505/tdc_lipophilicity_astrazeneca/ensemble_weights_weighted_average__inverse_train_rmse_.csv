@@ -1,0 +1,12 @@
+Model,Weight,Workflow
+ElasticNetCV,0.06678982765281075,Conventional ML
+Random forest,0.11403747122700547,Conventional ML
+AdaBoost,0.03186305165820031,Conventional ML
+Tabular MLP,0.2095914566983161,Conventional ML
+Tabular CNN,0.03145564124171523,Conventional ML
+XGBoost,0.1584849973659006,Conventional ML
+CatBoost,0.06434408913832322,Conventional ML
+MapLight CatBoost (Strict Parity),0.0642821434154049,Conventional ML
+"Chemprop v2 (AttentiveFP, ensemble=1)",0.061412948132469246,Chemprop v2
+"Chemprop v2 (AttentiveFP + Selected descriptors, ensemble=1)",0.12703942424121153,Chemprop v2
+"MapLight + GNN (CatBoost, Strict Parity)",0.07069894922864244,MapLight + GNN

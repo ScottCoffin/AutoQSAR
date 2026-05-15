@@ -1,0 +1,9 @@
+{
+  "status": "completed",
+  "dataset": "tdc_ppbr_az",
+  "source": "PyTDC ADME benchmark group: ppbr_az (official train_val/test split)",
+  "completed_at": "2026-04-25 04:37:35",
+  "elapsed_seconds": 5667.718,
+  "n_metrics_rows": 22,
+  "n_stage_records": 21
+}

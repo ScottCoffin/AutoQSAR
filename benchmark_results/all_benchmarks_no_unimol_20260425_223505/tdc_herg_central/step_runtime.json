@@ -1,0 +1,26 @@
+[
+  {
+    "dataset": "tdc_herg_central",
+    "stage_index": 1,
+    "total_stages": 22,
+    "stage_label": "loading PyTDC Tox benchmark: herg_central [label=hERG_at_1uM]",
+    "started_at": "2026-04-26 04:56:31 Pacific Daylight Time",
+    "started_epoch": 1777204591.6971903,
+    "status": "completed",
+    "ended_at": "2026-04-26 04:57:43 Pacific Daylight Time",
+    "ended_epoch": 1777204663.127503,
+    "duration_seconds": 71.43
+  },
+  {
+    "dataset": "tdc_herg_central",
+    "stage_index": 2,
+    "total_stages": 22,
+    "stage_label": "building molecular features",
+    "started_at": "2026-04-26 04:57:43 Pacific Daylight Time",
+    "started_epoch": 1777204663.127503,
+    "status": "running",
+    "ended_at": "2026-04-26 04:57:43 Pacific Daylight Time",
+    "ended_epoch": 1777204663.1281579,
+    "duration_seconds": 0.001
+  }
+]

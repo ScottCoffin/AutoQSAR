@@ -1,0 +1,9 @@
+{
+  "status": "completed",
+  "dataset": "poduam_pod_nc_std",
+  "source": "PODUAM benchmark: POD non-cancer standardized set (Aurisano et al., Nature Communications 2025)",
+  "completed_at": "2026-04-24 23:55:13",
+  "elapsed_seconds": 3787.873,
+  "n_metrics_rows": 22,
+  "n_stage_records": 21
+}

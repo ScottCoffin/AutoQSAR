@@ -1,0 +1,20 @@
+dataset,stage_index,total_stages,stage_label,started_at,started_epoch,status,ended_at,ended_epoch,duration_seconds
+tdc_cyp2c9_veith,1,22,loading PyTDC ADME benchmark group: cyp2c9_veith (official train_val/test split),2026-04-25 15:47:44 Pacific Daylight Time,1777157264.831744,completed,2026-04-25 15:47:47 Pacific Daylight Time,1777157267.9314146,3.1
+tdc_cyp2c9_veith,2,22,building molecular features,2026-04-25 15:47:47 Pacific Daylight Time,1777157267.9314146,completed,2026-04-25 15:54:05 Pacific Daylight Time,1777157645.399006,377.468
+tdc_cyp2c9_veith,3,22,splitting data and selecting features,2026-04-25 15:54:05 Pacific Daylight Time,1777157645.399006,completed,2026-04-25 16:58:43 Pacific Daylight Time,1777161523.4920754,3878.093
+tdc_cyp2c9_veith,4,22,conventional model LogisticRegression,2026-04-25 16:58:43 Pacific Daylight Time,1777161523.4920754,completed,2026-04-25 16:58:50 Pacific Daylight Time,1777161530.687913,7.196
+tdc_cyp2c9_veith,5,22,conventional model SVC,2026-04-25 16:58:50 Pacific Daylight Time,1777161530.687913,completed,2026-04-25 17:05:56 Pacific Daylight Time,1777161956.0800123,425.392
+tdc_cyp2c9_veith,6,22,conventional model Random forest,2026-04-25 17:05:56 Pacific Daylight Time,1777161956.0800123,completed,2026-04-25 17:07:30 Pacific Daylight Time,1777162050.2690222,94.189
+tdc_cyp2c9_veith,7,22,conventional model Extra trees,2026-04-25 17:07:30 Pacific Daylight Time,1777162050.2690222,completed,2026-04-25 17:08:38 Pacific Daylight Time,1777162118.8337047,68.565
+tdc_cyp2c9_veith,8,22,conventional model HistGradientBoosting,2026-04-25 17:08:38 Pacific Daylight Time,1777162118.8337047,completed,2026-04-25 17:10:07 Pacific Daylight Time,1777162207.1030781,88.269
+tdc_cyp2c9_veith,9,22,"conventional model Voting Classifier (KNN, SVM)",2026-04-25 17:10:07 Pacific Daylight Time,1777162207.1030781,completed,2026-04-25 17:17:25 Pacific Daylight Time,1777162645.1948307,438.092
+tdc_cyp2c9_veith,10,22,conventional model AdaBoost,2026-04-25 17:17:25 Pacific Daylight Time,1777162645.1948307,completed,2026-04-25 17:21:50 Pacific Daylight Time,1777162910.3333902,265.139
+tdc_cyp2c9_veith,11,22,conventional model Tabular MLP,2026-04-25 17:21:50 Pacific Daylight Time,1777162910.3333902,completed,2026-04-25 17:24:43 Pacific Daylight Time,1777163083.8295195,173.496
+tdc_cyp2c9_veith,12,22,conventional model XGBoost,2026-04-25 17:24:43 Pacific Daylight Time,1777163083.8295195,completed,2026-04-25 17:25:30 Pacific Daylight Time,1777163130.077227,46.248
+tdc_cyp2c9_veith,13,22,conventional model CatBoost,2026-04-25 17:25:30 Pacific Daylight Time,1777163130.077227,completed,2026-04-25 17:26:11 Pacific Daylight Time,1777163171.1201723,41.043
+tdc_cyp2c9_veith,14,22,deep model ChemML MLP (PyTorch),2026-04-25 17:26:11 Pacific Daylight Time,1777163171.1201723,completed,2026-04-25 17:33:14 Pacific Daylight Time,1777163594.952834,423.833
+tdc_cyp2c9_veith,15,22,"deep model Chemprop v2 (AttentiveFP, ensemble=1)",2026-04-25 17:33:14 Pacific Daylight Time,1777163594.952834,completed,2026-04-25 17:42:27 Pacific Daylight Time,1777164147.649583,552.697
+tdc_cyp2c9_veith,16,22,"deep model Chemprop v2 (AttentiveFP + Selected descriptors, ensemble=1)",2026-04-25 17:42:27 Pacific Daylight Time,1777164147.6505804,completed,2026-04-25 17:47:24 Pacific Daylight Time,1777164444.5125406,296.862
+tdc_cyp2c9_veith,17,22,"deep model MapLight + GNN (CatBoost, Strict Parity)",2026-04-25 17:47:24 Pacific Daylight Time,1777164444.5125406,completed,2026-04-25 17:53:39 Pacific Daylight Time,1777164819.4851694,374.973
+tdc_cyp2c9_veith,18,22,CFA combinatorial fusion,2026-04-25 17:53:39 Pacific Daylight Time,1777164819.4851694,completed,2026-04-25 17:53:40 Pacific Daylight Time,1777164820.4405293,0.955
+tdc_cyp2c9_veith,19,22,ensemble (2 method(s)),2026-04-25 17:53:40 Pacific Daylight Time,1777164820.4405293,completed,2026-04-25 17:53:43 Pacific Daylight Time,1777164823.6782272,3.238

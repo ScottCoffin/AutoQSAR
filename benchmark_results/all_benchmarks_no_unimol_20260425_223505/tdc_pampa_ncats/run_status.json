@@ -1,0 +1,9 @@
+{
+  "status": "completed",
+  "dataset": "tdc_pampa_ncats",
+  "source": "PyTDC ADME benchmark: pampa_ncats",
+  "completed_at": "2026-04-25 00:59:39",
+  "elapsed_seconds": 1723.856,
+  "n_metrics_rows": 18,
+  "n_stage_records": 19
+}

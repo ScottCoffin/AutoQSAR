@@ -1,0 +1,6 @@
+Model,Weight,Workflow
+Random forest,0.3333321245859521,Conventional ML
+AdaBoost,1.222802583349486e-06,Conventional ML
+CatBoost,0.3333321245859521,Conventional ML
+"Chemprop v2 (AttentiveFP, ensemble=1)",2.403439560376518e-06,Chemprop v2
+CFA (Combinatorial Fusion),0.3333321245859521,CFA fusion

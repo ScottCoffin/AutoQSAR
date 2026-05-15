@@ -1,0 +1,9 @@
+{
+  "status": "completed",
+  "dataset": "tdc_solubility_aqsoldb",
+  "source": "PyTDC ADME benchmark group: solubility_aqsoldb (official train_val/test split)",
+  "completed_at": "2026-04-25 15:47:44",
+  "elapsed_seconds": 8097.957,
+  "n_metrics_rows": 20,
+  "n_stage_records": 21
+}

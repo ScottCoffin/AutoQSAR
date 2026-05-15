@@ -1,0 +1,10 @@
+{
+  "status": "running",
+  "dataset": "vdss_nonpfas_struct",
+  "source": "PFAS auxiliary workbook: modeling_datasets_aux_features.xlsx::VDss_nonpfas_struct",
+  "started_at": "2026-05-14 18:25:20",
+  "checkpoint_stage": "conventional:Tabular MLP",
+  "n_metrics_rows": 9,
+  "n_prediction_tables": 16,
+  "n_stage_records": 11
+}

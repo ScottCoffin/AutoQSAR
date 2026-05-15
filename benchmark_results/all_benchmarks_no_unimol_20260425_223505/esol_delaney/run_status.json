@@ -1,0 +1,9 @@
+{
+  "status": "completed",
+  "dataset": "esol_delaney",
+  "source": "MoleculeNet PhysChem benchmark: ESOL (Delaney)",
+  "completed_at": "2026-04-24 20:22:10",
+  "elapsed_seconds": 1063.51,
+  "n_metrics_rows": 22,
+  "n_stage_records": 22
+}

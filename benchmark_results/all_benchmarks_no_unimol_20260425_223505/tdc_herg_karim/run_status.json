@@ -1,0 +1,9 @@
+{
+  "status": "completed",
+  "dataset": "tdc_herg_karim",
+  "source": "PyTDC Tox benchmark: herg_karim",
+  "completed_at": "2026-04-26 04:56:31",
+  "elapsed_seconds": 8633.763,
+  "n_metrics_rows": 18,
+  "n_stage_records": 19
+}

@@ -1,0 +1,14 @@
+Model,Weight,Workflow
+LogisticRegression,3.3802433974904736e-06,Conventional ML
+SVC,0.0002897311156701087,Conventional ML
+Random forest,0.6045489349308342,Conventional ML
+Extra trees,0.3780306926722965,Conventional ML
+AdaBoost,1.8898781225388488e-06,Conventional ML
+Tabular MLP,0.0005648824749551787,Conventional ML
+XGBoost,0.0007641588994239381,Conventional ML
+CatBoost,1.2218635495879326e-05,Conventional ML
+ChemML MLP (PyTorch),0.000930063807338347,ChemML deep learning
+"Chemprop v2 (AttentiveFP, ensemble=1)",3.3000179080008736e-06,Chemprop v2
+"Chemprop v2 (AttentiveFP + Selected descriptors, ensemble=1)",3.97520261677156e-06,Chemprop v2
+"MapLight + GNN (CatBoost, Strict Parity)",8.864839638532882e-06,MapLight + GNN
+CFA (Combinatorial Fusion),0.014837907282302578,CFA fusion

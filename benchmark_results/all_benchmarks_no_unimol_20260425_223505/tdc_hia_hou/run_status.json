@@ -1,0 +1,9 @@
+{
+  "status": "completed",
+  "dataset": "tdc_hia_hou",
+  "source": "PyTDC ADME benchmark group: hia_hou (official train_val/test split)",
+  "completed_at": "2026-04-24 17:15:52",
+  "elapsed_seconds": 1195.052,
+  "n_metrics_rows": 18,
+  "n_stage_records": 20
+}

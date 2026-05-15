@@ -1,0 +1,9 @@
+{
+  "status": "completed",
+  "dataset": "lipophilicity",
+  "source": "MoleculeNet PhysChem benchmark: Lipophilicity",
+  "completed_at": "2026-04-25 07:37:07",
+  "elapsed_seconds": 7962.171,
+  "n_metrics_rows": 20,
+  "n_stage_records": 21
+}

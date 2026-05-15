@@ -1,0 +1,13 @@
+dataset,stage_index,total_stages,stage_label,started_at,started_epoch,status,ended_at,ended_epoch,duration_seconds
+vdss_nonpfas_struct,1,22,loading PFAS auxiliary workbook: modeling_datasets_aux_features.xlsx::VDss_nonpfas_struct,2026-05-14 18:15:08 Pacific Daylight Time,1778807708.2993045,completed,2026-05-14 18:15:08 Pacific Daylight Time,1778807708.7326577,0.433
+vdss_nonpfas_struct,2,22,building molecular features,2026-05-14 18:15:08 Pacific Daylight Time,1778807708.7326577,completed,2026-05-14 18:16:14 Pacific Daylight Time,1778807774.9161203,66.183
+vdss_nonpfas_struct,3,22,splitting data and selecting features,2026-05-14 18:16:14 Pacific Daylight Time,1778807774.9161203,completed,2026-05-14 18:19:08 Pacific Daylight Time,1778807948.4876752,173.572
+vdss_nonpfas_struct,4,22,conventional model ElasticNetCV,2026-05-14 18:19:08 Pacific Daylight Time,1778807948.4876752,completed,2026-05-14 18:19:17 Pacific Daylight Time,1778807957.2058837,8.718
+vdss_nonpfas_struct,5,22,conventional model SVR,2026-05-14 18:19:17 Pacific Daylight Time,1778807957.2058837,completed,2026-05-14 18:19:19 Pacific Daylight Time,1778807959.0383272,1.832
+vdss_nonpfas_struct,6,22,conventional model Random forest,2026-05-14 18:19:19 Pacific Daylight Time,1778807959.0383272,completed,2026-05-14 18:21:04 Pacific Daylight Time,1778808064.156479,105.118
+vdss_nonpfas_struct,7,22,conventional model Extra trees,2026-05-14 18:21:04 Pacific Daylight Time,1778808064.156479,completed,2026-05-14 18:23:17 Pacific Daylight Time,1778808197.5883882,133.432
+vdss_nonpfas_struct,8,22,conventional model HistGradientBoosting,2026-05-14 18:23:17 Pacific Daylight Time,1778808197.5883882,completed,2026-05-14 18:24:08 Pacific Daylight Time,1778808248.9976082,51.409
+vdss_nonpfas_struct,9,22,"conventional model Voting Regressor (KNN, SVM)",2026-05-14 18:24:08 Pacific Daylight Time,1778808248.9976082,completed,2026-05-14 18:24:12 Pacific Daylight Time,1778808252.7102525,3.713
+vdss_nonpfas_struct,10,22,conventional model AdaBoost,2026-05-14 18:24:12 Pacific Daylight Time,1778808252.7102525,completed,2026-05-14 18:24:42 Pacific Daylight Time,1778808282.6487994,29.939
+vdss_nonpfas_struct,11,22,conventional model Tabular MLP,2026-05-14 18:24:42 Pacific Daylight Time,1778808282.6487994,completed,2026-05-14 18:25:20 Pacific Daylight Time,1778808320.8495238,38.201
+vdss_nonpfas_struct,12,22,conventional model Tabular CNN,2026-05-14 18:25:20 Pacific Daylight Time,1778808320.8495238,running,2026-05-14 18:25:20 Pacific Daylight Time,1778808320.8495238,0.0

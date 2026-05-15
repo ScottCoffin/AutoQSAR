@@ -1,0 +1,9 @@
+{
+  "status": "completed",
+  "dataset": "freesolv_sampl",
+  "source": "MoleculeNet PhysChem benchmark: FreeSolv (SAMPL)",
+  "completed_at": "2026-04-24 17:49:23",
+  "elapsed_seconds": 1019.32,
+  "n_metrics_rows": 20,
+  "n_stage_records": 22
+}

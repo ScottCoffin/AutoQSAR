@@ -1,0 +1,23 @@
+dataset,stage_index,total_stages,stage_label,started_at,started_epoch,status,ended_at,ended_epoch,duration_seconds
+tdc_caco2_wang,1,22,loading PyTDC ADME benchmark group: caco2_wang (official train_val/test split),2026-04-24 19:22:24 Pacific Daylight Time,1777083744.0359733,completed,2026-04-24 19:22:24 Pacific Daylight Time,1777083744.349247,0.313
+tdc_caco2_wang,2,22,building molecular features,2026-04-24 19:22:24 Pacific Daylight Time,1777083744.349247,completed,2026-04-24 19:22:24 Pacific Daylight Time,1777083744.4612217,0.112
+tdc_caco2_wang,3,22,splitting data and selecting features,2026-04-24 19:22:24 Pacific Daylight Time,1777083744.4612217,completed,2026-04-24 19:25:46 Pacific Daylight Time,1777083946.8027754,202.342
+tdc_caco2_wang,4,22,conventional model ElasticNetCV,2026-04-24 19:25:46 Pacific Daylight Time,1777083946.8027754,completed,2026-04-24 19:25:55 Pacific Daylight Time,1777083955.280202,8.477
+tdc_caco2_wang,5,22,conventional model SVR,2026-04-24 19:25:55 Pacific Daylight Time,1777083955.280202,completed,2026-04-24 19:25:55 Pacific Daylight Time,1777083955.8158195,0.536
+tdc_caco2_wang,6,22,conventional model Random forest,2026-04-24 19:25:55 Pacific Daylight Time,1777083955.8158195,completed,2026-04-24 19:26:32 Pacific Daylight Time,1777083992.882935,37.067
+tdc_caco2_wang,7,22,conventional model Extra trees,2026-04-24 19:26:32 Pacific Daylight Time,1777083992.882935,completed,2026-04-24 19:27:27 Pacific Daylight Time,1777084047.3187444,54.436
+tdc_caco2_wang,8,22,conventional model HistGradientBoosting,2026-04-24 19:27:27 Pacific Daylight Time,1777084047.3187444,completed,2026-04-24 19:28:01 Pacific Daylight Time,1777084081.1750045,33.856
+tdc_caco2_wang,9,22,"conventional model Voting Regressor (KNN, SVM)",2026-04-24 19:28:01 Pacific Daylight Time,1777084081.1760044,completed,2026-04-24 19:28:02 Pacific Daylight Time,1777084082.5383983,1.362
+tdc_caco2_wang,10,22,conventional model AdaBoost,2026-04-24 19:28:02 Pacific Daylight Time,1777084082.5383983,completed,2026-04-24 19:28:20 Pacific Daylight Time,1777084100.272681,17.734
+tdc_caco2_wang,11,22,conventional model Tabular MLP,2026-04-24 19:28:20 Pacific Daylight Time,1777084100.272681,completed,2026-04-24 19:28:39 Pacific Daylight Time,1777084119.8320842,19.559
+tdc_caco2_wang,12,22,conventional model Tabular CNN,2026-04-24 19:28:39 Pacific Daylight Time,1777084119.8320842,completed,2026-04-24 19:30:06 Pacific Daylight Time,1777084206.3000274,86.468
+tdc_caco2_wang,13,22,conventional model XGBoost,2026-04-24 19:30:06 Pacific Daylight Time,1777084206.3000274,completed,2026-04-24 19:30:10 Pacific Daylight Time,1777084210.5813084,4.281
+tdc_caco2_wang,14,22,conventional model CatBoost,2026-04-24 19:30:10 Pacific Daylight Time,1777084210.5813084,completed,2026-04-24 19:30:20 Pacific Daylight Time,1777084220.2607875,9.679
+tdc_caco2_wang,15,22,conventional model MapLight CatBoost (Strict Parity),2026-04-24 19:30:20 Pacific Daylight Time,1777084220.2607875,completed,2026-04-24 19:32:14 Pacific Daylight Time,1777084334.2196867,113.959
+tdc_caco2_wang,16,22,conventional model TabPFNRegressor,2026-04-24 19:32:14 Pacific Daylight Time,1777084334.2196867,completed,2026-04-24 19:33:46 Pacific Daylight Time,1777084426.3892114,92.17
+tdc_caco2_wang,17,22,deep model ChemML MLP (PyTorch),2026-04-24 19:33:46 Pacific Daylight Time,1777084426.3892114,completed,2026-04-24 19:34:04 Pacific Daylight Time,1777084444.1819198,17.793
+tdc_caco2_wang,18,22,"deep model Chemprop v2 (AttentiveFP, ensemble=1)",2026-04-24 19:34:04 Pacific Daylight Time,1777084444.1819198,completed,2026-04-24 19:36:16 Pacific Daylight Time,1777084576.8956306,132.714
+tdc_caco2_wang,19,22,"deep model Chemprop v2 (AttentiveFP + Selected descriptors, ensemble=1)",2026-04-24 19:36:16 Pacific Daylight Time,1777084576.8956306,completed,2026-04-24 19:37:29 Pacific Daylight Time,1777084649.3266814,72.431
+tdc_caco2_wang,20,22,"deep model MapLight + GNN (CatBoost, Strict Parity)",2026-04-24 19:37:29 Pacific Daylight Time,1777084649.3266814,completed,2026-04-24 19:41:09 Pacific Daylight Time,1777084869.4300394,220.103
+tdc_caco2_wang,21,22,CFA combinatorial fusion,2026-04-24 19:41:09 Pacific Daylight Time,1777084869.4300394,completed,2026-04-24 19:41:09 Pacific Daylight Time,1777084869.6114004,0.181
+tdc_caco2_wang,22,22,ensemble (2 method(s)),2026-04-24 19:41:09 Pacific Daylight Time,1777084869.6114004,completed,2026-04-24 19:41:10 Pacific Daylight Time,1777084870.3320534,0.721

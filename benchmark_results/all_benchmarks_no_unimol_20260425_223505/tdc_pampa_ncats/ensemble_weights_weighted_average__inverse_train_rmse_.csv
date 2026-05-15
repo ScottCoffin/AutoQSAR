@@ -1,0 +1,12 @@
+Model,Weight,Workflow
+LogisticRegression,8.678934020431078e-07,Conventional ML
+SVC,0.00026962555023453145,Conventional ML
+Random forest,0.24993098835255068,Conventional ML
+Extra trees,0.24993098835255068,Conventional ML
+AdaBoost,1.483306408538463e-08,Conventional ML
+XGBoost,0.24993098835255068,Conventional ML
+CatBoost,5.321556912527002e-06,Conventional ML
+"Chemprop v2 (AttentiveFP, ensemble=1)",1.2545780480568834e-08,Chemprop v2
+"Chemprop v2 (AttentiveFP + Selected descriptors, ensemble=1)",1.6125930037962344e-07,Chemprop v2
+"MapLight + GNN (CatBoost, Strict Parity)",4.2951103183549513e-08,MapLight + GNN
+CFA (Combinatorial Fusion),0.24993098835255068,CFA fusion

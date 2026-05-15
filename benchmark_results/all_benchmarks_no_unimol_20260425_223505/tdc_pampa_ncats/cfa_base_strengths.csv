@@ -1,0 +1,5 @@
+model,train_metric,performance_strength,diversity_strength
+ChemML MLP (PyTorch),0.0,1000000000000.0,0.010540420203532385
+"Chemprop v2 (AttentiveFP + Selected descriptors, ensemble=1)",0.015498702261772412,64.52153110047817,0.013969185070776553
+Extra trees,0.0,1000000000000.0,0.014015206948132576
+"MapLight + GNN (CatBoost, Strict Parity)",0.0581896551724137,17.18518518518521,0.017682384814923714

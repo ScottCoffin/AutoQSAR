@@ -1,0 +1,49 @@
+winning_family,task_kind,dataset_size_quartile,datasets,median_n_molecules,median_best_metric,median_estimated_rank
+Conventional ML,classification,"(279.999, 667.0]",3,640.0,0.8608247422680413,1.0
+Ensemble meta-model,classification,"(279.999, 667.0]",2,439.5,0.8439410939691445,3.0
+CFA combinatorial fusion,classification,"(279.999, 667.0]",1,578.0,0.989917695473251,4.0
+Graph neural networks (Chemprop),classification,"(279.999, 667.0]",1,667.0,0.6839378493200113,5.0
+Graph transfer + tabular head,classification,"(279.999, 667.0]",0,,,
+TabPFN foundation model,classification,"(279.999, 667.0]",0,,,
+Conventional ML,classification,"(667.0, 1604.5]",3,1218.0,0.9240202612636628,5.0
+Ensemble meta-model,classification,"(667.0, 1604.5]",1,669.0,0.4274802230930517,3.0
+CFA combinatorial fusion,classification,"(667.0, 1604.5]",0,,,
+Graph neural networks (Chemprop),classification,"(667.0, 1604.5]",0,,,
+Graph transfer + tabular head,classification,"(667.0, 1604.5]",0,,,
+TabPFN foundation model,classification,"(667.0, 1604.5]",0,,,
+Conventional ML,classification,"(1604.5, 4200.0]",2,1880.5,0.8618859600560987,1.5
+Ensemble meta-model,classification,"(1604.5, 4200.0]",1,2034.0,0.8112310815799187,
+CFA combinatorial fusion,classification,"(1604.5, 4200.0]",0,,,
+Graph neural networks (Chemprop),classification,"(1604.5, 4200.0]",0,,,
+Graph transfer + tabular head,classification,"(1604.5, 4200.0]",0,,,
+TabPFN foundation model,classification,"(1604.5, 4200.0]",0,,,
+Ensemble meta-model,classification,"(4200.0, 13445.0]",7,12579.0,0.8890383704398725,2.0
+Conventional ML,classification,"(4200.0, 13445.0]",1,7258.0,0.808239319602956,7.0
+CFA combinatorial fusion,classification,"(4200.0, 13445.0]",0,,,
+Graph neural networks (Chemprop),classification,"(4200.0, 13445.0]",0,,,
+Graph transfer + tabular head,classification,"(4200.0, 13445.0]",0,,,
+TabPFN foundation model,classification,"(4200.0, 13445.0]",0,,,
+TabPFN foundation model,regression,"(279.999, 667.0]",4,571.0,0.5309341798603084,11.0
+CFA combinatorial fusion,regression,"(279.999, 667.0]",1,642.0,0.6448689312902348,1.0
+Conventional ML,regression,"(279.999, 667.0]",0,,,
+Ensemble meta-model,regression,"(279.999, 667.0]",0,,,
+Graph neural networks (Chemprop),regression,"(279.999, 667.0]",0,,,
+Graph transfer + tabular head,regression,"(279.999, 667.0]",0,,,
+Graph transfer + tabular head,regression,"(667.0, 1604.5]",4,1116.0,20.50806207708796,4.0
+Conventional ML,regression,"(667.0, 1604.5]",1,910.0,0.349679972640062,3.0
+TabPFN foundation model,regression,"(667.0, 1604.5]",1,1128.0,0.6214392029538615,7.0
+CFA combinatorial fusion,regression,"(667.0, 1604.5]",0,,,
+Ensemble meta-model,regression,"(667.0, 1604.5]",0,,,
+Graph neural networks (Chemprop),regression,"(667.0, 1604.5]",0,,,
+Conventional ML,regression,"(1604.5, 4200.0]",5,2642.0,0.5546033124408984,6.0
+Graph transfer + tabular head,regression,"(1604.5, 4200.0]",2,2299.0,5.91251406400174,3.0
+CFA combinatorial fusion,regression,"(1604.5, 4200.0]",1,1842.0,0.6998504777949567,2.0
+Ensemble meta-model,regression,"(1604.5, 4200.0]",1,4200.0,0.5947876327217299,6.0
+Graph neural networks (Chemprop),regression,"(1604.5, 4200.0]",0,,,
+TabPFN foundation model,regression,"(1604.5, 4200.0]",0,,,
+CFA combinatorial fusion,regression,"(4200.0, 13445.0]",2,8682.5,0.9154596716529717,4.0
+Conventional ML,regression,"(4200.0, 13445.0]",0,,,
+Ensemble meta-model,regression,"(4200.0, 13445.0]",0,,,
+Graph neural networks (Chemprop),regression,"(4200.0, 13445.0]",0,,,
+Graph transfer + tabular head,regression,"(4200.0, 13445.0]",0,,,
+TabPFN foundation model,regression,"(4200.0, 13445.0]",0,,,

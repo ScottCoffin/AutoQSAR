@@ -1,0 +1,9 @@
+{
+  "status": "completed",
+  "dataset": "polaris_adme_fang_perm_1",
+  "source": "Polaris ADME benchmark mirror: adme-fang-perm-1",
+  "completed_at": "2026-04-25 03:03:08",
+  "elapsed_seconds": 2128.857,
+  "n_metrics_rows": 20,
+  "n_stage_records": 21
+}

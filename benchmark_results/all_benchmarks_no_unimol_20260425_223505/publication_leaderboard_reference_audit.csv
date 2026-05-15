@@ -1,0 +1,5 @@
+audit_item,count,expected,status,details
+TDC-22 datasets with MaxQsaring reference rows,22,22.0,complete,ames; bbb_martins; bioavailability_ma; caco2_wang; clearance_hepatocyte_az; clearance_microsome_az; cyp2c9_substrate_carbonmangels; cyp2c9_veith; cyp2d6_substrate_carbonmangels; cyp2d6_veith; cyp3a4_substrate_carbonmangels; cyp3a4_veith; dili; half_life_obach; herg; hia_hou; ld50_zhu; lipophilicity_astrazeneca; pgp_broccatelli; ppbr_az; solubility_aqsoldb; vdss_lombardo
+Current ESOL/Lipophilicity literature reference rows,73,2.0,complete,3D INFOMAX; 3D PGT; AutoML; AutoML (xLSTM paper); AutoQSAR (Ensemble); AutoQSAR (TabPFN); BiLSTM; DMPNN; DMPNN (xLSTM paper); DeeperGCN; FP-GNN; GCN (MoleculeNet); GEM; GEM + MolRuleLoss; GRAPHMSL; HiGNN; HimGNN; InstructMol; KCL; KPGT
+Updated reference rows total,407,,available,datasets=37
+Updated comparison rows generated,37,,available,datasets=37

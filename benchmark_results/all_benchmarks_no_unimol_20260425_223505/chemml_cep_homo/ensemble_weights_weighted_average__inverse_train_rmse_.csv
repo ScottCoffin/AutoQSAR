@@ -1,0 +1,6 @@
+Model,Weight,Workflow
+SVR,0.122556582380709,Conventional ML
+AdaBoost,0.07718639788153003,Conventional ML
+Tabular CNN,0.019977544846174183,Conventional ML
+TabPFNRegressor,0.7392549275824948,Conventional ML
+"Chemprop v2 (AttentiveFP, ensemble=1)",0.04102454730909205,Chemprop v2

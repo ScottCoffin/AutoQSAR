@@ -1,0 +1,9 @@
+dataset,estimated_train_rows,estimated_columns,estimated_estimators,estimated_tabpfn_tokens,fits_single_day_budget
+VDss_pfas_tsca,70,512,11,394240,True
+VDss_pfas_struct,118,512,11,664576,True
+HLe_invivo_pfas_tsca,164,512,11,923648,True
+HLe_invivo_pfas_struct,316,512,11,1779712,True
+VDss_nonpfas_struct,1430,512,11,8053760,True
+VDss_nonpfas_tsca,1478,512,11,8324096,True
+HLe_invivo_nonpfas_struct,2854,512,11,16073728,True
+HLe_invivo_nonpfas_tsca,3006,512,11,16929792,True

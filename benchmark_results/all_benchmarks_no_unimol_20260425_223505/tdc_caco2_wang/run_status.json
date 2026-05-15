@@ -1,0 +1,9 @@
+{
+  "status": "completed",
+  "dataset": "tdc_caco2_wang",
+  "source": "PyTDC ADME benchmark group: caco2_wang (official train_val/test split)",
+  "completed_at": "2026-04-24 19:41:10",
+  "elapsed_seconds": 1126.301,
+  "n_metrics_rows": 22,
+  "n_stage_records": 22
+}
