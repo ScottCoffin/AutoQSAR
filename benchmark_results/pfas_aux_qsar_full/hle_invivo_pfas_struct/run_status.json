@@ -2,8 +2,8 @@
   "status": "completed",
   "dataset": "hle_invivo_pfas_struct",
   "source": "PFAS auxiliary workbook: modeling_datasets_aux_features.xlsx::HLe_invivo_pfas_struct",
-  "completed_at": "2026-05-14 18:15:08",
-  "elapsed_seconds": 739.154,
-  "n_metrics_rows": 22,
+  "completed_at": "2026-05-15 11:25:59",
+  "elapsed_seconds": 5.603,
+  "n_metrics_rows": 25,
   "n_stage_records": 22
 }

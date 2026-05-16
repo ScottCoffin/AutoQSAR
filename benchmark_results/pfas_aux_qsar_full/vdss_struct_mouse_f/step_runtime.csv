@@ -1,0 +1,2 @@
+dataset,stage_index,total_stages,stage_label,started_at,started_epoch,status,ended_at,ended_epoch,duration_seconds
+vdss_struct_mouse_f,1,22,loading Structural single-target workbook: modeling_datasets_aux_features.xlsx::vdss_struct_mouse_f,2026-05-15 09:38:20 Pacific Daylight Time,1778863100.0494843,skipped,2026-05-15 09:38:20 Pacific Daylight Time,1778863100.055486,0.006

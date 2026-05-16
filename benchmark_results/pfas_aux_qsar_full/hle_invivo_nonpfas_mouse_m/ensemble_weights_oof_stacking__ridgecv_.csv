@@ -1,0 +1,3 @@
+Model,Weight,Abs normalized contribution,Workflow
+"Chemprop v2 (AttentiveFP, ensemble=1)",0.3866472916820243,0.16030979846484958,Chemprop v2
+"Chemprop v2 (AttentiveFP + Selected descriptors, ensemble=1)",2.0252283103374165,0.8396902015351504,Chemprop v2

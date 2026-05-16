@@ -1,0 +1,9 @@
+{
+  "status": "completed",
+  "dataset": "vdss_nonpfas_rat_m",
+  "source": "Structural single-target workbook: modeling_datasets_aux_features.xlsx::vdss_nonpfas_rat_m",
+  "completed_at": "2026-05-15 10:53:42",
+  "elapsed_seconds": 368.996,
+  "n_metrics_rows": 20,
+  "n_stage_records": 22
+}

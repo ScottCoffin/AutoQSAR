@@ -1,0 +1,5 @@
+{
+  "status": "skipped",
+  "reason": "too_few_rows_after_cleanup",
+  "n_rows": 2
+}

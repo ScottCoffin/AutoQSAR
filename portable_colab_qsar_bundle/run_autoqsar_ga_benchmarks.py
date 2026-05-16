@@ -34,6 +34,7 @@ import tempfile
 import subprocess
 import tarfile
 import urllib.request
+import warnings
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
@@ -86,8 +87,6 @@ os.environ.setdefault("TF_ENABLE_ONEDNN_OPTS", "0")
 os.environ.setdefault("ABSL_LOGGING_STDERR_THRESHOLD", "3")
 os.environ.setdefault("ABSL_MIN_LOG_LEVEL", "3")
 os.environ.setdefault("GLOG_minloglevel", "3")
-
-<<<<<<< HEAD
 
 def load_repo_dotenv() -> list[Path]:
     """Load repo-local .env values before optional API-backed models initialize."""
@@ -149,10 +148,6 @@ def tabpfn_backend_status_text() -> str:
     return source
 
 
-# Point Open Babel to its data files when installed via openbabel-wheel (pip).
-# The wheel bundles data under <pkg>/bin/data/ but doesn't set BABEL_DATADIR.
-if "BABEL_DATADIR" not in os.environ:
-=======
 def _openbabel_data_dir_is_usable(path_like: Any) -> bool:
     if not path_like:
         return False
@@ -175,11 +170,11 @@ def _find_openbabel_data_dir_under(prefix: Path) -> Path | None:
 
 
 def _configure_openbabel_data_dir() -> None:
+    """Point Open Babel to bundled data files when the package omits BABEL_DATADIR."""
     if _openbabel_data_dir_is_usable(os.environ.get("BABEL_DATADIR")):
         return
 
     candidates: list[Path] = []
->>>>>>> b7cd42c7321f23c1661f3fb43a0cbbd6198be21e
     _ob_spec = importlib.util.find_spec("openbabel")
     if _ob_spec and _ob_spec.origin:
         package_dir = Path(_ob_spec.origin).resolve().parent
@@ -1289,13 +1284,24 @@ def stage23_resume_cache_path(dataset_dir: Path) -> Path:
     return dataset_dir / "stage23_resume_cache.pkl"
 
 
+def load_pickle_suppressing_numpy_core_warning(handle: Any) -> Any:
+    """Load legacy NumPy-containing pickle caches without noisy NumPy internals warnings."""
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            "ignore",
+            message=r"numpy\.core\.numeric is deprecated.*",
+            category=DeprecationWarning,
+        )
+        return pickle.load(handle)
+
+
 def load_stage23_resume_cache(dataset_dir: Path, expected_signature: str) -> dict[str, Any] | None:
     cache_path = stage23_resume_cache_path(dataset_dir)
     if not cache_path.exists():
         return None
     try:
         with cache_path.open("rb") as handle:
-            payload = pickle.load(handle)
+            payload = load_pickle_suppressing_numpy_core_warning(handle)
     except Exception:
         return None
     if not isinstance(payload, dict):
@@ -1410,7 +1416,7 @@ def load_shared_feature_matrix_cache(
         return None
     try:
         with cache_file.open("rb") as handle:
-            payload = pickle.load(handle)
+            payload = load_pickle_suppressing_numpy_core_warning(handle)
     except Exception:
         return None
     if not isinstance(payload, dict):
@@ -2014,7 +2020,12 @@ def discover_local_datasets(root: Path, explicit_paths: list[str] | None = None)
 
 
 def discover_pfas_aux_workbook_datasets(workbook_path: Path, include_sheets: list[str] | None = None) -> list[DatasetSpec]:
-    """Load PFAS TK auxiliary-feature workbook sheets as predefined-split datasets."""
+    """Load PFAS TK workbook sheets as predefined-split datasets.
+
+    The workbook can mix auxiliary-feature sheets and derived SMILES-only
+    structural PFAS sheets. Sheets with no numeric columns beyond identifiers are
+    treated as non-auxiliary single-target datasets.
+    """
     path = Path(workbook_path)
     if not path.exists():
         raise FileNotFoundError(f"PFAS auxiliary workbook not found: {path}")
@@ -2053,10 +2064,17 @@ def discover_pfas_aux_workbook_datasets(workbook_path: Path, include_sheets: lis
                 auxiliary_columns.append(str(column))
         target_label = str(frame["target"].dropna().iloc[0]) if "target" in frame.columns and frame["target"].notna().any() else sheet_name
         subset_label = str(frame["smiles_subset"].dropna().iloc[0]) if "smiles_subset" in frame.columns and frame["smiles_subset"].notna().any() else sheet_name
+        is_non_auxiliary = len(auxiliary_columns) == 0
+        workbook_dataset_type = "structural_single_target" if is_non_auxiliary else "auxiliary_feature"
+        source_label = (
+            f"Structural single-target workbook: {path.name}::{sheet_name}"
+            if is_non_auxiliary
+            else f"PFAS auxiliary workbook: {path.name}::{sheet_name}"
+        )
         datasets.append(
             DatasetSpec(
                 name=str(sheet_name),
-                source=f"PFAS auxiliary workbook: {path.name}::{sheet_name}",
+                source=source_label,
                 frame=frame,
                 smiles_column="QSAR_READY_SMILES",
                 target_column="TARGET_log10",
@@ -2071,6 +2089,7 @@ def discover_pfas_aux_workbook_datasets(workbook_path: Path, include_sheets: lis
                     "target": target_label,
                     "smiles_subset": subset_label,
                     "auxiliary_feature_count": len(auxiliary_columns),
+                    "workbook_dataset_type": workbook_dataset_type,
                 },
             )
         )
@@ -3631,6 +3650,21 @@ def leaderboard_comparison_by_dataset(summary_df: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame(rows).sort_values(by=["dataset"]).reset_index(drop=True)
 
 
+def safe_correlation(y_true: Any, y_pred: Any, method: str = "spearman") -> float:
+    true_series = pd.Series(y_true, dtype=float).reset_index(drop=True)
+    pred_series = pd.Series(y_pred, dtype=float).reset_index(drop=True)
+    valid = true_series.notna() & pred_series.notna()
+    true_values = true_series.loc[valid]
+    pred_values = pred_series.loc[valid]
+    if len(true_values) < 2 or true_values.nunique(dropna=True) < 2 or pred_values.nunique(dropna=True) < 2:
+        return float("nan")
+    try:
+        value = true_values.corr(pred_values, method=str(method))
+        return float(value) if pd.notna(value) else float("nan")
+    except Exception:
+        return float("nan")
+
+
 def compute_primary_metric(metric_name: str, y_true: np.ndarray, y_pred: np.ndarray) -> float:
     metric = normalize_benchmark_metric(metric_name, fallback=str(metric_name).strip().lower())
     y_true_series = pd.Series(y_true, dtype=float).reset_index(drop=True)
@@ -3704,14 +3738,7 @@ def compute_primary_metric(metric_name: str, y_true: np.ndarray, y_pred: np.ndar
         except Exception:
             return float("nan")
     if metric in {"spearman", "pearson"}:
-        try:
-            from scipy.stats import spearmanr, pearsonr
-
-            if metric == "spearman":
-                return float(spearmanr(y_true_series, y_pred_series).correlation)
-            return float(pearsonr(y_true_series, y_pred_series).statistic)
-        except Exception:
-            return float(y_true_series.corr(y_pred_series, method=metric))
+        return safe_correlation(y_true_series, y_pred_series, method=metric)
     return float(math.sqrt(mean_squared_error(y_true_series, y_pred_series)))
 
 
@@ -3732,16 +3759,7 @@ def primary_metric_scorer(metric_name: str):
         return classifier_metric_scorer
     if metric in {"spearman", "pearson"}:
         def corr_score(y_true, y_pred):
-            try:
-                from scipy.stats import spearmanr, pearsonr
-
-                if metric == "spearman":
-                    return float(spearmanr(y_true, y_pred).correlation)
-                return float(pearsonr(y_true, y_pred).statistic)
-            except Exception:
-                series_true = pd.Series(y_true, dtype=float)
-                series_pred = pd.Series(y_pred, dtype=float)
-                return float(series_true.corr(series_pred, method=metric))
+            return safe_correlation(y_true, y_pred, method=metric)
         return make_scorer(corr_score, greater_is_better=True)
     return make_scorer(lambda y_true, y_pred: math.sqrt(mean_squared_error(y_true, y_pred)), greater_is_better=False)
 
@@ -3920,6 +3938,7 @@ def run_timed_elasticnet_selector_fit(
 import json
 import pickle
 import sys
+import warnings
 import numpy as np
 from sklearn.linear_model import ElasticNetCV
 
@@ -3929,7 +3948,13 @@ def main():
     result = {"ok": False, "error": "unknown"}
     try:
         with open(payload_path, "rb") as handle:
-            payload = pickle.load(handle)
+            with warnings.catch_warnings():
+                warnings.filterwarnings(
+                    "ignore",
+                    message=r"numpy\\.core\\.numeric is deprecated.*",
+                    category=DeprecationWarning,
+                )
+                payload = pickle.load(handle)
         selector = ElasticNetCV(
             l1_ratio=[float(value) for value in payload["l1_ratio"]],
             alphas=np.asarray(payload["alphas"], dtype=float),
@@ -4233,8 +4258,8 @@ def regression_metrics(y_train, pred_train, y_test, pred_test) -> dict[str, floa
     train_pred_series = pd.Series(pred_train, dtype=float)
     test_series = pd.Series(y_test, dtype=float)
     test_pred_series = pd.Series(pred_test, dtype=float)
-    train_spearman = train_series.corr(train_pred_series, method="spearman")
-    test_spearman = test_series.corr(test_pred_series, method="spearman")
+    train_spearman = safe_correlation(train_series, train_pred_series, method="spearman")
+    test_spearman = safe_correlation(test_series, test_pred_series, method="spearman")
     metrics = {
         "train_r2": float(r2_score(y_train, pred_train)),
         "train_rmse": float(math.sqrt(mean_squared_error(y_train, pred_train))),
@@ -4305,6 +4330,13 @@ def add_leaderboard_reference_columns(
     return row
 
 
+def adaptive_knn_neighbors(n_train: int, cv_folds: int, default_neighbors: int = 15) -> int:
+    train_count = max(1, int(n_train))
+    folds = max(2, min(int(cv_folds or 2), train_count))
+    smallest_fold_fit_count = max(1, train_count - int(math.ceil(train_count / folds)))
+    return max(1, min(int(default_neighbors), smallest_fold_fit_count))
+
+
 def conventional_models(
     args: argparse.Namespace,
     X_train: pd.DataFrame,
@@ -4317,6 +4349,11 @@ def conventional_models(
         np.nan_to_num,
         kw_args={"nan": np.nan, "posinf": np.nan, "neginf": np.nan},
         validate=False,
+    )
+    knn_neighbors = adaptive_knn_neighbors(
+        n_train=int(X_train.shape[0]),
+        cv_folds=int(getattr(args, "cv_folds", 5)),
+        default_neighbors=15,
     )
     if task_type == "classification":
         models: dict[str, Any] = {
@@ -4363,7 +4400,7 @@ def conventional_models(
                             [
                                 ("imputer", SimpleImputer(strategy="median")),
                                 ("scaler", StandardScaler()),
-                                ("model", KNeighborsClassifier(n_neighbors=15, weights="distance")),
+                                ("model", KNeighborsClassifier(n_neighbors=knn_neighbors, weights="distance")),
                             ]
                         ),
                     ),
@@ -4509,7 +4546,7 @@ def conventional_models(
                         [
                             ("imputer", SimpleImputer(strategy="median")),
                             ("scaler", StandardScaler()),
-                            ("model", KNeighborsRegressor(n_neighbors=15, weights="distance")),
+                            ("model", KNeighborsRegressor(n_neighbors=knn_neighbors, weights="distance")),
                         ]
                     ),
                 ),
@@ -6234,8 +6271,8 @@ def build_ensemble_result(
                     "Test R2": float(r2_score(test_obs, test_pred)),
                     "Train MAE": float(mean_absolute_error(train_obs, train_pred)),
                     "Test MAE": float(mean_absolute_error(test_obs, test_pred)),
-                    "Train Spearman": float(pd.Series(train_obs).corr(pd.Series(train_pred), method="spearman")),
-                    "Test Spearman": float(pd.Series(test_obs).corr(pd.Series(test_pred), method="spearman")),
+                    "Train Spearman": safe_correlation(train_obs, train_pred, method="spearman"),
+                    "Test Spearman": safe_correlation(test_obs, test_pred, method="spearman"),
                 }
             )
         else:
@@ -7375,6 +7412,13 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
         if list(maplight_direct_X_test.columns) != list(maplight_direct_X_train.columns):
             maplight_direct_X_test = maplight_direct_X_test.reindex(columns=list(maplight_direct_X_train.columns), fill_value=np.nan)
 
+    feature_count_with_auxiliary = pd.to_numeric(
+        pd.Series([feature_meta.get("feature_count_with_auxiliary", np.nan)]),
+        errors="coerce",
+    ).iloc[0]
+    if not np.isfinite(feature_count_with_auxiliary):
+        feature_count_with_auxiliary = int(feature_dedup_meta.get("post_dedup_feature_count", X_train.shape[1]))
+
     base_meta = {
         "dataset": dataset_id,
         "dataset_source": spec.source,
@@ -7438,7 +7482,7 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
         "built_feature_families_json": json.dumps(feature_meta.get("built_feature_families", []), default=str),
         "auxiliary_feature_columns_json": json.dumps(feature_meta.get("auxiliary_feature_columns", []), default=str),
         "auxiliary_feature_count": int(feature_meta.get("auxiliary_feature_count", 0) or 0),
-        "feature_count_with_auxiliary": int(feature_meta.get("feature_count_with_auxiliary", X.shape[1]) or X.shape[1]),
+        "feature_count_with_auxiliary": int(feature_count_with_auxiliary),
         "feature_store_path": feature_meta.get("feature_store_path", ""),
         "feature_store_shard_format": feature_meta.get("feature_store_shard_format", ""),
         "feature_store_cached_rows": feature_meta.get("cached_rows_loaded", np.nan),
@@ -8668,8 +8712,9 @@ def parse_args() -> argparse.Namespace:
         type=Path,
         default=None,
         help=(
-            "Run PFAS TK auxiliary-feature workbook sheets as predefined-split datasets. "
-            "Each non-manifest sheet must contain split, QSAR_READY_SMILES, TARGET_log10, and auxiliary feature columns."
+            "Run PFAS TK workbook sheets as predefined-split datasets. "
+            "Each non-manifest sheet must contain split, QSAR_READY_SMILES, and TARGET_log10. "
+            "Sheets without numeric non-identifier columns are treated as SMILES-only/non-auxiliary datasets."
         ),
     )
     parser.add_argument(
@@ -9320,8 +9365,16 @@ def main() -> int:
                 f"Estimator multiplier={int(tabpfn_budget_estimate['estimators_per_dataset'])}. "
                 f"{TABPFN_DAILY_RESET_NOTE}"
             )
-        leaderboard_refs = leaderboard_reference_table(datasets)
-        print(f"Leaderboard top10 reference rows fetched: {len(leaderboard_refs)}")
+        has_leaderboard_references = any(
+            bool(getattr(dataset, "leaderboard_url", None))
+            or bool(((dataset.leaderboard_summary or {}).get("metric_name") or "").strip())
+            for dataset in datasets
+        )
+        leaderboard_refs = leaderboard_reference_table(datasets) if has_leaderboard_references else pd.DataFrame()
+        if has_leaderboard_references:
+            print(f"Leaderboard top10 reference rows fetched: {len(leaderboard_refs)}")
+        else:
+            print("Leaderboard top10 reference rows fetched: 0 (no leaderboard references for selected datasets)")
         print("Datasets:")
         for dataset in datasets:
             leaderboard_metric = ((dataset.leaderboard_summary or {}).get("metric_name") or "").strip()

@@ -1,0 +1,33 @@
+model,workflow,datasets_attempted,datasets_successful,top1_count,ensemble_member_count,ensemble_nonzero_weight_count,ensemble_mean_abs_weight,never_top_or_ensemble
+AdaBoost,conventional,31,31,0,0,0,0.0,True
+CFA (Combinatorial Fusion),cfa,31,31,0,0,0,0.0,True
+CatBoost,conventional,31,31,0,0,0,0.0,True
+ElasticNetCV,conventional,31,31,0,0,0,0.0,True
+SVR,conventional,31,31,0,0,0,0.0,True
+TabPFNRegressor,conventional,31,31,0,0,0,0.0,True
+"Voting Regressor (KNN, SVM)",conventional,31,31,0,0,0,0.0,True
+XGBoost,conventional,31,31,0,0,0,0.0,True
+"Chemprop v2 (AttentiveFP + Selected descriptors, ensemble=1)",Chemprop v2,31,30,0,0,0,0.0,True
+"Chemprop v2 (AttentiveFP, ensemble=1)",Chemprop v2,31,30,0,0,0,0.0,True
+catboost,qsar_core_molecular_plus_auxiliary,2,2,0,0,0,0.0,True
+elasticnet,qsar_core_molecular_plus_auxiliary,2,2,0,0,0,0.0,True
+extra_trees,qsar_core_molecular_plus_auxiliary,2,2,0,0,0,0.0,True
+hist_gradient_boosting,qsar_core_molecular_plus_auxiliary,2,2,0,0,0,0.0,True
+knn_distance,qsar_core_molecular_plus_auxiliary,2,2,0,0,0,0.0,True
+random_forest,qsar_core_molecular_plus_auxiliary,2,2,0,0,0,0.0,True
+ridge_cv,qsar_core_molecular_plus_auxiliary,2,2,0,0,0,0.0,True
+svr_rbf,qsar_core_molecular_plus_auxiliary,2,2,0,0,0,0.0,True
+xgboost,qsar_core_molecular_plus_auxiliary,2,2,0,0,0,0.0,True
+LightGBM,conventional,1,1,0,0,0,0.0,True
+Ensemble (Weighted average (inverse train RMSE)),ensemble,31,26,0,0,0,0.0,False
+"Ensemble (OOF Stacking (RidgeCV, 2-fold))",ensemble,1,1,0,0,0,0.0,False
+ChemML MLP (PyTorch),ChemML deep learning,31,0,0,0,0,0.0,False
+Ensemble (OOF Stacking (RidgeCV)),ensemble,5,0,0,0,0,0.0,False
+Extra trees,conventional,31,31,1,0,0,0.0,False
+HistGradientBoosting,conventional,31,31,1,0,0,0.0,False
+Random forest,conventional,31,31,1,0,0,0.0,False
+Tabular CNN,conventional,31,31,1,0,0,0.0,False
+Tabular MLP,conventional,31,31,1,0,0,0.0,False
+"Ensemble (OOF Stacking (RidgeCV, 5-fold))",ensemble,30,30,1,0,0,0.0,False
+"MapLight + GNN (CatBoost, Strict Parity)",MapLight + GNN,31,30,5,0,0,0.0,False
+MapLight CatBoost (Strict Parity),conventional,31,31,20,0,0,0.0,False

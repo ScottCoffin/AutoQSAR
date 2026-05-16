@@ -1,0 +1,9 @@
+{
+  "status": "completed",
+  "dataset": "hle_invivo_nonpfas_rat_mf",
+  "source": "Structural single-target workbook: modeling_datasets_aux_features.xlsx::hle_invivo_nonpfas_rat_mf",
+  "completed_at": "2026-05-15 09:53:30",
+  "elapsed_seconds": 489.865,
+  "n_metrics_rows": 20,
+  "n_stage_records": 22
+}

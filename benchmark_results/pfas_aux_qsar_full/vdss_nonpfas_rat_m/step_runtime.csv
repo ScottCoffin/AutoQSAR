@@ -1,0 +1,23 @@
+dataset,stage_index,total_stages,stage_label,started_at,started_epoch,status,ended_at,ended_epoch,duration_seconds
+vdss_nonpfas_rat_m,1,22,loading Structural single-target workbook: modeling_datasets_aux_features.xlsx::vdss_nonpfas_rat_m,2026-05-15 10:47:33 Pacific Daylight Time,1778867253.3904297,completed,2026-05-15 10:47:33 Pacific Daylight Time,1778867253.4270053,0.037
+vdss_nonpfas_rat_m,2,22,building molecular features,2026-05-15 10:47:33 Pacific Daylight Time,1778867253.4270053,completed,2026-05-15 10:48:07 Pacific Daylight Time,1778867287.0115602,33.585
+vdss_nonpfas_rat_m,3,22,splitting data and selecting features,2026-05-15 10:48:07 Pacific Daylight Time,1778867287.0115602,completed,2026-05-15 10:48:16 Pacific Daylight Time,1778867296.6731622,9.662
+vdss_nonpfas_rat_m,4,22,conventional model ElasticNetCV,2026-05-15 10:48:16 Pacific Daylight Time,1778867296.6731622,completed,2026-05-15 10:48:16 Pacific Daylight Time,1778867296.7960432,0.123
+vdss_nonpfas_rat_m,5,22,conventional model SVR,2026-05-15 10:48:16 Pacific Daylight Time,1778867296.7960432,completed,2026-05-15 10:48:16 Pacific Daylight Time,1778867296.863245,0.067
+vdss_nonpfas_rat_m,6,22,conventional model Random forest,2026-05-15 10:48:16 Pacific Daylight Time,1778867296.863245,completed,2026-05-15 10:48:18 Pacific Daylight Time,1778867298.7302024,1.867
+vdss_nonpfas_rat_m,7,22,conventional model Extra trees,2026-05-15 10:48:18 Pacific Daylight Time,1778867298.7302024,completed,2026-05-15 10:48:20 Pacific Daylight Time,1778867300.3227365,1.593
+vdss_nonpfas_rat_m,8,22,conventional model HistGradientBoosting,2026-05-15 10:48:20 Pacific Daylight Time,1778867300.323687,completed,2026-05-15 10:48:21 Pacific Daylight Time,1778867301.464637,1.141
+vdss_nonpfas_rat_m,9,22,"conventional model Voting Regressor (KNN, SVM)",2026-05-15 10:48:21 Pacific Daylight Time,1778867301.464637,completed,2026-05-15 10:48:21 Pacific Daylight Time,1778867301.6137974,0.149
+vdss_nonpfas_rat_m,10,22,conventional model AdaBoost,2026-05-15 10:48:21 Pacific Daylight Time,1778867301.6147976,completed,2026-05-15 10:48:22 Pacific Daylight Time,1778867302.5583196,0.944
+vdss_nonpfas_rat_m,11,22,conventional model Tabular MLP,2026-05-15 10:48:22 Pacific Daylight Time,1778867302.5583196,completed,2026-05-15 10:48:28 Pacific Daylight Time,1778867308.3558748,5.798
+vdss_nonpfas_rat_m,12,22,conventional model Tabular CNN,2026-05-15 10:48:28 Pacific Daylight Time,1778867308.3558748,completed,2026-05-15 10:48:42 Pacific Daylight Time,1778867322.9236765,14.568
+vdss_nonpfas_rat_m,13,22,conventional model XGBoost,2026-05-15 10:48:42 Pacific Daylight Time,1778867322.9236765,completed,2026-05-15 10:48:43 Pacific Daylight Time,1778867323.2609138,0.337
+vdss_nonpfas_rat_m,14,22,conventional model CatBoost,2026-05-15 10:48:43 Pacific Daylight Time,1778867323.2609138,completed,2026-05-15 10:48:44 Pacific Daylight Time,1778867324.7283325,1.467
+vdss_nonpfas_rat_m,15,22,conventional model MapLight CatBoost (Strict Parity),2026-05-15 10:48:44 Pacific Daylight Time,1778867324.7283325,completed,2026-05-15 10:49:39 Pacific Daylight Time,1778867379.057119,54.329
+vdss_nonpfas_rat_m,16,22,conventional model TabPFNRegressor,2026-05-15 10:49:39 Pacific Daylight Time,1778867379.057119,completed,2026-05-15 10:50:09 Pacific Daylight Time,1778867409.9965866,30.939
+vdss_nonpfas_rat_m,17,22,deep model ChemML MLP (PyTorch),2026-05-15 10:50:09 Pacific Daylight Time,1778867409.9965866,completed,2026-05-15 10:50:10 Pacific Daylight Time,1778867410.0274599,0.031
+vdss_nonpfas_rat_m,18,22,"deep model Chemprop v2 (AttentiveFP, ensemble=1)",2026-05-15 10:50:10 Pacific Daylight Time,1778867410.0274599,completed,2026-05-15 10:51:13 Pacific Daylight Time,1778867473.0876775,63.06
+vdss_nonpfas_rat_m,19,22,"deep model Chemprop v2 (AttentiveFP + Selected descriptors, ensemble=1)",2026-05-15 10:51:13 Pacific Daylight Time,1778867473.0876775,completed,2026-05-15 10:52:16 Pacific Daylight Time,1778867536.129788,63.042
+vdss_nonpfas_rat_m,20,22,"deep model MapLight + GNN (CatBoost, Strict Parity)",2026-05-15 10:52:16 Pacific Daylight Time,1778867536.1303155,completed,2026-05-15 10:53:41 Pacific Daylight Time,1778867621.783506,85.653
+vdss_nonpfas_rat_m,21,22,CFA combinatorial fusion,2026-05-15 10:53:41 Pacific Daylight Time,1778867621.783506,completed,2026-05-15 10:53:41 Pacific Daylight Time,1778867621.8775973,0.094
+vdss_nonpfas_rat_m,22,22,ensemble (2 method(s)),2026-05-15 10:53:41 Pacific Daylight Time,1778867621.8775973,completed,2026-05-15 10:53:42 Pacific Daylight Time,1778867622.382715,0.505

@@ -1,0 +1,14 @@
+[
+  {
+    "dataset": "hle_invivo_struct_monkey_f",
+    "stage_index": 1,
+    "total_stages": 22,
+    "stage_label": "loading Structural single-target workbook: modeling_datasets_aux_features.xlsx::hle_invivo_struct_monkey_f",
+    "started_at": "2026-05-15 09:38:19 Pacific Daylight Time",
+    "started_epoch": 1778863099.8746643,
+    "status": "skipped",
+    "ended_at": "2026-05-15 09:38:19 Pacific Daylight Time",
+    "ended_epoch": 1778863099.8825653,
+    "duration_seconds": 0.008
+  }
+]

@@ -1,0 +1,5 @@
+Model,Weight,Abs normalized contribution,Workflow
+HistGradientBoosting,6.603549582706592e-07,6.603514791426685e-07,Conventional ML
+AdaBoost,-2.065657426442158e-06,2.065646543376193e-06,Conventional ML
+"Chemprop v2 (AttentiveFP, ensemble=1)",5.9230951698907575e-08,5.923063963634276e-08,Chemprop v2
+"MapLight + GNN (CatBoost, Strict Parity)",1.0000024833569476,0.9999972147713379,MapLight + GNN

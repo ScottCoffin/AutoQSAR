@@ -1,0 +1,4 @@
+model,train_metric,performance_strength,diversity_strength
+"Chemprop v2 (AttentiveFP, ensemble=1)",0.5344664415344696,1.8710248619706957,0.15387946285592205
+HistGradientBoosting,0.5494051393898742,1.820150428717359,0.2841982706861373
+"MapLight + GNN (CatBoost, Strict Parity)",2.3388446500491967e-07,4275615.312795424,0.1418178190251189

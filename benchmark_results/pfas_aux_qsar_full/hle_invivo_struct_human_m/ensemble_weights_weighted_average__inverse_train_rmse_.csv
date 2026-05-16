@@ -1,0 +1,7 @@
+Model,Weight,Workflow
+Extra trees,4.727681576257041e-07,conventional
+Tabular MLP,4.516184271243156e-07,conventional
+Tabular CNN,4.1528338546791714e-07,conventional
+MapLight CatBoost (Strict Parity),0.9999969551592607,conventional
+"Chemprop v2 (AttentiveFP, ensemble=1)",1.1649577069217952e-06,Chemprop v2
+"Chemprop v2 (AttentiveFP + Selected descriptors, ensemble=1)",5.402130621036944e-07,Chemprop v2

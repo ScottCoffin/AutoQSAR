@@ -1,0 +1,3 @@
+target_family,best_dataset_label,best_structural_pool,best_species,best_sex,best_aux_vars_used,best_auxiliary_feature_count,best_n_train,best_n_test,best_test_rmse,best_test_mae,best_test_r2,best_aux_minus_best_no_aux_rmse,evidence_note
+HLe_invivo,hle_invivo_nonpfas_rat_mf,Non-PFAS structural,Rat,MF,False,0,19,5,0.1804653178762002,0.16233455758457754,0.6401382153885031,0.41854179095740074,SMILES-only subsetting currently has lower best test RMSE than auxiliary-variable pooling.
+VDss,vdss_human_mf,PFAS structural,Human,MF,False,0,31,8,0.3332846608100894,0.29039827628888004,0.7616350806977827,0.02221934461512276,SMILES-only subsetting currently has lower best test RMSE than auxiliary-variable pooling.

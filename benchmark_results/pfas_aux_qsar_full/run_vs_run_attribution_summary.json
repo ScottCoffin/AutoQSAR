@@ -1,0 +1,12 @@
+{
+  "generated_at": "2026-05-15 17:18:58 Pacific Daylight Time",
+  "current_run_dir": "benchmark_results\\pfas_aux_qsar_full",
+  "reference_run_dir": "C:\\Users\\Scott.Coffin\\OneDrive - California OEHHA\\R_new\\AutoQSAR\\benchmark_results\\benchmark_name_date",
+  "has_reference_run": true,
+  "split_datasets_compared": 76,
+  "split_all_match_count": 0,
+  "config_diff_count": 11,
+  "new_error_count": 44,
+  "resolved_error_count": 283,
+  "leaderboard_comparable_dataset_count": 0
+}

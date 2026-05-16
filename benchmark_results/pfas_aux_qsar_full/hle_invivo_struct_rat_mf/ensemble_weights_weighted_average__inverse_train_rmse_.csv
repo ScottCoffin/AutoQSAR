@@ -1,0 +1,8 @@
+Model,Weight,Workflow
+HistGradientBoosting,7.347673596138642e-07,Conventional ML
+AdaBoost,1.2347310671311581e-06,Conventional ML
+Tabular CNN,1.164374756286253e-06,Conventional ML
+TabPFNRegressor,1.231272388666362e-06,Conventional ML
+"Chemprop v2 (AttentiveFP, ensemble=1)",7.5818508461515e-07,Chemprop v2
+"Chemprop v2 (AttentiveFP + Selected descriptors, ensemble=1)",8.879822300550054e-07,Chemprop v2
+CFA (Combinatorial Fusion),0.9999939886871136,CFA fusion

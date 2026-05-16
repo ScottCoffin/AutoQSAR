@@ -1,0 +1,14 @@
+[
+  {
+    "dataset": "hle_invivo_struct_mouse_mf",
+    "stage_index": 1,
+    "total_stages": 22,
+    "stage_label": "loading Structural single-target workbook: modeling_datasets_aux_features.xlsx::hle_invivo_struct_mouse_mf",
+    "started_at": "2026-05-15 09:38:20 Pacific Daylight Time",
+    "started_epoch": 1778863100.0355165,
+    "status": "skipped",
+    "ended_at": "2026-05-15 09:38:20 Pacific Daylight Time",
+    "ended_epoch": 1778863100.0457935,
+    "duration_seconds": 0.01
+  }
+]

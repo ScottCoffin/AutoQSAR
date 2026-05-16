@@ -2,8 +2,8 @@
   "status": "completed",
   "dataset": "vdss_pfas_tsca",
   "source": "PFAS auxiliary workbook: modeling_datasets_aux_features.xlsx::VDss_pfas_tsca",
-  "completed_at": "2026-05-14 17:45:41",
-  "elapsed_seconds": 399.952,
-  "n_metrics_rows": 31,
+  "completed_at": "2026-05-15 11:00:13",
+  "elapsed_seconds": 2.126,
+  "n_metrics_rows": 34,
   "n_stage_records": 22
 }

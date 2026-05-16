@@ -1,0 +1,14 @@
+[
+  {
+    "dataset": "vdss_nonpfas_mouse_mf",
+    "stage_index": 1,
+    "total_stages": 22,
+    "stage_label": "loading Structural single-target workbook: modeling_datasets_aux_features.xlsx::vdss_nonpfas_mouse_mf",
+    "started_at": "2026-05-15 09:38:19 Pacific Daylight Time",
+    "started_epoch": 1778863099.6621716,
+    "status": "skipped",
+    "ended_at": "2026-05-15 09:38:19 Pacific Daylight Time",
+    "ended_epoch": 1778863099.6663146,
+    "duration_seconds": 0.004
+  }
+]
