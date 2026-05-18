@@ -1,0 +1,2 @@
+model,workflow,sheet,train_rows,test_rows,auxiliary_feature_count,trained_group_unimol_models,fallback_group_count,train_rmse,train_mae,train_r2,test_rmse,test_mae,test_r2
+Uni-Mol V1 + Aux Fusion (Grouped),Uni-Mol grouped aux fusion,VDss_all_aux,3096,774,21,3,9,0.3445101563584209,0.2559179590658949,0.7226294236640507,0.49389688244485874,0.3844720159032339,0.4459452982048293

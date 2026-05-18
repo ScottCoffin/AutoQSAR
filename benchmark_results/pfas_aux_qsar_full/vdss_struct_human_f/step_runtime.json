@@ -2,13 +2,13 @@
   {
     "dataset": "vdss_struct_human_f",
     "stage_index": 1,
-    "total_stages": 22,
+    "total_stages": 23,
     "stage_label": "loading Structural single-target workbook: modeling_datasets_aux_features.xlsx::vdss_struct_human_f",
-    "started_at": "2026-05-15 09:38:19 Pacific Daylight Time",
-    "started_epoch": 1778863099.6816967,
+    "started_at": "2026-05-16 14:11:39 Pacific Daylight Time",
+    "started_epoch": 1778965899.039431,
     "status": "skipped",
-    "ended_at": "2026-05-15 09:38:19 Pacific Daylight Time",
-    "ended_epoch": 1778863099.6832018,
-    "duration_seconds": 0.002
+    "ended_at": "2026-05-16 14:11:39 Pacific Daylight Time",
+    "ended_epoch": 1778965899.0474217,
+    "duration_seconds": 0.008
   }
 ]

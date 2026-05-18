@@ -1,0 +1,3 @@
+Model,Weight,Workflow
+ChemML MLP (PyTorch),0.5908792864081607,ChemML deep learning
+Uni-Mol V1,0.40912071359183927,Uni-Mol

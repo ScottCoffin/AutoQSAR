@@ -1,0 +1,27 @@
+unimol_group,status,train_rows,train_unique_smiles,test_rows,oof_folds,fusion_run_dir,fusion_run_name,sheet
+species=Human|sex=F,fallback_global,2,1,0,0,c:\Users\scott\AutoQSAR\benchmark_results\unimol_aux_fusion_VDss,unimol_aux_fusion_VDss,VDss_all_aux
+species=Human|sex=M,fallback_global,2,1,0,0,c:\Users\scott\AutoQSAR\benchmark_results\unimol_aux_fusion_VDss,unimol_aux_fusion_VDss,VDss_all_aux
+species=Human|sex=MF,trained,2726,980,652,5,c:\Users\scott\AutoQSAR\benchmark_results\unimol_aux_fusion_VDss,unimol_aux_fusion_VDss,VDss_all_aux
+species=Monkey|sex=F,fallback_global,6,2,0,0,c:\Users\scott\AutoQSAR\benchmark_results\unimol_aux_fusion_VDss,unimol_aux_fusion_VDss,VDss_all_aux
+species=Monkey|sex=M,fallback_global,6,2,0,0,c:\Users\scott\AutoQSAR\benchmark_results\unimol_aux_fusion_VDss,unimol_aux_fusion_VDss,VDss_all_aux
+species=Mouse|sex=F,fallback_global,38,11,14,0,c:\Users\scott\AutoQSAR\benchmark_results\unimol_aux_fusion_VDss,unimol_aux_fusion_VDss,VDss_all_aux
+species=Mouse|sex=M,fallback_global,44,13,22,0,c:\Users\scott\AutoQSAR\benchmark_results\unimol_aux_fusion_VDss,unimol_aux_fusion_VDss,VDss_all_aux
+species=Mouse|sex=MF,fallback_global,2,1,0,0,c:\Users\scott\AutoQSAR\benchmark_results\unimol_aux_fusion_VDss,unimol_aux_fusion_VDss,VDss_all_aux
+species=Rat|sex=F,trained,62,20,16,5,c:\Users\scott\AutoQSAR\benchmark_results\unimol_aux_fusion_VDss,unimol_aux_fusion_VDss,VDss_all_aux
+species=Rat|sex=M,trained,200,69,68,5,c:\Users\scott\AutoQSAR\benchmark_results\unimol_aux_fusion_VDss,unimol_aux_fusion_VDss,VDss_all_aux
+species=Rat|sex=MF,fallback_global,6,3,2,0,c:\Users\scott\AutoQSAR\benchmark_results\unimol_aux_fusion_VDss,unimol_aux_fusion_VDss,VDss_all_aux
+species=Rat|sex=Not reported,fallback_global,2,1,0,0,c:\Users\scott\AutoQSAR\benchmark_results\unimol_aux_fusion_VDss,unimol_aux_fusion_VDss,VDss_all_aux
+species=Human|sex=F,fallback_global,44,17,6,0,c:\Users\scott\AutoQSAR\benchmark_results\unimol_aux_fusion_hle_invivo,unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux
+species=Human|sex=M,fallback_global,36,17,8,0,c:\Users\scott\AutoQSAR\benchmark_results\unimol_aux_fusion_hle_invivo,unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux
+species=Human|sex=MF,trained,4227,1404,1087,5,c:\Users\scott\AutoQSAR\benchmark_results\unimol_aux_fusion_hle_invivo,unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux
+species=Monkey|sex=F,fallback_global,22,8,2,0,c:\Users\scott\AutoQSAR\benchmark_results\unimol_aux_fusion_hle_invivo,unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux
+species=Monkey|sex=M,fallback_global,28,10,4,0,c:\Users\scott\AutoQSAR\benchmark_results\unimol_aux_fusion_hle_invivo,unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux
+species=Monkey|sex=MF,fallback_global,2,1,0,0,c:\Users\scott\AutoQSAR\benchmark_results\unimol_aux_fusion_hle_invivo,unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux
+species=Mouse|sex=F,trained,122,41,26,5,c:\Users\scott\AutoQSAR\benchmark_results\unimol_aux_fusion_hle_invivo,unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux
+species=Mouse|sex=M,trained,184,62,38,5,c:\Users\scott\AutoQSAR\benchmark_results\unimol_aux_fusion_hle_invivo,unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux
+species=Mouse|sex=MF,fallback_global,34,10,16,0,c:\Users\scott\AutoQSAR\benchmark_results\unimol_aux_fusion_hle_invivo,unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux
+species=Mouse|sex=Not available,fallback_global,2,1,2,0,c:\Users\scott\AutoQSAR\benchmark_results\unimol_aux_fusion_hle_invivo,unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux
+species=Rat|sex=F,trained,438,170,102,5,c:\Users\scott\AutoQSAR\benchmark_results\unimol_aux_fusion_hle_invivo,unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux
+species=Rat|sex=M,trained,1114,371,282,5,c:\Users\scott\AutoQSAR\benchmark_results\unimol_aux_fusion_hle_invivo,unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux
+species=Rat|sex=MF,trained,72,30,6,5,c:\Users\scott\AutoQSAR\benchmark_results\unimol_aux_fusion_hle_invivo,unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux
+species=Rat|sex=Not reported,fallback_global,16,7,6,0,c:\Users\scott\AutoQSAR\benchmark_results\unimol_aux_fusion_hle_invivo,unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux

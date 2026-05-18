@@ -1,0 +1,181 @@
+fusion_run_name,sheet,split,unimol_group,prediction_source,n,rmse,mae,r2
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,test,species=Human|sex=F,Aux-fusion meta-model,6,0.31746081144479094,0.2864340642892862,-0.3407257369070431
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,test,species=Human|sex=F,Uni-Mol global,6,1.0682454103934982,0.8871583829042042,-14.18104870062062
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,test,species=Human|sex=F,Uni-Mol grouped,0,,,
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,test,species=Human|sex=F,Uni-Mol stack input,6,1.0682454103934982,0.8871583829042042,-14.18104870062062
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,test,species=Human|sex=M,Aux-fusion meta-model,8,0.6008417208567738,0.5354955766458525,0.7333515239751358
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,test,species=Human|sex=M,Uni-Mol global,8,0.7244806508139897,0.6572044284930544,0.6123207780020503
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,test,species=Human|sex=M,Uni-Mol grouped,0,,,
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,test,species=Human|sex=M,Uni-Mol stack input,8,0.7244806508139897,0.6572044284930544,0.6123207780020503
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,test,species=Human|sex=MF,Aux-fusion meta-model,1087,0.6149284125122251,0.43832241360150825,0.4692001817563819
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,test,species=Human|sex=MF,Uni-Mol global,1087,0.6216422035687527,0.45069220841490026,0.45754635951836276
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,test,species=Human|sex=MF,Uni-Mol grouped,1087,0.6246530953692967,0.4453983936790539,0.4522789419063822
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,test,species=Human|sex=MF,Uni-Mol stack input,1087,0.6246530953692967,0.4453983936790539,0.4522789419063822
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,test,species=Monkey|sex=F,Aux-fusion meta-model,2,1.4596037815229028,1.4596037815229028,
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,test,species=Monkey|sex=F,Uni-Mol global,2,1.435736708174717,1.4357367081747159,
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,test,species=Monkey|sex=F,Uni-Mol grouped,0,,,
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,test,species=Monkey|sex=F,Uni-Mol stack input,2,1.435736708174717,1.4357367081747159,
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,test,species=Monkey|sex=M,Aux-fusion meta-model,4,0.7610331760542296,0.5853248090447332,-1.2572531564961418
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,test,species=Monkey|sex=M,Uni-Mol global,4,0.8447779102910133,0.7885043203305466,-1.7813662994459638
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,test,species=Monkey|sex=M,Uni-Mol grouped,0,,,
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,test,species=Monkey|sex=M,Uni-Mol stack input,4,0.8447779102910133,0.7885043203305466,-1.7813662994459638
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,test,species=Mouse|sex=F,Aux-fusion meta-model,26,0.6621334467176286,0.5411146993092333,-1.5722954019131912
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,test,species=Mouse|sex=F,Uni-Mol global,26,0.8165934084052682,0.6655754617146477,-2.9123844933056793
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,test,species=Mouse|sex=F,Uni-Mol grouped,26,0.8750134283978267,0.7449883144720051,-3.492201463216025
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,test,species=Mouse|sex=F,Uni-Mol stack input,26,0.8750134283978267,0.7449883144720051,-3.492201463216025
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,test,species=Mouse|sex=M,Aux-fusion meta-model,38,0.7485117791458267,0.5190446058867636,-0.3077879329066888
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,test,species=Mouse|sex=M,Uni-Mol global,38,0.9024485861572507,0.7635779209421307,-0.9010125557253754
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,test,species=Mouse|sex=M,Uni-Mol grouped,38,0.7151345957529237,0.5616347433601335,-0.1937561554320648
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,test,species=Mouse|sex=M,Uni-Mol stack input,38,0.7151345957529237,0.5616347433601335,-0.1937561554320648
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,test,species=Mouse|sex=MF,Aux-fusion meta-model,16,0.7078293947572872,0.5827938012101077,0.7464249624490581
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,test,species=Mouse|sex=MF,Uni-Mol global,16,1.1012181598094086,1.0308733276472806,0.3862435919496252
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,test,species=Mouse|sex=MF,Uni-Mol grouped,0,,,
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,test,species=Mouse|sex=MF,Uni-Mol stack input,16,1.1012181598094086,1.0308733276472806,0.3862435919496252
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,test,species=Mouse|sex=Not available,Aux-fusion meta-model,2,0.9056434526465365,0.9056434526465365,
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,test,species=Mouse|sex=Not available,Uni-Mol global,2,0.2594810875138902,0.2594810875138902,
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,test,species=Mouse|sex=Not available,Uni-Mol grouped,0,,,
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,test,species=Mouse|sex=Not available,Uni-Mol stack input,2,0.2594810875138902,0.2594810875138902,
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,test,species=Rat|sex=F,Aux-fusion meta-model,102,0.7966891984633371,0.6140843948390304,0.17909542362335584
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,test,species=Rat|sex=F,Uni-Mol global,102,1.080654393144068,0.8527065092240198,-0.5103877873821798
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,test,species=Rat|sex=F,Uni-Mol grouped,102,0.8431387982853411,0.6491456321766296,0.08058207258401573
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,test,species=Rat|sex=F,Uni-Mol stack input,102,0.8431387982853411,0.6491456321766296,0.08058207258401573
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,test,species=Rat|sex=M,Aux-fusion meta-model,282,0.6840751638417941,0.5269043294444734,0.2365862442292037
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,test,species=Rat|sex=M,Uni-Mol global,282,0.7798379561212407,0.6343649577717009,0.007887153044475848
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,test,species=Rat|sex=M,Uni-Mol grouped,282,0.6925324468226384,0.5149671543821058,0.21759325318549438
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,test,species=Rat|sex=M,Uni-Mol stack input,282,0.6925324468226384,0.5149671543821058,0.21759325318549438
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,test,species=Rat|sex=MF,Aux-fusion meta-model,6,0.32800991483415187,0.28611835553320725,-8.736111930181819
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,test,species=Rat|sex=MF,Uni-Mol global,6,0.21978445725956186,0.2152670799951267,-3.3712492276816732
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,test,species=Rat|sex=MF,Uni-Mol grouped,6,0.21366612154126513,0.2042644055708697,-3.1312640020203757
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,test,species=Rat|sex=MF,Uni-Mol stack input,6,0.21366612154126513,0.2042644055708697,-3.1312640020203757
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,test,species=Rat|sex=Not reported,Aux-fusion meta-model,6,0.9809892221971669,0.8391559795834568,0.30170126413669573
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,test,species=Rat|sex=Not reported,Uni-Mol global,6,0.8002228574641346,0.6629170552154523,0.53534064137442
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,test,species=Rat|sex=Not reported,Uni-Mol grouped,0,,,
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,test,species=Rat|sex=Not reported,Uni-Mol stack input,6,0.8002228574641346,0.6629170552154523,0.53534064137442
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,train,species=Human|sex=F,Aux-fusion meta-model,44,0.3444955158695185,0.27662414645592454,0.772986395460188
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,train,species=Human|sex=F,Uni-Mol global,44,1.8251350213892694,1.612785429169305,-5.371984858262803
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,train,species=Human|sex=F,Uni-Mol grouped,0,,,
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,train,species=Human|sex=F,Uni-Mol stack input,44,1.8251350213892694,1.612785429169305,-5.371984858262803
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,train,species=Human|sex=M,Aux-fusion meta-model,36,0.5518321084579139,0.43346306732159867,0.8667907284919423
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,train,species=Human|sex=M,Uni-Mol global,36,1.609766980167779,1.226658334280243,-0.13356531833603924
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,train,species=Human|sex=M,Uni-Mol grouped,0,,,
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,train,species=Human|sex=M,Uni-Mol stack input,36,1.609766980167779,1.226658334280243,-0.13356531833603924
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,train,species=Human|sex=MF,Aux-fusion meta-model,4227,0.49128346242543236,0.376391425339731,0.6823052409292633
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,train,species=Human|sex=MF,Uni-Mol global,4227,0.614725302997157,0.45769353431519133,0.5025975277975874
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,train,species=Human|sex=MF,Uni-Mol grouped,4227,0.5877975837777958,0.4381332689787354,0.5452200044001831
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,train,species=Human|sex=MF,Uni-Mol stack input,4227,0.5877975837777958,0.4381332689787354,0.5452200044001831
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,train,species=Monkey|sex=F,Aux-fusion meta-model,22,0.2187931452226399,0.16707840830701678,0.9569497544107335
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,train,species=Monkey|sex=F,Uni-Mol global,22,1.0513484467989043,0.7782923774024993,0.005965253817294958
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,train,species=Monkey|sex=F,Uni-Mol grouped,0,,,
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,train,species=Monkey|sex=F,Uni-Mol stack input,22,1.0513484467989043,0.7782923774024993,0.005965253817294958
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,train,species=Monkey|sex=M,Aux-fusion meta-model,28,0.25879406003959476,0.21241869343689324,0.9105937084855709
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,train,species=Monkey|sex=M,Uni-Mol global,28,1.042263572741235,0.7541395792146378,-0.4501555596182547
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,train,species=Monkey|sex=M,Uni-Mol grouped,0,,,
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,train,species=Monkey|sex=M,Uni-Mol stack input,28,1.042263572741235,0.7541395792146378,-0.4501555596182547
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,train,species=Monkey|sex=MF,Aux-fusion meta-model,2,0.365476446412214,0.365476446412214,
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,train,species=Monkey|sex=MF,Uni-Mol global,2,0.09819150720790404,0.09819150720790404,
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,train,species=Monkey|sex=MF,Uni-Mol grouped,0,,,
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,train,species=Monkey|sex=MF,Uni-Mol stack input,2,0.09819150720790404,0.09819150720790404,
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,train,species=Mouse|sex=F,Aux-fusion meta-model,122,0.42450172455911017,0.3196465416675149,0.884985812659888
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,train,species=Mouse|sex=F,Uni-Mol global,122,0.9524437471323911,0.7301523524496498,0.42100986086814485
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,train,species=Mouse|sex=F,Uni-Mol grouped,122,0.9835156598655889,0.77979525767277,0.3826164468078367
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,train,species=Mouse|sex=F,Uni-Mol stack input,122,0.9835156598655889,0.77979525767277,0.3826164468078367
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,train,species=Mouse|sex=M,Aux-fusion meta-model,184,0.399928332435746,0.297124803785383,0.8483744859023221
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,train,species=Mouse|sex=M,Uni-Mol global,184,0.8908106593997474,0.700104376606777,0.24772132303353878
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,train,species=Mouse|sex=M,Uni-Mol grouped,184,0.7819565674604106,0.5918437529188142,0.42034017033886284
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,train,species=Mouse|sex=M,Uni-Mol stack input,184,0.7819565674604106,0.5918437529188142,0.42034017033886284
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,train,species=Mouse|sex=MF,Aux-fusion meta-model,34,0.2528078315519976,0.20461838451065972,0.9689449859747946
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,train,species=Mouse|sex=MF,Uni-Mol global,34,1.0546112061573771,0.9404908395207164,0.45957498132143226
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,train,species=Mouse|sex=MF,Uni-Mol grouped,0,,,
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,train,species=Mouse|sex=MF,Uni-Mol stack input,34,1.0546112061573771,0.9404908395207164,0.45957498132143226
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,train,species=Mouse|sex=Not available,Aux-fusion meta-model,2,0.20787881953088472,0.20787881953088472,
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,train,species=Mouse|sex=Not available,Uni-Mol global,2,0.8772443069013323,0.8772443069013323,
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,train,species=Mouse|sex=Not available,Uni-Mol grouped,0,,,
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,train,species=Mouse|sex=Not available,Uni-Mol stack input,2,0.8772443069013323,0.8772443069013323,
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,train,species=Rat|sex=F,Aux-fusion meta-model,438,0.4642050397009676,0.35855798216962664,0.6692183414495949
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,train,species=Rat|sex=F,Uni-Mol global,438,0.8043268315599119,0.591355985799559,0.006914064282330656
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,train,species=Rat|sex=F,Uni-Mol grouped,438,0.7663360972339087,0.5999722193719605,0.0985113068406307
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,train,species=Rat|sex=F,Uni-Mol stack input,438,0.7663360972339087,0.5999722193719605,0.0985113068406307
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,train,species=Rat|sex=M,Aux-fusion meta-model,1114,0.5367130409811594,0.41573065801426057,0.6963563324068608
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,train,species=Rat|sex=M,Uni-Mol global,1114,0.8494358294582268,0.6522975853274,0.23942668458377891
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,train,species=Rat|sex=M,Uni-Mol grouped,1114,0.7611620139096804,0.6011080651461214,0.38929124527117
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,train,species=Rat|sex=M,Uni-Mol stack input,1114,0.7611620139096804,0.6011080651461214,0.38929124527117
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,train,species=Rat|sex=MF,Aux-fusion meta-model,72,0.4673096557461528,0.3846159132243331,0.6106658526221511
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,train,species=Rat|sex=MF,Uni-Mol global,72,0.79287926888346,0.6552766056723477,-0.12079739289215552
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,train,species=Rat|sex=MF,Uni-Mol grouped,72,0.722323815854502,0.5596567742569291,0.06979888594782846
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,train,species=Rat|sex=MF,Uni-Mol stack input,72,0.722323815854502,0.5596567742569291,0.06979888594782846
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,train,species=Rat|sex=Not reported,Aux-fusion meta-model,16,0.37474822548480075,0.30175234446012295,0.9292760429781762
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,train,species=Rat|sex=Not reported,Uni-Mol global,16,0.6514218022891848,0.5522955807687526,0.7862963395854874
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,train,species=Rat|sex=Not reported,Uni-Mol grouped,0,,,
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,train,species=Rat|sex=Not reported,Uni-Mol stack input,16,0.6514218022891848,0.5522955807687526,0.7862963395854874
+unimol_aux_fusion_VDss,VDss_all_aux,test,species=Human|sex=MF,Aux-fusion meta-model,652,0.48415653503021966,0.3754093467377272,0.4595495718581213
+unimol_aux_fusion_VDss,VDss_all_aux,test,species=Human|sex=MF,Uni-Mol global,652,0.48266471962984614,0.3716099256785602,0.4628749845065693
+unimol_aux_fusion_VDss,VDss_all_aux,test,species=Human|sex=MF,Uni-Mol grouped,652,0.46752670229822885,0.36267518372315144,0.4960387909897932
+unimol_aux_fusion_VDss,VDss_all_aux,test,species=Human|sex=MF,Uni-Mol stack input,652,0.46752670229822885,0.36267518372315144,0.4960387909897932
+unimol_aux_fusion_VDss,VDss_all_aux,test,species=Mouse|sex=F,Aux-fusion meta-model,14,0.549766499088099,0.46668588535637445,-0.2982380407781944
+unimol_aux_fusion_VDss,VDss_all_aux,test,species=Mouse|sex=F,Uni-Mol global,14,0.4552444679287378,0.3241949788156578,0.10980092047856593
+unimol_aux_fusion_VDss,VDss_all_aux,test,species=Mouse|sex=F,Uni-Mol grouped,0,,,
+unimol_aux_fusion_VDss,VDss_all_aux,test,species=Mouse|sex=F,Uni-Mol stack input,14,0.4552444679287378,0.3241949788156578,0.10980092047856593
+unimol_aux_fusion_VDss,VDss_all_aux,test,species=Mouse|sex=M,Aux-fusion meta-model,22,0.44794677039822545,0.36152392665067784,0.5005731388949342
+unimol_aux_fusion_VDss,VDss_all_aux,test,species=Mouse|sex=M,Uni-Mol global,22,0.3670433222169639,0.2958047948543023,0.6646844210394387
+unimol_aux_fusion_VDss,VDss_all_aux,test,species=Mouse|sex=M,Uni-Mol grouped,0,,,
+unimol_aux_fusion_VDss,VDss_all_aux,test,species=Mouse|sex=M,Uni-Mol stack input,22,0.3670433222169639,0.2958047948543023,0.6646844210394387
+unimol_aux_fusion_VDss,VDss_all_aux,test,species=Rat|sex=F,Aux-fusion meta-model,16,0.5746098610609671,0.4900636326931246,-2.1711633277616094
+unimol_aux_fusion_VDss,VDss_all_aux,test,species=Rat|sex=F,Uni-Mol global,16,0.584158009532727,0.443505324281614,-2.2774277950616537
+unimol_aux_fusion_VDss,VDss_all_aux,test,species=Rat|sex=F,Uni-Mol grouped,16,0.6049420194972568,0.47126053651542554,-2.514794714001603
+unimol_aux_fusion_VDss,VDss_all_aux,test,species=Rat|sex=F,Uni-Mol stack input,16,0.6049420194972568,0.47126053651542554,-2.514794714001603
+unimol_aux_fusion_VDss,VDss_all_aux,test,species=Rat|sex=M,Aux-fusion meta-model,68,0.5687473982923695,0.4438470225747587,0.23641323359824673
+unimol_aux_fusion_VDss,VDss_all_aux,test,species=Rat|sex=M,Uni-Mol global,68,0.5333652262772499,0.4243900262745949,0.3284645521662418
+unimol_aux_fusion_VDss,VDss_all_aux,test,species=Rat|sex=M,Uni-Mol grouped,68,0.5801939329873596,0.5076918630225141,0.20536825042358697
+unimol_aux_fusion_VDss,VDss_all_aux,test,species=Rat|sex=M,Uni-Mol stack input,68,0.5801939329873596,0.5076918630225141,0.20536825042358697
+unimol_aux_fusion_VDss,VDss_all_aux,test,species=Rat|sex=MF,Aux-fusion meta-model,2,0.15235089831359339,0.15235089831359339,
+unimol_aux_fusion_VDss,VDss_all_aux,test,species=Rat|sex=MF,Uni-Mol global,2,0.12461960436927488,0.12461960436927488,
+unimol_aux_fusion_VDss,VDss_all_aux,test,species=Rat|sex=MF,Uni-Mol grouped,0,,,
+unimol_aux_fusion_VDss,VDss_all_aux,test,species=Rat|sex=MF,Uni-Mol stack input,2,0.12461960436927488,0.12461960436927488,
+unimol_aux_fusion_VDss,VDss_all_aux,train,species=Human|sex=F,Aux-fusion meta-model,2,0.03942626644656372,0.03942626644656372,
+unimol_aux_fusion_VDss,VDss_all_aux,train,species=Human|sex=F,Uni-Mol global,2,0.0749598538480179,0.07495985384798087,
+unimol_aux_fusion_VDss,VDss_all_aux,train,species=Human|sex=F,Uni-Mol grouped,0,,,
+unimol_aux_fusion_VDss,VDss_all_aux,train,species=Human|sex=F,Uni-Mol stack input,2,0.0749598538480179,0.07495985384798087,
+unimol_aux_fusion_VDss,VDss_all_aux,train,species=Human|sex=M,Aux-fusion meta-model,2,0.10869012928224969,0.10869012928224969,
+unimol_aux_fusion_VDss,VDss_all_aux,train,species=Human|sex=M,Uni-Mol global,2,0.07495979424345603,0.07495979424333607,
+unimol_aux_fusion_VDss,VDss_all_aux,train,species=Human|sex=M,Uni-Mol grouped,0,,,
+unimol_aux_fusion_VDss,VDss_all_aux,train,species=Human|sex=M,Uni-Mol stack input,2,0.07495979424345603,0.07495979424333607,
+unimol_aux_fusion_VDss,VDss_all_aux,train,species=Human|sex=MF,Aux-fusion meta-model,2726,0.34843011551114395,0.2627099956602336,0.7135724215912161
+unimol_aux_fusion_VDss,VDss_all_aux,train,species=Human|sex=MF,Uni-Mol global,2726,0.4520055320772878,0.34272882631511004,0.5179734477996512
+unimol_aux_fusion_VDss,VDss_all_aux,train,species=Human|sex=MF,Uni-Mol grouped,2726,0.4502761758675786,0.33671925956203963,0.5216548229133566
+unimol_aux_fusion_VDss,VDss_all_aux,train,species=Human|sex=MF,Uni-Mol stack input,2726,0.4502761758675786,0.33671925956203963,0.5216548229133566
+unimol_aux_fusion_VDss,VDss_all_aux,train,species=Monkey|sex=F,Aux-fusion meta-model,6,0.06691261624060292,0.058392502952539095,-2.298018002523213
+unimol_aux_fusion_VDss,VDss_all_aux,train,species=Monkey|sex=F,Uni-Mol global,6,0.376137480541588,0.35792972656902616,-103.2149975615232
+unimol_aux_fusion_VDss,VDss_all_aux,train,species=Monkey|sex=F,Uni-Mol grouped,0,,,
+unimol_aux_fusion_VDss,VDss_all_aux,train,species=Monkey|sex=F,Uni-Mol stack input,6,0.376137480541588,0.35792972656902616,-103.2149975615232
+unimol_aux_fusion_VDss,VDss_all_aux,train,species=Monkey|sex=M,Aux-fusion meta-model,6,0.017657914249693367,0.014646897684426044,0.5014022185011364
+unimol_aux_fusion_VDss,VDss_all_aux,train,species=Monkey|sex=M,Uni-Mol global,6,0.2774220314382466,0.2721637055117438,-122.07034837458572
+unimol_aux_fusion_VDss,VDss_all_aux,train,species=Monkey|sex=M,Uni-Mol grouped,0,,,
+unimol_aux_fusion_VDss,VDss_all_aux,train,species=Monkey|sex=M,Uni-Mol stack input,6,0.2774220314382466,0.2721637055117438,-122.07034837458572
+unimol_aux_fusion_VDss,VDss_all_aux,train,species=Mouse|sex=F,Aux-fusion meta-model,38,0.1378410359360725,0.11268032239544673,0.7887174957681289
+unimol_aux_fusion_VDss,VDss_all_aux,train,species=Mouse|sex=F,Uni-Mol global,38,0.3233567806624419,0.2688462918506438,-0.16270736568370459
+unimol_aux_fusion_VDss,VDss_all_aux,train,species=Mouse|sex=F,Uni-Mol grouped,0,,,
+unimol_aux_fusion_VDss,VDss_all_aux,train,species=Mouse|sex=F,Uni-Mol stack input,38,0.3233567806624419,0.2688462918506438,-0.16270736568370459
+unimol_aux_fusion_VDss,VDss_all_aux,train,species=Mouse|sex=M,Aux-fusion meta-model,44,0.13703265036088708,0.10855076396313056,0.9404819763663994
+unimol_aux_fusion_VDss,VDss_all_aux,train,species=Mouse|sex=M,Uni-Mol global,44,0.34335973659408375,0.2541640483756908,0.6263206312093832
+unimol_aux_fusion_VDss,VDss_all_aux,train,species=Mouse|sex=M,Uni-Mol grouped,0,,,
+unimol_aux_fusion_VDss,VDss_all_aux,train,species=Mouse|sex=M,Uni-Mol stack input,44,0.34335973659408375,0.2541640483756908,0.6263206312093832
+unimol_aux_fusion_VDss,VDss_all_aux,train,species=Mouse|sex=MF,Aux-fusion meta-model,2,0.2460774139924817,0.2460774139924817,
+unimol_aux_fusion_VDss,VDss_all_aux,train,species=Mouse|sex=MF,Uni-Mol global,2,0.21864070853178322,0.21864070853178322,
+unimol_aux_fusion_VDss,VDss_all_aux,train,species=Mouse|sex=MF,Uni-Mol grouped,0,,,
+unimol_aux_fusion_VDss,VDss_all_aux,train,species=Mouse|sex=MF,Uni-Mol stack input,2,0.21864070853178322,0.21864070853178322,
+unimol_aux_fusion_VDss,VDss_all_aux,train,species=Rat|sex=F,Aux-fusion meta-model,62,0.25556023161312713,0.1968414323950333,0.8118740763238567
+unimol_aux_fusion_VDss,VDss_all_aux,train,species=Rat|sex=F,Uni-Mol global,62,0.4329316763459141,0.32020074386220404,0.4601155421371542
+unimol_aux_fusion_VDss,VDss_all_aux,train,species=Rat|sex=F,Uni-Mol grouped,62,0.6037504490599788,0.5363260684911244,-0.04997034389101396
+unimol_aux_fusion_VDss,VDss_all_aux,train,species=Rat|sex=F,Uni-Mol stack input,62,0.6037504490599788,0.5363260684911244,-0.04997034389101396
+unimol_aux_fusion_VDss,VDss_all_aux,train,species=Rat|sex=M,Aux-fusion meta-model,200,0.39106476731062306,0.26306778914631723,0.6987585171463717
+unimol_aux_fusion_VDss,VDss_all_aux,train,species=Rat|sex=M,Uni-Mol global,200,0.6615754336195382,0.43494338186405895,0.13786329283400067
+unimol_aux_fusion_VDss,VDss_all_aux,train,species=Rat|sex=M,Uni-Mol grouped,200,0.7022827834478479,0.5057261084721248,0.028503053952808055
+unimol_aux_fusion_VDss,VDss_all_aux,train,species=Rat|sex=M,Uni-Mol stack input,200,0.7022827834478479,0.5057261084721248,0.028503053952808055
+unimol_aux_fusion_VDss,VDss_all_aux,train,species=Rat|sex=MF,Aux-fusion meta-model,6,0.13452111217908538,0.13198340507618725,0.67181171147457
+unimol_aux_fusion_VDss,VDss_all_aux,train,species=Rat|sex=MF,Uni-Mol global,6,0.16735387163919324,0.1509237917786365,0.4920584867210819
+unimol_aux_fusion_VDss,VDss_all_aux,train,species=Rat|sex=MF,Uni-Mol grouped,0,,,
+unimol_aux_fusion_VDss,VDss_all_aux,train,species=Rat|sex=MF,Uni-Mol stack input,6,0.16735387163919324,0.1509237917786365,0.4920584867210819
+unimol_aux_fusion_VDss,VDss_all_aux,train,species=Rat|sex=Not reported,Aux-fusion meta-model,2,0.14256643702480348,0.14010807066596465,
+unimol_aux_fusion_VDss,VDss_all_aux,train,species=Rat|sex=Not reported,Uni-Mol global,2,0.07519525598227118,0.0751952559822697,
+unimol_aux_fusion_VDss,VDss_all_aux,train,species=Rat|sex=Not reported,Uni-Mol grouped,0,,,
+unimol_aux_fusion_VDss,VDss_all_aux,train,species=Rat|sex=Not reported,Uni-Mol stack input,2,0.07519525598227118,0.0751952559822697,

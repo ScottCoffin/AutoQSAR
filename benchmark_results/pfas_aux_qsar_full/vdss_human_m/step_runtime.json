@@ -2,13 +2,13 @@
   {
     "dataset": "vdss_human_m",
     "stage_index": 1,
-    "total_stages": 22,
+    "total_stages": 23,
     "stage_label": "loading Structural single-target workbook: modeling_datasets_aux_features.xlsx::vdss_human_m",
-    "started_at": "2026-05-15 09:38:19 Pacific Daylight Time",
-    "started_epoch": 1778863099.6517687,
+    "started_at": "2026-05-16 14:11:38 Pacific Daylight Time",
+    "started_epoch": 1778965898.990303,
     "status": "skipped",
-    "ended_at": "2026-05-15 09:38:19 Pacific Daylight Time",
-    "ended_epoch": 1778863099.6559036,
-    "duration_seconds": 0.004
+    "ended_at": "2026-05-16 14:11:39 Pacific Daylight Time",
+    "ended_epoch": 1778965899.000253,
+    "duration_seconds": 0.01
   }
 ]

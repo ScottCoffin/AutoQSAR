@@ -2,8 +2,8 @@
   "status": "completed",
   "dataset": "vdss_pfas_struct",
   "source": "PFAS auxiliary workbook: modeling_datasets_aux_features.xlsx::VDss_pfas_struct",
-  "completed_at": "2026-05-15 11:07:50",
-  "elapsed_seconds": 2.787,
+  "completed_at": "2026-05-16 14:32:53",
+  "elapsed_seconds": 4.871,
   "n_metrics_rows": 25,
-  "n_stage_records": 22
+  "n_stage_records": 23
 }

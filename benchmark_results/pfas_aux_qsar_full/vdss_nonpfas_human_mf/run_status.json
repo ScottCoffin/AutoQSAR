@@ -2,8 +2,8 @@
   "status": "completed",
   "dataset": "vdss_nonpfas_human_mf",
   "source": "Structural single-target workbook: modeling_datasets_aux_features.xlsx::vdss_nonpfas_human_mf",
-  "completed_at": "2026-05-15 12:22:55",
-  "elapsed_seconds": 1424.776,
-  "n_metrics_rows": 20,
-  "n_stage_records": 22
+  "completed_at": "2026-05-16 15:11:11",
+  "elapsed_seconds": 1340.848,
+  "n_metrics_rows": 22,
+  "n_stage_records": 23
 }

@@ -1,0 +1,3 @@
+Model,Weight,Abs normalized contribution,Workflow
+ChemML MLP (PyTorch),0.9708537069823739,0.960589352501946,ChemML deep learning
+Uni-Mol V1,0.03983176902638408,0.039410647498054,Uni-Mol

@@ -2,8 +2,8 @@
   "status": "completed",
   "dataset": "hle_invivo_struct_rat_mf",
   "source": "Structural single-target workbook: modeling_datasets_aux_features.xlsx::hle_invivo_struct_rat_mf",
-  "completed_at": "2026-05-15 10:06:20",
-  "elapsed_seconds": 385.501,
-  "n_metrics_rows": 20,
-  "n_stage_records": 22
+  "completed_at": "2026-05-16 14:17:41",
+  "elapsed_seconds": 60.845,
+  "n_metrics_rows": 22,
+  "n_stage_records": 23
 }

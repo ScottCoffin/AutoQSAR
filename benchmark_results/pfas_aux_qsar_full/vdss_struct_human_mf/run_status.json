@@ -2,8 +2,8 @@
   "status": "completed",
   "dataset": "vdss_struct_human_mf",
   "source": "Structural single-target workbook: modeling_datasets_aux_features.xlsx::vdss_struct_human_mf",
-  "completed_at": "2026-05-15 12:44:09",
-  "elapsed_seconds": 1273.719,
-  "n_metrics_rows": 20,
-  "n_stage_records": 22
+  "completed_at": "2026-05-16 15:33:53",
+  "elapsed_seconds": 1362.295,
+  "n_metrics_rows": 22,
+  "n_stage_records": 23
 }

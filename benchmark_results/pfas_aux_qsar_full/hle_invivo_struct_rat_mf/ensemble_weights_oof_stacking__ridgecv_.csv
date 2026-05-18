@@ -1,8 +1,3 @@
 Model,Weight,Abs normalized contribution,Workflow
-HistGradientBoosting,0.0,0.0,Conventional ML
-AdaBoost,4.027890443403237e-08,4.0278765670965265e-08,Conventional ML
-Tabular CNN,9.461972472202262e-08,9.461939875180582e-08,Conventional ML
-TabPFNRegressor,-4.6242792317574555e-07,4.624263300858183e-07,Conventional ML
-"Chemprop v2 (AttentiveFP, ensemble=1)",-1.6473319824263782e-06,1.6473263072760325e-06,Chemprop v2
-"Chemprop v2 (AttentiveFP + Selected descriptors, ensemble=1)",5.494913073722518e-07,5.494894143441213e-07,Chemprop v2
-CFA (Combinatorial Fusion),1.0000006509176715,0.9999972058597838,CFA fusion
+ChemML MLP (PyTorch),0.5952770763513904,0.3367591839661578,ChemML deep learning
+Uni-Mol V1,1.1723868945032605,0.6632408160338422,Uni-Mol

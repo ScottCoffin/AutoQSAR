@@ -1,23 +1,24 @@
 dataset,stage_index,total_stages,stage_label,started_at,started_epoch,status,ended_at,ended_epoch,duration_seconds
-hle_invivo_rat_m,1,22,loading Structural single-target workbook: modeling_datasets_aux_features.xlsx::hle_invivo_rat_m,2026-05-15 10:35:42 Pacific Daylight Time,1778866542.403279,completed,2026-05-15 10:35:42 Pacific Daylight Time,1778866542.428258,0.025
-hle_invivo_rat_m,2,22,building molecular features,2026-05-15 10:35:42 Pacific Daylight Time,1778866542.428258,completed,2026-05-15 10:36:17 Pacific Daylight Time,1778866577.3595428,34.931
-hle_invivo_rat_m,3,22,splitting data and selecting features,2026-05-15 10:36:17 Pacific Daylight Time,1778866577.3595428,completed,2026-05-15 10:36:23 Pacific Daylight Time,1778866583.9088647,6.549
-hle_invivo_rat_m,4,22,conventional model ElasticNetCV,2026-05-15 10:36:23 Pacific Daylight Time,1778866583.9088647,completed,2026-05-15 10:36:24 Pacific Daylight Time,1778866584.0608032,0.152
-hle_invivo_rat_m,5,22,conventional model SVR,2026-05-15 10:36:24 Pacific Daylight Time,1778866584.0608032,completed,2026-05-15 10:36:24 Pacific Daylight Time,1778866584.1300488,0.069
-hle_invivo_rat_m,6,22,conventional model Random forest,2026-05-15 10:36:24 Pacific Daylight Time,1778866584.1300488,completed,2026-05-15 10:36:26 Pacific Daylight Time,1778866586.0110292,1.881
-hle_invivo_rat_m,7,22,conventional model Extra trees,2026-05-15 10:36:26 Pacific Daylight Time,1778866586.0110292,completed,2026-05-15 10:36:27 Pacific Daylight Time,1778866587.8648403,1.854
-hle_invivo_rat_m,8,22,conventional model HistGradientBoosting,2026-05-15 10:36:27 Pacific Daylight Time,1778866587.8658404,completed,2026-05-15 10:36:28 Pacific Daylight Time,1778866588.9116907,1.046
-hle_invivo_rat_m,9,22,"conventional model Voting Regressor (KNN, SVM)",2026-05-15 10:36:28 Pacific Daylight Time,1778866588.9116907,completed,2026-05-15 10:36:29 Pacific Daylight Time,1778866589.0665393,0.155
-hle_invivo_rat_m,10,22,conventional model AdaBoost,2026-05-15 10:36:29 Pacific Daylight Time,1778866589.0665393,completed,2026-05-15 10:36:29 Pacific Daylight Time,1778866589.7842207,0.718
-hle_invivo_rat_m,11,22,conventional model Tabular MLP,2026-05-15 10:36:29 Pacific Daylight Time,1778866589.7842207,completed,2026-05-15 10:36:33 Pacific Daylight Time,1778866593.7660885,3.982
-hle_invivo_rat_m,12,22,conventional model Tabular CNN,2026-05-15 10:36:33 Pacific Daylight Time,1778866593.7660885,completed,2026-05-15 10:36:49 Pacific Daylight Time,1778866609.1675644,15.401
-hle_invivo_rat_m,13,22,conventional model XGBoost,2026-05-15 10:36:49 Pacific Daylight Time,1778866609.1675644,completed,2026-05-15 10:36:49 Pacific Daylight Time,1778866609.4193141,0.252
-hle_invivo_rat_m,14,22,conventional model CatBoost,2026-05-15 10:36:49 Pacific Daylight Time,1778866609.4193141,completed,2026-05-15 10:36:50 Pacific Daylight Time,1778866610.578329,1.159
-hle_invivo_rat_m,15,22,conventional model MapLight CatBoost (Strict Parity),2026-05-15 10:36:50 Pacific Daylight Time,1778866610.578329,completed,2026-05-15 10:37:35 Pacific Daylight Time,1778866655.7636302,45.185
-hle_invivo_rat_m,16,22,conventional model TabPFNRegressor,2026-05-15 10:37:35 Pacific Daylight Time,1778866655.7636302,completed,2026-05-15 10:38:03 Pacific Daylight Time,1778866683.7859292,28.022
-hle_invivo_rat_m,17,22,deep model ChemML MLP (PyTorch),2026-05-15 10:38:03 Pacific Daylight Time,1778866683.7859292,completed,2026-05-15 10:38:03 Pacific Daylight Time,1778866683.826911,0.041
-hle_invivo_rat_m,18,22,"deep model Chemprop v2 (AttentiveFP, ensemble=1)",2026-05-15 10:38:03 Pacific Daylight Time,1778866683.8279104,completed,2026-05-15 10:39:07 Pacific Daylight Time,1778866747.3039954,63.476
-hle_invivo_rat_m,19,22,"deep model Chemprop v2 (AttentiveFP + Selected descriptors, ensemble=1)",2026-05-15 10:39:07 Pacific Daylight Time,1778866747.3055024,completed,2026-05-15 10:40:09 Pacific Daylight Time,1778866809.8345141,62.529
-hle_invivo_rat_m,20,22,"deep model MapLight + GNN (CatBoost, Strict Parity)",2026-05-15 10:40:09 Pacific Daylight Time,1778866809.8345141,completed,2026-05-15 10:41:21 Pacific Daylight Time,1778866881.789941,71.955
-hle_invivo_rat_m,21,22,CFA combinatorial fusion,2026-05-15 10:41:21 Pacific Daylight Time,1778866881.789941,completed,2026-05-15 10:41:21 Pacific Daylight Time,1778866881.8701084,0.08
-hle_invivo_rat_m,22,22,ensemble (2 method(s)),2026-05-15 10:41:21 Pacific Daylight Time,1778866881.8701084,completed,2026-05-15 10:41:22 Pacific Daylight Time,1778866882.2878277,0.418
+hle_invivo_rat_m,1,23,loading Structural single-target workbook: modeling_datasets_aux_features.xlsx::hle_invivo_rat_m,2026-05-16 14:23:19 Pacific Daylight Time,1778966599.3276653,completed,2026-05-16 14:23:19 Pacific Daylight Time,1778966599.3646915,0.037
+hle_invivo_rat_m,2,23,building molecular features,2026-05-16 14:23:19 Pacific Daylight Time,1778966599.3646915,completed,2026-05-16 14:23:56 Pacific Daylight Time,1778966636.0330436,36.668
+hle_invivo_rat_m,3,23,splitting data and selecting features,2026-05-16 14:23:56 Pacific Daylight Time,1778966636.0330436,completed,2026-05-16 14:24:04 Pacific Daylight Time,1778966644.3327324,8.3
+hle_invivo_rat_m,4,23,conventional model ElasticNetCV (cached),2026-05-16 14:24:04 Pacific Daylight Time,1778966644.3327324,completed,2026-05-16 14:24:04 Pacific Daylight Time,1778966644.3357353,0.003
+hle_invivo_rat_m,5,23,conventional model SVR (cached),2026-05-16 14:24:04 Pacific Daylight Time,1778966644.3357353,completed,2026-05-16 14:24:04 Pacific Daylight Time,1778966644.3377883,0.002
+hle_invivo_rat_m,6,23,conventional model Random forest (cached),2026-05-16 14:24:04 Pacific Daylight Time,1778966644.3377883,completed,2026-05-16 14:24:04 Pacific Daylight Time,1778966644.3407311,0.003
+hle_invivo_rat_m,7,23,conventional model Extra trees (cached),2026-05-16 14:24:04 Pacific Daylight Time,1778966644.3407311,completed,2026-05-16 14:24:04 Pacific Daylight Time,1778966644.343734,0.003
+hle_invivo_rat_m,8,23,conventional model HistGradientBoosting (cached),2026-05-16 14:24:04 Pacific Daylight Time,1778966644.343734,completed,2026-05-16 14:24:04 Pacific Daylight Time,1778966644.345734,0.002
+hle_invivo_rat_m,9,23,"conventional model Voting Regressor (KNN, SVM) (cached)",2026-05-16 14:24:04 Pacific Daylight Time,1778966644.345734,completed,2026-05-16 14:24:04 Pacific Daylight Time,1778966644.348733,0.003
+hle_invivo_rat_m,10,23,conventional model AdaBoost (cached),2026-05-16 14:24:04 Pacific Daylight Time,1778966644.348733,completed,2026-05-16 14:24:04 Pacific Daylight Time,1778966644.3507304,0.002
+hle_invivo_rat_m,11,23,conventional model Tabular MLP (cached),2026-05-16 14:24:04 Pacific Daylight Time,1778966644.3507304,completed,2026-05-16 14:24:04 Pacific Daylight Time,1778966644.3527465,0.002
+hle_invivo_rat_m,12,23,conventional model Tabular CNN (cached),2026-05-16 14:24:04 Pacific Daylight Time,1778966644.3527465,completed,2026-05-16 14:24:04 Pacific Daylight Time,1778966644.354736,0.002
+hle_invivo_rat_m,13,23,conventional model XGBoost (cached),2026-05-16 14:24:04 Pacific Daylight Time,1778966644.354736,completed,2026-05-16 14:24:04 Pacific Daylight Time,1778966644.3577316,0.003
+hle_invivo_rat_m,14,23,conventional model CatBoost (cached),2026-05-16 14:24:04 Pacific Daylight Time,1778966644.3577316,completed,2026-05-16 14:24:04 Pacific Daylight Time,1778966644.3607347,0.003
+hle_invivo_rat_m,15,23,conventional model MapLight CatBoost (Strict Parity) (cached),2026-05-16 14:24:04 Pacific Daylight Time,1778966644.3607347,completed,2026-05-16 14:24:04 Pacific Daylight Time,1778966644.363733,0.003
+hle_invivo_rat_m,16,23,conventional model TabPFNRegressor (cached),2026-05-16 14:24:04 Pacific Daylight Time,1778966644.363733,completed,2026-05-16 14:24:04 Pacific Daylight Time,1778966644.3667364,0.003
+hle_invivo_rat_m,17,23,deep model ChemML MLP (PyTorch),2026-05-16 14:24:04 Pacific Daylight Time,1778966644.3667364,completed,2026-05-16 14:24:05 Pacific Daylight Time,1778966645.5266285,1.16
+hle_invivo_rat_m,18,23,"deep model Chemprop v2 (AttentiveFP, ensemble=1) (cached)",2026-05-16 14:24:05 Pacific Daylight Time,1778966645.5266285,completed,2026-05-16 14:24:05 Pacific Daylight Time,1778966645.5326307,0.006
+hle_invivo_rat_m,19,23,"deep model Chemprop v2 (AttentiveFP + Selected descriptors, ensemble=1) (cached)",2026-05-16 14:24:05 Pacific Daylight Time,1778966645.5336328,completed,2026-05-16 14:24:05 Pacific Daylight Time,1778966645.5366328,0.003
+hle_invivo_rat_m,20,23,deep model Uni-Mol V1,2026-05-16 14:24:05 Pacific Daylight Time,1778966645.5366328,completed,2026-05-16 14:24:33 Pacific Daylight Time,1778966673.9193742,28.383
+hle_invivo_rat_m,21,23,"deep model MapLight + GNN (CatBoost, Strict Parity) (cached)",2026-05-16 14:24:33 Pacific Daylight Time,1778966673.9193742,completed,2026-05-16 14:24:33 Pacific Daylight Time,1778966673.9213705,0.002
+hle_invivo_rat_m,22,23,CFA combinatorial fusion (cached),2026-05-16 14:24:33 Pacific Daylight Time,1778966673.9213705,completed,2026-05-16 14:24:33 Pacific Daylight Time,1778966673.924369,0.003
+hle_invivo_rat_m,23,23,ensemble (2 method(s)),2026-05-16 14:24:33 Pacific Daylight Time,1778966673.924369,completed,2026-05-16 14:24:34 Pacific Daylight Time,1778966674.0763736,0.152

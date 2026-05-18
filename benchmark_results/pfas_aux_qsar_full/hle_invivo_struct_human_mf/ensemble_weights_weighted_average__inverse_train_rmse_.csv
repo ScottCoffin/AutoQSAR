@@ -1,14 +1,3 @@
 Model,Weight,Workflow
-ElasticNetCV,2.2803285051633584e-08,Conventional ML
-SVR,9.094455507153913e-08,Conventional ML
-Random forest,4.917577905048619e-08,Conventional ML
-AdaBoost,1.7583653068818587e-08,Conventional ML
-Tabular MLP,5.939076937139451e-08,Conventional ML
-Tabular CNN,1.522369455600807e-08,Conventional ML
-XGBoost,8.245031623426134e-08,Conventional ML
-CatBoost,2.9371192401159258e-08,Conventional ML
-MapLight CatBoost (Strict Parity),2.9481745908703894e-08,Conventional ML
-"Chemprop v2 (AttentiveFP, ensemble=1)",2.467494248739474e-08,Chemprop v2
-"Chemprop v2 (AttentiveFP + Selected descriptors, ensemble=1)",2.4562928827019312e-08,Chemprop v2
-"MapLight + GNN (CatBoost, Strict Parity)",3.571172814381321e-08,MapLight + GNN
-CFA (Combinatorial Fusion),0.9999995186254098,CFA fusion
+ChemML MLP (PyTorch),0.8563044276785884,ChemML deep learning
+Uni-Mol V1,0.14369557232141167,Uni-Mol

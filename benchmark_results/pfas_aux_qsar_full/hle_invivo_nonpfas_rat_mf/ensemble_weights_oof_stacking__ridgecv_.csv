@@ -1,3 +1,3 @@
 Model,Weight,Abs normalized contribution,Workflow
-Tabular CNN,0.3224589450747314,0.30070322540377303,Conventional ML
-"Chemprop v2 (AttentiveFP, ensemble=1)",0.7498905272056062,0.6992967745962271,Chemprop v2
+ChemML MLP (PyTorch),0.8978109648938907,0.8402396526897445,ChemML deep learning
+Uni-Mol V1,0.17070676337547996,0.1597603473102556,Uni-Mol

@@ -1,0 +1,89 @@
+fusion_run_name,sheet,split,human_sex,human_pfas_source_sheet,prediction_source,row_count,rmse,mae,r2
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,test,All human PFAS,All PFAS source sheets,Aux-fusion meta-model,29,0.7491106122559542,0.5388015866200817,0.7579809176595477
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,test,All human PFAS,All PFAS source sheets,Uni-Mol global,29,1.0598340217166844,0.9015729093488531,0.5155673299555799
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,test,All human PFAS,All PFAS source sheets,Uni-Mol grouped,21,0.9137791306649921,0.7427883151033793,0.6224742178119738
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,test,All human PFAS,All PFAS source sheets,Uni-Mol stack input,29,0.982492370898797,0.8470688766302527,0.583690727277627
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,test,All human PFAS,HLe_invivo_pfas_struct,Aux-fusion meta-model,21,0.7985788365992649,0.5753135612419745,0.7223996823694998
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,test,All human PFAS,HLe_invivo_pfas_struct,Uni-Mol global,21,1.0148038057866309,0.8180074477085917,0.5517208497814305
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,test,All human PFAS,HLe_invivo_pfas_struct,Uni-Mol grouped,17,0.9270168761810288,0.7347944181025138,0.5549118406795079
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,test,All human PFAS,HLe_invivo_pfas_struct,Uni-Mol stack input,21,0.9719501274626732,0.8083202901458761,0.5887818001772782
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,test,All human PFAS,HLe_invivo_pfas_tsca,Aux-fusion meta-model,8,0.6001607335634439,0.4429576532376128,0.5683294718147033
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,test,All human PFAS,HLe_invivo_pfas_tsca,Uni-Mol global,8,1.1698202001289055,1.1209322461545397,-0.6400439111666454
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,test,All human PFAS,HLe_invivo_pfas_tsca,Uni-Mol grouped,4,0.8552358423412925,0.776762377357058,0.4479437032225365
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,test,All human PFAS,HLe_invivo_pfas_tsca,Uni-Mol stack input,8,1.0096421675268794,0.9487839161517405,-0.22166520447398308
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,test,F,All PFAS source sheets,Aux-fusion meta-model,4,0.28264468155566397,0.24086016154420142,-2.4912904448350517
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,test,F,All PFAS source sheets,Uni-Mol global,4,1.3075466212486286,1.298767130963583,-73.71687676413893
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,test,F,All PFAS source sheets,Uni-Mol grouped,0,,,
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,test,F,All PFAS source sheets,Uni-Mol stack input,4,1.3075466212486286,1.298767130963583,-73.71687676413893
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,test,M,All PFAS source sheets,Aux-fusion meta-model,4,0.47533965557851576,0.47334218860948307,-1.5149506604832474
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,test,M,All PFAS source sheets,Uni-Mol global,4,0.9513011547329244,0.9428435703130066,-9.072967269562636
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,test,M,All PFAS source sheets,Uni-Mol grouped,0,,,
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,test,M,All PFAS source sheets,Uni-Mol stack input,4,0.9513011547329244,0.9428435703130066,-9.072967269562636
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,test,MF,All PFAS source sheets,Aux-fusion meta-model,21,0.8465754925336776,0.6080207910175062,0.6759623084836741
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,test,MF,All PFAS source sheets,Uni-Mol global,21,1.0262179346911484,0.8180557888576374,0.5238504850009367
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,test,MF,All PFAS source sheets,Uni-Mol grouped,21,0.9137791306649921,0.7427883151033793,0.6224742178119738
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,test,MF,All PFAS source sheets,Uni-Mol stack input,21,0.9137791306649921,0.7427883151033793,0.6224742178119738
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,train,All human PFAS,All PFAS source sheets,Aux-fusion meta-model,162,0.485733822308652,0.3823088482130212,0.9175592790395775
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,train,All human PFAS,All PFAS source sheets,Uni-Mol global,162,1.469280650283613,1.1063934661530854,0.24568176003470787
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,train,All human PFAS,All PFAS source sheets,Uni-Mol grouped,113,0.9015460265587117,0.612870247021365,0.663487873618176
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,train,All human PFAS,All PFAS source sheets,Uni-Mol stack input,162,1.290863276179811,0.9222309969119914,0.4177552483956327
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,train,All human PFAS,HLe_invivo_pfas_struct,Aux-fusion meta-model,124,0.494563801782248,0.3894394456484719,0.8961336239327156
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,train,All human PFAS,HLe_invivo_pfas_struct,Uni-Mol global,124,1.2456128214457969,0.9008309711937293,0.34113495622523615
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,train,All human PFAS,HLe_invivo_pfas_struct,Uni-Mol grouped,99,0.801190418623325,0.5743923765701335,0.6163845829769306
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,train,All human PFAS,HLe_invivo_pfas_struct,Uni-Mol stack input,124,1.1106610605090472,0.7851993890332336,0.4761663194057616
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,train,All human PFAS,HLe_invivo_pfas_tsca,Aux-fusion meta-model,38,0.4557317474380108,0.35904058289733987,0.901808820568198
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,train,All human PFAS,HLe_invivo_pfas_tsca,Uni-Mol global,38,2.0347695500475695,1.77717634444151,-0.9574215664254637
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,train,All human PFAS,HLe_invivo_pfas_tsca,Uni-Mol grouped,14,1.421669775097013,0.8849637594979312,0.44189488691088097
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,train,All human PFAS,HLe_invivo_pfas_tsca,Uni-Mol stack input,38,1.754563258874242,1.369386769990043,-0.4554321728448165
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,train,F,All PFAS source sheets,Aux-fusion meta-model,28,0.3912285491671843,0.30473977593787144,0.772572954238503
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,train,F,All PFAS source sheets,Uni-Mol global,28,1.9949533968515991,1.8002408031964077,-4.91352641904012
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,train,F,All PFAS source sheets,Uni-Mol grouped,0,,,
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,train,F,All PFAS source sheets,Uni-Mol stack input,28,1.9949533968515991,1.8002408031964077,-4.91352641904012
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,train,M,All PFAS source sheets,Aux-fusion meta-model,21,0.610784405466498,0.49242291750955125,0.8089754902079604
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,train,M,All PFAS source sheets,Uni-Mol global,21,1.7817181406938059,1.4162067188966163,-0.6255158825650766
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,train,M,All PFAS source sheets,Uni-Mol grouped,0,,,
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,train,M,All PFAS source sheets,Uni-Mol stack input,21,1.7817181406938059,1.4162067188966163,-0.6255158825650766
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,train,MF,All PFAS source sheets,Aux-fusion meta-model,113,0.48061508258275887,0.38106582669511907,0.9043643744580367
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,train,MF,All PFAS source sheets,Uni-Mol global,113,1.232390540468703,0.8768907781457652,0.3711868375891869
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,train,MF,All PFAS source sheets,Uni-Mol grouped,113,0.9015460265587117,0.612870247021365,0.663487873618176
+unimol_aux_fusion_hle_invivo,HLe_invivo_all_aux,train,MF,All PFAS source sheets,Uni-Mol stack input,113,0.9015460265587117,0.612870247021365,0.663487873618176
+unimol_aux_fusion_VDss,VDss_all_aux,test,All human PFAS,All PFAS source sheets,Aux-fusion meta-model,9,0.4335026096957546,0.2967239088050163,0.5675569030381462
+unimol_aux_fusion_VDss,VDss_all_aux,test,All human PFAS,All PFAS source sheets,Uni-Mol global,9,0.43246853995397794,0.2814811604416302,0.5696175272107722
+unimol_aux_fusion_VDss,VDss_all_aux,test,All human PFAS,All PFAS source sheets,Uni-Mol grouped,9,0.42533541545289866,0.27081347578576676,0.5836978750939112
+unimol_aux_fusion_VDss,VDss_all_aux,test,All human PFAS,All PFAS source sheets,Uni-Mol stack input,9,0.42533541545289866,0.27081347578576676,0.5836978750939112
+unimol_aux_fusion_VDss,VDss_all_aux,test,All human PFAS,VDss_pfas_struct,Aux-fusion meta-model,8,0.4523048621660788,0.3045838732258948,0.5600447567049414
+unimol_aux_fusion_VDss,VDss_all_aux,test,All human PFAS,VDss_pfas_struct,Uni-Mol global,8,0.45430874340752464,0.29427424923338963,0.5561377856180167
+unimol_aux_fusion_VDss,VDss_all_aux,test,All human PFAS,VDss_pfas_struct,Uni-Mol grouped,8,0.4414559800103239,0.2718006461396033,0.5808969768001668
+unimol_aux_fusion_VDss,VDss_all_aux,test,All human PFAS,VDss_pfas_struct,Uni-Mol stack input,8,0.4414559800103239,0.2718006461396033,0.5808969768001668
+unimol_aux_fusion_VDss,VDss_all_aux,test,All human PFAS,VDss_pfas_tsca,Aux-fusion meta-model,1,0.2338441934379884,0.2338441934379884,
+unimol_aux_fusion_VDss,VDss_all_aux,test,All human PFAS,VDss_pfas_tsca,Uni-Mol global,1,0.1791364501075548,0.1791364501075548,
+unimol_aux_fusion_VDss,VDss_all_aux,test,All human PFAS,VDss_pfas_tsca,Uni-Mol grouped,1,0.2629161129550737,0.2629161129550737,
+unimol_aux_fusion_VDss,VDss_all_aux,test,All human PFAS,VDss_pfas_tsca,Uni-Mol stack input,1,0.2629161129550737,0.2629161129550737,
+unimol_aux_fusion_VDss,VDss_all_aux,test,MF,All PFAS source sheets,Aux-fusion meta-model,9,0.4335026096957546,0.2967239088050163,0.5675569030381462
+unimol_aux_fusion_VDss,VDss_all_aux,test,MF,All PFAS source sheets,Uni-Mol global,9,0.43246853995397794,0.2814811604416302,0.5696175272107722
+unimol_aux_fusion_VDss,VDss_all_aux,test,MF,All PFAS source sheets,Uni-Mol grouped,9,0.42533541545289866,0.27081347578576676,0.5836978750939112
+unimol_aux_fusion_VDss,VDss_all_aux,test,MF,All PFAS source sheets,Uni-Mol stack input,9,0.42533541545289866,0.27081347578576676,0.5836978750939112
+unimol_aux_fusion_VDss,VDss_all_aux,train,All human PFAS,All PFAS source sheets,Aux-fusion meta-model,44,0.3576706991887157,0.28646909149639443,0.6480589574723599
+unimol_aux_fusion_VDss,VDss_all_aux,train,All human PFAS,All PFAS source sheets,Uni-Mol global,44,0.4311126797373398,0.35294079459097527,0.48868941726087767
+unimol_aux_fusion_VDss,VDss_all_aux,train,All human PFAS,All PFAS source sheets,Uni-Mol grouped,42,0.4241235220630648,0.34168541103401545,0.46146614516902873
+unimol_aux_fusion_VDss,VDss_all_aux,train,All human PFAS,All PFAS source sheets,Uni-Mol stack input,44,0.4146803238034357,0.32956151597508426,0.5269249469102917
+unimol_aux_fusion_VDss,VDss_all_aux,train,All human PFAS,VDss_pfas_struct,Aux-fusion meta-model,43,0.3567561183883332,0.2839451294135866,0.655888550684783
+unimol_aux_fusion_VDss,VDss_all_aux,train,All human PFAS,VDss_pfas_struct,Uni-Mol global,43,0.4285716803134224,0.34884751964156013,0.5034040168536558
+unimol_aux_fusion_VDss,VDss_all_aux,train,All human PFAS,VDss_pfas_struct,Uni-Mol grouped,41,0.4270588888106554,0.3432318332350205,0.4623981984813341
+unimol_aux_fusion_VDss,VDss_all_aux,train,All human PFAS,VDss_pfas_struct,Uni-Mol stack input,43,0.4173222778444241,0.330754060514207,0.529131756989422
+unimol_aux_fusion_VDss,VDss_all_aux,train,All human PFAS,VDss_pfas_tsca,Aux-fusion meta-model,1,0.39499946105712813,0.39499946105712813,
+unimol_aux_fusion_VDss,VDss_all_aux,train,All human PFAS,VDss_pfas_tsca,Uni-Mol global,1,0.5289516174158277,0.5289516174158277,
+unimol_aux_fusion_VDss,VDss_all_aux,train,All human PFAS,VDss_pfas_tsca,Uni-Mol grouped,1,0.27828210079280746,0.27828210079280746,
+unimol_aux_fusion_VDss,VDss_all_aux,train,All human PFAS,VDss_pfas_tsca,Uni-Mol stack input,1,0.27828210079280746,0.27828210079280746,
+unimol_aux_fusion_VDss,VDss_all_aux,train,F,All PFAS source sheets,Aux-fusion meta-model,1,0.03942626644656372,0.03942626644656372,
+unimol_aux_fusion_VDss,VDss_all_aux,train,F,All PFAS source sheets,Uni-Mol global,1,0.0749597793421749,0.0749597793421749,
+unimol_aux_fusion_VDss,VDss_all_aux,train,F,All PFAS source sheets,Uni-Mol grouped,0,,,
+unimol_aux_fusion_VDss,VDss_all_aux,train,F,All PFAS source sheets,Uni-Mol stack input,1,0.0749597793421749,0.0749597793421749,
+unimol_aux_fusion_VDss,VDss_all_aux,train,M,All PFAS source sheets,Aux-fusion meta-model,1,0.10869012928224969,0.10869012928224969,
+unimol_aux_fusion_VDss,VDss_all_aux,train,M,All PFAS source sheets,Uni-Mol global,1,0.0749596601328853,0.0749596601328853,
+unimol_aux_fusion_VDss,VDss_all_aux,train,M,All PFAS source sheets,Uni-Mol grouped,0,,,
+unimol_aux_fusion_VDss,VDss_all_aux,train,M,All PFAS source sheets,Uni-Mol stack input,1,0.0749596601328853,0.0749596601328853,
+unimol_aux_fusion_VDss,VDss_all_aux,train,MF,All PFAS source sheets,Aux-fusion meta-model,42,0.3656526618797401,0.29658389595506046,0.5997182678208376
+unimol_aux_fusion_VDss,VDss_all_aux,train,MF,All PFAS source sheets,Uni-Mol global,42,0.4409546018250086,0.3661779886316156,0.4178752688749666
+unimol_aux_fusion_VDss,VDss_all_aux,train,MF,All PFAS source sheets,Uni-Mol grouped,42,0.4241235220630648,0.34168541103401545,0.46146614516902873
+unimol_aux_fusion_VDss,VDss_all_aux,train,MF,All PFAS source sheets,Uni-Mol stack input,42,0.4241235220630648,0.34168541103401545,0.46146614516902873

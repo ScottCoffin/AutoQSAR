@@ -1,3 +1,3 @@
 Model,Weight,Abs normalized contribution,Workflow
-MapLight CatBoost (Strict Parity),1.0000002845404048,0.9999998763786278,Conventional ML
-"Chemprop v2 (AttentiveFP, ensemble=1)",-1.2362142270960774e-07,1.2362137225208253e-07,Chemprop v2
+ChemML MLP (PyTorch),0.317782445124517,0.3130656612801634,ChemML deep learning
+Uni-Mol V1,0.6972839911785452,0.6869343387198367,Uni-Mol

@@ -462,6 +462,26 @@ python portable_colab_qsar_bundle\run_autoqsar_ga_benchmarks.py `
   --resume
 ```
 
+Create or refresh the pooled all-data sheets used by the grouped Uni-Mol fusion
+workflow:
+
+```powershell
+python test_data\add_structural_pfas_single_target_sheets.py `
+  --workbook data\modeling_datasets_aux_features.xlsx
+```
+
+This updates the existing derived structural sheets and adds:
+
+| Sheet | Contents |
+|---|---|
+| `HLe_invivo_all_aux` | HLe in vivo PFAS TSCA, PFAS structural, non-PFAS TSCA, and non-PFAS structural rows with all numeric aux features. |
+| `VDss_all_aux` | VDss PFAS TSCA, PFAS structural, non-PFAS TSCA, and non-PFAS structural rows with all numeric aux features. |
+
+The pooled sheets keep `QSAR_READY_SMILES`, `TARGET_log10`, species/sex/route
+one-hot columns, physiology columns, and a `source_sheet` column. Their split is
+reassigned deterministically by SMILES so the same molecule is not intentionally
+placed in both train and test.
+
 Use a dry run to confirm sheet discovery and planned model stages before
 training:
 
@@ -471,6 +491,73 @@ python portable_colab_qsar_bundle\run_autoqsar_ga_benchmarks.py `
   --pfas-aux-sheet VDss_pfas_tsca `
   --dry-run
 ```
+
+Run the standard benchmark on the pooled aux sheets:
+
+```powershell
+python portable_colab_qsar_bundle\run_autoqsar_ga_benchmarks.py `
+  --pfas-aux-workbook data\modeling_datasets_aux_features.xlsx `
+  --pfas-aux-sheet HLe_invivo_all_aux `
+  --pfas-aux-sheet VDss_all_aux `
+  --output-dir benchmark_results\pfas_aux_qsar_all_aux `
+  --resume
+```
+
+### Grouped Uni-Mol Auxiliary Fusion
+
+For aux-rich PFAS sheets, `portable_colab_qsar_bundle\run_unimol_aux_fusion.py`
+runs an explicit stacked workflow:
+
+1. Build out-of-fold Uni-Mol V1 predictions from SMILES-only training data.
+2. Train species/sex-specific Uni-Mol models when a subgroup has enough rows
+   and unique SMILES.
+3. Fall back to a global Uni-Mol prediction for sparse species/sex subgroups.
+4. Train a tabular fusion model on Uni-Mol predictions plus numeric auxiliary
+   features.
+
+Run HLe in vivo fusion:
+
+```powershell
+python portable_colab_qsar_bundle\run_unimol_aux_fusion.py `
+  --workbook data\modeling_datasets_aux_features.xlsx `
+  --sheet HLe_invivo_all_aux `
+  --output-dir benchmark_results\unimol_aux_fusion_hle_invivo `
+  --resume
+```
+
+Run VDss fusion:
+
+```powershell
+python portable_colab_qsar_bundle\run_unimol_aux_fusion.py `
+  --workbook data\modeling_datasets_aux_features.xlsx `
+  --sheet VDss_all_aux `
+  --output-dir benchmark_results\unimol_aux_fusion_vdss `
+  --resume
+```
+
+The default grouping uses active `species_*` and `sex_*` one-hot columns. Adjust
+the viability cutoff for grouped Uni-Mol models when needed:
+
+```powershell
+python portable_colab_qsar_bundle\run_unimol_aux_fusion.py `
+  --workbook data\modeling_datasets_aux_features.xlsx `
+  --sheet HLe_invivo_all_aux `
+  --output-dir benchmark_results\unimol_aux_fusion_hle_invivo_min10 `
+  --min-group-rows 20 `
+  --min-group-unique-smiles 10 `
+  --oof-folds 3 `
+  --resume
+```
+
+Fusion outputs:
+
+| File | Meaning |
+|---|---|
+| `metrics.csv` | Train/test RMSE, MAE, and R2 for `Uni-Mol V1 + Aux Fusion (Grouped)`. |
+| `predictions.csv` | Observed values, global Uni-Mol predictions, grouped Uni-Mol predictions, stack predictions, and final fusion predictions. |
+| `group_manifest.csv` | Species/sex subgroup sizes and whether each subgroup trained a Uni-Mol model or used the global fallback. |
+| `auxiliary_features.csv` | Numeric aux columns supplied to the second-stage fusion model. |
+| `unimol_models/` | Cached OOF and final Uni-Mol model directories. |
 
 Re-running the same command with the same `--output-dir --resume` reuses
 completed datasets and compatible intermediate artifacts. This supports

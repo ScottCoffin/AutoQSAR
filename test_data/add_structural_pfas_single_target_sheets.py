@@ -1,4 +1,4 @@
-"""Add non-auxiliary structural species/sex sheets to the PFAS workbook.
+"""Add derived PFAS workbook sheets for structural and aux-fusion benchmarks.
 
 The benchmark workbook contains structural PFAS sheets with auxiliary physiology,
 species, sex, and route columns. This script derives SMILES-only target sheets
@@ -6,6 +6,10 @@ for each species/sex subset so graph and 3D workflows can run without auxiliary
 variables. It writes PFAS-only, non-PFAS-only, and combined structural sheets.
 The combined sheets intentionally concatenate only the PFAS structural and
 non-PFAS structural source sheets; TSCA-only source sheets are not combined.
+
+It also writes one all-data auxiliary sheet per target. These sheets retain all
+numeric auxiliary columns and combine PFAS TSCA, PFAS structural, non-PFAS TSCA,
+and non-PFAS structural rows for grouped Uni-Mol plus auxiliary-feature fusion.
 """
 
 from __future__ import annotations
@@ -21,11 +25,17 @@ import pandas as pd
 TARGET_CONFIGS = {
     "hle_invivo": {
         "target": "hle_invivo",
+        "all_aux_sheet": "HLe_invivo_all_aux",
+        "pfas_tsca_sheet": "HLe_invivo_pfas_tsca",
+        "nonpfas_tsca_sheet": "HLe_invivo_nonpfas_tsca",
         "pfas_sheet": "HLe_invivo_pfas_struct",
         "nonpfas_sheet": "HLe_invivo_nonpfas_struct",
     },
     "vdss": {
         "target": "vdss",
+        "all_aux_sheet": "VDss_all_aux",
+        "pfas_tsca_sheet": "VDss_pfas_tsca",
+        "nonpfas_tsca_sheet": "VDss_nonpfas_tsca",
         "pfas_sheet": "VDss_pfas_struct",
         "nonpfas_sheet": "VDss_nonpfas_struct",
     },
@@ -140,13 +150,70 @@ def manifest_rows(sheet_frames: dict[str, pd.DataFrame]) -> pd.DataFrame:
                 "rows": int(len(frame)),
                 "train_rows": int(frame["split"].astype(str).str.lower().eq("train").sum()) if "split" in frame else 0,
                 "test_rows": int(frame["split"].astype(str).str.lower().eq("test").sum()) if "split" in frame else 0,
-                "auxiliary_feature_columns": "",
+                "auxiliary_feature_columns": ", ".join(auxiliary_feature_columns(frame)),
             }
         )
     return pd.DataFrame(rows)
 
 
-def derive_all_sheets(workbook: Path, test_fraction: float) -> dict[str, pd.DataFrame]:
+def auxiliary_feature_columns(frame: pd.DataFrame) -> list[str]:
+    excluded = {"target", "smiles_subset", "split", "QSAR_READY_SMILES", "TARGET_log10", "source_sheet"}
+    columns: list[str] = []
+    for column in frame.columns:
+        if str(column) in excluded:
+            continue
+        numeric = pd.to_numeric(frame[column], errors="coerce")
+        if numeric.notna().any():
+            columns.append(str(column))
+    return columns
+
+
+def fill_missing_numeric_aux_columns(frame: pd.DataFrame) -> pd.DataFrame:
+    frame = frame.copy()
+    for column in auxiliary_feature_columns(frame):
+        frame[column] = pd.to_numeric(frame[column], errors="coerce")
+        if str(column).startswith(("species_", "sex_", "route_")):
+            frame[column] = frame[column].fillna(0)
+    return frame
+
+
+def derive_all_aux_sheets(workbook: Path, xls: pd.ExcelFile, test_fraction: float) -> dict[str, pd.DataFrame]:
+    derived: dict[str, pd.DataFrame] = {}
+    for target_key, config in TARGET_CONFIGS.items():
+        source_keys = ["pfas_tsca_sheet", "pfas_sheet", "nonpfas_tsca_sheet", "nonpfas_sheet"]
+        missing = [str(config[key]) for key in source_keys if str(config[key]) not in xls.sheet_names]
+        if missing:
+            raise ValueError(f"Workbook is missing source sheet(s): {', '.join(missing)}")
+
+        frames: list[pd.DataFrame] = []
+        for key in source_keys:
+            sheet_name = str(config[key])
+            frame = pd.read_excel(workbook, sheet_name=sheet_name)
+            missing_columns = sorted(REQUIRED_COLUMNS - set(frame.columns))
+            if missing_columns:
+                raise ValueError(f"{target_key}:{sheet_name} is missing required column(s): {', '.join(missing_columns)}")
+            frame = frame.copy()
+            frame["source_sheet"] = sheet_name
+            frames.append(frame)
+
+        combined = pd.concat(frames, ignore_index=True, sort=False)
+        combined["target"] = str(config["target"])
+        combined["smiles_subset"] = f"{target_key}_all_aux"
+        combined["QSAR_READY_SMILES"] = combined["QSAR_READY_SMILES"].astype(str).str.strip()
+        combined["TARGET_log10"] = pd.to_numeric(combined["TARGET_log10"], errors="coerce")
+        combined = combined.dropna(subset=["QSAR_READY_SMILES", "TARGET_log10"])
+        combined = combined[combined["QSAR_READY_SMILES"] != ""].reset_index(drop=True)
+        combined = fill_missing_numeric_aux_columns(combined)
+        combined["split"] = assign_deterministic_split(combined["QSAR_READY_SMILES"], test_fraction)
+
+        ordered = ["target", "smiles_subset", "split", "QSAR_READY_SMILES", "TARGET_log10", "source_sheet"]
+        remaining = [column for column in combined.columns if column not in ordered]
+        combined = combined[ordered + remaining].drop_duplicates().reset_index(drop=True)
+        derived[str(config["all_aux_sheet"])] = combined
+    return derived
+
+
+def derive_structural_sheets(workbook: Path, xls: pd.ExcelFile, test_fraction: float) -> dict[str, pd.DataFrame]:
     xls = pd.ExcelFile(workbook)
     required_sheets = [
         str(config[sheet_key])
@@ -184,6 +251,13 @@ def derive_all_sheets(workbook: Path, test_fraction: float) -> dict[str, pd.Data
     return derived
 
 
+def derive_all_sheets(workbook: Path, test_fraction: float) -> dict[str, pd.DataFrame]:
+    xls = pd.ExcelFile(workbook)
+    derived = derive_structural_sheets(workbook, xls, test_fraction)
+    derived.update(derive_all_aux_sheets(workbook, xls, test_fraction))
+    return derived
+
+
 def update_workbook(workbook: Path, derived: dict[str, pd.DataFrame]) -> None:
     if not workbook.exists():
         raise FileNotFoundError(f"Workbook not found: {workbook}")
@@ -212,7 +286,7 @@ def main() -> int:
     derived = derive_all_sheets(workbook, args.test_fraction)
     update_workbook(workbook, derived)
     print(f"Updated workbook: {workbook}")
-    print(f"Derived non-auxiliary structural sheets: {len(derived)}")
+    print(f"Derived/updated sheets: {len(derived)}")
     for sheet_name, frame in derived.items():
         print(
             f"  - {sheet_name}: {len(frame)} rows "

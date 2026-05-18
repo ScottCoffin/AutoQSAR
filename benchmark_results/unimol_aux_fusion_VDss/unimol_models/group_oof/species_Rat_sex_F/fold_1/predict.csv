@@ -1,0 +1,15 @@
+SMILES,TARGET
+OC(=O)C(F)(F)C(F)(F)C(F)(F)F,0.0
+OC(=O)C(F)(F)C(F)(F)C(F)(F)F,0.0
+OC(=O)C(F)(F)C(F)(F)C(F)(F)F,0.0
+OC(=O)C(F)(F)C(F)(F)C(F)(F)F,0.0
+OC(=O)C(F)(F)C(F)(F)C(F)(F)F,0.0
+OC(=O)C(F)(F)C(F)(F)C(F)(F)F,0.0
+C=CC(N)=O,0.0
+CC1=CN(C2CC(N=[N+]=[N-])C(CO)O2)C(=O)NC1=O,0.0
+CC1=CN(C2CC(N=[N+]=[N-])C(CO)O2)C(=O)NC1=O,0.0
+CCCCOC(=O)C1=CC=CC=C1C(O)=O,0.0
+CC1=CN(C2CC(N=[N+]=[N-])C(CO)O2)C(=O)NC1=O,0.0
+CC1=CN(C2CC(N=[N+]=[N-])C(CO)O2)C(=O)NC1=O,0.0
+CCCCOC(=O)C1=CC=CC=C1C(O)=O,0.0
+C=CC(N)=O,0.0

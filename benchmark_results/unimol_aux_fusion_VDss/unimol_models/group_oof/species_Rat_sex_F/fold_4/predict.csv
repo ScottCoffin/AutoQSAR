@@ -1,0 +1,13 @@
+SMILES,TARGET
+OC(=O)C(F)(F)C(F)(F)C(F)(F)C(F)(F)C(F)(F)C(F)(F)C(F)(F)C(F)(F)C(F)(F)F,0.0
+OS(=O)(=O)C(F)(F)C(F)(F)C(F)(F)C(F)(F)C(F)(F)C(F)(F)F,0.0
+OC(=O)C(F)(F)C(F)(F)C(F)(F)C(F)(F)C(F)(F)C(F)(F)C(F)(F)C(F)(F)C(F)(F)F,0.0
+OS(=O)(=O)C(F)(F)C(F)(F)C(F)(F)C(F)(F)C(F)(F)C(F)(F)F,0.0
+OC(=O)C(F)(F)C(F)(F)C(F)(F)C(F)(F)C(F)(F)C(F)(F)C(F)(F)C(F)(F)C(F)(F)F,0.0
+OS(=O)(=O)C(F)(F)C(F)(F)C(F)(F)C(F)(F)C(F)(F)C(F)(F)F,0.0
+OC(=O)C(F)(F)C(F)(F)C(F)(F)C(F)(F)C(F)(F)C(F)(F)C(F)(F)C(F)(F)C(F)(F)F,0.0
+OS(=O)(=O)C(F)(F)C(F)(F)C(F)(F)C(F)(F)C(F)(F)C(F)(F)F,0.0
+CNC(=O)OC1=CC=CC2=CC=CC=C21,0.0
+CC(=O)C1CCC2C3CCC4=CC(=O)CCC4(C)C3CCC21C,0.0
+CNC(=O)OC1=CC=CC2=CC=CC=C21,0.0
+CC(=O)C1CCC2C3CCC4=CC(=O)CCC4(C)C3CCC21C,0.0

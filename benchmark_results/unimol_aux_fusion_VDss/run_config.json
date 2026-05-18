@@ -1,0 +1,12 @@
+{
+  "workbook": "data\\modeling_datasets_aux_features.xlsx",
+  "sheet": "VDss_all_aux",
+  "group_prefixes": [
+    "species_",
+    "sex_"
+  ],
+  "min_group_rows": 30,
+  "min_group_unique_smiles": 20,
+  "oof_folds": 5,
+  "fusion_model": "catboost"
+}

@@ -1,3 +1,3 @@
 Model,Weight,Workflow
-"Chemprop v2 (AttentiveFP, ensemble=1)",0.5338147006729594,Chemprop v2
-"Chemprop v2 (AttentiveFP + Selected descriptors, ensemble=1)",0.4661852993270406,Chemprop v2
+ChemML MLP (PyTorch),0.5363783764372035,ChemML deep learning
+Uni-Mol V1,0.4636216235627963,Uni-Mol

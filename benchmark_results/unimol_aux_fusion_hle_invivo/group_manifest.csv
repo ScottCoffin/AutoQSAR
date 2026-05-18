@@ -1,0 +1,15 @@
+unimol_group,status,train_rows,train_unique_smiles,test_rows,oof_folds
+species=Human|sex=F,fallback_global,44,17,6,0
+species=Human|sex=M,fallback_global,36,17,8,0
+species=Human|sex=MF,trained,4227,1404,1087,5
+species=Monkey|sex=F,fallback_global,22,8,2,0
+species=Monkey|sex=M,fallback_global,28,10,4,0
+species=Monkey|sex=MF,fallback_global,2,1,0,0
+species=Mouse|sex=F,trained,122,41,26,5
+species=Mouse|sex=M,trained,184,62,38,5
+species=Mouse|sex=MF,fallback_global,34,10,16,0
+species=Mouse|sex=Not available,fallback_global,2,1,2,0
+species=Rat|sex=F,trained,438,170,102,5
+species=Rat|sex=M,trained,1114,371,282,5
+species=Rat|sex=MF,trained,72,30,6,5
+species=Rat|sex=Not reported,fallback_global,16,7,6,0

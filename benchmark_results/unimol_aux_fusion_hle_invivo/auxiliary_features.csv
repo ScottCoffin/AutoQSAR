@@ -1,0 +1,22 @@
+auxiliary_feature
+ProxTubLen
+ProxTubDiam
+ProxTubVol
+ProxTubSA
+ProxTubTotalVol
+ProxTubTotSA
+GlomTotSA_ProxTubTotVol_ratio
+ProxTubTotSA_ProxTotVol_ratio
+species_Human
+species_Monkey
+species_Mouse
+species_Rat
+sex_F
+sex_M
+sex_MF
+route_intravenous
+route_oral
+route_other
+route_unknown
+sex_Not available
+sex_Not reported

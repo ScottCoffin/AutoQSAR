@@ -2,8 +2,8 @@
   "status": "completed",
   "dataset": "hle_invivo_nonpfas_mouse_f",
   "source": "Structural single-target workbook: modeling_datasets_aux_features.xlsx::hle_invivo_nonpfas_mouse_f",
-  "completed_at": "2026-05-15 10:11:41",
-  "elapsed_seconds": 320.548,
-  "n_metrics_rows": 20,
-  "n_stage_records": 22
+  "completed_at": "2026-05-16 14:18:40",
+  "elapsed_seconds": 59.426,
+  "n_metrics_rows": 22,
+  "n_stage_records": 23
 }
