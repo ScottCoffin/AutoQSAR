@@ -108,8 +108,8 @@ The targeted recommendations were cross-referenced against `portable_colab_qsar_
 
 | Recommendation | Notebook status | Remaining publication gap |
 |---|---|---|
-| Multi-seed TDC-22 evaluation | **Not implemented** | Official TDC-22 train/test splits are already being used for the 22 admet_group datasets in the current workflow. The missing piece is full 5-seed workflow execution and mean +/- std aggregation across seeds 1-5, using TDC-compatible evaluation outputs. |
-| Computational cost comparison | **Implemented** | Runner now emits inference-only timing and neural parameter-count fields for future benchmark artifacts; notebook builds a manuscript-oriented model-family cost table with current-run wall-clock time, hardware notes, parameter-count notes, inference-time fields, and MolGPS/MolE/ADMET-AI comparator rows. Existing benchmark artifacts still lack the newly added timing/parameter fields until rerun. |
+| Multi-seed TDC-22 evaluation | **Implemented in runner; requires rerun for artifacts** | `run_autoqsar_ga_benchmarks.py` now prefers official PyTDC `admet_group` train_val/test frames and, at the end of a run, evaluates the best directly trainable model for each official TDC dataset across seeds 1-5 by default. If ensemble/CFA is the main-run winner, the pass evaluates its contributing base-model members instead. Outputs are written under `tdc22_best_model_multiseed/` with mean/std aggregation. Existing benchmark artifacts must be regenerated to populate these files. |
+| Computational cost comparison | **Implemented; strengthened for new reruns** | Runner now emits explicit per-step/per-model runtime fields in `step_runtime.csv`, `step_runtime_summary.csv`, and new model metric columns. The PFAS auxiliary summary notebook now joins runtime cost to performance, writes cost/performance Pareto artifacts, and falls back to cumulative elapsed time for older runs. Existing benchmark artifacts need rerun for full per-model stage timing fidelity. |
 | Updated leaderboard references | **Implemented from local curated references** | Notebook now combines run references, MaxQsaring-containing TDC ADMET references, and current ESOL/Lipophilicity literature references into publication comparison artifacts. |
 | Ablation/component contribution | **Implemented from existing metrics** | Notebook now computes staged best-achievable performance from conventional ML through MapLight, deep backends, CFA, and ensemble/full-pipeline stages. |
 | Per-dataset best-model breakdown | **Implemented** | Notebook now reports win counts by family, a pie chart, a family-by-dataset rank heatmap, and a winning-model table. |
@@ -126,6 +126,8 @@ The targeted recommendations were cross-referenced against `portable_colab_qsar_
 
 - **TDC-primary classification metrics**: Implemented row-specific primary metric selection, including AUPRC for CYP2C9_Veith, CYP2D6_Veith, CYP3A4_Veith, CYP2C9_Substrate, CYP2D6_Substrate, and CYP3A4_Substrate.
 - **Benchmark artifact instrumentation**: Updated `run_autoqsar_ga_benchmarks.py` so future metrics include train/test inference-only timing, per-1000-molecule inference rates, and neural parameter-count fields where the backend exposes exact counts.
+- **TDC-22 multi-seed robustness pass**: Added an end-of-run 5-seed evaluation for official PyTDC `admet_group` datasets. The pass selects the best directly trainable model per dataset from the main run, or the contributing base-model members when ensemble/CFA is the winning approach, preserves the normal resume/cache workflow, and writes plan, metric, summary, and runtime CSVs.
+- **Per-step/model computation cost capture**: Added explicit step/model/workflow runtime metadata and per-model stage timing columns so downstream notebooks can optimize cost versus performance without relying on cumulative dataset elapsed time.
 - **Publication-grade computational cost table**: Added a model-family cost comparison table with AutoQSAR current-run runtimes and hardware/parameter notes, plus MolGPS, MolE, and ADMET-AI comparator rows. Future reruns will populate the new inference and parameter-count fields.
 - **Per-dataset best-model breakdown**: Added win counts by model family, a pie chart, rank-by-family heatmap, and winning-model table.
 - **Feature-family importance analysis**: Added feature-family importance summaries and heatmaps. The notebook consumes future per-model importance artifacts when present and otherwise uses selector coefficient/importances as a fallback for the current run.
@@ -206,9 +208,9 @@ These items are implemented from existing benchmark artifacts and notebook logic
 
 ### Items That Require New Benchmark Runs
 
-8. **Multi-seed evaluation for TDC-22 official splits**: Official TDC-22 train/test splits are already used where `admet_group` is available, but the current workflow is not a full 5-seed benchmark.
-   - Required work: rerun all 22 TDC ADMET Benchmark Group datasets with seeds 1-5, aggregate mean +/- standard deviation, and optionally apply paired tests against published baselines.
-   - Implementation note: add a workflow-level seed loop or a dedicated TDC-22 multi-seed driver. The existing `maplight_parity_seeds` setting is not a substitute because it only applies to the MapLight parity path.
+8. **Multi-seed evaluation for TDC-22 official splits**: Workflow support is now implemented, but publication artifacts require a fresh benchmark run.
+   - Required work: rerun the official TDC ADMET Benchmark Group datasets with the default seeds 1-5, then use `tdc22_best_model_multiseed_summary.csv` for mean +/- standard deviation reporting and optional paired tests against published baselines.
+   - Implementation note: this is now handled by `run_autoqsar_ga_benchmarks.py --run-tdc22-multiseed-best`; `maplight_parity_seeds` remains separate and only applies to the MapLight parity path.
 
 9. **Temporal robustness check**: Requires new scaffold-vs-temporal split comparisons.
    - Required work: identify datasets with temporal metadata or predefined temporal splits, rerun the affected model evaluations on temporal splits, and compare performance degradation against the current split protocol.

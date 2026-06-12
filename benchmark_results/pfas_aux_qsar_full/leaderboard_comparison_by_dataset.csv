@@ -1,4 +1,5 @@
 dataset,best_model,best_workflow,primary_metric,primary_metric_value,leaderboard_metric_name,leaderboard_metric_reference,leaderboard_delta_primary,leaderboard_estimated_rank_vs_top10,leaderboard_estimated_in_top10,leaderboard_gap_to_top10_cutoff,leaderboard_url
+hle_invivo_all_aux,XGBoost,conventional,rmse,0.631144354299796,nan,,,,,,
 hle_invivo_human_mf,CFA (Combinatorial Fusion),cfa,rmse,0.9940706113399354,nan,,,,,,
 hle_invivo_nonpfas_human_mf,CFA (Combinatorial Fusion),cfa,rmse,0.5967989648576429,nan,,,,,,
 hle_invivo_nonpfas_mouse_f,CFA (Combinatorial Fusion),cfa,rmse,0.5463915131298901,nan,,,,,,
@@ -19,6 +20,7 @@ hle_invivo_struct_mouse_m,AdaBoost,conventional,rmse,0.6778087359002822,nan,,,,,
 hle_invivo_struct_rat_f,CFA (Combinatorial Fusion),cfa,rmse,0.6735520699908533,nan,,,,,,
 hle_invivo_struct_rat_m,CFA (Combinatorial Fusion),cfa,rmse,0.6748314799436349,nan,,,,,,
 hle_invivo_struct_rat_mf,Uni-Mol V1,Uni-Mol,rmse,0.645578160081987,nan,,,,,,
+vdss_all_aux,CFA (Combinatorial Fusion),cfa,rmse,0.427259271642177,nan,,,,,,
 vdss_human_mf,Tabular CNN,conventional,rmse,0.3332846608100894,nan,,,,,,
 vdss_nonpfas_human_mf,CFA (Combinatorial Fusion),cfa,rmse,0.4148411116022449,nan,,,,,,
 vdss_nonpfas_rat_m,CFA (Combinatorial Fusion),cfa,rmse,0.4383934114826237,nan,,,,,,

@@ -1,2 +1,2 @@
 dataset,stage_index,total_stages,stage_label,started_at,started_epoch,status,ended_at,ended_epoch,duration_seconds
-hle_invivo_struct_rat_not_repor,1,23,loading Structural single-target workbook: modeling_datasets_aux_features.xlsx::hle_invivo_struct_rat_not_repor,2026-05-16 14:11:39 Pacific Daylight Time,1778965899.4981372,skipped,2026-05-16 14:11:39 Pacific Daylight Time,1778965899.5101428,0.012
+hle_invivo_struct_rat_not_repor,1,22,loading Structural single-target workbook: modeling_datasets_aux_features.xlsx::hle_invivo_struct_rat_not_repor,2026-05-22 14:19:11 Pacific Daylight Time,1779484751.2118526,skipped,2026-05-22 14:19:11 Pacific Daylight Time,1779484751.2260969,0.014

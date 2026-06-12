@@ -1,0 +1,9 @@
+{
+  "status": "completed",
+  "dataset": "hle_invivo_all_aux",
+  "source": "PFAS auxiliary workbook: modeling_datasets_aux_features.xlsx::HLe_invivo_all_aux",
+  "completed_at": "2026-05-22 18:38:08",
+  "elapsed_seconds": 12009.22,
+  "n_metrics_rows": 20,
+  "n_stage_records": 21
+}

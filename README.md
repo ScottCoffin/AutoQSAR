@@ -426,6 +426,8 @@ python portable_colab_qsar_bundle\run_autoqsar_ga_benchmarks.py `
 | `--run-cfa/--no-run-cfa` | Enable or disable CFA fusion. |
 | `--run-ensemble/--no-run-ensemble` | Enable or disable standard ensembles. |
 | `--compare-run-dir PATH` | Generate run-vs-run attribution against a previous run. |
+| `--run-tdc22-multiseed-best/--no-run-tdc22-multiseed-best` | Run or skip the end-of-run 5-seed TDC-22 best-model evaluation. |
+| `--tdc22-multiseed-seeds 1,2,3,4,5` | Seed list for the TDC-22 best-model robustness pass. |
 | `--resume/--no-resume` | Resume compatible incomplete runs. |
 
 The runner is designed for long runs. Use `--resume` and a stable `--output-dir`
@@ -636,8 +638,11 @@ It auto-detects the latest compatible PFAS auxiliary run from
 `run_autoqsar_ga_benchmarks.py --pfas-aux-workbook` unless `RUN_DIR` is set in
 the first code cell. The notebook builds a model-performance table for each
 dataset, identifies the best model per sheet by test RMSE, reports run metadata
-and stale-output warnings, and plots one faceted log10 actual-versus-predicted
-test-set scatterplot for the best model in each workbook dataset.
+and stale-output warnings, builds a cost-vs-performance Pareto table from
+model/stage runtimes, and plots one faceted log10 actual-versus-predicted
+test-set scatterplot for the best model in each workbook dataset. If TDC-22
+multi-seed artifacts are present in the selected run directory, the notebook
+also displays the mean/std robustness summary.
 
 ## Datasets And Benchmark Registry
 
@@ -656,6 +661,11 @@ benchmark runner's default dataset discovery. It includes:
 - Polaris ADME benchmark mirrors.
 - PODUAM POD datasets.
 - Expanded FreeSolv literature benchmark metadata.
+
+When PyTDC exposes an official `admet_group` entry for a TDC benchmark dataset,
+the runner prefers that train_val/test split over legacy single-prediction cache
+entries. Official split frames remain cached under `data/_autoqsar_cache`, and
+stale TDC cache entries without an official split are refreshed automatically.
 
 The broader dataset catalog is written to:
 
@@ -682,9 +692,12 @@ top-level outputs include:
 | `leaderboard_top10_reference.json` | JSON form of leaderboard references. |
 | `leaderboard_comparison_by_dataset.csv` | Best model per dataset compared with leaderboard references. |
 | `step_runtime_summary.csv` | Runtime diagnostics collected across datasets. |
+| `model_cost_performance_optimization.csv` | Notebook-generated per-dataset model performance joined to stage/model runtime cost. |
+| `model_cost_performance_by_model.csv` | Notebook-generated model-family cost/performance rollup. |
 | `model_value_report.csv` | Model contribution/value summary across datasets. |
 | `model_zero_value_candidates.csv` | Models that appear to add little value in the current run. |
 | `run_vs_run_attribution_summary.json` | Optional current-vs-reference run comparison summary. |
+| `tdc22_best_model_multiseed/` | End-of-run TDC-22 robustness artifacts for the selected best directly trainable model, or best ensemble/CFA base members, per official TDC dataset. |
 
 Each dataset subdirectory can include:
 
@@ -700,6 +713,25 @@ Each dataset subdirectory can include:
 - `ensemble_weights*.csv`
 - `step_runtime.csv`
 - backend-specific outputs such as Chemprop train/test files and predictions
+
+The `step_runtime.csv` and combined `step_runtime_summary.csv` files include
+dataset, step type, model, workflow, status, start/end timestamps, and duration.
+Model rows in `summary_metrics.csv` also preserve the historical
+`elapsed_seconds` column and add per-stage timing fields for new runs, including
+`stage_duration_seconds`, `cost_stage_label`, and `cost_step_type`.
+
+The TDC-22 multi-seed pass runs after the main benchmark outputs and reports are
+written. It selects the best directly trainable model for each official PyTDC
+`admet_group` dataset. If the main-run winner is an ensemble or CFA/fusion row,
+the pass extracts the contributing base-model members from `ensemble_members` or
+`cfa_selected_models` and evaluates those base models across the seed list
+instead. If member metadata is unavailable, it falls back to the best directly
+trainable model and records that fallback in the plan file. It writes:
+
+- `tdc22_best_model_multiseed_plan.csv`
+- `tdc22_best_model_multiseed_metrics.csv`
+- `tdc22_best_model_multiseed_summary.csv`
+- `tdc22_best_model_multiseed_step_runtime_summary.csv`
 
 ## Caching
 

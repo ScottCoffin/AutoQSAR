@@ -1,4 +1,5 @@
 dataset,model,current_workflow,current_error,reference_workflow,reference_error,transition
+hle_invivo_all_aux,ChemML MLP (PyTorch),ChemML deep learning,No module named 'chemml',,,new_error
 hle_invivo_human_mf,ChemML MLP (PyTorch),ChemML deep learning,No module named 'chemml',,,new_error
 hle_invivo_nonpfas_human_mf,ChemML MLP (PyTorch),ChemML deep learning,No module named 'chemml',,,new_error
 hle_invivo_nonpfas_mouse_f,ChemML MLP (PyTorch),ChemML deep learning,No module named 'chemml',,,new_error
@@ -19,6 +20,7 @@ hle_invivo_struct_mouse_m,ChemML MLP (PyTorch),ChemML deep learning,No module na
 hle_invivo_struct_rat_f,ChemML MLP (PyTorch),ChemML deep learning,No module named 'chemml',,,new_error
 hle_invivo_struct_rat_m,ChemML MLP (PyTorch),ChemML deep learning,No module named 'chemml',,,new_error
 hle_invivo_struct_rat_mf,ChemML MLP (PyTorch),ChemML deep learning,No module named 'chemml',,,new_error
+vdss_all_aux,ChemML MLP (PyTorch),ChemML deep learning,No module named 'chemml',,,new_error
 vdss_human_mf,ChemML MLP (PyTorch),ChemML deep learning,No module named 'chemml',,,new_error
 vdss_nonpfas_human_mf,ChemML MLP (PyTorch),ChemML deep learning,No module named 'chemml',,,new_error
 vdss_nonpfas_rat_m,ChemML MLP (PyTorch),ChemML deep learning,No module named 'chemml',,,new_error
@@ -33,6 +35,25 @@ vdss_struct_human_mf,ChemML MLP (PyTorch),ChemML deep learning,No module named '
 vdss_struct_mouse_m,ChemML MLP (PyTorch),ChemML deep learning,No module named 'chemml',,,new_error
 vdss_struct_rat_f,ChemML MLP (PyTorch),ChemML deep learning,No module named 'chemml',,,new_error
 vdss_struct_rat_m,ChemML MLP (PyTorch),ChemML deep learning,No module named 'chemml',,,new_error
+hle_invivo_all_aux,AdaBoost,conventional,,,,ok_both
+hle_invivo_all_aux,CFA (Combinatorial Fusion),cfa,,,,ok_both
+hle_invivo_all_aux,CatBoost,conventional,,,,ok_both
+hle_invivo_all_aux,"Chemprop v2 (AttentiveFP + Selected descriptors, ensemble=1)",Chemprop v2,,,,ok_both
+hle_invivo_all_aux,"Chemprop v2 (AttentiveFP, ensemble=1)",Chemprop v2,,,,ok_both
+hle_invivo_all_aux,ElasticNetCV,conventional,,,,ok_both
+hle_invivo_all_aux,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",ensemble,,,,ok_both
+hle_invivo_all_aux,Ensemble (Weighted average (inverse train RMSE)),ensemble,,,,ok_both
+hle_invivo_all_aux,Extra trees,conventional,,,,ok_both
+hle_invivo_all_aux,HistGradientBoosting,conventional,,,,ok_both
+hle_invivo_all_aux,"MapLight + GNN (CatBoost, Strict Parity)",MapLight + GNN,,,,ok_both
+hle_invivo_all_aux,MapLight CatBoost (Strict Parity),conventional,,,,ok_both
+hle_invivo_all_aux,Random forest,conventional,,,,ok_both
+hle_invivo_all_aux,SVR,conventional,,,,ok_both
+hle_invivo_all_aux,TabPFNRegressor,conventional,,,,ok_both
+hle_invivo_all_aux,Tabular CNN,conventional,,,,ok_both
+hle_invivo_all_aux,Tabular MLP,conventional,,,,ok_both
+hle_invivo_all_aux,"Voting Regressor (KNN, SVM)",conventional,,,,ok_both
+hle_invivo_all_aux,XGBoost,conventional,,,,ok_both
 hle_invivo_human_mf,AdaBoost,conventional,,,,ok_both
 hle_invivo_human_mf,CFA (Combinatorial Fusion),cfa,,,,ok_both
 hle_invivo_human_mf,CatBoost,conventional,,,,ok_both
@@ -443,6 +464,25 @@ hle_invivo_struct_rat_mf,Tabular MLP,conventional,,,,ok_both
 hle_invivo_struct_rat_mf,Uni-Mol V1,Uni-Mol,,,,ok_both
 hle_invivo_struct_rat_mf,"Voting Regressor (KNN, SVM)",conventional,,,,ok_both
 hle_invivo_struct_rat_mf,XGBoost,conventional,,,,ok_both
+vdss_all_aux,AdaBoost,conventional,,,,ok_both
+vdss_all_aux,CFA (Combinatorial Fusion),cfa,,,,ok_both
+vdss_all_aux,CatBoost,conventional,,,,ok_both
+vdss_all_aux,"Chemprop v2 (AttentiveFP + Selected descriptors, ensemble=1)",Chemprop v2,,,,ok_both
+vdss_all_aux,"Chemprop v2 (AttentiveFP, ensemble=1)",Chemprop v2,,,,ok_both
+vdss_all_aux,ElasticNetCV,conventional,,,,ok_both
+vdss_all_aux,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",ensemble,,,,ok_both
+vdss_all_aux,Ensemble (Weighted average (inverse train RMSE)),ensemble,,,,ok_both
+vdss_all_aux,Extra trees,conventional,,,,ok_both
+vdss_all_aux,HistGradientBoosting,conventional,,,,ok_both
+vdss_all_aux,"MapLight + GNN (CatBoost, Strict Parity)",MapLight + GNN,,,,ok_both
+vdss_all_aux,MapLight CatBoost (Strict Parity),conventional,,,,ok_both
+vdss_all_aux,Random forest,conventional,,,,ok_both
+vdss_all_aux,SVR,conventional,,,,ok_both
+vdss_all_aux,TabPFNRegressor,conventional,,,,ok_both
+vdss_all_aux,Tabular CNN,conventional,,,,ok_both
+vdss_all_aux,Tabular MLP,conventional,,,,ok_both
+vdss_all_aux,"Voting Regressor (KNN, SVM)",conventional,,,,ok_both
+vdss_all_aux,XGBoost,conventional,,,,ok_both
 vdss_human_mf,AdaBoost,conventional,,,,ok_both
 vdss_human_mf,CFA (Combinatorial Fusion),cfa,,,,ok_both
 vdss_human_mf,CatBoost,conventional,,,,ok_both

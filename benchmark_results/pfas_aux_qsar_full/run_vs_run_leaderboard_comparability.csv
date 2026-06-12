@@ -1,4 +1,5 @@
 dataset,current_best_model,current_best_workflow,primary_metric,current_primary_metric_value,leaderboard_metric_name,leaderboard_metric_reference,current_estimated_rank_vs_top10,current_estimated_in_top10,current_gap_to_top10_cutoff,leaderboard_top10_cutoff_value,leaderboard_url,leaderboard_comparable
+hle_invivo_all_aux,"MapLight + GNN (CatBoost, Strict Parity)",MapLight + GNN,mae,0.511347556033191,,,,,,,,False
 hle_invivo_human_mf,MapLight CatBoost (Strict Parity),conventional,mae,0.7507755541617117,,,,,,,,False
 hle_invivo_nonpfas_human_mf,"MapLight + GNN (CatBoost, Strict Parity)",MapLight + GNN,mae,0.4473003231703111,,,,,,,,False
 hle_invivo_nonpfas_mouse_f,MapLight CatBoost (Strict Parity),conventional,mae,0.4171462110617773,,,,,,,,False
@@ -19,6 +20,7 @@ hle_invivo_struct_mouse_m,MapLight CatBoost (Strict Parity),conventional,mae,0.5
 hle_invivo_struct_rat_f,MapLight CatBoost (Strict Parity),conventional,mae,0.4885452308101972,,,,,,,,False
 hle_invivo_struct_rat_m,MapLight CatBoost (Strict Parity),conventional,mae,0.5202463350782204,,,,,,,,False
 hle_invivo_struct_rat_mf,"MapLight + GNN (CatBoost, Strict Parity)",MapLight + GNN,mae,0.4336439566616558,,,,,,,,False
+vdss_all_aux,"MapLight + GNN (CatBoost, Strict Parity)",MapLight + GNN,mae,0.3218183835005626,,,,,,,,False
 vdss_human_mf,Tabular CNN,conventional,rmse,0.3332846608100894,,,,,,,,False
 vdss_nonpfas_human_mf,MapLight CatBoost (Strict Parity),conventional,mae,0.3160372278355997,,,,,,,,False
 vdss_nonpfas_rat_m,"MapLight + GNN (CatBoost, Strict Parity)",MapLight + GNN,mae,0.3287467745853267,,,,,,,,False

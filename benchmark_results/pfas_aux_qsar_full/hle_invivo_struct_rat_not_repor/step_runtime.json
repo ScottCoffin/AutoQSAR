@@ -2,13 +2,13 @@
   {
     "dataset": "hle_invivo_struct_rat_not_repor",
     "stage_index": 1,
-    "total_stages": 23,
+    "total_stages": 22,
     "stage_label": "loading Structural single-target workbook: modeling_datasets_aux_features.xlsx::hle_invivo_struct_rat_not_repor",
-    "started_at": "2026-05-16 14:11:39 Pacific Daylight Time",
-    "started_epoch": 1778965899.4981372,
+    "started_at": "2026-05-22 14:19:11 Pacific Daylight Time",
+    "started_epoch": 1779484751.2118526,
     "status": "skipped",
-    "ended_at": "2026-05-16 14:11:39 Pacific Daylight Time",
-    "ended_epoch": 1778965899.5101428,
-    "duration_seconds": 0.012
+    "ended_at": "2026-05-22 14:19:11 Pacific Daylight Time",
+    "ended_epoch": 1779484751.2260969,
+    "duration_seconds": 0.014
   }
 ]

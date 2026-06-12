@@ -75,3 +75,5 @@ VDss_nonpfas_struct,1430,143,11,2249390,True
 VDss_nonpfas_tsca,1478,148,11,2406184,True
 HLe_invivo_nonpfas_struct,2854,285,11,8947290,True
 HLe_invivo_nonpfas_tsca,3006,301,11,9952866,True
+VDss_all_aux,3096,310,11,10557360,True
+HLe_invivo_all_aux,6341,634,11,44222134,True

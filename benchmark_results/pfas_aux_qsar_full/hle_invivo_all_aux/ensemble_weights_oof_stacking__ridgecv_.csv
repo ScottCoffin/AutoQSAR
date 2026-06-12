@@ -1,0 +1,11 @@
+Model,Weight,Abs normalized contribution,Workflow
+SVR,-2.042598969451137e-06,2.0425697937830444e-06,Conventional ML
+Extra trees,0.9999979450252361,0.9999836614538775,Conventional ML
+AdaBoost,-1.4720637010780246e-06,1.4720426747078973e-06,Conventional ML
+Tabular CNN,-2.0641852398611826e-06,2.064155755863423e-06,Conventional ML
+XGBoost,-2.0208986355949032e-06,2.0208697698857147e-06,Conventional ML
+CatBoost,-1.9802896604192988e-06,1.980261374752497e-06,Conventional ML
+MapLight CatBoost (Strict Parity),-1.4850727252553597e-06,1.4850515130695253e-06,Conventional ML
+"Chemprop v2 (AttentiveFP, ensemble=1)",-1.8418153174132312e-06,1.8417890096586538e-06,Chemprop v2
+"Chemprop v2 (AttentiveFP + Selected descriptors, ensemble=1)",-1.9451732289413326e-06,1.9451454448636165e-06,Chemprop v2
+"MapLight + GNN (CatBoost, Strict Parity)",-1.4866820213094156e-06,1.4866607861370389e-06,MapLight + GNN

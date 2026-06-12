@@ -1,0 +1,3 @@
+sheet,target_family,rows,unique_qsar_ready_smiles,train_rows,test_rows,auxiliary_feature_count,all_required_sources_present,present_in_selected_run_config,selected_run_outputs_present,performance_status,source_sheet_row_counts
+HLe_invivo_all_aux,HLe_invivo,7926,2152,6341,1585,21,True,True,True,outputs present but no completed unified metric rows found,HLe_invivo_pfas_tsca=205; HLe_invivo_pfas_struct=395; HLe_invivo_nonpfas_tsca=3758; HLe_invivo_nonpfas_struct=3568
+VDss_all_aux,VDss,3870,1279,3096,774,21,True,True,True,outputs present but no completed unified metric rows found,VDss_pfas_tsca=88; VDss_pfas_struct=147; VDss_nonpfas_tsca=1847; VDss_nonpfas_struct=1788

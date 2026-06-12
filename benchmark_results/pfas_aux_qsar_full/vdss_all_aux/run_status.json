@@ -1,0 +1,9 @@
+{
+  "status": "completed",
+  "dataset": "vdss_all_aux",
+  "source": "PFAS auxiliary workbook: modeling_datasets_aux_features.xlsx::VDss_all_aux",
+  "completed_at": "2026-05-22 15:17:59",
+  "elapsed_seconds": 3526.726,
+  "n_metrics_rows": 20,
+  "n_stage_records": 21
+}

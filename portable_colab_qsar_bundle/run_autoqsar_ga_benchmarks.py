@@ -1466,6 +1466,43 @@ def parse_comma_list(text: Any) -> list[str]:
     return [str(token).strip() for token in str(text or "").split(",") if str(token).strip()]
 
 
+def parse_int_list(text: Any) -> list[int]:
+    values: list[int] = []
+    seen: set[int] = set()
+    for token in parse_comma_list(text):
+        try:
+            value = int(token)
+        except Exception:
+            continue
+        if value in seen:
+            continue
+        seen.add(value)
+        values.append(value)
+    return values
+
+
+def model_filter_values(args: argparse.Namespace) -> set[str]:
+    return {
+        str(item).strip()
+        for item in parse_comma_list(getattr(args, "only_model_names", ""))
+        if str(item).strip()
+    }
+
+
+def model_filter_allows(args: argparse.Namespace, model_name: Any) -> bool:
+    filters = model_filter_values(args)
+    if not filters:
+        return True
+    return str(model_name or "").strip() in filters
+
+
+def model_filter_allows_any(args: argparse.Namespace, model_names: Sequence[Any]) -> bool:
+    filters = model_filter_values(args)
+    if not filters:
+        return True
+    return any(str(name or "").strip() in filters for name in model_names)
+
+
 def _normalize_workflow_label(workflow_name: Any) -> str:
     return str(workflow_name or "").strip().lower()
 
@@ -2310,43 +2347,61 @@ def load_tdc_datasets(path: str = "./data") -> list[DatasetSpec]:
         frame: pd.DataFrame | None = None
         source_label = f"PyTDC {config['task']} benchmark: {dataset_name}"
         predefined_split_column: str | None = None
+        _ensure_benchmark_group_initialized()
+        benchmark_name = benchmark_group_names.get(dataset_key) if benchmark_group is not None else None
 
         cached_payload = _load_cached_dataset(dataset_name)
         if cached_payload is not None:
             frame, cached_meta = cached_payload
             cached_source_label = str(cached_meta.get("source_label", "")).strip()
             cached_predefined_col = str(cached_meta.get("predefined_split_column", "")).strip()
-            if cached_source_label:
-                source_label = cached_source_label
-            if cached_predefined_col and cached_predefined_col in frame.columns:
-                predefined_split_column = cached_predefined_col
-                recommended_split = "predefined"
-            recommended_split, recommended_metric, leaderboard_url, leaderboard_summary = _apply_catalog_sota_defaults(
-                dataset_name,
-                recommended_split,
-                recommended_metric,
-                leaderboard_url,
-                leaderboard_summary,
-            )
-            datasets.append(
-                DatasetSpec(
-                    f"tdc_{dataset_name}",
-                    source_label,
-                    frame,
-                    "smiles",
-                    "target",
-                    recommended_split=recommended_split,
-                    recommended_metric=recommended_metric,
-                    benchmark_suite="tdc",
-                    benchmark_id=dataset_name,
-                    leaderboard_url=leaderboard_url,
-                    leaderboard_summary=leaderboard_summary,
-                    predefined_split_column=predefined_split_column,
+            cached_has_official_split = bool(
+                benchmark_name
+                and cached_predefined_col
+                and cached_predefined_col in frame.columns
+                and (
+                    "benchmark group" in cached_source_label.lower()
+                    or "official train_val/test split" in cached_source_label.lower()
                 )
             )
-            continue
-
-        _ensure_benchmark_group_initialized()
+            if benchmark_name and not cached_has_official_split:
+                print(
+                    f"[info] PyTDC {dataset_name}: ignoring stale cache without official admet_group split; "
+                    "refreshing from benchmark_group.",
+                    flush=True,
+                )
+                frame = None
+                cached_payload = None
+            else:
+                if cached_source_label:
+                    source_label = cached_source_label
+                if cached_predefined_col and cached_predefined_col in frame.columns:
+                    predefined_split_column = cached_predefined_col
+                    recommended_split = "predefined"
+                recommended_split, recommended_metric, leaderboard_url, leaderboard_summary = _apply_catalog_sota_defaults(
+                    dataset_name,
+                    recommended_split,
+                    recommended_metric,
+                    leaderboard_url,
+                    leaderboard_summary,
+                )
+                datasets.append(
+                    DatasetSpec(
+                        f"tdc_{dataset_name}",
+                        source_label,
+                        frame,
+                        "smiles",
+                        "target",
+                        recommended_split=recommended_split,
+                        recommended_metric=recommended_metric,
+                        benchmark_suite="tdc",
+                        benchmark_id=dataset_name,
+                        leaderboard_url=leaderboard_url,
+                        leaderboard_summary=leaderboard_summary,
+                        predefined_split_column=predefined_split_column,
+                    )
+                )
+                continue
         if benchmark_group is None and benchmark_group_error is not None and not benchmark_group_error_reported:
             print(
                 "[info] PyTDC benchmark-group split loader unavailable; "
@@ -2355,7 +2410,6 @@ def load_tdc_datasets(path: str = "./data") -> list[DatasetSpec]:
             )
             benchmark_group_error_reported = True
 
-        benchmark_name = benchmark_group_names.get(dataset_key) if benchmark_group is not None else None
         if benchmark_group is not None and benchmark_name:
             try:
                 benchmark_payload = benchmark_group.get(benchmark_name)
@@ -6687,6 +6741,9 @@ def selected_conventional_model_names(args: argparse.Namespace) -> list[str]:
         names.append(maplight_catboost_model_label(args))
     if bool(getattr(args, "run_tabpfn", False)) and TabPFNRegressor is not None:
         names.append("TabPFNRegressor")
+    filters = model_filter_values(args)
+    if filters:
+        names = [name for name in names if name in filters]
     return names
 
 
@@ -6733,7 +6790,13 @@ def expected_model_targets_for_args(args: argparse.Namespace) -> tuple[set[str],
         expected_names.add("Uni-Mol V1")
     if bool(getattr(args, "run_maplight_gnn", False)):
         expected_names.add(maplight_gnn_model_label(args))
-    return expected_names, bool(getattr(args, "run_ensemble", False))
+    filters = model_filter_values(args)
+    if filters:
+        expected_names = {name for name in expected_names if name in filters}
+    ensemble_expected = bool(getattr(args, "run_ensemble", False))
+    if filters:
+        ensemble_expected = any(name == "Ensemble" or name.startswith("Ensemble (") for name in filters)
+    return expected_names, ensemble_expected
 
 
 def missing_requested_models_for_dataset(
@@ -6963,16 +7026,35 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
                 flush=True,
             )
 
-    requested_ga_models = parse_comma_list(getattr(args, "ga_models_resolved", getattr(args, "ga_models", "")))
-    requested_deep_stages = (
-        int(bool(args.run_chemml_pytorch))
-        + int(bool(args.run_chemml_tensorflow))
-        + (len(chemprop_variant_specs(args)) if bool(args.run_chemprop_mpnn) else 0)
-        + int(bool(getattr(args, "run_unimol_v1", False)))
-        + int(bool(args.run_maplight_gnn))
+    requested_ga_models = [
+        model_name
+        for model_name in parse_comma_list(getattr(args, "ga_models_resolved", getattr(args, "ga_models", "")))
+        if model_filter_allows(args, f"{model_name} GA")
+    ]
+    chemprop_stage_count = (
+        sum(
+            1
+            for spec in chemprop_variant_specs(args)
+            if model_filter_allows(args, str(spec.get("label", "")).strip())
+        )
+        if bool(args.run_chemprop_mpnn)
+        else 0
     )
-    requested_cfa_stage = int(bool(getattr(args, "run_cfa", False)))
-    requested_ensemble_stage = int(bool(args.run_ensemble))
+    requested_deep_stages = (
+        int(bool(args.run_chemml_pytorch) and model_filter_allows(args, "ChemML MLP (PyTorch)"))
+        + int(bool(args.run_chemml_tensorflow) and model_filter_allows(args, "ChemML MLP (TensorFlow)"))
+        + int(chemprop_stage_count)
+        + int(bool(getattr(args, "run_unimol_v1", False)) and model_filter_allows(args, "Uni-Mol V1"))
+        + int(bool(args.run_maplight_gnn) and model_filter_allows(args, maplight_gnn_model_label(args)))
+    )
+    requested_cfa_stage = int(bool(getattr(args, "run_cfa", False)) and model_filter_allows(args, "CFA (Combinatorial Fusion)"))
+    requested_ensemble_stage = int(
+        bool(args.run_ensemble)
+        and model_filter_allows_any(
+            args,
+            ["Ensemble", *[f"Ensemble ({method})" for method in resolved_ensemble_methods(args)]],
+        )
+    )
     total_stages = (
         3
         + len(selected_conventional_model_names(args))
@@ -7046,7 +7128,32 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
             encoding="utf-8",
         )
 
-    def stage_message(stage_index: int, label: str) -> None:
+    def active_stage_duration_seconds() -> float:
+        if active_stage_record is None:
+            return float("nan")
+        return round(time.time() - float(active_stage_record.get("_started_epoch", time.time())), 3)
+
+    def add_cost_columns(row: dict[str, Any], *, cost_scope: str = "model_stage") -> dict[str, Any]:
+        output = dict(row)
+        output["elapsed_seconds"] = round(time.time() - start, 3)
+        output["dataset_elapsed_seconds"] = output["elapsed_seconds"]
+        output["cost_scope"] = str(cost_scope)
+        output["stage_duration_seconds"] = active_stage_duration_seconds()
+        if active_stage_record is not None:
+            output["cost_stage_index"] = active_stage_record.get("stage_index", np.nan)
+            output["cost_stage_label"] = active_stage_record.get("stage_label", "")
+            output["cost_step_type"] = active_stage_record.get("step_type", "")
+            output["cost_started_at"] = active_stage_record.get("started_at", "")
+        return output
+
+    def stage_message(
+        stage_index: int,
+        label: str,
+        *,
+        model_name: str = "",
+        workflow: str = "",
+        step_type: str = "",
+    ) -> None:
         nonlocal active_stage_record
         _close_active_stage(default_status="completed")
         stage_started_at = _local_timestamp()
@@ -7056,6 +7163,9 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
             "stage_index": int(stage_index),
             "total_stages": int(total_stages),
             "stage_label": str(label),
+            "step_type": str(step_type or ("model" if str(model_name).strip() else "workflow_step")),
+            "model": str(model_name),
+            "workflow": str(workflow),
             "started_at": stage_started_at,
             "started_epoch": stage_started_epoch,
             "_started_epoch": stage_started_epoch,
@@ -7187,7 +7297,7 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
         },
     )
 
-    stage_message(1, f"loading {spec.source}")
+    stage_message(1, f"loading {spec.source}", step_type="load_dataset")
     use_log10_target = resolve_dataset_log10_target(spec, args)
     df, input_meta = canonicalize_frame(spec, use_log10_target)
     if len(df) < args.minimum_rows:
@@ -7223,7 +7333,7 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
     )
 
     if stage23_cache_payload is not None:
-        stage_message(2, "building molecular features (cached)")
+        stage_message(2, "building molecular features (cached)", step_type="feature_generation")
         _set_active_stage_status("resumed_cache")
         print(
             f"[resume] {dataset_id}: stage 2/3 cache hit (signature match); "
@@ -7248,7 +7358,7 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
         feature_dedup_meta = dict(stage23_cache_payload.get("feature_dedup_meta", {}))
         maplight_feature_cols = [str(col) for col in stage23_cache_payload.get("maplight_feature_cols", [])]
         cv_strategy_for_workflows = str(stage23_cache_payload.get("cv_strategy_for_workflows", "random"))
-        stage_message(3, "splitting data and selecting features (cached)")
+        stage_message(3, "splitting data and selecting features (cached)", step_type="feature_selection")
         _set_active_stage_status("resumed_cache")
         print(
             f"[resume] {dataset_id}: restored {int(X_train.shape[1]):,} selected features from stage 2/3 cache.",
@@ -7257,7 +7367,7 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
         write_selector_outputs(dataset_dir, selector_meta)
         write_feature_dedup_outputs(dataset_dir, feature_dedup_meta)
     else:
-        stage_message(2, "building molecular features")
+        stage_message(2, "building molecular features", step_type="feature_generation")
         shared_signature, shared_signature_payload = shared_feature_matrix_signature(
             smiles_values=df["canonical_smiles"],
             selected_families=list(DEFAULT_BENCHMARK_FEATURE_FAMILIES),
@@ -7332,7 +7442,7 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
             write_dataset_status(dataset_dir, {"status": "skipped", "reason": "too_few_rows_after_features", "n_rows": int(len(df))})
             return DatasetRunResult([], [], [], "skipped", time.time() - start)
 
-        stage_message(3, "splitting data and selecting features")
+        stage_message(3, "splitting data and selecting features", step_type="feature_selection")
         split = split_data(X, y, smiles, args, predefined_split=predefined_split)
         split["X_train"], split["X_test"], feature_dedup_meta = drop_exact_and_near_duplicate_features(
             split["X_train"],
@@ -7500,7 +7610,7 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
         split["smiles_train"],
         split_strategy_for_cv=cv_strategy_for_workflows,
     )
-    if bool(getattr(args, "run_tabpfn", False)):
+    if bool(getattr(args, "run_tabpfn", False)) and model_filter_allows(args, "TabPFNRegressor"):
         if TabPFNRegressor is None:
             print(
                 f"[info] {dataset_id} TabPFNRegressor unavailable: install `tabpfn` to enable this model.",
@@ -7513,6 +7623,13 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
                 flush=True,
             )
             if "TabPFNRegressor" not in completed_model_names:
+                stage_message(
+                    stage_index,
+                    "conventional model TabPFNRegressor (skipped: max train rows)",
+                    model_name="TabPFNRegressor",
+                    workflow="conventional",
+                    step_type="model",
+                )
                 tabpfn_skip_row = {
                     **base_meta,
                     "model": "TabPFNRegressor",
@@ -7520,17 +7637,25 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
                     "status": "skipped_tabpfn_max_train_rows",
                     "tabpfn_max_train_rows": int(getattr(args, "tabpfn_max_train_rows", 1000)),
                     "tabpfn_train_rows": int(X_train.shape[0]),
-                    "elapsed_seconds": round(time.time() - start, 3),
                 }
+                tabpfn_skip_row = add_cost_columns(tabpfn_skip_row, cost_scope="model_skip")
                 metrics_rows.append(tabpfn_skip_row)
                 completed_model_names.add("TabPFNRegressor")
                 persist_partial("conventional:TabPFNRegressor:skipped_max_train_rows")
+                model_bundle.pop("TabPFNRegressor", None)
+                stage_index += 1
     elasticnet_cv_meta = model_bundle.pop("_elasticnet_cv_meta", {})
-    model_items = list(model_bundle.items())
+    model_items = [(name, estimator) for name, estimator in model_bundle.items() if model_filter_allows(args, name)]
     maplight_catboost_label = maplight_catboost_model_label(args)
     for model_name, estimator in model_items:
         if str(model_name) in completed_model_names:
-            stage_message(stage_index, f"conventional model {model_name} (cached)")
+            stage_message(
+                stage_index,
+                f"conventional model {model_name} (cached)",
+                model_name=str(model_name),
+                workflow="conventional",
+                step_type="model",
+            )
             stage_index += 1
             continue
         if (
@@ -7538,7 +7663,13 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
             and bool(args.skip_elasticnetcv_if_selector_timeout)
             and bool(selector_meta.get("selector_timed_out", False))
         ):
-            stage_message(stage_index, f"conventional model {model_name} (skipped: selector timeout)")
+            stage_message(
+                stage_index,
+                f"conventional model {model_name} (skipped: selector timeout)",
+                model_name=str(model_name),
+                workflow="conventional",
+                step_type="model",
+            )
             skip_reason = (
                 f"Skipped {model_name}: selector ElasticNetCV exceeded timeout "
                 f"({float(args.selector_elasticnet_timeout_seconds):,.0f}s) and fell back to RandomForest importance."
@@ -7551,13 +7682,19 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
                 "status": "skipped_selector_timeout",
             }
             row.update(elasticnet_cv_meta)
-            row = {**base_meta, **row, "elapsed_seconds": round(time.time() - start, 3)}
+            row = add_cost_columns({**base_meta, **row}, cost_scope="model_skip")
             metrics_rows.append(row)
             completed_model_names.add(str(model_name))
             persist_partial(f"conventional:{model_name}")
             stage_index += 1
             continue
-        stage_message(stage_index, f"conventional model {model_name}")
+        stage_message(
+            stage_index,
+            f"conventional model {model_name}",
+            model_name=str(model_name),
+            workflow="conventional",
+            step_type="model",
+        )
         if model_name == maplight_catboost_label:
             if maplight_parity_mode:
                 if maplight_direct_X_train.empty:
@@ -7599,7 +7736,7 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
                     "tabpfn_daily_token_budget": int(TABPFN_DAILY_TOKEN_BUDGET),
                     "tabpfn_estimated_estimators": int(tabpfn_estimators_per_dataset_run(args)),
                 }
-                row = {**base_meta, **row, "elapsed_seconds": round(time.time() - start, 3)}
+                row = add_cost_columns({**base_meta, **row}, cost_scope="model_skip")
                 metrics_rows.append(row)
                 completed_model_names.add(str(model_name))
                 persist_partial(f"conventional:{model_name}")
@@ -7644,7 +7781,7 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
             pred_train, pred_test = np.array([]), np.array([])
         if model_name == "ElasticNetCV":
             row.update(elasticnet_cv_meta)
-        row = {**base_meta, **row, "elapsed_seconds": round(time.time() - start, 3)}
+        row = add_cost_columns({**base_meta, **row})
         metrics_rows.append(row)
         completed_model_names.add(str(model_name))
         if len(pred_train):
@@ -7670,14 +7807,26 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
     for model_name in requested_ga_models:
         ga_label = f"{model_name} GA"
         if ga_label in completed_model_names:
-            stage_message(stage_index, f"GA tuning {model_name} (cached)")
+            stage_message(
+                stage_index,
+                f"GA tuning {model_name} (cached)",
+                model_name=ga_label,
+                workflow="ga_tuned",
+                step_type="model",
+            )
             stage_index += 1
             continue
         if model_name not in ga_specs:
             print(f"[skip] {dataset_id} GA {model_name}: model unavailable")
             stage_index += 1
             continue
-        stage_message(stage_index, f"GA tuning {model_name}")
+        stage_message(
+            stage_index,
+            f"GA tuning {model_name}",
+            model_name=ga_label,
+            workflow="ga_tuned",
+            step_type="model",
+        )
         try:
             row, history, pred_train, pred_test = run_simple_ga(
                 model_name,
@@ -7693,7 +7842,7 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
         except Exception as exc:
             row = {"model": ga_label, "workflow": "ga_tuned", "error": str(exc)}
             history, pred_train, pred_test = pd.DataFrame(), np.array([]), np.array([])
-        row = {**base_meta, **row, "elapsed_seconds": round(time.time() - start, 3)}
+        row = add_cost_columns({**base_meta, **row})
         metrics_rows.append(row)
         completed_model_names.add(ga_label)
         if not history.empty:
@@ -7719,16 +7868,28 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
         stage_index += 1
 
     deep_model_specs: list[tuple[str, str]] = []
-    if bool(args.run_chemml_pytorch):
+    if bool(args.run_chemml_pytorch) and model_filter_allows(args, "ChemML MLP (PyTorch)"):
         deep_model_specs.append(("ChemML MLP (PyTorch)", "pytorch"))
-    if bool(args.run_chemml_tensorflow):
+    if bool(args.run_chemml_tensorflow) and model_filter_allows(args, "ChemML MLP (TensorFlow)"):
         deep_model_specs.append(("ChemML MLP (TensorFlow)", "tensorflow"))
     for deep_label, deep_engine in deep_model_specs:
         if deep_label in completed_model_names:
-            stage_message(stage_index, f"deep model {deep_label} (cached)")
+            stage_message(
+                stage_index,
+                f"deep model {deep_label} (cached)",
+                model_name=deep_label,
+                workflow="ChemML deep learning",
+                step_type="model",
+            )
             stage_index += 1
             continue
-        stage_message(stage_index, f"deep model {deep_label}")
+        stage_message(
+            stage_index,
+            f"deep model {deep_label}",
+            model_name=deep_label,
+            workflow="ChemML deep learning",
+            step_type="model",
+        )
         try:
             row, pred_train, pred_test = train_chemml_model(
                 label=deep_label,
@@ -7744,7 +7905,7 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
         except Exception as exc:
             row = {"model": deep_label, "workflow": "ChemML deep learning", "error": str(exc)}
             pred_train, pred_test = np.array([]), np.array([])
-        row = {**base_meta, **row, "elapsed_seconds": round(time.time() - start, 3)}
+        row = add_cost_columns({**base_meta, **row})
         metrics_rows.append(row)
         completed_model_names.add(str(deep_label))
         if len(pred_train):
@@ -7775,11 +7936,25 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
             chemprop_train_args = [str(item).strip() for item in list(chemprop_variant.get("train_args", [])) if str(item).strip()]
             chemprop_featurizers = [str(item).strip() for item in list(chemprop_variant.get("featurizers", [])) if str(item).strip()]
             chemprop_use_selected_descriptors = bool(chemprop_variant.get("use_selected_descriptors", False))
+            if not model_filter_allows(args, chemprop_label):
+                continue
             if chemprop_label in completed_model_names:
-                stage_message(stage_index, f"deep model {chemprop_label} (cached)")
+                stage_message(
+                    stage_index,
+                    f"deep model {chemprop_label} (cached)",
+                    model_name=chemprop_label,
+                    workflow=chemprop_workflow,
+                    step_type="model",
+                )
                 stage_index += 1
                 continue
-            stage_message(stage_index, f"deep model {chemprop_label}")
+            stage_message(
+                stage_index,
+                f"deep model {chemprop_label}",
+                model_name=chemprop_label,
+                workflow=chemprop_workflow,
+                step_type="model",
+            )
             try:
                 row, pred_train, pred_test = train_chemprop_model(
                     label=chemprop_label,
@@ -7812,7 +7987,7 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
                     "chemprop_selected_descriptor_count": int(X_train.shape[1]) if chemprop_use_selected_descriptors else 0,
                 }
                 pred_train, pred_test = np.array([]), np.array([])
-            row = {**base_meta, **row, "elapsed_seconds": round(time.time() - start, 3)}
+            row = add_cost_columns({**base_meta, **row})
             metrics_rows.append(row)
             completed_model_names.add(str(chemprop_label))
             if len(pred_train):
@@ -7834,13 +8009,25 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
             persist_partial(f"deep:Chemprop-v2:{chemprop_variant_tag}")
             stage_index += 1
 
-    if bool(getattr(args, "run_unimol_v1", False)):
+    if bool(getattr(args, "run_unimol_v1", False)) and model_filter_allows(args, "Uni-Mol V1"):
         unimol_label = "Uni-Mol V1"
         if unimol_label in completed_model_names:
-            stage_message(stage_index, f"deep model {unimol_label} (cached)")
+            stage_message(
+                stage_index,
+                f"deep model {unimol_label} (cached)",
+                model_name=unimol_label,
+                workflow="Uni-Mol",
+                step_type="model",
+            )
             stage_index += 1
         else:
-            stage_message(stage_index, f"deep model {unimol_label}")
+            stage_message(
+                stage_index,
+                f"deep model {unimol_label}",
+                model_name=unimol_label,
+                workflow="Uni-Mol",
+                step_type="model",
+            )
             try:
                 row, pred_train, pred_test = train_unimol_v1_model(
                     label=unimol_label,
@@ -7854,7 +8041,7 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
             except Exception as exc:
                 row = {"model": unimol_label, "workflow": "Uni-Mol", "error": str(exc)}
                 pred_train, pred_test = np.array([]), np.array([])
-            row = {**base_meta, **row, "elapsed_seconds": round(time.time() - start, 3)}
+            row = add_cost_columns({**base_meta, **row})
             metrics_rows.append(row)
             completed_model_names.add(str(unimol_label))
             if len(pred_train):
@@ -7876,24 +8063,36 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
             persist_partial("deep:Uni-Mol-V1")
             stage_index += 1
 
-    if bool(args.run_maplight_gnn):
+    if bool(args.run_maplight_gnn) and model_filter_allows(args, maplight_gnn_model_label(args)):
         maplight_label = maplight_gnn_model_label(args)
         if maplight_label in completed_model_names:
-            stage_message(stage_index, f"deep model {maplight_label} (cached)")
+            stage_message(
+                stage_index,
+                f"deep model {maplight_label} (cached)",
+                model_name=maplight_label,
+                workflow="MapLight + GNN",
+                step_type="model",
+            )
             stage_index += 1
         else:
-            stage_message(stage_index, f"deep model {maplight_label}")
+            stage_message(
+                stage_index,
+                f"deep model {maplight_label}",
+                model_name=maplight_label,
+                workflow="MapLight + GNN",
+                step_type="model",
+            )
             if CatBoostRegressor is None:
                 row = {"model": maplight_label, "workflow": "MapLight + GNN", "error": "CatBoost is unavailable"}
-                metrics_rows.append({**base_meta, **row, "elapsed_seconds": round(time.time() - start, 3)})
+                metrics_rows.append(add_cost_columns({**base_meta, **row}, cost_scope="model_skip"))
                 completed_model_names.add(maplight_label)
             elif maplight_parity_mode and maplight_direct_X_train.empty:
                 row = {"model": maplight_label, "workflow": "MapLight + GNN", "error": "MapLight strict parity features are unavailable"}
-                metrics_rows.append({**base_meta, **row, "elapsed_seconds": round(time.time() - start, 3)})
+                metrics_rows.append(add_cost_columns({**base_meta, **row}, cost_scope="model_skip"))
                 completed_model_names.add(maplight_label)
             elif (not maplight_parity_mode) and (not maplight_feature_cols):
                 row = {"model": maplight_label, "workflow": "MapLight + GNN", "error": "MapLight classic features are unavailable"}
-                metrics_rows.append({**base_meta, **row, "elapsed_seconds": round(time.time() - start, 3)})
+                metrics_rows.append(add_cost_columns({**base_meta, **row}, cost_scope="model_skip"))
                 completed_model_names.add(maplight_label)
             else:
                 try:
@@ -7968,7 +8167,7 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
                     if _is_maplight_gnn_dependency_error(exc):
                         row["status"] = "skipped_maplight_gnn_dependency_unavailable"
                     pred_train, pred_test = np.array([]), np.array([])
-                row = {**base_meta, **row, "elapsed_seconds": round(time.time() - start, 3)}
+                row = add_cost_columns({**base_meta, **row})
                 metrics_rows.append(row)
                 completed_model_names.add(maplight_label)
                 if len(pred_train):
@@ -7991,12 +8190,24 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
             stage_index += 1
 
     cfa_label = "CFA (Combinatorial Fusion)"
-    if bool(getattr(args, "run_cfa", False)):
+    if bool(getattr(args, "run_cfa", False)) and model_filter_allows(args, cfa_label):
         if cfa_label in completed_model_names:
-            stage_message(stage_index, "CFA combinatorial fusion (cached)")
+            stage_message(
+                stage_index,
+                "CFA combinatorial fusion (cached)",
+                model_name=cfa_label,
+                workflow="cfa",
+                step_type="model",
+            )
             stage_index += 1
         else:
-            stage_message(stage_index, "CFA combinatorial fusion")
+            stage_message(
+                stage_index,
+                "CFA combinatorial fusion",
+                model_name=cfa_label,
+                workflow="cfa",
+                step_type="model",
+            )
             cfa_optimize_metric = str(getattr(args, "cfa_optimize_metric", "mae"))
             if current_dataset_task_type() == "classification" and cfa_optimize_metric.strip().lower() in {"mae", "mse", "rmse"}:
                 cfa_optimize_metric = current_dataset_primary_metric("roc_auc")
@@ -8143,7 +8354,7 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
                 except Exception as exc:
                     row = {"model": cfa_label, "workflow": "cfa", "error": str(exc)}
                     pred_train, pred_test = np.array([]), np.array([])
-            row = {**base_meta, **row, "elapsed_seconds": round(time.time() - start, 3)}
+            row = add_cost_columns({**base_meta, **row})
             metrics_rows.append(row)
             completed_model_names.add(cfa_label)
             if len(pred_train):
@@ -8165,8 +8376,18 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
             persist_partial("cfa")
             stage_index += 1
 
-    if bool(args.run_ensemble):
+    if bool(args.run_ensemble) and model_filter_allows_any(
+        args,
+        ["Ensemble", *[f"Ensemble ({method})" for method in resolved_ensemble_methods(args)]],
+    ):
         requested_ensemble_methods = resolved_ensemble_methods(args)
+        filters = model_filter_values(args)
+        if filters:
+            requested_ensemble_methods = [
+                method_name
+                for method_name in requested_ensemble_methods
+                if f"Ensemble ({method_name})" in filters or "Ensemble" in filters
+            ]
         existing_ensemble_models = [
             str(name).strip()
             for name in completed_model_names
@@ -8181,11 +8402,23 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
             )
         ]
         if not pending_ensemble_methods:
-            stage_message(stage_index, "ensemble (cached)")
+            stage_message(
+                stage_index,
+                "ensemble (cached)",
+                model_name="Ensemble",
+                workflow="ensemble",
+                step_type="model",
+            )
             persist_partial("ensemble:cached")
             stage_index += 1
         else:
-            stage_message(stage_index, f"ensemble ({len(pending_ensemble_methods)} method(s))")
+            stage_message(
+                stage_index,
+                f"ensemble ({len(pending_ensemble_methods)} method(s))",
+                model_name="Ensemble",
+                workflow="ensemble",
+                step_type="model",
+            )
             if len(prediction_payloads) < 2:
                 print(f"[skip] {dataset_id} ensemble: fewer than two models produced predictions")
             else:
@@ -8217,7 +8450,7 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
                         final_ensemble_row["ensemble_members"] = ", ".join(ensemble_members)
                         final_ensemble_row["ensemble_member_filter_notes"] = " | ".join(member_filter_notes)
                         metrics_rows.append(
-                            {**base_meta, **final_ensemble_row, "elapsed_seconds": round(time.time() - start, 3)}
+                            add_cost_columns({**base_meta, **final_ensemble_row})
                         )
                         completed_model_names.add(str(final_ensemble_row.get("model", f"Ensemble ({method_name})")))
                         prediction_tables.extend(
@@ -8257,16 +8490,14 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
                             f"[warn] {dataset_id} ensemble method '{method_name}' failed: {exc}",
                             flush=True,
                         )
-                        metrics_rows.append(
-                            {
-                                **base_meta,
-                                "model": f"Ensemble ({method_name})",
-                                "workflow": "ensemble",
-                                "ensemble_method": str(method_name),
-                                "error": str(exc),
-                                "elapsed_seconds": round(time.time() - start, 3),
-                            }
-                        )
+                        row = {
+                            **base_meta,
+                            "model": f"Ensemble ({method_name})",
+                            "workflow": "ensemble",
+                            "ensemble_method": str(method_name),
+                            "error": str(exc),
+                        }
+                        metrics_rows.append(add_cost_columns(row))
                         completed_model_names.add(f"Ensemble ({method_name})")
                 if ensemble_results_tables:
                     pd.concat(ensemble_results_tables, ignore_index=True).to_csv(
@@ -8611,6 +8842,278 @@ def collect_step_runtime_summary(output_dir: Path) -> pd.DataFrame:
     summary_df = pd.concat(rows, ignore_index=True)
     summary_df.to_csv(output_dir / "step_runtime_summary.csv", index=False)
     return summary_df
+
+
+def collect_nested_step_runtime_summary(output_dir: Path, pattern: str = "*/*/step_runtime.csv") -> pd.DataFrame:
+    rows: list[pd.DataFrame] = []
+    for runtime_path in sorted(Path(output_dir).glob(pattern)):
+        try:
+            runtime_df = pd.read_csv(runtime_path)
+        except Exception:
+            continue
+        if runtime_df.empty:
+            continue
+        if "dataset" not in runtime_df.columns:
+            runtime_df.insert(0, "dataset", runtime_path.parent.name)
+        if "seed" not in runtime_df.columns:
+            seed_text = runtime_path.parent.parent.name
+            seed_match = re.search(r"(-?\d+)$", seed_text)
+            runtime_df.insert(1, "seed", int(seed_match.group(1)) if seed_match else np.nan)
+        rows.append(runtime_df)
+    if not rows:
+        return pd.DataFrame()
+    return pd.concat(rows, ignore_index=True)
+
+
+def tdc22_official_dataset_specs(datasets: list["DatasetSpec"]) -> list["DatasetSpec"]:
+    selected: list[DatasetSpec] = []
+    for spec in datasets:
+        if str(spec.benchmark_suite or "").strip().lower() != "tdc":
+            continue
+        if str(spec.recommended_split or "").strip().lower() != "predefined":
+            continue
+        if not str(spec.predefined_split_column or "").strip():
+            continue
+        if "benchmark group" not in str(spec.source or "").lower():
+            continue
+        selected.append(spec)
+    return selected
+
+
+def _direct_model_rows_for_multiseed(dataset_df: pd.DataFrame) -> pd.DataFrame:
+    if dataset_df.empty:
+        return pd.DataFrame()
+    working = dataset_df.copy()
+    if "model" not in working.columns:
+        return pd.DataFrame()
+    if "workflow" not in working.columns:
+        working["workflow"] = ""
+    working["model"] = working["model"].fillna("").astype(str).str.strip()
+    working["workflow"] = working["workflow"].fillna("").astype(str).str.strip()
+    direct_mask = ~working.apply(
+        lambda row: bool(is_ensemble_result_row(row.get("model", ""), row.get("workflow", "")))
+        or str(row.get("workflow", "")).strip().lower() in {"ensemble", "cfa"},
+        axis=1,
+    )
+    return working.loc[direct_mask & working["model"].ne("")].copy()
+
+
+def _fusion_member_model_names(fusion_row: pd.Series, direct_rows: pd.DataFrame) -> list[str]:
+    if direct_rows.empty or "model" not in direct_rows.columns:
+        return []
+    direct_names = [str(name).strip() for name in direct_rows["model"].dropna().astype(str).tolist() if str(name).strip()]
+    direct_names = list(dict.fromkeys(direct_names))
+    candidate_text = " ".join(
+        str(fusion_row.get(column, "") or "")
+        for column in [
+            "ensemble_members",
+            "cfa_selected_models",
+            "cfa_best_per_workflow_notes",
+            "ensemble_member_filter_notes",
+        ]
+    )
+    if not candidate_text.strip():
+        return []
+    selected: list[str] = []
+    for name in sorted(direct_names, key=len, reverse=True):
+        if name and name in candidate_text:
+            selected.append(name)
+    return list(dict.fromkeys(selected))
+
+
+def _multiseed_model_rows_for_dataset(dataset_df: pd.DataFrame) -> tuple[list[pd.Series], str, str]:
+    if dataset_df.empty:
+        return [], "no_rows", ""
+    working = dataset_df.copy()
+    if "model" not in working.columns:
+        return [], "missing_model_column", ""
+    if "workflow" not in working.columns:
+        working["workflow"] = ""
+    if "primary_metric_value" not in working.columns:
+        return [], "missing_primary_metric_value", ""
+    working = working.loc[~error_mask(working)].copy()
+    working["primary_metric_value"] = pd.to_numeric(working["primary_metric_value"], errors="coerce")
+    working = working.loc[working["primary_metric_value"].notna()].copy()
+    working["model"] = working["model"].fillna("").astype(str).str.strip()
+    working["workflow"] = working["workflow"].fillna("").astype(str).str.strip()
+    working = working.loc[working["model"].ne("")].copy()
+    if working.empty:
+        return [], "no_successful_metric_rows", ""
+
+    primary_metric = normalize_benchmark_metric(
+        str(working.get("primary_metric", pd.Series(["rmse"])).dropna().iloc[0]),
+        fallback="rmse",
+    )
+    lower_is_better = metric_lower_is_better(primary_metric)
+    if lower_is_better is None:
+        lower_is_better = True
+    values = pd.to_numeric(working["primary_metric_value"], errors="coerce")
+    overall_idx = values.idxmin() if lower_is_better else values.idxmax()
+    overall_row = working.loc[overall_idx]
+    overall_model = str(overall_row.get("model", "")).strip()
+    overall_workflow = str(overall_row.get("workflow", "")).strip().lower()
+    direct = _direct_model_rows_for_multiseed(working)
+    if direct.empty:
+        return [], f"best_model_not_directly_trainable:{overall_model}", overall_model
+    direct_values = pd.to_numeric(direct["primary_metric_value"], errors="coerce")
+    best_idx = direct_values.idxmin() if lower_is_better else direct_values.idxmax()
+    best_direct_row = direct.loc[best_idx]
+    selected_model = str(best_direct_row.get("model", "")).strip()
+    overall_is_fusion = bool(is_ensemble_result_row(overall_model, overall_workflow)) or overall_workflow in {"ensemble", "cfa"}
+    if overall_is_fusion:
+        member_names = _fusion_member_model_names(overall_row, direct)
+        member_rows: list[pd.Series] = []
+        for member_name in member_names:
+            matches = direct.loc[direct["model"].astype(str).str.strip().eq(member_name)].copy()
+            if matches.empty:
+                continue
+            member_values = pd.to_numeric(matches["primary_metric_value"], errors="coerce")
+            member_idx = member_values.idxmin() if lower_is_better else member_values.idxmax()
+            member_rows.append(matches.loc[member_idx])
+        if member_rows:
+            return member_rows, f"overall_best_fusion:{overall_model}; multiseed_base_members", overall_model
+        return [best_direct_row], f"overall_best_fusion:{overall_model}; member_metadata_missing_using_best_direct", overall_model
+    if selected_model != overall_model:
+        return [best_direct_row], f"overall_best_not_directly_trainable:{overall_model}; using_best_direct", overall_model
+    return [best_direct_row], "overall_best_direct_model", overall_model
+
+
+def run_tdc22_best_model_multiseed(
+    *,
+    datasets: list["DatasetSpec"],
+    output_dir: Path,
+    args: argparse.Namespace,
+    summary: pd.DataFrame,
+) -> dict[str, Any]:
+    seeds = parse_int_list(getattr(args, "tdc22_multiseed_seeds", "1,2,3,4,5"))
+    if not seeds:
+        seeds = [1, 2, 3, 4, 5]
+    run_specs = tdc22_official_dataset_specs(datasets)
+    multiseed_root = Path(output_dir) / str(getattr(args, "tdc22_multiseed_output_name", "tdc22_best_model_multiseed"))
+    multiseed_root.mkdir(parents=True, exist_ok=True)
+
+    plan_rows: list[dict[str, Any]] = []
+    metric_tables: list[pd.DataFrame] = []
+    if summary.empty or "dataset" not in summary.columns:
+        reason = "summary_metrics_unavailable"
+        pd.DataFrame([{"status": "skipped", "reason": reason}]).to_csv(multiseed_root / "tdc22_best_model_multiseed_plan.csv", index=False)
+        return {"status": "skipped", "reason": reason, "dataset_count": 0, "seed_count": int(len(seeds))}
+
+    for spec_index, spec in enumerate(run_specs, start=1):
+        dataset_id = slugify(spec.name)
+        dataset_df = summary.loc[summary["dataset"].astype(str).str.strip().eq(dataset_id)].copy()
+        selected_rows, selection_note, main_run_winner = _multiseed_model_rows_for_dataset(dataset_df)
+        if not selected_rows:
+            plan_rows.append(
+                {
+                    "dataset": dataset_id,
+                    "benchmark_id": spec.benchmark_id or "",
+                    "status": "skipped",
+                    "selection_note": selection_note,
+                    "main_run_winner_model": main_run_winner,
+                }
+            )
+            continue
+        selected_models = [str(row.get("model", "")).strip() for row in selected_rows if str(row.get("model", "")).strip()]
+        selected_models = list(dict.fromkeys(selected_models))
+        for selected_row in selected_rows:
+            plan_rows.append(
+                {
+                    "dataset": dataset_id,
+                    "benchmark_id": spec.benchmark_id or "",
+                    "status": "planned",
+                    "selected_model": str(selected_row.get("model", "")).strip(),
+                    "selected_workflow": str(selected_row.get("workflow", "")).strip(),
+                    "selection_note": selection_note,
+                    "main_run_winner_model": main_run_winner,
+                    "main_run_primary_metric": selected_row.get("primary_metric", ""),
+                    "main_run_primary_metric_value": selected_row.get("primary_metric_value", np.nan),
+                    "selected_model_count_for_dataset": int(len(selected_models)),
+                    "seed_count": int(len(seeds)),
+                    "seeds": ",".join(str(seed) for seed in seeds),
+                }
+            )
+
+        for seed_index, seed in enumerate(seeds, start=1):
+            seed_output_dir = multiseed_root / f"seed_{int(seed)}"
+            seed_args = argparse.Namespace(**vars(args))
+            seed_args.random_seed = int(seed)
+            seed_args.output_dir = seed_output_dir
+            seed_args.only_model_names = ",".join(selected_models)
+            seed_args.run_cfa = False
+            seed_args.run_ensemble = False
+            seed_args.revisit_completed_datasets = False
+            seed_args.rebuild_ensemble = False
+            ga_models = [model_name[:-3].strip() for model_name in selected_models if model_name.endswith(" GA")]
+            if ga_models:
+                seed_args.ga_models_resolved = ",".join(ga_models)
+                seed_args.ga_models = seed_args.ga_models_resolved
+            print(
+                "\nTDC-22 multi-seed best-model evaluation "
+                f"[dataset {spec_index}/{len(run_specs)}, seed {seed_index}/{len(seeds)}]: "
+                f"{dataset_id} | models={', '.join(selected_models)} | seed={seed}",
+                flush=True,
+            )
+            result = run_dataset(
+                spec,
+                seed_output_dir,
+                seed_args,
+                dataset_position=seed_index,
+                dataset_total=len(seeds),
+            )
+            if result.metrics_rows:
+                seed_metrics = pd.DataFrame(result.metrics_rows)
+            else:
+                seed_metrics = load_run_metrics_dataframe(seed_output_dir)
+            if not seed_metrics.empty:
+                seed_metrics = seed_metrics.copy()
+                seed_metrics["multiseed_seed"] = int(seed)
+                seed_metrics["multiseed_selected_model"] = (
+                    seed_metrics["model"].fillna("").astype(str).str.strip()
+                    if "model" in seed_metrics.columns
+                    else ""
+                )
+                seed_metrics["multiseed_selection_note"] = selection_note
+                seed_metrics["multiseed_main_run_winner_model"] = main_run_winner
+                metric_tables.append(seed_metrics)
+
+    plan_df = pd.DataFrame(plan_rows)
+    plan_df.to_csv(multiseed_root / "tdc22_best_model_multiseed_plan.csv", index=False)
+    metrics_out = pd.concat(metric_tables, ignore_index=True) if metric_tables else pd.DataFrame()
+    if not metrics_out.empty:
+        metrics_out.to_csv(multiseed_root / "tdc22_best_model_multiseed_metrics.csv", index=False)
+        working = metrics_out.copy()
+        working["primary_metric_value"] = pd.to_numeric(working.get("primary_metric_value"), errors="coerce")
+        working["stage_duration_seconds"] = pd.to_numeric(working.get("stage_duration_seconds"), errors="coerce")
+        grouped = (
+            working.groupby(["dataset", "multiseed_selected_model"], dropna=False)
+            .agg(
+                seed_count=("multiseed_seed", "nunique"),
+                primary_metric=("primary_metric", "first"),
+                mean_primary_metric_value=("primary_metric_value", "mean"),
+                std_primary_metric_value=("primary_metric_value", "std"),
+                min_primary_metric_value=("primary_metric_value", "min"),
+                max_primary_metric_value=("primary_metric_value", "max"),
+                mean_model_stage_seconds=("stage_duration_seconds", "mean"),
+                total_model_stage_seconds=("stage_duration_seconds", "sum"),
+            )
+            .reset_index()
+        )
+        grouped.to_csv(multiseed_root / "tdc22_best_model_multiseed_summary.csv", index=False)
+
+    runtime_summary = collect_nested_step_runtime_summary(multiseed_root)
+    if not runtime_summary.empty:
+        runtime_summary.to_csv(multiseed_root / "tdc22_best_model_multiseed_step_runtime_summary.csv", index=False)
+
+    return {
+        "status": "completed",
+        "output_dir": str(multiseed_root),
+        "dataset_count": int(len(run_specs)),
+        "planned_dataset_count": int((plan_df.get("status", pd.Series(dtype=str)).astype(str) == "planned").sum()) if not plan_df.empty else 0,
+        "seed_count": int(len(seeds)),
+        "metric_rows": int(len(metrics_out)),
+        "runtime_rows": int(len(runtime_summary)),
+    }
 
 
 def write_run_vs_run_attribution_report(
@@ -9091,6 +9594,30 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--ensemble-exclude-negative-test-r2-members", action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument("--compare-run-dir", type=Path, default=None, help="Optional previous run directory for automatic run-vs-run attribution diagnostics.")
     parser.add_argument("--emit-run-vs-run-report", action=argparse.BooleanOptionalAction, default=True)
+    parser.add_argument(
+        "--run-tdc22-multiseed-best",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help=(
+            "After the main run, evaluate the selected best directly trainable model for each official PyTDC "
+            "admet_group dataset across multiple random seeds."
+        ),
+    )
+    parser.add_argument(
+        "--tdc22-multiseed-seeds",
+        default="1,2,3,4,5",
+        help="Comma-separated random seeds for the end-of-run TDC-22 best-model evaluation.",
+    )
+    parser.add_argument(
+        "--tdc22-multiseed-output-name",
+        default="tdc22_best_model_multiseed",
+        help="Subdirectory name under the run output directory for TDC-22 multi-seed artifacts.",
+    )
+    parser.add_argument(
+        "--only-model-names",
+        default="",
+        help=argparse.SUPPRESS,
+    )
     parser.add_argument("--resume", action=argparse.BooleanOptionalAction, default=True, help="Resume a compatible incomplete run when possible.")
     return parser.parse_args()
 
@@ -9351,6 +9878,13 @@ def main() -> int:
             f"{'strict' if bool(getattr(args, 'maplight_leaderboard_parity_mode', True)) else 'legacy'} "
             f"(seeds={','.join(str(seed) for seed in maplight_parity_seed_values(args))})"
         )
+        tdc22_specs = tdc22_official_dataset_specs(datasets)
+        print(
+            "TDC-22 best-model multi-seed evaluation: "
+            f"{'on' if bool(getattr(args, 'run_tdc22_multiseed_best', True)) else 'off'} "
+            f"(official admet_group datasets={len(tdc22_specs)}, "
+            f"seeds={','.join(str(seed) for seed in parse_int_list(getattr(args, 'tdc22_multiseed_seeds', '1,2,3,4,5')) or [1, 2, 3, 4, 5])})"
+        )
         if resume_plan is not None:
             print_resume_execution_plan(resume_plan)
         if bool(getattr(args, "run_tabpfn", False)):
@@ -9594,6 +10128,27 @@ def main() -> int:
             f"{output_dir / 'run_vs_run_attribution_summary.json'}",
             flush=True,
         )
+    multiseed_payload: dict[str, Any] = {}
+    if bool(getattr(args, "run_tdc22_multiseed_best", True)):
+        tdc22_specs = tdc22_official_dataset_specs(datasets)
+        if tdc22_specs:
+            multiseed_payload = run_tdc22_best_model_multiseed(
+                datasets=datasets,
+                output_dir=output_dir,
+                args=args,
+                summary=summary,
+            )
+            print(
+                "TDC-22 best-model multi-seed artifacts saved: "
+                f"{multiseed_payload.get('output_dir', '')}",
+                flush=True,
+            )
+        else:
+            multiseed_payload = {
+                "status": "skipped",
+                "reason": "no selected official PyTDC admet_group datasets",
+                "dataset_count": 0,
+            }
     (output_dir / "run_complete.json").write_text(
         json.dumps(
             {
@@ -9602,6 +10157,7 @@ def main() -> int:
                 "dataset_count": len(datasets),
                 "ga_models_resolved": parse_comma_list(getattr(args, "ga_models_resolved", "")),
                 "run_vs_run_attribution": attribution_payload,
+                "tdc22_best_model_multiseed": multiseed_payload,
             },
             indent=2,
         ),
@@ -9623,6 +10179,16 @@ def main() -> int:
                 "run_vs_run_config_diff.csv",
                 "run_vs_run_error_diff.csv",
                 "run_vs_run_leaderboard_comparability.csv",
+            ]
+        )
+    if multiseed_payload and str(multiseed_payload.get("status", "")).lower() == "completed":
+        multiseed_name = str(getattr(args, "tdc22_multiseed_output_name", "tdc22_best_model_multiseed"))
+        primary_files.extend(
+            [
+                f"{multiseed_name}/tdc22_best_model_multiseed_plan.csv",
+                f"{multiseed_name}/tdc22_best_model_multiseed_metrics.csv",
+                f"{multiseed_name}/tdc22_best_model_multiseed_summary.csv",
+                f"{multiseed_name}/tdc22_best_model_multiseed_step_runtime_summary.csv",
             ]
         )
     print(f"\nWrote benchmark outputs to {output_dir}")
