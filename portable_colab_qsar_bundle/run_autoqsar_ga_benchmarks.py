@@ -9703,6 +9703,15 @@ def main() -> int:
         )
     gpu_available = detect_gpu_available()
     args.gpu_available = bool(gpu_available)
+    # Precision hook (§A): read AUTOQSAR_PRECISION env var set by run_one.py.
+    # Must run after GPU detection, before any CUDA op. No-op when torch absent.
+    try:
+        from autoqsar.precision import apply_global_precision
+        _precision_mode = os.environ.get("AUTOQSAR_PRECISION", "fp32")
+        apply_global_precision(_precision_mode)
+        args.precision_mode = _precision_mode
+    except ImportError:
+        args.precision_mode = "fp32"
     if getattr(args, "run_unimol_v1", None) is None:
         args.run_unimol_v1 = bool(gpu_available)
     elif bool(args.run_unimol_v1) and not gpu_available:

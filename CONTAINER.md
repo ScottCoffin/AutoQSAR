@@ -181,6 +181,86 @@ independently traceable.
 
 ---
 
+---
+
+## 10 — Jetstream2 cloud execution path
+
+Jetstream2 (NSF ACCESS cloud, OpenStack) is an alternative to Slurm HPC. The
+orchestrator at `js2/run_queue.py` provides:
+
+- Resumable queue via JSON state file (survives shelve/unshelve cycles)
+- Automatic SU burn-rate tracking (g3.large = 32 SU/hr)
+- `--su-budget` with 80% warning and auto-shelve at 100%
+
+See `js2/README.md` for full documentation including instance flavor table,
+persistent volume layout, conformer pre-generation, and quick-start examples.
+
+```bash
+# Dry-run to validate manifest before burning SU
+python js2/run_queue.py \
+    --manifest js2/manifests/gpu_tasks.tsv \
+    --sif ~/autoqsar/autoqsar.sif \
+    --input-dir /vol/autoqsar/autoqsar_in \
+    --output-dir /vol/autoqsar/autoqsar_out \
+    --su-budget 200 \
+    --dry-run
+```
+
+The v1 Slurm scripts (`hpc/`) are unchanged and remain the primary path for
+NSF ACCESS HPC clusters.
+
+---
+
+## 11 — Precision and Uni-Mol2 options (Update 2)
+
+### Precision flag
+
+| Flag | Effect | Use when |
+|---|---|---|
+| `--precision tf32_bf16` | TF32 matmul + BF16 autocast for supported workflows | Production throughput on A100/g3.large |
+| `--precision fp32` | Strict FP32, TF32 disabled | Reproducibility reference run |
+
+Default is `tf32_bf16`. BF16 autocast is **not** applied to TabPFN (blocklisted
+due to float64 internal paths). All precision decisions are logged and recorded
+in `run_one_provenance.json`.
+
+### Uni-Mol2 V2
+
+```bash
+apptainer run --nv autoqsar.sif \
+    --dataset tdc_ppbr_az --seed 1 \
+    --input-dir /in --output-dir /out \
+    --run-unimol-v2 \
+    --unimol-size 84m \
+    --conformer-cache /in/conformer_cache \
+    --device auto
+```
+
+The Uni-Mol2 workflow uses its own 3D geometry representation path (ETKDGv3+MMFF
+conformers cached in SQLite) and does NOT consume MapLight/ElasticNet features.
+Results land in `unimolv2_predictions.csv` and `unimolv2_metadata.json` alongside
+the standard benchmark outputs.
+
+Operator must:
+1. Download the 84m checkpoint to `model_cache/unimolv2_checkpoints/84m/checkpoint.pt`
+2. Record its SHA-256 in `autoqsar/unimolv2.py:UNIMOLV2_CHECKPOINT_SHA256["84m"]`
+
+### Conformer pre-generation (CPU mode)
+
+```bash
+apptainer run autoqsar.sif \
+    --generate-conformers-only \
+    --dataset tdc_ppbr_az \
+    --input-dir /in \
+    --conformer-cache /in/conformer_cache \
+    --conformer-seed 42
+```
+
+This mode generates and caches 3D conformers on CPU with no GPU required.
+Run this before GPU tasks to eliminate conformer-gen overhead on the g3.large.
+
+---
+
 ## Troubleshooting
 
 | Symptom | Likely cause | Fix |
@@ -190,3 +270,7 @@ independently traceable.
 | Feature store reads fail | `model_cache/` not in bind-mount | Ensure `/in` bind includes `model_cache/` sub-tree |
 | `ERROR: manifest not found` | Sub-manifests not generated | Run `make manifests` locally, then copy to cluster |
 | Out-of-memory on GPU | Request more VRAM or use `--device cpu` | Edit sbatch `--mem` or switch to CPU script |
+| Uni-Mol2 CUDA OOM | batch size too large | The OOM-retry loop halves batch size up to 3 times automatically |
+| Uni-Mol2 checkpoint SHA-256 mismatch | wrong file downloaded | Re-download and update `UNIMOLV2_CHECKPOINT_SHA256` in `autoqsar/unimolv2.py` |
+| `openstack server shelve` fails | credentials not configured | Run `openstack` CLI setup or shelve manually via Horizon web UI |
+| Conformer cache empty on GPU VM | pre-gen step was skipped | Run `--generate-conformers-only` on a CPU instance first, then sync cache |
