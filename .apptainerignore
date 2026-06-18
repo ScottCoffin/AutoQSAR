@@ -1,0 +1,19 @@
+# AutoQSAR .apptainerignore (mirrors .dockerignore)
+benchmark_results/
+data/
+model_cache/
+logs/
+test_data/
+.git/
+**/__pycache__/
+**/*.pyc
+**/*.ipynb
+node_modules/
+.conda/
+refs/
+*.pdf
+catboost_info/
+ad_result.csv
+ad_metadata.json
+.env
+.claude/

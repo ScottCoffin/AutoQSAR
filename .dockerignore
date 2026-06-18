@@ -1,0 +1,58 @@
+# AutoQSAR .dockerignore
+# Prevents large/irrelevant content from being sent to the Docker build context.
+# These paths are bind-mounted at runtime, not baked into the image.
+
+# ── Data and results (bind-mounted at runtime) ────────────────────────────────
+benchmark_results/
+data/
+model_cache/
+logs/
+test_data/
+
+# ── Git history ───────────────────────────────────────────────────────────────
+.git/
+.gitignore
+
+# ── Python caches ─────────────────────────────────────────────────────────────
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+**/*.pyd
+*.egg-info/
+.eggs/
+
+# ── Notebooks (not needed in batch container) ─────────────────────────────────
+**/*.ipynb
+**/*.ipynb_checkpoints/
+
+# ── Editor / OS artifacts ─────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# ── Conda / virtual environments ─────────────────────────────────────────────
+.conda/
+envs/
+*.conda
+
+# ── Large binary / reference artifacts ───────────────────────────────────────
+refs/
+*.pdf
+*.xlsx
+catboost_info/
+*.pth
+ad_result.csv
+ad_metadata.json
+exec_summary.md
+status.txt
+
+# ── Node (package.json for docs tooling only) ────────────────────────────────
+node_modules/
+package-lock.json
+
+# ── Local settings ────────────────────────────────────────────────────────────
+.env
+.claude/

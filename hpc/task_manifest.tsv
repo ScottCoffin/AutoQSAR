@@ -1,0 +1,111 @@
+dataset	seed	device	notes
+tdc_caco2_wang	1	cpu	ensemble winner (conventional ML)
+tdc_caco2_wang	2	cpu	ensemble winner (conventional ML)
+tdc_caco2_wang	3	cpu	ensemble winner (conventional ML)
+tdc_caco2_wang	4	cpu	ensemble winner (conventional ML)
+tdc_caco2_wang	5	cpu	ensemble winner (conventional ML)
+tdc_hia_hou	1	cpu	conventional ML / ensemble
+tdc_hia_hou	2	cpu	conventional ML / ensemble
+tdc_hia_hou	3	cpu	conventional ML / ensemble
+tdc_hia_hou	4	cpu	conventional ML / ensemble
+tdc_hia_hou	5	cpu	conventional ML / ensemble
+tdc_pgp_broccatelli	1	cpu	conventional ML / ensemble
+tdc_pgp_broccatelli	2	cpu	conventional ML / ensemble
+tdc_pgp_broccatelli	3	cpu	conventional ML / ensemble
+tdc_pgp_broccatelli	4	cpu	conventional ML / ensemble
+tdc_pgp_broccatelli	5	cpu	conventional ML / ensemble
+tdc_bioavailability_ma	1	cpu	conventional ML / ensemble
+tdc_bioavailability_ma	2	cpu	conventional ML / ensemble
+tdc_bioavailability_ma	3	cpu	conventional ML / ensemble
+tdc_bioavailability_ma	4	cpu	conventional ML / ensemble
+tdc_bioavailability_ma	5	cpu	conventional ML / ensemble
+tdc_lipophilicity_astrazeneca	1	cpu	XGBoost winner
+tdc_lipophilicity_astrazeneca	2	cpu	XGBoost winner
+tdc_lipophilicity_astrazeneca	3	cpu	XGBoost winner
+tdc_lipophilicity_astrazeneca	4	cpu	XGBoost winner
+tdc_lipophilicity_astrazeneca	5	cpu	XGBoost winner
+tdc_solubility_aqsoldb	1	cpu	CFA fusion winner
+tdc_solubility_aqsoldb	2	cpu	CFA fusion winner
+tdc_solubility_aqsoldb	3	cpu	CFA fusion winner
+tdc_solubility_aqsoldb	4	cpu	CFA fusion winner
+tdc_solubility_aqsoldb	5	cpu	CFA fusion winner
+tdc_bbb_martins	1	cpu	conventional ML / ensemble
+tdc_bbb_martins	2	cpu	conventional ML / ensemble
+tdc_bbb_martins	3	cpu	conventional ML / ensemble
+tdc_bbb_martins	4	cpu	conventional ML / ensemble
+tdc_bbb_martins	5	cpu	conventional ML / ensemble
+tdc_ppbr_az	1	gpu	MapLight+GNN winner
+tdc_ppbr_az	2	gpu	MapLight+GNN winner
+tdc_ppbr_az	3	gpu	MapLight+GNN winner
+tdc_ppbr_az	4	gpu	MapLight+GNN winner
+tdc_ppbr_az	5	gpu	MapLight+GNN winner
+tdc_vdss_lombardo	1	gpu	MapLight+GNN winner
+tdc_vdss_lombardo	2	gpu	MapLight+GNN winner
+tdc_vdss_lombardo	3	gpu	MapLight+GNN winner
+tdc_vdss_lombardo	4	gpu	MapLight+GNN winner
+tdc_vdss_lombardo	5	gpu	MapLight+GNN winner
+tdc_half_life_obach	1	gpu	TabPFN winner
+tdc_half_life_obach	2	gpu	TabPFN winner
+tdc_half_life_obach	3	gpu	TabPFN winner
+tdc_half_life_obach	4	gpu	TabPFN winner
+tdc_half_life_obach	5	gpu	TabPFN winner
+tdc_clearance_microsome_az	1	gpu	MapLight+GNN winner
+tdc_clearance_microsome_az	2	gpu	MapLight+GNN winner
+tdc_clearance_microsome_az	3	gpu	MapLight+GNN winner
+tdc_clearance_microsome_az	4	gpu	MapLight+GNN winner
+tdc_clearance_microsome_az	5	gpu	MapLight+GNN winner
+tdc_clearance_hepatocyte_az	1	gpu	MapLight+GNN winner
+tdc_clearance_hepatocyte_az	2	gpu	MapLight+GNN winner
+tdc_clearance_hepatocyte_az	3	gpu	MapLight+GNN winner
+tdc_clearance_hepatocyte_az	4	gpu	MapLight+GNN winner
+tdc_clearance_hepatocyte_az	5	gpu	MapLight+GNN winner
+tdc_ld50_zhu	1	cpu	CFA fusion winner
+tdc_ld50_zhu	2	cpu	CFA fusion winner
+tdc_ld50_zhu	3	cpu	CFA fusion winner
+tdc_ld50_zhu	4	cpu	CFA fusion winner
+tdc_ld50_zhu	5	cpu	CFA fusion winner
+tdc_herg	1	cpu	conventional ML / ensemble
+tdc_herg	2	cpu	conventional ML / ensemble
+tdc_herg	3	cpu	conventional ML / ensemble
+tdc_herg	4	cpu	conventional ML / ensemble
+tdc_herg	5	cpu	conventional ML / ensemble
+tdc_ames	1	cpu	conventional ML / ensemble
+tdc_ames	2	cpu	conventional ML / ensemble
+tdc_ames	3	cpu	conventional ML / ensemble
+tdc_ames	4	cpu	conventional ML / ensemble
+tdc_ames	5	cpu	conventional ML / ensemble
+tdc_dili	1	cpu	conventional ML / ensemble
+tdc_dili	2	cpu	conventional ML / ensemble
+tdc_dili	3	cpu	conventional ML / ensemble
+tdc_dili	4	cpu	conventional ML / ensemble
+tdc_dili	5	cpu	conventional ML / ensemble
+tdc_skin_reaction	1	cpu	conventional ML / ensemble
+tdc_skin_reaction	2	cpu	conventional ML / ensemble
+tdc_skin_reaction	3	cpu	conventional ML / ensemble
+tdc_skin_reaction	4	cpu	conventional ML / ensemble
+tdc_skin_reaction	5	cpu	conventional ML / ensemble
+tdc_carcinogens_lagunin	1	cpu	conventional ML / ensemble
+tdc_carcinogens_lagunin	2	cpu	conventional ML / ensemble
+tdc_carcinogens_lagunin	3	cpu	conventional ML / ensemble
+tdc_carcinogens_lagunin	4	cpu	conventional ML / ensemble
+tdc_carcinogens_lagunin	5	cpu	conventional ML / ensemble
+tdc_cyp2c19_veith	1	cpu	conventional ML / ensemble
+tdc_cyp2c19_veith	2	cpu	conventional ML / ensemble
+tdc_cyp2c19_veith	3	cpu	conventional ML / ensemble
+tdc_cyp2c19_veith	4	cpu	conventional ML / ensemble
+tdc_cyp2c19_veith	5	cpu	conventional ML / ensemble
+tdc_cyp2d6_veith	1	cpu	conventional ML / ensemble
+tdc_cyp2d6_veith	2	cpu	conventional ML / ensemble
+tdc_cyp2d6_veith	3	cpu	conventional ML / ensemble
+tdc_cyp2d6_veith	4	cpu	conventional ML / ensemble
+tdc_cyp2d6_veith	5	cpu	conventional ML / ensemble
+tdc_cyp3a4_veith	1	cpu	conventional ML / ensemble
+tdc_cyp3a4_veith	2	cpu	conventional ML / ensemble
+tdc_cyp3a4_veith	3	cpu	conventional ML / ensemble
+tdc_cyp3a4_veith	4	cpu	conventional ML / ensemble
+tdc_cyp3a4_veith	5	cpu	conventional ML / ensemble
+tdc_cyp1a2_veith	1	cpu	conventional ML / ensemble
+tdc_cyp1a2_veith	2	cpu	conventional ML / ensemble
+tdc_cyp1a2_veith	3	cpu	conventional ML / ensemble
+tdc_cyp1a2_veith	4	cpu	conventional ML / ensemble
+tdc_cyp1a2_veith	5	cpu	conventional ML / ensemble

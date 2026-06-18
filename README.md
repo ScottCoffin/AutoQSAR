@@ -907,6 +907,34 @@ Restart the notebook kernel or reload the notebook from disk. The generated
 notebook file and the live in-memory notebook/kernel can diverge during active
 editing.
 
+## Running on HPC via Apptainer
+
+AutoQSAR can be deployed as an Apptainer/Singularity container on NSF ACCESS HPC
+clusters (Delta, Bridges-2, Expanse, Stampede3) for GPU-accelerated, fully
+reproducible TDC-22 multi-seed evaluation.
+
+**Quick start:**
+
+```bash
+# Build image (requires clean git tree + Docker)
+make image
+
+# Convert to .sif
+make sif
+
+# Run smoke test locally
+bash tests/smoke_cpu.sh
+
+# Generate sub-manifests, then submit to Slurm
+make manifests
+sbatch hpc/submit_multiseed.sbatch      # GPU tasks
+sbatch hpc/submit_multiseed_cpu.sbatch  # CPU tasks
+```
+
+See [CONTAINER.md](CONTAINER.md) for full build, transfer, and submission
+instructions, and [hpc/README.md](hpc/README.md) for routing logic and
+cluster-specific placeholder values.
+
 ## License
 
 See `LICENSE`.
