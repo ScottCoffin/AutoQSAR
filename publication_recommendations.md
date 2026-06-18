@@ -83,7 +83,9 @@ The more detailed notebook crosswalk below supersedes this short list and separa
 ### Critical (Required)
 
 1. **Multi-seed evaluation** (5 seeds) for all TDC-22 datasets using official `admet_group` splits
+  1. Implemented, but requires re-run!
 2. **Computational cost table** comparing wall-clock time and hardware for AutoQSAR vs. MolGPS/MolE/ADMET-AI
+  1. Implemented, but requires re-run!
 
 ### Strongly Recommended
 
