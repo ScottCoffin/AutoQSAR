@@ -1,0 +1,26 @@
+dataset	seed	device	notes
+tdc_ppbr_az	1	gpu	MapLight+GNN winner
+tdc_ppbr_az	2	gpu	MapLight+GNN winner
+tdc_ppbr_az	3	gpu	MapLight+GNN winner
+tdc_ppbr_az	4	gpu	MapLight+GNN winner
+tdc_ppbr_az	5	gpu	MapLight+GNN winner
+tdc_vdss_lombardo	1	gpu	MapLight+GNN winner
+tdc_vdss_lombardo	2	gpu	MapLight+GNN winner
+tdc_vdss_lombardo	3	gpu	MapLight+GNN winner
+tdc_vdss_lombardo	4	gpu	MapLight+GNN winner
+tdc_vdss_lombardo	5	gpu	MapLight+GNN winner
+tdc_half_life_obach	1	gpu	TabPFN winner
+tdc_half_life_obach	2	gpu	TabPFN winner
+tdc_half_life_obach	3	gpu	TabPFN winner
+tdc_half_life_obach	4	gpu	TabPFN winner
+tdc_half_life_obach	5	gpu	TabPFN winner
+tdc_clearance_microsome_az	1	gpu	MapLight+GNN winner
+tdc_clearance_microsome_az	2	gpu	MapLight+GNN winner
+tdc_clearance_microsome_az	3	gpu	MapLight+GNN winner
+tdc_clearance_microsome_az	4	gpu	MapLight+GNN winner
+tdc_clearance_microsome_az	5	gpu	MapLight+GNN winner
+tdc_clearance_hepatocyte_az	1	gpu	MapLight+GNN winner
+tdc_clearance_hepatocyte_az	2	gpu	MapLight+GNN winner
+tdc_clearance_hepatocyte_az	3	gpu	MapLight+GNN winner
+tdc_clearance_hepatocyte_az	4	gpu	MapLight+GNN winner
+tdc_clearance_hepatocyte_az	5	gpu	MapLight+GNN winner

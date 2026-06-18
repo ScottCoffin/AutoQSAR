@@ -94,6 +94,20 @@ From: nvidia/cuda:12.1.1-cudnn8-runtime-ubuntu22.04
         dgllife==0.3.2 \
         -f https://data.dgl.ai/wheels/torch-2.5/cu121/repo.html
 
+    # ── unicore (DeepModeling backbone for Uni-Mol2) ──────────────────────────
+    # Requires nvcc (already present in the devel base image used for Apptainer).
+    # Operator: if building from cudnn8-runtime base, switch bootstrap to
+    # docker://nvidia/cuda:12.1.1-cudnn8-devel-ubuntu22.04 or install nvcc via
+    # apt before this step, then remove nvcc after compilation to save space.
+    # TODO (operator): pin UNICORE_GIT_SHA to a specific commit for full
+    # reproducibility (matches the ARG in containers/Dockerfile).
+    UNICORE_GIT_SHA=e04f7ef73d7685cf0fd1090de87a1b0900ef6f01
+    git clone https://github.com/dptech-corp/unicore.git /tmp/unicore
+    cd /tmp/unicore && git checkout ${UNICORE_GIT_SHA}
+    pip install --no-cache-dir -e /tmp/unicore
+    rm -rf /tmp/unicore
+    cd /opt/autoqsar
+
     # ── Remaining pinned requirements ─────────────────────────────────────────
     pip install --no-cache-dir \
         --extra-index-url https://download.pytorch.org/whl/cu121 \

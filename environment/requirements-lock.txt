@@ -42,7 +42,13 @@ molfeat==0.10.1
 tabpfn==7.1.1
 tabpfn-client==0.2.8
 tabpfn-common-utils==0.2.20
-unimol-tools==0.1.5
+# Uni-Mol2 V2: unimol-tools 1.x introduces MolTrain/MolPredict for V2 checkpoints.
+# unicore (DeepModeling backbone, CUDA extensions) is compiled from source in the
+# Dockerfile devel stage and NOT listed here — it is installed by the build stage
+# before pip processes this lockfile.
+# TODO (operator): verify the pinned version below matches the unicore version
+# compiled in the devel stage; update if upstream changes the API.
+unimol-tools==1.0.1
 
 # ── Gradient boosting ────────────────────────────────────────────────────────
 # NOTE: catboost and xgboost run CPU-only on datasets where no GPU winner was
