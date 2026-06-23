@@ -115,9 +115,11 @@ The notebook and benchmark runner also support these optional model families:
   descriptors to the graph model
 - optional Chemprop RDKit2D featurizer variants when `--run-chemprop-rdkit2d`
   is enabled
-- `Uni-Mol V1` in the benchmark runner and notebook
-- `Uni-Mol V2` in the notebook, with configurable model size and GPU-only
-  execution in that workflow
+- `Uni-Mol V1` in the benchmark runner and notebook; auto-enabled when a GPU
+  is detected
+- `Uni-Mol V2` in the benchmark runner and notebook; GPU-only, auto-enabled
+  when a GPU is detected; model size auto-set to `310m` on A100-class hardware
+  (≥39 GB VRAM), `164m` on mid-range GPUs (≥15 GB), `84m` otherwise
 
 ### Fusion And Ensemble Models
 
@@ -150,6 +152,8 @@ run continues.
 | `portable_colab_qsar_bundle/benchmark_registry.py` | Shared dataset registry for notebook examples and benchmark discovery. |
 | `portable_colab_qsar_bundle/simple_applicability_domain.py` | Applicability-domain support used by notebook prediction workflows. |
 | `portable_colab_qsar_bundle/example_prediction_smiles.csv` | Small bundled prediction input example. |
+| `js2/run_a100_benchmark.sh` | Canonical launcher for the full benchmark on a JetStream2 A100 (or any A100-class GPU). |
+| `js2/watch_benchmark.sh` | Live benchmark progress monitor; use with `watch -n 10 bash js2/watch_benchmark.sh`. |
 | `data/benchmark_dataset_catalog.csv` | Catalog of benchmark datasets, splits, metrics, local files, and leaderboard metadata. |
 | `data/benchmark_leaderboards/` | Cached leaderboard reference tables. |
 | `benchmark_results/` | Benchmark run outputs. |
@@ -422,7 +426,12 @@ python portable_colab_qsar_bundle\run_autoqsar_ga_benchmarks.py `
 | `--run-tabpfn/--no-run-tabpfn` | Enable or disable TabPFNRegressor. |
 | `--run-chemprop-mpnn/--no-run-chemprop-mpnn` | Enable or disable Chemprop MPNN. |
 | `--run-chemprop-attentivefp/--no-run-chemprop-attentivefp` | Enable or disable Chemprop AttentiveFP. |
-| `--run-unimol-v1/--no-run-unimol-v1` | Override Uni-Mol V1 auto behavior. |
+| `--run-unimol-v1/--no-run-unimol-v1` | Override Uni-Mol V1 auto behavior (auto-on when GPU detected). |
+| `--run-unimol-v2/--no-run-unimol-v2` | Override Uni-Mol V2 auto behavior (auto-on when GPU detected). |
+| `--unimol-model-size 84m/164m/310m` | V2 model size; auto-set to `310m` on ≥39 GB VRAM, `164m` on ≥15 GB, `84m` otherwise. |
+| `--unimol-max-atoms N` | Maximum atoms per molecule for Uni-Mol V2 featurization (default 96). |
+| `--unimol-use-amp/--no-unimol-use-amp` | V2 automatic mixed precision; auto-enabled on GPU. |
+| `--parallel-datasets N` | Run N datasets concurrently (default 1, serial). Opt in for many-core nodes. |
 | `--run-cfa/--no-run-cfa` | Enable or disable CFA fusion. |
 | `--run-ensemble/--no-run-ensemble` | Enable or disable standard ensembles. |
 | `--compare-run-dir PATH` | Generate run-vs-run attribution against a previous run. |
@@ -833,10 +842,39 @@ python portable_colab_qsar_bundle\run_autoqsar_ga_benchmarks.py `
   --rebuild-ensemble
 ```
 
-### Resume On A Different A100 (JetStream2 Or Any GPU Node)
+### Running The Full Benchmark On A JetStream2 A100
 
-The benchmark writes all state into its output directory. To continue a run on a
-new machine, transfer the directory and point the runner at it:
+`js2/run_a100_benchmark.sh` is the canonical launcher for the full 45-dataset
+benchmark on an NVIDIA A100 (or any GPU with ≥15 GB VRAM). It encodes all
+resource-aware settings explicitly so runs are reproducible across machines.
+
+**Fresh run:**
+
+```bash
+cd ~/AutoQSAR
+bash js2/run_a100_benchmark.sh
+```
+
+**Resume an interrupted run:**
+
+```bash
+bash js2/run_a100_benchmark.sh \
+  --output-dir benchmark_results/autoqsar_benchmark_<timestamp>
+```
+
+**Monitor progress (live, updates every 10 seconds):**
+
+```bash
+watch -n 10 bash js2/watch_benchmark.sh
+# or one-shot:
+bash js2/watch_benchmark.sh
+```
+
+`js2/watch_benchmark.sh` reads `run_timing.json` for the completed count,
+distinguishes stale entries from a previously killed run, and lists the active
+dataset and checkpoint stage.
+
+**Transfer and resume on a new machine:**
 
 ```bash
 # On the source machine — copy results (skip large model weight files)
@@ -845,19 +883,39 @@ rsync -av \
   benchmark_results/autoqsar_benchmark_<timestamp>/ \
   user@new-a100:~/AutoQSAR/benchmark_results/autoqsar_benchmark_<timestamp>/
 
-# On the new machine — resume with the canonical A100 launcher
-make benchmark-a100 BENCHMARK_OUTPUT_DIR=benchmark_results/autoqsar_benchmark_<timestamp>
-
-# Or equivalently:
+# On the new machine:
 bash js2/run_a100_benchmark.sh \
   --output-dir benchmark_results/autoqsar_benchmark_<timestamp>
 ```
 
-`js2/run_a100_benchmark.sh` encodes all A100-optimal settings explicitly
-(epochs, batch size, worker counts) so the run is fully reproducible across
-JetStream2 g3.xl nodes without relying on environment-specific defaults. The
-`run_config.json` inside the output directory records the complete configuration
-of any run for auditing and comparison.
+**Parallelism (opt-in, serial by default):**
+
+```bash
+# Run 2 datasets concurrently — useful on many-core nodes with enough VRAM:
+AUTOQSAR_PARALLEL_DATASETS=2 bash js2/run_a100_benchmark.sh
+```
+
+**Runtime settings encoded in `js2/run_a100_benchmark.sh`:**
+
+| Setting | Value | Rationale |
+|---|---|---|
+| `--benchmark-profile full` | full | All model variants enabled |
+| `--n-jobs 0` | all cores | Conventional ML uses all detected CPU cores |
+| `--unimol-epochs 20` | 20 | Meaningful fine-tuning with early stopping |
+| `--unimol-batch-size 128` | 128 | Saturates A100 39+ GB VRAM |
+| `--unimol-early-stopping 5` | 5 | Stops after 5 non-improving epochs |
+| `--unimol-model-size 310m` | 310m | Full V2 model; auto-scaled on smaller GPUs |
+| `--run-unimol-v1` | on | Explicit V1 enable (also auto-detected) |
+| `--run-unimol-v2` | on | Explicit V2 enable (also auto-detected) |
+| `--chemprop-epochs 40` | 40 | Standard for benchmark parity |
+| `--resume` | on | Safe to re-invoke after interruption |
+
+The `run_config.json` inside the output directory records the complete
+configuration of any run for auditing and comparison.
+
+> **Note on `tdc_herg_central`:** This dataset has ~307 K molecules. Without a
+> row limit the Uni-Mol and Chemprop stages alone would take several days.
+> Consider adding `--row-limit 10000` when time is constrained.
 
 #### Resource auto-detection
 
@@ -868,12 +926,16 @@ sensible defaults that can be overridden from the CLI:
 |---|---|---|
 | CPU cores for conventional ML | all detected cores | `--n-jobs N` |
 | Data-loader workers (Chemprop + Uni-Mol) | `min(8, cpu_count // 4)` | `--unimol-num-workers N` / `--chemprop-num-workers N` |
-| Uni-Mol V1 batch size (GPU) | 128 for ≥39 GB VRAM, 64 for ≥15 GB, 32 otherwise | `--unimol-batch-size N` |
-| Uni-Mol V1 epochs (GPU) | 20 when GPU detected, 10 (argparse default) on CPU | `--unimol-epochs N` |
-| Uni-Mol V1 enabled | auto-on when GPU detected, off on CPU | `--run-unimol-v1` / `--no-run-unimol-v1` |
+| Uni-Mol V1 + V2 batch size (GPU) | 128 for ≥39 GB VRAM, 64 for ≥15 GB, 32 otherwise | `--unimol-batch-size N` |
+| Uni-Mol V1 + V2 epochs (GPU) | 20 when GPU detected, 10 otherwise | `--unimol-epochs N` |
+| Uni-Mol V1 enabled | auto-on when GPU detected | `--run-unimol-v1` / `--no-run-unimol-v1` |
+| Uni-Mol V2 enabled | auto-on when GPU detected | `--run-unimol-v2` / `--no-run-unimol-v2` |
+| Uni-Mol V2 model size | `310m` for ≥39 GB VRAM, `164m` for ≥15 GB, `84m` otherwise | `--unimol-model-size 84m/164m/310m` |
+| Uni-Mol V2 AMP | auto-enabled when GPU available | `--unimol-use-amp` / `--no-unimol-use-amp` |
 
 The interactive notebook (`colab_qsar_tutorial.ipynb`) applies the same
-GPU-VRAM-aware batch-size logic at runtime in the Uni-Mol cells (6C and 6D).
+GPU-VRAM-aware batch-size and model-size logic at runtime in the Uni-Mol cells
+(6C and 6D).
 
 ### Compare Two Runs
 

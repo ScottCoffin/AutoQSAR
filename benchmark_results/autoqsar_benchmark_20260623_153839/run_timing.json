@@ -2,9 +2,9 @@
   "status": "running",
   "started_at": "2026-06-23 19:00:00 UTC",
   "started_epoch": 1782241200.492494,
-  "updated_at": "2026-06-23 19:01:19 UTC",
-  "updated_epoch": 1782241279.1421416,
-  "elapsed_seconds": 78.65,
+  "updated_at": "2026-06-23 19:16:29 UTC",
+  "updated_epoch": 1782242189.8137734,
+  "elapsed_seconds": 989.321,
   "dataset_count": 45,
   "resource_config": {
     "detected_cpu_count": 32,
@@ -26,9 +26,9 @@
     "precision_mode": "fp32"
   },
   "phase": "main_dataset_loop",
-  "completed_dataset_count": 3,
-  "last_dataset": "tdc_dili",
+  "completed_dataset_count": 5,
+  "last_dataset": "chemml_organic_density",
   "last_dataset_status": "completed",
-  "average_finished_dataset_seconds": 26.21,
-  "eta_seconds": 1100.821
+  "average_finished_dataset_seconds": 197.859,
+  "eta_seconds": 7914.368
 }
