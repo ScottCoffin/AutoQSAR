@@ -2,8 +2,8 @@
   "status": "completed",
   "dataset": "tdc_carcinogens_lagunin",
   "source": "PyTDC Tox benchmark: carcinogens_lagunin",
-  "completed_at": "2026-06-23 19:00:46",
-  "elapsed_seconds": 46.3,
-  "n_metrics_rows": 24,
+  "completed_at": "2026-06-23 23:40:46",
+  "elapsed_seconds": 35.044,
+  "n_metrics_rows": 39,
   "n_stage_records": 25
 }

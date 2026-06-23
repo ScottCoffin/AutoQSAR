@@ -8340,6 +8340,16 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
     if bool(getattr(args, "run_unimol_v2", False)) and model_filter_allows(
         args, f"Uni-Mol V2 ({getattr(args, 'unimol_model_size', '84m')})"
     ):
+        # Free V1's retained CUDA pool before loading V2, to avoid cumulative VRAM
+        # from V1 peak + V2 peak exceeding the GPU's total capacity.
+        try:
+            import gc as _gc
+            _gc.collect()
+            import torch as _torch
+            if _torch.cuda.is_available():
+                _torch.cuda.empty_cache()
+        except Exception:
+            pass
         unimol_v2_label = f"Uni-Mol V2 ({getattr(args, 'unimol_model_size', '84m')})"
         if unimol_v2_label in completed_model_names:
             stage_message(

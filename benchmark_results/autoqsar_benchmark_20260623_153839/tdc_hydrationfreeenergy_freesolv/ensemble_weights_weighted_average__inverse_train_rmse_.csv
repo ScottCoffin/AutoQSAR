@@ -1,0 +1,7 @@
+Model,Weight,Workflow
+ElasticNetCV,0.16441626057412415,Conventional ML
+SVR,0.24193501278043608,Conventional ML
+AdaBoost,0.07406770571191196,Conventional ML
+Tabular CNN,0.09966220308157853,Conventional ML
+CatBoost,0.3233228287018089,Conventional ML
+Uni-Mol V1,0.09659598915014043,Uni-Mol

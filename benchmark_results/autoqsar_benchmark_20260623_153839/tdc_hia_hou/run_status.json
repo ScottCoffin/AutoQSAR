@@ -2,9 +2,5 @@
   "status": "running",
   "dataset": "tdc_hia_hou",
   "source": "PyTDC ADME benchmark group: hia_hou (official train_val/test split)",
-  "started_at": "2026-06-23 19:18:08",
-  "checkpoint_stage": "deep:Chemprop-v2:cmpnn",
-  "n_metrics_rows": 26,
-  "n_prediction_tables": 1,
-  "n_stage_records": 18
+  "started_at": "2026-06-23 22:52:28"
 }

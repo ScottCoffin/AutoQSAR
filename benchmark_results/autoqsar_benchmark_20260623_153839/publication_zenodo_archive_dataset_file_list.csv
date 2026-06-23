@@ -1,6 +1,8 @@
 dataset,dataset_dir,has_metrics_csv,has_predictions_csv,has_selected_features_csv,has_selector_coefficients_csv,has_run_status_json,has_step_runtime_csv
 chemml_cep_homo,/home/exouser/AutoQSAR/benchmark_results/autoqsar_benchmark_20260623_153839/chemml_cep_homo,True,True,True,True,True,True
 chemml_organic_density,/home/exouser/AutoQSAR/benchmark_results/autoqsar_benchmark_20260623_153839/chemml_organic_density,True,True,True,True,True,True
+freesolv_sampl,/home/exouser/AutoQSAR/benchmark_results/autoqsar_benchmark_20260623_153839/freesolv_sampl,True,True,True,True,True,True
+tdc_bioavailability_ma,/home/exouser/AutoQSAR/benchmark_results/autoqsar_benchmark_20260623_153839/tdc_bioavailability_ma,True,True,True,True,True,True
 tdc_carcinogens_lagunin,/home/exouser/AutoQSAR/benchmark_results/autoqsar_benchmark_20260623_153839/tdc_carcinogens_lagunin,True,True,True,True,True,True
 tdc_dili,/home/exouser/AutoQSAR/benchmark_results/autoqsar_benchmark_20260623_153839/tdc_dili,True,True,True,True,True,True
 tdc_hia_hou,/home/exouser/AutoQSAR/benchmark_results/autoqsar_benchmark_20260623_153839/tdc_hia_hou,True,True,True,True,True,True

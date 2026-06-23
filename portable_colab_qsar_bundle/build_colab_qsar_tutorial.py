@@ -9208,16 +9208,17 @@ cells += [
         if gpu_available:
             _gpu_inv = STATE.get("resource_config", {}).get("gpu_inventory", [])
             _max_vram_gb = max((item.get("total_memory_gb", 0) for item in _gpu_inv), default=0)
-            _gpu_batch = 128 if _max_vram_gb >= 39 else 64 if _max_vram_gb >= 15 else unimol_batch_size
+            # batch=32 cap: Uni-Mol V2 84m has 48 attention heads; attention+pair matrices
+            # at batch=64 consume ~27 GB (batch-proportional) which OOMs a 40 GB A100 when
+            # any background CUDA context is present. batch=32 halves that to ~16 GB.
+            _gpu_batch = 32 if _max_vram_gb >= 15 else unimol_batch_size
             if _gpu_batch > unimol_batch_size:
                 print(f"[GPU-aware] Uni-Mol V2 batch_size {unimol_batch_size} → {_gpu_batch} ({_max_vram_gb:.1f} GB VRAM)")
                 unimol_batch_size = _gpu_batch
-            # Auto-upgrade model size from the conservative default when VRAM allows it.
-            # Only upgrades from "84m" (the default) so explicit user selections are respected.
-            _auto_model_size = "310m" if _max_vram_gb >= 39 else "164m" if _max_vram_gb >= 15 else None
-            if _auto_model_size and unimol_model_size == "84m":
-                print(f"[GPU-aware] Uni-Mol V2 model_size 84m → {_auto_model_size} ({_max_vram_gb:.1f} GB VRAM)")
-                unimol_model_size = _auto_model_size
+            # 84m is the safe default for all VRAM sizes including A100-40GB.
+            # 164m has 24 transformer layers with O(n_atoms^2 * layers) pair matrices
+            # that push VRAM to ~28 GB at batch=64 — too close to the 40 GB limit.
+            # No auto-upgrade; keep whatever the user selected.
         print("Uni-Mol V2 execution mode: GPU required")
         print(f"Uni-Mol V2 data-loader workers: {unimol_num_workers}")
 

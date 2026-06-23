@@ -1,8 +1,9 @@
 Model,Weight,Workflow
-ElasticNetCV,0.07548645042079218,conventional
-SVR,0.08887303395075825,conventional
-AdaBoost,0.05117749275105005,conventional
-Tabular MLP,0.08475086841692984,conventional
-Tabular CNN,0.018575280106699017,conventional
-Uni-Mol V1,0.054411086305429325,Uni-Mol
-CFA (Combinatorial Fusion),0.6267257880483412,cfa
+ElasticNetCV,0.07218532609836696,conventional
+SVR,0.08498649626953009,conventional
+AdaBoost,0.04893943194491234,conventional
+Tabular MLP,0.08104459859607832,conventional
+Tabular CNN,0.01776295804606076,conventional
+Uni-Mol V1,0.052031616090428244,Uni-Mol
+CFA (Combinatorial Fusion),0.599318223765154,cfa
+"Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",0.04373134918946924,Chemprop v2

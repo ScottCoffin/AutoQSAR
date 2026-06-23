@@ -27,7 +27,7 @@
 # Settings rationale (A100-40 GB, 32 cores):
 #   --n-jobs 0                    use all 32 detected CPU cores for conventional ML
 #   --unimol-epochs 20            meaningful fine-tuning in ~5-20 min per dataset
-#   --unimol-batch-size 128       A100-40GB has 39+ GB VRAM; 128 fits without OOM
+#   --unimol-batch-size 32        84m/batch-32: attention+pair matrices ~16 GB; safe with zombie VRAM ctx
 #   --unimol-early-stopping 5     5 non-improving epochs before stopping
 #   --unimol-num-workers 8        auto_data_loader_workers() = min(8, 32//4) = 8
 #   --chemprop-epochs 40          standard for benchmark parity
@@ -36,8 +36,11 @@
 #   --benchmark-profile full      enable all model variants (Chemprop DMPNN/CMPNN, etc.)
 #   --run-unimol-v1               GPU auto-enables V1; explicit here for clarity
 #   --run-unimol-v2               GPU auto-enables V2; explicit here for clarity
-#   --unimol-model-size 84m       V2 model variant: 84m (fast), 164m, or 310m (most accurate)
-#   --unimol-max-atoms 96         max atoms per molecule for Uni-Mol V2
+#   --unimol-model-size 84m       84m: 12 transformer layers, ~9 GB training peak; fits safely on A100-40 GB
+#                                  alongside V1 (total ~18 GB). 164m (24 layers) needs ~28 GB which
+#                                  exceeds available headroom on a 40 GB A100 after zombie CUDA contexts.
+#   --unimol-max-atoms 64         capped from 96: pair matrices scale as n_atoms^2, so 64 vs 96
+#                                  reduces peak VRAM by (64/96)^2 ≈ 44%; covers >95% of drug molecules
 #   --unimol-use-amp              enable AMP (automatic mixed precision) for V2 on A100
 #   --resume                      pick up any compatible incomplete run automatically
 #   --unimol-reuse-model-cache    skip re-training if weights already exist
@@ -80,41 +83,100 @@ else
     SEEDS_FLAG="--no-parallel-tdc22-seeds"
 fi
 
+LOG_FILE="$REPO_ROOT/benchmark_run.log"
+MAX_RETRIES="${AUTOQSAR_MAX_RETRIES:-20}"
+RETRY_DELAY="${AUTOQSAR_RETRY_DELAY:-15}"
+
 echo "=== AutoQSAR A100 Full Benchmark ==="
 echo "Repo:               $REPO_ROOT"
 echo "Conda env:          $CONDA_ENV"
 echo "Output:             ${OUTPUT_DIR_ARG:-auto-timestamped under benchmark_results/}"
 echo "Parallel datasets:  $PARALLEL_DATASETS  (set AUTOQSAR_PARALLEL_DATASETS=1 for serial/low-resource)"
 echo "Parallel TDC-22:    $PARALLEL_TDC22_SEEDS  (set AUTOQSAR_PARALLEL_TDC22_SEEDS=false to disable)"
+echo "Auto-resume:        up to $MAX_RETRIES retries on crash (AUTOQSAR_MAX_RETRIES to change)"
 echo "Started:            $(date -u '+%Y-%m-%dT%H:%M:%SZ')"
 echo ""
 
 cd "$REPO_ROOT"
 
-conda run -n "$CONDA_ENV" \
-    python portable_colab_qsar_bundle/run_autoqsar_ga_benchmarks.py \
-        --benchmark-profile full \
-        --run-unimol-v1 \
-        --run-unimol-v2 \
-        --unimol-model-size 310m \
-        --unimol-max-atoms 96 \
-        --unimol-use-amp \
-        --n-jobs 0 \
-        --unimol-epochs 20 \
-        --unimol-batch-size 128 \
-        --unimol-early-stopping 5 \
-        --unimol-num-workers 8 \
-        --unimol-reuse-model-cache \
-        --chemprop-epochs 40 \
-        --chemprop-batch-size 32 \
-        --chemprop-num-workers 8 \
-        --chemprop-reuse-model-cache \
-        --parallel-datasets "$PARALLEL_DATASETS" \
-        $SEEDS_FLAG \
-        --resume \
-        $OUTPUT_DIR_ARG \
-        "${PASSTHROUGH_ARGS[@]}" \
-    2>&1 | tee "$REPO_ROOT/benchmark_run.log"
+# Lockfile: prevent two wrapper instances from running simultaneously.
+# The auto-resume loop means kills of the Python child won't start a second wrapper,
+# but manually launching a second script invocation would cause dual GPU usage.
+LOCKFILE="/tmp/autoqsar_benchmark_${USER}.lock"
+if [ -f "$LOCKFILE" ]; then
+    LOCK_PID=$(cat "$LOCKFILE" 2>/dev/null)
+    if kill -0 "$LOCK_PID" 2>/dev/null; then
+        echo "ERROR: Another benchmark is already running (PID $LOCK_PID, lock: $LOCKFILE)" >&2
+        echo "       Kill it first: kill -9 $LOCK_PID" >&2
+        exit 1
+    else
+        echo "Stale lock found (PID $LOCK_PID no longer running). Removing." | tee -a "$LOG_FILE"
+        rm -f "$LOCKFILE"
+    fi
+fi
+echo "$$" > "$LOCKFILE"
+trap "rm -f '$LOCKFILE'" EXIT INT TERM
+
+# Disable exit-on-error so we can handle crash exit codes ourselves in the retry loop.
+set +e
+
+attempt=1
+EXIT_CODE=0
+while [ "$attempt" -le "$MAX_RETRIES" ]; do
+    if [ "$attempt" -gt 1 ]; then
+        {
+            echo ""
+            echo "=== Auto-resume attempt $attempt / $MAX_RETRIES: $(date -u '+%Y-%m-%dT%H:%M:%SZ') ==="
+        } | tee -a "$LOG_FILE"
+    fi
+
+    conda run -n "$CONDA_ENV" \
+        python portable_colab_qsar_bundle/run_autoqsar_ga_benchmarks.py \
+            --benchmark-profile full \
+            --run-unimol-v1 \
+            --run-unimol-v2 \
+            --unimol-model-size 84m \
+            --unimol-max-atoms 64 \
+            --unimol-use-amp \
+            --n-jobs 0 \
+            --unimol-epochs 20 \
+            --unimol-batch-size 32 \
+            --unimol-early-stopping 5 \
+            --unimol-num-workers 8 \
+            --unimol-reuse-model-cache \
+            --chemprop-epochs 40 \
+            --chemprop-batch-size 32 \
+            --chemprop-num-workers 8 \
+            --chemprop-reuse-model-cache \
+            --parallel-datasets "$PARALLEL_DATASETS" \
+            $SEEDS_FLAG \
+            --resume \
+            $OUTPUT_DIR_ARG \
+            "${PASSTHROUGH_ARGS[@]}" \
+        2>&1 | tee -a "$LOG_FILE"
+
+    EXIT_CODE="${PIPESTATUS[0]}"
+
+    if [ "$EXIT_CODE" -eq 0 ]; then
+        break
+    fi
+
+    if [ "$attempt" -ge "$MAX_RETRIES" ]; then
+        break
+    fi
+
+    {
+        echo ""
+        echo "=== Benchmark exited with code $EXIT_CODE at $(date -u '+%Y-%m-%dT%H:%M:%SZ'). Retrying in ${RETRY_DELAY}s (attempt $attempt / $MAX_RETRIES)... ==="
+    } | tee -a "$LOG_FILE"
+    attempt=$((attempt + 1))
+    sleep "$RETRY_DELAY"
+done
 
 echo ""
-echo "=== Benchmark complete: $(date -u '+%Y-%m-%dT%H:%M:%SZ') ==="
+if [ "$EXIT_CODE" -eq 0 ]; then
+    echo "=== Benchmark complete: $(date -u '+%Y-%m-%dT%H:%M:%SZ') ===" | tee -a "$LOG_FILE"
+else
+    echo "=== Benchmark failed (exit $EXIT_CODE) after $attempt attempt(s): $(date -u '+%Y-%m-%dT%H:%M:%SZ') ===" | tee -a "$LOG_FILE"
+    exit "$EXIT_CODE"
+fi

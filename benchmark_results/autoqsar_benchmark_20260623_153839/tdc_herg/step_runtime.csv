@@ -1,0 +1,22 @@
+dataset,stage_index,total_stages,stage_label,step_type,model,workflow,started_at,started_epoch,status,ended_at,ended_epoch,duration_seconds
+tdc_herg,1,27,loading PyTDC Tox benchmark group: herg (official train_val/test split),load_dataset,,,2026-06-23 20:40:45 UTC,1782247245.5592365,completed,2026-06-23 20:40:45 UTC,1782247245.7683809,0.209
+tdc_herg,2,27,building molecular features,feature_generation,,,2026-06-23 20:40:45 UTC,1782247245.7684238,completed,2026-06-23 20:41:20 UTC,1782247280.1341114,34.366
+tdc_herg,3,27,splitting data and selecting features,feature_selection,,,2026-06-23 20:41:20 UTC,1782247280.1341794,completed,2026-06-23 20:42:11 UTC,1782247331.7758942,51.642
+tdc_herg,4,27,conventional model LogisticRegression,model,LogisticRegression,conventional,2026-06-23 20:42:11 UTC,1782247331.775968,completed,2026-06-23 20:42:11 UTC,1782247331.9404318,0.164
+tdc_herg,5,27,conventional model SVC,model,SVC,conventional,2026-06-23 20:42:11 UTC,1782247331.9404607,completed,2026-06-23 20:42:13 UTC,1782247333.4567227,1.516
+tdc_herg,6,27,conventional model Random forest,model,Random forest,conventional,2026-06-23 20:42:13 UTC,1782247333.4567525,completed,2026-06-23 20:42:20 UTC,1782247340.7895117,7.333
+tdc_herg,7,27,conventional model Extra trees,model,Extra trees,conventional,2026-06-23 20:42:20 UTC,1782247340.7895443,completed,2026-06-23 20:42:28 UTC,1782247348.3917944,7.602
+tdc_herg,8,27,conventional model HistGradientBoosting,model,HistGradientBoosting,conventional,2026-06-23 20:42:28 UTC,1782247348.3918245,completed,2026-06-23 20:42:31 UTC,1782247351.4927292,3.101
+tdc_herg,9,27,"conventional model Voting Classifier (KNN, SVM)",model,"Voting Classifier (KNN, SVM)",conventional,2026-06-23 20:42:31 UTC,1782247351.4927785,completed,2026-06-23 20:42:32 UTC,1782247352.412589,0.92
+tdc_herg,10,27,conventional model AdaBoost,model,AdaBoost,conventional,2026-06-23 20:42:32 UTC,1782247352.4126194,completed,2026-06-23 20:42:34 UTC,1782247354.5457323,2.133
+tdc_herg,11,27,conventional model Tabular MLP,model,Tabular MLP,conventional,2026-06-23 20:42:34 UTC,1782247354.5457618,completed,2026-06-23 20:42:38 UTC,1782247358.26203,3.716
+tdc_herg,12,27,conventional model XGBoost,model,XGBoost,conventional,2026-06-23 20:42:38 UTC,1782247358.2621112,completed,2026-06-23 20:42:42 UTC,1782247362.3550253,4.093
+tdc_herg,13,27,conventional model CatBoost,model,CatBoost,conventional,2026-06-23 20:42:42 UTC,1782247362.3550878,completed,2026-06-23 20:42:48 UTC,1782247368.5731852,6.218
+tdc_herg,14,27,deep model ChemML MLP (PyTorch),model,ChemML MLP (PyTorch),ChemML deep learning,2026-06-23 20:42:48 UTC,1782247368.573217,completed,2026-06-23 20:43:00 UTC,1782247380.257622,11.684
+tdc_herg,15,27,deep model ChemML MLP (TensorFlow),model,ChemML MLP (TensorFlow),ChemML deep learning,2026-06-23 20:43:00 UTC,1782247380.2577107,completed,2026-06-23 20:43:34 UTC,1782247414.0152595,33.758
+tdc_herg,16,27,"deep model Chemprop v2 (D-MPNN, ensemble=3)",model,"Chemprop v2 (D-MPNN, ensemble=3)",Chemprop v2,2026-06-23 20:43:34 UTC,1782247414.015307,completed,2026-06-23 20:44:13 UTC,1782247453.418379,39.403
+tdc_herg,17,27,"deep model Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",model,"Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",Chemprop v2,2026-06-23 20:44:13 UTC,1782247453.4184108,completed,2026-06-23 20:44:54 UTC,1782247494.0339308,40.616
+tdc_herg,18,27,"deep model Chemprop v2 (CMPNN, ensemble=3)",model,"Chemprop v2 (CMPNN, ensemble=3)",Chemprop v2,2026-06-23 20:44:54 UTC,1782247494.0339646,completed,2026-06-23 20:45:33 UTC,1782247533.0543015,39.02
+tdc_herg,19,27,"deep model Chemprop v2 (AttentiveFP, ensemble=3)",model,"Chemprop v2 (AttentiveFP, ensemble=3)",Chemprop v2,2026-06-23 20:45:33 UTC,1782247533.0543664,completed,2026-06-23 20:46:11 UTC,1782247571.9599855,38.906
+tdc_herg,20,27,"deep model Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",model,"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",Chemprop v2,2026-06-23 20:46:11 UTC,1782247571.960083,completed,2026-06-23 20:46:47 UTC,1782247607.5679295,35.608
+tdc_herg,21,27,deep model Uni-Mol V1,model,Uni-Mol V1,Uni-Mol,2026-06-23 20:46:47 UTC,1782247607.5679932,running,2026-06-23 20:46:47 UTC,1782247607.568017,0.0

@@ -7,12 +7,12 @@
     "step_type": "load_dataset",
     "model": "",
     "workflow": "",
-    "started_at": "2026-06-23 19:00:47 UTC",
-    "started_epoch": 1782241247.0584934,
+    "started_at": "2026-06-23 23:40:46 UTC",
+    "started_epoch": 1782258046.4977837,
     "status": "completed",
-    "ended_at": "2026-06-23 19:00:47 UTC",
-    "ended_epoch": 1782241247.134313,
-    "duration_seconds": 0.076
+    "ended_at": "2026-06-23 23:40:46 UTC",
+    "ended_epoch": 1782258046.565588,
+    "duration_seconds": 0.068
   },
   {
     "dataset": "tdc_skin_reaction",
@@ -22,12 +22,12 @@
     "step_type": "feature_generation",
     "model": "",
     "workflow": "",
-    "started_at": "2026-06-23 19:00:47 UTC",
-    "started_epoch": 1782241247.134352,
+    "started_at": "2026-06-23 23:40:46 UTC",
+    "started_epoch": 1782258046.565623,
     "status": "resumed_cache",
-    "ended_at": "2026-06-23 19:00:47 UTC",
-    "ended_epoch": 1782241247.1385705,
-    "duration_seconds": 0.004
+    "ended_at": "2026-06-23 23:40:46 UTC",
+    "ended_epoch": 1782258046.5754614,
+    "duration_seconds": 0.01
   },
   {
     "dataset": "tdc_skin_reaction",
@@ -37,12 +37,12 @@
     "step_type": "feature_selection",
     "model": "",
     "workflow": "",
-    "started_at": "2026-06-23 19:00:47 UTC",
-    "started_epoch": 1782241247.1386087,
+    "started_at": "2026-06-23 23:40:46 UTC",
+    "started_epoch": 1782258046.5754936,
     "status": "resumed_cache",
-    "ended_at": "2026-06-23 19:00:50 UTC",
-    "ended_epoch": 1782241250.426275,
-    "duration_seconds": 3.288
+    "ended_at": "2026-06-23 23:40:49 UTC",
+    "ended_epoch": 1782258049.1583178,
+    "duration_seconds": 2.583
   },
   {
     "dataset": "tdc_skin_reaction",
@@ -52,11 +52,11 @@
     "step_type": "model",
     "model": "LogisticRegression",
     "workflow": "conventional",
-    "started_at": "2026-06-23 19:00:50 UTC",
-    "started_epoch": 1782241250.4263601,
+    "started_at": "2026-06-23 23:40:49 UTC",
+    "started_epoch": 1782258049.158382,
     "status": "completed",
-    "ended_at": "2026-06-23 19:00:50 UTC",
-    "ended_epoch": 1782241250.4284685,
+    "ended_at": "2026-06-23 23:40:49 UTC",
+    "ended_epoch": 1782258049.1603427,
     "duration_seconds": 0.002
   },
   {
@@ -67,11 +67,11 @@
     "step_type": "model",
     "model": "SVC",
     "workflow": "conventional",
-    "started_at": "2026-06-23 19:00:50 UTC",
-    "started_epoch": 1782241250.4285011,
+    "started_at": "2026-06-23 23:40:49 UTC",
+    "started_epoch": 1782258049.1603718,
     "status": "completed",
-    "ended_at": "2026-06-23 19:00:50 UTC",
-    "ended_epoch": 1782241250.4298437,
+    "ended_at": "2026-06-23 23:40:49 UTC",
+    "ended_epoch": 1782258049.161617,
     "duration_seconds": 0.001
   },
   {
@@ -82,11 +82,11 @@
     "step_type": "model",
     "model": "Random forest",
     "workflow": "conventional",
-    "started_at": "2026-06-23 19:00:50 UTC",
-    "started_epoch": 1782241250.4298744,
+    "started_at": "2026-06-23 23:40:49 UTC",
+    "started_epoch": 1782258049.1616452,
     "status": "completed",
-    "ended_at": "2026-06-23 19:00:50 UTC",
-    "ended_epoch": 1782241250.431165,
+    "ended_at": "2026-06-23 23:40:49 UTC",
+    "ended_epoch": 1782258049.1628928,
     "duration_seconds": 0.001
   },
   {
@@ -97,11 +97,11 @@
     "step_type": "model",
     "model": "Extra trees",
     "workflow": "conventional",
-    "started_at": "2026-06-23 19:00:50 UTC",
-    "started_epoch": 1782241250.4311955,
+    "started_at": "2026-06-23 23:40:49 UTC",
+    "started_epoch": 1782258049.162921,
     "status": "completed",
-    "ended_at": "2026-06-23 19:00:50 UTC",
-    "ended_epoch": 1782241250.4324808,
+    "ended_at": "2026-06-23 23:40:49 UTC",
+    "ended_epoch": 1782258049.1642058,
     "duration_seconds": 0.001
   },
   {
@@ -112,11 +112,11 @@
     "step_type": "model",
     "model": "HistGradientBoosting",
     "workflow": "conventional",
-    "started_at": "2026-06-23 19:00:50 UTC",
-    "started_epoch": 1782241250.432511,
+    "started_at": "2026-06-23 23:40:49 UTC",
+    "started_epoch": 1782258049.1642342,
     "status": "completed",
-    "ended_at": "2026-06-23 19:00:50 UTC",
-    "ended_epoch": 1782241250.4337742,
+    "ended_at": "2026-06-23 23:40:49 UTC",
+    "ended_epoch": 1782258049.1654944,
     "duration_seconds": 0.001
   },
   {
@@ -127,11 +127,11 @@
     "step_type": "model",
     "model": "Voting Classifier (KNN, SVM)",
     "workflow": "conventional",
-    "started_at": "2026-06-23 19:00:50 UTC",
-    "started_epoch": 1782241250.433804,
+    "started_at": "2026-06-23 23:40:49 UTC",
+    "started_epoch": 1782258049.1655223,
     "status": "completed",
-    "ended_at": "2026-06-23 19:00:50 UTC",
-    "ended_epoch": 1782241250.4351542,
+    "ended_at": "2026-06-23 23:40:49 UTC",
+    "ended_epoch": 1782258049.1668017,
     "duration_seconds": 0.001
   },
   {
@@ -142,11 +142,11 @@
     "step_type": "model",
     "model": "AdaBoost",
     "workflow": "conventional",
-    "started_at": "2026-06-23 19:00:50 UTC",
-    "started_epoch": 1782241250.4351842,
+    "started_at": "2026-06-23 23:40:49 UTC",
+    "started_epoch": 1782258049.1668293,
     "status": "completed",
-    "ended_at": "2026-06-23 19:00:50 UTC",
-    "ended_epoch": 1782241250.4365153,
+    "ended_at": "2026-06-23 23:40:49 UTC",
+    "ended_epoch": 1782258049.1681705,
     "duration_seconds": 0.001
   },
   {
@@ -157,11 +157,11 @@
     "step_type": "model",
     "model": "Tabular MLP",
     "workflow": "conventional",
-    "started_at": "2026-06-23 19:00:50 UTC",
-    "started_epoch": 1782241250.4365458,
+    "started_at": "2026-06-23 23:40:49 UTC",
+    "started_epoch": 1782258049.1681988,
     "status": "completed",
-    "ended_at": "2026-06-23 19:00:50 UTC",
-    "ended_epoch": 1782241250.4379356,
+    "ended_at": "2026-06-23 23:40:49 UTC",
+    "ended_epoch": 1782258049.1695337,
     "duration_seconds": 0.001
   },
   {
@@ -172,11 +172,11 @@
     "step_type": "model",
     "model": "XGBoost",
     "workflow": "conventional",
-    "started_at": "2026-06-23 19:00:50 UTC",
-    "started_epoch": 1782241250.4379659,
+    "started_at": "2026-06-23 23:40:49 UTC",
+    "started_epoch": 1782258049.1695611,
     "status": "completed",
-    "ended_at": "2026-06-23 19:00:50 UTC",
-    "ended_epoch": 1782241250.4393668,
+    "ended_at": "2026-06-23 23:40:49 UTC",
+    "ended_epoch": 1782258049.1709068,
     "duration_seconds": 0.001
   },
   {
@@ -187,11 +187,11 @@
     "step_type": "model",
     "model": "CatBoost",
     "workflow": "conventional",
-    "started_at": "2026-06-23 19:00:50 UTC",
-    "started_epoch": 1782241250.4393966,
+    "started_at": "2026-06-23 23:40:49 UTC",
+    "started_epoch": 1782258049.1709335,
     "status": "completed",
-    "ended_at": "2026-06-23 19:00:50 UTC",
-    "ended_epoch": 1782241250.441172,
+    "ended_at": "2026-06-23 23:40:49 UTC",
+    "ended_epoch": 1782258049.1726677,
     "duration_seconds": 0.002
   },
   {
@@ -202,11 +202,11 @@
     "step_type": "model",
     "model": "ChemML MLP (PyTorch)",
     "workflow": "ChemML deep learning",
-    "started_at": "2026-06-23 19:00:50 UTC",
-    "started_epoch": 1782241250.441203,
+    "started_at": "2026-06-23 23:40:49 UTC",
+    "started_epoch": 1782258049.1726954,
     "status": "completed",
-    "ended_at": "2026-06-23 19:00:50 UTC",
-    "ended_epoch": 1782241250.4425812,
+    "ended_at": "2026-06-23 23:40:49 UTC",
+    "ended_epoch": 1782258049.17409,
     "duration_seconds": 0.001
   },
   {
@@ -217,12 +217,12 @@
     "step_type": "model",
     "model": "ChemML MLP (TensorFlow)",
     "workflow": "ChemML deep learning",
-    "started_at": "2026-06-23 19:00:50 UTC",
-    "started_epoch": 1782241250.4426117,
+    "started_at": "2026-06-23 23:40:49 UTC",
+    "started_epoch": 1782258049.174118,
     "status": "completed",
-    "ended_at": "2026-06-23 19:00:50 UTC",
-    "ended_epoch": 1782241250.444156,
-    "duration_seconds": 0.002
+    "ended_at": "2026-06-23 23:40:49 UTC",
+    "ended_epoch": 1782258049.1755667,
+    "duration_seconds": 0.001
   },
   {
     "dataset": "tdc_skin_reaction",
@@ -232,11 +232,11 @@
     "step_type": "model",
     "model": "Chemprop v2 (D-MPNN, ensemble=3)",
     "workflow": "Chemprop v2",
-    "started_at": "2026-06-23 19:00:50 UTC",
-    "started_epoch": 1782241250.4442184,
+    "started_at": "2026-06-23 23:40:49 UTC",
+    "started_epoch": 1782258049.1755936,
     "status": "completed",
-    "ended_at": "2026-06-23 19:00:50 UTC",
-    "ended_epoch": 1782241250.4456637,
+    "ended_at": "2026-06-23 23:40:49 UTC",
+    "ended_epoch": 1782258049.1770706,
     "duration_seconds": 0.001
   },
   {
@@ -247,12 +247,12 @@
     "step_type": "model",
     "model": "Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",
     "workflow": "Chemprop v2",
-    "started_at": "2026-06-23 19:00:50 UTC",
-    "started_epoch": 1782241250.4456937,
+    "started_at": "2026-06-23 23:40:49 UTC",
+    "started_epoch": 1782258049.1770985,
     "status": "completed",
-    "ended_at": "2026-06-23 19:00:50 UTC",
-    "ended_epoch": 1782241250.4475038,
-    "duration_seconds": 0.002
+    "ended_at": "2026-06-23 23:40:49 UTC",
+    "ended_epoch": 1782258049.1785626,
+    "duration_seconds": 0.001
   },
   {
     "dataset": "tdc_skin_reaction",
@@ -262,12 +262,12 @@
     "step_type": "model",
     "model": "Chemprop v2 (CMPNN, ensemble=3)",
     "workflow": "Chemprop v2",
-    "started_at": "2026-06-23 19:00:50 UTC",
-    "started_epoch": 1782241250.447534,
+    "started_at": "2026-06-23 23:40:49 UTC",
+    "started_epoch": 1782258049.1785893,
     "status": "completed",
-    "ended_at": "2026-06-23 19:00:50 UTC",
-    "ended_epoch": 1782241250.4491575,
-    "duration_seconds": 0.002
+    "ended_at": "2026-06-23 23:40:49 UTC",
+    "ended_epoch": 1782258049.1800854,
+    "duration_seconds": 0.001
   },
   {
     "dataset": "tdc_skin_reaction",
@@ -277,11 +277,11 @@
     "step_type": "model",
     "model": "Chemprop v2 (AttentiveFP, ensemble=3)",
     "workflow": "Chemprop v2",
-    "started_at": "2026-06-23 19:00:50 UTC",
-    "started_epoch": 1782241250.449187,
+    "started_at": "2026-06-23 23:40:49 UTC",
+    "started_epoch": 1782258049.1801128,
     "status": "completed",
-    "ended_at": "2026-06-23 19:00:50 UTC",
-    "ended_epoch": 1782241250.4507053,
+    "ended_at": "2026-06-23 23:40:49 UTC",
+    "ended_epoch": 1782258049.181615,
     "duration_seconds": 0.002
   },
   {
@@ -292,11 +292,11 @@
     "step_type": "model",
     "model": "Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",
     "workflow": "Chemprop v2",
-    "started_at": "2026-06-23 19:00:50 UTC",
-    "started_epoch": 1782241250.4507344,
+    "started_at": "2026-06-23 23:40:49 UTC",
+    "started_epoch": 1782258049.1816428,
     "status": "completed",
-    "ended_at": "2026-06-23 19:00:50 UTC",
-    "ended_epoch": 1782241250.452319,
+    "ended_at": "2026-06-23 23:40:49 UTC",
+    "ended_epoch": 1782258049.1833475,
     "duration_seconds": 0.002
   },
   {
@@ -307,27 +307,27 @@
     "step_type": "model",
     "model": "Uni-Mol V1",
     "workflow": "Uni-Mol",
-    "started_at": "2026-06-23 19:00:50 UTC",
-    "started_epoch": 1782241250.452349,
+    "started_at": "2026-06-23 23:40:49 UTC",
+    "started_epoch": 1782258049.183375,
     "status": "completed",
-    "ended_at": "2026-06-23 19:00:50 UTC",
-    "ended_epoch": 1782241250.4539268,
-    "duration_seconds": 0.002
+    "ended_at": "2026-06-23 23:40:49 UTC",
+    "ended_epoch": 1782258049.572584,
+    "duration_seconds": 0.389
   },
   {
     "dataset": "tdc_skin_reaction",
     "stage_index": 22,
     "total_stages": 27,
-    "stage_label": "deep model Uni-Mol V2 (310m)",
+    "stage_label": "deep model Uni-Mol V2 (84m)",
     "step_type": "model",
-    "model": "Uni-Mol V2 (310m)",
+    "model": "Uni-Mol V2 (84m)",
     "workflow": "Uni-Mol",
-    "started_at": "2026-06-23 19:00:50 UTC",
-    "started_epoch": 1782241250.4539573,
+    "started_at": "2026-06-23 23:40:49 UTC",
+    "started_epoch": 1782258049.5727324,
     "status": "completed",
-    "ended_at": "2026-06-23 19:00:59 UTC",
-    "ended_epoch": 1782241259.891214,
-    "duration_seconds": 9.437
+    "ended_at": "2026-06-23 23:47:27 UTC",
+    "ended_epoch": 1782258447.5452404,
+    "duration_seconds": 397.973
   },
   {
     "dataset": "tdc_skin_reaction",
@@ -337,11 +337,11 @@
     "step_type": "model",
     "model": "MapLight + GNN (CatBoost, Strict Parity)",
     "workflow": "MapLight + GNN",
-    "started_at": "2026-06-23 19:00:59 UTC",
-    "started_epoch": 1782241259.8912783,
+    "started_at": "2026-06-23 23:47:27 UTC",
+    "started_epoch": 1782258447.5452719,
     "status": "completed",
-    "ended_at": "2026-06-23 19:00:59 UTC",
-    "ended_epoch": 1782241259.8928804,
+    "ended_at": "2026-06-23 23:47:27 UTC",
+    "ended_epoch": 1782258447.5468998,
     "duration_seconds": 0.002
   },
   {
@@ -352,11 +352,11 @@
     "step_type": "model",
     "model": "CFA (Combinatorial Fusion)",
     "workflow": "cfa",
-    "started_at": "2026-06-23 19:00:59 UTC",
-    "started_epoch": 1782241259.892911,
+    "started_at": "2026-06-23 23:47:27 UTC",
+    "started_epoch": 1782258447.5469291,
     "status": "completed",
-    "ended_at": "2026-06-23 19:00:59 UTC",
-    "ended_epoch": 1782241259.8945925,
+    "ended_at": "2026-06-23 23:47:27 UTC",
+    "ended_epoch": 1782258447.548651,
     "duration_seconds": 0.002
   },
   {
@@ -367,11 +367,11 @@
     "step_type": "model",
     "model": "Ensemble",
     "workflow": "ensemble",
-    "started_at": "2026-06-23 19:00:59 UTC",
-    "started_epoch": 1782241259.894656,
+    "started_at": "2026-06-23 23:47:27 UTC",
+    "started_epoch": 1782258447.548681,
     "status": "completed",
-    "ended_at": "2026-06-23 19:01:01 UTC",
-    "ended_epoch": 1782241261.3430085,
-    "duration_seconds": 1.448
+    "ended_at": "2026-06-23 23:47:29 UTC",
+    "ended_epoch": 1782258449.0924873,
+    "duration_seconds": 1.544
   }
 ]

@@ -1,5 +1,5 @@
 anomaly_clean: false
-batch_size: 128
+batch_size: 64
 conf_cache_level: 1
 data_type: molecule
 epochs: 20

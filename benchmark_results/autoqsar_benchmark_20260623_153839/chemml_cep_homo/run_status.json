@@ -1,9 +1,10 @@
 {
-  "status": "completed",
+  "status": "running",
   "dataset": "chemml_cep_homo",
   "source": "ChemML bundled dataset: cep_homo",
-  "completed_at": "2026-06-23 19:13:29",
-  "elapsed_seconds": 730.175,
-  "n_metrics_rows": 36,
-  "n_stage_records": 27
+  "started_at": "2026-06-23 23:52:22",
+  "checkpoint_stage": "deep:Chemprop-v2:dmpnn_selected_features",
+  "n_metrics_rows": 60,
+  "n_prediction_tables": 1,
+  "n_stage_records": 22
 }

@@ -34,40 +34,45 @@ if not timing_file.exists():
 
 t = json.loads(timing_file.read_text())
 run_start_epoch = t["started_epoch"]
-done = t["completed_dataset_count"]
 total = t["dataset_count"]
 elapsed_h = t["elapsed_seconds"] / 3600
 eta_h = (t.get("eta_seconds") or 0) / 3600
 avg_min = (t.get("average_finished_dataset_seconds") or 0) / 60
 
-print(f"=== {datetime.datetime.now().strftime('%H:%M:%S')}  |  {b.name} ===")
-print(f"Done: {done} / {total}   elapsed: {elapsed_h:.1f}h   avg/dataset: {avg_min:.0f}m   ETA: {eta_h:.1f}h (updates as data accumulates)")
-print()
-
-running_current, running_stale, completed = [], [], []
+# Count completed directly from run_status.json files — run_timing.json's
+# completed_dataset_count resets each time the benchmark process restarts,
+# so it under-counts when there have been multiple resume sessions.
+running_current, running_stale, completed_current, completed_prior = [], [], [], []
 for ds_dir in sorted(b.iterdir()):
     rs = ds_dir / "run_status.json"
     if not rs.exists():
         continue
     s = json.loads(rs.read_text())
     status = s.get("status", "")
+    try:
+        mtime = rs.stat().st_mtime
+    except OSError:
+        mtime = run_start_epoch
     if status == "completed":
         elap = s.get("elapsed_seconds", 0)
-        completed.append(f"  ✓  {ds_dir.name:<45}  {elap:.0f}s")
+        entry = f"  ✓  {ds_dir.name:<45}  {elap:.0f}s"
+        if mtime >= run_start_epoch:
+            completed_current.append(entry)
+        else:
+            completed_prior.append(entry)
     elif status == "running":
         stage = s.get("checkpoint_stage", "(starting)")
-        # Distinguish stale entries from the previous killed run vs. the current run
-        # run_status.json "started_at" is local-time string; compare epoch via mtime
-        try:
-            mtime = rs.stat().st_mtime
-            is_stale = mtime < run_start_epoch
-        except OSError:
-            is_stale = False
         entry = f"  ⟳  {ds_dir.name:<45}  @ {stage}"
-        if is_stale:
+        if mtime < run_start_epoch:
             running_stale.append(entry + "  [stale from prior run]")
         else:
             running_current.append(entry)
+
+done = len(completed_current) + len(completed_prior)
+
+print(f"=== {datetime.datetime.now().strftime('%H:%M:%S')}  |  {b.name} ===")
+print(f"Done: {done} / {total}   elapsed: {elapsed_h:.1f}h   avg/dataset: {avg_min:.0f}m   ETA: {eta_h:.1f}h (updates as data accumulates)")
+print()
 
 if running_current:
     print("Currently running:")
@@ -77,7 +82,11 @@ if running_stale:
     print("Stale (prior run, will be picked up):")
     print("\n".join(running_stale))
     print()
-if completed:
+if completed_current:
     print("Completed this session:")
-    print("\n".join(completed))
+    print("\n".join(completed_current))
+    print()
+if completed_prior:
+    print("Completed in prior sessions:")
+    print("\n".join(completed_prior))
 EOF

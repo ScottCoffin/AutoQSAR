@@ -1,2 +1,2 @@
 datasets_audited,datasets_with_metrics,datasets_with_predictions,datasets_with_selected_features,datasets_with_split_hashes,median_required_artifact_fraction,git_commit,git_is_dirty,run_config_present
-6,6,6,6,6,1.0,b9d5d3d8b3ab1c9a0535e05196b6fb8f9946e2ce,True,True
+8,8,8,8,8,1.0,c3263ebb317a2126bd5e05fbd3914ab6ca440639,True,True
