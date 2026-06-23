@@ -841,15 +841,21 @@ cells += [
                 pass
         try:
             import tensorflow as tf
-            if not RUNNING_IN_COLAB:
-                # On local/HPC environments, NVIDIA GRID vGPU drivers raise
-                # CUDA_ERROR_INVALID_HANDLE on graph-function-mode kernel launches
-                # (e.g. the FloorMod op Keras uses during layer seeding). TF was
-                # working correctly on CPU before GPU libs were made discoverable,
-                # and the only TF model (Tabular CNN) does not need GPU. Force
-                # CPU-only here; PyTorch was imported above and manages its own
-                # CUDA context independently.
-                tf.config.set_visible_devices([], "GPU")
+            if not RUNNING_IN_COLAB and tf.config.list_physical_devices("GPU"):
+                # Probe graph-function mode before committing TF to GPU.
+                # NVIDIA GRID vGPU raises CUDA_ERROR_INVALID_HANDLE on graph-mode
+                # kernel launches (e.g. FloorMod during Keras layer seeding).
+                # A bare-metal GPU passes this probe and keeps GPU enabled;
+                # a restricted vGPU fails and falls back to CPU-only.
+                # PyTorch manages its own CUDA context independently.
+                try:
+                    @tf.function
+                    def _tf_gpu_probe():
+                        return tf.math.floormod(tf.constant(5), tf.constant(3))
+                    _tf_gpu_probe()
+                    del _tf_gpu_probe
+                except Exception:
+                    tf.config.set_visible_devices([], "GPU")
         except Exception:
             tf = None
         setup_done("TensorFlow backend", f"available={'yes' if tf is not None else 'no'}")
@@ -8743,10 +8749,10 @@ cells += [
         """
         # @title 6C. Train and evaluate Uni-Mol V1 { display-mode: "form" }
         unimol_internal_split = "random" # @param ["random", "scaffold"]
-        unimol_epochs = 10 # @param {type:"slider", min:1, max:50, step:1}
+        unimol_epochs = 1 # @param {type:"slider", min:1, max:50, step:1}
         unimol_learning_rate = 0.0001 # @param {type:"number"}
-        unimol_batch_size = 16 # @param [4, 8, 16, 32]
-        unimol_early_stopping = 5 # @param {type:"slider", min:2, max:15, step:1}
+        unimol_batch_size = 32 # @param [4, 8, 16, 32]
+        unimol_early_stopping = 2 # @param {type:"slider", min:2, max:15, step:1}
         unimol_num_workers = 0 # @param [0, 1, 2]
 
         if "unimol_train_csv" not in STATE:
@@ -9036,10 +9042,10 @@ cells += [
         # @title 6D. Train and evaluate Uni-Mol V2 { display-mode: "form" }
         filter_unimolv2_incompatible = False # @param {type:"boolean"}
         unimol_internal_split = "random" # @param ["random", "scaffold"]
-        unimol_epochs = 10 # @param {type:"slider", min:1, max:50, step:1}
+        unimol_epochs = 1 # @param {type:"slider", min:1, max:50, step:1}
         unimol_learning_rate = 0.0001 # @param {type:"number"}
-        unimol_batch_size = 16 # @param [4, 8, 16, 32]
-        unimol_early_stopping = 5 # @param {type:"slider", min:2, max:15, step:1}
+        unimol_batch_size = 32 # @param [4, 8, 16, 32]
+        unimol_early_stopping = 2 # @param {type:"slider", min:2, max:15, step:1}
         unimol_model_size = "84m" # @param ["84m", "164m", "310m"]
         unimol_max_atoms = 96 # @param [64, 96, 128]
         unimol_use_amp = True # @param {type:"boolean"}
