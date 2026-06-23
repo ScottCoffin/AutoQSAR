@@ -1076,13 +1076,15 @@ def make_rdkit_descriptor_matrix(smiles_list):
 
 
 def make_maplight_morgan_count_matrix(smiles_list, radius=2, n_bits=1024):
+    from rdkit.Chem.rdFingerprintGenerator import GetMorganGenerator
+    generator = GetMorganGenerator(radius=int(radius), fpSize=int(n_bits))
     rows = []
     for smi in smiles_list:
         mol = Chem.MolFromSmiles(smi)
         if mol is None:
             rows.append(np.zeros((int(n_bits),), dtype=np.float32))
             continue
-        fp = rdMolDescriptors.GetHashedMorganFingerprint(mol, radius=int(radius), nBits=int(n_bits))
+        fp = generator.GetCountFingerprint(mol)
         arr = np.zeros((int(n_bits),), dtype=np.int32)
         for bit_id, count in fp.GetNonzeroElements().items():
             bit_id = int(bit_id)

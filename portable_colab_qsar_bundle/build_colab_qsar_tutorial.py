@@ -810,8 +810,46 @@ cells += [
         setup_done("PyTorch backend", f"available={'yes' if torch is not None else 'no'}")
 
         setup_start("TensorFlow backend")
+        if not RUNNING_IN_COLAB:
+            # On local Jupyter/HPC environments, pip-installed nvidia-* packages put CUDA
+            # libraries inside site-packages/nvidia/*/lib/ instead of a system path.
+            # TF cannot dlopen them unless these directories are on LD_LIBRARY_PATH.
+            # Colab manages its own CUDA paths, so we skip this there.
+            try:
+                def _patch_nvidia_ld_path():
+                    import site
+                    sp = next((p for p in site.getsitepackages() if "site-packages" in p), None)
+                    if not sp:
+                        return
+                    nvidia_base = os.path.join(sp, "nvidia")
+                    subdirs = [
+                        "cublas", "cuda_cupti", "cuda_nvrtc", "cuda_runtime",
+                        "cudnn", "cufft", "curand", "cusolver", "cusparse",
+                        "nccl", "nvjitlink", "nvtx",
+                    ]
+                    extra = ":".join(
+                        os.path.join(nvidia_base, s, "lib")
+                        for s in subdirs
+                        if os.path.isdir(os.path.join(nvidia_base, s, "lib"))
+                    )
+                    if extra:
+                        prev = os.environ.get("LD_LIBRARY_PATH", "")
+                        os.environ["LD_LIBRARY_PATH"] = f"{extra}:{prev}" if prev else extra
+                _patch_nvidia_ld_path()
+                del _patch_nvidia_ld_path
+            except Exception:
+                pass
         try:
             import tensorflow as tf
+            if not RUNNING_IN_COLAB:
+                # On local/HPC environments, NVIDIA GRID vGPU drivers raise
+                # CUDA_ERROR_INVALID_HANDLE on graph-function-mode kernel launches
+                # (e.g. the FloorMod op Keras uses during layer seeding). TF was
+                # working correctly on CPU before GPU libs were made discoverable,
+                # and the only TF model (Tabular CNN) does not need GPU. Force
+                # CPU-only here; PyTorch was imported above and manages its own
+                # CUDA context independently.
+                tf.config.set_visible_devices([], "GPU")
         except Exception:
             tf = None
         setup_done("TensorFlow backend", f"available={'yes' if tf is not None else 'no'}")
@@ -8060,6 +8098,27 @@ cells += [
                     "Run the Uni-Mol install cell first, then rerun this block."
                 ) from exc
 
+            _unimol_use_cuda = False
+            if torch is not None and torch.cuda.is_available():
+                try:
+                    import torch.nn as _nn
+                    _m = _nn.Linear(4, 4).cuda()
+                    del _m
+                    try:
+                        torch.zeros(4).pin_memory()
+                    except Exception:
+                        try:
+                            import unimol_tools.tasks.trainer as _umt_t
+                            from torch.utils.data import DataLoader as _TDL
+                            if not getattr(_umt_t, "_pin_memory_patched", False):
+                                _umt_t.TorchDataLoader = lambda *a, **kw: _TDL(*a, **{**kw, "pin_memory": False})
+                                _umt_t._pin_memory_patched = True
+                        except Exception:
+                            pass
+                    _unimol_use_cuda = True
+                except Exception:
+                    print("[Uni-Mol] CUDA model placement failed on this GPU; using CPU.", flush=True)
+
             def ensure_unimol_weights(need_v1=False, need_v2=False, v2_size="84m"):
                 weight_dir = Path(get_weight_dir())
                 weight_dir.mkdir(parents=True, exist_ok=True)
@@ -8227,6 +8286,7 @@ cells += [
                     split=str(unimol_internal_split),
                     save_path=str(save_dir),
                     num_workers=int(unimol_num_workers),
+                    use_cuda=_unimol_use_cuda,
                 )
                 if model_name == "unimolv2":
                     trainer_kwargs["model_size"] = str(unimol_model_size)
@@ -8724,6 +8784,27 @@ cells += [
                 "Uni-Mol packages are not available in this environment. Run the Uni-Mol install cell first."
             ) from exc
 
+        _unimol_use_cuda = False
+        if torch is not None and torch.cuda.is_available():
+            try:
+                import torch.nn as _nn
+                _m = _nn.Linear(4, 4).cuda()
+                del _m
+                try:
+                    torch.zeros(4).pin_memory()
+                except Exception:
+                    try:
+                        import unimol_tools.tasks.trainer as _umt_t
+                        from torch.utils.data import DataLoader as _TDL
+                        if not getattr(_umt_t, "_pin_memory_patched", False):
+                            _umt_t.TorchDataLoader = lambda *a, **kw: _TDL(*a, **{**kw, "pin_memory": False})
+                            _umt_t._pin_memory_patched = True
+                    except Exception:
+                        pass
+                _unimol_use_cuda = True
+            except Exception:
+                print("[Uni-Mol] CUDA model placement failed on this GPU; using CPU.", flush=True)
+
         def ensure_unimol_weights(need_v1=False, need_v2=False, v2_size="84m"):
             weight_dir = Path(get_weight_dir())
             weight_dir.mkdir(parents=True, exist_ok=True)
@@ -8820,6 +8901,7 @@ cells += [
                 split=str(unimol_internal_split),
                 save_path=str(save_dir),
                 num_workers=int(unimol_num_workers),
+                use_cuda=_unimol_use_cuda,
             )
             if not cached_model_loaded:
                 trainer = MolTrain(**trainer_kwargs)
@@ -9006,6 +9088,27 @@ cells += [
                     "Uni-Mol packages are not available in this environment. Run the Uni-Mol install cell first."
                 ) from exc
 
+            _unimol_use_cuda = False
+            if torch is not None and torch.cuda.is_available():
+                try:
+                    import torch.nn as _nn
+                    _m = _nn.Linear(4, 4).cuda()
+                    del _m
+                    try:
+                        torch.zeros(4).pin_memory()
+                    except Exception:
+                        try:
+                            import unimol_tools.tasks.trainer as _umt_t
+                            from torch.utils.data import DataLoader as _TDL
+                            if not getattr(_umt_t, "_pin_memory_patched", False):
+                                _umt_t.TorchDataLoader = lambda *a, **kw: _TDL(*a, **{**kw, "pin_memory": False})
+                                _umt_t._pin_memory_patched = True
+                        except Exception:
+                            pass
+                    _unimol_use_cuda = True
+                except Exception:
+                    print("[Uni-Mol] CUDA model placement failed on this GPU; using CPU.", flush=True)
+
             def ensure_unimol_weights(need_v1=False, need_v2=False, v2_size="84m"):
                 weight_dir = Path(get_weight_dir())
                 weight_dir.mkdir(parents=True, exist_ok=True)
@@ -9131,6 +9234,7 @@ cells += [
                 split=str(unimol_internal_split),
                 save_path=str(save_dir),
                 num_workers=int(unimol_num_workers),
+                use_cuda=_unimol_use_cuda,
                 model_size=str(unimol_model_size),
                 max_atoms=int(unimol_max_atoms),
                 use_amp=effective_unimol_use_amp,
