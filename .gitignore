@@ -239,3 +239,6 @@ data/*.zip
 gin_supervised_masking_pre_trained.pth
 **/trainer_logs/
 **/events.out.tfevents*
+
+# sh file (large, sys-specific)
+Miniconda3-latest-Linux-x86_64.sh
