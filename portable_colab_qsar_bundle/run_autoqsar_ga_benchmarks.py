@@ -323,6 +323,66 @@ def detect_gpu_available() -> bool:
         return False
 
 
+def detected_cpu_count() -> int:
+    return max(1, int(os.cpu_count() or 1))
+
+
+def resolve_n_jobs(value: Any) -> int:
+    try:
+        requested = int(value)
+    except Exception:
+        requested = 0
+    if requested <= 0:
+        return detected_cpu_count()
+    return max(1, requested)
+
+
+def benchmark_n_jobs(args: argparse.Namespace) -> int:
+    return resolve_n_jobs(getattr(args, "n_jobs", 0))
+
+
+def auto_data_loader_workers() -> int:
+    cpu_count = detected_cpu_count()
+    return max(1, min(8, cpu_count // 4 if cpu_count >= 4 else 1))
+
+
+def gpu_inventory() -> list[dict[str, Any]]:
+    try:
+        import torch
+
+        if not bool(torch.cuda.is_available()):
+            return []
+        rows: list[dict[str, Any]] = []
+        for index in range(int(torch.cuda.device_count())):
+            props = torch.cuda.get_device_properties(index)
+            rows.append(
+                {
+                    "index": int(index),
+                    "name": str(torch.cuda.get_device_name(index)),
+                    "total_memory_gb": round(float(props.total_memory) / (1024 ** 3), 3),
+                    "multi_processor_count": int(getattr(props, "multi_processor_count", 0)),
+                    "compute_capability": f"{getattr(props, 'major', '')}.{getattr(props, 'minor', '')}",
+                }
+            )
+        return rows
+    except Exception:
+        return []
+
+
+def resource_config_payload(args: argparse.Namespace) -> dict[str, Any]:
+    return {
+        "detected_cpu_count": detected_cpu_count(),
+        "n_jobs": benchmark_n_jobs(args),
+        "gpu_available": bool(getattr(args, "gpu_available", False)),
+        "gpu_inventory": gpu_inventory(),
+        "chemprop_num_workers": int(getattr(args, "chemprop_num_workers", 0)),
+        "unimol_num_workers": int(getattr(args, "unimol_num_workers", 0)),
+        "chemprop_batch_size": int(getattr(args, "chemprop_batch_size", 0)),
+        "unimol_batch_size": int(getattr(args, "unimol_batch_size", 0)),
+        "precision_mode": str(getattr(args, "precision_mode", "")),
+    }
+
+
 SMILES_CANDIDATES = ["QSAR_READY_SMILES", "canonical_smiles", "SMILES", "smiles", "Smiles"]
 TARGET_CANDIDATES = ["TARGET", "target", "Target", "Repro/Dev", "Non-Repro/Dev", "density_Kg/m3"]
 DEFAULT_BENCHMARK_FEATURE_FAMILIES = [
@@ -1610,6 +1670,7 @@ def evaluate_maplight_seeded_catboost(
     seed_values: list[int],
     feature_source: str,
     primary_metric: str = "mae",
+    n_jobs: int = 1,
 ) -> tuple[dict[str, Any], np.ndarray, np.ndarray]:
     task_type = current_dataset_task_type()
     if task_type == "classification":
@@ -1634,6 +1695,7 @@ def evaluate_maplight_seeded_catboost(
                             loss_function="Logloss",
                             eval_metric="AUC",
                             random_seed=int(seed_value),
+                            thread_count=int(max(1, n_jobs)),
                             verbose=False,
                         ),
                     ),
@@ -1650,6 +1712,7 @@ def evaluate_maplight_seeded_catboost(
                             loss_function="MAE",
                             eval_metric="MAE",
                             random_seed=int(seed_value),
+                            thread_count=int(max(1, n_jobs)),
                             verbose=False,
                         ),
                     ),
@@ -1677,6 +1740,7 @@ def evaluate_maplight_seeded_catboost(
         "maplight_loss_function": "Logloss" if task_type == "classification" else "MAE",
         "maplight_scaler": "StandardScaler",
         "maplight_feature_source": str(feature_source),
+        "benchmark_n_jobs": int(max(1, n_jobs)),
     }
     row.update(regression_metrics(y_train, pred_train, y_test, pred_test))
     row = add_leaderboard_reference_columns(
@@ -3971,6 +4035,7 @@ def run_timed_elasticnet_selector_fit(
     max_iter: int,
     random_seed: int,
     timeout_seconds: float,
+    n_jobs: int,
 ) -> dict[str, Any]:
     payload = {
         "X_scaled": np.asarray(X_scaled, dtype=float),
@@ -3983,6 +4048,7 @@ def run_timed_elasticnet_selector_fit(
         ],
         "max_iter": int(max_iter),
         "random_seed": int(random_seed),
+        "n_jobs": int(max(1, n_jobs)),
     }
     timeout_seconds = float(timeout_seconds)
     if timeout_seconds <= 0:
@@ -4014,7 +4080,7 @@ def main():
             alphas=np.asarray(payload["alphas"], dtype=float),
             cv=payload["cv_splits"],
             max_iter=int(payload["max_iter"]),
-            n_jobs=1,
+            n_jobs=int(payload.get("n_jobs", 1)),
             random_state=int(payload["random_seed"]),
         )
         selector.fit(np.asarray(payload["X_scaled"], dtype=float), np.asarray(payload["y_train"], dtype=float))
@@ -4187,6 +4253,7 @@ def select_features(
                 max_iter=args.selector_max_iter,
                 random_seed=args.random_seed,
                 timeout_seconds=float(args.selector_elasticnet_timeout_seconds),
+                n_jobs=benchmark_n_jobs(args),
             )
     else:
         selector_fit = run_timed_elasticnet_selector_fit(
@@ -4198,6 +4265,7 @@ def select_features(
             max_iter=args.selector_max_iter,
             random_seed=args.random_seed,
             timeout_seconds=float(args.selector_elasticnet_timeout_seconds),
+            n_jobs=benchmark_n_jobs(args),
         )
 
     if bool(selector_fit.get("ok")):
@@ -4253,7 +4321,7 @@ def select_features(
     rf_selector = RandomForestRegressor(
         n_estimators=int(args.selector_rf_fallback_n_estimators),
         random_state=args.random_seed,
-        n_jobs=1,
+        n_jobs=benchmark_n_jobs(args),
     )
     rf_selector.fit(X_imputed, y_train.to_numpy(dtype=float))
     importances = np.asarray(getattr(rf_selector, "feature_importances_", np.zeros(X_train.shape[1])), dtype=float)
@@ -4399,6 +4467,7 @@ def conventional_models(
     split_strategy_for_cv: str | None = None,
 ) -> dict[str, Any]:
     task_type = current_dataset_task_type()
+    n_jobs = benchmark_n_jobs(args)
     finite_numeric = FunctionTransformer(
         np.nan_to_num,
         kw_args={"nan": np.nan, "posinf": np.nan, "neginf": np.nan},
@@ -4425,11 +4494,11 @@ def conventional_models(
                     ("model", SVC(C=10.0, gamma="scale", probability=True, random_state=args.random_seed)),
                 ]
             ),
-            "Random forest": RandomForestClassifier(n_estimators=400, random_state=args.random_seed, n_jobs=1),
+            "Random forest": RandomForestClassifier(n_estimators=400, random_state=args.random_seed, n_jobs=n_jobs),
             "Extra trees": ExtraTreesClassifier(
                 n_estimators=500,
                 random_state=args.random_seed,
-                n_jobs=1,
+                n_jobs=n_jobs,
             ),
             "HistGradientBoosting": Pipeline(
                 [
@@ -4505,7 +4574,7 @@ def conventional_models(
                 objective="binary:logistic",
                 eval_metric="auc",
                 random_state=args.random_seed,
-                n_jobs=1,
+                n_jobs=n_jobs,
             )
         if LGBMClassifier is not None:
             models["LightGBM"] = LGBMClassifier(
@@ -4515,7 +4584,7 @@ def conventional_models(
                 subsample=0.9,
                 colsample_bytree=0.9,
                 random_state=args.random_seed,
-                n_jobs=1,
+                n_jobs=n_jobs,
             )
         if CatBoostClassifier is not None:
             models["CatBoost"] = CatBoostClassifier(
@@ -4524,6 +4593,7 @@ def conventional_models(
                 learning_rate=0.05,
                 loss_function="Logloss",
                 random_seed=args.random_seed,
+                thread_count=n_jobs,
                 verbose=False,
             )
         if (
@@ -4558,7 +4628,7 @@ def conventional_models(
                         alphas=regularization_grid(args.elasticnet_alpha_min_log10, args.elasticnet_alpha_max_log10, args.elasticnet_alpha_grid_size),
                         cv=elasticnet_cv,
                         max_iter=args.elasticnet_max_iter,
-                        n_jobs=1,
+                        n_jobs=n_jobs,
                         random_state=args.random_seed,
                     ),
                 ),
@@ -4571,11 +4641,11 @@ def conventional_models(
                 ("model", SVR(C=10.0, epsilon=0.1, gamma="scale")),
             ]
         ),
-        "Random forest": RandomForestRegressor(n_estimators=400, random_state=args.random_seed, n_jobs=1),
+        "Random forest": RandomForestRegressor(n_estimators=400, random_state=args.random_seed, n_jobs=n_jobs),
         "Extra trees": ExtraTreesRegressor(
             n_estimators=500,
             random_state=args.random_seed,
-            n_jobs=1,
+            n_jobs=n_jobs,
         ),
         "HistGradientBoosting": Pipeline(
             [
@@ -4672,7 +4742,7 @@ def conventional_models(
             colsample_bytree=0.9,
             objective="reg:squarederror",
             random_state=args.random_seed,
-            n_jobs=1,
+            n_jobs=n_jobs,
         )
     if LGBMRegressor is not None:
         models["LightGBM"] = LGBMRegressor(
@@ -4682,7 +4752,7 @@ def conventional_models(
             subsample=0.9,
             colsample_bytree=0.9,
             random_state=args.random_seed,
-            n_jobs=1,
+            n_jobs=n_jobs,
         )
     if CatBoostRegressor is not None:
         models["CatBoost"] = CatBoostRegressor(
@@ -4691,6 +4761,7 @@ def conventional_models(
             learning_rate=0.05,
             loss_function="RMSE",
             random_seed=args.random_seed,
+            thread_count=n_jobs,
             verbose=False,
         )
         if bool(getattr(args, "maplight_leaderboard_parity_mode", True)):
@@ -4704,6 +4775,7 @@ def conventional_models(
                 learning_rate=0.05,
                 loss_function="RMSE",
                 random_seed=args.random_seed,
+                thread_count=n_jobs,
                 verbose=False,
             )
     if (
@@ -4760,6 +4832,37 @@ def timed_predict_values_for_metric(estimator: Any, X, metric_name: str) -> tupl
     start_time = time.perf_counter()
     values = predict_values_for_metric(estimator, X, metric_name)
     return values, float(time.perf_counter() - start_time)
+
+
+def estimator_declares_internal_parallelism(estimator: Any) -> bool:
+    try:
+        params = estimator.get_params(deep=True)
+    except Exception:
+        return False
+    for key, value in params.items():
+        if not (str(key).endswith("n_jobs") or str(key).endswith("thread_count")):
+            continue
+        try:
+            if int(value) not in {0, 1}:
+                return True
+        except Exception:
+            if str(value).strip():
+                return True
+    return False
+
+
+def cross_validate_n_jobs_for_estimator(
+    *,
+    name: str,
+    estimator: Any,
+    args: argparse.Namespace,
+    cv_folds: int,
+) -> int:
+    if str(name).strip().lower() in {"tabpfnregressor", "tabpfnclassifier"}:
+        return 1
+    if estimator_declares_internal_parallelism(estimator):
+        return 1
+    return max(1, min(int(cv_folds), benchmark_n_jobs(args)))
 
 
 def inference_timing_columns(
@@ -4928,7 +5031,12 @@ def evaluate_model(
             y_train,
             cv=cv,
             scoring=scoring,
-            n_jobs=1,
+            n_jobs=cross_validate_n_jobs_for_estimator(
+                name=name,
+                estimator=estimator,
+                args=args,
+                cv_folds=cv_folds,
+            ),
         )
         fitted = clone(estimator)
         fitted.fit(X_train, y_train)
@@ -4949,6 +5057,13 @@ def evaluate_model(
         "cv_split_strategy": cv_split_strategy,
         "primary_metric": primary_metric,
         "cv_primary": primary_cv,
+        "benchmark_n_jobs": benchmark_n_jobs(args),
+        "benchmark_cv_n_jobs": cross_validate_n_jobs_for_estimator(
+            name=name,
+            estimator=estimator,
+            args=args,
+            cv_folds=cv_folds,
+        ),
     }
     if task_type == "classification":
         row.update(
@@ -5052,6 +5167,7 @@ def ga_model_specs(args: argparse.Namespace):
                     l2_leaf_reg=float(np.exp(p["log_l2_leaf_reg"])),
                     loss_function="Logloss",
                     random_seed=args.random_seed,
+                    thread_count=benchmark_n_jobs(args),
                     verbose=False,
                 ),
                 {
@@ -5102,6 +5218,7 @@ def ga_model_specs(args: argparse.Namespace):
                 l2_leaf_reg=float(np.exp(p["log_l2_leaf_reg"])),
                 loss_function="RMSE",
                 random_seed=args.random_seed,
+                thread_count=benchmark_n_jobs(args),
                 verbose=False,
             ),
             {
@@ -6234,6 +6351,161 @@ def train_unimol_v1_model(
     return row, np.asarray(pred_train, dtype=float), np.asarray(pred_test, dtype=float)
 
 
+def train_unimol_v2_model(
+    *,
+    label: str,
+    y_train: pd.Series,
+    y_test: pd.Series,
+    smiles_train: pd.Series,
+    smiles_test: pd.Series,
+    args: argparse.Namespace,
+    dataset_dir: Path,
+) -> tuple[dict[str, Any], np.ndarray, np.ndarray]:
+    """Train and evaluate a Uni-Mol V2 model (GPU-required, mirrors notebook cell 6D)."""
+    try:
+        from unimol_tools import MolPredict, MolTrain
+    except Exception as exc:
+        raise RuntimeError(
+            "Uni-Mol V2 requires `unimol_tools` with V2 support in the active environment."
+        ) from exc
+
+    model_size = str(getattr(args, "unimol_model_size", "84m"))
+    max_atoms = int(getattr(args, "unimol_max_atoms", 96))
+
+    save_dir = dataset_dir / "unimol_v2" / f"{model_size}_seed_{int(args.random_seed)}"
+    save_dir.mkdir(parents=True, exist_ok=True)
+    train_csv = save_dir / "train_unimol_v2.csv"
+    test_csv = save_dir / "test_unimol_v2.csv"
+    train_pred_cache = save_dir / "pred_train.npy"
+    test_pred_cache = save_dir / "pred_test.npy"
+
+    train_df = pd.DataFrame(
+        {
+            "SMILES": pd.Series(smiles_train, dtype=str).astype(str).reset_index(drop=True),
+            "TARGET": pd.Series(y_train, dtype=float).reset_index(drop=True),
+        }
+    )
+    test_df = pd.DataFrame(
+        {
+            "SMILES": pd.Series(smiles_test, dtype=str).astype(str).reset_index(drop=True),
+            "TARGET": pd.Series(y_test, dtype=float).reset_index(drop=True),
+        }
+    )
+    train_df.to_csv(train_csv, index=False)
+    test_df.to_csv(test_csv, index=False)
+
+    pred_train: np.ndarray | None = None
+    pred_test: np.ndarray | None = None
+    train_inference_seconds = np.nan
+    test_inference_seconds = np.nan
+    inference_timing_source = "cached_predictions_no_timing"
+    if bool(getattr(args, "unimol_reuse_model_cache", True)):
+        if train_pred_cache.exists() and test_pred_cache.exists():
+            try:
+                pred_train = np.asarray(np.load(train_pred_cache), dtype=float).reshape(-1)
+                pred_test = np.asarray(np.load(test_pred_cache), dtype=float).reshape(-1)
+                if len(pred_train) != len(train_df) or len(pred_test) != len(test_df):
+                    pred_train, pred_test = None, None
+            except Exception:
+                pred_train, pred_test = None, None
+
+    if pred_train is None or pred_test is None:
+        unimol_task = "classification" if current_dataset_task_type() == "classification" else "regression"
+        unimol_metric = "auc" if unimol_task == "classification" else "mse"
+
+        # V2 requires explicit use_cuda flag; probe CUDA placement to confirm it works
+        use_cuda = False
+        try:
+            import torch as _torch
+            if _torch.cuda.is_available():
+                import torch.nn as _nn
+                _probe = _nn.Linear(4, 4).cuda()
+                del _probe
+                use_cuda = True
+        except Exception:
+            pass
+
+        use_amp = bool(getattr(args, "unimol_use_amp", True)) and use_cuda
+
+        trainer = MolTrain(
+            task=str(unimol_task),
+            data_type="molecule",
+            model_name="unimolv2",
+            epochs=int(args.unimol_epochs),
+            learning_rate=float(args.unimol_learning_rate),
+            batch_size=int(args.unimol_batch_size),
+            early_stopping=int(args.unimol_early_stopping),
+            metrics=str(unimol_metric),
+            split=str(args.unimol_internal_split),
+            save_path=str(save_dir),
+            num_workers=int(args.unimol_num_workers),
+            use_cuda=use_cuda,
+            model_size=model_size,
+            max_atoms=max_atoms,
+            use_amp=use_amp,
+        )
+        trainer.fit(str(train_csv))
+        predictor = MolPredict(load_model=str(save_dir))
+        train_predict_start = time.perf_counter()
+        pred_train = np.asarray(predictor.predict(str(train_csv))).reshape(-1)
+        train_inference_seconds = float(time.perf_counter() - train_predict_start)
+        test_predict_start = time.perf_counter()
+        pred_test = np.asarray(predictor.predict(str(test_csv))).reshape(-1)
+        test_inference_seconds = float(time.perf_counter() - test_predict_start)
+        inference_timing_source = "unimol_predict"
+        try:
+            np.save(train_pred_cache, np.asarray(pred_train, dtype=float))
+            np.save(test_pred_cache, np.asarray(pred_test, dtype=float))
+        except Exception:
+            pass
+
+    execution_mode = "GPU" if detect_gpu_available() else "CPU"
+    primary_metric = current_dataset_primary_metric("rmse")
+    row = {
+        "model": str(label),
+        "workflow": "Uni-Mol",
+        "execution_mode": execution_mode,
+        "cv_folds": np.nan,
+        "cv_split_strategy": "",
+        "cv_r2": np.nan,
+        "cv_rmse": np.nan,
+        "cv_mae": np.nan,
+        "primary_metric": primary_metric,
+        "cv_primary": np.nan,
+        "unimol_model_dir": str(save_dir),
+        "unimol_internal_split": str(args.unimol_internal_split),
+        "unimol_epochs": int(args.unimol_epochs),
+        "unimol_learning_rate": float(args.unimol_learning_rate),
+        "unimol_batch_size": int(args.unimol_batch_size),
+        "unimol_early_stopping": int(args.unimol_early_stopping),
+        "unimol_num_workers": int(args.unimol_num_workers),
+        "unimol_v2_model_size": model_size,
+        "unimol_v2_max_atoms": max_atoms,
+        "unimol_v2_use_amp": bool(getattr(args, "unimol_use_amp", True)),
+    }
+    row.update(regression_metrics(y_train, pred_train, y_test, pred_test))
+    row.update(
+        inference_timing_columns(
+            train_seconds=train_inference_seconds,
+            test_seconds=test_inference_seconds,
+            n_train=len(y_train),
+            n_test=len(y_test),
+            source=inference_timing_source,
+        )
+    )
+    parameter_count, parameter_source = count_torch_parameters_from_checkpoint_dir(save_dir)
+    row["model_trainable_parameters"] = parameter_count
+    row["model_parameter_count_source"] = f"unimol_{parameter_source}"
+    row["primary_metric_value"] = float(
+        compute_primary_metric(
+            primary_metric,
+            pd.Series(y_test, dtype=float).to_numpy(dtype=float),
+            np.asarray(pred_test, dtype=float),
+        )
+    )
+    return row, np.asarray(pred_train, dtype=float), np.asarray(pred_test, dtype=float)
+
+
 def build_ensemble_result(
     *,
     payloads: dict[str, dict[str, Any]],
@@ -7045,6 +7317,7 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
         + int(bool(args.run_chemml_tensorflow) and model_filter_allows(args, "ChemML MLP (TensorFlow)"))
         + int(chemprop_stage_count)
         + int(bool(getattr(args, "run_unimol_v1", False)) and model_filter_allows(args, "Uni-Mol V1"))
+        + int(bool(getattr(args, "run_unimol_v2", False)) and model_filter_allows(args, f"Uni-Mol V2 ({getattr(args, 'unimol_model_size', '84m')})"))
         + int(bool(args.run_maplight_gnn) and model_filter_allows(args, maplight_gnn_model_label(args)))
     )
     requested_cfa_stage = int(bool(getattr(args, "run_cfa", False)) and model_filter_allows(args, "CFA (Combinatorial Fusion)"))
@@ -7759,6 +8032,7 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
                     seed_values=maplight_seed_values,
                     feature_source="direct_maplight_classic_from_smiles_no_dedup",
                     primary_metric=maplight_primary_metric,
+                    n_jobs=benchmark_n_jobs(args),
                 )
             else:
                 row, pred_train, pred_test = evaluate_model(
@@ -8063,6 +8337,62 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
             persist_partial("deep:Uni-Mol-V1")
             stage_index += 1
 
+    if bool(getattr(args, "run_unimol_v2", False)) and model_filter_allows(
+        args, f"Uni-Mol V2 ({getattr(args, 'unimol_model_size', '84m')})"
+    ):
+        unimol_v2_label = f"Uni-Mol V2 ({getattr(args, 'unimol_model_size', '84m')})"
+        if unimol_v2_label in completed_model_names:
+            stage_message(
+                stage_index,
+                f"deep model {unimol_v2_label} (cached)",
+                model_name=unimol_v2_label,
+                workflow="Uni-Mol",
+                step_type="model",
+            )
+            stage_index += 1
+        else:
+            stage_message(
+                stage_index,
+                f"deep model {unimol_v2_label}",
+                model_name=unimol_v2_label,
+                workflow="Uni-Mol",
+                step_type="model",
+            )
+            try:
+                row, pred_train, pred_test = train_unimol_v2_model(
+                    label=unimol_v2_label,
+                    y_train=split["y_train"],
+                    y_test=split["y_test"],
+                    smiles_train=split["smiles_train"],
+                    smiles_test=split["smiles_test"],
+                    args=args,
+                    dataset_dir=dataset_dir,
+                )
+            except Exception as exc:
+                row = {"model": unimol_v2_label, "workflow": "Uni-Mol", "error": str(exc)}
+                pred_train, pred_test = np.array([]), np.array([])
+            row = add_cost_columns({**base_meta, **row})
+            metrics_rows.append(row)
+            completed_model_names.add(str(unimol_v2_label))
+            if len(pred_train):
+                prediction_tables.extend(
+                    [
+                        prediction_frame(dataset_id, unimol_v2_label, "Uni-Mol", "train", split["smiles_train"], split["y_train"], pred_train),
+                        prediction_frame(dataset_id, unimol_v2_label, "Uni-Mol", "test", split["smiles_test"], split["y_test"], pred_test),
+                    ]
+                )
+                prediction_payloads[unimol_v2_label] = prediction_payload(
+                    workflow="Uni-Mol",
+                    train_smiles=split["smiles_train"],
+                    test_smiles=split["smiles_test"],
+                    y_train=split["y_train"],
+                    y_test=split["y_test"],
+                    pred_train=pred_train,
+                    pred_test=pred_test,
+                )
+            persist_partial("deep:Uni-Mol-V2")
+            stage_index += 1
+
     if bool(args.run_maplight_gnn) and model_filter_allows(args, maplight_gnn_model_label(args)):
         maplight_label = maplight_gnn_model_label(args)
         if maplight_label in completed_model_names:
@@ -8138,6 +8468,7 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
                             seed_values=maplight_seed_values,
                             feature_source="direct_maplight_classic_plus_gnn_no_dedup",
                             primary_metric="mae",
+                            n_jobs=benchmark_n_jobs(args),
                         )
                     else:
                         maplight_estimator = CatBoostRegressor(
@@ -8146,6 +8477,7 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
                             learning_rate=0.05,
                             loss_function="RMSE",
                             random_seed=args.random_seed,
+                            thread_count=benchmark_n_jobs(args),
                             verbose=False,
                         )
                         row, pred_train, pred_test = evaluate_model(
@@ -8978,6 +9310,31 @@ def _multiseed_model_rows_for_dataset(dataset_df: pd.DataFrame) -> tuple[list[pd
     return [best_direct_row], "overall_best_direct_model", overall_model
 
 
+def _run_tdc22_seed(
+    seed: int,
+    spec: Any,
+    multiseed_root_str: str,
+    args_vars: dict[str, Any],
+    selected_models: list[str],
+) -> "tuple[int, Any]":
+    """Top-level picklable helper: run one seed for one TDC-22 dataset."""
+    seed_args = argparse.Namespace(**args_vars)
+    seed_args.random_seed = int(seed)
+    seed_output_dir = Path(multiseed_root_str) / f"seed_{int(seed)}"
+    seed_args.output_dir = seed_output_dir
+    seed_args.only_model_names = ",".join(selected_models)
+    seed_args.run_cfa = False
+    seed_args.run_ensemble = False
+    seed_args.revisit_completed_datasets = False
+    seed_args.rebuild_ensemble = False
+    ga_models = [m[:-3].strip() for m in selected_models if m.endswith(" GA")]
+    if ga_models:
+        seed_args.ga_models_resolved = ",".join(ga_models)
+        seed_args.ga_models = seed_args.ga_models_resolved
+    result = run_dataset(spec, seed_output_dir, seed_args, dataset_position=1, dataset_total=1)
+    return int(seed), result
+
+
 def run_tdc22_best_model_multiseed(
     *,
     datasets: list["DatasetSpec"],
@@ -8985,6 +9342,8 @@ def run_tdc22_best_model_multiseed(
     args: argparse.Namespace,
     summary: pd.DataFrame,
 ) -> dict[str, Any]:
+    multiseed_start = time.time()
+    multiseed_started_at = local_timestamp_text()
     seeds = parse_int_list(getattr(args, "tdc22_multiseed_seeds", "1,2,3,4,5"))
     if not seeds:
         seeds = [1, 2, 3, 4, 5]
@@ -8997,7 +9356,15 @@ def run_tdc22_best_model_multiseed(
     if summary.empty or "dataset" not in summary.columns:
         reason = "summary_metrics_unavailable"
         pd.DataFrame([{"status": "skipped", "reason": reason}]).to_csv(multiseed_root / "tdc22_best_model_multiseed_plan.csv", index=False)
-        return {"status": "skipped", "reason": reason, "dataset_count": 0, "seed_count": int(len(seeds))}
+        return {
+            "status": "skipped",
+            "reason": reason,
+            "dataset_count": 0,
+            "seed_count": int(len(seeds)),
+            "started_at": multiseed_started_at,
+            "completed_at": local_timestamp_text(),
+            "elapsed_seconds": round(time.time() - multiseed_start, 3),
+        }
 
     for spec_index, spec in enumerate(run_specs, start=1):
         dataset_id = slugify(spec.name)
@@ -9034,48 +9401,87 @@ def run_tdc22_best_model_multiseed(
                 }
             )
 
-        for seed_index, seed in enumerate(seeds, start=1):
-            seed_output_dir = multiseed_root / f"seed_{int(seed)}"
-            seed_args = argparse.Namespace(**vars(args))
-            seed_args.random_seed = int(seed)
-            seed_args.output_dir = seed_output_dir
-            seed_args.only_model_names = ",".join(selected_models)
-            seed_args.run_cfa = False
-            seed_args.run_ensemble = False
-            seed_args.revisit_completed_datasets = False
-            seed_args.rebuild_ensemble = False
-            ga_models = [model_name[:-3].strip() for model_name in selected_models if model_name.endswith(" GA")]
-            if ga_models:
-                seed_args.ga_models_resolved = ",".join(ga_models)
-                seed_args.ga_models = seed_args.ga_models_resolved
+        _use_parallel_seeds = bool(getattr(args, "parallel_tdc22_seeds", True)) and len(seeds) > 1
+        if _use_parallel_seeds:
+            import concurrent.futures
+            import multiprocessing as _mp
+            _ctx = _mp.get_context("spawn")
             print(
-                "\nTDC-22 multi-seed best-model evaluation "
-                f"[dataset {spec_index}/{len(run_specs)}, seed {seed_index}/{len(seeds)}]: "
-                f"{dataset_id} | models={', '.join(selected_models)} | seed={seed}",
+                f"\nTDC-22 multi-seed [{dataset_id}]: submitting {len(seeds)} seeds in parallel "
+                f"(models={', '.join(selected_models)})",
                 flush=True,
             )
-            result = run_dataset(
-                spec,
-                seed_output_dir,
-                seed_args,
-                dataset_position=seed_index,
-                dataset_total=len(seeds),
-            )
-            if result.metrics_rows:
-                seed_metrics = pd.DataFrame(result.metrics_rows)
-            else:
-                seed_metrics = load_run_metrics_dataframe(seed_output_dir)
-            if not seed_metrics.empty:
-                seed_metrics = seed_metrics.copy()
-                seed_metrics["multiseed_seed"] = int(seed)
-                seed_metrics["multiseed_selected_model"] = (
-                    seed_metrics["model"].fillna("").astype(str).str.strip()
-                    if "model" in seed_metrics.columns
-                    else ""
+            _seed_results: dict[int, Any] = {}
+            with concurrent.futures.ProcessPoolExecutor(max_workers=len(seeds), mp_context=_ctx) as _pool:
+                _fs = {
+                    _pool.submit(_run_tdc22_seed, s, spec, str(multiseed_root), vars(args), selected_models): s
+                    for s in seeds
+                }
+                for _f in concurrent.futures.as_completed(_fs):
+                    _s, _r = _f.result()
+                    _seed_results[_s] = _r
+                    print(f"  [tdc22 seed {_s}] {dataset_id} → {_r.status}", flush=True)
+            for seed in seeds:
+                result = _seed_results[seed]
+                seed_output_dir = multiseed_root / f"seed_{int(seed)}"
+                if result.metrics_rows:
+                    seed_metrics = pd.DataFrame(result.metrics_rows)
+                else:
+                    seed_metrics = load_run_metrics_dataframe(seed_output_dir)
+                if not seed_metrics.empty:
+                    seed_metrics = seed_metrics.copy()
+                    seed_metrics["multiseed_seed"] = int(seed)
+                    seed_metrics["multiseed_selected_model"] = (
+                        seed_metrics["model"].fillna("").astype(str).str.strip()
+                        if "model" in seed_metrics.columns
+                        else ""
+                    )
+                    seed_metrics["multiseed_selection_note"] = selection_note
+                    seed_metrics["multiseed_main_run_winner_model"] = main_run_winner
+                    metric_tables.append(seed_metrics)
+        else:
+            for seed_index, seed in enumerate(seeds, start=1):
+                seed_output_dir = multiseed_root / f"seed_{int(seed)}"
+                seed_args = argparse.Namespace(**vars(args))
+                seed_args.random_seed = int(seed)
+                seed_args.output_dir = seed_output_dir
+                seed_args.only_model_names = ",".join(selected_models)
+                seed_args.run_cfa = False
+                seed_args.run_ensemble = False
+                seed_args.revisit_completed_datasets = False
+                seed_args.rebuild_ensemble = False
+                ga_models = [model_name[:-3].strip() for model_name in selected_models if model_name.endswith(" GA")]
+                if ga_models:
+                    seed_args.ga_models_resolved = ",".join(ga_models)
+                    seed_args.ga_models = seed_args.ga_models_resolved
+                print(
+                    "\nTDC-22 multi-seed best-model evaluation "
+                    f"[dataset {spec_index}/{len(run_specs)}, seed {seed_index}/{len(seeds)}]: "
+                    f"{dataset_id} | models={', '.join(selected_models)} | seed={seed}",
+                    flush=True,
                 )
-                seed_metrics["multiseed_selection_note"] = selection_note
-                seed_metrics["multiseed_main_run_winner_model"] = main_run_winner
-                metric_tables.append(seed_metrics)
+                result = run_dataset(
+                    spec,
+                    seed_output_dir,
+                    seed_args,
+                    dataset_position=seed_index,
+                    dataset_total=len(seeds),
+                )
+                if result.metrics_rows:
+                    seed_metrics = pd.DataFrame(result.metrics_rows)
+                else:
+                    seed_metrics = load_run_metrics_dataframe(seed_output_dir)
+                if not seed_metrics.empty:
+                    seed_metrics = seed_metrics.copy()
+                    seed_metrics["multiseed_seed"] = int(seed)
+                    seed_metrics["multiseed_selected_model"] = (
+                        seed_metrics["model"].fillna("").astype(str).str.strip()
+                        if "model" in seed_metrics.columns
+                        else ""
+                    )
+                    seed_metrics["multiseed_selection_note"] = selection_note
+                    seed_metrics["multiseed_main_run_winner_model"] = main_run_winner
+                    metric_tables.append(seed_metrics)
 
     plan_df = pd.DataFrame(plan_rows)
     plan_df.to_csv(multiseed_root / "tdc22_best_model_multiseed_plan.csv", index=False)
@@ -9108,6 +9514,9 @@ def run_tdc22_best_model_multiseed(
     return {
         "status": "completed",
         "output_dir": str(multiseed_root),
+        "started_at": multiseed_started_at,
+        "completed_at": local_timestamp_text(),
+        "elapsed_seconds": round(time.time() - multiseed_start, 3),
         "dataset_count": int(len(run_specs)),
         "planned_dataset_count": int((plan_df.get("status", pd.Series(dtype=str)).astype(str) == "planned").sum()) if not plan_df.empty else 0,
         "seed_count": int(len(seeds)),
@@ -9263,6 +9672,12 @@ def parse_args() -> argparse.Namespace:
 
     parser.add_argument("--minimum-rows", type=int, default=20)
     parser.add_argument("--row-limit", type=int, default=0, help="Optional deterministic row cap for smoke tests. 0 uses all rows.")
+    parser.add_argument(
+        "--n-jobs",
+        type=int,
+        default=0,
+        help="CPU worker count for parallel-capable benchmark estimators. 0 or negative uses all detected CPU cores.",
+    )
     parser.add_argument(
         "--fingerprint-bits",
         type=int,
@@ -9522,10 +9937,32 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--unimol-internal-split", choices=["random", "scaffold"], default="random")
     parser.add_argument("--unimol-epochs", type=int, default=10)
     parser.add_argument("--unimol-learning-rate", type=float, default=1e-4)
-    parser.add_argument("--unimol-batch-size", type=int, default=16)
+    parser.add_argument("--unimol-batch-size", type=int, default=32)
     parser.add_argument("--unimol-early-stopping", type=int, default=5)
     parser.add_argument("--unimol-num-workers", type=int, default=0)
     parser.add_argument("--unimol-reuse-model-cache", action=argparse.BooleanOptionalAction, default=True)
+    parser.add_argument(
+        "--run-unimol-v2",
+        action=argparse.BooleanOptionalAction,
+        default=None,
+        help=(
+            "Run Uni-Mol V2 benchmarking stage (GPU required). Default is auto: enabled only when a GPU is "
+            "detected. Override with --run-unimol-v2 or --no-run-unimol-v2."
+        ),
+    )
+    parser.add_argument(
+        "--unimol-model-size",
+        choices=["84m", "164m", "310m"],
+        default="84m",
+        help="Uni-Mol V2 pre-trained model size. '84m' is fastest; '310m' is most accurate. Default: 84m.",
+    )
+    parser.add_argument("--unimol-max-atoms", type=int, default=96, help="Max atoms per molecule for Uni-Mol V2. Default: 96.")
+    parser.add_argument(
+        "--unimol-use-amp",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="Enable automatic mixed precision (AMP) for Uni-Mol V2 on GPU. Default: True.",
+    )
     parser.add_argument("--run-maplight-gnn", action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument(
         "--maplight-leaderboard-parity-mode",
@@ -9619,6 +10056,22 @@ def parse_args() -> argparse.Namespace:
         help=argparse.SUPPRESS,
     )
     parser.add_argument("--resume", action=argparse.BooleanOptionalAction, default=True, help="Resume a compatible incomplete run when possible.")
+    parser.add_argument(
+        "--parallel-datasets",
+        type=int,
+        default=1,
+        help=(
+            "Number of datasets to run concurrently (ProcessPoolExecutor, spawn context). "
+            "n_jobs is divided equally across workers. Recommended on A100 with many cores: 2-3. "
+            "Default: 1 (sequential)."
+        ),
+    )
+    parser.add_argument(
+        "--parallel-tdc22-seeds",
+        action=argparse.BooleanOptionalAction,
+        default=False,
+        help="Run TDC-22 multi-seed evaluations in parallel across seeds. Default: False (serial).",
+    )
     return parser.parse_args()
 
 
@@ -9669,6 +10122,25 @@ def apply_benchmark_profile_defaults(args: argparse.Namespace, argv_tokens: list
             setattr(args, arg_name, value)
 
 
+def apply_resource_defaults(args: argparse.Namespace, argv_tokens: list[str]) -> None:
+    args.n_jobs = resolve_n_jobs(getattr(args, "n_jobs", 0))
+    loader_workers = auto_data_loader_workers()
+    if not _cli_option_provided(argv_tokens, "chemprop_num_workers"):
+        args.chemprop_num_workers = loader_workers
+    if not _cli_option_provided(argv_tokens, "unimol_num_workers"):
+        args.unimol_num_workers = loader_workers
+    if getattr(args, "gpu_available", False):
+        _gpu_inv = gpu_inventory()
+        _max_vram_gb = max((item.get("total_memory_gb", 0) for item in _gpu_inv), default=0.0) if _gpu_inv else 0.0
+        _gpu_batch = 128 if _max_vram_gb >= 39 else 64 if _max_vram_gb >= 15 else 32
+        if not _cli_option_provided(argv_tokens, "unimol_batch_size"):
+            args.unimol_batch_size = _gpu_batch
+        if not _cli_option_provided(argv_tokens, "unimol_epochs"):
+            args.unimol_epochs = 20
+        if not _cli_option_provided(argv_tokens, "unimol_use_amp"):
+            args.unimol_use_amp = True
+
+
 def select_output_dir(root: Path, args: argparse.Namespace) -> Path:
     if args.output_dir is not None:
         return Path(args.output_dir)
@@ -9689,6 +10161,75 @@ def select_output_dir(root: Path, args: argparse.Namespace) -> Path:
                 print(f"Resuming compatible incomplete run: {candidate}")
                 return candidate
     return benchmark_root / f"autoqsar_benchmark_{time.strftime('%Y%m%d_%H%M%S')}"
+
+
+def _run_datasets_parallel(
+    datasets: list[Any],
+    output_dir: "Path",
+    args: argparse.Namespace,
+    n_parallel: int,
+    overall_start: float,
+    progress_callback: Any = None,
+) -> "tuple[list[dict[str, Any]], list[Any], list[Any], list[float]]":
+    """Run benchmark datasets concurrently with a ProcessPoolExecutor (spawn context).
+
+    n_jobs in the worker args is divided equally so total CPU usage stays constant.
+    progress_callback(completed, total, spec, result, elapsed, avg, eta) is called in
+    the main process after each future completes — safe to use closures like write_run_timing.
+    """
+    import concurrent.futures
+    import multiprocessing as _mp
+
+    worker_args = argparse.Namespace(**vars(args))
+    worker_args.n_jobs = max(1, args.n_jobs // n_parallel)
+    print(
+        f"\nParallel dataset mode: {n_parallel} workers, "
+        f"n_jobs per worker: {worker_args.n_jobs} (total cores: {args.n_jobs})",
+        flush=True,
+    )
+
+    all_metrics: list[dict[str, Any]] = []
+    all_predictions: list[Any] = []
+    all_histories: list[Any] = []
+    completed_times: list[float] = []
+    completed_count = 0
+
+    ctx = _mp.get_context("spawn")
+    with concurrent.futures.ProcessPoolExecutor(max_workers=n_parallel, mp_context=ctx) as pool:
+        future_to_pos = {
+            pool.submit(run_dataset, spec, output_dir, worker_args, i + 1, len(datasets)): (i + 1, spec)
+            for i, spec in enumerate(datasets)
+        }
+        for future in concurrent.futures.as_completed(future_to_pos):
+            pos, spec = future_to_pos[future]
+            completed_count += 1
+            try:
+                result = future.result()
+            except Exception as exc:
+                print(
+                    f"[parallel] FAILED {getattr(spec, 'name', str(spec))}: {exc}",
+                    flush=True,
+                )
+                continue
+            all_metrics.extend(result.metrics_rows)
+            all_predictions.extend(result.prediction_tables)
+            all_histories.extend(result.ga_history_tables)
+            if result.status in {"completed", "resumed"}:
+                completed_times.append(float(result.elapsed_seconds))
+            elapsed = time.time() - overall_start
+            avg = sum(completed_times) / len(completed_times) if completed_times else 0.0
+            remaining = len(datasets) - completed_count
+            eta = avg * remaining if avg else 0.0
+            print(
+                f"[parallel {completed_count}/{len(datasets)}] {getattr(spec, 'name', '?')} "
+                f"→ {result.status} | elapsed {format_seconds(elapsed)} | "
+                f"avg {format_seconds(avg) if avg else 'n/a'} | ETA {format_seconds(eta)}",
+                flush=True,
+            )
+            if progress_callback is not None:
+                progress_callback(completed_count, len(datasets), spec, result, elapsed, avg, eta)
+
+    return all_metrics, all_predictions, all_histories, completed_times
 
 
 def main() -> int:
@@ -9719,6 +10260,15 @@ def main() -> int:
             "Uni-Mol V1 was explicitly enabled without detected GPU; attempting CPU fallback.",
             flush=True,
         )
+    if getattr(args, "run_unimol_v2", None) is None:
+        args.run_unimol_v2 = bool(gpu_available)
+    elif bool(args.run_unimol_v2) and not gpu_available:
+        print(
+            "Uni-Mol V2 requires a GPU. --run-unimol-v2 was requested but no GPU was detected; skipping V2.",
+            flush=True,
+        )
+        args.run_unimol_v2 = False
+    apply_resource_defaults(args, sys.argv[1:])
     root = Path(__file__).resolve().parents[1]
     if str(getattr(args, "persistent_feature_store_path", "AUTO")).strip().upper() == "AUTO":
         args.persistent_feature_store_path = str((root / "model_cache" / "feature_store_parquet").resolve())
@@ -9839,6 +10389,16 @@ def main() -> int:
         )
         print(f"Planned output directory: {output_dir}")
         print(f"Benchmark profile: {args.benchmark_profile}")
+        resource_config = resource_config_payload(args)
+        gpu_names = ", ".join(item.get("name", "") for item in resource_config["gpu_inventory"]) or "none"
+        print(
+            "Resource plan: "
+            f"cpu_count={resource_config['detected_cpu_count']}, "
+            f"n_jobs={resource_config['n_jobs']}, "
+            f"chemprop_workers={resource_config['chemprop_num_workers']}, "
+            f"unimol_workers={resource_config['unimol_num_workers']}, "
+            f"gpu={gpu_names}"
+        )
         print(f".env loaded: {dotenv_status_text()}")
         print(
             "Prior Labs API key: "
@@ -9960,10 +10520,33 @@ def main() -> int:
     if bool(getattr(args, "resume", False)):
         resume_plan = build_resume_execution_plan(datasets, output_dir, args)
 
+    overall_start = time.time()
+    overall_started_at = local_timestamp_text()
     output_dir.mkdir(parents=True, exist_ok=True)
+
+    def write_run_timing(status: str, **extra: Any) -> None:
+        now_epoch = time.time()
+        payload: dict[str, Any] = {
+            "status": str(status),
+            "started_at": overall_started_at,
+            "started_epoch": overall_start,
+            "updated_at": local_timestamp_text(),
+            "updated_epoch": now_epoch,
+            "elapsed_seconds": round(now_epoch - overall_start, 3),
+            "dataset_count": int(len(datasets)),
+            "resource_config": resource_config_payload(args),
+        }
+        payload.update(extra)
+        (output_dir / "run_timing.json").write_text(
+            json.dumps(payload, indent=2, default=str),
+            encoding="utf-8",
+        )
+
+    write_run_timing("running", phase="initializing_outputs", completed_dataset_count=0)
     config = vars(args).copy()
     config["output_dir"] = str(output_dir)
     config["default_feature_families"] = list(DEFAULT_BENCHMARK_FEATURE_FAMILIES)
+    config["resource_config"] = resource_config_payload(args)
     config["config_signature"] = benchmark_config_signature(args)
     config["datasets"] = [{"name": item.name, "source": item.source, "smiles_column": item.smiles_column, "target_column": item.target_column} for item in datasets]
     (output_dir / "run_config.json").write_text(json.dumps(config, indent=2, default=str), encoding="utf-8")
@@ -9983,6 +10566,16 @@ def main() -> int:
         else "unknown"
     )
     print(f"Benchmark profile: {args.benchmark_profile}")
+    resource_config = resource_config_payload(args)
+    gpu_names = ", ".join(item.get("name", "") for item in resource_config["gpu_inventory"]) or "none"
+    print(
+        "Resource plan: "
+        f"cpu_count={resource_config['detected_cpu_count']}, "
+        f"n_jobs={resource_config['n_jobs']}, "
+        f"chemprop_workers={resource_config['chemprop_num_workers']}, "
+        f"unimol_workers={resource_config['unimol_num_workers']}, "
+        f"gpu={gpu_names}"
+    )
     print(f".env loaded: {dotenv_status_text()}")
     print(
         "Prior Labs API key: "
@@ -10051,6 +10644,13 @@ def main() -> int:
         f"{'on' if bool(getattr(args, 'run_unimol_v1', False)) else 'off'} "
         f"(gpu_detected={'yes' if bool(getattr(args, 'gpu_available', False)) else 'no'})"
     )
+    print(
+        "Uni-Mol V2 stage: "
+        f"{'on' if bool(getattr(args, 'run_unimol_v2', False)) else 'off'} "
+        f"(model_size={getattr(args, 'unimol_model_size', '84m')}, "
+        f"max_atoms={getattr(args, 'unimol_max_atoms', 96)}, "
+        f"amp={'on' if bool(getattr(args, 'unimol_use_amp', True)) else 'off'})"
+    )
     print(f"Leaderboard reference rows stored: {len(leaderboard_ref_df)}")
     print("Datasets:")
     for dataset in datasets:
@@ -10065,28 +10665,52 @@ def main() -> int:
             f"{leaderboard_note if leaderboard_metric or leaderboard_value else ''}"
         )
 
-    overall_start = time.time()
     all_metrics: list[dict[str, Any]] = []
     all_predictions: list[pd.DataFrame] = []
     all_histories: list[pd.DataFrame] = []
     completed_dataset_times: list[float] = []
-    for index, spec in enumerate(datasets, start=1):
-        result = run_dataset(spec, output_dir, args, dataset_position=index, dataset_total=len(datasets))
-        all_metrics.extend(result.metrics_rows)
-        all_predictions.extend(result.prediction_tables)
-        all_histories.extend(result.ga_history_tables)
-        if result.status in {"completed", "resumed"}:
-            completed_dataset_times.append(float(result.elapsed_seconds))
-        elapsed = time.time() - overall_start
-        avg_dataset_time = sum(completed_dataset_times) / max(1, len(completed_dataset_times)) if completed_dataset_times else 0.0
-        remaining = len(datasets) - index
-        eta = avg_dataset_time * remaining if avg_dataset_time else 0.0
-        print(
-            f"[overall {index}/{len(datasets)}] "
-            f"status={result.status} | elapsed {format_seconds(elapsed)} | "
-            f"average per finished dataset {format_seconds(avg_dataset_time) if avg_dataset_time else 'n/a'} | "
-            f"ETA {format_seconds(eta)}"
+    n_parallel_datasets = max(1, int(getattr(args, "parallel_datasets", 1)))
+    if n_parallel_datasets > 1:
+        def _par_progress(completed: int, total: int, spec: Any, result: Any, elapsed: float, avg: float, eta: float) -> None:
+            write_run_timing(
+                "running",
+                phase="main_dataset_loop_parallel",
+                completed_dataset_count=int(completed),
+                last_dataset=str(slugify(spec.name)),
+                last_dataset_status=str(result.status),
+                average_finished_dataset_seconds=round(float(avg), 3) if avg else np.nan,
+                eta_seconds=round(float(eta), 3) if avg else np.nan,
+            )
+        all_metrics, all_predictions, all_histories, completed_dataset_times = _run_datasets_parallel(
+            datasets, output_dir, args, n_parallel_datasets, overall_start, _par_progress
         )
+    else:
+        for index, spec in enumerate(datasets, start=1):
+            result = run_dataset(spec, output_dir, args, dataset_position=index, dataset_total=len(datasets))
+            all_metrics.extend(result.metrics_rows)
+            all_predictions.extend(result.prediction_tables)
+            all_histories.extend(result.ga_history_tables)
+            if result.status in {"completed", "resumed"}:
+                completed_dataset_times.append(float(result.elapsed_seconds))
+            elapsed = time.time() - overall_start
+            avg_dataset_time = sum(completed_dataset_times) / max(1, len(completed_dataset_times)) if completed_dataset_times else 0.0
+            remaining = len(datasets) - index
+            eta = avg_dataset_time * remaining if avg_dataset_time else 0.0
+            print(
+                f"[overall {index}/{len(datasets)}] "
+                f"status={result.status} | elapsed {format_seconds(elapsed)} | "
+                f"average per finished dataset {format_seconds(avg_dataset_time) if avg_dataset_time else 'n/a'} | "
+                f"ETA {format_seconds(eta)}"
+            )
+            write_run_timing(
+                "running",
+                phase="main_dataset_loop",
+                completed_dataset_count=int(index),
+                last_dataset=str(slugify(spec.name)),
+                last_dataset_status=str(result.status),
+                average_finished_dataset_seconds=round(float(avg_dataset_time), 3) if avg_dataset_time else np.nan,
+                eta_seconds=round(float(eta), 3) if avg_dataset_time else np.nan,
+            )
 
     summary = build_summary_from_dataset_metrics(output_dir)
     if summary.empty and all_metrics:
@@ -10141,6 +10765,12 @@ def main() -> int:
     if bool(getattr(args, "run_tdc22_multiseed_best", True)):
         tdc22_specs = tdc22_official_dataset_specs(datasets)
         if tdc22_specs:
+            write_run_timing(
+                "running",
+                phase="tdc22_multiseed",
+                completed_dataset_count=int(len(datasets)),
+                tdc22_multiseed_status="running",
+            )
             multiseed_payload = run_tdc22_best_model_multiseed(
                 datasets=datasets,
                 output_dir=output_dir,
@@ -10158,12 +10788,20 @@ def main() -> int:
                 "reason": "no selected official PyTDC admet_group datasets",
                 "dataset_count": 0,
             }
+    write_run_timing(
+        "completed",
+        phase="completed",
+        completed_dataset_count=int(len(datasets)),
+        tdc22_best_model_multiseed=multiseed_payload,
+    )
     (output_dir / "run_complete.json").write_text(
         json.dumps(
             {
+                "started_at": overall_started_at,
                 "completed_at": time.strftime("%Y-%m-%d %H:%M:%S"),
                 "elapsed_seconds": round(time.time() - overall_start, 3),
                 "dataset_count": len(datasets),
+                "resource_config": resource_config_payload(args),
                 "ga_models_resolved": parse_comma_list(getattr(args, "ga_models_resolved", "")),
                 "run_vs_run_attribution": attribution_payload,
                 "tdc22_best_model_multiseed": multiseed_payload,
@@ -10173,7 +10811,7 @@ def main() -> int:
         encoding="utf-8",
     )
 
-    primary_files = ["summary_metrics.csv", "test_rmse_pivot.csv", "predictions.csv", "run_config.json"]
+    primary_files = ["summary_metrics.csv", "test_rmse_pivot.csv", "predictions.csv", "run_config.json", "run_timing.json", "run_complete.json"]
     if all_histories:
         primary_files.append("ga_history.csv")
     if not step_runtime_summary.empty:

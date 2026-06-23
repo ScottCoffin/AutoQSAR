@@ -902,6 +902,83 @@ cells += [
         STATE["persist_outputs_to_google_drive"] = bool(persist_outputs_to_google_drive and IN_COLAB)
         setup_done("state container")
 
+        setup_start("Resource detection")
+
+        def detected_cpu_count():
+            return max(1, int(os.cpu_count() or 1))
+
+        def autoqsar_n_jobs(value=0):
+            try:
+                requested = int(value)
+            except Exception:
+                requested = 0
+            if requested <= 0:
+                return detected_cpu_count()
+            return max(1, requested)
+
+        def auto_data_loader_workers():
+            cpu_count = detected_cpu_count()
+            return max(1, min(8, cpu_count // 4 if cpu_count >= 4 else 1))
+
+        def resolve_auto_worker_count(value):
+            try:
+                requested = int(value)
+            except Exception:
+                requested = 0
+            if requested <= 0:
+                return auto_data_loader_workers()
+            return max(0, requested)
+
+        def gpu_inventory():
+            if torch is None:
+                return []
+            try:
+                if not bool(torch.cuda.is_available()):
+                    return []
+                rows = []
+                for index in range(int(torch.cuda.device_count())):
+                    props = torch.cuda.get_device_properties(index)
+                    rows.append(
+                        {
+                            "index": int(index),
+                            "name": str(torch.cuda.get_device_name(index)),
+                            "total_memory_gb": round(float(props.total_memory) / (1024 ** 3), 3),
+                            "multi_processor_count": int(getattr(props, "multi_processor_count", 0)),
+                            "compute_capability": f"{getattr(props, 'major', '')}.{getattr(props, 'minor', '')}",
+                        }
+                    )
+                return rows
+            except Exception:
+                return []
+
+        def refresh_resource_config():
+            torch_gpu = bool(torch is not None and torch.cuda.is_available())
+            tf_gpus = [] if tf is None else tf.config.list_physical_devices("GPU")
+            tf_gpu = len(tf_gpus) > 0
+            resource_config = {
+                "detected_cpu_count": detected_cpu_count(),
+                "n_jobs": autoqsar_n_jobs(),
+                "auto_data_loader_workers": auto_data_loader_workers(),
+                "torch_gpu_available": bool(torch_gpu),
+                "tensorflow_gpu_count": int(len(tf_gpus)),
+                "gpu_available": bool(torch_gpu or tf_gpu),
+                "gpu_inventory": gpu_inventory(),
+            }
+            STATE["resource_config"] = dict(resource_config)
+            STATE["gpu_available"] = bool(resource_config["gpu_available"])
+            STATE["deep_learning_execution_mode"] = "gpu" if STATE["gpu_available"] else "cpu"
+            return dict(resource_config)
+
+        STATE["resource_config"] = refresh_resource_config()
+        _gpu_names = ", ".join(item.get("name", "") for item in STATE["resource_config"]["gpu_inventory"]) or "none"
+        setup_done(
+            "Resource detection",
+            f"cpu_count={STATE['resource_config']['detected_cpu_count']}, "
+            f"n_jobs={STATE['resource_config']['n_jobs']}, "
+            f"auto_workers={STATE['resource_config']['auto_data_loader_workers']}, "
+            f"gpu={_gpu_names}",
+        )
+
         setup_start("Model cache helper")
         STATE["cache_session_stamp"] = time.strftime("%Y%m%d_%H%M%S")
 
@@ -4675,6 +4752,16 @@ cells += [
         selector_cache_dir = Path(STATE["feature_selector_cache_dir"]) if STATE.get("feature_selector_cache_dir") else None
         selector_cache_paths = dict(STATE.get("feature_selector_cache_paths", {}))
         train_selector_summary = dict(STATE.get("traditional_train_only_feature_selector", {}))
+        resource_n_jobs = autoqsar_n_jobs()
+        _gpu_available_5a = bool(STATE.get("gpu_available", False))
+        if _gpu_available_5a:
+            _new_cnn_batch = 128 if cnn_batch_size < 128 else cnn_batch_size
+            _new_cnn_epochs = max(cnn_training_epochs, 60)
+            if _new_cnn_batch != cnn_batch_size or _new_cnn_epochs != cnn_training_epochs:
+                print(f"[GPU-aware] CNN: batch_size {cnn_batch_size}→{_new_cnn_batch}, epochs {cnn_training_epochs}→{_new_cnn_epochs}")
+                cnn_batch_size = _new_cnn_batch
+                cnn_training_epochs = _new_cnn_epochs
+        print(f"Conventional ML resource plan: n_jobs={resource_n_jobs}")
         training_cv_split_strategy = current_cv_split_strategy(default_strategy="random", fallback="random")
         effective_cv_folds = None
         if use_cross_validation:
@@ -4711,6 +4798,7 @@ cells += [
             "elasticnet_model_cv_folds": int(elasticnet_internal_cv_folds),
             "elasticnet_model_cv_split_strategy": elasticnet_internal_cv_split_strategy,
             "elasticnet_model_max_iter": int(elasticnet_model_max_iter),
+            "benchmark_n_jobs": int(resource_n_jobs),
         }
         model_specific_cache_metadata = {
             "ElasticNetCV": elasticnet_model_cache_metadata,
@@ -4721,7 +4809,7 @@ cells += [
             alphas=elasticnet_alpha_grid,
             cv=elasticnet_internal_cv,
             max_iter=int(elasticnet_model_max_iter),
-            n_jobs=-1,
+            n_jobs=resource_n_jobs,
             random_state=int(model_random_seed),
         )
         finite_numeric_transform = FunctionTransformer(
@@ -4753,10 +4841,10 @@ cells += [
                 ]
             ),
             "Random forest": RandomForestRegressor(
-                n_estimators=400, random_state=int(model_random_seed), n_jobs=-1
+                n_estimators=400, random_state=int(model_random_seed), n_jobs=resource_n_jobs
             ),
             "Extra trees": ExtraTreesRegressor(
-                n_estimators=500, random_state=int(model_random_seed), n_jobs=-1
+                n_estimators=500, random_state=int(model_random_seed), n_jobs=resource_n_jobs
             ),
             "HistGradientBoosting": Pipeline(
                 [
@@ -4810,7 +4898,7 @@ cells += [
                 colsample_bytree=0.9,
                 objective="reg:squarederror",
                 random_state=int(model_random_seed),
-                n_jobs=2,
+                n_jobs=resource_n_jobs,
             ),
             "CatBoost": CatBoostRegressor(
                 iterations=400,
@@ -4818,6 +4906,7 @@ cells += [
                 learning_rate=0.05,
                 loss_function="RMSE",
                 random_seed=int(model_random_seed),
+                thread_count=resource_n_jobs,
                 verbose=False,
             ),
         }
@@ -4829,7 +4918,7 @@ cells += [
                 subsample=0.9,
                 colsample_bytree=0.9,
                 random_state=int(model_random_seed),
-                n_jobs=2,
+                n_jobs=resource_n_jobs,
             )
         if CatBoostRegressor is not None:
             available_models["MapLight CatBoost"] = CatBoostRegressor(
@@ -4838,6 +4927,7 @@ cells += [
                 learning_rate=0.05,
                 loss_function="RMSE",
                 random_seed=int(model_random_seed),
+                thread_count=resource_n_jobs,
                 verbose=False,
             )
         if run_tabular_cnn:
@@ -4995,6 +5085,7 @@ cells += [
                             "train_only_feature_selector_alpha": feature_metadata["train_only_feature_selector_alpha"],
                             "train_only_feature_selector_l1_ratio": feature_metadata["train_only_feature_selector_l1_ratio"],
                             "train_only_feature_selector_max_features": int(feature_metadata["train_only_feature_selector_max_features"]),
+                            "benchmark_n_jobs": int(resource_n_jobs),
                             **model_specific_cache_metadata.get(name, {}),
                         }
                         if not cache_metadata_matches(metadata, expected_metadata):
@@ -5037,6 +5128,7 @@ cells += [
 
             row = {
                 "Model": name,
+                "Benchmark n_jobs": int(resource_n_jobs),
                 "CV R2": (
                     float(np.mean(scores["test_r2"]))
                     if scores is not None
@@ -5136,6 +5228,7 @@ cells += [
                         "cv_rmse": row["CV RMSE"],
                         "cv_mae": row["CV MAE"],
                         "random_seed": int(model_random_seed),
+                        "benchmark_n_jobs": int(resource_n_jobs),
                         "model_alpha": row.get("Model alpha"),
                         "model_l1_ratio": row.get("Model l1_ratio"),
                         **model_specific_cache_metadata.get(name, {}),
@@ -5551,6 +5644,7 @@ cells += [
         y_train = np.asarray(STATE["y_train"], dtype=float)
         y_test = np.asarray(STATE["y_test"], dtype=float)
         feature_metadata = dict(STATE["traditional_feature_metadata"])
+        resource_n_jobs = autoqsar_n_jobs()
         tuning_split_strategy = str(STATE.get("model_split_strategy", "target_quartiles"))
         tuning_test_fraction = float(STATE.get("model_test_fraction", 0.2))
         tuning_random_seed = int(STATE.get("model_split_random_seed", 42))
@@ -5560,6 +5654,7 @@ cells += [
             f"train={len(X_train)}, test={len(X_test)}, features={X_train.shape[1]}",
             flush=True,
         )
+        print(f"GA tuning resource plan: n_jobs={resource_n_jobs}", flush=True)
 
         def _rounded_float(value, digits=6):
             return float(np.round(float(value), digits))
@@ -5644,7 +5739,7 @@ cells += [
                     min_samples_leaf=int(params["min_samples_leaf"]),
                     max_features=params["max_features"],
                     random_state=42,
-                    n_jobs=1,
+                    n_jobs=resource_n_jobs,
                 ),
                 (
                     {"n_estimators": {"int": [200, 600]}},
@@ -5665,7 +5760,7 @@ cells += [
                     colsample_bytree=float(params["colsample_bytree"]),
                     min_child_weight=int(params["min_child_weight"]),
                     random_state=42,
-                    n_jobs=2,
+                    n_jobs=resource_n_jobs,
                 ),
                 (
                     {"n_estimators": {"int": [200, 600]}},
@@ -5692,6 +5787,7 @@ cells += [
                     learning_rate=float(np.exp(params["log_learning_rate"])),
                     l2_leaf_reg=float(params["l2_leaf_reg"]),
                     random_seed=42,
+                    thread_count=resource_n_jobs,
                     verbose=False,
                 ),
                 (
@@ -5845,6 +5941,7 @@ cells += [
                             "train_only_feature_selector_l1_ratio": feature_metadata.get("train_only_feature_selector_l1_ratio"),
                             "train_only_feature_selector_max_features": int(feature_metadata.get("train_only_feature_selector_max_features", X_train.shape[1])),
                             "use_prepared_4b_split_for_tuning": bool(use_prepared_4b_split_for_tuning),
+                            "benchmark_n_jobs": int(resource_n_jobs),
                         }
                         if not cache_metadata_matches(metadata, expected_metadata):
                             continue
@@ -5882,6 +5979,7 @@ cells += [
                                     "ga_crossover_size": int(ga_crossover_size),
                                     "ga_mutation_size": int(ga_mutation_size),
                                     "ga_mutation_probability": float(ga_mutation_probability),
+                                    "benchmark_n_jobs": int(resource_n_jobs),
                                 },
                             )
                         )
@@ -5924,6 +6022,7 @@ cells += [
                         best_params = metadata.get("best_params", "{}")
                         row = {
                             "Model": model_name,
+                            "Benchmark n_jobs": int(resource_n_jobs),
                             "Best GA Fitness": best_fitness,
                             "GA objective": str(ga_objective),
                             "Best params": str(best_params),
@@ -6051,6 +6150,7 @@ cells += [
                     "ga_state_path": active_state_path,
                     "ga_objective": ga_objective,
                     "ga_cv_folds": int(effective_search_folds),
+                    "benchmark_n_jobs": int(resource_n_jobs),
                     "ga_generations_requested": int(ga_generations),
                     "ga_generations_completed": int(completed_generations),
                     "ga_population_size": int(ga_population_size),
@@ -6283,6 +6383,7 @@ cells += [
             best_fitness = extract_ga_fitness_scalar(best_history.iloc[-1]["Fitness_values"])
             row = {
                 "Model": model_name,
+                "Benchmark n_jobs": int(resource_n_jobs),
                 "Best GA Fitness": best_fitness,
                 "GA objective": str(ga_objective),
                 "Best params": str(best_params),
@@ -6644,14 +6745,20 @@ cells += [
     code(
         """
         # @title 5A. Check whether a GPU is available { display-mode: "form" }
-        torch_gpu = bool(torch is not None and torch.cuda.is_available())
+        resource_config = refresh_resource_config()
+        torch_gpu = bool(resource_config.get("torch_gpu_available", False))
         tf_gpus = [] if tf is None else tf.config.list_physical_devices("GPU")
-        tf_gpu = len(tf_gpus) > 0
-        STATE["gpu_available"] = bool(torch_gpu or tf_gpu)
-        STATE["deep_learning_execution_mode"] = "gpu" if STATE["gpu_available"] else "cpu"
+        gpu_names = ", ".join(item.get("name", "") for item in resource_config.get("gpu_inventory", [])) or "none"
 
         print(f"PyTorch GPU available: {torch_gpu}")
         print(f"TensorFlow GPU devices: {tf_gpus}")
+        print(
+            "Resource plan: "
+            f"cpu_count={resource_config['detected_cpu_count']}, "
+            f"n_jobs={resource_config['n_jobs']}, "
+            f"auto_data_loader_workers={resource_config['auto_data_loader_workers']}, "
+            f"gpu={gpu_names}"
+        )
         if STATE["gpu_available"]:
             display_note("GPU detected. Deep-learning cells should run much faster.")
         else:
@@ -6742,9 +6849,24 @@ cells += [
         )
         feature_metadata = current_feature_metadata()
 
+        resource_n_jobs = autoqsar_n_jobs()
         gpu_available = bool(STATE.get("gpu_available", False))
         STATE["deep_learning_execution_mode"] = "gpu" if gpu_available else "cpu"
+        if gpu_available:
+            _gpu_inv = STATE.get("resource_config", {}).get("gpu_inventory", [])
+            _max_vram_gb = max((item.get("total_memory_gb", 0) for item in _gpu_inv), default=0)
+            _new_width = 256 if chemml_hidden_width < 256 else chemml_hidden_width
+            _new_batch = 128 if _max_vram_gb >= 15 and chemml_batch_size < 128 else chemml_batch_size
+            _new_epochs = max(chemml_training_epochs, 80)
+            if _new_width != chemml_hidden_width or _new_batch != chemml_batch_size or _new_epochs != chemml_training_epochs:
+                print(f"[GPU-aware] ChemML: hidden_width {chemml_hidden_width}→{_new_width}, "
+                      f"batch_size {chemml_batch_size}→{_new_batch}, "
+                      f"epochs {chemml_training_epochs}→{_new_epochs}")
+                chemml_hidden_width = _new_width
+                chemml_batch_size = _new_batch
+                chemml_training_epochs = _new_epochs
         print(f"Deep-learning execution mode: {'GPU acceleration' if gpu_available else 'CPU fallback'}")
+        print(f"Deep-learning resource plan: n_jobs={resource_n_jobs}, auto_data_loader_workers={auto_data_loader_workers()}")
         if gpu_available:
             display_note("GPU detected. Deep-learning training will use GPU acceleration where the underlying library supports it.")
         else:
@@ -7711,6 +7833,7 @@ cells += [
                                     "catboost_depth": int(maplight_depth),
                                     "catboost_learning_rate": float(maplight_learning_rate),
                                     "catboost_loss_function": str(maplight_loss),
+                                    "benchmark_n_jobs": int(resource_n_jobs),
                                 }
                                 if not cache_metadata_matches(metadata, expected_metadata):
                                     continue
@@ -7810,6 +7933,7 @@ cells += [
                             learning_rate=float(maplight_learning_rate),
                             loss_function=str(maplight_loss),
                             random_seed=int(deep_random_seed),
+                            thread_count=int(resource_n_jobs),
                             verbose=False,
                         )
                         maplight_model.fit(X_train_maplight, y_train_maplight)
@@ -7917,6 +8041,7 @@ cells += [
                                     "catboost_depth": int(maplight_depth),
                                     "catboost_learning_rate": float(maplight_learning_rate),
                                     "catboost_loss_function": str(maplight_loss),
+                                    "benchmark_n_jobs": int(resource_n_jobs),
                                     "maplight_embedding_backend": maplight_embedding_backend,
                                     "model_dir": model_dir,
                                     "model_path": model_path,
@@ -7964,7 +8089,7 @@ cells += [
                         "test_smiles": test_smiles,
                         "workflow": "MapLight + GNN",
                     }
-                    row = {"Model": maplight_label, "Workflow": "MapLight + GNN"}
+                    row = {"Model": maplight_label, "Workflow": "MapLight + GNN", "Benchmark n_jobs": int(resource_n_jobs)}
                     row["Execution mode"] = "GPU" if gpu_available else "CPU"
                     row["CV R2"] = maplight_cv_summary["CV R2"]
                     row["CV RMSE"] = maplight_cv_summary["CV RMSE"]
@@ -8749,11 +8874,11 @@ cells += [
         """
         # @title 6C. Train and evaluate Uni-Mol V1 { display-mode: "form" }
         unimol_internal_split = "random" # @param ["random", "scaffold"]
-        unimol_epochs = 1 # @param {type:"slider", min:1, max:50, step:1}
+        unimol_epochs = 10 # @param {type:"slider", min:1, max:50, step:1}
         unimol_learning_rate = 0.0001 # @param {type:"number"}
-        unimol_batch_size = 32 # @param [4, 8, 16, 32]
-        unimol_early_stopping = 2 # @param {type:"slider", min:2, max:15, step:1}
-        unimol_num_workers = 0 # @param [0, 1, 2]
+        unimol_batch_size = 32 # @param [16, 32, 64, 128]
+        unimol_early_stopping = 5 # @param {type:"slider", min:2, max:15, step:1}
+        unimol_num_workers = 0 # @param [0, 1, 2, 4, 8]
 
         if "unimol_train_csv" not in STATE:
             raise RuntimeError("Please prepare the Uni-Mol train/test files first in block 6B.")
@@ -8774,7 +8899,16 @@ cells += [
         )
 
         gpu_available = bool(STATE.get("gpu_available", False))
+        unimol_num_workers = resolve_auto_worker_count(unimol_num_workers)
+        if gpu_available:
+            _gpu_inv = STATE.get("resource_config", {}).get("gpu_inventory", [])
+            _max_vram_gb = max((item.get("total_memory_gb", 0) for item in _gpu_inv), default=0)
+            _gpu_batch = 128 if _max_vram_gb >= 39 else 64 if _max_vram_gb >= 15 else unimol_batch_size
+            if _gpu_batch > unimol_batch_size:
+                print(f"[GPU-aware] Uni-Mol V1 batch_size {unimol_batch_size} → {_gpu_batch} ({_max_vram_gb:.1f} GB VRAM)")
+                unimol_batch_size = _gpu_batch
         print(f"Uni-Mol execution mode: {'GPU acceleration' if gpu_available else 'CPU fallback'}")
+        print(f"Uni-Mol data-loader workers: {unimol_num_workers}")
         if not gpu_available:
             display_note(
                 "No GPU detected. Uni-Mol will run in **CPU fallback** mode. "
@@ -9042,14 +9176,14 @@ cells += [
         # @title 6D. Train and evaluate Uni-Mol V2 { display-mode: "form" }
         filter_unimolv2_incompatible = False # @param {type:"boolean"}
         unimol_internal_split = "random" # @param ["random", "scaffold"]
-        unimol_epochs = 1 # @param {type:"slider", min:1, max:50, step:1}
+        unimol_epochs = 10 # @param {type:"slider", min:1, max:50, step:1}
         unimol_learning_rate = 0.0001 # @param {type:"number"}
-        unimol_batch_size = 32 # @param [4, 8, 16, 32]
-        unimol_early_stopping = 2 # @param {type:"slider", min:2, max:15, step:1}
+        unimol_batch_size = 32 # @param [16, 32, 64, 128]
+        unimol_early_stopping = 5 # @param {type:"slider", min:2, max:15, step:1}
         unimol_model_size = "84m" # @param ["84m", "164m", "310m"]
         unimol_max_atoms = 96 # @param [64, 96, 128]
         unimol_use_amp = True # @param {type:"boolean"}
-        unimol_num_workers = 0 # @param [0, 1, 2]
+        unimol_num_workers = 0 # @param [0, 1, 2, 4, 8]
 
         if "unimol_train_csv" not in STATE:
             raise RuntimeError("Please prepare the Uni-Mol train/test files first in block 6B.")
@@ -9070,7 +9204,22 @@ cells += [
         )
 
         gpu_available = bool(STATE.get("gpu_available", False))
+        unimol_num_workers = resolve_auto_worker_count(unimol_num_workers)
+        if gpu_available:
+            _gpu_inv = STATE.get("resource_config", {}).get("gpu_inventory", [])
+            _max_vram_gb = max((item.get("total_memory_gb", 0) for item in _gpu_inv), default=0)
+            _gpu_batch = 128 if _max_vram_gb >= 39 else 64 if _max_vram_gb >= 15 else unimol_batch_size
+            if _gpu_batch > unimol_batch_size:
+                print(f"[GPU-aware] Uni-Mol V2 batch_size {unimol_batch_size} → {_gpu_batch} ({_max_vram_gb:.1f} GB VRAM)")
+                unimol_batch_size = _gpu_batch
+            # Auto-upgrade model size from the conservative default when VRAM allows it.
+            # Only upgrades from "84m" (the default) so explicit user selections are respected.
+            _auto_model_size = "310m" if _max_vram_gb >= 39 else "164m" if _max_vram_gb >= 15 else None
+            if _auto_model_size and unimol_model_size == "84m":
+                print(f"[GPU-aware] Uni-Mol V2 model_size 84m → {_auto_model_size} ({_max_vram_gb:.1f} GB VRAM)")
+                unimol_model_size = _auto_model_size
         print("Uni-Mol V2 execution mode: GPU required")
+        print(f"Uni-Mol V2 data-loader workers: {unimol_num_workers}")
 
         if not gpu_available:
             display_note(
@@ -9449,7 +9598,7 @@ cells += [
         run_chemprop_selected_features = True # @param {type:"boolean"}
         chemprop_epochs = 15 # @param {type:"slider", min:3, max:100, step:1}
         chemprop_batch_size = 32 # @param [16, 32, 64, 128]
-        chemprop_num_workers = 0 # @param [0, 1, 2, 4]
+        chemprop_num_workers = 0 # @param [0, 1, 2, 4, 8]
         chemprop_ensemble_size = 1 # @param [1, 3, 5]
         chemprop_random_seed = 42 # @param {type:"integer"}
 
@@ -9498,6 +9647,16 @@ cells += [
             import torch
         except Exception:
             torch = None
+        chemprop_num_workers = resolve_auto_worker_count(chemprop_num_workers)
+        _cp_gpu = bool(STATE.get("gpu_available", False))
+        if _cp_gpu:
+            _gpu_inv = STATE.get("resource_config", {}).get("gpu_inventory", [])
+            _max_vram_gb = max((item.get("total_memory_gb", 0) for item in _gpu_inv), default=0)
+            _cp_batch = 128 if _max_vram_gb >= 39 else 64 if _max_vram_gb >= 15 else chemprop_batch_size
+            if _cp_batch > chemprop_batch_size:
+                print(f"[GPU-aware] Chemprop batch_size {chemprop_batch_size}→{_cp_batch} ({_max_vram_gb:.1f} GB VRAM)")
+                chemprop_batch_size = _cp_batch
+        print(f"Chemprop data-loader workers: {chemprop_num_workers}")
 
         if enable_chemprop_model_cache:
             chemprop_output_dir = resolve_model_cache_dir(
@@ -9543,6 +9702,8 @@ cells += [
                         candidate + ["--help"],
                         capture_output=True,
                         text=True,
+                        encoding="utf-8",
+                        errors="replace",
                     )
                 except FileNotFoundError:
                     continue
@@ -9556,7 +9717,13 @@ cells += [
         def _run_chemprop(command_prefix, args, description):
             cmd = command_prefix + args
             print(f"[Chemprop] {description}: {' '.join(str(part) for part in cmd)}", flush=True)
-            result = subprocess.run(cmd, capture_output=True, text=True)
+            result = subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+            )
             if result.returncode != 0:
                 stdout_tail = (result.stdout or "").strip()[-1500:]
                 stderr_tail = (result.stderr or "").strip()[-1500:]
@@ -11729,7 +11896,13 @@ cells += [
                     candidates.append(["chemprop"])
                     for candidate in candidates:
                         try:
-                            probe = subprocess.run(candidate + ["--help"], capture_output=True, text=True)
+                            probe = subprocess.run(
+                                candidate + ["--help"],
+                                capture_output=True,
+                                text=True,
+                                encoding="utf-8",
+                                errors="replace",
+                            )
                         except FileNotFoundError:
                             continue
                         if probe.returncode == 0:
@@ -11880,7 +12053,13 @@ cells += [
                     np.savez(descriptor_prediction_path, descriptor_values)
                     predict_cmd.extend(["--descriptors-path", str(descriptor_prediction_path)])
 
-                result = subprocess.run(predict_cmd, capture_output=True, text=True)
+                result = subprocess.run(
+                    predict_cmd,
+                    capture_output=True,
+                    text=True,
+                    encoding="utf-8",
+                    errors="replace",
+                )
                 if result.returncode != 0:
                     raise RuntimeError(
                         "Chemprop prediction failed. "
@@ -12565,6 +12744,8 @@ cells += [
         mastml_cluster_settings = [2, 3]
         if mastml_use_custom_bandwidth:
             mastml_params["bandwidth"] = float(mastml_bandwidth)
+        resource_n_jobs = autoqsar_n_jobs()
+        print(f"Applicability-domain resource plan: n_jobs={resource_n_jobs}", flush=True)
 
         class _MastmlPreprocessorShim:
             def __init__(self):
@@ -12582,7 +12763,7 @@ cells += [
         mastml_model = _MastmlModelShim(
             n_estimators=int(mastml_random_forest_estimators),
             random_state=42,
-            n_jobs=1,
+            n_jobs=resource_n_jobs,
         )
 
         ad_cache_dir = None
@@ -12637,6 +12818,7 @@ cells += [
             "ad_mahalanobis_in_domain_quantile": float(ad_mahalanobis_in_domain_quantile),
             "ad_consensus_low_support_ratio": float(ad_consensus_low_support_ratio),
             "prediction_smiles_key": ad_prediction_cache_key,
+            "benchmark_n_jobs": int(resource_n_jobs),
         }
 
         ad_model = None
@@ -12692,7 +12874,7 @@ cells += [
                 benchmark_rf = RandomForestRegressor(
                     n_estimators=benchmark_estimators,
                     random_state=42,
-                    n_jobs=1,
+                    n_jobs=resource_n_jobs,
                 )
                 benchmark_start = time.perf_counter()
                 benchmark_rf.fit(

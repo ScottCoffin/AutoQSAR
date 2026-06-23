@@ -21,16 +21,21 @@ GIT_TAG       := $(shell git describe --tags --exact-match 2>/dev/null || echo u
 BUILD_DATE    := $(shell date -u +%Y-%m-%dT%H:%M:%SZ)
 TREE_DIRTY    := $(shell git status --porcelain 2>/dev/null | wc -l | tr -d ' ')
 
-.PHONY: env image sif smoke manifests clean help
+CONDA_ENV     ?= autoqsar-py311
+BENCHMARK_OUTPUT_DIR ?=
+
+.PHONY: env image sif smoke manifests clean help benchmark-a100
 
 help:
 	@echo "AutoQSAR container build targets:"
-	@echo "  make env        Install pinned CPU venv (for local dev/test)"
-	@echo "  make image      Build Docker image (requires clean git tree)"
-	@echo "  make sif        Convert Docker image to Apptainer .sif"
-	@echo "  make smoke      Run CPU smoke test inside container"
-	@echo "  make manifests  Split task_manifest.tsv into GPU/CPU sub-manifests"
-	@echo "  make clean      Remove local build artifacts"
+	@echo "  make env             Install pinned CPU venv (for local dev/test)"
+	@echo "  make image           Build Docker image (requires clean git tree)"
+	@echo "  make sif             Convert Docker image to Apptainer .sif"
+	@echo "  make smoke           Run CPU smoke test inside container"
+	@echo "  make manifests       Split task_manifest.tsv into GPU/CPU sub-manifests"
+	@echo "  make benchmark-a100  Run (or resume) the full A100 benchmark"
+	@echo "    BENCHMARK_OUTPUT_DIR=/path/to/run  resume a specific run directory"
+	@echo "  make clean           Remove local build artifacts"
 
 # ── env: install pinned CPU venv ─────────────────────────────────────────────
 env:
@@ -108,6 +113,19 @@ manifests:
 	CPU_TASKS=$$(awk 'NR>1' hpc/task_manifest_cpu.tsv | wc -l); \
 	echo "GPU tasks: $$GPU_TASKS  (update --array=0-$$((GPU_TASKS-1)) in submit_multiseed.sbatch)"; \
 	echo "CPU tasks: $$CPU_TASKS  (update --array=0-$$((CPU_TASKS-1)) in submit_multiseed_cpu.sbatch)"
+
+# ── benchmark-a100: run or resume full A100 benchmark ────────────────────────
+# Fresh run:   make benchmark-a100
+# Resume run:  make benchmark-a100 BENCHMARK_OUTPUT_DIR=benchmark_results/autoqsar_benchmark_<timestamp>
+benchmark-a100:
+	@if [ -n "$(BENCHMARK_OUTPUT_DIR)" ]; then \
+		echo "Resuming benchmark run at: $(BENCHMARK_OUTPUT_DIR)"; \
+		AUTOQSAR_CONDA_ENV=$(CONDA_ENV) bash js2/run_a100_benchmark.sh \
+			--output-dir "$(BENCHMARK_OUTPUT_DIR)"; \
+	else \
+		echo "Starting fresh A100 benchmark run..."; \
+		AUTOQSAR_CONDA_ENV=$(CONDA_ENV) bash js2/run_a100_benchmark.sh; \
+	fi
 
 # ── clean ─────────────────────────────────────────────────────────────────────
 clean:

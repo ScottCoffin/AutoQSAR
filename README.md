@@ -833,6 +833,48 @@ python portable_colab_qsar_bundle\run_autoqsar_ga_benchmarks.py `
   --rebuild-ensemble
 ```
 
+### Resume On A Different A100 (JetStream2 Or Any GPU Node)
+
+The benchmark writes all state into its output directory. To continue a run on a
+new machine, transfer the directory and point the runner at it:
+
+```bash
+# On the source machine — copy results (skip large model weight files)
+rsync -av \
+  --exclude='*.pth' --exclude='*.pt' --exclude='*.joblib' \
+  benchmark_results/autoqsar_benchmark_<timestamp>/ \
+  user@new-a100:~/AutoQSAR/benchmark_results/autoqsar_benchmark_<timestamp>/
+
+# On the new machine — resume with the canonical A100 launcher
+make benchmark-a100 BENCHMARK_OUTPUT_DIR=benchmark_results/autoqsar_benchmark_<timestamp>
+
+# Or equivalently:
+bash js2/run_a100_benchmark.sh \
+  --output-dir benchmark_results/autoqsar_benchmark_<timestamp>
+```
+
+`js2/run_a100_benchmark.sh` encodes all A100-optimal settings explicitly
+(epochs, batch size, worker counts) so the run is fully reproducible across
+JetStream2 g3.xl nodes without relying on environment-specific defaults. The
+`run_config.json` inside the output directory records the complete configuration
+of any run for auditing and comparison.
+
+#### Resource auto-detection
+
+`run_autoqsar_ga_benchmarks.py` detects resources at startup and applies
+sensible defaults that can be overridden from the CLI:
+
+| Resource | Auto-detected value | Override flag |
+|---|---|---|
+| CPU cores for conventional ML | all detected cores | `--n-jobs N` |
+| Data-loader workers (Chemprop + Uni-Mol) | `min(8, cpu_count // 4)` | `--unimol-num-workers N` / `--chemprop-num-workers N` |
+| Uni-Mol V1 batch size (GPU) | 128 for ≥39 GB VRAM, 64 for ≥15 GB, 32 otherwise | `--unimol-batch-size N` |
+| Uni-Mol V1 epochs (GPU) | 20 when GPU detected, 10 (argparse default) on CPU | `--unimol-epochs N` |
+| Uni-Mol V1 enabled | auto-on when GPU detected, off on CPU | `--run-unimol-v1` / `--no-run-unimol-v1` |
+
+The interactive notebook (`colab_qsar_tutorial.ipynb`) applies the same
+GPU-VRAM-aware batch-size logic at runtime in the Uni-Mol cells (6C and 6D).
+
 ### Compare Two Runs
 
 ```powershell

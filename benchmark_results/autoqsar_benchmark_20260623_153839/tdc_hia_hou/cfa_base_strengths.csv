@@ -1,0 +1,4 @@
+model,train_metric,performance_strength,diversity_strength
+CatBoost,0.0,1000000000000.0,0.0018665471431047328
+ChemML MLP (TensorFlow),0.0,1000000000000.0,0.004025514163102019
+"MapLight + GNN (CatBoost, Strict Parity)",0.0,1000000000000.0,0.002193600916827382

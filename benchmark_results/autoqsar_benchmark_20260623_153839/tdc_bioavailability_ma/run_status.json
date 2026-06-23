@@ -1,0 +1,10 @@
+{
+  "status": "running",
+  "dataset": "tdc_bioavailability_ma",
+  "source": "PyTDC ADME benchmark group: bioavailability_ma (official train_val/test split)",
+  "started_at": "2026-06-23 18:58:39",
+  "checkpoint_stage": "deep:MapLight+GNN",
+  "n_metrics_rows": 20,
+  "n_prediction_tables": 24,
+  "n_stage_records": 23
+}

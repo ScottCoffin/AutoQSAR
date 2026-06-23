@@ -1,0 +1,6 @@
+Model,Weight,Workflow
+Random forest,0.24999945546993604,conventional
+AdaBoost,2.1781202557819027e-06,conventional
+CatBoost,0.24999945546993604,conventional
+ChemML MLP (TensorFlow),0.24999945546993604,ChemML deep learning
+CFA (Combinatorial Fusion),0.24999945546993604,CFA fusion
