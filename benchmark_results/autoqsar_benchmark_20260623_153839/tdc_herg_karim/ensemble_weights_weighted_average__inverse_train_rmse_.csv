@@ -1,0 +1,15 @@
+Model,Weight,Workflow
+LogisticRegression,0.02255950912903876,conventional
+SVC,0.089052999420156,conventional
+HistGradientBoosting,0.05334899169895811,conventional
+"Voting Classifier (KNN, SVM)",0.18448520499507642,conventional
+AdaBoost,0.016206415512345137,conventional
+Tabular MLP,0.08149193090334877,conventional
+XGBoost,0.06574099333526977,conventional
+CatBoost,0.029620495790593514,conventional
+ChemML MLP (PyTorch),0.08529922488437827,ChemML deep learning
+ChemML MLP (TensorFlow),0.060167833209455075,ChemML deep learning
+Uni-Mol V1,0.07284159885320174,Uni-Mol
+Uni-Mol V2 (84m),0.11099552779956554,Uni-Mol
+"MapLight + GNN (CatBoost, Strict Parity)",0.04442096356217609,MapLight + GNN
+CFA (Combinatorial Fusion),0.08376831090643687,cfa

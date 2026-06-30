@@ -1,0 +1,11 @@
+Model,Weight,Workflow
+ElasticNetCV,0.06067626561851687,conventional
+Random forest,0.11491559961614604,conventional
+HistGradientBoosting,0.13816640356707918,conventional
+AdaBoost,0.032008662196830136,conventional
+Tabular CNN,0.031058507563782305,conventional
+CatBoost,0.06408036453904312,conventional
+MapLight CatBoost (Strict Parity),0.06469786615105697,conventional
+ChemML MLP (TensorFlow),0.11972449306045607,ChemML deep learning
+"MapLight + GNN (CatBoost, Strict Parity)",0.07098484313423052,MapLight + GNN
+CFA (Combinatorial Fusion),0.3036869945528587,cfa

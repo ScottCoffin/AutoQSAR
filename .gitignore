@@ -221,9 +221,11 @@ data/*.zip
 # Ignore heavy model artifacts by subdirectory and extension
 **/benchmark_results/**/chemprop_v2/
 **/benchmark_results/**/unimol_v1/
+**/benchmark_results/**/unimol_v2/
 **/benchmark_results/**/chemml_deep_learning/
 **/benchmark_results/**/conventional_ml/
 **/benchmark_results/**/tuned_conventional_ml/
+benchmark_results/abandoned_*/
 **/benchmark_results/*/*/predictions.csv
 **/benchmark_results/**/*.npy
 **/benchmark_results/**/*.npz

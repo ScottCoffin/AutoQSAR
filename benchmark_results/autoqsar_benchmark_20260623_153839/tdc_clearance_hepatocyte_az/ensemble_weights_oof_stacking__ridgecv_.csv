@@ -1,0 +1,4 @@
+Model,Weight,Abs normalized contribution,Workflow
+MapLight CatBoost (Strict Parity),0.014654603353009554,0.01145001369827584,conventional
+Uni-Mol V1,0.2269456829413079,0.17731842451463495,Uni-Mol
+"MapLight + GNN (CatBoost, Strict Parity)",1.038276204614708,0.8112315617870892,MapLight + GNN

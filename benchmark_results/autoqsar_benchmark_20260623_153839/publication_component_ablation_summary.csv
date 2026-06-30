@@ -1,6 +1,6 @@
 stage_order,stage,datasets_evaluated,datasets_improved_vs_previous,datasets_changed_winner,median_marginal_score_improvement,mean_marginal_score_improvement,median_relative_metric_improvement,improvement_fraction
-1,Conventional ML only,8,0,0,,,,0.0
-2,+ MapLight classic features,8,0,0,0.0,0.0,0.0,0.0
-3,+ neural/deep backends,8,4,4,0.02042936288088637,0.057801231897819924,0.02301092043681741,0.5
-4,+ CFA fusion,8,1,2,0.0,0.000784625660718262,0.0,0.125
-5,Full pipeline incl. ensembles,8,1,1,0.0,8.28694835993375e-05,0.0,0.125
+1,Conventional ML only,32,0,0,,,,0.0
+2,+ MapLight classic features,32,10,10,0.0,0.20843533028680195,0.0,0.3125
+3,+ neural/deep backends,32,17,17,0.007944595177458186,0.19115876262294237,0.010132034188531347,0.53125
+4,+ CFA fusion,32,3,3,0.0,0.0007656225949743845,0.0,0.09375
+5,Full pipeline incl. ensembles,32,9,9,0.0,0.030046469498222803,0.0,0.28125

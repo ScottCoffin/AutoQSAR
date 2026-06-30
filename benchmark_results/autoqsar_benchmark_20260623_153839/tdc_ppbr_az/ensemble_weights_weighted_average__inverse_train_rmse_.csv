@@ -1,0 +1,13 @@
+Model,Weight,Workflow
+SVR,0.05870555906462315,conventional
+Random forest,0.09590268866922978,conventional
+Extra trees,0.11395486346133919,conventional
+"Voting Regressor (KNN, SVM)",0.08760595874432103,conventional
+Tabular CNN,0.031027085662507684,conventional
+XGBoost,0.10412213766393416,conventional
+CatBoost,0.07606264926165925,conventional
+MapLight CatBoost (Strict Parity),0.068446166177234,conventional
+ChemML MLP (TensorFlow),0.09888803074607674,ChemML deep learning
+Uni-Mol V1,0.0880584924048917,Uni-Mol
+"MapLight + GNN (CatBoost, Strict Parity)",0.07559283763515562,MapLight + GNN
+CFA (Combinatorial Fusion),0.10163353050902765,cfa

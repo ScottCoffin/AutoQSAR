@@ -1,6 +1,8 @@
 Model,Weight,Workflow
-Random forest,0.24999945546993604,conventional
-AdaBoost,2.1781202557819027e-06,conventional
-CatBoost,0.24999945546993604,conventional
-ChemML MLP (TensorFlow),0.24999945546993604,ChemML deep learning
-CFA (Combinatorial Fusion),0.24999945546993604,cfa
+Random forest,0.24999940596115508,conventional
+AdaBoost,2.1781198244366483e-06,conventional
+CatBoost,0.24999940596115508,conventional
+"Chemprop v2 (D-MPNN, ensemble=3)",1.177362067263001e-07,Chemprop v2
+"Chemprop v2 (CMPNN, ensemble=3)",8.029934836632494e-08,Chemprop v2
+Uni-Mol V1,0.24999940596115508,Uni-Mol
+CFA (Combinatorial Fusion),0.24999940596115508,cfa

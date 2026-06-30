@@ -1,28 +1,28 @@
 dataset,stage_index,total_stages,stage_label,step_type,model,workflow,started_at,started_epoch,status,ended_at,ended_epoch,duration_seconds
-freesolv_sampl,1,27,loading MoleculeNet PhysChem benchmark: FreeSolv (SAMPL),load_dataset,,,2026-06-23 19:47:24 UTC,1782244044.839436,completed,2026-06-23 19:47:24 UTC,1782244044.9035952,0.064
-freesolv_sampl,2,27,building molecular features,feature_generation,,,2026-06-23 19:47:24 UTC,1782244044.903628,completed,2026-06-23 19:47:49 UTC,1782244069.3485436,24.445
-freesolv_sampl,3,27,splitting data and selecting features,feature_selection,,,2026-06-23 19:47:49 UTC,1782244069.348621,completed,2026-06-23 19:48:01 UTC,1782244081.7379856,12.389
-freesolv_sampl,4,27,conventional model ElasticNetCV,model,ElasticNetCV,conventional,2026-06-23 19:48:01 UTC,1782244081.7380679,completed,2026-06-23 19:48:02 UTC,1782244082.1256738,0.388
-freesolv_sampl,5,27,conventional model SVR,model,SVR,conventional,2026-06-23 19:48:02 UTC,1782244082.1257024,completed,2026-06-23 19:48:03 UTC,1782244083.5987637,1.473
-freesolv_sampl,6,27,conventional model Random forest,model,Random forest,conventional,2026-06-23 19:48:03 UTC,1782244083.5987914,completed,2026-06-23 19:48:08 UTC,1782244088.1995118,4.601
-freesolv_sampl,7,27,conventional model Extra trees,model,Extra trees,conventional,2026-06-23 19:48:08 UTC,1782244088.199543,completed,2026-06-23 19:48:12 UTC,1782244092.38739,4.188
-freesolv_sampl,8,27,conventional model HistGradientBoosting,model,HistGradientBoosting,conventional,2026-06-23 19:48:12 UTC,1782244092.3874226,completed,2026-06-23 19:48:14 UTC,1782244094.827788,2.44
-freesolv_sampl,9,27,"conventional model Voting Regressor (KNN, SVM)",model,"Voting Regressor (KNN, SVM)",conventional,2026-06-23 19:48:14 UTC,1782244094.8278308,completed,2026-06-23 19:48:15 UTC,1782244095.3316226,0.504
-freesolv_sampl,10,27,conventional model AdaBoost,model,AdaBoost,conventional,2026-06-23 19:48:15 UTC,1782244095.3316522,completed,2026-06-23 19:48:17 UTC,1782244097.7185946,2.387
-freesolv_sampl,11,27,conventional model Tabular MLP,model,Tabular MLP,conventional,2026-06-23 19:48:17 UTC,1782244097.7186236,completed,2026-06-23 19:48:27 UTC,1782244107.2489157,9.53
-freesolv_sampl,12,27,conventional model Tabular CNN,model,Tabular CNN,conventional,2026-06-23 19:48:27 UTC,1782244107.2489457,completed,2026-06-23 19:48:45 UTC,1782244125.1177833,17.869
-freesolv_sampl,13,27,conventional model XGBoost,model,XGBoost,conventional,2026-06-23 19:48:45 UTC,1782244125.1178248,completed,2026-06-23 19:48:51 UTC,1782244131.2417166,6.124
-freesolv_sampl,14,27,conventional model CatBoost,model,CatBoost,conventional,2026-06-23 19:48:51 UTC,1782244131.241747,completed,2026-06-23 19:48:57 UTC,1782244137.2292063,5.987
-freesolv_sampl,15,27,conventional model MapLight CatBoost (Strict Parity),model,MapLight CatBoost (Strict Parity),conventional,2026-06-23 19:48:57 UTC,1782244137.2292407,completed,2026-06-23 19:49:56 UTC,1782244196.0146112,58.785
-freesolv_sampl,16,27,deep model ChemML MLP (PyTorch),model,ChemML MLP (PyTorch),ChemML deep learning,2026-06-23 19:49:56 UTC,1782244196.0146425,completed,2026-06-23 19:50:07 UTC,1782244207.2806597,11.266
-freesolv_sampl,17,27,deep model ChemML MLP (TensorFlow),model,ChemML MLP (TensorFlow),ChemML deep learning,2026-06-23 19:50:07 UTC,1782244207.2806902,completed,2026-06-23 19:50:40 UTC,1782244240.0042167,32.724
-freesolv_sampl,18,27,"deep model Chemprop v2 (D-MPNN, ensemble=3)",model,"Chemprop v2 (D-MPNN, ensemble=3)",Chemprop v2,2026-06-23 19:50:40 UTC,1782244240.0042496,completed,2026-06-23 19:54:53 UTC,1782244493.369934,253.366
-freesolv_sampl,19,27,"deep model Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",model,"Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",Chemprop v2,2026-06-23 19:54:53 UTC,1782244493.3699641,completed,2026-06-23 19:59:05 UTC,1782244745.6362374,252.266
-freesolv_sampl,20,27,"deep model Chemprop v2 (CMPNN, ensemble=3)",model,"Chemprop v2 (CMPNN, ensemble=3)",Chemprop v2,2026-06-23 19:59:05 UTC,1782244745.6362684,completed,2026-06-23 20:03:20 UTC,1782245000.4797082,254.843
-freesolv_sampl,21,27,"deep model Chemprop v2 (AttentiveFP, ensemble=3)",model,"Chemprop v2 (AttentiveFP, ensemble=3)",Chemprop v2,2026-06-23 20:03:20 UTC,1782245000.4797719,completed,2026-06-23 20:07:36 UTC,1782245256.6797142,256.2
-freesolv_sampl,22,27,"deep model Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",model,"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",Chemprop v2,2026-06-23 20:07:36 UTC,1782245256.6797776,completed,2026-06-23 20:11:51 UTC,1782245511.6661425,254.986
-freesolv_sampl,23,27,deep model Uni-Mol V1,model,Uni-Mol V1,Uni-Mol,2026-06-23 20:11:51 UTC,1782245511.6661735,completed,2026-06-23 20:12:45 UTC,1782245565.4166462,53.75
-freesolv_sampl,24,27,deep model Uni-Mol V2 (310m),model,Uni-Mol V2 (310m),Uni-Mol,2026-06-23 20:12:45 UTC,1782245565.4166768,completed,2026-06-23 20:12:54 UTC,1782245574.6764252,9.26
-freesolv_sampl,25,27,"deep model MapLight + GNN (CatBoost, Strict Parity)",model,"MapLight + GNN (CatBoost, Strict Parity)",MapLight + GNN,2026-06-23 20:12:54 UTC,1782245574.676459,completed,2026-06-23 20:14:20 UTC,1782245660.1201987,85.444
-freesolv_sampl,26,27,CFA combinatorial fusion,model,CFA (Combinatorial Fusion),cfa,2026-06-23 20:14:20 UTC,1782245660.120262,completed,2026-06-23 20:14:20 UTC,1782245660.228581,0.108
-freesolv_sampl,27,27,ensemble (2 method(s)),model,Ensemble,ensemble,2026-06-23 20:14:20 UTC,1782245660.2286124,completed,2026-06-23 20:14:20 UTC,1782245660.8333724,0.605
+freesolv_sampl,1,27,loading MoleculeNet PhysChem benchmark: FreeSolv (SAMPL),load_dataset,,,2026-06-30 14:39:29 UTC,1782830369.4108913,completed,2026-06-30 14:39:29 UTC,1782830369.5096679,0.099
+freesolv_sampl,2,27,building molecular features (cached),feature_generation,,,2026-06-30 14:39:29 UTC,1782830369.5097036,resumed_cache,2026-06-30 14:39:29 UTC,1782830369.5175014,0.008
+freesolv_sampl,3,27,splitting data and selecting features (cached),feature_selection,,,2026-06-30 14:39:29 UTC,1782830369.517535,resumed_cache,2026-06-30 14:39:32 UTC,1782830372.3417063,2.824
+freesolv_sampl,4,27,conventional model ElasticNetCV (cached),model,ElasticNetCV,conventional,2026-06-30 14:39:32 UTC,1782830372.341776,completed,2026-06-30 14:39:32 UTC,1782830372.3435147,0.002
+freesolv_sampl,5,27,conventional model SVR (cached),model,SVR,conventional,2026-06-30 14:39:32 UTC,1782830372.3435454,completed,2026-06-30 14:39:32 UTC,1782830372.3447447,0.001
+freesolv_sampl,6,27,conventional model Random forest (cached),model,Random forest,conventional,2026-06-30 14:39:32 UTC,1782830372.3447742,completed,2026-06-30 14:39:32 UTC,1782830372.3459313,0.001
+freesolv_sampl,7,27,conventional model Extra trees (cached),model,Extra trees,conventional,2026-06-30 14:39:32 UTC,1782830372.3459604,completed,2026-06-30 14:39:32 UTC,1782830372.3471224,0.001
+freesolv_sampl,8,27,conventional model HistGradientBoosting (cached),model,HistGradientBoosting,conventional,2026-06-30 14:39:32 UTC,1782830372.3471515,completed,2026-06-30 14:39:32 UTC,1782830372.3483424,0.001
+freesolv_sampl,9,27,"conventional model Voting Regressor (KNN, SVM) (cached)",model,"Voting Regressor (KNN, SVM)",conventional,2026-06-30 14:39:32 UTC,1782830372.3483713,completed,2026-06-30 14:39:32 UTC,1782830372.349572,0.001
+freesolv_sampl,10,27,conventional model AdaBoost (cached),model,AdaBoost,conventional,2026-06-30 14:39:32 UTC,1782830372.3496008,completed,2026-06-30 14:39:32 UTC,1782830372.35084,0.001
+freesolv_sampl,11,27,conventional model Tabular MLP (cached),model,Tabular MLP,conventional,2026-06-30 14:39:32 UTC,1782830372.3508692,completed,2026-06-30 14:39:32 UTC,1782830372.3521328,0.001
+freesolv_sampl,12,27,conventional model Tabular CNN (cached),model,Tabular CNN,conventional,2026-06-30 14:39:32 UTC,1782830372.3521612,completed,2026-06-30 14:39:32 UTC,1782830372.3534484,0.001
+freesolv_sampl,13,27,conventional model XGBoost (cached),model,XGBoost,conventional,2026-06-30 14:39:32 UTC,1782830372.3534765,completed,2026-06-30 14:39:32 UTC,1782830372.3547566,0.001
+freesolv_sampl,14,27,conventional model CatBoost (cached),model,CatBoost,conventional,2026-06-30 14:39:32 UTC,1782830372.3547845,completed,2026-06-30 14:39:32 UTC,1782830372.356108,0.001
+freesolv_sampl,15,27,conventional model MapLight CatBoost (Strict Parity) (cached),model,MapLight CatBoost (Strict Parity),conventional,2026-06-30 14:39:32 UTC,1782830372.3561368,completed,2026-06-30 14:39:32 UTC,1782830372.3580325,0.002
+freesolv_sampl,16,27,deep model ChemML MLP (PyTorch) (cached),model,ChemML MLP (PyTorch),ChemML deep learning,2026-06-30 14:39:32 UTC,1782830372.358059,completed,2026-06-30 14:39:32 UTC,1782830372.3595352,0.001
+freesolv_sampl,17,27,deep model ChemML MLP (TensorFlow) (cached),model,ChemML MLP (TensorFlow),ChemML deep learning,2026-06-30 14:39:32 UTC,1782830372.3595648,completed,2026-06-30 14:39:32 UTC,1782830372.361004,0.001
+freesolv_sampl,18,27,"deep model Chemprop v2 (D-MPNN, ensemble=3)",model,"Chemprop v2 (D-MPNN, ensemble=3)",Chemprop v2,2026-06-30 14:39:32 UTC,1782830372.361062,completed,2026-06-30 14:43:50 UTC,1782830630.0140615,257.653
+freesolv_sampl,19,27,"deep model Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",model,"Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",Chemprop v2,2026-06-30 14:43:50 UTC,1782830630.0141218,completed,2026-06-30 14:48:15 UTC,1782830895.9244225,265.91
+freesolv_sampl,20,27,"deep model Chemprop v2 (CMPNN, ensemble=3)",model,"Chemprop v2 (CMPNN, ensemble=3)",Chemprop v2,2026-06-30 14:48:15 UTC,1782830895.9244792,completed,2026-06-30 14:52:35 UTC,1782831155.091003,259.167
+freesolv_sampl,21,27,"deep model Chemprop v2 (AttentiveFP, ensemble=3)",model,"Chemprop v2 (AttentiveFP, ensemble=3)",Chemprop v2,2026-06-30 14:52:35 UTC,1782831155.091032,completed,2026-06-30 14:56:54 UTC,1782831414.028109,258.937
+freesolv_sampl,22,27,"deep model Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",model,"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",Chemprop v2,2026-06-30 14:56:54 UTC,1782831414.0281405,completed,2026-06-30 15:01:18 UTC,1782831678.6961167,264.668
+freesolv_sampl,23,27,deep model Uni-Mol V1 (cached),model,Uni-Mol V1,Uni-Mol,2026-06-30 15:01:18 UTC,1782831678.696177,completed,2026-06-30 15:01:19 UTC,1782831679.4009106,0.705
+freesolv_sampl,24,27,deep model Uni-Mol V2 (84m) (cached),model,Uni-Mol V2 (84m),Uni-Mol,2026-06-30 15:01:19 UTC,1782831679.4010153,completed,2026-06-30 15:01:19 UTC,1782831679.4039671,0.003
+freesolv_sampl,25,27,"deep model MapLight + GNN (CatBoost, Strict Parity) (cached)",model,"MapLight + GNN (CatBoost, Strict Parity)",MapLight + GNN,2026-06-30 15:01:19 UTC,1782831679.4040053,completed,2026-06-30 15:01:19 UTC,1782831679.4059331,0.002
+freesolv_sampl,26,27,CFA combinatorial fusion (cached),model,CFA (Combinatorial Fusion),cfa,2026-06-30 15:01:19 UTC,1782831679.4059649,completed,2026-06-30 15:01:19 UTC,1782831679.4094677,0.004
+freesolv_sampl,27,27,ensemble (2 method(s)),model,Ensemble,ensemble,2026-06-30 15:01:19 UTC,1782831679.4095006,completed,2026-06-30 15:01:20 UTC,1782831680.0931776,0.684

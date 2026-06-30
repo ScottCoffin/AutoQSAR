@@ -14,7 +14,7 @@
     "metric_value_numeric":0.848,
     "is_top10_entry":true,
     "reference_source":"literature_static",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_carcinogens_lagunin",
@@ -31,7 +31,7 @@
     "metric_value_numeric":0.842,
     "is_top10_entry":true,
     "reference_source":"literature_static",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_carcinogens_lagunin",
@@ -48,7 +48,7 @@
     "metric_value_numeric":0.83,
     "is_top10_entry":true,
     "reference_source":"literature_static",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_carcinogens_lagunin",
@@ -65,7 +65,7 @@
     "metric_value_numeric":0.822,
     "is_top10_entry":true,
     "reference_source":"literature_static",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_carcinogens_lagunin",
@@ -82,7 +82,7 @@
     "metric_value_numeric":0.795,
     "is_top10_entry":true,
     "reference_source":"literature_static",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_carcinogens_lagunin",
@@ -99,7 +99,7 @@
     "metric_value_numeric":0.783,
     "is_top10_entry":true,
     "reference_source":"literature_static",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_carcinogens_lagunin",
@@ -116,7 +116,7 @@
     "metric_value_numeric":0.783,
     "is_top10_entry":true,
     "reference_source":"literature_static",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_carcinogens_lagunin",
@@ -133,7 +133,7 @@
     "metric_value_numeric":0.751,
     "is_top10_entry":true,
     "reference_source":"literature_static",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_carcinogens_lagunin",
@@ -150,7 +150,7 @@
     "metric_value_numeric":0.74,
     "is_top10_entry":true,
     "reference_source":"literature_static",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_carcinogens_lagunin",
@@ -167,7 +167,7 @@
     "metric_value_numeric":0.73,
     "is_top10_entry":true,
     "reference_source":"literature_static",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_skin_reaction",
@@ -184,7 +184,7 @@
     "metric_value_numeric":0.741,
     "is_top10_entry":true,
     "reference_source":"literature_static",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_skin_reaction",
@@ -201,7 +201,7 @@
     "metric_value_numeric":0.733,
     "is_top10_entry":true,
     "reference_source":"literature_static",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_skin_reaction",
@@ -218,7 +218,7 @@
     "metric_value_numeric":0.731,
     "is_top10_entry":true,
     "reference_source":"literature_static",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_skin_reaction",
@@ -235,7 +235,7 @@
     "metric_value_numeric":0.695,
     "is_top10_entry":true,
     "reference_source":"literature_static",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_skin_reaction",
@@ -252,7 +252,7 @@
     "metric_value_numeric":0.677,
     "is_top10_entry":true,
     "reference_source":"literature_static",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_skin_reaction",
@@ -269,7 +269,7 @@
     "metric_value_numeric":0.659,
     "is_top10_entry":true,
     "reference_source":"literature_static",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_skin_reaction",
@@ -286,7 +286,7 @@
     "metric_value_numeric":0.643,
     "is_top10_entry":true,
     "reference_source":"literature_static",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_skin_reaction",
@@ -303,7 +303,7 @@
     "metric_value_numeric":0.613,
     "is_top10_entry":true,
     "reference_source":"literature_static",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_skin_reaction",
@@ -320,7 +320,7 @@
     "metric_value_numeric":0.499,
     "is_top10_entry":true,
     "reference_source":"literature_static",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_skin_reaction",
@@ -337,7 +337,7 @@
     "metric_value_numeric":0.451,
     "is_top10_entry":true,
     "reference_source":"literature_static",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_hydrationfreeenergy_freesolv",
@@ -354,7 +354,7 @@
     "metric_value_numeric":0.654,
     "is_top10_entry":true,
     "reference_source":"literature_static",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_hydrationfreeenergy_freesolv",
@@ -371,7 +371,7 @@
     "metric_value_numeric":1.024,
     "is_top10_entry":true,
     "reference_source":"literature_static",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_hydrationfreeenergy_freesolv",
@@ -388,7 +388,7 @@
     "metric_value_numeric":1.068,
     "is_top10_entry":true,
     "reference_source":"literature_static",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_hydrationfreeenergy_freesolv",
@@ -405,7 +405,7 @@
     "metric_value_numeric":1.106,
     "is_top10_entry":true,
     "reference_source":"literature_static",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_hydrationfreeenergy_freesolv",
@@ -422,7 +422,7 @@
     "metric_value_numeric":1.211,
     "is_top10_entry":true,
     "reference_source":"literature_static",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_hydrationfreeenergy_freesolv",
@@ -439,7 +439,7 @@
     "metric_value_numeric":1.261,
     "is_top10_entry":true,
     "reference_source":"literature_static",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_half_life_obach",
@@ -456,7 +456,7 @@
     "metric_value_numeric":0.576,
     "is_top10_entry":true,
     "reference_source":"tdc",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_half_life_obach",
@@ -473,7 +473,7 @@
     "metric_value_numeric":0.562,
     "is_top10_entry":true,
     "reference_source":"tdc",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_half_life_obach",
@@ -490,7 +490,7 @@
     "metric_value_numeric":0.557,
     "is_top10_entry":true,
     "reference_source":"tdc",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_half_life_obach",
@@ -507,7 +507,7 @@
     "metric_value_numeric":0.547,
     "is_top10_entry":true,
     "reference_source":"tdc",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_half_life_obach",
@@ -524,7 +524,7 @@
     "metric_value_numeric":0.544,
     "is_top10_entry":true,
     "reference_source":"tdc",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_half_life_obach",
@@ -541,7 +541,7 @@
     "metric_value_numeric":0.495,
     "is_top10_entry":true,
     "reference_source":"tdc",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_half_life_obach",
@@ -558,7 +558,7 @@
     "metric_value_numeric":0.485,
     "is_top10_entry":true,
     "reference_source":"tdc",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_half_life_obach",
@@ -575,7 +575,7 @@
     "metric_value_numeric":0.438,
     "is_top10_entry":true,
     "reference_source":"tdc",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_half_life_obach",
@@ -592,7 +592,7 @@
     "metric_value_numeric":0.392,
     "is_top10_entry":true,
     "reference_source":"tdc",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_half_life_obach",
@@ -609,7 +609,7 @@
     "metric_value_numeric":0.372,
     "is_top10_entry":true,
     "reference_source":"tdc",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"polaris_adme_fang_rppb_1",
@@ -626,7 +626,7 @@
     "metric_value_numeric":0.235,
     "is_top10_entry":true,
     "reference_source":"polaris",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"polaris_adme_fang_rppb_1",
@@ -643,7 +643,7 @@
     "metric_value_numeric":0.265,
     "is_top10_entry":true,
     "reference_source":"polaris",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"polaris_adme_fang_rppb_1",
@@ -660,7 +660,7 @@
     "metric_value_numeric":0.23,
     "is_top10_entry":true,
     "reference_source":"polaris",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"polaris_adme_fang_rppb_1",
@@ -677,7 +677,7 @@
     "metric_value_numeric":0.316,
     "is_top10_entry":true,
     "reference_source":"polaris",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"polaris_adme_fang_rppb_1",
@@ -694,7 +694,7 @@
     "metric_value_numeric":0.361,
     "is_top10_entry":true,
     "reference_source":"polaris",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"polaris_adme_fang_rppb_1",
@@ -711,7 +711,7 @@
     "metric_value_numeric":0.436,
     "is_top10_entry":true,
     "reference_source":"polaris",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"polaris_adme_fang_rppb_1",
@@ -728,7 +728,7 @@
     "metric_value_numeric":0.457,
     "is_top10_entry":true,
     "reference_source":"polaris",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"polaris_adme_fang_rppb_1",
@@ -745,7 +745,7 @@
     "metric_value_numeric":0.634,
     "is_top10_entry":true,
     "reference_source":"polaris",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"polaris_adme_fang_rppb_1",
@@ -762,7 +762,7 @@
     "metric_value_numeric":0.517,
     "is_top10_entry":true,
     "reference_source":"polaris",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"polaris_adme_fang_rppb_1",
@@ -779,7 +779,7 @@
     "metric_value_numeric":0.555,
     "is_top10_entry":true,
     "reference_source":"polaris",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_caco2_wang",
@@ -796,7 +796,7 @@
     "metric_value_numeric":0.256,
     "is_top10_entry":true,
     "reference_source":"tdc",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_caco2_wang",
@@ -813,7 +813,7 @@
     "metric_value_numeric":0.274,
     "is_top10_entry":true,
     "reference_source":"tdc",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_caco2_wang",
@@ -830,7 +830,7 @@
     "metric_value_numeric":0.276,
     "is_top10_entry":true,
     "reference_source":"tdc",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_caco2_wang",
@@ -847,7 +847,7 @@
     "metric_value_numeric":0.285,
     "is_top10_entry":true,
     "reference_source":"tdc",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_caco2_wang",
@@ -864,7 +864,7 @@
     "metric_value_numeric":0.287,
     "is_top10_entry":true,
     "reference_source":"tdc",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_caco2_wang",
@@ -881,7 +881,7 @@
     "metric_value_numeric":0.287,
     "is_top10_entry":true,
     "reference_source":"tdc",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_caco2_wang",
@@ -898,7 +898,7 @@
     "metric_value_numeric":0.289,
     "is_top10_entry":true,
     "reference_source":"tdc",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_caco2_wang",
@@ -915,7 +915,7 @@
     "metric_value_numeric":0.297,
     "is_top10_entry":true,
     "reference_source":"tdc",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_caco2_wang",
@@ -932,7 +932,7 @@
     "metric_value_numeric":0.321,
     "is_top10_entry":true,
     "reference_source":"tdc",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_caco2_wang",
@@ -949,7 +949,7 @@
     "metric_value_numeric":0.326,
     "is_top10_entry":true,
     "reference_source":"tdc",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_clearance_microsome_az",
@@ -966,7 +966,7 @@
     "metric_value_numeric":0.63,
     "is_top10_entry":true,
     "reference_source":"tdc",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_clearance_microsome_az",
@@ -983,7 +983,7 @@
     "metric_value_numeric":0.628,
     "is_top10_entry":true,
     "reference_source":"tdc",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_clearance_microsome_az",
@@ -1000,7 +1000,7 @@
     "metric_value_numeric":0.626,
     "is_top10_entry":true,
     "reference_source":"tdc",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_clearance_microsome_az",
@@ -1017,7 +1017,7 @@
     "metric_value_numeric":0.625,
     "is_top10_entry":true,
     "reference_source":"tdc",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_clearance_microsome_az",
@@ -1034,7 +1034,7 @@
     "metric_value_numeric":0.625,
     "is_top10_entry":true,
     "reference_source":"tdc",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_clearance_microsome_az",
@@ -1051,7 +1051,7 @@
     "metric_value_numeric":0.599,
     "is_top10_entry":true,
     "reference_source":"tdc",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_clearance_microsome_az",
@@ -1068,7 +1068,7 @@
     "metric_value_numeric":0.597,
     "is_top10_entry":true,
     "reference_source":"tdc",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_clearance_microsome_az",
@@ -1085,7 +1085,7 @@
     "metric_value_numeric":0.586,
     "is_top10_entry":true,
     "reference_source":"tdc",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_clearance_microsome_az",
@@ -1102,7 +1102,7 @@
     "metric_value_numeric":0.585,
     "is_top10_entry":true,
     "reference_source":"tdc",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_clearance_microsome_az",
@@ -1119,7 +1119,7 @@
     "metric_value_numeric":0.578,
     "is_top10_entry":true,
     "reference_source":"tdc",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"esol_delaney",
@@ -1136,7 +1136,7 @@
     "metric_value_numeric":0.8851,
     "is_top10_entry":true,
     "reference_source":"moleculenet",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"esol_delaney",
@@ -1153,7 +1153,7 @@
     "metric_value_numeric":1.7406,
     "is_top10_entry":true,
     "reference_source":"moleculenet",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_vdss_lombardo",
@@ -1170,7 +1170,7 @@
     "metric_value_numeric":0.713,
     "is_top10_entry":true,
     "reference_source":"tdc",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_vdss_lombardo",
@@ -1187,7 +1187,7 @@
     "metric_value_numeric":0.707,
     "is_top10_entry":true,
     "reference_source":"tdc",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_vdss_lombardo",
@@ -1204,7 +1204,7 @@
     "metric_value_numeric":0.628,
     "is_top10_entry":true,
     "reference_source":"tdc",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_vdss_lombardo",
@@ -1221,7 +1221,7 @@
     "metric_value_numeric":0.627,
     "is_top10_entry":true,
     "reference_source":"tdc",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_vdss_lombardo",
@@ -1238,7 +1238,7 @@
     "metric_value_numeric":0.609,
     "is_top10_entry":true,
     "reference_source":"tdc",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_vdss_lombardo",
@@ -1255,7 +1255,7 @@
     "metric_value_numeric":0.582,
     "is_top10_entry":true,
     "reference_source":"tdc",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_vdss_lombardo",
@@ -1272,7 +1272,7 @@
     "metric_value_numeric":0.561,
     "is_top10_entry":true,
     "reference_source":"tdc",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_vdss_lombardo",
@@ -1289,7 +1289,7 @@
     "metric_value_numeric":0.559,
     "is_top10_entry":true,
     "reference_source":"tdc",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_vdss_lombardo",
@@ -1306,7 +1306,7 @@
     "metric_value_numeric":0.535,
     "is_top10_entry":true,
     "reference_source":"tdc",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_vdss_lombardo",
@@ -1323,7 +1323,7 @@
     "metric_value_numeric":0.497,
     "is_top10_entry":true,
     "reference_source":"tdc",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_clearance_hepatocyte_az",
@@ -1340,7 +1340,7 @@
     "metric_value_numeric":0.536,
     "is_top10_entry":true,
     "reference_source":"tdc",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_clearance_hepatocyte_az",
@@ -1357,7 +1357,7 @@
     "metric_value_numeric":0.498,
     "is_top10_entry":true,
     "reference_source":"tdc",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_clearance_hepatocyte_az",
@@ -1374,7 +1374,7 @@
     "metric_value_numeric":0.466,
     "is_top10_entry":true,
     "reference_source":"tdc",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_clearance_hepatocyte_az",
@@ -1391,7 +1391,7 @@
     "metric_value_numeric":0.447,
     "is_top10_entry":true,
     "reference_source":"tdc",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_clearance_hepatocyte_az",
@@ -1408,7 +1408,7 @@
     "metric_value_numeric":0.446,
     "is_top10_entry":true,
     "reference_source":"tdc",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_clearance_hepatocyte_az",
@@ -1425,7 +1425,7 @@
     "metric_value_numeric":0.44,
     "is_top10_entry":true,
     "reference_source":"tdc",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_clearance_hepatocyte_az",
@@ -1442,7 +1442,7 @@
     "metric_value_numeric":0.44,
     "is_top10_entry":true,
     "reference_source":"tdc",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_clearance_hepatocyte_az",
@@ -1459,7 +1459,7 @@
     "metric_value_numeric":0.439,
     "is_top10_entry":true,
     "reference_source":"tdc",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_clearance_hepatocyte_az",
@@ -1476,7 +1476,7 @@
     "metric_value_numeric":0.431,
     "is_top10_entry":true,
     "reference_source":"tdc",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_clearance_hepatocyte_az",
@@ -1493,7 +1493,7 @@
     "metric_value_numeric":0.43,
     "is_top10_entry":true,
     "reference_source":"tdc",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_clintox",
@@ -1510,7 +1510,7 @@
     "metric_value_numeric":0.996,
     "is_top10_entry":true,
     "reference_source":"literature_static",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_clintox",
@@ -1527,7 +1527,7 @@
     "metric_value_numeric":0.897,
     "is_top10_entry":true,
     "reference_source":"literature_static",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_clintox",
@@ -1544,7 +1544,7 @@
     "metric_value_numeric":0.895,
     "is_top10_entry":true,
     "reference_source":"literature_static",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_clintox",
@@ -1561,7 +1561,7 @@
     "metric_value_numeric":0.892,
     "is_top10_entry":true,
     "reference_source":"literature_static",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_clintox",
@@ -1578,7 +1578,7 @@
     "metric_value_numeric":0.889,
     "is_top10_entry":true,
     "reference_source":"literature_static",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_clintox",
@@ -1595,7 +1595,7 @@
     "metric_value_numeric":0.732,
     "is_top10_entry":true,
     "reference_source":"literature_static",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_toxcast",
@@ -1612,7 +1612,7 @@
     "metric_value_numeric":0.714,
     "is_top10_entry":true,
     "reference_source":"literature_static",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"polaris_adme_fang_hppb_1",
@@ -1629,7 +1629,7 @@
     "metric_value_numeric":0.143,
     "is_top10_entry":true,
     "reference_source":"polaris",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"polaris_adme_fang_hppb_1",
@@ -1646,7 +1646,7 @@
     "metric_value_numeric":0.152,
     "is_top10_entry":true,
     "reference_source":"polaris",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"polaris_adme_fang_hppb_1",
@@ -1663,7 +1663,7 @@
     "metric_value_numeric":0.21,
     "is_top10_entry":true,
     "reference_source":"polaris",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"polaris_adme_fang_hppb_1",
@@ -1680,7 +1680,7 @@
     "metric_value_numeric":0.219,
     "is_top10_entry":true,
     "reference_source":"polaris",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"polaris_adme_fang_hppb_1",
@@ -1697,7 +1697,7 @@
     "metric_value_numeric":0.258,
     "is_top10_entry":true,
     "reference_source":"polaris",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"polaris_adme_fang_hppb_1",
@@ -1714,7 +1714,7 @@
     "metric_value_numeric":0.303,
     "is_top10_entry":true,
     "reference_source":"polaris",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"polaris_adme_fang_hppb_1",
@@ -1731,7 +1731,7 @@
     "metric_value_numeric":0.249,
     "is_top10_entry":true,
     "reference_source":"polaris",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"polaris_adme_fang_hppb_1",
@@ -1748,7 +1748,7 @@
     "metric_value_numeric":0.249,
     "is_top10_entry":true,
     "reference_source":"polaris",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"polaris_adme_fang_hppb_1",
@@ -1765,7 +1765,7 @@
     "metric_value_numeric":0.333,
     "is_top10_entry":true,
     "reference_source":"polaris",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"polaris_adme_fang_hppb_1",
@@ -1782,7 +1782,7 @@
     "metric_value_numeric":0.383,
     "is_top10_entry":true,
     "reference_source":"polaris",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"poduam_pod_nc_std",
@@ -1799,7 +1799,7 @@
     "metric_value_numeric":0.73,
     "is_top10_entry":true,
     "reference_source":"literature_static",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"poduam_pod_nc_std",
@@ -1816,7 +1816,7 @@
     "metric_value_numeric":0.55,
     "is_top10_entry":true,
     "reference_source":"literature_static",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"polaris_adme_fang_solu_1",
@@ -1833,7 +1833,7 @@
     "metric_value_numeric":0.222,
     "is_top10_entry":true,
     "reference_source":"polaris",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"polaris_adme_fang_solu_1",
@@ -1850,7 +1850,7 @@
     "metric_value_numeric":0.229,
     "is_top10_entry":true,
     "reference_source":"polaris",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"polaris_adme_fang_solu_1",
@@ -1867,7 +1867,7 @@
     "metric_value_numeric":0.257,
     "is_top10_entry":true,
     "reference_source":"polaris",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"polaris_adme_fang_solu_1",
@@ -1884,7 +1884,7 @@
     "metric_value_numeric":0.291,
     "is_top10_entry":true,
     "reference_source":"polaris",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"polaris_adme_fang_solu_1",
@@ -1901,7 +1901,7 @@
     "metric_value_numeric":0.314,
     "is_top10_entry":true,
     "reference_source":"polaris",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"polaris_adme_fang_solu_1",
@@ -1918,7 +1918,7 @@
     "metric_value_numeric":0.311,
     "is_top10_entry":true,
     "reference_source":"polaris",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"polaris_adme_fang_solu_1",
@@ -1935,7 +1935,7 @@
     "metric_value_numeric":0.323,
     "is_top10_entry":true,
     "reference_source":"polaris",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"polaris_adme_fang_solu_1",
@@ -1952,7 +1952,7 @@
     "metric_value_numeric":0.323,
     "is_top10_entry":true,
     "reference_source":"polaris",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"polaris_adme_fang_solu_1",
@@ -1969,7 +1969,7 @@
     "metric_value_numeric":0.325,
     "is_top10_entry":true,
     "reference_source":"polaris",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"polaris_adme_fang_solu_1",
@@ -1986,7 +1986,7 @@
     "metric_value_numeric":0.329,
     "is_top10_entry":true,
     "reference_source":"polaris",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"poduam_pod_rd_std",
@@ -2003,7 +2003,7 @@
     "metric_value_numeric":0.63,
     "is_top10_entry":true,
     "reference_source":"literature_static",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"poduam_pod_rd_std",
@@ -2020,7 +2020,7 @@
     "metric_value_numeric":0.41,
     "is_top10_entry":true,
     "reference_source":"literature_static",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"polaris_adme_fang_perm_1",
@@ -2037,7 +2037,7 @@
     "metric_value_numeric":0.113,
     "is_top10_entry":true,
     "reference_source":"polaris",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"polaris_adme_fang_perm_1",
@@ -2054,7 +2054,7 @@
     "metric_value_numeric":0.129,
     "is_top10_entry":true,
     "reference_source":"polaris",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"polaris_adme_fang_perm_1",
@@ -2071,7 +2071,7 @@
     "metric_value_numeric":0.161,
     "is_top10_entry":true,
     "reference_source":"polaris",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"polaris_adme_fang_perm_1",
@@ -2088,7 +2088,7 @@
     "metric_value_numeric":0.176,
     "is_top10_entry":true,
     "reference_source":"polaris",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"polaris_adme_fang_perm_1",
@@ -2105,7 +2105,7 @@
     "metric_value_numeric":0.182,
     "is_top10_entry":true,
     "reference_source":"polaris",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"polaris_adme_fang_perm_1",
@@ -2122,7 +2122,7 @@
     "metric_value_numeric":0.203,
     "is_top10_entry":true,
     "reference_source":"polaris",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"polaris_adme_fang_perm_1",
@@ -2139,7 +2139,7 @@
     "metric_value_numeric":0.232,
     "is_top10_entry":true,
     "reference_source":"polaris",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"polaris_adme_fang_perm_1",
@@ -2156,7 +2156,7 @@
     "metric_value_numeric":0.239,
     "is_top10_entry":true,
     "reference_source":"polaris",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"polaris_adme_fang_perm_1",
@@ -2173,7 +2173,7 @@
     "metric_value_numeric":0.248,
     "is_top10_entry":true,
     "reference_source":"polaris",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"polaris_adme_fang_perm_1",
@@ -2190,7 +2190,7 @@
     "metric_value_numeric":0.257,
     "is_top10_entry":true,
     "reference_source":"polaris",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_ppbr_az",
@@ -2207,7 +2207,7 @@
     "metric_value_numeric":7.44,
     "is_top10_entry":true,
     "reference_source":"tdc",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_ppbr_az",
@@ -2224,7 +2224,7 @@
     "metric_value_numeric":7.526,
     "is_top10_entry":true,
     "reference_source":"tdc",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_ppbr_az",
@@ -2241,7 +2241,7 @@
     "metric_value_numeric":7.66,
     "is_top10_entry":true,
     "reference_source":"tdc",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_ppbr_az",
@@ -2258,7 +2258,7 @@
     "metric_value_numeric":7.696,
     "is_top10_entry":true,
     "reference_source":"tdc",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_ppbr_az",
@@ -2275,7 +2275,7 @@
     "metric_value_numeric":7.788,
     "is_top10_entry":true,
     "reference_source":"tdc",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_ppbr_az",
@@ -2292,7 +2292,7 @@
     "metric_value_numeric":7.914,
     "is_top10_entry":true,
     "reference_source":"tdc",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_ppbr_az",
@@ -2309,7 +2309,7 @@
     "metric_value_numeric":7.99,
     "is_top10_entry":true,
     "reference_source":"tdc",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_ppbr_az",
@@ -2326,7 +2326,7 @@
     "metric_value_numeric":8.2,
     "is_top10_entry":true,
     "reference_source":"tdc",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_ppbr_az",
@@ -2343,7 +2343,7 @@
     "metric_value_numeric":8.288,
     "is_top10_entry":true,
     "reference_source":"tdc",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_ppbr_az",
@@ -2360,7 +2360,7 @@
     "metric_value_numeric":8.68,
     "is_top10_entry":true,
     "reference_source":"tdc",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"polaris_adme_fang_rclint_1",
@@ -2377,7 +2377,7 @@
     "metric_value_numeric":0.216,
     "is_top10_entry":true,
     "reference_source":"polaris",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"polaris_adme_fang_rclint_1",
@@ -2394,7 +2394,7 @@
     "metric_value_numeric":0.22,
     "is_top10_entry":true,
     "reference_source":"polaris",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"polaris_adme_fang_rclint_1",
@@ -2411,7 +2411,7 @@
     "metric_value_numeric":0.243,
     "is_top10_entry":true,
     "reference_source":"polaris",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"polaris_adme_fang_rclint_1",
@@ -2428,7 +2428,7 @@
     "metric_value_numeric":0.296,
     "is_top10_entry":true,
     "reference_source":"polaris",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"polaris_adme_fang_rclint_1",
@@ -2445,7 +2445,7 @@
     "metric_value_numeric":0.31,
     "is_top10_entry":true,
     "reference_source":"polaris",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"polaris_adme_fang_rclint_1",
@@ -2462,7 +2462,7 @@
     "metric_value_numeric":0.297,
     "is_top10_entry":true,
     "reference_source":"polaris",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"polaris_adme_fang_rclint_1",
@@ -2479,7 +2479,7 @@
     "metric_value_numeric":0.337,
     "is_top10_entry":true,
     "reference_source":"polaris",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"polaris_adme_fang_rclint_1",
@@ -2496,7 +2496,7 @@
     "metric_value_numeric":0.334,
     "is_top10_entry":true,
     "reference_source":"polaris",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"polaris_adme_fang_rclint_1",
@@ -2513,7 +2513,7 @@
     "metric_value_numeric":0.34,
     "is_top10_entry":true,
     "reference_source":"polaris",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"polaris_adme_fang_rclint_1",
@@ -2530,7 +2530,7 @@
     "metric_value_numeric":0.403,
     "is_top10_entry":true,
     "reference_source":"polaris",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"lipophilicity",
@@ -2547,7 +2547,7 @@
     "metric_value_numeric":0.7806,
     "is_top10_entry":true,
     "reference_source":"moleculenet",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"lipophilicity",
@@ -2564,7 +2564,7 @@
     "metric_value_numeric":0.9621,
     "is_top10_entry":true,
     "reference_source":"moleculenet",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_lipophilicity_astrazeneca",
@@ -2581,7 +2581,7 @@
     "metric_value_numeric":0.456,
     "is_top10_entry":true,
     "reference_source":"tdc",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_lipophilicity_astrazeneca",
@@ -2598,7 +2598,7 @@
     "metric_value_numeric":0.467,
     "is_top10_entry":true,
     "reference_source":"tdc",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_lipophilicity_astrazeneca",
@@ -2615,7 +2615,7 @@
     "metric_value_numeric":0.47,
     "is_top10_entry":true,
     "reference_source":"tdc",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_lipophilicity_astrazeneca",
@@ -2632,7 +2632,7 @@
     "metric_value_numeric":0.479,
     "is_top10_entry":true,
     "reference_source":"tdc",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_lipophilicity_astrazeneca",
@@ -2649,7 +2649,7 @@
     "metric_value_numeric":0.512,
     "is_top10_entry":true,
     "reference_source":"tdc",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_lipophilicity_astrazeneca",
@@ -2666,7 +2666,7 @@
     "metric_value_numeric":0.515,
     "is_top10_entry":true,
     "reference_source":"tdc",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_lipophilicity_astrazeneca",
@@ -2683,7 +2683,7 @@
     "metric_value_numeric":0.525,
     "is_top10_entry":true,
     "reference_source":"tdc",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_lipophilicity_astrazeneca",
@@ -2700,7 +2700,7 @@
     "metric_value_numeric":0.535,
     "is_top10_entry":true,
     "reference_source":"tdc",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_lipophilicity_astrazeneca",
@@ -2717,7 +2717,7 @@
     "metric_value_numeric":0.538,
     "is_top10_entry":true,
     "reference_source":"tdc",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_lipophilicity_astrazeneca",
@@ -2734,7 +2734,7 @@
     "metric_value_numeric":0.539,
     "is_top10_entry":true,
     "reference_source":"tdc",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_tox21",
@@ -2751,7 +2751,7 @@
     "metric_value_numeric":0.867,
     "is_top10_entry":true,
     "reference_source":"literature_static",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_tox21",
@@ -2768,7 +2768,7 @@
     "metric_value_numeric":0.851,
     "is_top10_entry":true,
     "reference_source":"literature_static",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_tox21",
@@ -2785,7 +2785,7 @@
     "metric_value_numeric":0.849,
     "is_top10_entry":true,
     "reference_source":"literature_static",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_tox21",
@@ -2802,7 +2802,7 @@
     "metric_value_numeric":0.844,
     "is_top10_entry":true,
     "reference_source":"literature_static",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_tox21",
@@ -2819,7 +2819,7 @@
     "metric_value_numeric":0.84,
     "is_top10_entry":true,
     "reference_source":"literature_static",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_tox21",
@@ -2836,7 +2836,7 @@
     "metric_value_numeric":0.833,
     "is_top10_entry":true,
     "reference_source":"literature_static",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_ld50_zhu",
@@ -2853,7 +2853,7 @@
     "metric_value_numeric":0.552,
     "is_top10_entry":true,
     "reference_source":"tdc",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_ld50_zhu",
@@ -2870,7 +2870,7 @@
     "metric_value_numeric":0.573,
     "is_top10_entry":true,
     "reference_source":"tdc",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_ld50_zhu",
@@ -2887,7 +2887,7 @@
     "metric_value_numeric":0.585,
     "is_top10_entry":true,
     "reference_source":"tdc",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_ld50_zhu",
@@ -2904,7 +2904,7 @@
     "metric_value_numeric":0.588,
     "is_top10_entry":true,
     "reference_source":"tdc",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_ld50_zhu",
@@ -2921,7 +2921,7 @@
     "metric_value_numeric":0.606,
     "is_top10_entry":true,
     "reference_source":"tdc",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_ld50_zhu",
@@ -2938,7 +2938,7 @@
     "metric_value_numeric":0.614,
     "is_top10_entry":true,
     "reference_source":"tdc",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_ld50_zhu",
@@ -2955,7 +2955,7 @@
     "metric_value_numeric":0.621,
     "is_top10_entry":true,
     "reference_source":"tdc",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_ld50_zhu",
@@ -2972,7 +2972,7 @@
     "metric_value_numeric":0.622,
     "is_top10_entry":true,
     "reference_source":"tdc",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_ld50_zhu",
@@ -2989,7 +2989,7 @@
     "metric_value_numeric":0.625,
     "is_top10_entry":true,
     "reference_source":"tdc",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_ld50_zhu",
@@ -3006,7 +3006,7 @@
     "metric_value_numeric":0.63,
     "is_top10_entry":true,
     "reference_source":"tdc",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_solubility_aqsoldb",
@@ -3023,7 +3023,7 @@
     "metric_value_numeric":0.741,
     "is_top10_entry":true,
     "reference_source":"tdc",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_solubility_aqsoldb",
@@ -3040,7 +3040,7 @@
     "metric_value_numeric":0.761,
     "is_top10_entry":true,
     "reference_source":"tdc",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_solubility_aqsoldb",
@@ -3057,7 +3057,7 @@
     "metric_value_numeric":0.775,
     "is_top10_entry":true,
     "reference_source":"tdc",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_solubility_aqsoldb",
@@ -3074,7 +3074,7 @@
     "metric_value_numeric":0.776,
     "is_top10_entry":true,
     "reference_source":"tdc",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_solubility_aqsoldb",
@@ -3091,7 +3091,7 @@
     "metric_value_numeric":0.789,
     "is_top10_entry":true,
     "reference_source":"tdc",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_solubility_aqsoldb",
@@ -3108,7 +3108,7 @@
     "metric_value_numeric":0.792,
     "is_top10_entry":true,
     "reference_source":"tdc",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_solubility_aqsoldb",
@@ -3125,7 +3125,7 @@
     "metric_value_numeric":0.796,
     "is_top10_entry":true,
     "reference_source":"tdc",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_solubility_aqsoldb",
@@ -3142,7 +3142,7 @@
     "metric_value_numeric":0.827,
     "is_top10_entry":true,
     "reference_source":"tdc",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_solubility_aqsoldb",
@@ -3159,7 +3159,7 @@
     "metric_value_numeric":0.828,
     "is_top10_entry":true,
     "reference_source":"tdc",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   },
   {
     "dataset":"tdc_solubility_aqsoldb",
@@ -3176,6 +3176,6 @@
     "metric_value_numeric":0.829,
     "is_top10_entry":true,
     "reference_source":"tdc",
-    "captured_at":"2026-06-23 23:40:11"
+    "captured_at":"2026-06-30 14:12:57"
   }
 ]

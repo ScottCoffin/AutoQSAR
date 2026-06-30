@@ -1,0 +1,4 @@
+Model,Weight,Workflow
+MapLight CatBoost (Strict Parity),0.3461476033574813,conventional
+Uni-Mol V1,0.2737151841737894,Uni-Mol
+"MapLight + GNN (CatBoost, Strict Parity)",0.38013721246872917,MapLight + GNN

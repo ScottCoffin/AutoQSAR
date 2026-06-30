@@ -1,0 +1,9 @@
+{
+  "status": "completed",
+  "dataset": "tdc_bbb_martins",
+  "source": "PyTDC ADME benchmark group: bbb_martins (official train_val/test split)",
+  "completed_at": "2026-06-29 23:27:22",
+  "elapsed_seconds": 196.192,
+  "n_metrics_rows": 35,
+  "n_stage_records": 25
+}

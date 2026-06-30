@@ -1,0 +1,17 @@
+Model,Weight,Workflow
+ElasticNetCV,0.015726432420024777,conventional
+SVR,0.033576737058282624,conventional
+Random forest,0.03035266697958095,conventional
+Extra trees,0.5847484793215348,conventional
+HistGradientBoosting,0.022587088716024308,conventional
+"Voting Regressor (KNN, SVM)",0.0668215594997402,conventional
+AdaBoost,0.00957359534973806,conventional
+Tabular MLP,0.04853973525175985,conventional
+Tabular CNN,0.010501479994161357,conventional
+XGBoost,0.029180122316464063,conventional
+CatBoost,0.017029086717870186,conventional
+MapLight CatBoost (Strict Parity),0.015019155416934478,conventional
+ChemML MLP (TensorFlow),0.02901602586954307,ChemML deep learning
+Uni-Mol V1,0.023419561306532867,Uni-Mol
+"MapLight + GNN (CatBoost, Strict Parity)",0.016914730250885954,MapLight + GNN
+CFA (Combinatorial Fusion),0.04699354353092248,cfa

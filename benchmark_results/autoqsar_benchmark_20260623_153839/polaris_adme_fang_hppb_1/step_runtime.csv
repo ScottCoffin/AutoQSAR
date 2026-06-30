@@ -1,0 +1,19 @@
+dataset,stage_index,total_stages,stage_label,step_type,model,workflow,started_at,started_epoch,status,ended_at,ended_epoch,duration_seconds
+polaris_adme_fang_hppb_1,1,27,loading Polaris ADME benchmark mirror: adme-fang-hppb-1,load_dataset,,,2026-06-30 20:50:42 UTC,1782852642.9533408,completed,2026-06-30 20:50:43 UTC,1782852643.63102,0.678
+polaris_adme_fang_hppb_1,2,27,building molecular features (cached),feature_generation,,,2026-06-30 20:50:43 UTC,1782852643.6310923,resumed_cache,2026-06-30 20:50:43 UTC,1782852643.6558526,0.025
+polaris_adme_fang_hppb_1,3,27,splitting data and selecting features (cached),feature_selection,,,2026-06-30 20:50:43 UTC,1782852643.6559021,resumed_cache,2026-06-30 20:51:02 UTC,1782852662.8597534,19.204
+polaris_adme_fang_hppb_1,4,27,conventional model ElasticNetCV (cached),model,ElasticNetCV,conventional,2026-06-30 20:51:02 UTC,1782852662.8598309,completed,2026-06-30 20:51:02 UTC,1782852662.861567,0.002
+polaris_adme_fang_hppb_1,5,27,conventional model SVR (cached),model,SVR,conventional,2026-06-30 20:51:02 UTC,1782852662.8615973,completed,2026-06-30 20:51:02 UTC,1782852662.8628743,0.001
+polaris_adme_fang_hppb_1,6,27,conventional model Random forest (cached),model,Random forest,conventional,2026-06-30 20:51:02 UTC,1782852662.8629045,completed,2026-06-30 20:51:02 UTC,1782852662.8641388,0.001
+polaris_adme_fang_hppb_1,7,27,conventional model Extra trees (cached),model,Extra trees,conventional,2026-06-30 20:51:02 UTC,1782852662.8641675,completed,2026-06-30 20:51:02 UTC,1782852662.8654191,0.001
+polaris_adme_fang_hppb_1,8,27,conventional model HistGradientBoosting (cached),model,HistGradientBoosting,conventional,2026-06-30 20:51:02 UTC,1782852662.8654478,completed,2026-06-30 20:51:02 UTC,1782852662.8667028,0.001
+polaris_adme_fang_hppb_1,9,27,"conventional model Voting Regressor (KNN, SVM) (cached)",model,"Voting Regressor (KNN, SVM)",conventional,2026-06-30 20:51:02 UTC,1782852662.8667324,completed,2026-06-30 20:51:02 UTC,1782852662.8680003,0.001
+polaris_adme_fang_hppb_1,10,27,conventional model AdaBoost (cached),model,AdaBoost,conventional,2026-06-30 20:51:02 UTC,1782852662.8680296,completed,2026-06-30 20:51:02 UTC,1782852662.8693597,0.001
+polaris_adme_fang_hppb_1,11,27,conventional model Tabular MLP (cached),model,Tabular MLP,conventional,2026-06-30 20:51:02 UTC,1782852662.8693888,completed,2026-06-30 20:51:02 UTC,1782852662.870732,0.001
+polaris_adme_fang_hppb_1,12,27,conventional model Tabular CNN (cached),model,Tabular CNN,conventional,2026-06-30 20:51:02 UTC,1782852662.8707607,completed,2026-06-30 20:51:02 UTC,1782852662.8723447,0.002
+polaris_adme_fang_hppb_1,13,27,conventional model XGBoost (cached),model,XGBoost,conventional,2026-06-30 20:51:02 UTC,1782852662.872374,completed,2026-06-30 20:51:02 UTC,1782852662.873749,0.001
+polaris_adme_fang_hppb_1,14,27,conventional model CatBoost (cached),model,CatBoost,conventional,2026-06-30 20:51:02 UTC,1782852662.8737783,completed,2026-06-30 20:51:02 UTC,1782852662.8751497,0.001
+polaris_adme_fang_hppb_1,15,27,conventional model MapLight CatBoost (Strict Parity) (cached),model,MapLight CatBoost (Strict Parity),conventional,2026-06-30 20:51:02 UTC,1782852662.8751786,completed,2026-06-30 20:51:02 UTC,1782852662.8772113,0.002
+polaris_adme_fang_hppb_1,16,27,deep model ChemML MLP (PyTorch) (cached),model,ChemML MLP (PyTorch),ChemML deep learning,2026-06-30 20:51:02 UTC,1782852662.877239,completed,2026-06-30 20:51:02 UTC,1782852662.8786972,0.001
+polaris_adme_fang_hppb_1,17,27,deep model ChemML MLP (TensorFlow) (cached),model,ChemML MLP (TensorFlow),ChemML deep learning,2026-06-30 20:51:02 UTC,1782852662.8787272,completed,2026-06-30 20:51:02 UTC,1782852662.880227,0.001
+polaris_adme_fang_hppb_1,18,27,"deep model Chemprop v2 (D-MPNN, ensemble=3)",model,"Chemprop v2 (D-MPNN, ensemble=3)",Chemprop v2,2026-06-30 20:51:02 UTC,1782852662.8802862,running,2026-06-30 20:51:02 UTC,1782852662.8802958,0.0

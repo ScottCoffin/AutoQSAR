@@ -1,7 +1,8 @@
 Model,Weight,Workflow
-ElasticNetCV,0.12459183894374916,Conventional ML
-Random forest,0.2369475687021508,Conventional ML
-AdaBoost,0.076333080550713,Conventional ML
-Tabular CNN,0.09231363560531976,Conventional ML
-ChemML MLP (PyTorch),0.3689150310586625,ChemML deep learning
-Uni-Mol V1,0.10089884513940477,Uni-Mol
+ElasticNetCV,0.11604269380361538,conventional
+Random forest,0.2206888861703754,conventional
+AdaBoost,0.0710953170651271,conventional
+Tabular CNN,0.08597933091976478,conventional
+ChemML MLP (PyTorch),0.343601108640988,ChemML deep learning
+Uni-Mol V1,0.09397544727577663,Uni-Mol
+Uni-Mol V2 (84m),0.06861721612435275,Uni-Mol

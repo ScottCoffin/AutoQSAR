@@ -1,0 +1,3 @@
+model,train_metric,performance_strength,diversity_strength
+"MapLight + GNN (CatBoost, Strict Parity)",0.00295857988165682,337.9999999999983,0.05260053437896971
+Uni-Mol V2 (84m),0.015812522983318256,63.24101479915447,0.05260053437896971

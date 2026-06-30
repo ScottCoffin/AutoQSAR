@@ -1,0 +1,9 @@
+{
+  "status": "completed",
+  "dataset": "tdc_clearance_microsome_az",
+  "source": "PyTDC ADME benchmark group: clearance_microsome_az (official train_val/test split)",
+  "completed_at": "2026-06-30 18:15:52",
+  "elapsed_seconds": 1472.746,
+  "n_metrics_rows": 40,
+  "n_stage_records": 27
+}

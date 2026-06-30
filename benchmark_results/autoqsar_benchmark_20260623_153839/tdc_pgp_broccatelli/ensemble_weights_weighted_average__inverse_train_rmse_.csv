@@ -1,0 +1,9 @@
+Model,Weight,Workflow
+LogisticRegression,2.968648462151916e-06,conventional
+Random forest,0.3333261855581898,conventional
+HistGradientBoosting,0.3333261855581898,conventional
+AdaBoost,1.007485787386717e-07,conventional
+CatBoost,1.6327566541828274e-05,conventional
+Uni-Mol V1,1.0165021971570951e-06,Uni-Mol
+Uni-Mol V2 (84m),1.0298596504705641e-06,Uni-Mol
+CFA (Combinatorial Fusion),0.3333261855581898,cfa
