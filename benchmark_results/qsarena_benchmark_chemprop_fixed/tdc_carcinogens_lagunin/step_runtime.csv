@@ -1,0 +1,10 @@
+dataset,stage_index,total_stages,stage_label,step_type,model,workflow,started_at,started_epoch,status,ended_at,ended_epoch,duration_seconds
+tdc_carcinogens_lagunin,1,9,loading PyTDC Tox benchmark: carcinogens_lagunin,load_dataset,,,2026-09-25 18:43:28 UTC,1790361808.0808544,completed,2026-09-25 18:43:28 UTC,1790361808.1599464,0.079
+tdc_carcinogens_lagunin,2,9,building molecular features (cached),feature_generation,,,2026-09-25 18:43:28 UTC,1790361808.1599903,resumed_cache,2026-09-25 18:43:28 UTC,1790361808.1643164,0.004
+tdc_carcinogens_lagunin,3,9,splitting data and selecting features (cached),feature_selection,,,2026-09-25 18:43:28 UTC,1790361808.164349,resumed_cache,2026-09-25 18:43:31 UTC,1790361811.1075048,2.943
+tdc_carcinogens_lagunin,4,9,"deep model Chemprop v2 (D-MPNN, ensemble=3) (cached)",model,"Chemprop v2 (D-MPNN, ensemble=3)",Chemprop v2,2026-09-25 18:43:31 UTC,1790361811.107553,completed,2026-09-25 18:43:31 UTC,1790361811.1092303,0.002
+tdc_carcinogens_lagunin,5,9,"deep model Chemprop v2 (D-MPNN + RDKit2D, ensemble=3) (cached)",model,"Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",Chemprop v2,2026-09-25 18:43:31 UTC,1790361811.1092618,completed,2026-09-25 18:43:31 UTC,1790361811.1105378,0.001
+tdc_carcinogens_lagunin,6,9,"deep model Chemprop v2 (CMPNN, ensemble=3) (cached)",model,"Chemprop v2 (CMPNN, ensemble=3)",Chemprop v2,2026-09-25 18:43:31 UTC,1790361811.1105673,completed,2026-09-25 18:43:31 UTC,1790361811.1117735,0.001
+tdc_carcinogens_lagunin,7,9,"deep model Chemprop v2 (AttentiveFP, ensemble=3) (cached)",model,"Chemprop v2 (AttentiveFP, ensemble=3)",Chemprop v2,2026-09-25 18:43:31 UTC,1790361811.111878,completed,2026-09-25 18:43:31 UTC,1790361811.113192,0.001
+tdc_carcinogens_lagunin,8,9,"deep model Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3) (cached)",model,"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",Chemprop v2,2026-09-25 18:43:31 UTC,1790361811.113223,completed,2026-09-25 18:43:31 UTC,1790361811.1144495,0.001
+tdc_carcinogens_lagunin,9,9,ensemble (2 method(s)),model,Ensemble,ensemble,2026-09-25 18:43:31 UTC,1790361811.1145072,completed,2026-09-25 18:43:32 UTC,1790361812.4207127,1.306

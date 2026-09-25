@@ -1,0 +1,10 @@
+dataset,stage_index,total_stages,stage_label,step_type,model,workflow,started_at,started_epoch,status,ended_at,ended_epoch,duration_seconds
+freesolv_sampl,1,9,loading MoleculeNet PhysChem benchmark: FreeSolv (SAMPL),load_dataset,,,2026-09-25 19:03:59 UTC,1790363039.2336164,completed,2026-09-25 19:03:59 UTC,1790363039.298548,0.065
+freesolv_sampl,2,9,building molecular features (cached),feature_generation,,,2026-09-25 19:03:59 UTC,1790363039.2985969,resumed_cache,2026-09-25 19:03:59 UTC,1790363039.3016195,0.003
+freesolv_sampl,3,9,splitting data and selecting features (cached),feature_selection,,,2026-09-25 19:03:59 UTC,1790363039.3016503,resumed_cache,2026-09-25 19:04:01 UTC,1790363041.9596772,2.658
+freesolv_sampl,4,9,"deep model Chemprop v2 (D-MPNN, ensemble=3)",model,"Chemprop v2 (D-MPNN, ensemble=3)",Chemprop v2,2026-09-25 19:04:01 UTC,1790363041.9597228,completed,2026-09-25 19:07:48 UTC,1790363268.6931124,226.733
+freesolv_sampl,5,9,"deep model Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",model,"Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",Chemprop v2,2026-09-25 19:07:48 UTC,1790363268.6931403,completed,2026-09-25 19:11:40 UTC,1790363500.568294,231.875
+freesolv_sampl,6,9,"deep model Chemprop v2 (CMPNN, ensemble=3)",model,"Chemprop v2 (CMPNN, ensemble=3)",Chemprop v2,2026-09-25 19:11:40 UTC,1790363500.5683203,completed,2026-09-25 19:15:28 UTC,1790363728.1913376,227.623
+freesolv_sampl,7,9,"deep model Chemprop v2 (AttentiveFP, ensemble=3)",model,"Chemprop v2 (AttentiveFP, ensemble=3)",Chemprop v2,2026-09-25 19:15:28 UTC,1790363728.1915638,completed,2026-09-25 19:19:12 UTC,1790363952.7803915,224.589
+freesolv_sampl,8,9,"deep model Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",model,"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",Chemprop v2,2026-09-25 19:19:12 UTC,1790363952.7804174,completed,2026-09-25 19:22:52 UTC,1790364172.7515254,219.971
+freesolv_sampl,9,9,ensemble (2 method(s)),model,Ensemble,ensemble,2026-09-25 19:22:52 UTC,1790364172.7515848,completed,2026-09-25 19:22:53 UTC,1790364173.5573657,0.806

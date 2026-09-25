@@ -1,0 +1,28 @@
+dataset,stage_index,total_stages,stage_label,step_type,model,workflow,started_at,started_epoch,status,ended_at,ended_epoch,duration_seconds
+esol_delaney,1,27,loading MoleculeNet PhysChem benchmark: ESOL (Delaney),load_dataset,,,2026-06-30 18:15:52 UTC,1782843352.5542846,completed,2026-06-30 18:15:52 UTC,1782843352.781356,0.227
+esol_delaney,2,27,building molecular features (cached),feature_generation,,,2026-06-30 18:15:52 UTC,1782843352.7814236,resumed_cache,2026-06-30 18:15:52 UTC,1782843352.7861476,0.005
+esol_delaney,3,27,splitting data and selecting features (cached),feature_selection,,,2026-06-30 18:15:52 UTC,1782843352.7861943,resumed_cache,2026-06-30 18:15:59 UTC,1782843359.1591592,6.373
+esol_delaney,4,27,conventional model ElasticNetCV (cached),model,ElasticNetCV,conventional,2026-06-30 18:15:59 UTC,1782843359.1592317,completed,2026-06-30 18:15:59 UTC,1782843359.1611245,0.002
+esol_delaney,5,27,conventional model SVR (cached),model,SVR,conventional,2026-06-30 18:15:59 UTC,1782843359.161155,completed,2026-06-30 18:15:59 UTC,1782843359.1624246,0.001
+esol_delaney,6,27,conventional model Random forest (cached),model,Random forest,conventional,2026-06-30 18:15:59 UTC,1782843359.1624546,completed,2026-06-30 18:15:59 UTC,1782843359.1636734,0.001
+esol_delaney,7,27,conventional model Extra trees (cached),model,Extra trees,conventional,2026-06-30 18:15:59 UTC,1782843359.1637154,completed,2026-06-30 18:15:59 UTC,1782843359.1649532,0.001
+esol_delaney,8,27,conventional model HistGradientBoosting (cached),model,HistGradientBoosting,conventional,2026-06-30 18:15:59 UTC,1782843359.164983,completed,2026-06-30 18:15:59 UTC,1782843359.1662154,0.001
+esol_delaney,9,27,"conventional model Voting Regressor (KNN, SVM) (cached)",model,"Voting Regressor (KNN, SVM)",conventional,2026-06-30 18:15:59 UTC,1782843359.1662464,completed,2026-06-30 18:15:59 UTC,1782843359.1675384,0.001
+esol_delaney,10,27,conventional model AdaBoost (cached),model,AdaBoost,conventional,2026-06-30 18:15:59 UTC,1782843359.1675677,completed,2026-06-30 18:15:59 UTC,1782843359.1688576,0.001
+esol_delaney,11,27,conventional model Tabular MLP (cached),model,Tabular MLP,conventional,2026-06-30 18:15:59 UTC,1782843359.1688864,completed,2026-06-30 18:15:59 UTC,1782843359.1702006,0.001
+esol_delaney,12,27,conventional model Tabular CNN (cached),model,Tabular CNN,conventional,2026-06-30 18:15:59 UTC,1782843359.17023,completed,2026-06-30 18:15:59 UTC,1782843359.1715627,0.001
+esol_delaney,13,27,conventional model XGBoost (cached),model,XGBoost,conventional,2026-06-30 18:15:59 UTC,1782843359.171592,completed,2026-06-30 18:15:59 UTC,1782843359.1729498,0.001
+esol_delaney,14,27,conventional model CatBoost (cached),model,CatBoost,conventional,2026-06-30 18:15:59 UTC,1782843359.1729786,completed,2026-06-30 18:15:59 UTC,1782843359.1744046,0.001
+esol_delaney,15,27,conventional model MapLight CatBoost (Strict Parity) (cached),model,MapLight CatBoost (Strict Parity),conventional,2026-06-30 18:15:59 UTC,1782843359.1744342,completed,2026-06-30 18:15:59 UTC,1782843359.1765008,0.002
+esol_delaney,16,27,deep model ChemML MLP (PyTorch) (cached),model,ChemML MLP (PyTorch),ChemML deep learning,2026-06-30 18:15:59 UTC,1782843359.1765294,completed,2026-06-30 18:15:59 UTC,1782843359.1779435,0.001
+esol_delaney,17,27,deep model ChemML MLP (TensorFlow) (cached),model,ChemML MLP (TensorFlow),ChemML deep learning,2026-06-30 18:15:59 UTC,1782843359.1779735,completed,2026-06-30 18:15:59 UTC,1782843359.179485,0.002
+esol_delaney,18,27,"deep model Chemprop v2 (D-MPNN, ensemble=3)",model,"Chemprop v2 (D-MPNN, ensemble=3)",Chemprop v2,2026-06-30 18:15:59 UTC,1782843359.179543,completed,2026-06-30 18:20:40 UTC,1782843640.6863933,281.507
+esol_delaney,19,27,"deep model Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",model,"Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",Chemprop v2,2026-06-30 18:20:40 UTC,1782843640.686424,completed,2026-06-30 18:25:27 UTC,1782843927.0318682,286.345
+esol_delaney,20,27,"deep model Chemprop v2 (CMPNN, ensemble=3)",model,"Chemprop v2 (CMPNN, ensemble=3)",Chemprop v2,2026-06-30 18:25:27 UTC,1782843927.031899,completed,2026-06-30 18:30:07 UTC,1782844207.1555367,280.124
+esol_delaney,21,27,"deep model Chemprop v2 (AttentiveFP, ensemble=3)",model,"Chemprop v2 (AttentiveFP, ensemble=3)",Chemprop v2,2026-06-30 18:30:07 UTC,1782844207.1555827,completed,2026-06-30 18:34:56 UTC,1782844496.9004192,289.745
+esol_delaney,22,27,"deep model Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",model,"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",Chemprop v2,2026-06-30 18:34:56 UTC,1782844496.9004807,completed,2026-06-30 18:39:48 UTC,1782844788.0107975,291.11
+esol_delaney,23,27,deep model Uni-Mol V1 (cached),model,Uni-Mol V1,Uni-Mol,2026-06-30 18:39:48 UTC,1782844788.0108285,completed,2026-06-30 18:39:48 UTC,1782844788.7303813,0.72
+esol_delaney,24,27,deep model Uni-Mol V2 (84m) (cached),model,Uni-Mol V2 (84m),Uni-Mol,2026-06-30 18:39:48 UTC,1782844788.7304835,completed,2026-06-30 18:39:48 UTC,1782844788.7335796,0.003
+esol_delaney,25,27,"deep model MapLight + GNN (CatBoost, Strict Parity) (cached)",model,"MapLight + GNN (CatBoost, Strict Parity)",MapLight + GNN,2026-06-30 18:39:48 UTC,1782844788.7336242,completed,2026-06-30 18:39:48 UTC,1782844788.735592,0.002
+esol_delaney,26,27,CFA combinatorial fusion (cached),model,CFA (Combinatorial Fusion),cfa,2026-06-30 18:39:48 UTC,1782844788.7356267,completed,2026-06-30 18:39:48 UTC,1782844788.7374637,0.002
+esol_delaney,27,27,ensemble (2 method(s)),model,Ensemble,ensemble,2026-06-30 18:39:48 UTC,1782844788.7374947,completed,2026-06-30 18:39:49 UTC,1782844789.4954844,0.758

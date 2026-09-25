@@ -1,0 +1,13 @@
+Model,Weight,Workflow
+ElasticNetCV,0.04081244574020157,conventional
+SVR,0.03443633330021697,conventional
+Random forest,0.09363723089343257,conventional
+HistGradientBoosting,0.0771223394333369,conventional
+"Voting Regressor (KNN, SVM)",0.06877932160164073,conventional
+XGBoost,0.1617663413305864,conventional
+CatBoost,0.06457564732765565,conventional
+MapLight CatBoost (Strict Parity),0.06130061854112552,conventional
+Uni-Mol V1,0.04691660164964201,Uni-Mol
+Uni-Mol V2 (84m),0.05193101841693259,Uni-Mol
+"MapLight + GNN (CatBoost, Strict Parity)",0.07643799327499373,MapLight + GNN
+CFA (Combinatorial Fusion),0.2222841084902354,cfa

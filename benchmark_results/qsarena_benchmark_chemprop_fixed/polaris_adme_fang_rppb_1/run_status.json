@@ -1,0 +1,10 @@
+{
+  "status": "running",
+  "dataset": "polaris_adme_fang_rppb_1",
+  "source": "Polaris ADME benchmark mirror: adme-fang-rppb-1",
+  "started_at": "2026-09-25 21:31:54",
+  "checkpoint_stage": "deep:Chemprop-v2:cmpnn",
+  "n_metrics_rows": 41,
+  "n_prediction_tables": 7,
+  "n_stage_records": 6
+}

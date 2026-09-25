@@ -1,0 +1,10 @@
+dataset,stage_index,total_stages,stage_label,step_type,model,workflow,started_at,started_epoch,status,ended_at,ended_epoch,duration_seconds
+tdc_herg,1,9,loading PyTDC Tox benchmark group: herg (official train_val/test split),load_dataset,,,2026-09-25 19:41:57 UTC,1790365317.7972941,completed,2026-09-25 19:41:57 UTC,1790365317.9862032,0.189
+tdc_herg,2,9,building molecular features (cached),feature_generation,,,2026-09-25 19:41:57 UTC,1790365317.986271,resumed_cache,2026-09-25 19:41:57 UTC,1790365317.993548,0.007
+tdc_herg,3,9,splitting data and selecting features (cached),feature_selection,,,2026-09-25 19:41:57 UTC,1790365317.993591,resumed_cache,2026-09-25 19:42:04 UTC,1790365324.3413053,6.348
+tdc_herg,4,9,"deep model Chemprop v2 (D-MPNN, ensemble=3)",model,"Chemprop v2 (D-MPNN, ensemble=3)",Chemprop v2,2026-09-25 19:42:04 UTC,1790365324.34136,completed,2026-09-25 19:45:53 UTC,1790365553.3675215,229.026
+tdc_herg,5,9,"deep model Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",model,"Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",Chemprop v2,2026-09-25 19:45:53 UTC,1790365553.367579,completed,2026-09-25 19:49:53 UTC,1790365793.773217,240.406
+tdc_herg,6,9,"deep model Chemprop v2 (CMPNN, ensemble=3)",model,"Chemprop v2 (CMPNN, ensemble=3)",Chemprop v2,2026-09-25 19:49:53 UTC,1790365793.773292,completed,2026-09-25 19:53:46 UTC,1790366026.965389,233.192
+tdc_herg,7,9,"deep model Chemprop v2 (AttentiveFP, ensemble=3)",model,"Chemprop v2 (AttentiveFP, ensemble=3)",Chemprop v2,2026-09-25 19:53:46 UTC,1790366026.9654443,completed,2026-09-25 19:57:47 UTC,1790366267.0562513,240.091
+tdc_herg,8,9,"deep model Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",model,"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",Chemprop v2,2026-09-25 19:57:47 UTC,1790366267.0563142,completed,2026-09-25 20:01:38 UTC,1790366498.7683413,231.712
+tdc_herg,9,9,ensemble (2 method(s)),model,Ensemble,ensemble,2026-09-25 20:01:38 UTC,1790366498.7683694,completed,2026-09-25 20:01:39 UTC,1790366499.5255232,0.757

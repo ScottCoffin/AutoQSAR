@@ -1,0 +1,10 @@
+dataset,stage_index,total_stages,stage_label,step_type,model,workflow,started_at,started_epoch,status,ended_at,ended_epoch,duration_seconds
+tdc_bioavailability_ma,1,9,loading PyTDC ADME benchmark group: bioavailability_ma (official train_val/test split),load_dataset,,,2026-09-25 18:44:10 UTC,1790361850.2547874,completed,2026-09-25 18:44:10 UTC,1790361850.4162793,0.161
+tdc_bioavailability_ma,2,9,building molecular features (cached),feature_generation,,,2026-09-25 18:44:10 UTC,1790361850.4163237,resumed_cache,2026-09-25 18:44:10 UTC,1790361850.4201615,0.004
+tdc_bioavailability_ma,3,9,splitting data and selecting features (cached),feature_selection,,,2026-09-25 18:44:10 UTC,1790361850.4201956,resumed_cache,2026-09-25 18:44:16 UTC,1790361856.0881996,5.668
+tdc_bioavailability_ma,4,9,"deep model Chemprop v2 (D-MPNN, ensemble=3)",model,"Chemprop v2 (D-MPNN, ensemble=3)",Chemprop v2,2026-09-25 18:44:16 UTC,1790361856.0882423,completed,2026-09-25 18:47:53 UTC,1790362073.5447545,217.457
+tdc_bioavailability_ma,5,9,"deep model Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",model,"Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",Chemprop v2,2026-09-25 18:47:53 UTC,1790362073.5447834,completed,2026-09-25 18:51:48 UTC,1790362308.1169317,234.572
+tdc_bioavailability_ma,6,9,"deep model Chemprop v2 (CMPNN, ensemble=3)",model,"Chemprop v2 (CMPNN, ensemble=3)",Chemprop v2,2026-09-25 18:51:48 UTC,1790362308.1169598,completed,2026-09-25 18:55:36 UTC,1790362536.913658,228.797
+tdc_bioavailability_ma,7,9,"deep model Chemprop v2 (AttentiveFP, ensemble=3)",model,"Chemprop v2 (AttentiveFP, ensemble=3)",Chemprop v2,2026-09-25 18:55:36 UTC,1790362536.9136844,completed,2026-09-25 18:59:47 UTC,1790362787.6131852,250.7
+tdc_bioavailability_ma,8,9,"deep model Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",model,"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",Chemprop v2,2026-09-25 18:59:47 UTC,1790362787.6132164,completed,2026-09-25 19:03:58 UTC,1790363038.3366308,250.723
+tdc_bioavailability_ma,9,9,ensemble (2 method(s)),model,Ensemble,ensemble,2026-09-25 19:03:58 UTC,1790363038.3366594,completed,2026-09-25 19:03:58 UTC,1790363038.9871073,0.65

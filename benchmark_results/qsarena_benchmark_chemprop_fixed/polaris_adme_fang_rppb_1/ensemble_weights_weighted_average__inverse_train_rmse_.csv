@@ -1,0 +1,12 @@
+Model,Weight,Workflow
+ElasticNetCV,0.05334352242977855,conventional
+SVR,0.18588501611502617,conventional
+Random forest,0.1044025582500627,conventional
+HistGradientBoosting,0.1717646626401525,conventional
+AdaBoost,0.03816773751157733,conventional
+Tabular CNN,0.02943885491344197,conventional
+CatBoost,0.08755996818098717,conventional
+MapLight CatBoost (Strict Parity),0.0996248824035279,conventional
+Uni-Mol V1,0.06527776053449563,Uni-Mol
+Uni-Mol V2 (84m),0.034572718417744626,Uni-Mol
+"MapLight + GNN (CatBoost, Strict Parity)",0.12996231860320548,MapLight + GNN

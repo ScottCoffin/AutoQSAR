@@ -1,0 +1,8 @@
+Model,Weight,Abs normalized contribution,Workflow
+Random forest,2.223153317633315,0.2524970659254946,conventional
+AdaBoost,-0.6124417473149989,0.06955874029054551,conventional
+"Chemprop v2 (D-MPNN, ensemble=3)",0.4203361674816108,0.04774013926509571,Chemprop v2
+"Chemprop v2 (CMPNN, ensemble=3)",0.5859967547009451,0.0665552213741901,Chemprop v2
+Uni-Mol V1,1.7361814507622264,0.19718870433030425,Uni-Mol
+"MapLight + GNN (CatBoost, Strict Parity)",3.186228892851117,0.3618794261425023,MapLight + GNN
+CFA (Combinatorial Fusion),-0.04033157496198038,0.004580702671867574,cfa

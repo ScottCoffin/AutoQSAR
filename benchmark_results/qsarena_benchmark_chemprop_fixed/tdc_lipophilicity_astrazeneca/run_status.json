@@ -1,0 +1,9 @@
+{
+  "status": "completed",
+  "dataset": "tdc_lipophilicity_astrazeneca",
+  "source": "PyTDC ADME benchmark group: lipophilicity_astrazeneca (official train_val/test split)",
+  "completed_at": "2026-06-30 03:06:43",
+  "elapsed_seconds": 1219.567,
+  "n_metrics_rows": 37,
+  "n_stage_records": 27
+}

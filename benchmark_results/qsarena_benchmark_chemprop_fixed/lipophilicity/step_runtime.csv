@@ -1,0 +1,28 @@
+dataset,stage_index,total_stages,stage_label,step_type,model,workflow,started_at,started_epoch,status,ended_at,ended_epoch,duration_seconds
+lipophilicity,1,27,loading MoleculeNet PhysChem benchmark: Lipophilicity,load_dataset,,,2026-06-30 02:11:52 UTC,1782785512.468075,completed,2026-06-30 02:11:53 UTC,1782785513.9274917,1.459
+lipophilicity,2,27,building molecular features (cached),feature_generation,,,2026-06-30 02:11:53 UTC,1782785513.9275634,resumed_cache,2026-06-30 02:11:54 UTC,1782785514.0111866,0.084
+lipophilicity,3,27,splitting data and selecting features (cached),feature_selection,,,2026-06-30 02:11:54 UTC,1782785514.0112638,resumed_cache,2026-06-30 02:12:34 UTC,1782785554.5069084,40.496
+lipophilicity,4,27,conventional model ElasticNetCV (cached),model,ElasticNetCV,conventional,2026-06-30 02:12:34 UTC,1782785554.5069525,completed,2026-06-30 02:12:34 UTC,1782785554.5085554,0.002
+lipophilicity,5,27,conventional model SVR (cached),model,SVR,conventional,2026-06-30 02:12:34 UTC,1782785554.5085847,completed,2026-06-30 02:12:34 UTC,1782785554.5098085,0.001
+lipophilicity,6,27,conventional model Random forest (cached),model,Random forest,conventional,2026-06-30 02:12:34 UTC,1782785554.5098379,completed,2026-06-30 02:12:34 UTC,1782785554.5110521,0.001
+lipophilicity,7,27,conventional model Extra trees (cached),model,Extra trees,conventional,2026-06-30 02:12:34 UTC,1782785554.5110798,completed,2026-06-30 02:12:34 UTC,1782785554.5122957,0.001
+lipophilicity,8,27,conventional model HistGradientBoosting (cached),model,HistGradientBoosting,conventional,2026-06-30 02:12:34 UTC,1782785554.5123422,completed,2026-06-30 02:12:34 UTC,1782785554.5135531,0.001
+lipophilicity,9,27,"conventional model Voting Regressor (KNN, SVM) (cached)",model,"Voting Regressor (KNN, SVM)",conventional,2026-06-30 02:12:34 UTC,1782785554.5135813,completed,2026-06-30 02:12:34 UTC,1782785554.5148242,0.001
+lipophilicity,10,27,conventional model AdaBoost (cached),model,AdaBoost,conventional,2026-06-30 02:12:34 UTC,1782785554.5148523,completed,2026-06-30 02:12:34 UTC,1782785554.5161495,0.001
+lipophilicity,11,27,conventional model Tabular MLP (cached),model,Tabular MLP,conventional,2026-06-30 02:12:34 UTC,1782785554.5161772,completed,2026-06-30 02:12:34 UTC,1782785554.5174792,0.001
+lipophilicity,12,27,conventional model Tabular CNN (cached),model,Tabular CNN,conventional,2026-06-30 02:12:34 UTC,1782785554.517507,completed,2026-06-30 02:12:34 UTC,1782785554.518818,0.001
+lipophilicity,13,27,conventional model XGBoost (cached),model,XGBoost,conventional,2026-06-30 02:12:34 UTC,1782785554.5188475,completed,2026-06-30 02:12:34 UTC,1782785554.5201714,0.001
+lipophilicity,14,27,conventional model CatBoost (cached),model,CatBoost,conventional,2026-06-30 02:12:34 UTC,1782785554.5201986,completed,2026-06-30 02:12:34 UTC,1782785554.5215538,0.001
+lipophilicity,15,27,conventional model MapLight CatBoost (Strict Parity) (cached),model,MapLight CatBoost (Strict Parity),conventional,2026-06-30 02:12:34 UTC,1782785554.5215812,completed,2026-06-30 02:12:34 UTC,1782785554.5236163,0.002
+lipophilicity,16,27,deep model ChemML MLP (PyTorch) (cached),model,ChemML MLP (PyTorch),ChemML deep learning,2026-06-30 02:12:34 UTC,1782785554.5236428,completed,2026-06-30 02:12:34 UTC,1782785554.5250113,0.001
+lipophilicity,17,27,deep model ChemML MLP (TensorFlow) (cached),model,ChemML MLP (TensorFlow),ChemML deep learning,2026-06-30 02:12:34 UTC,1782785554.5250397,completed,2026-06-30 02:12:34 UTC,1782785554.5264974,0.001
+lipophilicity,18,27,"deep model Chemprop v2 (D-MPNN, ensemble=3)",model,"Chemprop v2 (D-MPNN, ensemble=3)",Chemprop v2,2026-06-30 02:12:34 UTC,1782785554.526555,completed,2026-06-30 02:18:49 UTC,1782785929.988683,375.462
+lipophilicity,19,27,"deep model Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",model,"Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",Chemprop v2,2026-06-30 02:18:49 UTC,1782785929.9887092,completed,2026-06-30 02:25:53 UTC,1782786353.7713382,423.783
+lipophilicity,20,27,"deep model Chemprop v2 (CMPNN, ensemble=3)",model,"Chemprop v2 (CMPNN, ensemble=3)",Chemprop v2,2026-06-30 02:25:53 UTC,1782786353.7713683,completed,2026-06-30 02:32:21 UTC,1782786741.4829988,387.712
+lipophilicity,21,27,"deep model Chemprop v2 (AttentiveFP, ensemble=3)",model,"Chemprop v2 (AttentiveFP, ensemble=3)",Chemprop v2,2026-06-30 02:32:21 UTC,1782786741.4831307,completed,2026-06-30 02:39:12 UTC,1782787152.2259676,410.743
+lipophilicity,22,27,"deep model Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",model,"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",Chemprop v2,2026-06-30 02:39:12 UTC,1782787152.2260725,completed,2026-06-30 02:45:42 UTC,1782787542.303347,390.077
+lipophilicity,23,27,deep model Uni-Mol V1 (cached),model,Uni-Mol V1,Uni-Mol,2026-06-30 02:45:42 UTC,1782787542.3033786,completed,2026-06-30 02:45:42 UTC,1782787542.6904094,0.387
+lipophilicity,24,27,deep model Uni-Mol V2 (84m),model,Uni-Mol V2 (84m),Uni-Mol,2026-06-30 02:45:42 UTC,1782787542.6906517,completed,2026-06-30 02:46:22 UTC,1782787582.6075282,39.917
+lipophilicity,25,27,"deep model MapLight + GNN (CatBoost, Strict Parity) (cached)",model,"MapLight + GNN (CatBoost, Strict Parity)",MapLight + GNN,2026-06-30 02:46:22 UTC,1782787582.6075618,completed,2026-06-30 02:46:22 UTC,1782787582.6092167,0.002
+lipophilicity,26,27,CFA combinatorial fusion (cached),model,CFA (Combinatorial Fusion),cfa,2026-06-30 02:46:22 UTC,1782787582.6092477,completed,2026-06-30 02:46:22 UTC,1782787582.6109488,0.002
+lipophilicity,27,27,ensemble (2 method(s)),model,Ensemble,ensemble,2026-06-30 02:46:22 UTC,1782787582.6110098,completed,2026-06-30 02:46:24 UTC,1782787584.0865731,1.476

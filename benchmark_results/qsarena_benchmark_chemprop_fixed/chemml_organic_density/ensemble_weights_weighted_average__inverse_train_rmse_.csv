@@ -1,0 +1,9 @@
+Model,Weight,Workflow
+Random forest,2.928265221296625e-06,conventional
+Extra trees,0.9999873554110801,conventional
+AdaBoost,1.156618621642892e-06,conventional
+Uni-Mol V1,1.8534154589720193e-06,Uni-Mol
+Uni-Mol V2 (84m),7.517141279335543e-07,Uni-Mol
+"Chemprop v2 (D-MPNN, ensemble=3)",1.612143992015388e-06,Chemprop v2
+"Chemprop v2 (CMPNN, ensemble=3)",1.3954516546614702e-06,Chemprop v2
+"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",2.946979843398825e-06,Chemprop v2

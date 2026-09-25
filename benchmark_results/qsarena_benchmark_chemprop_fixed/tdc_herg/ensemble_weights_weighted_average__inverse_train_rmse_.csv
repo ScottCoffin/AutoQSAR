@@ -1,0 +1,9 @@
+Model,Weight,Workflow
+Uni-Mol V1,0.025430698837651387,Uni-Mol
+Uni-Mol V2 (84m),0.04766239856147557,Uni-Mol
+"MapLight + GNN (CatBoost, Strict Parity)",0.2547380171703704,MapLight + GNN
+CFA (Combinatorial Fusion),0.585566610898089,cfa
+"Chemprop v2 (D-MPNN, ensemble=3)",0.007222269588203716,Chemprop v2
+"Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",0.028645888843173883,Chemprop v2
+"Chemprop v2 (CMPNN, ensemble=3)",0.00639918095928978,Chemprop v2
+"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",0.04433493514174624,Chemprop v2

@@ -1,0 +1,10 @@
+dataset,stage_index,total_stages,stage_label,step_type,model,workflow,started_at,started_epoch,status,ended_at,ended_epoch,duration_seconds
+tdc_hia_hou,1,9,loading PyTDC ADME benchmark group: hia_hou (official train_val/test split),load_dataset,,,2026-09-25 18:44:03 UTC,1790361843.7356665,completed,2026-09-25 18:44:03 UTC,1790361843.8829637,0.147
+tdc_hia_hou,2,9,building molecular features (cached),feature_generation,,,2026-09-25 18:44:03 UTC,1790361843.8830144,resumed_cache,2026-09-25 18:44:03 UTC,1790361843.8907566,0.008
+tdc_hia_hou,3,9,splitting data and selecting features (cached),feature_selection,,,2026-09-25 18:44:03 UTC,1790361843.8908145,resumed_cache,2026-09-25 18:44:09 UTC,1790361849.0286987,5.138
+tdc_hia_hou,4,9,"deep model Chemprop v2 (D-MPNN, ensemble=3) (cached)",model,"Chemprop v2 (D-MPNN, ensemble=3)",Chemprop v2,2026-09-25 18:44:09 UTC,1790361849.028743,completed,2026-09-25 18:44:09 UTC,1790361849.0301485,0.001
+tdc_hia_hou,5,9,"deep model Chemprop v2 (D-MPNN + RDKit2D, ensemble=3) (cached)",model,"Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",Chemprop v2,2026-09-25 18:44:09 UTC,1790361849.0301776,completed,2026-09-25 18:44:09 UTC,1790361849.0313702,0.001
+tdc_hia_hou,6,9,"deep model Chemprop v2 (CMPNN, ensemble=3) (cached)",model,"Chemprop v2 (CMPNN, ensemble=3)",Chemprop v2,2026-09-25 18:44:09 UTC,1790361849.0313983,completed,2026-09-25 18:44:09 UTC,1790361849.032575,0.001
+tdc_hia_hou,7,9,"deep model Chemprop v2 (AttentiveFP, ensemble=3) (cached)",model,"Chemprop v2 (AttentiveFP, ensemble=3)",Chemprop v2,2026-09-25 18:44:09 UTC,1790361849.0326023,completed,2026-09-25 18:44:09 UTC,1790361849.0337882,0.001
+tdc_hia_hou,8,9,"deep model Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3) (cached)",model,"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",Chemprop v2,2026-09-25 18:44:09 UTC,1790361849.033834,completed,2026-09-25 18:44:09 UTC,1790361849.0350776,0.001
+tdc_hia_hou,9,9,ensemble (2 method(s)),model,Ensemble,ensemble,2026-09-25 18:44:09 UTC,1790361849.0351052,completed,2026-09-25 18:44:10 UTC,1790361850.1872087,1.152
