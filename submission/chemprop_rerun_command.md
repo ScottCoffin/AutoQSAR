@@ -91,9 +91,17 @@ python portable_colab_qsar_bundle/prepare_chemprop_repair_run.py \
   benchmark_results/autoqsar_benchmark_20260623_153839 \
   benchmark_results/qsarena_benchmark_chemprop_fixed
 
+# Restrict discovery to the 44 seeded datasets. This deliberately excludes the
+# abandoned tdc_herg_central dataset, which has no completed metrics to repair.
+dataset_args=()
+for metrics_file in benchmark_results/qsarena_benchmark_chemprop_fixed/*/metrics.csv; do
+  dataset_args+=(--dataset-name "$(basename "$(dirname "$metrics_file")")")
+done
+
 nohup python portable_colab_qsar_bundle/run_qsarena_benchmarks.py \
   --output-dir benchmark_results/qsarena_benchmark_chemprop_fixed \
   --benchmark-profile full \
+  "${dataset_args[@]}" \
   --only-model-names 'Chemprop v2 (D-MPNN, ensemble=3)' \
   --only-model-names 'Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)' \
   --only-model-names 'Chemprop v2 (CMPNN, ensemble=3)' \
