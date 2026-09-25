@@ -20,7 +20,7 @@ keywords:
 # doi: "10.5281/zenodo.XXXXXXX"   # TODO: add the concept DOI after the first Zenodo release
 preferred-citation:
   type: article
-  title: "No Single Architecture Wins: Ensembles and Conventional Machine Learning Match Pretrained Molecular Models Across 44 Property-Prediction Benchmarks"
+  title: "No Single Model Family Dominates: Ensembles and Conventional Machine Learning Perform Comparably to Pretrained Molecular Models Across 44 Property-Prediction Benchmarks"
   authors:
     - family-names: Coffin
       given-names: Scott

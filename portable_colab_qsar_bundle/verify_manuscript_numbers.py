@@ -45,7 +45,7 @@ chk("no multiseed", d["multiseed_artifacts_present"] is False)
 # ---- wins -----------------------------------------------------------------------------------
 for fam, tot, r, c in [
     ("Ensemble (stacking / averaging)", 16, 7, 9),
-    ("Uni-Mol V1 (3D pretrained)", 11, 6, 5),
+    ("Uni-Mol (3D pretrained)", 11, 6, 5),
     ("Conventional ML", 8, 2, 6),
     ("MapLight + GNN", 4, 4, 0),
     ("Deep tabular NN (ChemML MLP)", 2, 2, 0),
@@ -55,12 +55,12 @@ for fam, tot, r, c in [
     chk(f"wins {fam}", (W[fam]["total"], W[fam]["regression"], W[fam]["classification"]) == (tot, r, c), str(W.get(fam)))
 chk("wins sum to 44", sum(v["total"] for v in W.values()) == 44)
 chk("largest share 36%", round(100 * max(v["total"] for v in W.values()) / 44) == 36)
-chk("3D wins 5 classification", W["Uni-Mol V1 (3D pretrained)"]["classification"] == 5)
+chk("3D wins 5 classification", W["Uni-Mol (3D pretrained)"]["classification"] == 5)
 
 # ---- consistency ----------------------------------------------------------------------------
 for fam, pct, rank in [
     ("Ensemble (stacking / averaging)", 75, 2.0),
-    ("Uni-Mol V1 (3D pretrained)", 70, 4.0),
+    ("Uni-Mol (3D pretrained)", 70, 4.0),
     ("Conventional ML", 66, 3.0),
     ("MapLight + GNN", 27, 8.5),
     ("Deep tabular NN (ChemML MLP)", 25, 12.5),
@@ -108,9 +108,9 @@ chk("cost totals", (round(C["total_recorded_wall_clock_hours"], 1), round(C["med
 m = C["per_family_median_own_seconds"]
 for fam, v, nd in [("CFA combinatorial fusion", 0.3, 1), ("Ensemble (stacking / averaging)", 0.6, 1),
                    ("Conventional ML", 6.8, 1), ("Deep tabular NN (ChemML MLP)", 39.8, 1),
-                   ("MapLight + GNN", 137, 0), ("Chemprop v2 GNN", 269, 0), ("Uni-Mol V1 (3D pretrained)", 374, 0)]:
+                   ("MapLight + GNN", 137, 0), ("Chemprop v2 GNN", 269, 0), ("Uni-Mol (3D pretrained)", 374, 0)]:
     chk(f"cost {fam}", round(m[fam], nd) == v, f"{m[fam]:.2f}")
-chk("unimol 55x conventional", round(m["Uni-Mol V1 (3D pretrained)"] / m["Conventional ML"]) == 55)
+chk("unimol 55x conventional", round(m["Uni-Mol (3D pretrained)"] / m["Conventional ML"]) == 55)
 S = d["selector_scaling"]
 chk("selector 0.77/0.58/295/1003", (round(S["log10_slope"], 2), round(S["pearson_r"], 2), round(S["median_selector_seconds"]), round(S["max_selector_seconds"]), S["max_selector_dataset"]) == (0.77, 0.58, 295, 1003, "tdc_herg_karim"))
 
@@ -129,7 +129,7 @@ t2 = list(csv.DictReader(io.StringIO(pathlib.Path("manuscript_assets/tables/tabl
 chk("table2 has leaderboard columns", {"Est. rank", "Best published", "Leaderboard metric", "Best published model"} <= set(t2[0].keys()))
 chk("table2 rows == datasets", len(t2) == d["datasets_analyzed"])
 chk("table2 ranks populated", sum(1 for r in t2 if str(r["Est. rank"]).strip()) == L["datasets_compared"])
-t6 = {r["Architecture family"]: r for r in csv.DictReader(io.StringIO(pathlib.Path("manuscript_assets/tables/table6_cost.csv").read_text(encoding="utf-8")))}
+t6 = {r["Model family"]: r for r in csv.DictReader(io.StringIO(pathlib.Path("manuscript_assets/tables/table6_cost.csv").read_text(encoding="utf-8")))}
 chk("table6 has published comparators", any("published" in k for k in t6))
 
 print(f"PASS {len(ok)} checks")

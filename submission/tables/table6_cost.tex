@@ -6,7 +6,7 @@
 \label{tab:cost}
 \begin{tabularx}{\dimexpr\paperheight-5cm\relax}{@{}>{\raggedright\arraybackslash\hsize=0.633\hsize}Xrr>{\raggedright\arraybackslash\hsize=0.449\hsize}Xrr>{\raggedright\arraybackslash\hsize=1.918\hsize}X@{}}
 \toprule
-\textbf{Architecture family} & \makecell[r]{\textbf{Model-dataset}\\\textbf{fits timed}} & \makecell[r]{\textbf{Median own}\\\textbf{wall-clock}\\\textbf{(s)}} & \textbf{IQR own wall-clock (s)} & \makecell[r]{\textbf{Median cost}\\\textbf{incl. base pool}\\\textbf{(s)}} & \makecell[r]{\textbf{Median}\\\textbf{trainable}\\\textbf{parameters}} & \textbf{Notes} \\
+\textbf{Model family} & \makecell[r]{\textbf{Model-dataset}\\\textbf{fits timed}} & \makecell[r]{\textbf{Median own}\\\textbf{wall-clock}\\\textbf{(s)}} & \textbf{IQR own wall-clock (s)} & \makecell[r]{\textbf{Median cost}\\\textbf{incl. base pool}\\\textbf{(s)}} & \makecell[r]{\textbf{Median}\\\textbf{trainable}\\\textbf{parameters}} & \textbf{Notes} \\
 \midrule
 CFA combinatorial fusion & 44.0 & 0.3 & 0-\allowbreak{}-\allowbreak{}0 & 1,378 &  & fusion over fitted base-\allowbreak{}model predictions \\
 Ensemble (stacking /\allowbreak{} averaging) & 87.0 & 0.6 & 0-\allowbreak{}-\allowbreak{}1 & 1,378 &  & fusion over fitted base-\allowbreak{}model predictions \\
@@ -14,7 +14,7 @@ Conventional ML & 440.0 & 6.8 & 3-\allowbreak{}-\allowbreak{}20 &  & 157,953 & m
 Deep tabular NN (ChemML MLP) & 88.0 & 39.8 & 27-\allowbreak{}-\allowbreak{}94 &  & 90,369 & measured in this run \\
 Map\allowbreak{}Light + GNN & 44.0 & 137.4 & 126-\allowbreak{}-\allowbreak{}160 &  &  & measured in this run \\
 Chemprop v2 GNN & 25.0 & 268.6 & 229-\allowbreak{}-\allowbreak{}274 &  & 325,552 & measured in this run \\
-Uni-\allowbreak{}Mol V1 (3D pretrained) & 61.0 & 373.5 & 170-\allowbreak{}-\allowbreak{}1285 &  & 47,331,652 & measured in this run \\
+Uni-\allowbreak{}Mol (3D pretrained) & 61.0 & 373.5 & 170-\allowbreak{}-\allowbreak{}1285 &  & 47,331,652 & measured in this run \\
 MolGPS (published) &  &  &  &  &  & \textasciitilde{}3B parameters; GPU pretraining/\allowbreak{}inference reported in literature \\
 MolE (published) &  &  &  &  &  & \textasciitilde{}100M parameters; GPU pretraining reported in literature \\
 ADMET-\allowbreak{}AI (published) &  &  &  &  &  & Chemprop-\allowbreak{}RDKit; exact parameter count not recorded here; GPU-\allowbreak{}capable Chemprop-\allowbreak{}RDKit deployment \\
