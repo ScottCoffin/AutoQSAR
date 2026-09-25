@@ -11,7 +11,7 @@
 #   <CUDA_OR_APPTAINER_MODULE> : e.g. "module load apptainer"
 #   <MAX_CONCURRENT>       : max simultaneous CPU tasks (e.g. 20–40)
 
-#SBATCH --job-name=autoqsar_multiseed_cpu
+#SBATCH --job-name=qsarena_multiseed_cpu
 #SBATCH --account=<ACCOUNT>                  # TODO: replace with your allocation
 #SBATCH --partition=<CPU_PARTITION>          # TODO: replace with cluster CPU partition
 #SBATCH --nodes=1
@@ -46,9 +46,9 @@ fi
 
 echo "Task $SLURM_ARRAY_TASK_ID (CPU): dataset=$DATASET seed=$SEED"
 
-AUTOQSAR_INPUT="${AUTOQSAR_INPUT:-$SCRATCH/autoqsar_in}"
-AUTOQSAR_OUTPUT="${AUTOQSAR_OUTPUT:-$SCRATCH/autoqsar_out}"
-SIF="${SIF:-$SLURM_SUBMIT_DIR/autoqsar.sif}"
+QSARENA_INPUT="${QSARENA_INPUT:-$SCRATCH/qsarena_in}"
+QSARENA_OUTPUT="${QSARENA_OUTPUT:-$SCRATCH/qsarena_out}"
+SIF="${SIF:-$SLURM_SUBMIT_DIR/qsarena.sif}"
 
 if [[ ! -f "$SIF" ]]; then
     echo "ERROR: .sif not found at $SIF" >&2
@@ -56,20 +56,20 @@ if [[ ! -f "$SIF" ]]; then
 fi
 
 # Stage to node-local NVMe if available
-if [[ -n "${TMPDIR:-}" && -d "$TMPDIR" && "$AUTOQSAR_INPUT" != "$TMPDIR/autoqsar_in" ]]; then
-    mkdir -p "$TMPDIR/autoqsar_in"
-    rsync -a --quiet "$AUTOQSAR_INPUT/data/"        "$TMPDIR/autoqsar_in/data/"       2>/dev/null || true
-    rsync -a --quiet "$AUTOQSAR_INPUT/model_cache/" "$TMPDIR/autoqsar_in/model_cache/" 2>/dev/null || true
-    rsync -a --quiet "$AUTOQSAR_INPUT/.cache/"      "$TMPDIR/autoqsar_in/.cache/"     2>/dev/null || true
-    LOCAL_INPUT="$TMPDIR/autoqsar_in"
+if [[ -n "${TMPDIR:-}" && -d "$TMPDIR" && "$QSARENA_INPUT" != "$TMPDIR/qsarena_in" ]]; then
+    mkdir -p "$TMPDIR/qsarena_in"
+    rsync -a --quiet "$QSARENA_INPUT/data/"        "$TMPDIR/qsarena_in/data/"       2>/dev/null || true
+    rsync -a --quiet "$QSARENA_INPUT/model_cache/" "$TMPDIR/qsarena_in/model_cache/" 2>/dev/null || true
+    rsync -a --quiet "$QSARENA_INPUT/.cache/"      "$TMPDIR/qsarena_in/.cache/"     2>/dev/null || true
+    LOCAL_INPUT="$TMPDIR/qsarena_in"
 else
-    LOCAL_INPUT="$AUTOQSAR_INPUT"
+    LOCAL_INPUT="$QSARENA_INPUT"
 fi
 
 # Run WITHOUT --nv (no GPU)
 apptainer run \
     --bind "${LOCAL_INPUT}:/in" \
-    --bind "${AUTOQSAR_OUTPUT}:/out" \
+    --bind "${QSARENA_OUTPUT}:/out" \
     "$SIF" \
         --dataset "$DATASET" \
         --seed    "$SEED" \

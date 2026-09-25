@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# smoke_cpu.sh — CPU smoke test for the AutoQSAR container
+# smoke_cpu.sh — CPU smoke test for the QSARena container
 #
 # Runs one (dataset, seed) unit on CPU inside the Apptainer container and
 # asserts that the expected artifacts exist and the primary metric is finite.
@@ -8,20 +8,20 @@
 #   bash tests/smoke_cpu.sh [SIF_PATH] [INPUT_DIR] [OUTPUT_DIR]
 #
 # Defaults:
-#   SIF_PATH   : ./autoqsar.sif
+#   SIF_PATH   : ./qsarena.sif
 #   INPUT_DIR  : ./   (repo root as bind-mount for data/ and model_cache/)
-#   OUTPUT_DIR : /tmp/autoqsar_smoke_cpu_$$
+#   OUTPUT_DIR : /tmp/qsarena_smoke_cpu_$$
 
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-SIF="${1:-${REPO_ROOT}/autoqsar.sif}"
+SIF="${1:-${REPO_ROOT}/qsarena.sif}"
 INPUT_DIR="${2:-${REPO_ROOT}}"
-OUTPUT_DIR="${3:-/tmp/autoqsar_smoke_cpu_$$}"
+OUTPUT_DIR="${3:-/tmp/qsarena_smoke_cpu_$$}"
 DATASET="tdc_herg"
 SEED=1
 
-echo "=== AutoQSAR CPU smoke test ==="
+echo "=== QSARena CPU smoke test ==="
 echo "  SIF        : $SIF"
 echo "  INPUT_DIR  : $INPUT_DIR"
 echo "  OUTPUT_DIR : $OUTPUT_DIR"

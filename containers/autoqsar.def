@@ -1,27 +1,27 @@
 Bootstrap: docker
 From: nvidia/cuda:12.1.1-cudnn8-runtime-ubuntu22.04
 
-# AutoQSAR Apptainer definition file
+# QSARena Apptainer definition file
 #
 # Build:
-#   apptainer build autoqsar.sif containers/autoqsar.def
+#   apptainer build qsarena.sif containers/qsarena.def
 #
 # Or, build from a pre-exported Docker tarball (faster on HPC):
-#   docker save autoqsar:latest | gzip > autoqsar.tar.gz
-#   apptainer build autoqsar.sif docker-archive://autoqsar.tar.gz
+#   docker save qsarena:latest | gzip > qsarena.tar.gz
+#   apptainer build qsarena.sif docker-archive://qsarena.tar.gz
 #
 # Run (GPU):
 #   apptainer run --nv \
-#     --bind /scratch/autoqsar_in:/in \
-#     --bind /scratch/autoqsar_out:/out \
-#     autoqsar.sif --dataset tdc_caco2_wang --seed 1 \
+#     --bind /scratch/qsarena_in:/in \
+#     --bind /scratch/qsarena_out:/out \
+#     qsarena.sif --dataset tdc_caco2_wang --seed 1 \
 #                  --input-dir /in --output-dir /out --device auto
 #
 # Run (CPU):
 #   apptainer run \
-#     --bind /scratch/autoqsar_in:/in \
-#     --bind /scratch/autoqsar_out:/out \
-#     autoqsar.sif --dataset tdc_caco2_wang --seed 1 \
+#     --bind /scratch/qsarena_in:/in \
+#     --bind /scratch/qsarena_out:/out \
+#     qsarena.sif --dataset tdc_caco2_wang --seed 1 \
 #                  --input-dir /in --output-dir /out --device cpu
 
 %arguments
@@ -30,7 +30,7 @@ From: nvidia/cuda:12.1.1-cudnn8-runtime-ubuntu22.04
     BUILD_DATE=unknown
 
 %labels
-    Author "AutoQSAR project"
+    Author "QSARena project"
     CUDA_Version 12.1
     Python_Version 3.11
     Git_Commit {{ GIT_COMMIT }}
@@ -39,10 +39,10 @@ From: nvidia/cuda:12.1.1-cudnn8-runtime-ubuntu22.04
     Container_Type Apptainer/Singularity
 
 %help
-    AutoQSAR — portable QSAR modeling and benchmarking (CUDA 12.1).
+    QSARena — portable QSAR modeling and benchmarking (CUDA 12.1).
 
     Run one (dataset, seed) unit:
-      apptainer run --nv autoqsar.sif \
+      apptainer run --nv qsarena.sif \
         --dataset <NAME> --seed <INT> \
         --input-dir <path/to/data+model_cache> \
         --output-dir <path/to/results> \
@@ -106,22 +106,22 @@ From: nvidia/cuda:12.1.1-cudnn8-runtime-ubuntu22.04
     cd /tmp/unicore && git checkout ${UNICORE_GIT_SHA}
     pip install --no-cache-dir -e /tmp/unicore
     rm -rf /tmp/unicore
-    cd /opt/autoqsar
+    cd /opt/qsarena
 
     # ── Remaining pinned requirements ─────────────────────────────────────────
     pip install --no-cache-dir \
         --extra-index-url https://download.pytorch.org/whl/cu121 \
-        -r /opt/autoqsar/environment/requirements-lock.txt
+        -r /opt/qsarena/environment/requirements-lock.txt
 
     # ── Vendored PyTDC ────────────────────────────────────────────────────────
-    pip install --no-cache-dir /opt/autoqsar/.cache/pytdc-1.1.15.tar.gz
+    pip install --no-cache-dir /opt/qsarena/.cache/pytdc-1.1.15.tar.gz
 
     # ── Record installed packages into BUILD_PROVENANCE.md ───────────────────
-    echo "" >> /opt/autoqsar/BUILD_PROVENANCE.md
-    echo "## Installed packages (pip freeze inside image)" >> /opt/autoqsar/BUILD_PROVENANCE.md
-    echo "\`\`\`" >> /opt/autoqsar/BUILD_PROVENANCE.md
-    pip freeze >> /opt/autoqsar/BUILD_PROVENANCE.md
-    echo "\`\`\`" >> /opt/autoqsar/BUILD_PROVENANCE.md
+    echo "" >> /opt/qsarena/BUILD_PROVENANCE.md
+    echo "## Installed packages (pip freeze inside image)" >> /opt/qsarena/BUILD_PROVENANCE.md
+    echo "\`\`\`" >> /opt/qsarena/BUILD_PROVENANCE.md
+    pip freeze >> /opt/qsarena/BUILD_PROVENANCE.md
+    echo "\`\`\`" >> /opt/qsarena/BUILD_PROVENANCE.md
 
     # ── Cleanup ───────────────────────────────────────────────────────────────
     apt-get clean
@@ -134,12 +134,12 @@ From: nvidia/cuda:12.1.1-cudnn8-runtime-ubuntu22.04
     export CUBLAS_WORKSPACE_CONFIG=":4096:8"
     export OMP_NUM_THREADS=1
     # Bind-mount paths used by Slurm submission script
-    export AUTOQSAR_INPUT=/in
-    export AUTOQSAR_OUTPUT=/out
+    export QSARENA_INPUT=/in
+    export QSARENA_OUTPUT=/out
 
 %runscript
-    exec python /opt/autoqsar/run_one.py "$@"
+    exec python /opt/qsarena/run_one.py "$@"
 
 %files
     # Copy repo source into image (data, benchmark_results, model_cache excluded via .apptainerignore)
-    . /opt/autoqsar
+    . /opt/qsarena

@@ -1,27 +1,30 @@
 | Architecture family | Model | Valid regression datasets | Valid classification datasets | Wins | Datasets attempted |
 |---|---|---|---|---|---|
-| CFA combinatorial fusion | CFA (Combinatorial Fusion) | 22 | 22 | 4 | 45 |
-| Chemprop v2 GNN | Chemprop v2 (AttentiveFP + Selected descriptors, ensemble=1) | 23 | 0 | 0 | 45 |
-| Chemprop v2 GNN | Chemprop v2 (AttentiveFP, ensemble=1) | 21 | 0 | 1 | 45 |
-| Conventional ML | AdaBoost | 23 | 22 | 2 | 45 |
-| Conventional ML | CatBoost | 23 | 22 | 3 | 45 |
-| Conventional ML | ElasticNetCV | 23 | 0 | 0 | 23 |
-| Conventional ML | Extra trees | 23 | 22 | 0 | 45 |
-| Conventional ML | HistGradientBoosting | 23 | 22 | 0 | 45 |
-| Conventional ML | LogisticRegression | 0 | 22 | 1 | 22 |
-| Conventional ML | MapLight CatBoost (Strict Parity) | 23 | 0 | 0 | 23 |
-| Conventional ML | Random forest | 23 | 22 | 1 | 45 |
+| CFA combinatorial fusion | CFA (Combinatorial Fusion) | 22 | 22 | 1 | 44 |
+| Chemprop v2 GNN | Chemprop v2 (AttentiveFP, ensemble=3) | 2 | 4 | 1 | 44 |
+| Chemprop v2 GNN | Chemprop v2 (CMPNN, ensemble=3) | 2 | 4 | 0 | 44 |
+| Chemprop v2 GNN | Chemprop v2 (D-MPNN + RDKit2D, ensemble=3) | 2 | 4 | 1 | 44 |
+| Chemprop v2 GNN | Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3) | 2 | 4 | 0 | 44 |
+| Chemprop v2 GNN | Chemprop v2 (D-MPNN, ensemble=3) | 2 | 4 | 0 | 44 |
+| Conventional ML | AdaBoost | 22 | 22 | 2 | 44 |
+| Conventional ML | CatBoost | 22 | 22 | 1 | 44 |
+| Conventional ML | ElasticNetCV | 20 | 0 | 0 | 22 |
+| Conventional ML | Extra trees | 22 | 22 | 0 | 44 |
+| Conventional ML | HistGradientBoosting | 22 | 22 | 1 | 44 |
+| Conventional ML | LogisticRegression | 0 | 22 | 0 | 22 |
+| Conventional ML | MapLight CatBoost (Strict Parity) | 22 | 0 | 0 | 22 |
+| Conventional ML | Random forest | 22 | 22 | 4 | 44 |
 | Conventional ML | SVC | 0 | 22 | 0 | 22 |
-| Conventional ML | SVR | 23 | 0 | 0 | 23 |
-| Conventional ML | Tabular CNN | 23 | 0 | 0 | 23 |
-| Conventional ML | Tabular MLP | 23 | 22 | 0 | 45 |
+| Conventional ML | SVR | 22 | 0 | 0 | 22 |
+| Conventional ML | Tabular CNN | 22 | 0 | 0 | 22 |
+| Conventional ML | Tabular MLP | 22 | 22 | 0 | 44 |
 | Conventional ML | Voting Classifier (KNN, SVM) | 0 | 22 | 0 | 22 |
-| Conventional ML | Voting Regressor (KNN, SVM) | 23 | 0 | 0 | 23 |
-| Conventional ML | XGBoost | 23 | 22 | 4 | 45 |
-| Deep tabular NN (ChemML MLP) | ChemML MLP (PyTorch) | 23 | 22 | 0 | 45 |
-| Ensemble (stacking / averaging) | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 23 | 22 | 4 | 45 |
-| Ensemble (stacking / averaging) | Ensemble (Weighted average (inverse train RMSE)) | 23 | 22 | 11 | 45 |
-| MapLight + GNN | MapLight + GNN (CatBoost, Strict Parity) | 22 | 20 | 4 | 45 |
-| TabPFN (tabular foundation) | TabPFNClassifier | 0 | 10 | 0 | 10 |
-| TabPFN (tabular foundation) | TabPFNRegressor | 12 | 0 | 3 | 35 |
-| Uni-Mol V1 (3D pretrained) | Uni-Mol V1 | 23 | 22 | 7 | 45 |
+| Conventional ML | Voting Regressor (KNN, SVM) | 22 | 0 | 0 | 22 |
+| Conventional ML | XGBoost | 22 | 22 | 0 | 44 |
+| Deep tabular NN (ChemML MLP) | ChemML MLP (PyTorch) | 22 | 22 | 1 | 44 |
+| Deep tabular NN (ChemML MLP) | ChemML MLP (TensorFlow) | 22 | 22 | 1 | 44 |
+| Ensemble (stacking / averaging) | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 22 | 22 | 7 | 44 |
+| Ensemble (stacking / averaging) | Ensemble (Weighted average (inverse train RMSE)) | 22 | 22 | 9 | 44 |
+| MapLight + GNN | MapLight + GNN (CatBoost, Strict Parity) | 22 | 22 | 4 | 44 |
+| Uni-Mol V1 (3D pretrained) | Uni-Mol V1 | 22 | 22 | 7 | 44 |
+| Uni-Mol V1 (3D pretrained) | Uni-Mol V2 (84m) | 10 | 7 | 4 | 44 |

@@ -1,0 +1,57 @@
+\begin{landscape}
+\begingroup\scriptsize
+\begin{xltabular}{\dimexpr\paperheight-5cm\relax}{@{}>{\raggedright\arraybackslash\hsize=1.372\hsize}X>{\raggedright\arraybackslash\hsize=0.349\hsize}X>{\raggedright\arraybackslash\hsize=1.938\hsize}Xrrrr>{\raggedright\arraybackslash\hsize=0.363\hsize}X>{\raggedright\arraybackslash\hsize=1.130\hsize}Xr>{\raggedright\arraybackslash\hsize=0.847\hsize}X@{}}
+\caption{Per-dataset leaderboard comparison, sorted by estimated rank. ``References (n)'' is the number of published values available for that dataset and metric; ranks from sparse reference sets are correspondingly uncertain. The \texttt{tdc\_ppbr\_az} top-1 reference (MAE 0.679) is inconsistent in scale with the rest of that dataset's references (top-10 cutoff 7.914) and its top-1 gap should be disregarded.}\label{tab:leaderboard}\\
+\toprule
+\textbf{Dataset} & \textbf{Metric} & \textbf{QSARena best model (test-selected)} & \textbf{QSARena value} & \textbf{Reference top-1} & \makecell[r]{\textbf{Reference}\\\textbf{top-10}\\\textbf{cutoff}} & \textbf{References (n)} & \textbf{Est. rank} & \textbf{CV-selected model} & \makecell[r]{\textbf{CV-selected}\\\textbf{value}} & \textbf{CV-selected est. rank} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Dataset} & \textbf{Metric} & \textbf{QSARena best model (test-selected)} & \textbf{QSARena value} & \textbf{Reference top-1} & \makecell[r]{\textbf{Reference}\\\textbf{top-10}\\\textbf{cutoff}} & \textbf{References (n)} & \textbf{Est. rank} & \textbf{CV-selected model} & \makecell[r]{\textbf{CV-selected}\\\textbf{value}} & \textbf{CV-selected est. rank} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{11}{r@{}}{\itshape continued on next page}\\
+\endfoot
+\bottomrule
+\endlastfoot
+tdc\_\allowbreak{}bioavailability\_\allowbreak{}ma & ROC\_\allowbreak{}AUC & Cat\allowbreak{}Boost & 0.777 & 0.748 & 0.640 & 8 & 1 & Logistic\allowbreak{}Regression & 0.715 & 3 \\
+tdc\_\allowbreak{}carcinogens\_\allowbreak{}lagunin & ROC\_\allowbreak{}AUC & Chemprop v2 (AttentiveFP, ensemble=3) & 0.929 & 0.848 & 0.795 & 20 & 1 & Voting Classifier (KNN, SVM) & 0.837 & 5 \\
+tdc\_\allowbreak{}clearance\_\allowbreak{}microsome\_\allowbreak{}az & SPEARMAN & Uni-\allowbreak{}Mol V2 (84m) & 0.678 & 0.652 & 0.599 & 17 & 1 & XGBoost & 0.305 & >10 \\
+tdc\_\allowbreak{}cyp2c9\_\allowbreak{}substrate\_\allowbreak{}carbonmangels & AUPRC & Ensemble (OOF Stacking (RidgeCV, 5-\allowbreak{}fold)) & 0.466 & 0.450 & 0.360 & 6 & 1 & SVC & 0.301 & 7 \\
+tdc\_\allowbreak{}toxcast & ROC\_\allowbreak{}AUC & Hist\allowbreak{}Gradient\allowbreak{}Boosting & 0.716 & 0.714 & 0.714 & 2 & 1 & Logistic\allowbreak{}Regression & 0.595 & 3 \\
+poduam\_\allowbreak{}pod\_\allowbreak{}nc\_\allowbreak{}std & RMSE & Random forest & 0.720 & 0.550 & 0.730 & 2 & 2 & Elastic\allowbreak{}NetCV & 0.792 & 3 \\
+poduam\_\allowbreak{}pod\_\allowbreak{}rd\_\allowbreak{}std & RMSE & Random forest & 0.572 & 0.410 & 0.630 & 2 & 2 & Elastic\allowbreak{}NetCV & 0.703 & 3 \\
+tdc\_\allowbreak{}ames & ROC\_\allowbreak{}AUC & Ensemble (OOF Stacking (RidgeCV, 5-\allowbreak{}fold)) & 0.876 & 0.912 & 0.834 & 7 & 2 & Extra trees & 0.871 & 2 \\
+tdc\_\allowbreak{}bbb\_\allowbreak{}martins & ROC\_\allowbreak{}AUC & Random forest & 0.925 & 0.941 & 0.903 & 7 & 2 & Tabular MLP & 0.898 & 8 \\
+tdc\_\allowbreak{}cyp2d6\_\allowbreak{}veith & AUPRC & Ensemble (OOF Stacking (RidgeCV, 5-\allowbreak{}fold)) & 0.734 & 0.811 & 0.464 & 6 & 2 & Ada\allowbreak{}Boost & 0.615 & 6 \\
+tdc\_\allowbreak{}cyp3a4\_\allowbreak{}veith & AUPRC & Ensemble (OOF Stacking (RidgeCV, 5-\allowbreak{}fold)) & 0.884 & 0.923 & 0.750 & 6 & 2 & Ada\allowbreak{}Boost & 0.798 & 6 \\
+tdc\_\allowbreak{}half\_\allowbreak{}life\_\allowbreak{}obach & SPEARMAN & Uni-\allowbreak{}Mol V1 & 0.597 & 0.649 & 0.485 & 16 & 2 & Random forest & 0.108 & >10 \\
+tdc\_\allowbreak{}solubility\_\allowbreak{}aqsoldb & MAE & Uni-\allowbreak{}Mol V1 & 0.710 & 0.557 & 0.776 & 17 & 2 & XGBoost & 0.744 & 6 \\
+polaris\_\allowbreak{}adme\_\allowbreak{}fang\_\allowbreak{}hppb\_\allowbreak{}1 & MSE & Map\allowbreak{}Light + GNN (Cat\allowbreak{}Boost, Strict Parity) & 0.201 & 0.143 & 0.383 & 10 & 3 & Elastic\allowbreak{}NetCV & 0.300 & 8 \\
+polaris\_\allowbreak{}adme\_\allowbreak{}fang\_\allowbreak{}perm\_\allowbreak{}1 & MSE & Uni-\allowbreak{}Mol V1 & 0.159 & 0.113 & 0.257 & 10 & 3 & ChemML MLP (Py\allowbreak{}Torch) & 0.212 & 7 \\
+polaris\_\allowbreak{}adme\_\allowbreak{}fang\_\allowbreak{}rppb\_\allowbreak{}1 & MSE & Map\allowbreak{}Light + GNN (Cat\allowbreak{}Boost, Strict Parity) & 0.243 & 0.230 & 0.634 & 10 & 3 & Elastic\allowbreak{}NetCV & 0.361 & 5 \\
+tdc\_\allowbreak{}caco2\_\allowbreak{}wang & MAE & Map\allowbreak{}Light Cat\allowbreak{}Boost (Strict Parity) & 0.272 & 0.256 & 0.288 & 20 & 3 & Elastic\allowbreak{}NetCV & 0.345 & >10 \\
+tdc\_\allowbreak{}clearance\_\allowbreak{}hepatocyte\_\allowbreak{}az & SPEARMAN & Map\allowbreak{}Light + GNN (Cat\allowbreak{}Boost, Strict Parity) & 0.516 & 0.633 & 0.440 & 16 & 3 & Cat\allowbreak{}Boost & 0.224 & >10 \\
+tdc\_\allowbreak{}clintox & ROC\_\allowbreak{}AUC & CFA (Combinatorial Fusion) & 0.974 & 0.996 & 0.889 & 12 & 3 & Logistic\allowbreak{}Regression & 0.896 & 5 \\
+tdc\_\allowbreak{}cyp2c9\_\allowbreak{}veith & AUPRC & Ensemble (OOF Stacking (RidgeCV, 5-\allowbreak{}fold)) & 0.814 & 0.877 & 0.770 & 6 & 3 & Ada\allowbreak{}Boost & 0.705 & 7 \\
+tdc\_\allowbreak{}ppbr\_\allowbreak{}az & MAE & Map\allowbreak{}Light + GNN (Cat\allowbreak{}Boost, Strict Parity) & 7.306 & 0.679 & 7.914 & 16 & 3 & ChemML MLP (Py\allowbreak{}Torch) & 9.741 & >10 \\
+polaris\_\allowbreak{}adme\_\allowbreak{}fang\_\allowbreak{}rclint\_\allowbreak{}1 & MSE & Uni-\allowbreak{}Mol V1 & 0.273 & 0.216 & 0.403 & 10 & 4 & Elastic\allowbreak{}NetCV & 0.365 & 10 \\
+tdc\_\allowbreak{}dili & ROC\_\allowbreak{}AUC & Uni-\allowbreak{}Mol V1 & 0.922 & 0.945 & 0.852 & 6 & 4 & Logistic\allowbreak{}Regression & 0.745 & 7 \\
+tdc\_\allowbreak{}herg & ROC\_\allowbreak{}AUC & Ada\allowbreak{}Boost & 0.848 & 0.880 & 0.806 & 7 & 4 & Logistic\allowbreak{}Regression & 0.709 & 8 \\
+tdc\_\allowbreak{}hia\_\allowbreak{}hou & ROC\_\allowbreak{}AUC & Ensemble (OOF Stacking (RidgeCV, 5-\allowbreak{}fold)) & 0.988 & 0.994 & 0.976 & 8 & 4 & Logistic\allowbreak{}Regression & 0.983 & 7 \\
+tdc\_\allowbreak{}pgp\_\allowbreak{}broccatelli & ROC\_\allowbreak{}AUC & Uni-\allowbreak{}Mol V2 (84m) & 0.933 & 0.994 & 0.911 & 8 & 4 & Logistic\allowbreak{}Regression & 0.868 & 9 \\
+polaris\_\allowbreak{}adme\_\allowbreak{}fang\_\allowbreak{}solu\_\allowbreak{}1 & MSE & Uni-\allowbreak{}Mol V2 (84m) & 0.304 & 0.222 & 0.329 & 10 & 5 & ChemML MLP (Py\allowbreak{}Torch) & 0.410 & >10 \\
+tdc\_\allowbreak{}cyp2d6\_\allowbreak{}substrate\_\allowbreak{}carbonmangels & AUPRC & Uni-\allowbreak{}Mol V1 & 0.652 & 0.766 & 0.570 & 7 & 5 & Ada\allowbreak{}Boost & 0.620 & 7 \\
+tdc\_\allowbreak{}ld50\_\allowbreak{}zhu & MAE & Ensemble (Weighted average (inverse train RMSE)) & 0.575 & 0.292 & 0.605 & 16 & 5 & XGBoost & 0.588 & 8 \\
+tdc\_\allowbreak{}vdss\_\allowbreak{}lombardo & SPEARMAN & Map\allowbreak{}Light + GNN (Cat\allowbreak{}Boost, Strict Parity) & 0.680 & 0.942 & 0.582 & 16 & 5 & Extra trees & 0.368 & >10 \\
+esol\_\allowbreak{}delaney & RMSE & Ensemble (Weighted average (inverse train RMSE)) & 0.617 & 0.558 & 0.743 & 30 & 6 & Elastic\allowbreak{}NetCV & 0.726 & 9 \\
+lipophilicity & RMSE & Ensemble (Weighted average (inverse train RMSE)) & 0.589 & 0.549 & 0.610 & 27 & 7 & Elastic\allowbreak{}NetCV & 0.682 & >10 \\
+tdc\_\allowbreak{}cyp3a4\_\allowbreak{}substrate\_\allowbreak{}carbonmangels & ROC\_\allowbreak{}AUC & Voting Classifier (KNN, SVM) & 0.655 & 0.692 & 0.651 & 7 & 7 & Logistic\allowbreak{}Regression & 0.624 & 8 \\
+tdc\_\allowbreak{}lipophilicity\_\allowbreak{}astrazeneca & MAE & CFA (Combinatorial Fusion) & 0.470 & 0.406 & 0.515 & 17 & 7 & ChemML MLP (Py\allowbreak{}Torch) & 0.542 & >10 \\
+tdc\_\allowbreak{}hydrationfreeenergy\_\allowbreak{}freesolv & RMSE & Ensemble (OOF Stacking (RidgeCV, 5-\allowbreak{}fold)) & 1.112 & 0.654 & 1.211 & 12 & 9 & Elastic\allowbreak{}NetCV & 1.321 & >10 \\
+tdc\_\allowbreak{}skin\_\allowbreak{}reaction & ROC\_\allowbreak{}AUC & Uni-\allowbreak{}Mol V2 (84m) & 0.658 & 0.741 & 0.677 & 21 & >10 & Voting Classifier (KNN, SVM) & 0.503 & >10 \\
+tdc\_\allowbreak{}tox21 & ROC\_\allowbreak{}AUC & Ada\allowbreak{}Boost & 0.556 & 0.867 & 0.840 & 12 & >10 & SVC & 0.467 & >10 \\
+\end{xltabular}
+\endgroup
+\end{landscape}

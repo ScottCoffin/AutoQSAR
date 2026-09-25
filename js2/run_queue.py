@@ -1,18 +1,18 @@
 #!/usr/bin/env python3
 """
-js2/run_queue.py — AutoQSAR Jetstream2 task orchestrator.
+js2/run_queue.py — QSARena Jetstream2 task orchestrator.
 
 Reads a task manifest TSV (dataset, seed, device, notes), runs each task via
-    apptainer run --nv autoqsar.sif ...
+    apptainer run --nv qsarena.sif ...
 and checkpoints progress to a JSON state file so the queue can be resumed after
 a cloud VM shelve/unshelve cycle.
 
 Usage:
     python js2/run_queue.py \\
         --manifest js2/manifests/gpu_tasks.tsv \\
-        --sif ~/autoqsar/autoqsar.sif \\
-        --input-dir /vol/autoqsar_in \\
-        --output-dir /vol/autoqsar_out \\
+        --sif ~/qsarena/qsarena.sif \\
+        --input-dir /vol/qsarena_in \\
+        --output-dir /vol/qsarena_out \\
         --state js2/queue_state.json \\
         --su-budget 200 \\
         [--dry-run]
@@ -300,13 +300,13 @@ def _now_iso() -> str:
 
 def _build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
-        description="AutoQSAR Jetstream2 resumable task orchestrator.",
+        description="QSARena Jetstream2 resumable task orchestrator.",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     p.add_argument("--manifest", required=True,
                    help="Path to task manifest TSV (dataset, seed, device, notes).")
     p.add_argument("--sif", required=True,
-                   help="Path to autoqsar.sif Apptainer image.")
+                   help="Path to qsarena.sif Apptainer image.")
     p.add_argument("--input-dir", required=True,
                    help="Host path bind-mounted as /in inside the container.")
     p.add_argument("--output-dir", required=True,

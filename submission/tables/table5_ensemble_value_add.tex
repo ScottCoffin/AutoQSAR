@@ -1,0 +1,20 @@
+\begin{landscape}
+\begin{table}[htbp]
+\centering
+\scriptsize
+\caption{Ensemble and fusion value-add against the best single base model available on the same dataset, under each dataset's primary metric.}
+\label{tab:ensemble}
+\begin{tabularx}{\dimexpr\paperheight-5cm\relax}{@{}>{\raggedright\arraybackslash\hsize=1.349\hsize}X>{\raggedright\arraybackslash\hsize=0.651\hsize}Xrrrrrrr@{}}
+\toprule
+\textbf{Fusion method} & \textbf{Task} & \textbf{Datasets} & \textbf{Overall wins} & \textbf{Top-3} & \textbf{Beats best base} & \makecell[r]{\textbf{Loses to}\\\textbf{best base}} & \textbf{Median rank} & \makecell[r]{\textbf{Median}\\\textbf{rel.}\\\textbf{change vs}\\\textbf{best base}} \\
+\midrule
+OOF stacking & classification & 22 & 6 & 13 & 8 & 14 & 3.000 & -\allowbreak{}0.003 \\
+Inverse-\allowbreak{}RMSE weighted average & classification & 22 & 3 & 10 & 7 & 15 & 4.000 & -\allowbreak{}0.008 \\
+CFA fusion & classification & 22 & 1 & 10 & 5 & 17 & 4.000 & -\allowbreak{}0.009 \\
+Inverse-\allowbreak{}RMSE weighted average & regression & 22 & 6 & 16 & 7 & 15 & 2.500 & -\allowbreak{}0.016 \\
+OOF stacking & regression & 22 & 1 & 6 & 4 & 18 & 6.000 & -\allowbreak{}0.050 \\
+CFA fusion & regression & 22 & 0 & 5 & 1 & 21 & 6.000 & -\allowbreak{}0.051 \\
+\bottomrule
+\end{tabularx}
+\end{table}
+\end{landscape}

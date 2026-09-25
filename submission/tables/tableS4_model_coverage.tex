@@ -1,0 +1,48 @@
+\begingroup\footnotesize
+\begin{xltabular}{\textwidth}{@{}>{\raggedright\arraybackslash}Xrr@{}}
+\caption{Model coverage: datasets attempted and datasets yielding a valid metric, per model.}\label{tab:s4}\\
+\toprule
+\textbf{model} & \makecell[r]{\textbf{datasets\_attempted}} & \textbf{datasets\_valid} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{model} & \makecell[r]{\textbf{datasets\_attempted}} & \textbf{datasets\_valid} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{3}{r@{}}{\itshape continued on next page}\\
+\endfoot
+\bottomrule
+\endlastfoot
+Uni-\allowbreak{}Mol V2 (164m) & 4 & 0 \\
+Uni-\allowbreak{}Mol V2 (310m) & 8 & 0 \\
+Chemprop v2 (CMPNN, ensemble=3) & 44 & 6 \\
+Chemprop v2 (D-\allowbreak{}MPNN + RDKit2D, ensemble=3) & 44 & 6 \\
+Chemprop v2 (D-\allowbreak{}MPNN, ensemble=3) & 44 & 6 \\
+Chemprop v2 (D-\allowbreak{}MPNN + Selected descriptors, ensemble=3) & 44 & 6 \\
+Chemprop v2 (AttentiveFP, ensemble=3) & 44 & 6 \\
+Uni-\allowbreak{}Mol V2 (84m) & 44 & 17 \\
+Elastic\allowbreak{}NetCV & 22 & 20 \\
+SVR & 22 & 22 \\
+SVC & 22 & 22 \\
+Voting Classifier (KNN, SVM) & 22 & 22 \\
+Map\allowbreak{}Light Cat\allowbreak{}Boost (Strict Parity) & 22 & 22 \\
+Tabular CNN & 22 & 22 \\
+Logistic\allowbreak{}Regression & 22 & 22 \\
+Voting Regressor (KNN, SVM) & 22 & 22 \\
+Hist\allowbreak{}Gradient\allowbreak{}Boosting & 44 & 44 \\
+Extra trees & 44 & 44 \\
+Ensemble (Weighted average (inverse train RMSE)) & 44 & 44 \\
+Ensemble (OOF Stacking (RidgeCV, 5-\allowbreak{}fold)) & 44 & 44 \\
+ChemML MLP (Py\allowbreak{}Torch) & 44 & 44 \\
+Cat\allowbreak{}Boost & 44 & 44 \\
+CFA (Combinatorial Fusion) & 44 & 44 \\
+ChemML MLP (Tensor\allowbreak{}Flow) & 44 & 44 \\
+Ada\allowbreak{}Boost & 44 & 44 \\
+Tabular MLP & 44 & 44 \\
+Map\allowbreak{}Light + GNN (Cat\allowbreak{}Boost, Strict Parity) & 44 & 44 \\
+Random forest & 44 & 44 \\
+Uni-\allowbreak{}Mol V1 & 44 & 44 \\
+XGBoost & 44 & 44 \\
+\end{xltabular}
+\endgroup

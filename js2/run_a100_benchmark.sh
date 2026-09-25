@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# js2/run_a100_benchmark.sh — Canonical A100 launcher for the AutoQSAR full benchmark.
+# js2/run_a100_benchmark.sh — Canonical A100 launcher for the QSARena full benchmark.
 #
 # Resource profile: NVIDIA A100 (40 GB or 80 GB), 32 CPU cores, ~117 GB RAM.
 # All Uni-Mol and Chemprop parameters are set explicitly so this script is
 # fully self-documenting and reproducible on any compatible A100 system.
-# GPU-aware auto-detection in run_autoqsar_ga_benchmarks.py will also apply
+# GPU-aware auto-detection in run_qsarena_benchmarks.py will also apply
 # these same values automatically when no CLI override is provided.
 #
 # Usage (fresh run):
@@ -87,7 +87,7 @@ LOG_FILE="$REPO_ROOT/benchmark_run.log"
 MAX_RETRIES="${AUTOQSAR_MAX_RETRIES:-20}"
 RETRY_DELAY="${AUTOQSAR_RETRY_DELAY:-15}"
 
-echo "=== AutoQSAR A100 Full Benchmark ==="
+echo "=== QSARena A100 Full Benchmark ==="
 echo "Repo:               $REPO_ROOT"
 echo "Conda env:          $CONDA_ENV"
 echo "Output:             ${OUTPUT_DIR_ARG:-auto-timestamped under benchmark_results/}"
@@ -131,7 +131,7 @@ while [ "$attempt" -le "$MAX_RETRIES" ]; do
     fi
 
     conda run -n "$CONDA_ENV" \
-        python portable_colab_qsar_bundle/run_autoqsar_ga_benchmarks.py \
+        python portable_colab_qsar_bundle/run_qsarena_benchmarks.py \
             --benchmark-profile full \
             --run-unimol-v1 \
             --run-unimol-v2 \

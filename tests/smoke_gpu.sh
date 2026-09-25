@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# smoke_gpu.sh — GPU smoke test for the AutoQSAR container
+# smoke_gpu.sh — GPU smoke test for the QSARena container
 #
 # Runs one (dataset, seed) unit on GPU inside the Apptainer container and
 # asserts that the expected artifacts exist and the primary metric is finite.
@@ -11,13 +11,13 @@
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-SIF="${1:-${REPO_ROOT}/autoqsar.sif}"
+SIF="${1:-${REPO_ROOT}/qsarena.sif}"
 INPUT_DIR="${2:-${REPO_ROOT}}"
-OUTPUT_DIR="${3:-/tmp/autoqsar_smoke_gpu_$$}"
+OUTPUT_DIR="${3:-/tmp/qsarena_smoke_gpu_$$}"
 DATASET="tdc_herg"
 SEED=1
 
-echo "=== AutoQSAR GPU smoke test ==="
+echo "=== QSARena GPU smoke test ==="
 echo "  SIF        : $SIF"
 echo "  INPUT_DIR  : $INPUT_DIR"
 echo "  OUTPUT_DIR : $OUTPUT_DIR"

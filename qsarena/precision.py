@@ -1,9 +1,9 @@
 """
-autoqsar.precision — TF32/BF16 precision startup hook.
+qsarena.precision — TF32/BF16 precision startup hook.
 
-Activated by AUTOQSAR_PRECISION env var (set by run_one.py before
+Activated by QSARENA_PRECISION env var (set by run_one.py before
 launching any subprocess) and by a 3-line call in the benchmark runner's
-main() — see portable_colab_qsar_bundle/run_autoqsar_ga_benchmarks.py.
+main() — see portable_colab_qsar_bundle/run_qsarena_benchmarks.py.
 
 Two modes:
   tf32_bf16  Enables TF32 matmul/cuDNN + BF16 autocast where amp_ok.
@@ -54,7 +54,7 @@ def apply_global_precision(mode: str) -> None:
     """Apply global PyTorch precision settings.
 
     Call this once at process startup, before any CUDA operations.
-    The mode is read from AUTOQSAR_PRECISION env var by the benchmark runner.
+    The mode is read from QSARENA_PRECISION env var by the benchmark runner.
     """
     mode = (mode or "fp32").strip().lower()
     if mode not in ("tf32_bf16", "fp32"):

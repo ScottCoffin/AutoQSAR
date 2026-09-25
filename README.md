@@ -1,12 +1,31 @@
-# AutoQSAR
+# QSARena
 
-AutoQSAR is a portable QSAR modeling and benchmarking workspace for molecular
+> ### ⚠️ Outstanding: deposit the Zenodo archive
+>
+> **This is the last item blocking the *Journal of Cheminformatics* submission, and it needs a
+> Zenodo login so it cannot be automated.** The journal's reproducibility criteria require an
+> external archive (Zenodo/FigShare) referenced from this README — a GitHub link alone is not
+> accepted — and the manuscript's *Availability of data and materials* section currently carries a
+> DOI placeholder.
+>
+> **→ Step-by-step instructions: [ZENODO.md](ZENODO.md)**
+>
+> In short: (1) log in to Zenodo with the GitHub account and enable the webhook for this repository
+> at <https://zenodo.org/account/settings/github/>; (2) tag and push a release (`v1.0.0`) from a
+> clean tree; (3) upload the per-molecule `predictions.csv` bundle as a second file, since the
+> webhook only archives the tagged source tree; (4) paste the resulting DOIs into `README.md`,
+> `CITATION.cff`, the manuscript and `submission/README.md`. `.zenodo.json` and `CITATION.cff` are
+> already staged, so the record's metadata will be correct without editing it by hand.
+>
+> Everything else outstanding is tracked in **[TODO.md](TODO.md)**.
+
+QSARena is a portable QSAR modeling and benchmarking workspace for molecular
 property prediction from SMILES strings. It has two main entry points:
 
 - `portable_colab_qsar_bundle/colab_qsar_tutorial.ipynb`: an interactive,
   widget-driven notebook for building QSAR models on built-in or user-supplied
   datasets.
-- `portable_colab_qsar_bundle/run_autoqsar_ga_benchmarks.py`: a command-line
+- `portable_colab_qsar_bundle/run_qsarena_benchmarks.py`: a command-line
   benchmark runner for comparing model families across curated ChemML, TDCommons,
   MoleculeNet, Polaris, PODUAM, and literature datasets.
 
@@ -17,7 +36,7 @@ resume-safe long runs, leaderboard comparisons, and reusable output artifacts.
 
 ## What This Repository Does
 
-AutoQSAR takes molecular tables with a SMILES column and a numeric target column,
+QSARena takes molecular tables with a SMILES column and a numeric target column,
 then runs a complete modeling workflow:
 
 1. Load an example dataset or user-provided CSV/XLSX file.
@@ -39,7 +58,7 @@ then runs a complete modeling workflow:
 
 ## Models This Repo Runs
 
-AutoQSAR runs different model sets depending on whether the active dataset is a
+QSARena runs different model sets depending on whether the active dataset is a
 continuous regression task or a strict binary 0/1 classification task. Optional
 models are skipped when their packages, credentials, hardware, or dataset-size
 guardrails are not satisfied.
@@ -123,7 +142,7 @@ The notebook and benchmark runner also support these optional model families:
 
 ### Fusion And Ensemble Models
 
-After base models produce aligned train/test predictions, AutoQSAR can run:
+After base models produce aligned train/test predictions, QSARena can run:
 
 - `CFA fusion` / `CFA combinatorial fusion`, using best-per-workflow model
   selection before bounded combinatorial fusion
@@ -147,7 +166,7 @@ run continues.
 |---|---|
 | `portable_colab_qsar_bundle/colab_qsar_tutorial.ipynb` | Generated interactive notebook for Colab or local Jupyter. |
 | `portable_colab_qsar_bundle/build_colab_qsar_tutorial.py` | Source of truth for the generated notebook. Edit this file, then regenerate the notebook. |
-| `portable_colab_qsar_bundle/run_autoqsar_ga_benchmarks.py` | CLI benchmark runner. |
+| `portable_colab_qsar_bundle/run_qsarena_benchmarks.py` | CLI benchmark runner. |
 | `portable_colab_qsar_bundle/qsar_workflow_core.py` | Shared feature, split, CFA, and QSAR helper code used by notebook and benchmarks. |
 | `portable_colab_qsar_bundle/benchmark_registry.py` | Shared dataset registry for notebook examples and benchmark discovery. |
 | `portable_colab_qsar_bundle/simple_applicability_domain.py` | Applicability-domain support used by notebook prediction workflows. |
@@ -161,6 +180,7 @@ run continues.
 | `refs/` and `portable_colab_qsar_bundle/references/` | Reference papers and ChemML notebooks used to guide workflow design. |
 | `test_data/` | Local development and example datasets. |
 | `environment-*.yml`, `requirements-*.txt` | Conda and pip/uv environment definitions. |
+| `pyproject.toml` | Packaging metadata for `pip install qsarena` (core deps, extras, console scripts). |
 | `setup_env.bat`, `setup_env.ps1` | Windows setup helpers. |
 
 ## Requirements
@@ -213,10 +233,10 @@ environment, install `uv`, and install the pinned Python packages.
 ### Manual CPU Setup
 
 ```powershell
-conda env create -f environment-cpu.yml -n autoqsar-py311
-conda run -n autoqsar-py311 pip install uv
-conda run -n autoqsar-py311 uv pip install --system --index-strategy unsafe-best-match --prerelease=allow -r requirements-cpu.txt
-conda activate autoqsar-py311
+conda env create -f environment-cpu.yml -n qsarena-py311
+conda run -n qsarena-py311 pip install uv
+conda run -n qsarena-py311 uv pip install --system --index-strategy unsafe-best-match --prerelease=allow -r requirements-cpu.txt
+conda activate qsarena-py311
 ```
 
 ### Manual CUDA Setup
@@ -224,10 +244,10 @@ conda activate autoqsar-py311
 Use this path only on systems with an NVIDIA GPU and compatible CUDA support:
 
 ```powershell
-conda env create -f environment-cuda.yml -n autoqsar-py311
-conda run -n autoqsar-py311 pip install uv
-conda run -n autoqsar-py311 uv pip install --system --index-strategy unsafe-best-match --prerelease=allow -r requirements-cuda.txt
-conda activate autoqsar-py311
+conda env create -f environment-cuda.yml -n qsarena-py311
+conda run -n qsarena-py311 pip install uv
+conda run -n qsarena-py311 uv pip install --system --index-strategy unsafe-best-match --prerelease=allow -r requirements-cuda.txt
+conda activate qsarena-py311
 ```
 
 The `--index-strategy unsafe-best-match` flag lets `uv` resolve pinned packages
@@ -238,7 +258,7 @@ trusted public package indexes.
 ### Verify The Environment
 
 ```powershell
-conda activate autoqsar-py311
+conda activate qsarena-py311
 @'
 import sys
 print(sys.version)
@@ -255,14 +275,98 @@ print("rdkit imported")
 '@ | python -
 ```
 
+### Installation via pip
+
+The conda/`uv` routes above install the exact pinned environment used for the
+published benchmark and remain the recommended path for reproducing it. For
+library use, or to get the command-line runner without a conda install, QSARena
+is also packaged as a wheel:
+
+```powershell
+pip install qsarena
+```
+
+The core install is deliberately CPU-only and minimal (`numpy`, `pandas`,
+`scipy`, `scikit-learn`, `joblib`, `rdkit`), so it resolves on any platform.
+Every heavier backend is an optional extra and is imported lazily, so the CLI
+starts and the conventional model families run without any of them:
+
+| Extra | Installs | Enables |
+|---|---|---|
+| `boosting` | xgboost, lightgbm, catboost | Gradient-boosted tree model families |
+| `deep` | torch, tensorflow (Python < 3.13) | Precision hook, Uni-Mol, tabular CNN |
+| `graph` | chemprop, descriptastorus, molfeat, huggingface-hub | Chemprop v2 architectures, MapLight+GNN embeddings |
+| `foundation` | tabpfn, tabpfn-client, unimol-tools | TabPFN and Uni-Mol / Uni-Mol2 |
+| `benchmarks` | openpyxl, pyarrow, python-dotenv | Parquet feature store, aux workbook input, `.env` keys |
+| `notebook` | jupyter, ipywidgets, plotly, matplotlib, seaborn, tqdm | The Colab tutorial and analysis notebooks |
+| `chemml` | chemml | ChemML MLP backend (pulls in TensorFlow) |
+| `tdc` | PyTDC | PyTDC / TDC ADMET benchmark dataset loaders |
+| `all` | everything above except `tdc` and `chemml` | |
+
+```powershell
+pip install "qsarena[all]"          # everything that resolves cleanly on CPU
+pip install "qsarena[boosting]"     # just the gradient-boosting families
+```
+
+Two backends need extra care and are therefore not part of `all`:
+
+- **PyTDC** (`qsarena[tdc]`) hard-pins `numpy==1.26.4`, `pandas==2.1.4`,
+  `scikit-learn==1.2.2` and `rdkit==2023.9.5`, so it only resolves on Python
+  3.10-3.12 and will downgrade the core stack. Prefer the conda/`uv` environment
+  above when you need the TDC benchmark groups. Without it, the runner prints
+  `[skip] PyTDC benchmark datasets` and continues with the other suites.
+- **MapLight + GNN** additionally needs `dgl` and `dgllife`, which publish
+  almost nothing to PyPI. Install them from the DGL wheel index for your
+  platform, for example:
+  `pip install dgl dgllife -f https://data.dgl.ai/wheels/repo.html`.
+
+Installing the package provides two console scripts, which are thin wrappers
+around the same `main()` functions the scripts have always used:
+
+```powershell
+qsarena-benchmark --help
+qsarena-applicability-domain --help
+```
+
+The pip install does **not** bundle the `data/` tree (benchmark dataset caches,
+`data/benchmark_dataset_catalog.csv` and `data/benchmark_leaderboards/`), which
+is tens of megabytes and mostly regenerable. Everything degrades gracefully when
+it is absent: catalog metadata falls back to the CLI defaults and leaderboard
+comparisons are skipped. To use those files with an installed copy, run from a
+clone of the repository, or point `QSARENA_HOME` at one:
+
+```powershell
+$env:QSARENA_HOME = "C:\path\to\QSARena"
+qsarena-benchmark --help
+```
+
+`QSARENA_HOME` also controls where `model_cache/` and `benchmark_results/` are
+written. When it is unset, a source checkout uses the repository root (unchanged
+behaviour) and an installed copy uses the current working directory.
+
+To build the wheel locally instead of installing from PyPI:
+
+```powershell
+python -m pip install build
+python -m build
+pip install dist/qsarena-0.1.0-py3-none-any.whl
+```
+
+Installing the package is optional. The documented "clone and run the script"
+workflow is unchanged and still works without any install:
+
+```powershell
+python portable_colab_qsar_bundle/run_qsarena_benchmarks.py --help
+```
+
 ## Using The Interactive Notebook
 
-The notebook is the easiest way to run AutoQSAR on your own data.
+The notebook is the easiest way to run QSARena on your own data.
 
 1. Activate the environment:
 
    ```powershell
-   conda activate autoqsar-py311
+   conda activate qsarena-py311
    ```
 
 2. Start Jupyter:
@@ -277,14 +381,14 @@ The notebook is the easiest way to run AutoQSAR on your own data.
    portable_colab_qsar_bundle/colab_qsar_tutorial.ipynb
    ```
 
-4. Use the `AutoQSAR (py311)` kernel if it is available.
+4. Use the `QSARena (py311)` kernel if it is available.
 
 If the kernel is missing, create it:
 
 ```powershell
-conda activate autoqsar-py311
+conda activate qsarena-py311
 python -m pip install jupyter ipykernel
-python -m ipykernel install --user --name autoqsar-py311 --display-name "AutoQSAR (py311)"
+python -m ipykernel install --user --name qsarena-py311 --display-name "QSARena (py311)"
 ```
 
 ### Notebook Workflow
@@ -326,7 +430,7 @@ portable_colab_qsar_bundle/build_colab_qsar_tutorial.py
 Then regenerate:
 
 ```powershell
-conda activate autoqsar-py311
+conda activate qsarena-py311
 python portable_colab_qsar_bundle/build_colab_qsar_tutorial.py
 ```
 
@@ -344,9 +448,9 @@ catalog and writes machine-readable artifacts.
 Basic run:
 
 ```powershell
-conda activate autoqsar-py311
-$out = "benchmark_results\autoqsar_benchmark_$(Get-Date -Format yyyyMMdd_HHmmss)"
-python portable_colab_qsar_bundle\run_autoqsar_ga_benchmarks.py `
+conda activate qsarena-py311
+$out = "benchmark_results\qsarena_benchmark_$(Get-Date -Format yyyyMMdd_HHmmss)"
+python portable_colab_qsar_bundle\run_qsarena_benchmarks.py `
   --output-dir $out `
   --resume
 ```
@@ -354,13 +458,13 @@ python portable_colab_qsar_bundle\run_autoqsar_ga_benchmarks.py `
 Preview the planned datasets and configuration without fitting models:
 
 ```powershell
-python portable_colab_qsar_bundle\run_autoqsar_ga_benchmarks.py --dry-run
+python portable_colab_qsar_bundle\run_qsarena_benchmarks.py --dry-run
 ```
 
 Run one named built-in dataset:
 
 ```powershell
-python portable_colab_qsar_bundle\run_autoqsar_ga_benchmarks.py `
+python portable_colab_qsar_bundle\run_qsarena_benchmarks.py `
   --dataset-name tdc_caco2_wang `
   --output-dir benchmark_results\tdc_caco2_wang_test `
   --resume
@@ -369,7 +473,7 @@ python portable_colab_qsar_bundle\run_autoqsar_ga_benchmarks.py `
 Run a local CSV instead of the default benchmark set:
 
 ```powershell
-python portable_colab_qsar_bundle\run_autoqsar_ga_benchmarks.py `
+python portable_colab_qsar_bundle\run_qsarena_benchmarks.py `
   --dataset path\to\your_dataset.csv `
   --output-dir benchmark_results\local_dataset_run `
   --resume
@@ -378,7 +482,7 @@ python portable_colab_qsar_bundle\run_autoqsar_ga_benchmarks.py `
 Include an extra local CSV in addition to the default benchmark set:
 
 ```powershell
-python portable_colab_qsar_bundle\run_autoqsar_ga_benchmarks.py `
+python portable_colab_qsar_bundle\run_qsarena_benchmarks.py `
   --include-local-csv path\to\your_dataset.csv `
   --output-dir benchmark_results\with_local_dataset `
   --resume
@@ -387,7 +491,7 @@ python portable_colab_qsar_bundle\run_autoqsar_ga_benchmarks.py `
 Refresh leaderboard reference artifacts without model training:
 
 ```powershell
-python portable_colab_qsar_bundle\run_autoqsar_ga_benchmarks.py `
+python portable_colab_qsar_bundle\run_qsarena_benchmarks.py `
   --refresh-leaderboards-only `
   --output-dir benchmark_results\leaderboard_refresh
 ```
@@ -403,7 +507,7 @@ The runner has two profiles:
 Example:
 
 ```powershell
-python portable_colab_qsar_bundle\run_autoqsar_ga_benchmarks.py `
+python portable_colab_qsar_bundle\run_qsarena_benchmarks.py `
   --benchmark-profile full `
   --output-dir benchmark_results\full_profile `
   --resume
@@ -446,7 +550,7 @@ so completed datasets and compatible intermediate artifacts can be reused.
 
 The PFAS auxiliary-feature workbook is handled by the main benchmark runner, so
 it uses the same model-discovery, optional-backend availability checks, CUDA
-behavior, reporting, CFA, ensemble, and resume logic as the other AutoQSAR
+behavior, reporting, CFA, ensemble, and resume logic as the other QSARena
 benchmarks.
 
 ```text
@@ -466,8 +570,8 @@ for these datasets.
 Basic full run:
 
 ```powershell
-conda activate autoqsar-py311
-python portable_colab_qsar_bundle\run_autoqsar_ga_benchmarks.py `
+conda activate qsarena-py311
+python portable_colab_qsar_bundle\run_qsarena_benchmarks.py `
   --pfas-aux-workbook data\modeling_datasets_aux_features.xlsx `
   --output-dir benchmark_results\pfas_aux_qsar_full `
   --resume
@@ -497,7 +601,7 @@ Use a dry run to confirm sheet discovery and planned model stages before
 training:
 
 ```powershell
-python portable_colab_qsar_bundle\run_autoqsar_ga_benchmarks.py `
+python portable_colab_qsar_bundle\run_qsarena_benchmarks.py `
   --pfas-aux-workbook data\modeling_datasets_aux_features.xlsx `
   --pfas-aux-sheet VDss_pfas_tsca `
   --dry-run
@@ -506,7 +610,7 @@ python portable_colab_qsar_bundle\run_autoqsar_ga_benchmarks.py `
 Run the standard benchmark on the pooled aux sheets:
 
 ```powershell
-python portable_colab_qsar_bundle\run_autoqsar_ga_benchmarks.py `
+python portable_colab_qsar_bundle\run_qsarena_benchmarks.py `
   --pfas-aux-workbook data\modeling_datasets_aux_features.xlsx `
   --pfas-aux-sheet HLe_invivo_all_aux `
   --pfas-aux-sheet VDss_all_aux `
@@ -578,7 +682,7 @@ remaining sheets without rerunning completed work.
 Run or resume one sheet:
 
 ```powershell
-python portable_colab_qsar_bundle\run_autoqsar_ga_benchmarks.py `
+python portable_colab_qsar_bundle\run_qsarena_benchmarks.py `
   --pfas-aux-workbook data\modeling_datasets_aux_features.xlsx `
   --pfas-aux-sheet VDss_pfas_tsca `
   --output-dir benchmark_results\pfas_aux_qsar_full `
@@ -588,7 +692,7 @@ python portable_colab_qsar_bundle\run_autoqsar_ga_benchmarks.py `
 Run a lower-cost smoke test before a full run:
 
 ```powershell
-python portable_colab_qsar_bundle\run_autoqsar_ga_benchmarks.py `
+python portable_colab_qsar_bundle\run_qsarena_benchmarks.py `
   --pfas-aux-workbook data\modeling_datasets_aux_features.xlsx `
   --pfas-aux-sheet VDss_pfas_tsca `
   --output-dir benchmark_results\pfas_aux_qsar_smoke `
@@ -621,7 +725,7 @@ Useful PFAS workbook controls:
 | `--run-cfa/--no-run-cfa` | Enable or disable CFA fusion. |
 | `--run-ensemble/--no-run-ensemble` | Enable or disable standard ensembles. |
 
-The full command uses the same model plan as `run_autoqsar_ga_benchmarks.py`.
+The full command uses the same model plan as `run_qsarena_benchmarks.py`.
 Conventional models, CatBoost/XGBoost, ChemML MLP, Chemprop, MapLight/GNN,
 Uni-Mol, TabPFN, CFA, and ensemble stages are run or skipped according to the
 installed packages, CUDA availability, benchmark profile, and explicit
@@ -644,7 +748,7 @@ portable_colab_qsar_bundle/pfas_aux_qsar_results_summary.ipynb
 ```
 
 It auto-detects the latest compatible PFAS auxiliary run from
-`run_autoqsar_ga_benchmarks.py --pfas-aux-workbook` unless `RUN_DIR` is set in
+`run_qsarena_benchmarks.py --pfas-aux-workbook` unless `RUN_DIR` is set in
 the first code cell. The notebook builds a model-performance table for each
 dataset, identifies the best model per sheet by test RMSE, reports run metadata
 and stale-output warnings, builds a cost-vs-performance Pareto table from
@@ -673,7 +777,7 @@ benchmark runner's default dataset discovery. It includes:
 
 When PyTDC exposes an official `admet_group` entry for a TDC benchmark dataset,
 the runner prefers that train_val/test split over legacy single-prediction cache
-entries. Official split frames remain cached under `data/_autoqsar_cache`, and
+entries. Official split frames remain cached under `data/_qsarena_cache`, and
 stale TDC cache entries without an official split are refreshed automatically.
 
 The broader dataset catalog is written to:
@@ -744,7 +848,7 @@ trainable model and records that fallback in the plan file. It writes:
 
 ## Caching
 
-AutoQSAR uses caches to avoid repeating expensive work:
+QSARena uses caches to avoid repeating expensive work:
 
 - `model_cache/feature_store_parquet`: persistent molecular feature store keyed
   by canonical SMILES and feature representation.
@@ -777,7 +881,7 @@ backend selection. The preferred local setup is:
 PRIORLABS_API_KEY=your_key_here
 ```
 
-With that key present, `run_autoqsar_ga_benchmarks.py` uses the Prior Labs
+With that key present, `run_qsarena_benchmarks.py` uses the Prior Labs
 `tabpfn_client` backend by default and applies the key before the TabPFN
 preflight. The runner prints whether `.env` was loaded and whether a Prior Labs
 key was found, but it does not print the key value.
@@ -818,8 +922,8 @@ source-load fallback when needed.
 ### Quick Smoke Test
 
 ```powershell
-conda activate autoqsar-py311
-python portable_colab_qsar_bundle\run_autoqsar_ga_benchmarks.py `
+conda activate qsarena-py311
+python portable_colab_qsar_bundle\run_qsarena_benchmarks.py `
   --dataset-name chemml_organic_density `
   --row-limit 100 `
   --no-run-tabpfn `
@@ -835,7 +939,7 @@ python portable_colab_qsar_bundle\run_autoqsar_ga_benchmarks.py `
 ### Resume A Long Run And Rebuild Ensembles
 
 ```powershell
-python portable_colab_qsar_bundle\run_autoqsar_ga_benchmarks.py `
+python portable_colab_qsar_bundle\run_qsarena_benchmarks.py `
   --output-dir benchmark_results\all_benchmarks_run `
   --resume `
   --revisit-completed-datasets `
@@ -919,7 +1023,7 @@ configuration of any run for auditing and comparison.
 
 #### Resource auto-detection
 
-`run_autoqsar_ga_benchmarks.py` detects resources at startup and applies
+`run_qsarena_benchmarks.py` detects resources at startup and applies
 sensible defaults that can be overridden from the CLI:
 
 | Resource | Auto-detected value | Override flag |
@@ -940,7 +1044,7 @@ GPU-VRAM-aware batch-size and model-size logic at runtime in the Uni-Mol cells
 ### Compare Two Runs
 
 ```powershell
-python portable_colab_qsar_bundle\run_autoqsar_ga_benchmarks.py `
+python portable_colab_qsar_bundle\run_qsarena_benchmarks.py `
   --output-dir benchmark_results\new_run `
   --compare-run-dir benchmark_results\previous_run `
   --resume
@@ -956,7 +1060,7 @@ when enough matching data are available.
 - For shared features, split logic, persistent feature-store behavior, and CFA
   logic, edit `qsar_workflow_core.py`.
 - For built-in dataset availability, edit `benchmark_registry.py`.
-- For benchmark-runner behavior, edit `run_autoqsar_ga_benchmarks.py`.
+- For benchmark-runner behavior, edit `run_qsarena_benchmarks.py`.
 - Keep benchmark split intent dataset-specific. The runner supports fallback
   logic, but benchmark datasets should preserve their intended split strategy
   where possible.
@@ -971,11 +1075,11 @@ when enough matching data are available.
 
 ### Jupyter Uses The Wrong Python
 
-Create or reselect the `AutoQSAR (py311)` kernel:
+Create or reselect the `QSARena (py311)` kernel:
 
 ```powershell
-conda activate autoqsar-py311
-python -m ipykernel install --user --name autoqsar-py311 --display-name "AutoQSAR (py311)"
+conda activate qsarena-py311
+python -m ipykernel install --user --name qsarena-py311 --display-name "QSARena (py311)"
 ```
 
 ### CUDA Or Torch Import Fails
@@ -983,7 +1087,7 @@ python -m ipykernel install --user --name autoqsar-py311 --display-name "AutoQSA
 Use the CPU environment if CUDA compatibility is uncertain:
 
 ```powershell
-conda env create -f environment-cpu.yml -n autoqsar-py311
+conda env create -f environment-cpu.yml -n qsarena-py311
 ```
 
 ### Benchmark Results Do Not Change After A Code Edit
@@ -997,7 +1101,7 @@ the relevant cache under `model_cache/` or the affected dataset subdirectory in
 Disable the failing backend and rerun:
 
 ```powershell
-python portable_colab_qsar_bundle\run_autoqsar_ga_benchmarks.py `
+python portable_colab_qsar_bundle\run_qsarena_benchmarks.py `
   --no-run-tabpfn `
   --no-run-chemprop-mpnn `
   --no-run-chemprop-attentivefp `
@@ -1013,7 +1117,7 @@ editing.
 
 ## Running on HPC via Apptainer
 
-AutoQSAR can be deployed as an Apptainer/Singularity container on NSF ACCESS HPC
+QSARena can be deployed as an Apptainer/Singularity container on NSF ACCESS HPC
 clusters (Delta, Bridges-2, Expanse, Stampede3) for GPU-accelerated, fully
 reproducible TDC-22 multi-seed evaluation.
 
@@ -1039,6 +1143,50 @@ See [CONTAINER.md](CONTAINER.md) for full build, transfer, and submission
 instructions, and [hpc/README.md](hpc/README.md) for routing logic and
 cluster-specific placeholder values.
 
+## Reporting Issues And Contributing
+
+Bug reports, questions and feature requests are welcome in the public issue tracker:
+
+**<https://github.com/ScottCoffin/QSARena/issues>**
+
+To open one, click **New issue** and pick a template:
+
+- **Bug report** — something does not work as documented. Please include the exact
+  command or notebook cell, the dataset (a public benchmark name is ideal), the
+  traceback or the `error` column from the affected `metrics.csv` row, and your OS,
+  Python version and whether a GPU was used.
+- **Feature request** — a model, dataset, metric or workflow you would like added. A
+  reference or link to the method helps.
+- A blank issue is also fine for anything that does not fit either template.
+
+Before opening a bug, it is worth checking:
+
+1. Whether the backend is optional and failed a dependency or hardware guardrail —
+   these are reported in the `error` column rather than raised, and the run continues
+   (see [Troubleshooting](#troubleshooting)).
+2. Whether a fresh `--output-dir` resolves it, which distinguishes cache issues from
+   code issues.
+
+Pull requests are welcome. For workflow changes, edit `qsar_workflow_core.py`; for the
+interactive notebook, edit `build_colab_qsar_tutorial.py` and regenerate rather than
+editing the notebook JSON (see [Development Notes](#development-notes)).
+
+## Citation And Archived Release
+
+If you use QSARena, please cite the accompanying paper and the archived software
+release. A versioned snapshot of this repository, including the benchmark artifacts, is
+deposited on Zenodo:
+
+```text
+Zenodo DOI: <pending — see ZENODO.md>
+```
+
+`CITATION.cff` in the repository root carries machine-readable citation metadata, and
+`.zenodo.json` controls how Zenodo records each release. See [ZENODO.md](ZENODO.md) for
+how the archive is created and updated.
+
 ## License
 
-See `LICENSE`.
+QSARena is released under the MIT License — an
+[OSI-approved](https://opensource.org/licenses/MIT) license permitting reuse,
+modification and redistribution. See `LICENSE` for the full text.

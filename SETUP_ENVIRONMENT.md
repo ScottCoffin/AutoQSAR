@@ -1,19 +1,19 @@
-# AutoQSAR Environment Setup
+# QSARena Environment Setup
 
-This script helps you set up the conda environment for AutoQSAR based on your system's capabilities.
+This script helps you set up the conda environment for QSARena based on your system's capabilities.
 
 ## Quick Start
 
 ### For CUDA-enabled GPU systems:
 ```powershell
-conda env create -f environment-cuda.yml -n autoqsar-py311
-conda activate autoqsar-py311
+conda env create -f environment-cuda.yml -n qsarena-py311
+conda activate qsarena-py311
 ```
 
 ### For CPU-only systems:
 ```powershell
-conda env create -f environment-cpu.yml -n autoqsar-py311
-conda activate autoqsar-py311
+conda env create -f environment-cpu.yml -n qsarena-py311
+conda activate qsarena-py311
 ```
 
 ## Environment Files Explained
@@ -47,8 +47,8 @@ print(torch.cuda.is_available())  # Should be True for CUDA, False for CPU
 - Try CPU version instead: `environment-cpu.yml`
 
 ### ModuleNotFoundError: No module named 'torch'
-- Make sure conda environment is activated: `conda activate autoqsar-py311`
+- Make sure conda environment is activated: `conda activate qsarena-py311`
 
 ### Environment creation fails
 - Try clearing pip cache: `pip cache purge`
-- Then retry: `conda env create -f environment-cuda.yml -n autoqsar-py311`
+- Then retry: `conda env create -f environment-cuda.yml -n qsarena-py311`

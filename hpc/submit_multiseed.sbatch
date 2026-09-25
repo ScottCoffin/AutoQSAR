@@ -18,7 +18,7 @@
 # GPU subset (this script): tasks where device==gpu in hpc/task_manifest_gpu.tsv
 # See generate_manifests.py or hpc/README.md §Manifest to generate the GPU-only sub-manifest.
 
-#SBATCH --job-name=autoqsar_multiseed_gpu
+#SBATCH --job-name=qsarena_multiseed_gpu
 #SBATCH --account=<ACCOUNT>                  # TODO: replace with your allocation
 #SBATCH --partition=<GPU_SHARED_PARTITION>   # TODO: replace with cluster GPU-shared partition
 #SBATCH --gpus-per-task=1
@@ -60,12 +60,12 @@ fi
 echo "Task $SLURM_ARRAY_TASK_ID: dataset=$DATASET seed=$SEED"
 
 # ── Paths ────────────────────────────────────────────────────────────────────
-# Operator: set AUTOQSAR_INPUT to the directory containing data/, model_cache/,
+# Operator: set QSARENA_INPUT to the directory containing data/, model_cache/,
 # .cache/ relative to the repo root structure. Typically stage to $SCRATCH before
 # the job runs (see hpc/README.md §Staging).
-AUTOQSAR_INPUT="${AUTOQSAR_INPUT:-$SCRATCH/autoqsar_in}"
-AUTOQSAR_OUTPUT="${AUTOQSAR_OUTPUT:-$SCRATCH/autoqsar_out}"
-SIF="${SIF:-$SLURM_SUBMIT_DIR/autoqsar.sif}"
+QSARENA_INPUT="${QSARENA_INPUT:-$SCRATCH/qsarena_in}"
+QSARENA_OUTPUT="${QSARENA_OUTPUT:-$SCRATCH/qsarena_out}"
+SIF="${SIF:-$SLURM_SUBMIT_DIR/qsarena.sif}"
 
 if [[ ! -f "$SIF" ]]; then
     echo "ERROR: .sif not found at $SIF" >&2
@@ -74,26 +74,26 @@ fi
 
 # ── Stage inputs to node-local NVMe if available ─────────────────────────────
 # NODE_LOCAL_STORAGE is set to $TMPDIR on most ACCESS clusters with NVMe scratch.
-# If not available, we use the shared AUTOQSAR_INPUT directly.
-if [[ -n "${TMPDIR:-}" && -d "$TMPDIR" && "$AUTOQSAR_INPUT" != "$TMPDIR/autoqsar_in" ]]; then
-    echo "Staging input to node-local NVMe: $TMPDIR/autoqsar_in"
-    mkdir -p "$TMPDIR/autoqsar_in"
+# If not available, we use the shared QSARENA_INPUT directly.
+if [[ -n "${TMPDIR:-}" && -d "$TMPDIR" && "$QSARENA_INPUT" != "$TMPDIR/qsarena_in" ]]; then
+    echo "Staging input to node-local NVMe: $TMPDIR/qsarena_in"
+    mkdir -p "$TMPDIR/qsarena_in"
     # Rsync only the needed sub-trees to keep staging fast
     rsync -a --quiet \
-        "$AUTOQSAR_INPUT/data/"        "$TMPDIR/autoqsar_in/data/"       2>/dev/null || true
+        "$QSARENA_INPUT/data/"        "$TMPDIR/qsarena_in/data/"       2>/dev/null || true
     rsync -a --quiet \
-        "$AUTOQSAR_INPUT/model_cache/" "$TMPDIR/autoqsar_in/model_cache/" 2>/dev/null || true
+        "$QSARENA_INPUT/model_cache/" "$TMPDIR/qsarena_in/model_cache/" 2>/dev/null || true
     rsync -a --quiet \
-        "$AUTOQSAR_INPUT/.cache/"      "$TMPDIR/autoqsar_in/.cache/"     2>/dev/null || true
-    LOCAL_INPUT="$TMPDIR/autoqsar_in"
+        "$QSARENA_INPUT/.cache/"      "$TMPDIR/qsarena_in/.cache/"     2>/dev/null || true
+    LOCAL_INPUT="$TMPDIR/qsarena_in"
 else
-    LOCAL_INPUT="$AUTOQSAR_INPUT"
+    LOCAL_INPUT="$QSARENA_INPUT"
 fi
 
 # ── Run container ─────────────────────────────────────────────────────────────
 apptainer run --nv \
     --bind "${LOCAL_INPUT}:/in" \
-    --bind "${AUTOQSAR_OUTPUT}:/out" \
+    --bind "${QSARENA_OUTPUT}:/out" \
     "$SIF" \
         --dataset "$DATASET" \
         --seed    "$SEED" \

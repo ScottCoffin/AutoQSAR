@@ -1,6 +1,6 @@
-# Running AutoQSAR on HPC via Apptainer
+# Running QSARena on HPC via Apptainer
 
-This document explains how to build the AutoQSAR container, transfer it to an
+This document explains how to build the QSARena container, transfer it to an
 NSF ACCESS HPC cluster, and dispatch the TDC-22 multi-seed evaluation as a
 Slurm job array.
 
@@ -26,10 +26,10 @@ Slurm job array.
 # The working tree MUST be clean (enforced by Makefile)
 git status    # confirm no uncommitted changes
 
-make image    # builds autoqsar:<commit> and autoqsar:latest, populates BUILD_PROVENANCE.md
+make image    # builds qsarena:<commit> and qsarena:latest, populates BUILD_PROVENANCE.md
 ```
 
-The Makefile tags the current commit (`git tag autoqsar-vYYYYMMDD`), embeds the
+The Makefile tags the current commit (`git tag qsarena-vYYYYMMDD`), embeds the
 hash into the image labels, and records `pip freeze` output in `BUILD_PROVENANCE.md`.
 
 ---
@@ -37,20 +37,20 @@ hash into the image labels, and records `pip freeze` output in `BUILD_PROVENANCE
 ## 2 — Convert to Apptainer .sif
 
 ```bash
-make sif      # exports Docker image → autoqsar.sif, records SHA-256 in BUILD_PROVENANCE.md
+make sif      # exports Docker image → qsarena.sif, records SHA-256 in BUILD_PROVENANCE.md
 ```
 
 Or on HPC where Docker is unavailable, build directly from the Apptainer def file:
 
 ```bash
 # On the HPC login node (requires internet access or pre-pulled base image)
-apptainer build autoqsar.sif containers/autoqsar.def
+apptainer build qsarena.sif containers/qsarena.def
 ```
 
 Verify the image:
 
 ```bash
-apptainer run autoqsar.sif --help
+apptainer run qsarena.sif --help
 ```
 
 ---
@@ -74,13 +74,13 @@ and `run_one_provenance.json` exist with finite metric values.
 
 ```bash
 # Replace <USER> and <CLUSTER> with your ACCESS credentials
-scp autoqsar.sif <USER>@<CLUSTER>:~/autoqsar/
-scp -r hpc/       <USER>@<CLUSTER>:~/autoqsar/
+scp qsarena.sif <USER>@<CLUSTER>:~/qsarena/
+scp -r hpc/       <USER>@<CLUSTER>:~/qsarena/
 
 # Stage repo data to $SCRATCH (do this once; subsequent jobs reuse it)
-rsync -av data/        <USER>@<CLUSTER>:$SCRATCH/autoqsar_in/data/
-rsync -av model_cache/ <USER>@<CLUSTER>:$SCRATCH/autoqsar_in/model_cache/
-rsync -av .cache/      <USER>@<CLUSTER>:$SCRATCH/autoqsar_in/.cache/
+rsync -av data/        <USER>@<CLUSTER>:$SCRATCH/qsarena_in/data/
+rsync -av model_cache/ <USER>@<CLUSTER>:$SCRATCH/qsarena_in/model_cache/
+rsync -av .cache/      <USER>@<CLUSTER>:$SCRATCH/qsarena_in/.cache/
 ```
 
 ---
@@ -125,9 +125,9 @@ Examples by cluster:
 
 ```bash
 # On the HPC login node
-export AUTOQSAR_INPUT=$SCRATCH/autoqsar_in
-export AUTOQSAR_OUTPUT=$SCRATCH/autoqsar_out
-export SIF=~/autoqsar/autoqsar.sif
+export QSARENA_INPUT=$SCRATCH/qsarena_in
+export QSARENA_OUTPUT=$SCRATCH/qsarena_out
+export SIF=~/qsarena/qsarena.sif
 
 # Submit GPU array (MapLight+GNN, TabPFN, Chemprop winners)
 sbatch hpc/submit_multiseed.sbatch
@@ -143,7 +143,7 @@ squeue -u $USER
 
 ## 8 — Retrieving results
 
-Each task writes to `$AUTOQSAR_OUTPUT/<dataset>/seed_<seed>/`:
+Each task writes to `$QSARENA_OUTPUT/<dataset>/seed_<seed>/`:
 
 ```
 metrics.csv               per-model test metrics
@@ -156,7 +156,7 @@ run_status.json           pass/fail, elapsed wall time
 Sync results back:
 
 ```bash
-rsync -av <USER>@<CLUSTER>:$SCRATCH/autoqsar_out/ ./benchmark_results/multiseed_hpc/
+rsync -av <USER>@<CLUSTER>:$SCRATCH/qsarena_out/ ./benchmark_results/multiseed_hpc/
 ```
 
 ---
@@ -166,8 +166,8 @@ rsync -av <USER>@<CLUSTER>:$SCRATCH/autoqsar_out/ ./benchmark_results/multiseed_
 ```bash
 apptainer run --nv \
     --bind ./:/in \
-    --bind /tmp/autoqsar_out:/out \
-    autoqsar.sif \
+    --bind /tmp/qsarena_out:/out \
+    qsarena.sif \
         --dataset tdc_clearance_microsome_az \
         --seed 3 \
         --input-dir /in \
@@ -199,9 +199,9 @@ persistent volume layout, conformer pre-generation, and quick-start examples.
 # Dry-run to validate manifest before burning SU
 python js2/run_queue.py \
     --manifest js2/manifests/gpu_tasks.tsv \
-    --sif ~/autoqsar/autoqsar.sif \
-    --input-dir /vol/autoqsar/autoqsar_in \
-    --output-dir /vol/autoqsar/autoqsar_out \
+    --sif ~/qsarena/qsarena.sif \
+    --input-dir /vol/qsarena/qsarena_in \
+    --output-dir /vol/qsarena/qsarena_out \
     --su-budget 200 \
     --dry-run
 ```
@@ -227,7 +227,7 @@ in `run_one_provenance.json`.
 ### Uni-Mol2 V2
 
 ```bash
-apptainer run --nv autoqsar.sif \
+apptainer run --nv qsarena.sif \
     --dataset tdc_ppbr_az --seed 1 \
     --input-dir /in --output-dir /out \
     --run-unimol-v2 \
@@ -243,12 +243,12 @@ the standard benchmark outputs.
 
 Operator must:
 1. Download the 84m checkpoint to `model_cache/unimolv2_checkpoints/84m/checkpoint.pt`
-2. Record its SHA-256 in `autoqsar/unimolv2.py:UNIMOLV2_CHECKPOINT_SHA256["84m"]`
+2. Record its SHA-256 in `qsarena/unimolv2.py:UNIMOLV2_CHECKPOINT_SHA256["84m"]`
 
 ### Conformer pre-generation (CPU mode)
 
 ```bash
-apptainer run autoqsar.sif \
+apptainer run qsarena.sif \
     --generate-conformers-only \
     --dataset tdc_ppbr_az \
     --input-dir /in \
@@ -271,6 +271,6 @@ Run this before GPU tasks to eliminate conformer-gen overhead on the g3.large.
 | `ERROR: manifest not found` | Sub-manifests not generated | Run `make manifests` locally, then copy to cluster |
 | Out-of-memory on GPU | Request more VRAM or use `--device cpu` | Edit sbatch `--mem` or switch to CPU script |
 | Uni-Mol2 CUDA OOM | batch size too large | The OOM-retry loop halves batch size up to 3 times automatically |
-| Uni-Mol2 checkpoint SHA-256 mismatch | wrong file downloaded | Re-download and update `UNIMOLV2_CHECKPOINT_SHA256` in `autoqsar/unimolv2.py` |
+| Uni-Mol2 checkpoint SHA-256 mismatch | wrong file downloaded | Re-download and update `UNIMOLV2_CHECKPOINT_SHA256` in `qsarena/unimolv2.py` |
 | `openstack server shelve` fails | credentials not configured | Run `openstack` CLI setup or shelve manually via Horizon web UI |
 | Conformer cache empty on GPU VM | pre-gen step was skipped | Run `--generate-conformers-only` on a CPU instance first, then sync cache |

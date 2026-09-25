@@ -1,5 +1,5 @@
 """
-autoqsar.conformers — RDKit ETKDGv3+MMFF 3D conformer generation with
+qsarena.conformers — RDKit ETKDGv3+MMFF 3D conformer generation with
 persistent SQLite cache.
 
 Design:
@@ -8,7 +8,7 @@ Design:
   - All conformer generation is CPU work; no GPU required.
   - Cache hash (SHA-256 of all mol binaries, sorted by key) is stable across
     platforms and embeddable in run provenance records.
-  - Standalone CLI: python -m autoqsar.conformers --dataset <NAME> ...
+  - Standalone CLI: python -m qsarena.conformers --dataset <NAME> ...
 
 Reproducibility:
   The conformer seed is separate from the model seed (default 42) so the
@@ -235,7 +235,7 @@ def _cli_main(argv: list[str] | None = None) -> int:
     import argparse
 
     parser = argparse.ArgumentParser(
-        description="AutoQSAR conformer pre-generation — runs on CPU, no GPU required."
+        description="QSARena conformer pre-generation — runs on CPU, no GPU required."
     )
     parser.add_argument("--dataset", required=True, help="Dataset name (e.g. tdc_caco2_wang).")
     parser.add_argument("--data-dir", type=Path, default=Path("data"), help="Data directory.")

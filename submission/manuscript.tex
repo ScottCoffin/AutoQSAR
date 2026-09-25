@@ -1,0 +1,79 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% QSARena -- Journal of Cheminformatics (Software article)
+%% Springer Nature LaTeX template (sn-jnl.cls), December 2024 release.
+%%
+%% BUILD: sn-jnl.cls is NOT bundled here. Either
+%%   (a) open this folder on Overleaf via the Springer Nature template
+%%       https://www.overleaf.com/latex/templates/springer-nature-latex-template/gsvvftmrppwq
+%%       (the class is preinstalled there), or
+%%   (b) download the template .zip from
+%%       https://www.springernature.com/gp/authors/campaigns/latex-author-support
+%%       and copy sn-jnl.cls + the sn-*.bst files into this directory.
+%% Then: pdflatex manuscript && bibtex manuscript && pdflatex manuscript && pdflatex manuscript
+%%
+%% To proof the text without the Springer class, compile proof.tex instead (standard article
+%% class, same body.tex). See README.md.
+%%
+%% sn-vancouver-num gives the numbered Vancouver reference style used by BMC journals.
+%% Add 'referee' for double-spaced review copy, 'lineno' for line numbers.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\documentclass[pdflatex,sn-vancouver-num]{sn-jnl}
+
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{rotating}
+\usepackage{tabularx}
+\usepackage{xltabular}
+\usepackage{makecell}
+\usepackage{pdflscape}
+\usepackage{url}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage[htt]{hyphenat}   % allow hyphenation inside \texttt identifiers
+\setlength{\emergencystretch}{3em}
+
+\graphicspath{{figures/}}
+
+\raggedbottom
+
+\begin{document}
+
+\title[No Single Architecture Wins]{No Single Architecture Wins: Ensembles and Conventional Machine Learning Match Pretrained Molecular Models Across 44 Property-Prediction Benchmarks}
+
+\author*[1]{\fnm{Scott} \sur{Coffin}}\email{scott.l.coffin@gmail.com}
+
+\affil*[1]{\orgname{California Office of Environmental Health Hazard Assessment},
+\orgaddress{\street{1001 I Street}, \city{Sacramento}, \postcode{95814}, \state{CA}, \country{USA}}}
+
+\abstract{\input{abstract}}
+
+\keywords{\input{keywords}}
+
+\maketitle
+
+%% Graphical abstract. Journal of Cheminformatics accepts one; it is also supplied as a
+%% standalone file (figures/graphical_abstract.pdf) for the submission system.
+\begin{figure*}[htbp]
+\centering
+\includegraphics[width=\textwidth]{figures/graphical_abstract.pdf}
+\caption*{\textbf{Graphical abstract.} QSARena evaluates conventional, ensemble and pretrained molecular models under one leakage-controlled pipeline across 44 benchmarks. No architecture family wins more than 36\% of datasets; the best model per dataset reaches the estimated published top ten on 35 of 37 comparable datasets, falling to 25 of 37 when the model is chosen without consulting held-out data.}
+\end{figure*}
+
+\clearpage
+
+\input{body}
+
+\section*{Abbreviations}
+
+ADMET: absorption, distribution, metabolism, excretion and toxicity; ADME: absorption, distribution, metabolism and excretion; AUPRC: area under the precision--recall curve; AUROC: area under the receiver operating characteristic curve; AutoML: automated machine learning; CFA: combinatorial fusion analysis; CV: cross-validation; D-MPNN: directed message-passing neural network; ECFP: extended-connectivity fingerprint; ErG: extended reduced graph; GIN: graph isomorphism network; GNN: graph neural network; MAE: mean absolute error; MCC: Matthews correlation coefficient; OOF: out-of-fold; POD: point of departure; QSAR: quantitative structure--activity relationship; RMSE: root-mean-square error; SMILES: simplified molecular-input line-entry system; TDC: Therapeutics Data Commons.
+
+\section*{Supplementary information}
+
+\textbf{Additional file 1.} Supplementary tables S1--S4: per-dataset winning models with cross-validation-selected comparators (S1), staged component ablation (S2), feature-family selection summary (S3), and model coverage (S4).
+
+\input{declarations}
+
+\bibliography{references}
+
+\end{document}

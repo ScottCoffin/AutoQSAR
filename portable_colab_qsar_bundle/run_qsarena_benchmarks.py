@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Benchmark the AutoQSAR notebook workflow (CPU-focused).
+"""Benchmark the QSARena notebook workflow (CPU-focused).
 
 This script benchmarks the notebook's example SMILES-based datasets: runnable
 ChemML bundled examples plus QSAR benchmark suites (PyTDC, MoleculeNet
@@ -213,6 +213,45 @@ def _configure_openbabel_data_dir() -> None:
 
 
 _configure_openbabel_data_dir()
+
+
+# Decode child-process output as UTF-8 explicitly, never via the ambient locale.
+#
+# `subprocess.run(..., text=True)` with no `encoding=` decodes using
+# `locale.getpreferredencoding(False)`. On a Linux host with a C/POSIX locale -- the usual state
+# inside a container or a non-login SSH session, and what we got on Jetstream2 -- that resolves to
+# ANSI_X3.4-1968 (ASCII). Chemprop v2 prints UTF-8 progress output (0xe2 leads the em-dash and
+# box-drawing glyphs), so `subprocess.run` itself raised UnicodeDecodeError before any training
+# result could be read. That destroyed 86.4% of Chemprop runs in the canonical A100 benchmark while
+# looking like a model failure. Windows was unaffected only because cp1252 maps 0xe2 without error.
+_SUBPROCESS_TEXT_KWARGS: dict[str, Any] = {
+    "text": True,
+    "encoding": "utf-8",
+    "errors": "replace",
+}
+
+
+def workspace_root() -> Path:
+    """Return the directory that holds ``data/``, ``model_cache/``, ``benchmark_results/``.
+
+    In a source checkout this is the repository root (the parent of this file's
+    directory), which is what the scripts have always used. After ``pip install
+    qsarena`` that parent is ``site-packages``, which must never be written to,
+    so fall back to the current working directory. ``QSARENA_HOME`` overrides
+    both, which is what the container/HPC launchers should set.
+    """
+
+    override = os.environ.get("QSARENA_HOME", "").strip()
+    if override:
+        return Path(override).expanduser().resolve()
+
+    source_root = Path(__file__).resolve().parents[1]
+    # A checkout is identified by a repo marker that is never present in site-packages.
+    for marker in ("pyproject.toml", ".git", "environment-cpu.yml"):
+        if (source_root / marker).exists():
+            return source_root
+    return Path.cwd().resolve()
+
 
 try:
     from portable_colab_qsar_bundle.qsar_workflow_core import (
@@ -556,7 +595,7 @@ def ensure_tabpfn_installed(prefer_local_backend: bool = False) -> bool:
         if importlib.util.find_spec(module_name) is None:
             print(f"[installing] {install_targets[backend]}", flush=True)
             install_cmd = [sys.executable, "-m", "pip", "install", "-q", "--no-input", install_targets[backend]]
-            install_result = subprocess.run(install_cmd, capture_output=True, text=True)
+            install_result = subprocess.run(install_cmd, capture_output=True, **_SUBPROCESS_TEXT_KWARGS)
             if install_result.returncode != 0:
                 install_logs = ((install_result.stdout or "") + "\n" + (install_result.stderr or "")).strip()
                 print(
@@ -591,7 +630,7 @@ def ensure_tabpfn_client_installed() -> bool:
         return True
     print("[installing] tabpfn-client", flush=True)
     install_cmd = [sys.executable, "-m", "pip", "install", "-q", "--no-input", "tabpfn-client"]
-    install_result = subprocess.run(install_cmd, capture_output=True, text=True)
+    install_result = subprocess.run(install_cmd, capture_output=True, **_SUBPROCESS_TEXT_KWARGS)
     if install_result.returncode != 0:
         install_logs = ((install_result.stdout or "") + "\n" + (install_result.stderr or "")).strip()
         print(
@@ -1431,7 +1470,7 @@ def write_stage23_resume_cache(
 
 
 def default_shared_feature_matrix_cache_path() -> Path:
-    return Path(__file__).resolve().parents[1] / "model_cache" / "benchmark_feature_matrix_cache"
+    return workspace_root() / "model_cache" / "benchmark_feature_matrix_cache"
 
 
 def resolve_shared_feature_matrix_cache_path(cache_path: str | Path = "AUTO") -> Path:
@@ -1542,9 +1581,12 @@ def parse_int_list(text: Any) -> list[int]:
 
 
 def model_filter_values(args: argparse.Namespace) -> set[str]:
+    raw_filters = getattr(args, "only_model_names", [])
+    if isinstance(raw_filters, str):
+        raw_filters = [raw_filters] if raw_filters.strip() else []
     return {
         str(item).strip()
-        for item in parse_comma_list(getattr(args, "only_model_names", ""))
+        for item in raw_filters
         if str(item).strip()
     }
 
@@ -2281,7 +2323,7 @@ def load_tdc_datasets(path: str = "./data") -> list[DatasetSpec]:
         return datasets
     data_root = Path(path)
     data_root.mkdir(parents=True, exist_ok=True)
-    cache_root = data_root / "_autoqsar_cache" / "tdc_single_pred"
+    cache_root = data_root / "_qsarena_cache" / "tdc_single_pred"
     cache_root.mkdir(parents=True, exist_ok=True)
     catalog_metadata = load_benchmark_catalog_metadata(data_root)
 
@@ -2893,7 +2935,7 @@ def fetch_tdc_leaderboard_best(dataset_name: str, timeout: int = 20) -> dict[str
     leaderboard_url = TDC_LEADERBOARD_URLS.get(dataset_key)
     if not leaderboard_url:
         return None
-    request = urllib.request.Request(leaderboard_url, headers={"User-Agent": "AutoQSAR-Benchmark/1.0"})
+    request = urllib.request.Request(leaderboard_url, headers={"User-Agent": "QSARena-Benchmark/1.0"})
     with urllib.request.urlopen(request, timeout=int(timeout)) as response:
         html = response.read().decode("utf-8", errors="replace")
     tables = pd.read_html(io.StringIO(html))
@@ -2955,7 +2997,7 @@ def fetch_moleculenet_leaderboard_best(dataset_key: str, timeout: int = 20) -> d
             section_candidates.append(candidate_text)
     if not section_candidates:
         return None
-    request = urllib.request.Request(MOLECULENET_LEADERBOARD_README_URL, headers={"User-Agent": "AutoQSAR-Benchmark/1.0"})
+    request = urllib.request.Request(MOLECULENET_LEADERBOARD_README_URL, headers={"User-Agent": "QSARena-Benchmark/1.0"})
     with urllib.request.urlopen(request, timeout=int(timeout)) as response:
         markdown = response.read().decode("utf-8", errors="replace")
     section_match = None
@@ -3015,7 +3057,7 @@ def fetch_moleculenet_leaderboard_best(dataset_key: str, timeout: int = 20) -> d
 def fetch_polaris_leaderboard_best(leaderboard_url: str, timeout: int = 20) -> dict[str, Any] | None:
     if not leaderboard_url:
         return None
-    request = urllib.request.Request(leaderboard_url, headers={"User-Agent": "AutoQSAR-Benchmark/1.0"})
+    request = urllib.request.Request(leaderboard_url, headers={"User-Agent": "QSARena-Benchmark/1.0"})
     with urllib.request.urlopen(request, timeout=int(timeout)) as response:
         html = response.read().decode("utf-8", errors="replace")
     tables = pd.read_html(io.StringIO(html))
@@ -3370,7 +3412,9 @@ def estimate_rank_vs_top10(primary_value: float, comparable_top10_values: list[f
 
 
 def cached_leaderboard_summary_for_spec(spec: DatasetSpec, cache_csv_path: Path | None = None) -> dict[str, Any] | None:
-    cache_path = cache_csv_path or Path("data/benchmark_leaderboards/leaderboard_top10_reference_latest.csv")
+    cache_path = cache_csv_path or (
+        workspace_root() / "data" / "benchmark_leaderboards" / "leaderboard_top10_reference_latest.csv"
+    )
     if not cache_path.exists():
         return None
     try:
@@ -3682,7 +3726,8 @@ def write_leaderboard_reference_artifacts(root: Path, output_dir: Path, datasets
 
 
 def leaderboard_comparison_by_dataset(summary_df: pd.DataFrame) -> pd.DataFrame:
-    if summary_df.empty or "dataset" not in summary_df.columns:
+    required_columns = {"dataset", "primary_metric", "primary_metric_value"}
+    if summary_df.empty or not required_columns.issubset(summary_df.columns):
         return pd.DataFrame()
     rows: list[dict[str, Any]] = []
     for dataset_name, group in summary_df.groupby("dataset", sort=True):
@@ -4100,7 +4145,7 @@ def main():
 if __name__ == "__main__":
     main()
 """
-    selector_tmp_root = Path.cwd() / ".autoqsar_tmp"
+    selector_tmp_root = Path.cwd() / ".qsarena_tmp"
     selector_tmp_root.mkdir(parents=True, exist_ok=True)
     temp_path = selector_tmp_root / f"selector_{int(time.time() * 1000)}_{random.randint(1000, 9999)}"
     temp_path.mkdir(parents=True, exist_ok=True)
@@ -4117,9 +4162,9 @@ if __name__ == "__main__":
                 [sys.executable, str(worker_path), str(payload_path), str(result_path)],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
-                text=True,
                 timeout=timeout_seconds,
                 check=False,
+                **_SUBPROCESS_TEXT_KWARGS,
             )
         except subprocess.TimeoutExpired:
             return {
@@ -5468,7 +5513,7 @@ def _suppress_maplight_store_probe_noise():
 
 
 def default_maplight_pretrained_cache_dir() -> Path:
-    return Path(__file__).resolve().parents[1] / "model_cache" / "maplight_gnn_pretrained"
+    return workspace_root() / "model_cache" / "maplight_gnn_pretrained"
 
 
 def _build_maplight_gnn_embedder(kind: str = "gin_supervised_masking") -> tuple[Callable[[list[str]], list[Any]], str]:
@@ -5802,7 +5847,11 @@ def _resolve_chemprop_command() -> list[str]:
     candidates.append(["chemprop"])
     for candidate in candidates:
         try:
-            probe = subprocess.run(candidate + ["--help"], capture_output=True, text=True)
+            probe = subprocess.run(
+                candidate + ["--help"],
+                capture_output=True,
+                **_SUBPROCESS_TEXT_KWARGS,
+            )
         except FileNotFoundError:
             continue
         if probe.returncode == 0:
@@ -5818,13 +5867,23 @@ def _run_chemprop_command(command_prefix: list[str], command_args: list[str], de
     if bool(getattr(_run_chemprop_command, "_echo_commands", False)):
         print(f"[Chemprop] {description}: {' '.join(str(part) for part in cmd)}", flush=True)
     start_time = time.perf_counter()
-    result = subprocess.run(cmd, capture_output=True, text=True)
+    try:
+        result = subprocess.run(cmd, capture_output=True, **_SUBPROCESS_TEXT_KWARGS)
+    except OSError as exc:
+        # Distinguish a harness-side I/O failure from a model failure. Conflating the two is
+        # exactly what hid the ASCII-locale decode bug for a whole 44-dataset run: every
+        # Chemprop variant failed at an identical 86.4% rate and the cause was recorded in the
+        # same `error` column as genuine training failures.
+        raise RuntimeError(
+            f"Chemprop harness error (subprocess I/O) during {description}: {exc}\n"
+            f"Command: {' '.join(str(part) for part in cmd)}"
+        ) from exc
     elapsed_seconds = float(time.perf_counter() - start_time)
     if result.returncode != 0:
         stdout_tail = (result.stdout or "").strip()[-1500:]
         stderr_tail = (result.stderr or "").strip()[-1500:]
         raise RuntimeError(
-            f"Chemprop command failed during {description} (exit={result.returncode}).\n"
+            f"Chemprop training failed during {description} (exit={result.returncode}).\n"
             f"Command: {' '.join(str(part) for part in cmd)}\n"
             f"stdout tail:\n{stdout_tail}\n\n"
             f"stderr tail:\n{stderr_tail}"
@@ -6515,7 +6574,20 @@ def build_ensemble_result(
     drop_highly_correlated_members: bool,
     max_train_prediction_correlation: float,
     exclude_negative_test_r2_members: bool,
+    member_selection_split: str = "train",
 ) -> tuple[pd.DataFrame, pd.DataFrame, np.ndarray, np.ndarray, list[str], list[str], Any]:
+    """Build a stacked or weighted ensemble from per-model train/test predictions.
+
+    ``member_selection_split`` governs which split decides *which members are admitted*:
+
+    ``"train"`` (default)
+        Leakage-free. Member exclusion and the correlated-pair tie-break both read training
+        metrics, so no held-out value influences ensemble composition.
+    ``"test"``
+        The original behaviour, retained only to reproduce the deposited benchmark run
+        bit-for-bit. It consults held-out R^2 and the held-out primary metric, which biases the
+        reported ensemble score upward. Do not use it for new results.
+    """
     if len(payloads) < 2:
         raise ValueError("At least two model predictions are required to build an ensemble.")
     primary_metric = current_dataset_primary_metric("rmse")
@@ -6618,12 +6690,24 @@ def build_ensemble_result(
 
     member_filter_notes: list[str] = []
     active_columns = list(prediction_columns)
+
+    # Which split may inform ensemble COMPOSITION. "train" keeps the selection leakage-free;
+    # "test" reproduces the deposited run and is optimistically biased. See the docstring.
+    selection_split = str(member_selection_split or "train").strip().lower()
+    if selection_split not in {"train", "test"}:
+        raise ValueError(f"member_selection_split must be 'train' or 'test', got {member_selection_split!r}")
+    sel_r2_key = "Test R2" if selection_split == "test" else "Train R2"
+    sel_primary_key = "Test Primary" if selection_split == "test" else "Train Primary"
+    member_filter_notes.append(f"Member selection metrics read from the {selection_split} split")
+
     if bool(exclude_negative_test_r2_members) and not is_classification:
-        positive_test_columns = [name for name in active_columns if float(member_metrics[name]["Test R2"]) > 0.0]
-        removed_negative = [name for name in active_columns if name not in positive_test_columns]
-        if removed_negative and len(positive_test_columns) >= 2:
-            active_columns = positive_test_columns
-            member_filter_notes.append("Dropped members with non-positive overlap Test R2: " + ", ".join(removed_negative))
+        positive_columns = [name for name in active_columns if float(member_metrics[name][sel_r2_key]) > 0.0]
+        removed_negative = [name for name in active_columns if name not in positive_columns]
+        if removed_negative and len(positive_columns) >= 2:
+            active_columns = positive_columns
+            member_filter_notes.append(
+                f"Dropped members with non-positive overlap {sel_r2_key}: " + ", ".join(removed_negative)
+            )
 
     if bool(drop_highly_correlated_members) and len(active_columns) > 2:
         threshold = float(min(max(max_train_prediction_correlation, 0.0), 0.999999))
@@ -6644,8 +6728,8 @@ def build_ensemble_result(
             max_idx = np.unravel_index(np.argmax(corr_values), corr_values.shape)
             model_a = str(corr_matrix.index[max_idx[0]])
             model_b = str(corr_matrix.columns[max_idx[1]])
-            primary_a = float(member_metrics[model_a]["Test Primary"])
-            primary_b = float(member_metrics[model_b]["Test Primary"])
+            primary_a = float(member_metrics[model_a][sel_primary_key])
+            primary_b = float(member_metrics[model_b][sel_primary_key])
             if lower_is_better:
                 if primary_a > primary_b:
                     drop_model = model_a
@@ -6664,7 +6748,10 @@ def build_ensemble_result(
             active_columns = [name for name in active_columns if name != drop_model]
         if removed_correlated:
             details = [f"{drop} (pair={a}/{b}, corr={corr:.3f})" for a, b, drop, corr in removed_correlated]
-            member_filter_notes.append("Dropped highly correlated members using overlap train predictions: " + "; ".join(details))
+            member_filter_notes.append(
+                f"Dropped highly correlated members (pair correlation on train predictions, "
+                f"tie-break on {sel_primary_key}): " + "; ".join(details)
+            )
 
     if len(active_columns) < 2:
         raise ValueError("Ensemble filtering left fewer than two members.")
@@ -8783,6 +8870,9 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
                             drop_highly_correlated_members=bool(args.ensemble_drop_highly_correlated_members),
                             max_train_prediction_correlation=float(args.ensemble_max_train_correlation),
                             exclude_negative_test_r2_members=bool(args.ensemble_exclude_negative_test_r2_members),
+                            member_selection_split=str(
+                                getattr(args, "ensemble_member_selection_split", "train")
+                            ),
                         )
                         final_ensemble_row = ensemble_results.loc[
                             ensemble_results["workflow"].astype(str) == "ensemble"
@@ -9332,7 +9422,7 @@ def _run_tdc22_seed(
     seed_args.random_seed = int(seed)
     seed_output_dir = Path(multiseed_root_str) / f"seed_{int(seed)}"
     seed_args.output_dir = seed_output_dir
-    seed_args.only_model_names = ",".join(selected_models)
+    seed_args.only_model_names = list(selected_models)
     seed_args.run_cfa = False
     seed_args.run_ensemble = False
     seed_args.revisit_completed_datasets = False
@@ -9455,7 +9545,7 @@ def run_tdc22_best_model_multiseed(
                 seed_args = argparse.Namespace(**vars(args))
                 seed_args.random_seed = int(seed)
                 seed_args.output_dir = seed_output_dir
-                seed_args.only_model_names = ",".join(selected_models)
+                seed_args.only_model_names = list(selected_models)
                 seed_args.run_cfa = False
                 seed_args.run_ensemble = False
                 seed_args.revisit_completed_datasets = False
@@ -9659,7 +9749,7 @@ def parse_args() -> argparse.Namespace:
         ),
     )
     parser.add_argument("--include-local-csv", action="append", help="Optional extra local CSV dataset path to add on top of the default benchmark example set.")
-    parser.add_argument("--output-dir", type=Path, default=None, help="Output directory. Defaults to benchmark_results/autoqsar_benchmark_<timestamp>.")
+    parser.add_argument("--output-dir", type=Path, default=None, help="Output directory. Defaults to benchmark_results/qsarena_benchmark_<timestamp>.")
     parser.add_argument(
         "--benchmark-profile",
         choices=["cost_optimized", "full"],
@@ -10039,6 +10129,18 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--ensemble-drop-highly-correlated-members", action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument("--ensemble-max-train-correlation", type=float, default=0.995)
     parser.add_argument("--ensemble-exclude-negative-test-r2-members", action=argparse.BooleanOptionalAction, default=True)
+    parser.add_argument(
+        "--ensemble-member-selection-split",
+        choices=["train", "test"],
+        default="train",
+        help=(
+            "Which split may inform ensemble MEMBERSHIP (not the reported score). "
+            "'train' (default) keeps member exclusion and the correlated-pair tie-break "
+            "leakage-free. 'test' reproduces the originally deposited benchmark run, which "
+            "consulted held-out R2 and is therefore optimistically biased; use it only for "
+            "exact reproduction."
+        ),
+    )
     parser.add_argument("--compare-run-dir", type=Path, default=None, help="Optional previous run directory for automatic run-vs-run attribution diagnostics.")
     parser.add_argument("--emit-run-vs-run-report", action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument(
@@ -10062,7 +10164,8 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--only-model-names",
-        default="",
+        action="append",
+        default=[],
         help=argparse.SUPPRESS,
     )
     parser.add_argument("--resume", action=argparse.BooleanOptionalAction, default=True, help="Resume a compatible incomplete run when possible.")
@@ -10158,7 +10261,7 @@ def select_output_dir(root: Path, args: argparse.Namespace) -> Path:
     benchmark_root.mkdir(parents=True, exist_ok=True)
     config_signature = benchmark_config_signature(args)
     if args.resume:
-        for candidate in sorted(benchmark_root.glob("autoqsar_benchmark_*"), key=lambda path: path.name, reverse=True):
+        for candidate in sorted(benchmark_root.glob("qsarena_benchmark_*"), key=lambda path: path.name, reverse=True):
             run_config_path = candidate / "run_config.json"
             run_complete_path = candidate / "run_complete.json"
             if not run_config_path.exists() or run_complete_path.exists():
@@ -10170,7 +10273,7 @@ def select_output_dir(root: Path, args: argparse.Namespace) -> Path:
             if payload.get("config_signature") == config_signature:
                 print(f"Resuming compatible incomplete run: {candidate}")
                 return candidate
-    return benchmark_root / f"autoqsar_benchmark_{time.strftime('%Y%m%d_%H%M%S')}"
+    return benchmark_root / f"qsarena_benchmark_{time.strftime('%Y%m%d_%H%M%S')}"
 
 
 def _run_datasets_parallel(
@@ -10254,11 +10357,11 @@ def main() -> int:
         )
     gpu_available = detect_gpu_available()
     args.gpu_available = bool(gpu_available)
-    # Precision hook (§A): read AUTOQSAR_PRECISION env var set by run_one.py.
+    # Precision hook (§A): read QSARENA_PRECISION env var set by run_one.py.
     # Must run after GPU detection, before any CUDA op. No-op when torch absent.
     try:
-        from autoqsar.precision import apply_global_precision
-        _precision_mode = os.environ.get("AUTOQSAR_PRECISION", "fp32")
+        from qsarena.precision import apply_global_precision
+        _precision_mode = os.environ.get("QSARENA_PRECISION", "fp32")
         apply_global_precision(_precision_mode)
         args.precision_mode = _precision_mode
     except ImportError:
@@ -10279,7 +10382,7 @@ def main() -> int:
         )
         args.run_unimol_v2 = False
     apply_resource_defaults(args, sys.argv[1:])
-    root = Path(__file__).resolve().parents[1]
+    root = workspace_root()
     if str(getattr(args, "persistent_feature_store_path", "AUTO")).strip().upper() == "AUTO":
         args.persistent_feature_store_path = str((root / "model_cache" / "feature_store_parquet").resolve())
     if str(getattr(args, "shared_feature_matrix_cache_path", "AUTO")).strip().upper() == "AUTO":

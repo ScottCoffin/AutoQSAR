@@ -1,8 +1,8 @@
 @echo off
-REM AutoQSAR Environment Setup Script
+REM QSARena Environment Setup Script
 
 echo ========================================
-echo AutoQSAR Conda Environment Setup
+echo QSARena Conda Environment Setup
 echo ========================================
 echo.
 echo Choose your setup option:
@@ -16,36 +16,36 @@ set /p choice="Enter your choice (1, 2, or 3): "
 if "%choice%"=="1" (
     echo.
     echo Creating CUDA environment...
-    conda env create -f environment-cuda.yml -n autoqsar-py311
+    conda env create -f environment-cuda.yml -n qsarena-py311
     if errorlevel 1 goto :error
     echo.
     echo Installing pip packages via uv (this may take several minutes)...
-    conda run -n autoqsar-py311 pip install uv
-    conda run -n autoqsar-py311 uv pip install --system --index-strategy unsafe-best-match --prerelease=allow -r requirements-cuda.txt
+    conda run -n qsarena-py311 pip install uv
+    conda run -n qsarena-py311 uv pip install --system --index-strategy unsafe-best-match --prerelease=allow -r requirements-cuda.txt
     if errorlevel 1 goto :error
     echo.
     echo Setup complete! Activate with:
-    echo   conda activate autoqsar-py311
+    echo   conda activate qsarena-py311
 ) else if "%choice%"=="2" (
     echo.
     echo Creating CPU-only environment...
-    conda env create -f environment-cpu.yml -n autoqsar-py311
+    conda env create -f environment-cpu.yml -n qsarena-py311
     if errorlevel 1 goto :error
     echo.
     echo Installing pip packages via uv (this may take several minutes)...
-    conda run -n autoqsar-py311 pip install uv
-    conda run -n autoqsar-py311 uv pip install --system --index-strategy unsafe-best-match --prerelease=allow -r requirements-cpu.txt
+    conda run -n qsarena-py311 pip install uv
+    conda run -n qsarena-py311 uv pip install --system --index-strategy unsafe-best-match --prerelease=allow -r requirements-cpu.txt
     if errorlevel 1 goto :error
     echo.
     echo Setup complete! Activate with:
-    echo   conda activate autoqsar-py311
+    echo   conda activate qsarena-py311
 ) else if "%choice%"=="3" (
     echo.
     echo Creating base environment (without PyTorch)...
-    conda env create -f environment-base.yml -n autoqsar-py311
+    conda env create -f environment-base.yml -n qsarena-py311
     echo.
     echo Next steps:
-    echo   1. Activate: conda activate autoqsar-py311
+    echo   1. Activate: conda activate qsarena-py311
     echo   2. Install PyTorch manually from https://pytorch.org/get-started/locally/
     echo   3. Then run: pip install uv ^&^& uv pip install --system --index-strategy unsafe-best-match --prerelease=allow -r requirements-cpu.txt
 ) else (

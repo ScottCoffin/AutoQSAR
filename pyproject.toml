@@ -1,0 +1,145 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "qsarena"
+version = "0.1.0"
+description = "Portable, leakage-controlled AutoML workspace for SMILES-based molecular property prediction (QSAR / ADMET) with a 45-dataset benchmark harness."
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Scott Coffin" }]
+maintainers = [{ name = "Scott Coffin" }]
+keywords = [
+    "QSAR",
+    "ADMET",
+    "AutoML",
+    "cheminformatics",
+    "molecular property prediction",
+    "benchmarking",
+    "reproducibility",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Bio-Informatics",
+    "Topic :: Scientific/Engineering :: Chemistry",
+]
+
+# Core runtime: CPU-only and small enough that `pip install qsarena` resolves
+# on any platform with wheels. Every heavier backend is an optional extra and is
+# imported lazily behind try/except in the runner, so the CLI still starts
+# without them.
+dependencies = [
+    "numpy>=1.24",
+    "pandas>=2.0",
+    "scipy>=1.10",
+    "scikit-learn>=1.3",
+    "joblib>=1.3",
+    "rdkit>=2023.3.1",
+]
+
+[project.optional-dependencies]
+# Gradient-boosted tree backends (XGBoost/LightGBM/CatBoost model families).
+boosting = [
+    "xgboost>=2.0",
+    "lightgbm>=4.0",
+    "catboost>=1.2",
+]
+
+# Torch- and TensorFlow-backed model families: the precision hook, Uni-Mol,
+# MapLight+GNN embeddings and the tabular CNN.
+deep = [
+    "torch>=2.0",
+    "tensorflow>=2.13; python_version < '3.13'",
+]
+
+# Graph-neural-network backends (Chemprop v2 variants, MapLight+GNN embeddings).
+# NOTE: the MapLight+GNN path also needs dgl and dgllife, which publish almost
+# nothing to PyPI. They are deliberately NOT listed here because the extra would
+# then be uninstallable on every platform; install them from the DGL wheel index
+# instead (see the "Installation via pip" section of the README).
+graph = [
+    "chemprop>=2.0",
+    "descriptastorus>=2.6",
+    "molfeat>=0.9",
+    "huggingface-hub>=0.20",
+]
+
+# Pretrained/foundation tabular and molecular models.
+foundation = [
+    "tabpfn>=2.0",
+    "tabpfn-client>=0.2.8",
+    "unimol-tools>=0.1.0",
+]
+
+# Local dataset caching, the PFAS aux workbook reader and the parquet feature
+# store used by `qsarena-benchmark`.
+benchmarks = [
+    "openpyxl>=3.0",
+    "pyarrow>=12.0",
+    "python-dotenv>=1.0",
+]
+
+# PyTDC dataset loaders (the TDC ADMET benchmark groups). Kept out of `all` on
+# purpose: PyTDC hard-pins numpy==1.26.4, pandas==2.1.4, scikit-learn==1.2.2,
+# rdkit==2023.9.5 and dgl, so it only resolves on Python 3.10-3.12 with those
+# exact versions and will make `pip install qsarena[all]` fail otherwise. The
+# runner imports `tdc` lazily and prints "[skip] PyTDC benchmark datasets" when
+# it is absent.
+tdc = [
+    "PyTDC>=0.4.1",
+]
+
+# ChemML MLP backend (TensorFlow-based).
+chemml = [
+    "chemml>=1.2",
+]
+
+# Notebook / plotting stack used by colab_qsar_tutorial.ipynb and the analysis
+# notebooks.
+notebook = [
+    "jupyter>=1.0",
+    "ipywidgets>=8.0",
+    "plotly>=5.15",
+    "matplotlib>=3.7",
+    "seaborn>=0.13",
+    "tqdm>=4.65",
+]
+
+# Everything that resolves cleanly on CPU from PyPI. `tdc` is excluded because
+# its pins are incompatible with a modern resolver (see above); `chemml` is
+# excluded because it drags in TensorFlow. Add either explicitly if you need it.
+all = [
+    "qsarena[boosting]",
+    "qsarena[deep]",
+    "qsarena[graph]",
+    "qsarena[foundation]",
+    "qsarena[benchmarks]",
+    "qsarena[notebook]",
+]
+
+[project.urls]
+Homepage = "https://github.com/ScottCoffin/QSARena"
+Repository = "https://github.com/ScottCoffin/QSARena"
+Issues = "https://github.com/ScottCoffin/QSARena/issues"
+
+[project.scripts]
+qsarena-benchmark = "portable_colab_qsar_bundle.run_qsarena_benchmarks:main"
+qsarena-applicability-domain = "portable_colab_qsar_bundle.simple_applicability_domain:main"
+
+[tool.setuptools]
+# Explicit list: auto-discovery would otherwise try to package data/, hpc/,
+# js2/, tests/, benchmark_results/ and the manuscript directories.
+packages = ["qsarena", "portable_colab_qsar_bundle"]
+include-package-data = false
+
+[tool.setuptools.package-data]
+portable_colab_qsar_bundle = ["example_prediction_smiles.csv"]

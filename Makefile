@@ -1,4 +1,4 @@
-# AutoQSAR Makefile
+# QSARena Makefile
 #
 # Targets:
 #   make env      Install pinned CPU environment in a local venv
@@ -9,9 +9,9 @@
 
 PYTHON        ?= python3.11
 VENV_DIR      ?= .venv
-IMAGE_NAME    ?= autoqsar
+IMAGE_NAME    ?= qsarena
 IMAGE_TAG     ?= latest
-SIF_PATH      ?= autoqsar.sif
+SIF_PATH      ?= qsarena.sif
 SMOKE_DATASET ?= tdc_herg
 SMOKE_SEED    ?= 1
 
@@ -27,7 +27,7 @@ BENCHMARK_OUTPUT_DIR ?=
 .PHONY: env image sif smoke manifests clean help benchmark-a100
 
 help:
-	@echo "AutoQSAR container build targets:"
+	@echo "QSARena container build targets:"
 	@echo "  make env             Install pinned CPU venv (for local dev/test)"
 	@echo "  make image           Build Docker image (requires clean git tree)"
 	@echo "  make sif             Convert Docker image to Apptainer .sif"
@@ -56,7 +56,7 @@ image:
 	fi
 	@echo "Building Docker image $(IMAGE_NAME):$(GIT_COMMIT)..."
 	@# Tag the commit for provenance (non-destructive; skip if tag already exists)
-	@git tag autoqsar-v$(shell date -u +%Y%m%d) 2>/dev/null || true
+	@git tag qsarena-v$(shell date -u +%Y%m%d) 2>/dev/null || true
 	docker build \
 		--file containers/Dockerfile \
 		--tag $(IMAGE_NAME):$(GIT_COMMIT) \
@@ -82,9 +82,9 @@ image:
 # ── sif: convert Docker image to Apptainer .sif ──────────────────────────────
 sif: image
 	@echo "Converting Docker image to Apptainer .sif at $(SIF_PATH)..."
-	docker save $(IMAGE_NAME):$(IMAGE_TAG) | gzip > /tmp/autoqsar_docker.tar.gz
-	apptainer build $(SIF_PATH) docker-archive:///tmp/autoqsar_docker.tar.gz
-	rm -f /tmp/autoqsar_docker.tar.gz
+	docker save $(IMAGE_NAME):$(IMAGE_TAG) | gzip > /tmp/qsarena_docker.tar.gz
+	apptainer build $(SIF_PATH) docker-archive:///tmp/qsarena_docker.tar.gz
+	rm -f /tmp/qsarena_docker.tar.gz
 	@# Record .sif SHA-256 in BUILD_PROVENANCE.md
 	@SIF_HASH=$$(sha256sum $(SIF_PATH) | cut -d' ' -f1); \
 	echo "" >> BUILD_PROVENANCE.md; \
@@ -129,5 +129,5 @@ benchmark-a100:
 
 # ── clean ─────────────────────────────────────────────────────────────────────
 clean:
-	rm -rf $(VENV_DIR) /tmp/autoqsar_docker.tar.gz
+	rm -rf $(VENV_DIR) /tmp/qsarena_docker.tar.gz
 	@echo "Cleaned. Note: $(SIF_PATH) and Docker images not removed automatically."

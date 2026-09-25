@@ -1,27 +1,31 @@
 model,datasets_attempted,datasets_valid
-Ensemble (OOF Stacking (RidgeCV)),26,0
-TabPFNClassifier,10,10
-"Chemprop v2 (AttentiveFP, ensemble=1)",45,21
-LogisticRegression,22,22
+Uni-Mol V2 (164m),4,0
+Uni-Mol V2 (310m),8,0
+"Chemprop v2 (CMPNN, ensemble=3)",44,6
+"Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",44,6
+"Chemprop v2 (D-MPNN, ensemble=3)",44,6
+"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",44,6
+"Chemprop v2 (AttentiveFP, ensemble=3)",44,6
+Uni-Mol V2 (84m),44,17
+ElasticNetCV,22,20
+SVR,22,22
 SVC,22,22
 "Voting Classifier (KNN, SVM)",22,22
-MapLight CatBoost (Strict Parity),23,23
-ElasticNetCV,23,23
-SVR,23,23
-"Chemprop v2 (AttentiveFP + Selected descriptors, ensemble=1)",45,23
-"Voting Regressor (KNN, SVM)",23,23
-Tabular CNN,23,23
-TabPFNRegressor,35,35
-"MapLight + GNN (CatBoost, Strict Parity)",45,42
-AdaBoost,45,45
-ChemML MLP (PyTorch),45,45
-Random forest,45,45
-Ensemble (Weighted average (inverse train RMSE)),45,45
-Extra trees,45,45
-HistGradientBoosting,45,45
-"Ensemble (OOF Stacking (RidgeCV, 5-fold))",45,45
-CatBoost,45,45
-CFA (Combinatorial Fusion),45,45
-Tabular MLP,45,45
-Uni-Mol V1,45,45
-XGBoost,45,45
+MapLight CatBoost (Strict Parity),22,22
+Tabular CNN,22,22
+LogisticRegression,22,22
+"Voting Regressor (KNN, SVM)",22,22
+HistGradientBoosting,44,44
+Extra trees,44,44
+Ensemble (Weighted average (inverse train RMSE)),44,44
+"Ensemble (OOF Stacking (RidgeCV, 5-fold))",44,44
+ChemML MLP (PyTorch),44,44
+CatBoost,44,44
+CFA (Combinatorial Fusion),44,44
+ChemML MLP (TensorFlow),44,44
+AdaBoost,44,44
+Tabular MLP,44,44
+"MapLight + GNN (CatBoost, Strict Parity)",44,44
+Random forest,44,44
+Uni-Mol V1,44,44
+XGBoost,44,44

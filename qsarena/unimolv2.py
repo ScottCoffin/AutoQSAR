@@ -1,5 +1,5 @@
 """
-autoqsar.unimolv2 — Uni-Mol2 V2 workflow wrapper.
+qsarena.unimolv2 — Uni-Mol2 V2 workflow wrapper.
 
 Key design points (§B):
   - Model size 84m by default (fits RTX 4070 12 GB and A100 g3.large 20 GB).
@@ -108,7 +108,7 @@ class UnimolV2Workflow:
 
     def run(self, dataset_name: str, data_dir: Path) -> dict:
         """End-to-end: load data → split → conformers → train → predict → save."""
-        from autoqsar.conformers import smiles_to_conformer
+        from qsarena.conformers import smiles_to_conformer
 
         t0 = time.time()
         logger.info("Uni-Mol2 %s: starting on %s (device=%s, precision=%s)",
@@ -300,7 +300,7 @@ class UnimolV2Workflow:
         Checkpoint path is resolved from self.checkpoint_dir / self.model_size.
         """
         from rdkit import Chem
-        from autoqsar.precision import amp_context
+        from qsarena.precision import amp_context
 
         # unimol_tools expects SMILES strings (it handles 3D internally via its
         # own atom-coordinate extraction); we pass canonical SMILES and let it
@@ -392,7 +392,7 @@ class UnimolV2Workflow:
                 "Uni-Mol2 checkpoint not found at %s. "
                 "Download from https://github.com/dptech-corp/Uni-Mol/releases "
                 "and place at %s, then record SHA-256 in "
-                "autoqsar/unimolv2.py:UNIMOLV2_CHECKPOINT_SHA256[%r].",
+                "qsarena/unimolv2.py:UNIMOLV2_CHECKPOINT_SHA256[%r].",
                 ckpt_file, ckpt_file, self.model_size,
             )
         else:

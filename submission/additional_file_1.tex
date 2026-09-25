@@ -1,0 +1,55 @@
+%% Additional file 1 -- Supplementary tables for
+%% "No Single Architecture Wins" (Journal of Cheminformatics, Software article).
+%% Compiles standalone:  pdflatex additional_file_1
+
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[margin=2cm]{geometry}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{xltabular}
+\usepackage{makecell}
+\usepackage{pdflscape}
+\usepackage[htt]{hyphenat}
+\usepackage{url}
+\setlength{\emergencystretch}{3em}
+
+\renewcommand{\thetable}{S\arabic{table}}
+
+\title{Additional file 1: Supplementary tables\\[0.4em]
+\large No Single Architecture Wins: Ensembles and Conventional Machine Learning\\
+Match Pretrained Molecular Models Across 45 Property-Prediction Benchmarks}
+\author{Scott Coffin}
+\date{}
+
+\begin{document}
+\maketitle
+
+This file contains the five supplementary tables referenced in the main text. All are generated
+directly from the deposited benchmark artifacts by
+\texttt{portable\_colab\_qsar\_bundle/render\_manuscript\_assets.py} and
+\texttt{render\_latex\_tables.py}, and carry the same values as the machine-readable
+\texttt{manuscript\_assets/tables/*.csv} files in the repository.
+
+All results derive from a single split and a single seed per dataset; as set out in the
+Limitations section of the main text, individual entries are therefore provisional and close
+comparisons between models should not be treated as established.
+
+\clearpage
+\input{tables/tableS1_dataset_winners}
+
+\clearpage
+\input{tables/tableS2_component_ablation}
+
+\clearpage
+\input{tables/tableS3_feature_families}
+
+\clearpage
+\input{tables/tableS4_model_coverage}
+
+\clearpage
+\input{tables/tableS5_run_comparison}
+
+\end{document}

@@ -1,0 +1,64 @@
+%% Local proof build of the SAME body.tex, using the standard article class.
+%% Purpose: verify the manuscript body compiles (text, maths, tables, figures, citations)
+%% on a machine without sn-jnl.cls. This is NOT the submission file -- submit manuscript.tex.
+%%
+%%   pdflatex proof && bibtex proof && pdflatex proof && pdflatex proof
+
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[margin=2.2cm]{geometry}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{rotating}
+\usepackage{tabularx}
+\usepackage{xltabular}
+\usepackage{makecell}
+\usepackage{pdflscape}
+\usepackage{url}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage[numbers,sort&compress]{natbib}
+\usepackage[htt]{hyphenat}   % allow hyphenation inside \texttt identifiers
+\usepackage{hyperref}
+\setlength{\emergencystretch}{3em}
+
+\graphicspath{{figures/}}
+\bibliographystyle{unsrtnat}
+
+% sn-jnl provides \bmhead and \sur/\fnm; stub them so body.tex and the declarations compile here.
+\providecommand{\bmhead}[1]{\subsection*{#1}}
+
+\title{No Single Architecture Wins: Ensembles and Conventional Machine Learning Match Pretrained Molecular Models Across 44 Property-Prediction Benchmarks\\[0.4em]
+\large PROOF BUILD -- not the submission file}
+\author{Scott Coffin\\\small California Office of Environmental Health Hazard Assessment, Sacramento, CA, USA}
+\date{\today}
+
+\begin{document}
+\maketitle
+%% Front matter shared verbatim with manuscript.tex, so this proof shows the COMPLETE paper.
+%% An earlier version of this shim omitted these, and a reviewer reasonably read the resulting
+%% PDF as lacking a structured abstract, keywords and declarations. Keep these in sync by
+%% construction: both files \input the same sources.
+\begin{abstract}
+\noindent\input{abstract}
+\end{abstract}
+
+\medskip
+\noindent\textbf{Keywords:} \input{keywords}
+
+\bigskip
+\noindent\textbf{Graphical abstract} (submitted separately, 920$\times$300\,px):
+
+\noindent\includegraphics[width=\linewidth]{figures/graphical_abstract.pdf}
+
+\clearpage
+
+\input{body}
+
+\input{declarations}
+
+\bibliography{references}
+
+\end{document}

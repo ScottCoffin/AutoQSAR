@@ -1,4 +1,4 @@
-# HPC Deployment — AutoQSAR TDC-22 Multi-Seed Evaluation
+# HPC Deployment — QSARena TDC-22 Multi-Seed Evaluation
 
 This directory contains Slurm job-array submission scripts and the task manifest
 for the TDC-22 multi-seed re-evaluation on NSF ACCESS HPC clusters.
@@ -90,18 +90,18 @@ The container expects:
 Stage from your project directory to `$SCRATCH` before submitting:
 
 ```bash
-rsync -av /path/to/AutoQSAR/data/        $SCRATCH/autoqsar_in/data/
-rsync -av /path/to/AutoQSAR/model_cache/ $SCRATCH/autoqsar_in/model_cache/
-rsync -av /path/to/AutoQSAR/.cache/      $SCRATCH/autoqsar_in/.cache/
+rsync -av /path/to/QSARena/data/        $SCRATCH/qsarena_in/data/
+rsync -av /path/to/QSARena/model_cache/ $SCRATCH/qsarena_in/model_cache/
+rsync -av /path/to/QSARena/.cache/      $SCRATCH/qsarena_in/.cache/
 ```
 
-Set `AUTOQSAR_INPUT` and `AUTOQSAR_OUTPUT` before submitting (or edit the defaults
+Set `QSARENA_INPUT` and `QSARENA_OUTPUT` before submitting (or edit the defaults
 in the sbatch scripts):
 
 ```bash
-export AUTOQSAR_INPUT=$SCRATCH/autoqsar_in
-export AUTOQSAR_OUTPUT=$SCRATCH/autoqsar_out
-export SIF=/path/to/autoqsar.sif
+export QSARENA_INPUT=$SCRATCH/qsarena_in
+export QSARENA_OUTPUT=$SCRATCH/qsarena_out
+export SIF=/path/to/qsarena.sif
 ```
 
 ---
@@ -125,7 +125,7 @@ squeue -u $USER
 
 ## Interpreting Outputs
 
-Each task writes to `$AUTOQSAR_OUTPUT/<dataset>/seed_<seed>/`:
+Each task writes to `$QSARENA_OUTPUT/<dataset>/seed_<seed>/`:
 
 ```
 metrics.csv                  # per-model test metrics
@@ -139,9 +139,9 @@ ensemble_results.csv         # ensemble member details
 To aggregate across seeds after all tasks complete:
 
 ```bash
-python portable_colab_qsar_bundle/run_autoqsar_ga_benchmarks.py \
+python portable_colab_qsar_bundle/run_qsarena_benchmarks.py \
     --multi-seed-summary-only \
-    --output-dir $SCRATCH/autoqsar_out
+    --output-dir $SCRATCH/qsarena_out
 ```
 
 ---
