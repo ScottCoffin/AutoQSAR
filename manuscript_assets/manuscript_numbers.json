@@ -1,0 +1,556 @@
+{
+  "run_dir": "benchmark_name_date",
+  "benchmark_profile": "cost_optimized",
+  "datasets_with_run_status": 46,
+  "datasets_completed": 45,
+  "datasets_analyzed": 45,
+  "datasets_by_task": {
+    "regression": 23,
+    "classification": 22
+  },
+  "datasets_by_suite": {
+    "TDC": 32,
+    "Polaris": 5,
+    "ChemML": 3,
+    "MoleculeNet": 3,
+    "PODUAM": 2
+  },
+  "models_with_valid_results": 25,
+  "valid_model_dataset_rows": 828,
+  "wins_by_family": {
+    "Deep tabular NN (ChemML MLP)": {
+      "regression": 0,
+      "classification": 0,
+      "total": 0
+    },
+    "Chemprop v2 GNN": {
+      "regression": 1,
+      "classification": 0,
+      "total": 1
+    },
+    "TabPFN (tabular foundation)": {
+      "regression": 3,
+      "classification": 0,
+      "total": 3
+    },
+    "CFA combinatorial fusion": {
+      "regression": 2,
+      "classification": 2,
+      "total": 4
+    },
+    "MapLight + GNN": {
+      "regression": 4,
+      "classification": 0,
+      "total": 4
+    },
+    "Uni-Mol V1 (3D pretrained)": {
+      "regression": 7,
+      "classification": 0,
+      "total": 7
+    },
+    "Conventional ML": {
+      "regression": 1,
+      "classification": 10,
+      "total": 11
+    },
+    "Ensemble (stacking / averaging)": {
+      "regression": 5,
+      "classification": 10,
+      "total": 15
+    }
+  },
+  "family_consistency": {
+    "Ensemble (stacking / averaging)": {
+      "Models": 2,
+      "Datasets with valid results": 45,
+      "Wins (regression)": 5,
+      "Wins (classification)": 10,
+      "Median gap to best, regression (%)": 2.3636566006126625,
+      "Median gap to best, classification (%)": 0.02606731792554291,
+      "Within 5% of best (% of datasets)": 75.55555555555556,
+      "Median rank of family-best model": 2.0
+    },
+    "Conventional ML": {
+      "Models": 15,
+      "Datasets with valid results": 45,
+      "Wins (regression)": 1,
+      "Wins (classification)": 10,
+      "Median gap to best, regression (%)": 3.918828629800233,
+      "Median gap to best, classification (%)": 0.07916773064267871,
+      "Within 5% of best (% of datasets)": 68.88888888888889,
+      "Median rank of family-best model": 2.0
+    },
+    "Uni-Mol V1 (3D pretrained)": {
+      "Models": 1,
+      "Datasets with valid results": 45,
+      "Wins (regression)": 7,
+      "Wins (classification)": 0,
+      "Median gap to best, regression (%)": 3.6964151778943686,
+      "Median gap to best, classification (%)": 2.2765118328641547,
+      "Within 5% of best (% of datasets)": 62.22222222222222,
+      "Median rank of family-best model": 6.0
+    },
+    "CFA combinatorial fusion": {
+      "Models": 1,
+      "Datasets with valid results": 44,
+      "Wins (regression)": 2,
+      "Wins (classification)": 2,
+      "Median gap to best, regression (%)": 12.634572166177167,
+      "Median gap to best, classification (%)": 2.541259696063116,
+      "Within 5% of best (% of datasets)": 43.18181818181818,
+      "Median rank of family-best model": 7.0
+    },
+    "MapLight + GNN": {
+      "Models": 1,
+      "Datasets with valid results": 42,
+      "Wins (regression)": 4,
+      "Wins (classification)": 0,
+      "Median gap to best, regression (%)": 7.628961119033674,
+      "Median gap to best, classification (%)": 11.142998562337064,
+      "Within 5% of best (% of datasets)": 26.190476190476193,
+      "Median rank of family-best model": 11.5
+    },
+    "TabPFN (tabular foundation)": {
+      "Models": 2,
+      "Datasets with valid results": 22,
+      "Wins (regression)": 3,
+      "Wins (classification)": 0,
+      "Median gap to best, regression (%)": 9.770584379134597,
+      "Median gap to best, classification (%)": 4.617156131242245,
+      "Within 5% of best (% of datasets)": 40.909090909090914,
+      "Median rank of family-best model": 4.5
+    },
+    "Chemprop v2 GNN": {
+      "Models": 2,
+      "Datasets with valid results": 23,
+      "Wins (regression)": 1,
+      "Wins (classification)": 0,
+      "Median gap to best, regression (%)": 12.506775051906269,
+      "Median gap to best, classification (%)": NaN,
+      "Within 5% of best (% of datasets)": 17.391304347826086,
+      "Median rank of family-best model": 9.0
+    },
+    "Deep tabular NN (ChemML MLP)": {
+      "Models": 1,
+      "Datasets with valid results": 45,
+      "Wins (regression)": 0,
+      "Wins (classification)": 0,
+      "Median gap to best, regression (%)": 21.603625542886537,
+      "Median gap to best, classification (%)": 7.896108032741051,
+      "Within 5% of best (% of datasets)": 15.555555555555555,
+      "Median rank of family-best model": 14.0
+    }
+  },
+  "fusion_vs_best_single": {
+    "classification": {
+      "datasets": 22,
+      "fusion_better": 12,
+      "median_rel_improvement_when_better_pct": 0.4802622301806725,
+      "median_rel_improvement_all_pct": 0.04018926380288465
+    },
+    "regression": {
+      "datasets": 23,
+      "fusion_better": 7,
+      "median_rel_improvement_when_better_pct": 3.316013286937898,
+      "median_rel_improvement_all_pct": -2.361299793804806
+    }
+  },
+  "leaderboard": {
+    "datasets_compared": 37,
+    "reference_rows": 430,
+    "top10_test_selected": 35,
+    "rank1_test_selected": 6,
+    "rank1_datasets": [
+      "tdc_bioavailability_ma",
+      "tdc_carcinogens_lagunin",
+      "tdc_cyp2c9_substrate_carbonmangels",
+      "tdc_hydrationfreeenergy_freesolv",
+      "tdc_skin_reaction",
+      "tdc_toxcast"
+    ],
+    "below_top10_datasets": [
+      "polaris_adme_fang_solu_1",
+      "tdc_tox21"
+    ],
+    "median_rank_test_selected": 3.0,
+    "cv_selected_compared": 37,
+    "top10_cv_selected": 26,
+    "rank1_cv_selected": 1,
+    "median_rank_cv_selected": 7.0
+  },
+  "leaderboard_by_comparability": {
+    "local_split": {
+      "datasets": 10,
+      "top10_test_selected": 9,
+      "rank1_test_selected": [
+        "tdc_carcinogens_lagunin",
+        "tdc_hydrationfreeenergy_freesolv",
+        "tdc_skin_reaction",
+        "tdc_toxcast"
+      ],
+      "median_rank_test_selected": 2.0,
+      "top10_cv_selected": 7,
+      "median_rank_cv_selected": 4.0
+    },
+    "polaris_official": {
+      "datasets": 5,
+      "top10_test_selected": 4,
+      "rank1_test_selected": [],
+      "median_rank_test_selected": 3.0,
+      "top10_cv_selected": 4,
+      "median_rank_cv_selected": 7.0
+    },
+    "tdc_admet_group_official": {
+      "datasets": 22,
+      "top10_test_selected": 22,
+      "rank1_test_selected": [
+        "tdc_bioavailability_ma",
+        "tdc_cyp2c9_substrate_carbonmangels"
+      ],
+      "median_rank_test_selected": 3.0,
+      "top10_cv_selected": 15,
+      "median_rank_cv_selected": 8.0
+    }
+  },
+  "cv_selected_all_datasets": {
+    "datasets": 45,
+    "median_relative_gap_to_test_best_pct": 10.3650024246896,
+    "is_overall_winner": 2
+  },
+  "feature_families": {
+    "selected_features_total": 16863,
+    "maplight_classic_selected": 6366,
+    "maplight_classic_share_selected_pct": 37.75128980608433,
+    "maplight_classic_share_available_pct": 22.85937863945543,
+    "per_family": {
+      "morgan": {
+        "selected_features_total": 934,
+        "share_selected_pct": 5.538753483958963,
+        "enrichment_vs_uniform": 0.5162311176603249,
+        "datasets_selected": 42,
+        "datasets_with_family": 45
+      },
+      "layered": {
+        "selected_features_total": 1084,
+        "share_selected_pct": 6.428274921425606,
+        "enrichment_vs_uniform": 0.5592114752298248,
+        "datasets_selected": 42,
+        "datasets_with_family": 45
+      },
+      "topological_torsion": {
+        "selected_features_total": 713,
+        "share_selected_pct": 4.228191899424776,
+        "enrichment_vs_uniform": 0.6806451972508041,
+        "datasets_selected": 43,
+        "datasets_with_family": 45
+      },
+      "rdk_path": {
+        "selected_features_total": 1394,
+        "share_selected_pct": 8.266619225523336,
+        "enrichment_vs_uniform": 0.6883390878257474,
+        "datasets_selected": 41,
+        "datasets_with_family": 45
+      },
+      "ecfp6": {
+        "selected_features_total": 1454,
+        "share_selected_pct": 8.622427800509993,
+        "enrichment_vs_uniform": 0.7585485219283647,
+        "datasets_selected": 40,
+        "datasets_with_family": 45
+      },
+      "atom_pair": {
+        "selected_features_total": 1393,
+        "share_selected_pct": 8.260689082606891,
+        "enrichment_vs_uniform": 0.7926631131081983,
+        "datasets_selected": 42,
+        "datasets_with_family": 45
+      },
+      "maplight": {
+        "selected_features_total": 1197,
+        "share_selected_pct": 7.098381070983811,
+        "enrichment_vs_uniform": 0.9004282956243614,
+        "datasets_selected": 41,
+        "datasets_with_family": 45
+      },
+      "fcfp6": {
+        "selected_features_total": 1783,
+        "share_selected_pct": 10.573444820020162,
+        "enrichment_vs_uniform": 0.9480866274130533,
+        "datasets_selected": 44,
+        "datasets_with_family": 45
+      },
+      "maccs": {
+        "selected_features_total": 301,
+        "share_selected_pct": 1.7849730178497303,
+        "enrichment_vs_uniform": 1.1405231357881744,
+        "datasets_selected": 41,
+        "datasets_with_family": 45
+      },
+      "avalon": {
+        "selected_features_total": 3921,
+        "share_selected_pct": 23.252090375378046,
+        "enrichment_vs_uniform": 1.9912934478250053,
+        "datasets_selected": 44,
+        "datasets_with_family": 45
+      },
+      "erg": {
+        "selected_features_total": 1248,
+        "share_selected_pct": 7.40081835972247,
+        "enrichment_vs_uniform": 2.2432417045810538,
+        "datasets_selected": 40,
+        "datasets_with_family": 45
+      },
+      "rdkit": {
+        "selected_features_total": 1441,
+        "share_selected_pct": 8.545335942596216,
+        "enrichment_vs_uniform": 3.904277445483901,
+        "datasets_selected": 41,
+        "datasets_with_family": 45
+      }
+    }
+  },
+  "cost": {
+    "total_recorded_wall_clock_hours": 155.04368611111113,
+    "median_dataset_wall_clock_hours": 1.1145738888888888,
+    "max_dataset_wall_clock_hours": 23.586457222222222,
+    "max_dataset": "tdc_herg_karim",
+    "per_family_median_own_seconds": {
+      "CFA combinatorial fusion": 0.23199999999951615,
+      "Ensemble (stacking / averaging)": 0.4579999999999984,
+      "Conventional ML": 17.10500000000031,
+      "Deep tabular NN (ChemML MLP)": 18.073000000000093,
+      "Chemprop v2 GNN": 97.94999999999999,
+      "TabPFN (tabular foundation)": 125.18200000000002,
+      "MapLight + GNN": 150.767,
+      "Uni-Mol V1 (3D pretrained)": 1963.5115
+    }
+  },
+  "selector_scaling": {
+    "datasets": 45,
+    "log10_slope": 1.3556013129236195,
+    "log10_intercept": -2.276926482107183,
+    "pearson_r": 0.6698220279330532,
+    "median_selector_seconds": 98.78,
+    "max_selector_seconds": 10654.259,
+    "max_selector_dataset": "tdc_cyp2d6_veith"
+  },
+  "dataset_size": {
+    "min": 38,
+    "median": 1478.0,
+    "max": 13445,
+    "total": 156090
+  },
+  "split_counts": {
+    "predefined": 27,
+    "random": 6,
+    "scaffold": 6,
+    "target_quartiles": 6
+  },
+  "ensemble_value_add": [
+    {
+      "Fusion method": "Inverse-RMSE weighted average",
+      "Task": "classification",
+      "Datasets": 22,
+      "Overall wins": 6,
+      "Top-3": 12,
+      "Beats best base": 8,
+      "Loses to best base": 14,
+      "Median rank": 2.5,
+      "Median rel. change vs best base": -0.004822978782040072
+    },
+    {
+      "Fusion method": "OOF stacking",
+      "Task": "classification",
+      "Datasets": 22,
+      "Overall wins": 4,
+      "Top-3": 11,
+      "Beats best base": 6,
+      "Loses to best base": 16,
+      "Median rank": 3.5,
+      "Median rel. change vs best base": -0.008379133687925243
+    },
+    {
+      "Fusion method": "CFA fusion",
+      "Task": "classification",
+      "Datasets": 22,
+      "Overall wins": 2,
+      "Top-3": 6,
+      "Beats best base": 5,
+      "Loses to best base": 17,
+      "Median rank": 7.0,
+      "Median rel. change vs best base": -0.02153757236157386
+    },
+    {
+      "Fusion method": "Inverse-RMSE weighted average",
+      "Task": "regression",
+      "Datasets": 23,
+      "Overall wins": 5,
+      "Top-3": 17,
+      "Beats best base": 5,
+      "Loses to best base": 18,
+      "Median rank": 3.0,
+      "Median rel. change vs best base": -0.02436889586251253
+    },
+    {
+      "Fusion method": "OOF stacking",
+      "Task": "regression",
+      "Datasets": 23,
+      "Overall wins": 0,
+      "Top-3": 9,
+      "Beats best base": 1,
+      "Loses to best base": 22,
+      "Median rank": 5.0,
+      "Median rel. change vs best base": -0.05452034227931532
+    },
+    {
+      "Fusion method": "CFA fusion",
+      "Task": "regression",
+      "Datasets": 22,
+      "Overall wins": 2,
+      "Top-3": 3,
+      "Beats best base": 3,
+      "Loses to best base": 19,
+      "Median rank": 8.0,
+      "Median rel. change vs best base": -0.10648939288790824
+    }
+  ],
+  "component_ablation": [
+    {
+      "stage": "Conventional ML only",
+      "datasets_improved_vs_previous": 0
+    },
+    {
+      "stage": "+ MapLight classic features",
+      "datasets_improved_vs_previous": 7
+    },
+    {
+      "stage": "+ neural/deep backends",
+      "datasets_improved_vs_previous": 26
+    },
+    {
+      "stage": "+ CFA fusion",
+      "datasets_improved_vs_previous": 8
+    },
+    {
+      "stage": "Full pipeline incl. ensembles",
+      "datasets_improved_vs_previous": 15
+    }
+  ],
+  "model_coverage": {
+    "Ensemble (OOF Stacking (RidgeCV))": {
+      "datasets_attempted": 26,
+      "datasets_valid": 0
+    },
+    "TabPFNClassifier": {
+      "datasets_attempted": 10,
+      "datasets_valid": 10
+    },
+    "Chemprop v2 (AttentiveFP, ensemble=1)": {
+      "datasets_attempted": 45,
+      "datasets_valid": 21
+    },
+    "LogisticRegression": {
+      "datasets_attempted": 22,
+      "datasets_valid": 22
+    },
+    "SVC": {
+      "datasets_attempted": 22,
+      "datasets_valid": 22
+    },
+    "Voting Classifier (KNN, SVM)": {
+      "datasets_attempted": 22,
+      "datasets_valid": 22
+    },
+    "MapLight CatBoost (Strict Parity)": {
+      "datasets_attempted": 23,
+      "datasets_valid": 23
+    },
+    "ElasticNetCV": {
+      "datasets_attempted": 23,
+      "datasets_valid": 23
+    },
+    "SVR": {
+      "datasets_attempted": 23,
+      "datasets_valid": 23
+    },
+    "Chemprop v2 (AttentiveFP + Selected descriptors, ensemble=1)": {
+      "datasets_attempted": 45,
+      "datasets_valid": 23
+    },
+    "Voting Regressor (KNN, SVM)": {
+      "datasets_attempted": 23,
+      "datasets_valid": 23
+    },
+    "Tabular CNN": {
+      "datasets_attempted": 23,
+      "datasets_valid": 23
+    },
+    "TabPFNRegressor": {
+      "datasets_attempted": 35,
+      "datasets_valid": 35
+    },
+    "MapLight + GNN (CatBoost, Strict Parity)": {
+      "datasets_attempted": 45,
+      "datasets_valid": 42
+    },
+    "AdaBoost": {
+      "datasets_attempted": 45,
+      "datasets_valid": 45
+    },
+    "ChemML MLP (PyTorch)": {
+      "datasets_attempted": 45,
+      "datasets_valid": 45
+    },
+    "Random forest": {
+      "datasets_attempted": 45,
+      "datasets_valid": 45
+    },
+    "Ensemble (Weighted average (inverse train RMSE))": {
+      "datasets_attempted": 45,
+      "datasets_valid": 45
+    },
+    "Extra trees": {
+      "datasets_attempted": 45,
+      "datasets_valid": 45
+    },
+    "HistGradientBoosting": {
+      "datasets_attempted": 45,
+      "datasets_valid": 45
+    },
+    "Ensemble (OOF Stacking (RidgeCV, 5-fold))": {
+      "datasets_attempted": 45,
+      "datasets_valid": 45
+    },
+    "CatBoost": {
+      "datasets_attempted": 45,
+      "datasets_valid": 45
+    },
+    "CFA (Combinatorial Fusion)": {
+      "datasets_attempted": 45,
+      "datasets_valid": 45
+    },
+    "Tabular MLP": {
+      "datasets_attempted": 45,
+      "datasets_valid": 45
+    },
+    "Uni-Mol V1": {
+      "datasets_attempted": 45,
+      "datasets_valid": 45
+    },
+    "XGBoost": {
+      "datasets_attempted": 45,
+      "datasets_valid": 45
+    }
+  },
+  "reproducibility": {
+    "analysis_time_git_commit": "0ae9941bb2cb856cb40fd60e29d1626da4a36eb2",
+    "analysis_time_git_is_dirty": true,
+    "run_artifacts_committed_in": "b7cd42c",
+    "random_seed": 13,
+    "chemprop_seed": 42
+  },
+  "multiseed_artifacts_present": false,
+  "incomplete_datasets": [
+    "tdc_herg_central"
+  ]
+}
