@@ -178,16 +178,18 @@ That headline, however, is produced by choosing the best of 28 models using held
 
 \textbf{That ten-dataset gap has two causes, and separating them changes its interpretation.} Cross-validation selection is restricted to models that emit cross-validated metrics, which in this run excludes Chemprop, the Uni-Mol models, MapLight\,+\,GNN and the fusion methods. The comparison above therefore confounds the cost of not peeking at the test set with the cost of losing those candidate families. To separate them we added a third protocol that holds the candidate set fixed at the cross-validation-eligible models and selects among them on the test metric:
 
+% tabularx against \linewidth, not a fixed tabular: sn-jnl's text block is 372.0pt, far narrower
+% than the article-class proof's 472.3pt, and the fixed version overflowed it by 59.5pt.
 \begin{center}
-\begin{tabular}{llccc}
+\begin{tabularx}{\linewidth}{@{}>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}Xccc@{}}
 \toprule
-Protocol & Candidate set & Top ten & First places & Median rank \\
+Selection & Candidate set & \makecell{Top\\ten} & \makecell{First\\places} & \makecell{Median\\rank} \\
 \midrule
-Test-selected & full 28-model library & 35 / 37 & 5 & 3 \\
-Test-selected & cross-validation-eligible only & 28 / 37 & 3 & 6 \\
-Cross-validation-selected & cross-validation-eligible only & 25 / 37 & 0 & 8 \\
+Test metric & Full 28-model library & 35/37 & 5 & 3 \\
+Test metric & CV-eligible models only & 28/37 & 3 & 6 \\
+Cross-validation & CV-eligible models only & 25/37 & 0 & 8 \\
 \bottomrule
-\end{tabular}
+\end{tabularx}
 \end{center}
 
 Read down the table, \textbf{7 of the 10 lost placements come from narrowing the candidate set and only 3 from honest selection}; the median rank moves from 3 to 6 on library breadth and from 6 to 8 on selection protocol. Both effects are real and neither is small, but they are different claims. The breadth of the model library is worth about seven leaderboard placements, which is the strongest available argument for running many model families rather than one well-tuned architecture. The cost of honest model selection is about three placements and, more strikingly, every one of the five first places: \textbf{no protocol that refuses test-set information produced a single estimated rank of 1.} We previously reported the whole ten-dataset gap as the cost of honest selection; that attribution was wrong, and the corrected decomposition is the more useful result.
@@ -309,7 +311,7 @@ The same landscape view explains why ``rigorous benchmarking'' is a credibility 
 
 \begin{landscape}
 \begingroup\scriptsize
-\begin{xltabular}{\dimexpr\paperheight-5cm\relax}{@{}>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}Xll>{\raggedright\arraybackslash}Xl>{\raggedright\arraybackslash}X@{}}
+\begin{xltabular}{\linewidth}{@{}>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}Xll>{\raggedright\arraybackslash}Xl>{\raggedright\arraybackslash}X@{}}
 \caption{Positioning of QSARena relative to representative open-source, commercial and web-based molecular property-prediction tools. Performance entries report each tool's \textbf{own published results} and are \textbf{not} head-to-head comparisons: rows use different splits, seeds and selection protocols, and ``---'' indicates no public TDC leaderboard results. Where a published claim could be re-scored against the full reference set we give both, because they differ substantially: ADMETboost's 18 reported first places become 0 once all reference values are ranked together, and MaxQsaring's 19 become 7. None of the tools in this table appears in the TDC leaderboard snapshots we captured, so every performance entry is publication-reported. ADMET-AI's ``highest average rank'' is a 2024 self-reported aggregate, not per-endpoint supremacy. QSARena reuses ADMET-AI's Chemprop-RDKit architecture through its \texttt{Chemprop v2 (D-MPNN + RDKit2D)} variant but does not integrate ADMET-AI itself, and in this run that variant produced valid results on only 6 of 44 datasets, so parity with ADMET-AI is untested. ``Code-free'' means usable without scripting; ``retrain'' means the user can fit models on their own data; ``suites'' counts distinct benchmark collections the tool has been evaluated on in its own publications.}\label{tab:landscape}\\
 \toprule
 \textbf{Tool} & \textbf{Access / licence} & \textbf{Code-free} & \textbf{Retrain} & \textbf{Architecture breadth} & \textbf{Suites} & \textbf{Published TDC ADMET performance} \\
@@ -344,7 +346,7 @@ ADMETlab 3.0 \cite{fu2024admetlab} & Free web & Yes (web) & No (fixed) & Multi-t
 
 \section{Limitations}\label{sec:limitations}
 
-\paragraph{Single split and single seed: the principal limitation of this work.} Every result reported here derives from one split and one random seed per dataset. The TDC convention is to report mean\,$\pm$\,standard deviation over five independent seeds, and we do not meet it. Multi-seed evaluation over the official TDC splits is implemented in the runner (\texttt{-{}-run-tdc22-multiseed-best}) and was enabled in this run's configuration, but the stage executes only after all datasets finish and the run was interrupted before reaching it; repeating the full benchmark five times was in any case beyond the computational budget available for this study, since the single-seed run alone consumed 112 hours of A100 time (Section~\ref{sec:cost}), implying roughly 560 hours for a five-seed replication.
+\paragraph{Single split and single seed: the principal limitation of this work.} Every result reported here derives from one split and one random seed per dataset. The TDC convention is to report mean\,$\pm$\,standard deviation over five independent seeds, and we do not meet it. Multi-seed evaluation over the official TDC splits is implemented in the runner (\texttt{-{}-run\allowbreak-tdc22\allowbreak-multiseed\allowbreak-best}) and was enabled in this run's configuration, but the stage executes only after all datasets finish and the run was interrupted before reaching it; repeating the full benchmark five times was in any case beyond the computational budget available for this study, since the single-seed run alone consumed 112 hours of A100 time (Section~\ref{sec:cost}), implying roughly 560 hours for a five-seed replication.
 
 The consequences should be stated plainly rather than minimized. We report no variance estimates, no confidence intervals and no significance tests, and we therefore cannot distinguish a genuine difference between two models from seed-to-seed noise. Concretely: (i) the per-dataset ``winner'' in Fig.~\ref{fig:wins}, Table~\ref{tab:leaderboard} and Additional file~1 (Table~S1) is the winner \emph{on this split}, and an unknown fraction of the 44 winners would change under a different seed, so the win counts in Fig.~\ref{fig:wins} should be read as a coarse distribution across families rather than as a precise ranking; (ii) the family orderings in Table~\ref{tab:families} are indicative, and the top three rows --- ensembles at 75\%, 3D pretrained at 70\% and conventional machine learning at 66\% within 5\% of best --- should be treated as a single indistinguishable group; (iii) the ensemble and fusion margins in Table~\ref{tab:ensemble} and Section~\ref{sec:components} are small in absolute terms (median relative changes below 3\%) and are the results most vulnerable to seed variance, so the conclusion we draw from them is directional rather than quantitative; and (iv) estimated leaderboard ranks (Section~\ref{sec:leaderboard}) inherit the same instability, which compounds the model-selection effect quantified there.
 

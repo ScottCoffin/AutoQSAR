@@ -247,3 +247,7 @@ gin_supervised_masking_pre_trained.pth
 *.out
 *.toc
 *.synctex.gz
+
+# Springer Nature class/style fetched for local verification; Springer supplies these at submission
+submission/sn-jnl.cls
+submission/sn-vancouver.bst
