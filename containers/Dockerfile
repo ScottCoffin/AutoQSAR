@@ -1,15 +1,15 @@
-# AutoQSAR container — CUDA 12.1 / Ubuntu 22.04
+# QSARena container — CUDA 12.1 / Ubuntu 22.04
 #
 # Multi-stage build:
 #   builder — installs the full Python environment from pinned lockfile
 #   runtime — copies the venv and source into a slim CUDA runtime image
 #
 # Usage (local):
-#   docker build -t autoqsar:latest -f containers/Dockerfile .
+#   docker build -t qsarena:latest -f containers/Dockerfile .
 #
-# Convert to Apptainer .sif (see containers/autoqsar.def for direct Apptainer build):
-#   docker save autoqsar:latest | gzip > autoqsar.tar.gz
-#   apptainer build autoqsar.sif docker-archive://autoqsar.tar.gz
+# Convert to Apptainer .sif (see containers/qsarena.def for direct Apptainer build):
+#   docker save qsarena:latest | gzip > qsarena.tar.gz
+#   apptainer build qsarena.sif docker-archive://qsarena.tar.gz
 
 # ── Stage 1: builder ──────────────────────────────────────────────────────────
 FROM nvidia/cuda:12.1.1-cudnn8-devel-ubuntu22.04 AS builder
@@ -25,7 +25,7 @@ ARG DEBIAN_FRONTEND=noninteractive
 # Leave empty to skip checkpoint pre-download (download at first run instead).
 ARG UNIMOL_SIZE=84m
 # TODO (operator): set UNICORE_GIT_SHA to the exact commit you want to pin,
-# then fill the matching SHA-256 in autoqsar/unimolv2.py:UNIMOLV2_CHECKPOINT_SHA256.
+# then fill the matching SHA-256 in qsarena/unimolv2.py:UNIMOLV2_CHECKPOINT_SHA256.
 ARG UNICORE_GIT_SHA=e04f7ef73d7685cf0fd1090de87a1b0900ef6f01
 
 # System deps: Python 3.11, build tools, git for provenance
@@ -97,13 +97,13 @@ ARG BUILD_DATE
 ARG GIT_COMMIT=unknown
 ARG GIT_TAG=unknown
 
-LABEL org.opencontainers.image.title="AutoQSAR" \
+LABEL org.opencontainers.image.title="QSARena" \
       org.opencontainers.image.description="Portable QSAR modeling and benchmarking — CUDA 12.1" \
       org.opencontainers.image.created="${BUILD_DATE}" \
       org.opencontainers.image.revision="${GIT_COMMIT}" \
       org.opencontainers.image.version="${GIT_TAG}" \
-      autoqsar.cuda_version="12.1" \
-      autoqsar.python_version="3.11"
+      qsarena.cuda_version="12.1" \
+      qsarena.python_version="3.11"
 
 ARG DEBIAN_FRONTEND=noninteractive
 
@@ -121,9 +121,9 @@ COPY --from=builder /opt/venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
 # Copy repo source (data, benchmark_results, model_cache are bind-mounted at runtime)
-COPY --chown=nobody:nogroup . /opt/autoqsar/
+COPY --chown=nobody:nogroup . /opt/qsarena/
 
-WORKDIR /opt/autoqsar
+WORKDIR /opt/qsarena
 
 # Reproducibility env
 ENV PYTHONHASHSEED=0 \
@@ -131,5 +131,5 @@ ENV PYTHONHASHSEED=0 \
     CUBLAS_WORKSPACE_CONFIG=":4096:8" \
     OMP_NUM_THREADS=1
 
-ENTRYPOINT ["python", "/opt/autoqsar/run_one.py"]
+ENTRYPOINT ["python", "/opt/qsarena/run_one.py"]
 CMD ["--help"]

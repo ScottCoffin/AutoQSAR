@@ -1,0 +1,12 @@
+Model,Weight,Workflow
+SVR,0.04828149637998215,conventional
+Random forest,0.04928456897823003,conventional
+Extra trees,0.6433148385272661,conventional
+HistGradientBoosting,0.03903819401454188,conventional
+AdaBoost,0.01334846620193521,conventional
+Tabular CNN,0.01607785267097647,conventional
+CatBoost,0.022535584557782273,conventional
+MapLight CatBoost (Strict Parity),0.020854140443191813,conventional
+ChemML MLP (TensorFlow),0.0379599124134524,ChemML deep learning
+Uni-Mol V1,0.039065110217407516,Uni-Mol
+CFA (Combinatorial Fusion),0.07023983559523404,cfa

@@ -1,0 +1,28 @@
+{
+  "title": "QSARena: a portable, leakage-controlled AutoML workspace for molecular property prediction",
+  "description": "<p>QSARena predicts molecular properties from SMILES through a single reproducible workflow: RDKit standardization, ten fingerprint and descriptor families including a MapLight-style composite, train-only filtering and ElasticNetCV feature selection, and a model library spanning conventional machine learning, gradient boosting, deep tabular networks, message-passing graph neural networks (Chemprop v2), descriptor-graph hybrids (MapLight + GNN), 3D pretrained models (Uni-Mol V1 and V2), and combinatorial-fusion and stacking ensembles.</p><p>It is delivered as both a code-free Jupyter/Colab notebook and a resume-safe command-line benchmark runner that share one workflow core.</p><p>This archive includes the complete benchmark artifacts for 44 datasets across five suites (Therapeutics Data Commons, MoleculeNet, Polaris ADME, PODUAM, ChemML), including per-molecule predictions that are excluded from the Git repository for size reasons, together with the analysis notebook and the scripts that regenerate every figure, table and quoted number in the accompanying paper.</p>",
+  "upload_type": "software",
+  "license": "MIT",
+  "access_right": "open",
+  "creators": [
+    {
+      "name": "Coffin, Scott",
+      "affiliation": "California Office of Environmental Health Hazard Assessment"
+    }
+  ],
+  "keywords": [
+    "QSAR",
+    "ADMET",
+    "AutoML",
+    "molecular property prediction",
+    "cheminformatics",
+    "benchmarking",
+    "reproducibility",
+    "data leakage",
+    "ensemble learning",
+    "foundation models"
+  ],
+  "language": "eng",
+  "grants": [],
+  "notes": "Benchmark executed on NSF ACCESS Jetstream2 under allocation CIS261142. Jetstream2 is supported by the U.S. National Science Foundation under Grant 2005506; the ACCESS program is supported by NSF grants 2138259, 2138286, 2138307, 2137603 and 2138296."
+}

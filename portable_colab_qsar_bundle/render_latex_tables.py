@@ -93,6 +93,14 @@ TABLE_SPEC = {
         "Feature-family selection summary across all datasets, sorted by per-feature enrichment relative to a "
         "uniform-selection baseline.",
     ),
+    "tableS5_run_comparison": (
+        "tab:s5", True, 3,
+        "Run-to-run comparison: the canonical NSF ACCESS Jetstream2 A100 benchmark against the earlier "
+        "consumer-GPU (RTX 4060) run, analysed identically. ``Same split'' marks datasets where both runs "
+        "used the identical held-out partition; the remainder were re-split to scaffold splits in the A100 "
+        "run and are therefore not directly comparable. Change is relative and metric-direction aware "
+        "(positive favours the A100 run).",
+    ),
     "tableS4_model_coverage": (
         "tab:s4", False, 3,
         "Model coverage: datasets attempted and datasets yielding a valid metric, per model.",

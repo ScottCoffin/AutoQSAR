@@ -1,7 +1,7 @@
-# AutoQSAR Environment Setup Script (PowerShell)
+# QSARena Environment Setup Script (PowerShell)
 
 Write-Host "========================================"
-Write-Host "AutoQSAR Conda Environment Setup"
+Write-Host "QSARena Conda Environment Setup"
 Write-Host "========================================"
 Write-Host ""
 Write-Host "Choose your setup option:"
@@ -16,38 +16,38 @@ switch ($choice) {
     "1" {
         Write-Host ""
         Write-Host "Creating CUDA environment..."
-        & conda env create -f environment-cuda.yml -n autoqsar-py311
+        & conda env create -f environment-cuda.yml -n qsarena-py311
         if (-not $?) { Write-Host "Conda env creation failed."; Pause; exit 1 }
         Write-Host ""
         Write-Host "Installing pip packages via uv (this may take several minutes)..."
-        & conda run -n autoqsar-py311 pip install uv
-        & conda run -n autoqsar-py311 uv pip install --system --index-strategy unsafe-best-match --prerelease=allow -r requirements-cuda.txt
+        & conda run -n qsarena-py311 pip install uv
+        & conda run -n qsarena-py311 uv pip install --system --index-strategy unsafe-best-match --prerelease=allow -r requirements-cuda.txt
         if (-not $?) { Write-Host "Package installation failed."; Pause; exit 1 }
         Write-Host ""
         Write-Host "Setup complete! Activate with:"
-        Write-Host "  conda activate autoqsar-py311"
+        Write-Host "  conda activate qsarena-py311"
     }
     "2" {
         Write-Host ""
         Write-Host "Creating CPU-only environment..."
-        & conda env create -f environment-cpu.yml -n autoqsar-py311
+        & conda env create -f environment-cpu.yml -n qsarena-py311
         if (-not $?) { Write-Host "Conda env creation failed."; Pause; exit 1 }
         Write-Host ""
         Write-Host "Installing pip packages via uv (this may take several minutes)..."
-        & conda run -n autoqsar-py311 pip install uv
-        & conda run -n autoqsar-py311 uv pip install --system --index-strategy unsafe-best-match --prerelease=allow -r requirements-cpu.txt
+        & conda run -n qsarena-py311 pip install uv
+        & conda run -n qsarena-py311 uv pip install --system --index-strategy unsafe-best-match --prerelease=allow -r requirements-cpu.txt
         if (-not $?) { Write-Host "Package installation failed."; Pause; exit 1 }
         Write-Host ""
         Write-Host "Setup complete! Activate with:"
-        Write-Host "  conda activate autoqsar-py311"
+        Write-Host "  conda activate qsarena-py311"
     }
     "3" {
         Write-Host ""
         Write-Host "Creating base environment (without PyTorch)..."
-        & conda env create -f environment-base.yml -n autoqsar-py311
+        & conda env create -f environment-base.yml -n qsarena-py311
         Write-Host ""
         Write-Host "Next steps:"
-        Write-Host "  1. Activate: conda activate autoqsar-py311"
+        Write-Host "  1. Activate: conda activate qsarena-py311"
         Write-Host "  2. Install PyTorch manually from https://pytorch.org/get-started/locally/"
         Write-Host "  3. Then run: pip install uv; uv pip install --system -r requirements-cpu.txt"
     }

@@ -1,0 +1,9 @@
+{
+  "status": "completed",
+  "dataset": "chemml_cep_homo",
+  "source": "ChemML bundled dataset: cep_homo",
+  "completed_at": "2026-06-24 00:25:43",
+  "elapsed_seconds": 305.887,
+  "n_metrics_rows": 65,
+  "n_stage_records": 27
+}

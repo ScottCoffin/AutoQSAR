@@ -1,4 +1,4 @@
-# AGENTS.md — AutoQSAR
+# AGENTS.md — QSARena
 
 Orientation for coding agents. Read this before exploring; most of it took a full session to discover.
 Human-facing docs: `README.md` (usage), `CONTAINER.md` / `hpc/README.md` / `js2/README.md` (HPC),
@@ -7,7 +7,7 @@ that would have saved you time.
 
 ## What this repo is
 
-AutoQSAR: SMILES → molecular property QSAR/AutoML workspace plus a 45-dataset benchmark and a manuscript
+QSARena: SMILES → molecular property QSAR/AutoML workspace plus a 45-dataset benchmark and a manuscript
 (`manuscript.md`, target: *Journal of Cheminformatics*). Windows + OneDrive checkout (paths contain spaces:
 always quote). Bash (Git Bash) and PowerShell are both available.
 
@@ -16,70 +16,86 @@ always quote). Bash (Git Bash) and PowerShell are both available.
 | Want to change | Edit | Notes |
 |---|---|---|
 | Interactive Colab notebook | `portable_colab_qsar_bundle/build_colab_qsar_tutorial.py` | Regenerates `colab_qsar_tutorial.ipynb`; never hand-edit that notebook. |
-| Benchmark runner | `portable_colab_qsar_bundle/run_autoqsar_ga_benchmarks.py` | ~10k lines. `run_autoqsar_ga_benchmarks.txt` is a **stale mirror**: do not read or grep it as source. |
+| Benchmark runner | `portable_colab_qsar_bundle/run_qsarena_benchmarks.py` | ~10k lines. `run_qsarena_benchmarks.txt` is a **stale mirror**: do not read or grep it as source. |
 | Features, splits, CFA | `portable_colab_qsar_bundle/qsar_workflow_core.py` | (`qsar_workflow_core.txt` is a mirror.) |
 | Dataset registry / catalog | `benchmark_registry.py`, `data/benchmark_dataset_catalog.csv` | |
 | Leaderboard references | `data/benchmark_leaderboards/*.csv` | Current-literature ESOL/Lipophilicity refs live in `ESOL_Lipophilicity_Current_Benchmarks_csv.csv`. |
 | Benchmark analysis, manuscript figures and tables | `portable_colab_qsar_bundle/benchmark_results_summary.ipynb` | Hand-maintained (no builder). The last cell (`# MANUSCRIPT_FIGURE_EXPORT`) writes `manuscript_assets/`. |
 | Graphical abstract | `portable_colab_qsar_bundle/render_graphical_abstract.py` | Writes `manuscript_assets/figures/graphical_abstract.svg`. It should summarize the paper's decision story, not duplicate Figure 1. |
-| Precision, Uni-Mol2, conformers (Update 2) | `autoqsar/` package, `run_one.py`, `js2/`, `hpc/` | |
+| Precision, Uni-Mol2, conformers (Update 2) | `qsarena/` package, `run_one.py`, `js2/`, `hpc/` | |
+| pip packaging (deps, extras, console scripts) | `pyproject.toml` | See "Packaging" below. |
+
+## Packaging (`pip install qsarena`)
+
+- Both `qsarena/` and `portable_colab_qsar_bundle/` ship as real packages; the bundle got an
+  `__init__.py` purely for that. The cross-imports in `run_qsarena_benchmarks.py` already
+  used `from portable_colab_qsar_bundle.X import ...` with a `sys.path` fallback, so script-style
+  and installed use both work. Don't "simplify" that try/except.
+- `workspace_root()` in the runner replaces the old `Path(__file__).resolve().parents[1]` for
+  `data/`, `model_cache/` and the leaderboard cache: `QSARENA_HOME` > source checkout (detected by
+  `pyproject.toml`/`.git`/`environment-cpu.yml`) > CWD. Without it, an installed copy would write
+  into `site-packages`.
+- The `data/` tree is **not** bundled in the wheel (tens of MB, mostly regenerable). Missing catalog
+  and leaderboard CSVs already degrade to empty dicts / skipped comparisons.
+- **PyTDC hard-pins** `numpy==1.26.4`, `pandas==2.1.4`, `scikit-learn==1.2.2`, `rdkit==2023.9.5`
+  and `dgl`, so it is in its own `[tdc]` extra and deliberately excluded from `[all]`; it only
+  resolves on Python 3.10-3.12. `dgl`/`dgllife` are not in any extra at all (no usable PyPI wheels).
+- Build/verify: `python -m build`, then install the wheel in a venv **outside** the repo and with a
+  **short** path — a long Windows path makes RDKit fail with
+  `ImportError: DLL load failed while importing cDataStructs`.
 
 ## Manuscript workflow (the fast path)
 
-1. Canonical run: **`benchmark_results/benchmark_name_date`**: the GPU run from commit `b7cd42c` (2026-05-11),
-   `cost_optimized` profile, 45 datasets (23 regression / 22 classification), 25 models incl. Uni-Mol V1.
-   The user chose this run (2026-09-24). Do not re-litigate it.
-2. Regenerate every figure, table and number (≈1.5 min, no conda env needed; system Python has
-   pandas/matplotlib/plotly/scipy/rdkit/nbclient):
+1. **Canonical run: `benchmark_results/autoqsar_benchmark_20260623_153839`** — the NSF ACCESS
+   Jetstream2 **A100** run (`g3.large`, allocation CIS261142), `full` profile, 28 models incl.
+   Uni-Mol V1+V2, committed on origin/main in `bbfb188`. Confirmed A100 by `run_timing.json`
+   (`NVIDIA A100-SXM4-40GB`, 32 CPUs), UTC timestamps and zero Windows paths.
+   44 datasets analysed (22 reg / 22 cls), 43 fully complete; `tdc_herg_central` abandoned (>24 h),
+   `polaris_adme_fang_hppb_1` interrupted but has a full model table.
+   The earlier **RTX 4060** run (`benchmark_results/benchmark_name_date`, `cost_optimized`) is kept
+   deliberately: §3.11 / Table S5 compare the two. Do not delete it.
+2. Regenerate every figure, table and number (~1.5 min; system Python suffices):
    ```bash
-   python portable_colab_qsar_bundle/render_manuscript_assets.py
+   python portable_colab_qsar_bundle/render_manuscript_assets.py   # notebook + figures + tables + numbers JSON + LaTeX tables
+   python portable_colab_qsar_bundle/render_graphical_abstract.py  # 920x300 J.Cheminform graphical abstract
+   python portable_colab_qsar_bundle/verify_manuscript_numbers.py  # 64 assertions; non-zero exit on drift
    ```
-   Outputs: `manuscript_assets/figures/*.png|pdf`, `manuscript_assets/tables/*.csv|md`,
-   `manuscript_assets/manuscript_numbers.json`, plus `publication_*.csv` inside the run directory.
-   It re-executes the notebook in place (so its saved outputs match the canonical run) and refreshes every
-   `<!-- TABLE:<stem> -->…<!-- /TABLE -->` block in `manuscript.md` from `manuscript_assets/tables/<stem>.md`.
-   **Never hand-edit text inside those blocks** — it is overwritten. Edit the export cell instead.
-3. Check the prose against the artifacts:
-   ```bash
-   python portable_colab_qsar_bundle/verify_manuscript_numbers.py   # 69 assertions, exit 1 on drift
-   ```
-   **Every number in `manuscript.md` must trace to `manuscript_numbers.json` or a `manuscript_assets/tables/*` file.**
-   After any rerun this script is the checklist: fix the prose to match the new artifacts, then update the expected
-   values in the script. Never copy numbers from old notebook outputs or from `Manuscript Outline.md` /
-   `publication_recommendations.md` (both predate the canonical run and the bug fixes below, and their headline
-   counts — e.g. "MapLight+GNN mean gap 0.199", "selector slope 1.09", 44 datasets — come from the deleted April run).
-4. Figures are static matplotlib written by the notebook's last cell (`# MANUSCRIPT_FIGURE_EXPORT`); Plotly
-   `kaleido` is not installed, so don't build figures with Plotly for the manuscript.
-5. Graphical abstract design: keep it as a decision-map, not a workflow diagram. Figure 1 already explains the
-   pipeline. The graphical abstract should show (left) 45 datasets / 5 suites / 25 model variants entering AutoQSAR,
-   (middle) base models running first, then post-model CFA fusion and ensemble layers, and (right) the three headline
-   results: broad winner distribution (largest family 15/45, 33%), task-dependent choices (classification favors
-   ensembles/conventional ML; regression is more heterogeneous with selective 3D wins), and published-reference
-   top-10 placement. Do not show bare fractions like 35/37 or 26/37 without explaining that they are the number of
-   comparable datasets where AutoQSAR placed in the published-reference top 10. Do not add a separate guardrails or
-   artifact-provenance box to this graphic. Include the compute trade-off that Uni-Mol V1 costs about 115x the median
-   conventional model. Use restrained scientific colors: blue core, green accessibility/conventional, purple
-   pretrained/3D, amber caution/selection.
+   The first also rewrites the `<!-- TABLE:stem -->` blocks in `manuscript.md` and
+   `submission/tables/*.tex`. **Never hand-edit inside those blocks or those .tex files.**
+3. **Two manuscript formats must stay in sync**: `manuscript.md` (working doc, checked by the
+   verifier) and `submission/body.tex` (the submission). Prose edits must be made in both.
+   `verify_manuscript_numbers.py` only checks `manuscript.md`, so a number fixed there but not in
+   `body.tex` will pass silently — grep `body.tex` after any numeric change.
+4. Numbers come only from `manuscript_assets/manuscript_numbers.json` or
+   `manuscript_assets/tables/*.csv`. Never from old notebook outputs, `Manuscript Outline.md` or
+   `publication_recommendations.md` (all predate the A100 run).
 
-## LaTeX submission package (`submission/`)
+## Paper's framing (do not weaken these without evidence)
 
-Journal of Cheminformatics **Software article**, Springer Nature `sn-jnl.cls`, `sn-vancouver-num`.
+The paper makes three load-bearing claims. Keep them straight when editing:
+1. **Leaderboard placement**: top-10 on 35/37 (22/22 on official TDC splits), median rank 3.
+2. **Honest model selection costs ~10 placements**: CV-selected falls to 25/37, median rank 8. This
+   is the novel methodological contribution; never drop it to make the headline look better.
+3. **No effort and no hardware required**: all 44 datasets ran under ONE fixed configuration with no
+   per-dataset tuning and GA disabled, and the notebook runs code-free in Colab with no install.
+   §3.12 states this and its limits. It is evidenced by the run design, not a marketing line.
 
-- `body.tex` holds all prose and is shared by `manuscript.tex` (submission, needs `sn-jnl.cls`) and
-  `proof.tex` (local `article`-class proof; compiles on TeX Live with 0 errors). Edit prose once, in `body.tex`.
-- `submission/tables/*.tex` are **generated** from `manuscript_assets/tables/*.csv` by
-  `render_latex_tables.py`, which `render_manuscript_assets.py` now calls. Never hand-edit them.
-- `sn-jnl.cls` is not on CTAN and tlmgr here cannot sync (local TeX Live 2025 vs remote 2026), so the
-  submission file cannot be compiled locally. Use Overleaf's Springer Nature template, or drop the
-  class into `submission/`. `proof.tex` is the local verification path.
-- Table layout rules that were needed to stop overflow, all in `render_latex_tables.py`: every text
-  column is a tabularx `X`; `\hsize` weights must sum to the number of X columns; tables with >= 7
-  columns go landscape via `pdflscape`; tables over 16 rows use `xltabular` to break across pages;
-  long headers wrap via `makecell`; and `cell_escape` inserts `llowbreak` at underscores, hyphens
-  and CamelCase boundaries so identifiers like `polaris_adme_fang_rclint_1` and `LogisticRegression`
-  can wrap. Without these the build had 597 overfull boxes; it now has 0 above 50pt.
-- Preprints are allowed: Springer Nature does not treat them as prior publication, but disclose the
-  DOI and license at submission.
+Open work is tracked in [TODO.md](TODO.md); the Zenodo deposit is the last blocking submission item.
+
+## Journal requirements already encoded (J. Cheminform., Software article)
+
+- Abstract is capped at **350 words** and must contain a **Scientific Contribution** section
+  (max 3 sentences). Both are in place; re-check the word count after any abstract edit.
+- Graphical abstract spec: **920x300 px, <=150 KB, white background**. `render_graphical_abstract.py`
+  emits exactly that and reads its statistics from `manuscript_numbers.json`.
+- Structure: Background / Implementation / Results and discussion / Conclusions /
+  **Availability and requirements** (seven fields) / Declarations (seven subsections) / Abbreviations.
+  Note `Availability and requirements` and the `Availability of data and materials` declaration are
+  two different required sections.
+- No "highlights" section is required (that is an Elsevier convention).
+- Preprints are permitted and are not prior publication; disclose DOI and license at submission.
+- License is **MIT**; the GitHub issue tracker is enabled with templates in `.github/ISSUE_TEMPLATE/`.
+  Zenodo archive is **not yet deposited** — see `ZENODO.md`, `.zenodo.json`, `CITATION.cff`.
 
 ## Data and analysis traps (all verified; each one changed headline results)
 
@@ -92,15 +108,50 @@ Journal of Cheminformatics **Software article**, Springer Nature `sn-jnl.cls`, `
   magnitude (the old "MapLight+GNN ≈ 13 h" was an artifact; the real median is ≈150 s).
 - **`analysis_delta_from_best` is an absolute difference**, so it mixes units (clearance RMSE ≈ 40 vs LogS ≈ 0.6).
   Use `relative_gap_to_best` from the export cell for cross-dataset summaries.
-- **Test-set leakage to disclose (not fixed in runner):** the per-dataset "best model" is chosen on the test set,
-  and ensemble member filtering uses test metrics (`ensemble_exclude_negative_test_r2_members`, plus a test-metric
-  tie-break when dropping correlated members, `run_autoqsar_ga_benchmarks.py` `build_ensemble_result`). The export
-  cell reports a CV-selected sensitivity analysis (only conventional models, TabPFN and ChemML MLP have CV metrics).
+- **Test-set leakage:** the per-dataset "best model" is still chosen on the test set (disclose this). Ensemble
+  member filtering **was** leaky too and is now **fixed**: `build_ensemble_result` takes
+  `member_selection_split`, exposed as `--ensemble-member-selection-split {train,test}` and defaulting to
+  `train`. The deposited run predates the flag, so a `run_config.json` with no
+  `ensemble_member_selection_split` key means the legacy leaky `test` behaviour — pass `--ensemble-member-selection-split test`
+  to reproduce it exactly. **Ensembles must be re-run for the fix to show up in results**; see
+  [submission/chemprop_rerun_command.md](submission/chemprop_rerun_command.md). The export cell reports a
+  CV-selected sensitivity analysis (only conventional models, TabPFN and ChemML MLP have CV metrics).
+- **All `subprocess.run` calls must use `_SUBPROCESS_TEXT_KWARGS`** (`text`/`encoding="utf-8"`/`errors="replace"`),
+  never bare `text=True`. Bare `text=True` decodes with the ambient locale; under the C/POSIX locale on
+  Jetstream2 that was ASCII, and Chemprop v2's UTF-8 progress output (`0xe2`) made `subprocess.run` itself
+  raise `UnicodeDecodeError` before any result was read. That destroyed **86.4% of Chemprop runs at an
+  identical rate across all five variants** and was recorded in the same `error` column as genuine training
+  failures, which is why it hid for a whole run. Harness I/O errors now say `Chemprop harness error`;
+  model failures say `Chemprop training failed`. Regression test: `tests/test_subprocess_encoding.py`
+  (needs pytest, which the Windows workstation does not have).
+- **`select_output_dir` now globs `qsarena_benchmark_*`** after the rename, so `--resume` will NOT find the
+  canonical `autoqsar_benchmark_20260623_153839`. Do not "fix" the glob to resume into the canonical run;
+  always write re-runs to a new `--output-dir`.
 - Leaderboard comparisons: use `UPDATED_LEADERBOARD_COMPARISON` (cell 21), not `leaderboard_eval` (cell 9 still scores
   ESOL/Lipophilicity against 2017 MoleculeNet baselines). Only the 22 TDC ADMET Benchmark Group datasets and 5 Polaris
   sets use official splits; tox21/toxcast are single-label subsets; carcinogens, skin_reaction, clintox, hydration-FreeSolv,
   PODUAM and MoleculeNet sets use local splits → "estimated rank", not leaderboard-equivalent.
-- `tdc_ppbr_az` reference set contains a row on a different scale (top-1 MAE 0.679 vs top-10 cutoff 7.9); treat its top-1 gap as invalid.
+- **The curated `TDC_ADMET_Benchmark_Performance_by_Model.csv` `TDC_Rank` column is each paper's SELF-REPORTED
+  rank at its own publication date, not a leaderboard position.** 64 rows claim rank 1 across 28 datasets;
+  `caco2_wang` alone has four. Re-score from `Score_Mean` before quoting any ranking. Doing so turns
+  ADMETboost's "first on 18/22" into **0 firsts** (it was true in 2022 and has since been beaten on all 22)
+  and MaxQsaring's "19/22 firsts" into **7 firsts / 19 top-3 / median rank 2**. Full audit:
+  [LEADERBOARD_PROVENANCE_FINDINGS.md](LEADERBOARD_PROVENANCE_FINDINGS.md).
+- **MaxQsaring, ADMETboost, ADMET-AI, DeepAutoQSAR, Auto-ADMET and QW-MTL do not appear in the scraped actual
+  TDC top-10s at all.** Any comparison against them is publication-vs-publication, never head-to-head.
+  DeepAutoQSAR's "top performer on 20 of 22" is *best-of-three* against ChemProp and DeepPurpose in
+  Schrödinger's own white paper — not a leaderboard rank, so it never conflicted with MaxQsaring's claim.
+- **Only 24 of 44 datasets carry any leaderboard reference, and only 9 are backed entirely by the actual
+  scraped TDC leaderboard** (`caco2_wang`, `clearance_hepatocyte_az`, `clearance_microsome_az`,
+  `half_life_obach`, `ld50_zhu`, `lipophilicity_astrazeneca`, `ppbr_az`, `solubility_aqsoldb`,
+  `vdss_lombardo`). The notebook reaches 37 by merging curated literature CSVs. Check
+  `reference_source` (`tdc` / `literature_static` / unlabelled) before calling anything leaderboard-equivalent.
+- **MolGPS (3B) has three wrong-scale rows** in the curated CSV (it reports normalised targets):
+  `ppbr_az` MAE 0.679 vs real 7.440, `ld50_zhu` MAE 0.292 vs 0.552, `vdss_lombardo` Spearman 0.942 vs 0.713.
+  They produce 3 of its 7 apparent first places. Drop them.
+- When ranking our own results against references, **filter to rows whose `primary_metric` matches the
+  leaderboard metric first.** Spearman-primary datasets also carry `mae` rows in `primary_metric_value`;
+  taking a naive max mixes units and yields absurdities (a "Spearman" of 32.1 on `clearance_hepatocyte_az`).
 - The notebook's feature-family labels split MapLight classic into `avalon` + `erg` + `maplight` (descriptor panel). Sum them for "MapLight".
 - Catalog metadata is wrong for some tasks (e.g. `tdc_cyp1a2_veith`, `tdc_cyp2c19_veith`, `tdc_herg_karim` list `rmse`/scaffold but
   are binary): the notebook infers classification from strict 0/1 targets, and that inference is what the analysis uses.
@@ -113,15 +164,10 @@ Journal of Cheminformatics **Software article**, Springer Nature `sn-jnl.cls`, `
 - **Multi-seed was never run, by choice, not oversight** (user, 2026-09-24): repeating 45 datasets × 25 models five times
   was beyond budget (the single-seed run alone took 155 h). `--run-tdc22-multiseed-best` exists but has no artifacts.
   The manuscript hedges this at length in §4; do not soften that hedging or present margins as established.
-- **Host provenance conflict — unresolved, ask before writing hardware claims.** The user states the benchmark ran on an
-  NSF ACCESS Jetstream2 A100 (`g3.large`, allocation CIS261142) and that the artifacts merely look local because they
-  were downloaded. The artifacts themselves say otherwise, and these strings are written *by the running process*:
-  `NVIDIA GeForce RTX 4060 Laptop GPU` (3×), `C:\Users\scott\.conda\envs\autoqsar-py311\...` (761×, 44/45 datasets),
-  Windows-only Chemprop exit code 3221226505, and 1,940 timestamps in Pacific Daylight Time rather than UTC. `js2/`
-  was also committed 2026-06-18, five weeks after the run commit `b7cd42c` (2026-05-11). Section 2.12 of the manuscript
-  carries an `[AUTHOR: hardware statement requires confirmation]` block describing the RTX 4060 workstation. If JS2
-  artifacts surface, they must replace `benchmark_results/benchmark_name_date/` wholesale, since every number derives
-  from it. The ACCESS/Jetstream2 acknowledgement and citations [41, 42] are in place regardless.
+- **Host provenance: resolved.** The A100 run is real and is now canonical (see above). The RTX 4060
+  evidence applies only to `benchmark_results/benchmark_name_date`, which is retained as the
+  hardware-comparison arm. On 37 identically split datasets the two runs differ by a median of
+  -0.19%, which is the paper's accessibility result, not a discrepancy to fix.
 - **PODUAM is misattributed in repo metadata.** `data/benchmark_dataset_catalog.csv` and the cached
   `data/benchmark_leaderboards/leaderboard_top10_reference_*.csv` credit "Aurisano et al., Nature Communications 2025".
   The actual PODUAM paper is von Borries K, Beckwith KV, Goodman JM, Chiu WA, Jolliet O, Fantke P, *Nat Commun*
@@ -135,7 +181,7 @@ Journal of Cheminformatics **Software article**, Springer Nature `sn-jnl.cls`, `
 - The manuscript was first drafted (commit `46bcd3d`) from notebook outputs of an older run,
   `all_benchmarks_no_unimol_20260425_223505`, which that same commit deleted from the repo. Recover it if you need it:
   `git archive 745b820 benchmark_results/all_benchmarks_no_unimol_20260425_223505 | tar -x -C <dir>`.
-- Committed notebook outputs before 2026-09-24 came from another machine (`C:\Users\scott\AutoQSAR`) and a mixed state.
+- Committed notebook outputs before 2026-09-24 came from another machine (`C:\Users\scott\QSARena`) and a mixed state.
 
 ## Don'ts (cost savers)
 

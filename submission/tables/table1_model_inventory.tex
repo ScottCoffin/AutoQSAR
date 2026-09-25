@@ -1,5 +1,5 @@
 \begingroup\scriptsize
-\begin{xltabular}{\textwidth}{@{}>{\raggedright\arraybackslash\hsize=0.681\hsize}X>{\raggedright\arraybackslash\hsize=1.319\hsize}Xrrrr@{}}
+\begin{xltabular}{\textwidth}{@{}>{\raggedright\arraybackslash\hsize=0.721\hsize}X>{\raggedright\arraybackslash\hsize=1.279\hsize}Xrrrr@{}}
 \caption{Model inventory. ``Valid'' datasets are those on which the model produced a metric without an error; differences from 45 reflect task-type applicability (regression-only or classification-only estimators), dataset-size guardrails, or backend failures (Section~\ref{sec:coverage}).}\label{tab:models}\\
 \toprule
 \textbf{Architecture family} & \textbf{Model} & \makecell[r]{\textbf{Valid}\\\textbf{regression}\\\textbf{datasets}} & \makecell[r]{\textbf{Valid}\\\textbf{classification}\\\textbf{datasets}} & \textbf{Wins} & \makecell[r]{\textbf{Datasets}\\\textbf{attempted}} \\
@@ -14,30 +14,33 @@
 \endfoot
 \bottomrule
 \endlastfoot
-CFA combinatorial fusion & CFA (Combinatorial Fusion) & 22 & 22 & 4 & 45 \\
-Chemprop v2 GNN & Chemprop v2 (AttentiveFP + Selected descriptors, ensemble=1) & 23 & 0 & 0 & 45 \\
-Chemprop v2 GNN & Chemprop v2 (AttentiveFP, ensemble=1) & 21 & 0 & 1 & 45 \\
-Conventional ML & Ada\allowbreak{}Boost & 23 & 22 & 2 & 45 \\
-Conventional ML & Cat\allowbreak{}Boost & 23 & 22 & 3 & 45 \\
-Conventional ML & Elastic\allowbreak{}NetCV & 23 & 0 & 0 & 23 \\
-Conventional ML & Extra trees & 23 & 22 & 0 & 45 \\
-Conventional ML & Hist\allowbreak{}Gradient\allowbreak{}Boosting & 23 & 22 & 0 & 45 \\
-Conventional ML & Logistic\allowbreak{}Regression & 0 & 22 & 1 & 22 \\
-Conventional ML & Map\allowbreak{}Light Cat\allowbreak{}Boost (Strict Parity) & 23 & 0 & 0 & 23 \\
-Conventional ML & Random forest & 23 & 22 & 1 & 45 \\
+CFA combinatorial fusion & CFA (Combinatorial Fusion) & 22 & 22 & 1 & 44 \\
+Chemprop v2 GNN & Chemprop v2 (AttentiveFP, ensemble=3) & 2 & 4 & 1 & 44 \\
+Chemprop v2 GNN & Chemprop v2 (CMPNN, ensemble=3) & 2 & 4 & 0 & 44 \\
+Chemprop v2 GNN & Chemprop v2 (D-\allowbreak{}MPNN + RDKit2D, ensemble=3) & 2 & 4 & 1 & 44 \\
+Chemprop v2 GNN & Chemprop v2 (D-\allowbreak{}MPNN + Selected descriptors, ensemble=3) & 2 & 4 & 0 & 44 \\
+Chemprop v2 GNN & Chemprop v2 (D-\allowbreak{}MPNN, ensemble=3) & 2 & 4 & 0 & 44 \\
+Conventional ML & Ada\allowbreak{}Boost & 22 & 22 & 2 & 44 \\
+Conventional ML & Cat\allowbreak{}Boost & 22 & 22 & 1 & 44 \\
+Conventional ML & Elastic\allowbreak{}NetCV & 20 & 0 & 0 & 22 \\
+Conventional ML & Extra trees & 22 & 22 & 0 & 44 \\
+Conventional ML & Hist\allowbreak{}Gradient\allowbreak{}Boosting & 22 & 22 & 1 & 44 \\
+Conventional ML & Logistic\allowbreak{}Regression & 0 & 22 & 0 & 22 \\
+Conventional ML & Map\allowbreak{}Light Cat\allowbreak{}Boost (Strict Parity) & 22 & 0 & 0 & 22 \\
+Conventional ML & Random forest & 22 & 22 & 4 & 44 \\
 Conventional ML & SVC & 0 & 22 & 0 & 22 \\
-Conventional ML & SVR & 23 & 0 & 0 & 23 \\
-Conventional ML & Tabular CNN & 23 & 0 & 0 & 23 \\
-Conventional ML & Tabular MLP & 23 & 22 & 0 & 45 \\
+Conventional ML & SVR & 22 & 0 & 0 & 22 \\
+Conventional ML & Tabular CNN & 22 & 0 & 0 & 22 \\
+Conventional ML & Tabular MLP & 22 & 22 & 0 & 44 \\
 Conventional ML & Voting Classifier (KNN, SVM) & 0 & 22 & 0 & 22 \\
-Conventional ML & Voting Regressor (KNN, SVM) & 23 & 0 & 0 & 23 \\
-Conventional ML & XGBoost & 23 & 22 & 4 & 45 \\
-Deep tabular NN (ChemML MLP) & ChemML MLP (Py\allowbreak{}Torch) & 23 & 22 & 0 & 45 \\
-Ensemble (stacking /\allowbreak{} averaging) & Ensemble (OOF Stacking (RidgeCV, 5-\allowbreak{}fold)) & 23 & 22 & 4 & 45 \\
-Ensemble (stacking /\allowbreak{} averaging) & Ensemble (Weighted average (inverse train RMSE)) & 23 & 22 & 11 & 45 \\
-Map\allowbreak{}Light + GNN & Map\allowbreak{}Light + GNN (Cat\allowbreak{}Boost, Strict Parity) & 22 & 20 & 4 & 45 \\
-TabPFN (tabular foundation) & TabPFNClassifier & 0 & 10 & 0 & 10 \\
-TabPFN (tabular foundation) & TabPFNRegressor & 12 & 0 & 3 & 35 \\
-Uni-\allowbreak{}Mol V1 (3D pretrained) & Uni-\allowbreak{}Mol V1 & 23 & 22 & 7 & 45 \\
+Conventional ML & Voting Regressor (KNN, SVM) & 22 & 0 & 0 & 22 \\
+Conventional ML & XGBoost & 22 & 22 & 0 & 44 \\
+Deep tabular NN (ChemML MLP) & ChemML MLP (Py\allowbreak{}Torch) & 22 & 22 & 1 & 44 \\
+Deep tabular NN (ChemML MLP) & ChemML MLP (Tensor\allowbreak{}Flow) & 22 & 22 & 1 & 44 \\
+Ensemble (stacking /\allowbreak{} averaging) & Ensemble (OOF Stacking (RidgeCV, 5-\allowbreak{}fold)) & 22 & 22 & 7 & 44 \\
+Ensemble (stacking /\allowbreak{} averaging) & Ensemble (Weighted average (inverse train RMSE)) & 22 & 22 & 9 & 44 \\
+Map\allowbreak{}Light + GNN & Map\allowbreak{}Light + GNN (Cat\allowbreak{}Boost, Strict Parity) & 22 & 22 & 4 & 44 \\
+Uni-\allowbreak{}Mol V1 (3D pretrained) & Uni-\allowbreak{}Mol V1 & 22 & 22 & 7 & 44 \\
+Uni-\allowbreak{}Mol V1 (3D pretrained) & Uni-\allowbreak{}Mol V2 (84m) & 10 & 7 & 4 & 44 \\
 \end{xltabular}
 \endgroup

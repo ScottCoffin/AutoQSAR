@@ -1,0 +1,30 @@
+cff-version: 1.2.0
+message: "If you use QSARena, please cite both the software and the accompanying paper."
+title: "QSARena: a portable, leakage-controlled AutoML workspace for molecular property prediction"
+type: software
+authors:
+  - family-names: Coffin
+    given-names: Scott
+    affiliation: "California Office of Environmental Health Hazard Assessment"
+    # orcid: "https://orcid.org/0000-0000-0000-0000"   # TODO: add before archiving
+repository-code: "https://github.com/ScottCoffin/QSARena"
+license: MIT
+keywords:
+  - QSAR
+  - ADMET
+  - AutoML
+  - molecular property prediction
+  - cheminformatics
+  - benchmarking
+  - reproducibility
+# doi: "10.5281/zenodo.XXXXXXX"   # TODO: add the concept DOI after the first Zenodo release
+preferred-citation:
+  type: article
+  title: "No Single Architecture Wins: Ensembles and Conventional Machine Learning Match Pretrained Molecular Models Across 44 Property-Prediction Benchmarks"
+  authors:
+    - family-names: Coffin
+      given-names: Scott
+      affiliation: "California Office of Environmental Health Hazard Assessment"
+  journal: "Journal of Cheminformatics"
+  year: 2026
+  # doi: "10.1186/s13321-026-XXXXX-X"   # TODO: add on acceptance

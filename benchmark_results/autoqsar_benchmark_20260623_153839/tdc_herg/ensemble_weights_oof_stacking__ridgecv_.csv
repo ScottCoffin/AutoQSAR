@@ -1,0 +1,5 @@
+Model,Weight,Abs normalized contribution,Workflow
+Uni-Mol V1,0.5975263185279436,0.07370395674023862,Uni-Mol
+Uni-Mol V2 (84m),0.2712812506106754,0.03346212700505844,Uni-Mol
+"MapLight + GNN (CatBoost, Strict Parity)",4.460035214016791,0.5501385165488099,MapLight + GNN
+CFA (Combinatorial Fusion),2.7782703889889073,0.342695399705893,cfa

@@ -1,0 +1,9 @@
+{
+  "status": "completed",
+  "dataset": "tdc_cyp1a2_veith",
+  "source": "PyTDC ADME benchmark: cyp1a2_veith",
+  "completed_at": "2026-06-30 08:12:59",
+  "elapsed_seconds": 616.729,
+  "n_metrics_rows": 29,
+  "n_stage_records": 25
+}

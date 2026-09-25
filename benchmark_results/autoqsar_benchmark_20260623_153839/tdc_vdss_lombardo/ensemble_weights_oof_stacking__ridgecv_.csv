@@ -1,0 +1,6 @@
+Model,Weight,Abs normalized contribution,Workflow
+SVR,-1.0000504851341248,0.3332260054890129,conventional
+"Voting Regressor (KNN, SVM)",2.000415861606598,0.6665569356637299,conventional
+MapLight CatBoost (Strict Parity),0.00029754638671875,9.914518853583709e-05,conventional
+Uni-Mol V1,0.00034034252166748047,0.00011340525371386814,Uni-Mol
+"MapLight + GNN (CatBoost, Strict Parity)",1.3530254364013672e-05,4.508405007539066e-06,MapLight + GNN

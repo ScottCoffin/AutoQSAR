@@ -1,0 +1,13 @@
+Model,Weight,Workflow
+LogisticRegression,1.2088732933556628e-07,conventional
+SVC,2.8286773975512436e-07,conventional
+Random forest,1.743431166734659e-05,conventional
+Extra trees,1.743431166734659e-05,conventional
+HistGradientBoosting,5.727618416355773e-07,conventional
+"Voting Classifier (KNN, SVM)",9.283204913781671e-06,conventional
+AdaBoost,2.6412695501651837e-08,conventional
+XGBoost,5.85427336905157e-07,conventional
+CatBoost,6.89302582797695e-07,conventional
+Uni-Mol V1,4.474253745375585e-08,Uni-Mol
+"MapLight + GNN (CatBoost, Strict Parity)",0.49997676288484405,MapLight + GNN
+CFA (Combinatorial Fusion),0.49997676288484405,cfa

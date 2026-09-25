@@ -7,7 +7,7 @@ publication_*.csv files inside the benchmark run directory, then refreshes every
     python portable_colab_qsar_bundle/render_manuscript_assets.py [--run-dir benchmark_results/<run>]
 
 Only pandas, numpy, matplotlib, plotly, scipy, nbformat and nbclient are needed (RDKit is optional);
-the full autoqsar-py311 conda environment is not required. Takes well under a minute.
+the full qsarena-py311 conda environment is not required. Takes well under a minute.
 """
 
 from __future__ import annotations

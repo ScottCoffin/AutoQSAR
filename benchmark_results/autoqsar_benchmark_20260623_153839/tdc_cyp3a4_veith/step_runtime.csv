@@ -1,0 +1,26 @@
+dataset,stage_index,total_stages,stage_label,step_type,model,workflow,started_at,started_epoch,status,ended_at,ended_epoch,duration_seconds
+tdc_cyp3a4_veith,1,27,loading PyTDC ADME benchmark group: cyp3a4_veith (official train_val/test split),load_dataset,,,2026-06-30 06:50:01 UTC,1782802201.6799376,completed,2026-06-30 06:50:05 UTC,1782802205.5204377,3.841
+tdc_cyp3a4_veith,2,27,building molecular features (cached),feature_generation,,,2026-06-30 06:50:05 UTC,1782802205.5205112,resumed_cache,2026-06-30 06:50:05 UTC,1782802205.8505638,0.33
+tdc_cyp3a4_veith,3,27,splitting data and selecting features (cached),feature_selection,,,2026-06-30 06:50:05 UTC,1782802205.8506217,resumed_cache,2026-06-30 06:51:56 UTC,1782802316.709034,110.858
+tdc_cyp3a4_veith,4,27,conventional model LogisticRegression (cached),model,LogisticRegression,conventional,2026-06-30 06:51:56 UTC,1782802316.7091022,completed,2026-06-30 06:51:56 UTC,1782802316.7109525,0.002
+tdc_cyp3a4_veith,5,27,conventional model SVC (cached),model,SVC,conventional,2026-06-30 06:51:56 UTC,1782802316.7109923,completed,2026-06-30 06:51:56 UTC,1782802316.712431,0.001
+tdc_cyp3a4_veith,6,27,conventional model Random forest (cached),model,Random forest,conventional,2026-06-30 06:51:56 UTC,1782802316.7124624,completed,2026-06-30 06:51:56 UTC,1782802316.7137349,0.001
+tdc_cyp3a4_veith,7,27,conventional model Extra trees (cached),model,Extra trees,conventional,2026-06-30 06:51:56 UTC,1782802316.7137666,completed,2026-06-30 06:51:56 UTC,1782802316.7150545,0.001
+tdc_cyp3a4_veith,8,27,conventional model HistGradientBoosting (cached),model,HistGradientBoosting,conventional,2026-06-30 06:51:56 UTC,1782802316.7150838,completed,2026-06-30 06:51:56 UTC,1782802316.7163532,0.001
+tdc_cyp3a4_veith,9,27,"conventional model Voting Classifier (KNN, SVM) (cached)",model,"Voting Classifier (KNN, SVM)",conventional,2026-06-30 06:51:56 UTC,1782802316.7163837,completed,2026-06-30 06:51:56 UTC,1782802316.717672,0.001
+tdc_cyp3a4_veith,10,27,conventional model AdaBoost (cached),model,AdaBoost,conventional,2026-06-30 06:51:56 UTC,1782802316.7177017,completed,2026-06-30 06:51:56 UTC,1782802316.7189965,0.001
+tdc_cyp3a4_veith,11,27,conventional model Tabular MLP (cached),model,Tabular MLP,conventional,2026-06-30 06:51:56 UTC,1782802316.7190251,completed,2026-06-30 06:51:56 UTC,1782802316.7203553,0.001
+tdc_cyp3a4_veith,12,27,conventional model XGBoost (cached),model,XGBoost,conventional,2026-06-30 06:51:56 UTC,1782802316.7203846,completed,2026-06-30 06:51:56 UTC,1782802316.72172,0.001
+tdc_cyp3a4_veith,13,27,conventional model CatBoost (cached),model,CatBoost,conventional,2026-06-30 06:51:56 UTC,1782802316.7217486,completed,2026-06-30 06:51:56 UTC,1782802316.723634,0.002
+tdc_cyp3a4_veith,14,27,deep model ChemML MLP (PyTorch) (cached),model,ChemML MLP (PyTorch),ChemML deep learning,2026-06-30 06:51:56 UTC,1782802316.7236629,completed,2026-06-30 06:51:56 UTC,1782802316.7250056,0.001
+tdc_cyp3a4_veith,15,27,deep model ChemML MLP (TensorFlow) (cached),model,ChemML MLP (TensorFlow),ChemML deep learning,2026-06-30 06:51:56 UTC,1782802316.7250357,completed,2026-06-30 06:51:56 UTC,1782802316.7264898,0.001
+tdc_cyp3a4_veith,16,27,"deep model Chemprop v2 (D-MPNN, ensemble=3)",model,"Chemprop v2 (D-MPNN, ensemble=3)",Chemprop v2,2026-06-30 06:51:56 UTC,1782802316.7265189,completed,2026-06-30 07:04:01 UTC,1782803041.2824042,724.556
+tdc_cyp3a4_veith,17,27,"deep model Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",model,"Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",Chemprop v2,2026-06-30 07:04:01 UTC,1782803041.2824354,completed,2026-06-30 07:18:08 UTC,1782803888.9802592,847.698
+tdc_cyp3a4_veith,18,27,"deep model Chemprop v2 (CMPNN, ensemble=3)",model,"Chemprop v2 (CMPNN, ensemble=3)",Chemprop v2,2026-06-30 07:18:08 UTC,1782803888.980288,completed,2026-06-30 07:30:28 UTC,1782804628.5350738,739.555
+tdc_cyp3a4_veith,19,27,"deep model Chemprop v2 (AttentiveFP, ensemble=3)",model,"Chemprop v2 (AttentiveFP, ensemble=3)",Chemprop v2,2026-06-30 07:30:28 UTC,1782804628.535102,completed,2026-06-30 07:44:37 UTC,1782805477.8068821,849.272
+tdc_cyp3a4_veith,20,27,"deep model Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",model,"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",Chemprop v2,2026-06-30 07:44:37 UTC,1782805477.806911,completed,2026-06-30 07:57:22 UTC,1782806242.4932353,764.686
+tdc_cyp3a4_veith,21,27,deep model Uni-Mol V1 (cached),model,Uni-Mol V1,Uni-Mol,2026-06-30 07:57:22 UTC,1782806242.493264,completed,2026-06-30 07:57:22 UTC,1782806242.872016,0.379
+tdc_cyp3a4_veith,22,27,deep model Uni-Mol V2 (84m),model,Uni-Mol V2 (84m),Uni-Mol,2026-06-30 07:57:22 UTC,1782806242.8722405,completed,2026-06-30 08:02:39 UTC,1782806559.5357742,316.664
+tdc_cyp3a4_veith,23,27,"deep model MapLight + GNN (CatBoost, Strict Parity) (cached)",model,"MapLight + GNN (CatBoost, Strict Parity)",MapLight + GNN,2026-06-30 08:02:39 UTC,1782806559.5358064,completed,2026-06-30 08:02:39 UTC,1782806559.537425,0.002
+tdc_cyp3a4_veith,24,27,CFA combinatorial fusion (cached),model,CFA (Combinatorial Fusion),cfa,2026-06-30 08:02:39 UTC,1782806559.5374541,completed,2026-06-30 08:02:39 UTC,1782806559.5391273,0.002
+tdc_cyp3a4_veith,25,27,ensemble (2 method(s)),model,Ensemble,ensemble,2026-06-30 08:02:39 UTC,1782806559.539187,completed,2026-06-30 08:02:42 UTC,1782806562.6787472,3.14

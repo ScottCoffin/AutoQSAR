@@ -1,30 +1,52 @@
+"""Render the Journal of Cheminformatics graphical abstract.
+
+Journal spec (J. Cheminform. author guidelines): 920 x 300 px, max 150 KB, jpeg/png/svg,
+white background, filling the available width.
+
+Every statistic is read from manuscript_assets/manuscript_numbers.json, which
+render_manuscript_assets.py writes from the benchmark artifacts, so this figure cannot drift
+from the manuscript.
+
+Design notes (graphical-abstract best practice):
+  * One left-to-right reading path: what was benchmarked -> the headline result -> what it means.
+  * A message title, not a topic title: the reader should get the finding without the paper.
+  * The most citable result (leaderboard placement, and how much of it is a selection artifact)
+    is the visual hero; supporting findings are deliberately smaller.
+  * Okabe-Ito colourblind-safe palette, also separable in greyscale by lightness.
+  * No gradients, shadows or 3D: they cost file size and carry no information.
+  * Minimum effective type size ~9.5 px at final scale; numbers carry the emphasis, not decoration.
+
+Usage:  python portable_colab_qsar_bundle/render_graphical_abstract.py
+"""
+
 from __future__ import annotations
 
+import json
 import math
 from html import escape
 from pathlib import Path
-from textwrap import wrap
+
+ROOT = Path(__file__).resolve().parents[1]
+OUT_PATH = ROOT / "manuscript_assets" / "figures" / "graphical_abstract.svg"
+NUMBERS_PATH = ROOT / "manuscript_assets" / "manuscript_numbers.json"
+
+WIDTH, HEIGHT = 920, 300
+
+# Okabe-Ito: colourblind-safe and greyscale-separable.
+BLUE = "#0072B2"
+ORANGE = "#E69F00"
+GREEN = "#009E73"
+VERMILION = "#D55E00"
+INK = "#1B2A38"
+MUTED = "#5A6B7B"
+RULE = "#D6DEE6"
+TRACK = "#EEF2F6"
+FONT = "Helvetica, Arial, 'Liberation Sans', sans-serif"
 
 
-OUT_PATH = (
-    Path(__file__).resolve().parents[1]
-    / "manuscript_assets"
-    / "figures"
-    / "graphical_abstract.svg"
-)
-
-WIDTH = 1800
-HEIGHT = 900
-
-
-def attrs(**kwargs: object) -> str:
-    parts: list[str] = []
-    for key, value in kwargs.items():
-        if value is None:
-            continue
-        key = key.rstrip("_").replace("_", "-")
-        parts.append(f'{key}="{escape(str(value), quote=True)}"')
-    return " ".join(parts)
+def load_numbers() -> dict:
+    with NUMBERS_PATH.open(encoding="utf-8") as handle:
+        return json.load(handle)
 
 
 class Svg:
@@ -34,327 +56,177 @@ class Svg:
     def add(self, raw: str) -> None:
         self.parts.append(raw)
 
-    def rect(
-        self,
-        x: float,
-        y: float,
-        w: float,
-        h: float,
-        *,
-        rx: float = 20,
-        fill: str = "#ffffff",
-        stroke: str = "#d7dee8",
-        sw: float = 2,
-        extra: str = "",
-    ) -> None:
+    def rect(self, x, y, w, h, rx=0, fill="none", stroke="none", sw=1) -> None:
         self.add(
-            "<rect "
-            + attrs(x=x, y=y, width=w, height=h, rx=rx, fill=fill, stroke=stroke, stroke_width=sw)
-            + (f" {extra}" if extra else "")
-            + "/>"
+            f'<rect x="{x:.1f}" y="{y:.1f}" width="{w:.1f}" height="{h:.1f}" rx="{rx}" '
+            f'fill="{fill}" stroke="{stroke}" stroke-width="{sw}"/>'
         )
 
-    def line(
-        self,
-        x1: float,
-        y1: float,
-        x2: float,
-        y2: float,
-        *,
-        color: str = "#617083",
-        sw: float = 3,
-        arrow: bool = False,
-        dash: str | None = None,
-    ) -> None:
+    def text(self, x, y, s, size=12, weight="400", color=INK, anchor="start", spacing=None) -> None:
+        extra = f' letter-spacing="{spacing}"' if spacing else ""
         self.add(
-            "<line "
-            + attrs(
-                x1=x1,
-                y1=y1,
-                x2=x2,
-                y2=y2,
-                stroke=color,
-                stroke_width=sw,
-                stroke_linecap="round",
-                marker_end="url(#arrow)" if arrow else None,
-                stroke_dasharray=dash,
-            )
-            + "/>"
+            f'<text x="{x:.1f}" y="{y:.1f}" font-family="{FONT}" font-size="{size}" '
+            f'font-weight="{weight}" fill="{color}" text-anchor="{anchor}"{extra}>{escape(s)}</text>'
         )
 
-    def path(
-        self,
-        d: str,
-        *,
-        fill: str = "none",
-        stroke: str = "#617083",
-        sw: float = 3,
-        arrow: bool = False,
-        dash: str | None = None,
-    ) -> None:
+    def line(self, x1, y1, x2, y2, color=MUTED, sw=1.5) -> None:
         self.add(
-            "<path "
-            + attrs(
-                d=d,
-                fill=fill,
-                stroke=stroke,
-                stroke_width=sw,
-                stroke_linecap="round",
-                stroke_linejoin="round",
-                marker_end="url(#arrow)" if arrow else None,
-                stroke_dasharray=dash,
-            )
-            + "/>"
+            f'<line x1="{x1:.1f}" y1="{y1:.1f}" x2="{x2:.1f}" y2="{y2:.1f}" '
+            f'stroke="{color}" stroke-width="{sw}" stroke-linecap="round"/>'
         )
 
-    def circle(
-        self,
-        cx: float,
-        cy: float,
-        r: float,
-        *,
-        fill: str = "#ffffff",
-        stroke: str = "#d7dee8",
-        sw: float = 2,
-    ) -> None:
+    def path(self, d, fill="none", stroke=MUTED, sw=1.5) -> None:
         self.add(
-            "<circle "
-            + attrs(cx=cx, cy=cy, r=r, fill=fill, stroke=stroke, stroke_width=sw)
-            + "/>"
+            f'<path d="{d}" fill="{fill}" stroke="{stroke}" stroke-width="{sw}" '
+            f'stroke-linejoin="round" stroke-linecap="round"/>'
         )
 
-    def polygon(
-        self,
-        points: list[tuple[float, float]],
-        *,
-        fill: str = "none",
-        stroke: str = "#617083",
-        sw: float = 3,
-    ) -> None:
-        point_text = " ".join(f"{x:.1f},{y:.1f}" for x, y in points)
+    def arrow(self, x, y, size=9, color=MUTED) -> None:
         self.add(
-            "<polygon "
-            + attrs(points=point_text, fill=fill, stroke=stroke, stroke_width=sw, stroke_linejoin="round")
-            + "/>"
+            f'<path d="M {x:.1f} {y - size / 2:.1f} L {x + size * 0.85:.1f} {y:.1f} '
+            f'L {x:.1f} {y + size / 2:.1f} Z" fill="{color}"/>'
         )
 
-    def text(
-        self,
-        x: float,
-        y: float,
-        text: str,
-        *,
-        size: float = 24,
-        weight: str = "400",
-        color: str = "#18202c",
-        anchor: str = "start",
-        max_chars: int | None = None,
-        line_height: float = 1.22,
-        italic: bool = False,
-    ) -> None:
-        lines = text.split("\n")
-        if max_chars:
-            wrapped: list[str] = []
-            for line in lines:
-                wrapped.extend(wrap(line, max_chars) or [""])
-            lines = wrapped
-        style = f"font-size:{size}px;font-weight:{weight};fill:{color};font-family:Arial,Helvetica,sans-serif;"
-        if italic:
-            style += "font-style:italic;"
-        self.add(f'<text {attrs(x=x, y=y, text_anchor=anchor, style=style)}>')
-        for idx, line in enumerate(lines):
-            dy = 0 if idx == 0 else size * line_height
-            self.add(f'<tspan {attrs(x=x, dy=dy)}>{escape(line)}</tspan>')
-        self.add("</text>")
 
-    def pill(
-        self,
-        x: float,
-        y: float,
-        w: float,
-        h: float,
-        label: str,
-        *,
-        fill: str,
-        stroke: str,
-        color: str = "#18202c",
-        size: float = 17,
-    ) -> None:
-        self.rect(x, y, w, h, rx=h / 2, fill=fill, stroke=stroke, sw=1.6)
-        self.text(x + w / 2, y + h / 2 + size * 0.34, label, size=size, weight="700", color=color, anchor="middle")
-
-
-def draw_molecule(svg: Svg, cx: float, cy: float, r: float) -> None:
-    points = [
-        (cx + r * math.cos(math.pi / 6 + i * math.pi / 3), cy + r * math.sin(math.pi / 6 + i * math.pi / 3))
-        for i in range(6)
-    ]
-    svg.polygon(points, stroke="#2f7ebc", sw=4)
-    for i, j in [(0, 1), (2, 3), (4, 5)]:
-        svg.line(points[i][0], points[i][1], points[j][0], points[j][1], color="#2f7ebc", sw=3)
-    svg.circle(cx + r * 1.42, cy - r * 0.58, 10, fill="#ffffff", stroke="#2f7ebc", sw=3)
-    svg.line(cx + r * 0.83, cy - r * 0.50, cx + r * 1.23, cy - r * 0.56, color="#2f7ebc", sw=3)
-
-
-def stat_card(svg: Svg, x: float, y: float, w: float, h: float, big: str, label: str, color: str) -> None:
-    svg.rect(x, y, w, h, rx=18, fill="#ffffff", stroke="#d9e2ec", sw=1.6)
-    svg.text(x + w / 2, y + 42, big, size=34, weight="800", color=color, anchor="middle")
-    svg.text(x + w / 2, y + 72, label, size=16, weight="700", color="#465568", anchor="middle", max_chars=15)
-
-
-def model_box(svg: Svg, x: float, y: float, w: float, h: float, label: str, color: str) -> None:
-    svg.rect(x, y, w, h, rx=14, fill="#ffffff", stroke=color, sw=2)
-    svg.circle(x + 20, y + h / 2, 7, fill=color, stroke=color, sw=1)
-    svg.text(x + 36, y + h / 2 + 6, label, size=16, weight="700", color="#263241")
-
-
-def win_bar(svg: Svg, x: float, y: float, label: str, value: int, color: str) -> None:
-    svg.text(x, y + 16, label, size=16, weight="700", color="#263241")
-    svg.rect(x + 140, y, 210, 19, rx=9.5, fill="#eef2f7", stroke="#dce3ec", sw=1)
-    svg.rect(x + 140, y, 210 * value / 45, 19, rx=9.5, fill=color, stroke=color, sw=1)
-    svg.text(x + 365, y + 16, f"{value}/45", size=16, weight="800", color="#263241")
-
-
-def top10_bar(svg: Svg, x: float, y: float, label: str, value: int, color: str) -> None:
-    svg.text(x, y + 18, label, size=17, weight="800", color="#263241")
-    svg.rect(x, y + 32, 410, 26, rx=13, fill="#eef2f7", stroke="#dce3ec", sw=1)
-    svg.rect(x, y + 32, 410 * value / 37, 26, rx=13, fill=color, stroke=color, sw=1)
-    svg.text(x + 430, y + 53, f"{value} of 37", size=19, weight="800", color=color)
-    svg.text(x + 430, y + 78, "datasets in published-reference top 10", size=13, weight="700", color="#6a7788")
-
-
-def draw_svg() -> str:
-    svg = Svg()
-    svg.add(f'<svg xmlns="http://www.w3.org/2000/svg" width="{WIDTH}" height="{HEIGHT}" viewBox="0 0 {WIDTH} {HEIGHT}">')
+def hexagon(svg: Svg, cx: float, cy: float, r: float, color: str) -> None:
+    """Benzene-ring glyph: signals 'molecules in' without implying a specific structure."""
+    pts = []
+    for i in range(6):
+        a = math.radians(60 * i - 30)
+        pts.append(f"{cx + r * math.cos(a):.1f},{cy + r * math.sin(a):.1f}")
+    svg.add(f'<polygon points="{" ".join(pts)}" fill="none" stroke="{color}" stroke-width="1.8"/>')
     svg.add(
-        """
-<defs>
-  <marker id="arrow" markerWidth="14" markerHeight="14" refX="10" refY="5" orient="auto" markerUnits="strokeWidth">
-    <path d="M 0 0 L 10 5 L 0 10 z" fill="#617083"/>
-  </marker>
-  <linearGradient id="engineGrad" x1="0" x2="1" y1="0" y2="1">
-    <stop offset="0%" stop-color="#e8f4ff"/>
-    <stop offset="100%" stop-color="#f2fbf6"/>
-  </linearGradient>
-  <filter id="softShadow" x="-5%" y="-5%" width="110%" height="120%">
-    <feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#1b2a3a" flood-opacity="0.11"/>
-  </filter>
-</defs>
-"""
-    )
-    svg.rect(0, 0, WIDTH, HEIGHT, rx=0, fill="#f7fafc", stroke="#f7fafc", sw=0)
-    svg.text(64, 64, "AutoQSAR: no single architecture wins", size=34, weight="800", color="#172033")
-    svg.text(
-        64,
-        100,
-        "A leakage-controlled benchmark maps when conventional, ensemble, and pretrained molecular models are worth using.",
-        size=21,
-        color="#4a586b",
+        f'<circle cx="{cx:.1f}" cy="{cy:.1f}" r="{r * 0.42:.1f}" fill="none" '
+        f'stroke="{color}" stroke-width="1.3"/>'
     )
 
-    # Left panel.
-    left_x, left_y, left_w, left_h = 60, 145, 360, 640
-    svg.rect(left_x, left_y, left_w, left_h, rx=26, fill="#ffffff", stroke="#cfd9e6", sw=2.2, extra='filter="url(#softShadow)"')
-    svg.text(left_x + 28, left_y + 48, "Benchmark set", size=28, weight="800", color="#1b3045")
-    draw_molecule(svg, left_x + 91, left_y + 120, 43)
-    svg.text(left_x + 160, left_y + 104, "SMILES", size=24, weight="800", color="#2f7ebc")
-    svg.text(left_x + 160, left_y + 134, "to molecular\nproperty targets", size=18, color="#526173", max_chars=20)
-    stat_card(svg, left_x + 28, left_y + 205, 140, 94, "45", "datasets", "#2f7ebc")
-    stat_card(svg, left_x + 192, left_y + 205, 140, 94, "5", "suites", "#2f7ebc")
-    stat_card(svg, left_x + 28, left_y + 323, 140, 94, "23", "regression", "#7b54b8")
-    stat_card(svg, left_x + 192, left_y + 323, 140, 94, "22", "classification", "#1f8f69")
-    stat_card(svg, left_x + 110, left_y + 441, 140, 94, "25", "model variants", "#d28a0b")
-    for idx, label in enumerate(["TDC", "Polaris", "MoleculeNet", "PODUAM", "ChemML"]):
-        x = left_x + 31 + (idx % 2) * 156
-        y = left_y + 565 + (idx // 2) * 36
-        svg.pill(x, y, 132, 28, label, fill="#eef6ff", stroke="#b9d4ee", color="#2f587e", size=14)
 
-    # Middle panel.
-    mid_x, mid_y, mid_w, mid_h = 485, 145, 590, 640
-    svg.rect(mid_x, mid_y, mid_w, mid_h, rx=26, fill="#ffffff", stroke="#cfd9e6", sw=2.2, extra='filter="url(#softShadow)"')
-    svg.text(mid_x + 30, mid_y + 48, "AutoQSAR comparison engine", size=28, weight="800", color="#1b3045")
-    svg.rect(mid_x + 28, mid_y + 78, mid_w - 56, 330, rx=24, fill="url(#engineGrad)", stroke="#bdd7ee", sw=2)
-    svg.text(mid_x + 48, mid_y + 116, "Base model library", size=22, weight="800", color="#1b3045")
-    base_models = [
-        ("Conventional ML", "#1f8f69"),
-        ("Deep tabular NN", "#7b54b8"),
-        ("Chemprop GNN", "#7b54b8"),
-        ("TabPFN", "#7b54b8"),
-        ("Uni-Mol V1", "#7b54b8"),
-        ("MapLight + GNN", "#7b54b8"),
-    ]
-    for idx, (label, color) in enumerate(base_models):
-        col = idx % 2
-        row = idx // 2
-        model_box(svg, mid_x + 50 + col * 252, mid_y + 145 + row * 70, 220, 44, label, color)
-    svg.line(mid_x + 295, mid_y + 362, mid_x + 295, mid_y + 440, color="#617083", sw=3, arrow=True)
-    svg.rect(mid_x + 78, mid_y + 440, 434, 78, rx=18, fill="#ffffff", stroke="#c4d8ec", sw=2)
-    svg.text(mid_x + 295, mid_y + 473, "Aligned train/test predictions", size=22, weight="800", color="#263241", anchor="middle")
-    svg.text(mid_x + 295, mid_y + 499, "same splits and metrics for every dataset", size=16, color="#526173", anchor="middle")
-    svg.line(mid_x + 295, mid_y + 518, mid_x + 295, mid_y + 560, color="#617083", sw=3, arrow=True)
-    svg.rect(mid_x + 58, mid_y + 560, 210, 70, rx=18, fill="#fff8e9", stroke="#e7bd62", sw=2)
-    svg.text(mid_x + 163, mid_y + 590, "CFA fusion", size=21, weight="800", color="#7b4d00", anchor="middle")
-    svg.text(mid_x + 163, mid_y + 615, "post-model", size=15, weight="700", color="#7b4d00", anchor="middle")
-    svg.rect(mid_x + 322, mid_y + 560, 210, 70, rx=18, fill="#eefaf5", stroke="#a9d7c5", sw=2)
-    svg.text(mid_x + 427, mid_y + 590, "Ensemble layer", size=21, weight="800", color="#176c50", anchor="middle")
-    svg.text(mid_x + 427, mid_y + 615, "post-model", size=15, weight="700", color="#176c50", anchor="middle")
-    svg.path(f"M {mid_x + 295} {mid_y + 538} C {mid_x + 240} {mid_y + 548}, {mid_x + 190} {mid_y + 548}, {mid_x + 163} {mid_y + 560}", stroke="#617083", sw=2.5, arrow=True)
-    svg.path(f"M {mid_x + 295} {mid_y + 538} C {mid_x + 350} {mid_y + 548}, {mid_x + 400} {mid_y + 548}, {mid_x + 427} {mid_y + 560}", stroke="#617083", sw=2.5, arrow=True)
-    svg.text(mid_x + 295, mid_y + 682, "Model choice is evaluated as a pipeline output.", size=18, weight="700", color="#405268", anchor="middle")
+SHORT_FAMILY = {
+    "Ensemble (stacking / averaging)": "Ensembles",
+    "Uni-Mol V1 (3D pretrained)": "3D pretrained",
+    "Conventional ML": "Conventional ML",
+    "MapLight + GNN": "MapLight+GNN",
+    "Chemprop v2 GNN": "Chemprop",
+    "Deep tabular NN (ChemML MLP)": "Deep tabular",
+    "CFA combinatorial fusion": "Fusion",
+}
 
-    svg.line(left_x + left_w + 25, 465, mid_x - 26, 465, color="#617083", sw=4, arrow=True)
 
-    # Right panel.
-    right_x, right_y, right_w, right_h = 1138, 145, 602, 640
-    svg.rect(right_x, right_y, right_w, right_h, rx=26, fill="#ffffff", stroke="#cfd9e6", sw=2.2, extra='filter="url(#softShadow)"')
-    svg.text(right_x + 30, right_y + 48, "Benchmark findings", size=28, weight="800", color="#1b3045")
+def draw() -> str:
+    n = load_numbers()
+    lb = n["leaderboard"]
+    tdc = n["leaderboard_by_comparability"]["tdc_admet_group_official"]
+    hw = n["run_comparison_vs_rtx"]
+    wins = {k: v["total"] for k, v in n["wins_by_family"].items()}
+    top = sorted(wins.items(), key=lambda kv: -kv[1])[:3]
+    n_ds = int(n["datasets_analyzed"])
+    total = lb["datasets_compared"]
+    gap = lb["top10_test_selected"] - lb["top10_cv_selected"]
+    share = round(100 * top[0][1] / n_ds)
 
-    card_x, card_y, card_w = right_x + 28, right_y + 82, 546
-    svg.rect(card_x, card_y, card_w, 174, rx=20, fill="#fbfdff", stroke="#d7e3ef", sw=1.8)
-    svg.text(card_x + 22, card_y + 37, "1. Winner distribution is broad", size=22, weight="800", color="#1b3045")
-    win_bar(svg, card_x + 22, card_y + 62, "Ensemble", 15, "#1f8f69")
-    win_bar(svg, card_x + 22, card_y + 92, "Conventional", 11, "#55a37f")
-    win_bar(svg, card_x + 22, card_y + 122, "Uni-Mol V1", 7, "#7b54b8")
-    svg.text(card_x + 390, card_y + 158, "No family exceeds one-third of datasets.", size=16, weight="800", color="#7b4d00", anchor="middle")
-
-    card_y2 = card_y + 196
-    svg.rect(card_x, card_y2, card_w, 154, rx=20, fill="#fbfdff", stroke="#d7e3ef", sw=1.8)
-    svg.text(card_x + 22, card_y2 + 37, "2. Best default depends on task", size=22, weight="800", color="#1b3045")
-    svg.rect(card_x + 24, card_y2 + 59, 238, 66, rx=16, fill="#eefaf5", stroke="#b8dece", sw=1.5)
-    svg.text(card_x + 143, card_y2 + 86, "Classification", size=19, weight="800", color="#176c50", anchor="middle")
-    svg.text(card_x + 143, card_y2 + 111, "20/22 wins: ensemble or conventional", size=14, weight="700", color="#405268", anchor="middle")
-    svg.rect(card_x + 286, card_y2 + 59, 238, 66, rx=16, fill="#f4f0fb", stroke="#d5c8eb", sw=1.5)
-    svg.text(card_x + 405, card_y2 + 86, "Regression", size=19, weight="800", color="#664399", anchor="middle")
-    svg.text(card_x + 405, card_y2 + 111, "heterogeneous; 3D wins selectively", size=14, weight="700", color="#405268", anchor="middle")
-    svg.text(card_x + 274, card_y2 + 142, "Uni-Mol V1: about 115x median conventional-model cost", size=15, weight="800", color="#7b4d00", anchor="middle")
-
-    card_y3 = card_y2 + 176
-    svg.rect(card_x, card_y3, card_w, 186, rx=20, fill="#fbfdff", stroke="#d7e3ef", sw=1.8)
-    svg.text(card_x + 22, card_y3 + 37, "3. Published-reference top-10 placement", size=22, weight="800", color="#1b3045")
-    top10_bar(svg, card_x + 24, card_y3 + 62, "Best model chosen with test set", 35, "#1f8f69")
-    top10_bar(svg, card_x + 24, card_y3 + 122, "Model chosen by cross-validation", 26, "#d28a0b")
-    svg.text(card_x + 274, card_y3 + 176, "Honest model selection costs about 9 top-10 placements.", size=15, weight="800", color="#7b4d00", anchor="middle")
-
-    svg.line(mid_x + mid_w + 25, 465, right_x - 26, 465, color="#617083", sw=4, arrow=True)
-
-    svg.text(
-        900,
-        846,
-        "Practical takeaway: start with descriptor-rich gradient boosting plus averaging; add 3D pretrained models only for regression tasks where chemistry and compute justify it.",
-        size=20,
-        weight="700",
-        color="#263241",
-        anchor="middle",
-        max_chars=128,
+    svg = Svg()
+    svg.add(
+        f'<svg xmlns="http://www.w3.org/2000/svg" width="{WIDTH}" height="{HEIGHT}" '
+        f'viewBox="0 0 {WIDTH} {HEIGHT}">'
     )
+    svg.rect(0, 0, WIDTH, HEIGHT, fill="#FFFFFF")
+
+    # ---- Message title -------------------------------------------------------------------
+    svg.text(24, 26, f"QSARena: top-10 on {lb['top10_test_selected']} of {total} ADMET benchmarks",
+             size=19, weight="700")
+    svg.text(24, 45,
+             f"One leakage-controlled pipeline, {n_ds} datasets, {n['models_with_valid_results']} models "
+             "- and no architecture dominates.",
+             size=11.5, color=MUTED)
+    svg.line(24, 56, WIDTH - 24, 56, color=RULE, sw=1)
+
+    # ---- Panel 1: what was benchmarked ---------------------------------------------------
+    x0 = 24
+    svg.text(x0, 78, "BENCHMARK", size=9.5, weight="700", color=MUTED, spacing="0.8")
+    hexagon(svg, x0 + 13, 105, 11, BLUE)
+    svg.line(x0 + 27, 105, x0 + 43, 105, color=RULE, sw=1.4)
+    svg.text(x0 + 50, 101, "SMILES", size=11, weight="700", color=BLUE)
+    svg.text(x0 + 50, 113, "to property", size=10, color=MUTED)
+
+    for i, (value, label) in enumerate([
+        (n_ds, "datasets"),
+        (len(n["datasets_by_suite"]), "suites"),
+        (int(n["models_with_valid_results"]), "models"),
+    ]):
+        yy = 142 + i * 26
+        svg.text(x0 + 2, yy, str(value), size=17, weight="700", color=INK)
+        svg.text(x0 + 36, yy, label, size=11, color=MUTED)
+
+    svg.text(x0, 232, "TDC | MoleculeNet | Polaris", size=9.5, color=MUTED)
+    svg.text(x0, 245, "PODUAM | ChemML", size=9.5, color=MUTED)
+
+    # Vertical rules separate the three steps; the left-to-right order is carried by the layout and
+    # the title, so no arrow glyph is needed (it only collided with the rule).
+    svg.line(x0 + 156, 72, x0 + 156, 256, color=RULE, sw=1)
+
+    # ---- Panel 2: the hero result --------------------------------------------------------
+    hx, track_w = 204, 286
+    svg.text(hx, 78, "PUBLISHED-REFERENCE TOP-10 PLACEMENT", size=9.5, weight="700",
+             color=MUTED, spacing="0.8")
+
+    def bar(y, label, value, color, note):
+        svg.text(hx, y - 6, label, size=10.5, weight="600", color=INK)
+        svg.rect(hx, y, track_w, 19, rx=9.5, fill=TRACK)
+        svg.rect(hx, y, track_w * value / total, 19, rx=9.5, fill=color)
+        svg.text(hx + track_w + 9, y + 14.5, f"{value}/{total}", size=15, weight="700", color=color)
+        svg.text(hx, y + 33, note, size=9.5, color=MUTED)
+
+    bar(100, "Best model, chosen on the test set", lb["top10_test_selected"], GREEN,
+        f"{tdc['top10_test_selected']}/{tdc['datasets']} on official TDC splits "
+        f"- median rank {int(lb['median_rank_test_selected'])}")
+    bar(163, "Model chosen by cross-validation only", lb["top10_cv_selected"], ORANGE,
+        f"median rank {int(lb['median_rank_cv_selected'])} - the honest estimate for new data")
+
+    # The gap between the two bars is the paper's methodological point; mark it explicitly.
+    gx = hx + track_w + 62
+    svg.path(f"M {gx} 104 L {gx + 7} 104 L {gx + 7} 178 L {gx} 178", stroke=VERMILION, sw=1.6)
+    svg.text(gx + 13, 134, f"-{gap}", size=16, weight="700", color=VERMILION)
+    svg.text(gx + 13, 148, "placements lost", size=9.5, color=VERMILION)
+    svg.text(gx + 13, 160, "to honest model", size=9.5, color=VERMILION)
+    svg.text(gx + 13, 172, "selection", size=9.5, color=VERMILION)
+
+    svg.line(640, 72, 640, 256, color=RULE, sw=1)
+
+    # ---- Panel 3: supporting findings ----------------------------------------------------
+    rx = 660
+    svg.text(rx, 78, "NO SINGLE WINNER", size=9.5, weight="700", color=MUTED, spacing="0.8")
+    for i, (fam, count) in enumerate(top):
+        yy = 94 + i * 21
+        svg.text(rx, yy + 9, SHORT_FAMILY.get(fam, fam), size=10, color=INK)
+        svg.rect(rx + 88, yy, 86, 11, rx=5.5, fill=TRACK)
+        svg.rect(rx + 88, yy, 86 * count / n_ds, 11, rx=5.5, fill=[GREEN, BLUE, MUTED][i])
+        svg.text(rx + 180, yy + 9, str(count), size=10.5, weight="700", color=INK)
+    svg.text(rx, 170, f"Top family takes only {share}% of datasets;", size=10, color=MUTED)
+    svg.text(rx, 183, "the best model is dataset-dependent.", size=10, color=MUTED)
+
+    svg.line(rx, 198, WIDTH - 24, 198, color=RULE, sw=1)
+    svg.text(rx, 218, "RUNS ON A LAPTOP GPU", size=9.5, weight="700", color=MUTED, spacing="0.8")
+    svg.text(rx, 242, f"{hw['median_change_pct_same_split']:+.1f}%", size=16, weight="700", color=BLUE)
+    svg.text(rx + 48, 237, "median change vs an A100,", size=10, color=MUTED)
+    svg.text(rx + 48, 249, f"{hw['datasets_same_split']} identically split datasets", size=10, color=MUTED)
+
+    # ---- Footer --------------------------------------------------------------------------
+    svg.line(24, 266, WIDTH - 24, 266, color=RULE, sw=1)
+    svg.text(24, 284,
+             "Start with descriptor-rich gradient boosting plus averaging; add 3D pretrained models "
+             "where chemistry and compute justify it.",
+             size=10.5, weight="600", color=INK)
+    svg.text(WIDTH - 24, 284, "github.com/ScottCoffin/QSARena", size=9.5, color=MUTED, anchor="end")
+
     svg.add("</svg>")
     return "\n".join(svg.parts)
 
 
 def main() -> None:
     OUT_PATH.parent.mkdir(parents=True, exist_ok=True)
-    OUT_PATH.write_text(draw_svg(), encoding="utf-8")
-    print(f"Wrote {OUT_PATH}")
+    OUT_PATH.write_text(draw(), encoding="utf-8")
+    kb = OUT_PATH.stat().st_size / 1024
+    print(f"Wrote {OUT_PATH} ({WIDTH}x{HEIGHT}, {kb:.1f} KB; journal limit 150 KB)")
 
 
 if __name__ == "__main__":

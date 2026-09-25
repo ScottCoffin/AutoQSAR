@@ -1,46 +1,45 @@
 dataset,suite,task_kind,family,model,analysis_metric,analysis_metric_value,cv_selected_model,cv_selected_family,cv_selected_gap_to_best
-tdc_ames,TDC,classification,Conventional ML,XGBoost,test_roc_auc,0.8746558577610684,Extra trees,Conventional ML,0.7767340231665831
-tdc_bbb_martins,TDC,classification,Conventional ML,Random forest,test_roc_auc,0.932418699186992,Tabular MLP,Conventional ML,5.107943827289892
+tdc_ames,TDC,classification,Ensemble (stacking / averaging),"Ensemble (OOF Stacking (RidgeCV, 5-fold))",test_roc_auc,0.875897315396816,Extra trees,Conventional ML,0.5770021819222368
+tdc_bbb_martins,TDC,classification,Conventional ML,Random forest,test_roc_auc,0.9250703564727956,Tabular MLP,Conventional ML,2.94291629695357
 tdc_bioavailability_ma,TDC,classification,Conventional ML,CatBoost,test_roc_auc,0.7766877286331892,LogisticRegression,Conventional ML,7.942624705630484
-tdc_carcinogens_lagunin,TDC,classification,Conventional ML,AdaBoost,test_roc_auc,0.8626262626262626,LogisticRegression,Conventional ML,3.7470725995316148
-tdc_clintox,TDC,classification,Conventional ML,CatBoost,test_roc_auc,0.9488839285714286,LogisticRegression,Conventional ML,3.5521053869677743
-tdc_cyp1a2_veith,TDC,classification,Ensemble (stacking / averaging),Ensemble (Weighted average (inverse train RMSE)),test_roc_auc,0.9697811473453868,ChemML MLP (PyTorch),Deep tabular NN (ChemML MLP),2.383157172801804
-tdc_cyp2c19_veith,TDC,classification,Ensemble (stacking / averaging),Ensemble (Weighted average (inverse train RMSE)),test_roc_auc,0.9209284732568748,XGBoost,Conventional ML,8.809300604802676
-tdc_cyp2c9_substrate_carbonmangels,TDC,classification,Ensemble (stacking / averaging),"Ensemble (OOF Stacking (RidgeCV, 5-fold))",test_auprc,0.481501462880155,SVC,Conventional ML,37.537956987719525
-tdc_cyp2c9_veith,TDC,classification,Ensemble (stacking / averaging),"Ensemble (OOF Stacking (RidgeCV, 5-fold))",test_auprc,0.8096466863698548,AdaBoost,Conventional ML,12.948551296091951
-tdc_cyp2d6_substrate_carbonmangels,TDC,classification,Ensemble (stacking / averaging),Ensemble (Weighted average (inverse train RMSE)),test_auprc,0.6730598919174792,AdaBoost,Conventional ML,3.0667634218228828
-tdc_cyp2d6_veith,TDC,classification,Conventional ML,XGBoost,test_auprc,0.7223933005560315,AdaBoost,Conventional ML,14.841850125023411
-tdc_cyp3a4_substrate_carbonmangels,TDC,classification,Conventional ML,LogisticRegression,test_auprc,0.7166601893773767,Tabular MLP,Conventional ML,5.324595955320535
-tdc_cyp3a4_veith,TDC,classification,Ensemble (stacking / averaging),"Ensemble (OOF Stacking (RidgeCV, 5-fold))",test_auprc,0.8896540840739798,AdaBoost,Conventional ML,10.3650024246896
-tdc_dili,TDC,classification,Ensemble (stacking / averaging),"Ensemble (OOF Stacking (RidgeCV, 5-fold))",test_roc_auc,0.9147826086956522,LogisticRegression,Conventional ML,6.036121673003796
-tdc_herg,TDC,classification,Conventional ML,AdaBoost,test_roc_auc,0.8608247422680413,Tabular MLP,Conventional ML,15.893926432848597
-tdc_herg_karim,TDC,classification,Ensemble (stacking / averaging),Ensemble (Weighted average (inverse train RMSE)),test_roc_auc,0.9021504308793244,SVC,Conventional ML,9.739173845574989
-tdc_hia_hou,TDC,classification,CFA combinatorial fusion,CFA (Combinatorial Fusion),test_roc_auc,0.989917695473251,LogisticRegression,Conventional ML,0.2702140927042065
-tdc_pampa_ncats,TDC,classification,Ensemble (stacking / averaging),Ensemble (Weighted average (inverse train RMSE)),test_roc_auc,0.8056939830195645,Tabular MLP,Conventional ML,5.601053776988725
-tdc_pgp_broccatelli,TDC,classification,Ensemble (stacking / averaging),Ensemble (Weighted average (inverse train RMSE)),test_roc_auc,0.928952279392162,Tabular MLP,Conventional ML,2.4573109484861377
-tdc_skin_reaction,TDC,classification,CFA combinatorial fusion,CFA (Combinatorial Fusion),test_roc_auc,0.7690322580645161,LogisticRegression,Conventional ML,4.572147651006697
-tdc_tox21,TDC,classification,Conventional ML,XGBoost,test_roc_auc,0.8122786304604486,SVC,Conventional ML,2.861218776916452
-tdc_toxcast,TDC,classification,Conventional ML,CatBoost,test_roc_auc,0.7913532209252054,CatBoost,Conventional ML,0.0
-chemml_cep_homo,ChemML,regression,TabPFN (tabular foundation),TabPFNRegressor,test_rmse,0.0856916631964772,ElasticNetCV,Conventional ML,28.254407466552774
-chemml_organic_density,ChemML,regression,TabPFN (tabular foundation),TabPFNRegressor,test_rmse,0.0051121267168412,ElasticNetCV,Conventional ML,26.007121866625265
-chemml_xyz_polarizability,ChemML,regression,TabPFN (tabular foundation),TabPFNRegressor,test_rmse,0.0072789382647337,TabPFNRegressor,TabPFN (tabular foundation),0.0
-esol_delaney,MoleculeNet,regression,Ensemble (stacking / averaging),Ensemble (Weighted average (inverse train RMSE)),test_rmse,0.5921183142490405,ElasticNetCV,Conventional ML,14.804642083345342
-freesolv_sampl,MoleculeNet,regression,Chemprop v2 GNN,"Chemprop v2 (AttentiveFP, ensemble=1)",test_rmse,1.0798592139451626,ElasticNetCV,Conventional ML,15.792355073764137
-lipophilicity,MoleculeNet,regression,Ensemble (stacking / averaging),Ensemble (Weighted average (inverse train RMSE)),test_rmse,0.5820225825970389,ElasticNetCV,Conventional ML,13.040575644234195
-poduam_pod_nc_std,PODUAM,regression,Ensemble (stacking / averaging),Ensemble (Weighted average (inverse train RMSE)),test_rmse,0.698689327028878,XGBoost,Conventional ML,5.15407083992305
-poduam_pod_rd_std,PODUAM,regression,Conventional ML,XGBoost,test_rmse,0.5507770607752229,ElasticNetCV,Conventional ML,29.476955083184496
-polaris_adme_fang_hppb_1,Polaris,regression,MapLight + GNN,"MapLight + GNN (CatBoost, Strict Parity)",test_rmse,0.4492138661802479,ElasticNetCV,Conventional ML,16.16736955468616
-polaris_adme_fang_perm_1,Polaris,regression,Uni-Mol V1 (3D pretrained),Uni-Mol V1,test_rmse,0.3990606793974839,ChemML MLP (PyTorch),Deep tabular NN (ChemML MLP),18.507026048915563
-polaris_adme_fang_rclint_1,Polaris,regression,Uni-Mol V1 (3D pretrained),Uni-Mol V1,test_rmse,0.5122971166920043,ChemML MLP (PyTorch),Deep tabular NN (ChemML MLP),12.570083114461175
-polaris_adme_fang_rppb_1,Polaris,regression,MapLight + GNN,"MapLight + GNN (CatBoost, Strict Parity)",test_rmse,0.4935579399047347,TabPFNRegressor,TabPFN (tabular foundation),8.04306428287679
-polaris_adme_fang_solu_1,Polaris,regression,Uni-Mol V1 (3D pretrained),Uni-Mol V1,test_rmse,0.5750967482821963,ChemML MLP (PyTorch),Deep tabular NN (ChemML MLP),12.303315183810867
-tdc_caco2_wang,TDC,regression,Ensemble (stacking / averaging),Ensemble (Weighted average (inverse train RMSE)),test_rmse,0.3364933739637883,ElasticNetCV,Conventional ML,13.841838184268212
-tdc_clearance_hepatocyte_az,TDC,regression,MapLight + GNN,"MapLight + GNN (CatBoost, Strict Parity)",test_rmse,43.97614474030573,TabPFNRegressor,TabPFN (tabular foundation),17.125630890563425
-tdc_clearance_microsome_az,TDC,regression,Uni-Mol V1 (3D pretrained),Uni-Mol V1,test_rmse,35.888059718513354,Tabular MLP,Conventional ML,13.242426115858175
-tdc_half_life_obach,TDC,regression,Uni-Mol V1 (3D pretrained),Uni-Mol V1,test_rmse,17.222253952148026,TabPFNRegressor,TabPFN (tabular foundation),11.498104475392402
-tdc_hydrationfreeenergy_freesolv,TDC,regression,CFA combinatorial fusion,CFA (Combinatorial Fusion),test_rmse,0.5564249428337948,ElasticNetCV,Conventional ML,143.01885322126472
-tdc_ld50_zhu,TDC,regression,CFA combinatorial fusion,CFA (Combinatorial Fusion),test_rmse,0.8337746668930903,XGBoost,Conventional ML,1.0965153701980908
-tdc_lipophilicity_astrazeneca,TDC,regression,Uni-Mol V1 (3D pretrained),Uni-Mol V1,test_rmse,0.5872156467943753,ElasticNetCV,Conventional ML,27.84038430468831
-tdc_ppbr_az,TDC,regression,Ensemble (stacking / averaging),Ensemble (Weighted average (inverse train RMSE)),test_rmse,11.014020894332376,ChemML MLP (PyTorch),Deep tabular NN (ChemML MLP),28.554996234958935
-tdc_solubility_aqsoldb,TDC,regression,Uni-Mol V1 (3D pretrained),Uni-Mol V1,test_rmse,0.9888281816530252,Extra trees,Conventional ML,5.426522651928304
-tdc_vdss_lombardo,TDC,regression,MapLight + GNN,"MapLight + GNN (CatBoost, Strict Parity)",test_rmse,4.66807207398872,TabPFNRegressor,TabPFN (tabular foundation),16.998814958291987
+tdc_carcinogens_lagunin,TDC,classification,Chemprop v2 GNN,"Chemprop v2 (AttentiveFP, ensemble=3)",test_roc_auc,0.9286703601108032,"Voting Classifier (KNN, SVM)",Conventional ML,9.917971662938092
+tdc_clintox,TDC,classification,CFA combinatorial fusion,CFA (Combinatorial Fusion),test_roc_auc,0.9739688128772636,LogisticRegression,Conventional ML,8.005164622336984
+tdc_cyp1a2_veith,TDC,classification,Ensemble (stacking / averaging),Ensemble (Weighted average (inverse train RMSE)),test_roc_auc,0.9706601373889996,ChemML MLP (TensorFlow),Deep tabular NN (ChemML MLP),1.4323524527245879
+tdc_cyp2c19_veith,TDC,classification,Ensemble (stacking / averaging),Ensemble (Weighted average (inverse train RMSE)),test_roc_auc,0.9227114445098922,XGBoost,Conventional ML,8.976200422762847
+tdc_cyp2c9_substrate_carbonmangels,TDC,classification,Ensemble (stacking / averaging),"Ensemble (OOF Stacking (RidgeCV, 5-fold))",test_auprc,0.4663814326429536,SVC,Conventional ML,35.51294502772138
+tdc_cyp2c9_veith,TDC,classification,Ensemble (stacking / averaging),"Ensemble (OOF Stacking (RidgeCV, 5-fold))",test_auprc,0.813538249556402,AdaBoost,Conventional ML,13.32596736850497
+tdc_cyp2d6_substrate_carbonmangels,TDC,classification,Uni-Mol V1 (3D pretrained),Uni-Mol V1,test_auprc,0.6522203476485503,AdaBoost,Conventional ML,4.965552084226262
+tdc_cyp2d6_veith,TDC,classification,Ensemble (stacking / averaging),"Ensemble (OOF Stacking (RidgeCV, 5-fold))",test_auprc,0.7336956730461076,AdaBoost,Conventional ML,16.153687124765717
+tdc_cyp3a4_substrate_carbonmangels,TDC,classification,Conventional ML,Random forest,test_auprc,0.7059550348701992,LogisticRegression,Conventional ML,2.7910433954692357
+tdc_cyp3a4_veith,TDC,classification,Ensemble (stacking / averaging),"Ensemble (OOF Stacking (RidgeCV, 5-fold))",test_auprc,0.8839851712909622,AdaBoost,Conventional ML,9.750062846330422
+tdc_dili,TDC,classification,Uni-Mol V1 (3D pretrained),Uni-Mol V1,test_roc_auc,0.9217391304347826,LogisticRegression,Conventional ML,19.150943396226417
+tdc_herg,TDC,classification,Conventional ML,AdaBoost,test_roc_auc,0.8484536082474227,LogisticRegression,Conventional ML,16.38604408956778
+tdc_herg_karim,TDC,classification,Ensemble (stacking / averaging),Ensemble (Weighted average (inverse train RMSE)),test_roc_auc,0.905355749300726,ChemML MLP (PyTorch),Deep tabular NN (ChemML MLP),3.672234873059746
+tdc_hia_hou,TDC,classification,Ensemble (stacking / averaging),"Ensemble (OOF Stacking (RidgeCV, 5-fold))",test_roc_auc,0.9880658436213992,LogisticRegression,Conventional ML,0.4997917534360616
+tdc_pampa_ncats,TDC,classification,Uni-Mol V1 (3D pretrained),Uni-Mol V1,test_roc_auc,0.7633302724211816,LogisticRegression,Conventional ML,26.28117731975299
+tdc_pgp_broccatelli,TDC,classification,Uni-Mol V1 (3D pretrained),Uni-Mol V2 (84m),test_roc_auc,0.9328845641162358,LogisticRegression,Conventional ML,6.965778381081676
+tdc_skin_reaction,TDC,classification,Uni-Mol V1 (3D pretrained),Uni-Mol V2 (84m),test_roc_auc,0.6577560240963856,"Voting Classifier (KNN, SVM)",Conventional ML,23.49742415569548
+tdc_tox21,TDC,classification,Conventional ML,AdaBoost,test_roc_auc,0.5562514497796335,SVC,Conventional ML,15.984674728940798
+tdc_toxcast,TDC,classification,Conventional ML,HistGradientBoosting,test_roc_auc,0.7156874524410268,LogisticRegression,Conventional ML,16.899832120872972
+chemml_cep_homo,ChemML,regression,Ensemble (stacking / averaging),Ensemble (Weighted average (inverse train RMSE)),test_rmse,0.0991003494900324,ElasticNetCV,Conventional ML,22.270113504248954
+chemml_organic_density,ChemML,regression,Chemprop v2 GNN,"Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",test_rmse,0.0051734474083698,ElasticNetCV,Conventional ML,34.525180599518826
+esol_delaney,MoleculeNet,regression,Ensemble (stacking / averaging),Ensemble (Weighted average (inverse train RMSE)),test_rmse,0.6171060602925269,ElasticNetCV,Conventional ML,17.595501969418734
+freesolv_sampl,MoleculeNet,regression,Deep tabular NN (ChemML MLP),ChemML MLP (PyTorch),test_rmse,0.9933109228913308,CatBoost,Conventional ML,115.43222564368585
+lipophilicity,MoleculeNet,regression,Ensemble (stacking / averaging),Ensemble (Weighted average (inverse train RMSE)),test_rmse,0.5894262039236943,ElasticNetCV,Conventional ML,15.768560944645202
+poduam_pod_nc_std,PODUAM,regression,Conventional ML,Random forest,test_rmse,0.7200851779122264,ElasticNetCV,Conventional ML,9.929200923622433
+poduam_pod_rd_std,PODUAM,regression,Conventional ML,Random forest,test_rmse,0.5722334861689493,ElasticNetCV,Conventional ML,22.905734941950552
+polaris_adme_fang_hppb_1,Polaris,regression,MapLight + GNN,"MapLight + GNN (CatBoost, Strict Parity)",test_rmse,0.4483703847085673,ElasticNetCV,Conventional ML,22.176980555576716
+polaris_adme_fang_perm_1,Polaris,regression,Uni-Mol V1 (3D pretrained),Uni-Mol V1,test_rmse,0.3992212119521127,ChemML MLP (PyTorch),Deep tabular NN (ChemML MLP),15.412817227232223
+polaris_adme_fang_rclint_1,Polaris,regression,Uni-Mol V1 (3D pretrained),Uni-Mol V1,test_rmse,0.5224201589480364,ElasticNetCV,Conventional ML,15.663605867946654
+polaris_adme_fang_rppb_1,Polaris,regression,MapLight + GNN,"MapLight + GNN (CatBoost, Strict Parity)",test_rmse,0.4927168918367268,ElasticNetCV,Conventional ML,21.893211887348915
+polaris_adme_fang_solu_1,Polaris,regression,Uni-Mol V1 (3D pretrained),Uni-Mol V2 (84m),test_rmse,0.5509331416342176,ChemML MLP (PyTorch),Deep tabular NN (ChemML MLP),16.215499727531963
+tdc_caco2_wang,TDC,regression,Ensemble (stacking / averaging),Ensemble (Weighted average (inverse train RMSE)),test_rmse,0.3416442139709767,ElasticNetCV,Conventional ML,22.97900227766015
+tdc_clearance_hepatocyte_az,TDC,regression,Ensemble (stacking / averaging),Ensemble (Weighted average (inverse train RMSE)),test_rmse,43.84075083704621,CatBoost,Conventional ML,12.398620359532519
+tdc_clearance_microsome_az,TDC,regression,Uni-Mol V1 (3D pretrained),Uni-Mol V2 (84m),test_rmse,33.50711719182458,XGBoost,Conventional ML,16.477030031878925
+tdc_half_life_obach,TDC,regression,Ensemble (stacking / averaging),Ensemble (Weighted average (inverse train RMSE)),test_rmse,18.54086590083412,Random forest,Conventional ML,21.085817649504005
+tdc_hydrationfreeenergy_freesolv,TDC,regression,Ensemble (stacking / averaging),"Ensemble (OOF Stacking (RidgeCV, 5-fold))",test_rmse,1.1120028129071169,ElasticNetCV,Conventional ML,18.818022632002673
+tdc_ld50_zhu,TDC,regression,Deep tabular NN (ChemML MLP),ChemML MLP (TensorFlow),test_rmse,0.8280459139290118,XGBoost,Conventional ML,2.0788870011484226
+tdc_lipophilicity_astrazeneca,TDC,regression,Uni-Mol V1 (3D pretrained),Uni-Mol V1,test_rmse,0.6173686180094499,ChemML MLP (PyTorch),Deep tabular NN (ChemML MLP),17.58317310041059
+tdc_ppbr_az,TDC,regression,MapLight + GNN,"MapLight + GNN (CatBoost, Strict Parity)",test_rmse,11.35635011770925,ChemML MLP (PyTorch),Deep tabular NN (ChemML MLP),27.930707644086112
+tdc_solubility_aqsoldb,TDC,regression,Uni-Mol V1 (3D pretrained),Uni-Mol V1,test_rmse,1.0065887622019132,XGBoost,Conventional ML,1.8135352960609123
+tdc_vdss_lombardo,TDC,regression,MapLight + GNN,"MapLight + GNN (CatBoost, Strict Parity)",test_rmse,4.669695591179202,Extra trees,Conventional ML,50.70447872787497

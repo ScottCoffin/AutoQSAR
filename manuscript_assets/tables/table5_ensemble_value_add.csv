@@ -1,7 +1,7 @@
 Fusion method,Task,Datasets,Overall wins,Top-3,Beats best base,Loses to best base,Median rank,Median rel. change vs best base
-Inverse-RMSE weighted average,classification,22,6,12,8,14,2.5,-0.004822978782040072
-OOF stacking,classification,22,4,11,6,16,3.5,-0.008379133687925243
-CFA fusion,classification,22,2,6,5,17,7.0,-0.02153757236157386
-Inverse-RMSE weighted average,regression,23,5,17,5,18,3.0,-0.02436889586251253
-OOF stacking,regression,23,0,9,1,22,5.0,-0.05452034227931532
-CFA fusion,regression,22,2,3,3,19,8.0,-0.10648939288790824
+OOF stacking,classification,22,6,13,8,14,3.0,-0.0033505170463966737
+Inverse-RMSE weighted average,classification,22,3,10,7,15,4.0,-0.008168177496397942
+CFA fusion,classification,22,1,10,5,17,4.0,-0.0089158576835636
+Inverse-RMSE weighted average,regression,22,6,16,7,15,2.5,-0.015746195112968438
+OOF stacking,regression,22,1,6,4,18,6.0,-0.049501920660260934
+CFA fusion,regression,22,0,5,1,21,6.0,-0.05133624342776508

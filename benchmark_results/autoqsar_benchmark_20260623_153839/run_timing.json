@@ -1,0 +1,34 @@
+{
+  "status": "running",
+  "started_at": "2026-06-30 14:12:57 UTC",
+  "started_epoch": 1782828777.6013212,
+  "updated_at": "2026-06-30 20:50:42 UTC",
+  "updated_epoch": 1782852642.5779498,
+  "elapsed_seconds": 23864.977,
+  "dataset_count": 45,
+  "resource_config": {
+    "detected_cpu_count": 32,
+    "n_jobs": 32,
+    "gpu_available": true,
+    "gpu_inventory": [
+      {
+        "index": 0,
+        "name": "NVIDIA A100-SXM4-40GB",
+        "total_memory_gb": 39.494,
+        "multi_processor_count": 108,
+        "compute_capability": "8.0"
+      }
+    ],
+    "chemprop_num_workers": 8,
+    "unimol_num_workers": 8,
+    "chemprop_batch_size": 32,
+    "unimol_batch_size": 32,
+    "precision_mode": "fp32"
+  },
+  "phase": "main_dataset_loop",
+  "completed_dataset_count": 23,
+  "last_dataset": "tdc_toxcast",
+  "last_dataset_status": "completed",
+  "average_finished_dataset_seconds": 1058.95,
+  "eta_seconds": 23296.89
+}

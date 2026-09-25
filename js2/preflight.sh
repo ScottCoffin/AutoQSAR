@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# js2/preflight.sh — Jetstream2 VM first-boot preflight checks for AutoQSAR.
+# js2/preflight.sh — Jetstream2 VM first-boot preflight checks for QSARena.
 #
 # Run once after provisioning a new g3.large or m3.medium instance before
 # submitting any tasks via js2/run_queue.py.
@@ -22,7 +22,7 @@ pass() { echo "[PASS] $*"; }
 warn() { echo "[WARN] $*" >&2; }
 fail() { echo "[FAIL] $*" >&2; exit 1; }
 
-echo "=== AutoQSAR Jetstream2 Preflight ($(date -u '+%Y-%m-%dT%H:%M:%SZ')) ==="
+echo "=== QSARena Jetstream2 Preflight ($(date -u '+%Y-%m-%dT%H:%M:%SZ')) ==="
 
 # ── 1. apptainer ─────────────────────────────────────────────────────────────
 if command -v apptainer &>/dev/null; then
@@ -80,30 +80,30 @@ else
 fi
 
 # ── 4. Persistent volume ─────────────────────────────────────────────────────
-VOL_DIR="${AUTOQSAR_VOL:-/vol/autoqsar}"
+VOL_DIR="${QSARENA_VOL:-/vol/qsarena}"
 if [[ -d "$VOL_DIR" ]]; then
     AVAIL=$(df -BG "$VOL_DIR" 2>/dev/null | awk 'NR==2{print $4}' || echo "unknown")
     pass "Persistent volume $VOL_DIR present (avail: $AVAIL)"
 else
     warn "Persistent volume not found at $VOL_DIR. " \
-         "Expected layout: $VOL_DIR/{autoqsar_in,autoqsar_out,conformer_cache}. " \
+         "Expected layout: $VOL_DIR/{qsarena_in,qsarena_out,conformer_cache}. " \
          "Create with: sudo mkdir -p $VOL_DIR && sudo chown \$USER:$USER $VOL_DIR"
 fi
 
 # ── 5. SIF present ────────────────────────────────────────────────────────────
-SIF_PATH="${AUTOQSAR_SIF:-$HOME/autoqsar/autoqsar.sif}"
+SIF_PATH="${QSARENA_SIF:-$HOME/qsarena/qsarena.sif}"
 if [[ -f "$SIF_PATH" ]]; then
     SIF_SHA=$(sha256sum "$SIF_PATH" | cut -d' ' -f1)
-    pass "autoqsar.sif found: $SIF_PATH (sha256: ${SIF_SHA:0:16}...)"
+    pass "qsarena.sif found: $SIF_PATH (sha256: ${SIF_SHA:0:16}...)"
 else
-    warn "autoqsar.sif not found at $SIF_PATH. " \
-         "Transfer with: scp autoqsar.sif user@js2.jetstream-cloud.org:~/autoqsar/"
+    warn "qsarena.sif not found at $SIF_PATH. " \
+         "Transfer with: scp qsarena.sif user@js2.jetstream-cloud.org:~/qsarena/"
 fi
 
 # ── 6. Record environment to disk ────────────────────────────────────────────
-REPORT_PATH="${AUTOQSAR_VOL:-$HOME}/preflight_$(date -u '+%Y%m%d_%H%M%S').txt"
+REPORT_PATH="${QSARENA_VOL:-$HOME}/preflight_$(date -u '+%Y%m%d_%H%M%S').txt"
 {
-    echo "=== AutoQSAR Preflight Report ==="
+    echo "=== QSARena Preflight Report ==="
     echo "date_utc: $(date -u '+%Y-%m-%dT%H:%M:%SZ')"
     echo "hostname: $(hostname)"
     echo "kernel:   $(uname -r)"

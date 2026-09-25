@@ -8,14 +8,13 @@
 \toprule
 \textbf{Architecture family} & \textbf{Models} & \makecell[r]{\textbf{Datasets}\\\textbf{with}\\\textbf{valid}\\\textbf{results}} & \makecell[r]{\textbf{Wins}\\\textbf{(regression)}} & \makecell[r]{\textbf{Wins}\\\textbf{(classification)}} & \makecell[r]{\textbf{Median}\\\textbf{gap to}\\\textbf{best,}\\\textbf{regression}\\\textbf{(\%)}} & \makecell[r]{\textbf{Median}\\\textbf{gap to}\\\textbf{best,}\\\textbf{classification}\\\textbf{(\%)}} & \makecell[r]{\textbf{Within}\\\textbf{5\% of}\\\textbf{best (\%}\\\textbf{of}\\\textbf{datasets)}} & \makecell[r]{\textbf{Median}\\\textbf{rank of}\\\textbf{family-best}\\\textbf{model}} \\
 \midrule
-Ensemble (stacking /\allowbreak{} averaging) & 2 & 45 & 5 & 10 & 2.4 & 0.0 & 75.6 & 2.0 \\
-Conventional ML & 15 & 45 & 1 & 10 & 3.9 & 0.1 & 68.9 & 2.0 \\
-Uni-\allowbreak{}Mol V1 (3D pretrained) & 1 & 45 & 7 & 0 & 3.7 & 2.3 & 62.2 & 6.0 \\
-CFA combinatorial fusion & 1 & 44 & 2 & 2 & 12.6 & 2.5 & 43.2 & 7.0 \\
-Map\allowbreak{}Light + GNN & 1 & 42 & 4 & 0 & 7.6 & 11.1 & 26.2 & 11.5 \\
-TabPFN (tabular foundation) & 2 & 22 & 3 & 0 & 9.8 & 4.6 & 40.9 & 4.5 \\
-Chemprop v2 GNN & 2 & 23 & 1 & 0 & 12.5 &  & 17.4 & 9.0 \\
-Deep tabular NN (ChemML MLP) & 1 & 45 & 0 & 0 & 21.6 & 7.9 & 15.6 & 14.0 \\
+Ensemble (stacking /\allowbreak{} averaging) & 2 & 44 & 7 & 9 & 1.6 & 0.3 & 75.0 & 2.0 \\
+Uni-\allowbreak{}Mol V1 (3D pretrained) & 2 & 44 & 6 & 5 & 3.8 & 1.7 & 70.5 & 4.0 \\
+Conventional ML & 15 & 44 & 2 & 6 & 2.8 & 1.5 & 65.9 & 3.0 \\
+Map\allowbreak{}Light + GNN & 1 & 44 & 4 & 0 & 7.5 & 11.1 & 27.3 & 8.5 \\
+Chemprop v2 GNN & 5 & 6 & 1 & 1 & 10.1 & 1.0 & 83.3 & 2.0 \\
+Deep tabular NN (ChemML MLP) & 2 & 44 & 2 & 0 & 18.2 & 7.5 & 25.0 & 12.5 \\
+CFA combinatorial fusion & 1 & 44 & 0 & 1 & 6.2 & 1.8 & 63.6 & 4.5 \\
 \bottomrule
 \end{tabularx}
 \end{table}

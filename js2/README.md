@@ -1,6 +1,6 @@
-# Running AutoQSAR on Jetstream2 (OpenStack Cloud)
+# Running QSARena on Jetstream2 (OpenStack Cloud)
 
-This directory contains the Jetstream2-specific execution path for AutoQSAR.
+This directory contains the Jetstream2-specific execution path for QSARena.
 The v1 Slurm scripts for NSF ACCESS HPC clusters are preserved under `hpc/` and
 are unaffected by the additions here.
 
@@ -24,13 +24,13 @@ All data and outputs should live on an attached Cinder volume (not the ephemeral
 root disk) so they survive shelve/unshelve cycles.
 
 ```
-/vol/autoqsar/
-├── autoqsar_in/              # bind-mounted as /in inside container
+/vol/qsarena/
+├── qsarena_in/              # bind-mounted as /in inside container
 │   ├── data/                 # TDC-22 dataset files (.tab, .csv)
 │   ├── model_cache/          # pre-trained MapLight feature stores
 │   ├── .cache/               # vendored PyTDC tarball
-│   └── conformer_cache/      # SQLite conformer cache (autoqsar/conformers.py)
-├── autoqsar_out/             # bind-mounted as /out; task outputs land here
+│   └── conformer_cache/      # SQLite conformer cache (qsarena/conformers.py)
+├── qsarena_out/             # bind-mounted as /out; task outputs land here
 │   └── <dataset>/seed_<N>/  # one directory per (dataset, seed) task
 └── queue_state.json          # orchestrator checkpoint (do NOT delete while running)
 ```
@@ -38,10 +38,10 @@ root disk) so they survive shelve/unshelve cycles.
 Recommended setup after provisioning:
 ```bash
 sudo mkfs.ext4 /dev/sdb
-sudo mkdir -p /vol/autoqsar
-sudo mount /dev/sdb /vol/autoqsar
-sudo chown $USER:$USER /vol/autoqsar
-mkdir -p /vol/autoqsar/{autoqsar_in/data,autoqsar_in/model_cache,autoqsar_in/.cache,autoqsar_in/conformer_cache,autoqsar_out}
+sudo mkdir -p /vol/qsarena
+sudo mount /dev/sdb /vol/qsarena
+sudo chown $USER:$USER /vol/qsarena
+mkdir -p /vol/qsarena/{qsarena_in/data,qsarena_in/model_cache,qsarena_in/.cache,qsarena_in/conformer_cache,qsarena_out}
 ```
 
 ---
@@ -70,19 +70,19 @@ Manifests:
 bash js2/preflight.sh --gpu-required
 
 # 3. Transfer image and data (from local machine)
-scp autoqsar.sif user@<JS2_IP>:~/autoqsar/
-rsync -av data/ user@<JS2_IP>:/vol/autoqsar/autoqsar_in/data/
-rsync -av model_cache/ user@<JS2_IP>:/vol/autoqsar/autoqsar_in/model_cache/
-rsync -av .cache/ user@<JS2_IP>:/vol/autoqsar/autoqsar_in/.cache/
+scp qsarena.sif user@<JS2_IP>:~/qsarena/
+rsync -av data/ user@<JS2_IP>:/vol/qsarena/qsarena_in/data/
+rsync -av model_cache/ user@<JS2_IP>:/vol/qsarena/qsarena_in/model_cache/
+rsync -av .cache/ user@<JS2_IP>:/vol/qsarena/qsarena_in/.cache/
 
 # 4. Run the GPU queue (on the Jetstream2 VM)
 export INSTANCE_ID="<your-openstack-instance-uuid>"
 python js2/run_queue.py \
     --manifest js2/manifests/gpu_tasks.tsv \
-    --sif ~/autoqsar/autoqsar.sif \
-    --input-dir /vol/autoqsar/autoqsar_in \
-    --output-dir /vol/autoqsar/autoqsar_out \
-    --state /vol/autoqsar/queue_state_gpu.json \
+    --sif ~/qsarena/qsarena.sif \
+    --input-dir /vol/qsarena/qsarena_in \
+    --output-dir /vol/qsarena/qsarena_out \
+    --state /vol/qsarena/queue_state_gpu.json \
     --instance-flavor g3.large \
     --su-budget 200 \
     --precision tf32_bf16
@@ -96,10 +96,10 @@ bash js2/preflight.sh   # no --gpu-required
 
 python js2/run_queue.py \
     --manifest js2/manifests/cpu_tasks.tsv \
-    --sif ~/autoqsar/autoqsar.sif \
-    --input-dir /vol/autoqsar/autoqsar_in \
-    --output-dir /vol/autoqsar/autoqsar_out \
-    --state /vol/autoqsar/queue_state_cpu.json \
+    --sif ~/qsarena/qsarena.sif \
+    --input-dir /vol/qsarena/qsarena_in \
+    --output-dir /vol/qsarena/qsarena_out \
+    --state /vol/qsarena/queue_state_cpu.json \
     --instance-flavor m3.medium \
     --su-budget 100 \
     --precision fp32
@@ -116,16 +116,16 @@ the GPU instance spends no time on CPU conformer geometry:
 # On m3.medium (or any CPU host with RDKit installed)
 for DATASET in tdc_ppbr_az tdc_vdss_lombardo tdc_clearance_microsome_az \
                tdc_clearance_hepatocyte_az tdc_half_life_obach; do
-    apptainer run autoqsar.sif \
+    apptainer run qsarena.sif \
         --generate-conformers-only \
         --dataset $DATASET \
-        --input-dir /vol/autoqsar/autoqsar_in \
-        --conformer-cache /vol/autoqsar/autoqsar_in/conformer_cache \
+        --input-dir /vol/qsarena/qsarena_in \
+        --conformer-cache /vol/qsarena/qsarena_in/conformer_cache \
         --conformer-seed 42
 done
 ```
 
-The cache is a SQLite database at `/vol/autoqsar/autoqsar_in/conformer_cache/conformer_cache.db`.
+The cache is a SQLite database at `/vol/qsarena/qsarena_in/conformer_cache/conformer_cache.db`.
 GPU tasks read from it automatically when `--conformer-cache` is set.
 
 ---
@@ -142,7 +142,7 @@ openstack server shelve <INSTANCE_ID>
 openstack server unshelve <INSTANCE_ID>
 
 # Resume queue (state file persists on the attached volume):
-python js2/run_queue.py --manifest ... --state /vol/autoqsar/queue_state_gpu.json ...
+python js2/run_queue.py --manifest ... --state /vol/qsarena/queue_state_gpu.json ...
 ```
 
 The `queue_state.json` file records which tasks are `done`, `error`, or interrupted.
@@ -154,10 +154,10 @@ On resume, only `pending` and `running` (interrupted) tasks are re-queued.
 
 ```bash
 # From local machine
-rsync -av user@<JS2_IP>:/vol/autoqsar/autoqsar_out/ ./benchmark_results/js2_multiseed/
+rsync -av user@<JS2_IP>:/vol/qsarena/qsarena_out/ ./benchmark_results/js2_multiseed/
 ```
 
-Each task writes to `autoqsar_out/<dataset>/seed_<N>/` with the same output
+Each task writes to `qsarena_out/<dataset>/seed_<N>/` with the same output
 structure as the Slurm HPC path (see `CONTAINER.md §8`).
 
 ---

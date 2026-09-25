@@ -1,0 +1,7 @@
+Model,Weight,Workflow
+ElasticNetCV,0.15610399951732887,conventional
+AdaBoost,0.09776253455727915,conventional
+Tabular CNN,0.1001524731037789,conventional
+MapLight CatBoost (Strict Parity),0.2933614874207364,conventional
+Uni-Mol V1,0.2311372876221569,Uni-Mol
+Uni-Mol V2 (84m),0.12148221777871986,Uni-Mol

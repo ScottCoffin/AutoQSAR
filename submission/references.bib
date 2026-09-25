@@ -1,9 +1,9 @@
 %% References for "No Single Architecture Wins" (Journal of Cheminformatics submission).
 %% Per Springer Nature LaTeX guidance, all diacritics are written as TeX commands, and braces
-%% protect capitalisation in titles. Entries flagged [VERIFY] need a final check before submission.
+%% protect capitalisation in titles. All entries were verified against primary sources at revision.
 
 @article{fu2024admetlab,
-  author  = {Fu, Li and Shi, Shaoyang and Yi, Jiacai and Wang, Ningning and He, Yuanhang and Wu, Zhiyi and Peng, Jinfu and Deng, Youchao and Wang, Wenxuan and Wu, Chengkun and Lyu, Aiping and Zeng, Xiangxiang and Zhao, Weixing and Hou, Tingjun and Cao, Dongsheng},
+  author  = {Fu, Li and Shi, Shaohua and Yi, Jiacai and Wang, Ningning and He, Yuanhang and Wu, Zhenxing and Peng, Jinfu and Deng, Youchao and Wang, Wenxuan and Wu, Chengkun and Lyu, Aiping and Zeng, Xiangxiang and Zhao, Wentao and Hou, Tingjun and Cao, Dongsheng},
   title   = {{ADMETlab 3.0}: an updated comprehensive online {ADMET} prediction platform enhanced with broader coverage, improved performance, {API} functionality and decision support},
   journal = {Nucleic Acids Research},
   year    = {2024},
@@ -14,14 +14,14 @@
 }
 
 @article{addme2009,
+  author  = {Tsaioun, Katya and Bottlaender, Michel and Mabondzo, Aloise},
   title   = {{ADDME} -- Avoiding Drug Development Mistakes Early: central nervous system drug discovery perspective},
   journal = {BMC Neurology},
   year    = {2009},
   volume  = {9},
   number  = {Suppl 1},
   pages   = {S1},
-  doi     = {10.1186/1471-2377-9-S1-S1},
-  note    = {[VERIFY] Author byline could not be confirmed from available metadata}
+  doi     = {10.1186/1471-2377-9-S1-S1}
 }
 
 @article{komura2023trends,
@@ -61,8 +61,7 @@
   year    = {2024},
   volume  = {15},
   pages   = {9431},
-  doi     = {10.1038/s41467-024-53751-y},
-  note    = {[VERIFY] Confirm article number; DOI verified}
+  doi     = {10.1038/s41467-024-53751-y}
 }
 
 @inproceedings{sypetkowski2024molgps,
@@ -172,10 +171,10 @@
 
 @article{koleiev2026critical,
   author  = {Koleiev, Ihor and Stratiichuk, Roman and Shevchuk, Nataliia and Melnychenko, Maksym and Nyporko, Oleksandr and Todoryshyn, Dmytro and Husak, Volodymyr and Starosyla, Serhii and Yesylevskyy, Semen and Nafiiev, Anton},
-  title   = {Critical assessment of {ML} models for {ADMET} prediction in {TDC} leaderboards},
-  journal = {bioRxiv},
+  title   = {An end-user audit of reproducibility, data leakage, and overfitting of the top-ranked {ADMET} prediction models in {TDC} leaderboards},
+  journal = {Journal of Chemical Information and Modeling},
   year    = {2026},
-  doi     = {10.64898/2026.02.26.708193}
+  doi     = {10.1021/acs.jcim.6c00819}
 }
 
 @article{swanson2024admetai,
@@ -207,11 +206,15 @@
   note   = {arXiv:2502.16378}
 }
 
-@misc{marimuthu2025chemxploreml,
-  author = {Marimuthu, Aravindh Nivas Perumal and McGuire, Brett A.},
-  title  = {{ChemXploreML}: a machine learning pipeline for molecular property prediction},
-  year   = {2025},
-  note   = {arXiv:2505.08688. [VERIFY] Confirm final journal/venue details}
+@article{marimuthu2025chemxploreml,
+  author  = {Marimuthu, Aravindh Nivas and McGuire, Brett A.},
+  title   = {Machine learning pipeline for molecular property prediction using {ChemXploreML}},
+  journal = {Journal of Chemical Information and Modeling},
+  year    = {2025},
+  volume  = {65},
+  number  = {11},
+  pages   = {5424--5437},
+  doi     = {10.1021/acs.jcim.5c00516}
 }
 
 @article{delaney2004esol,
@@ -250,6 +253,7 @@
   author       = {Landrum, Greg},
   title        = {{RDKit}: open-source cheminformatics},
   howpublished = {\url{https://www.rdkit.org}},
+  year         = {2026},
   note         = {Accessed 2026-09-24}
 }
 
@@ -377,7 +381,8 @@
   publisher = {IGI Global},
   year      = {2006},
   pages     = {32--62},
-  note      = {[VERIFY] Confirm pagination}
+  editor    = {Hsu, Hui-Huang},
+  doi       = {10.4018/978-1-59140-863-5.ch003}
 }
 
 @inproceedings{hancock2021jetstream2,
@@ -398,4 +403,175 @@
   publisher = {ACM},
   address   = {New York, NY, USA},
   doi       = {10.1145/3569951.3597559}
+}
+
+
+%% ---- Added at revision -----------------------------------------------------------------------
+
+@article{dixon2016autoqsar,
+  author  = {Dixon, Steven L. and Duan, Jianxin and Smith, Ethan and Von Bargen, Christopher D. and Sherman, Woody and Repasky, Matthew P.},
+  title   = {{AutoQSAR}: an automated machine learning tool for best-practice quantitative structure-activity relationship modeling},
+  journal = {Future Medicinal Chemistry},
+  year    = {2016},
+  volume  = {8},
+  number  = {15},
+  pages   = {1825--1839},
+  doi     = {10.4155/fmc-2016-0093}
+}
+
+@misc{schrodinger2024deepautoqsar,
+  author       = {Kaplan, Zachary and Ehrlich, Stefan and Leswing, Karl},
+  title        = {Benchmark study of {DeepAutoQSAR}, {ChemProp} and {DeepPurpose} on the {ADMET} subset of the {Therapeutics Data Commons}},
+  howpublished = {\url{https://www.schrodinger.com/life-science/learn/white-papers/benchmark-study-deepautoqsar-chemprop-and-deeppurpose-admet-subset-therapeutic-data/}},
+  year         = {2022},
+  note         = {Schr\"odinger, Inc. white paper. Accessed 2026-09-25}
+}
+
+@article{cox2013qsarworkbench,
+  author  = {Cox, Richard and Green, Darren V. S. and Luscombe, Christopher N. and Malcolm, Nathan and Pickett, Stephen D.},
+  title   = {{QSAR} workbench: automating {QSAR} modeling to drive compound design},
+  journal = {Journal of Computer-Aided Molecular Design},
+  year    = {2013},
+  volume  = {27},
+  number  = {4},
+  pages   = {321--336},
+  doi     = {10.1007/s10822-013-9648-4}
+}
+
+@inproceedings{ji2024unimol2,
+  author    = {Ji, Xiaohong and Wang, Zhen and Gao, Zhifeng and Zheng, Hang and Zhang, Linfeng and Ke, Guolin and E, Weinan},
+  title     = {{Uni-Mol2}: exploring molecular pretraining model at scale},
+  booktitle = {Advances in Neural Information Processing Systems 37},
+  year      = {2024},
+  note      = {arXiv:2406.14969}
+}
+
+@article{graff2026chempropv2,
+  author  = {Graff, David E. and Morgan, Nathan K. and Burns, Jackson W. and Doner, Anna C. and Li, Bo and Li, Shih-Cheng and Manu, Joshua and Menon, Akshay and Pang, Hao-Wei and Wu, Haoyang and Zalte, Ambuj S. and Zheng, Jonathan W. and Coley, Connor W. and Green, William H. and Greenman, Kevin P.},
+  title   = {Chemprop v2: an efficient, modular machine learning package for chemical property prediction},
+  journal = {Journal of Chemical Information and Modeling},
+  year    = {2026},
+  volume  = {66},
+  number  = {1},
+  pages   = {28--33},
+  doi     = {10.1021/acs.jcim.5c02332}
+}
+
+@article{ash2025polaris,
+  author  = {Ash, Jeremy R. and Wognum, Cas and Rodr{\'\i}guez-P{\'e}rez, Raquel and Aldeghi, Matteo and Cheng, Alan C. and Clevert, Djork-Arn{\'e} and Engkvist, Ola and Fang, Cheng and Price, Daniel J. and Hughes-Oliver, Jacqueline M. and Walters, W. Patrick},
+  title   = {Practically significant method comparison protocols for machine learning in small molecule drug discovery},
+  journal = {Journal of Chemical Information and Modeling},
+  year    = {2025},
+  volume  = {65},
+  number  = {18},
+  pages   = {9398--9411},
+  doi     = {10.1021/acs.jcim.5c01609}
+}
+
+@misc{wognum2025polarissoftware,
+  author       = {Wognum, Cas and others},
+  title        = {polaris-hub/polaris},
+  year         = {2025},
+  howpublished = {Zenodo},
+  doi          = {10.5281/zenodo.15610218}
+}
+
+@article{deng2023systematic,
+  author  = {Deng, Jun and Yang, Zhongyu and Wang, Hongxia and Ojima, Iwao and Samaras, Dimitris and Wang, Fusheng},
+  title   = {A systematic study of key elements underlying molecular property prediction},
+  journal = {Nature Communications},
+  year    = {2023},
+  volume  = {14},
+  number  = {1},
+  pages   = {6395},
+  doi     = {10.1038/s41467-023-41948-6}
+}
+
+@article{sun2022why90,
+  author  = {Sun, Duxin and Gao, Wei and Hu, Hongxiang and Zhou, Simon},
+  title   = {Why 90\% of clinical drug development fails and how to improve it?},
+  journal = {Acta Pharmaceutica Sinica B},
+  year    = {2022},
+  volume  = {12},
+  number  = {7},
+  pages   = {3049--3062},
+  doi     = {10.1016/j.apsb.2022.02.002}
+}
+
+@article{kola2004attrition,
+  author  = {Kola, Ismail and Landis, John},
+  title   = {Can the pharmaceutical industry reduce attrition rates?},
+  journal = {Nature Reviews Drug Discovery},
+  year    = {2004},
+  volume  = {3},
+  number  = {8},
+  pages   = {711--715},
+  doi     = {10.1038/nrd1470}
+}
+
+
+%% ---- Peer cluster added after competitive-positioning review --------------------------------
+
+@article{mervin2024qsartuna,
+  author  = {Mervin, Lewis and Voronov, Alexey and Kabeshov, Mikhail and Engkvist, Ola},
+  title   = {{QSARtuna}: an automated {QSAR} modeling platform for molecular property prediction in drug design},
+  journal = {Journal of Chemical Information and Modeling},
+  year    = {2024},
+  volume  = {64},
+  number  = {14},
+  pages   = {5365--5374},
+  doi     = {10.1021/acs.jcim.4c00457}
+}
+
+@article{turon2023zairachem,
+  author  = {Turon, Gemma and Hlozek, Jason and Woodland, John G. and Kumar, Ankur and Chibale, Kelly and Duran-Frigola, Miquel},
+  title   = {First fully-automated {AI/ML} virtual screening cascade implemented at a drug discovery centre in {Africa}},
+  journal = {Nature Communications},
+  year    = {2023},
+  volume  = {14},
+  pages   = {5736},
+  doi     = {10.1038/s41467-023-41512-2}
+}
+
+@article{maagdenberg2024qsprpred,
+  author  = {van den Maagdenberg, Helle W. and {\v S}{\'i}cho, Martin and Alencar Araripe, David and Luukkonen, Sohvi and Schoenmaker, Linde and Jespers, Michiel and B{\'e}quignon, Olivier J. M. and Gorostiola Gonz{\'a}lez, Marina and van den Broek, Remco L. and Bernatavicius, Andrius and van Hasselt, J. G. Coen and van der Graaf, Piet H. and van Westen, Gerard J. P.},
+  title   = {{QSPRpred}: a flexible open-source quantitative structure-property relationship modelling tool},
+  journal = {Journal of Cheminformatics},
+  year    = {2024},
+  volume  = {16},
+  number  = {1},
+  pages   = {128},
+  doi     = {10.1186/s13321-024-00908-y}
+}
+
+@article{huang2020deeppurpose,
+  author  = {Huang, Kexin and Fu, Tianfan and Glass, Lucas M. and Zitnik, Marinka and Xiao, Cao and Sun, Jimeng},
+  title   = {{DeepPurpose}: a deep learning library for drug-target interaction prediction},
+  journal = {Bioinformatics},
+  year    = {2020},
+  volume  = {36},
+  number  = {22-23},
+  pages   = {5545--5547},
+  doi     = {10.1093/bioinformatics/btaa1005}
+}
+
+@article{daina2017swissadme,
+  author  = {Daina, Antoine and Michielin, Olivier and Zoete, Vincent},
+  title   = {{SwissADME}: a free web tool to evaluate pharmacokinetics, drug-likeness and medicinal chemistry friendliness of small molecules},
+  journal = {Scientific Reports},
+  year    = {2017},
+  volume  = {7},
+  pages   = {42717},
+  doi     = {10.1038/srep42717}
+}
+
+@article{pires2015pkcsm,
+  author  = {Pires, Douglas E. V. and Blundell, Tom L. and Ascher, David B.},
+  title   = {{pkCSM}: predicting small-molecule pharmacokinetic and toxicity properties using graph-based signatures},
+  journal = {Journal of Medicinal Chemistry},
+  year    = {2015},
+  volume  = {58},
+  number  = {9},
+  pages   = {4066--4072},
+  doi     = {10.1021/acs.jmedchem.5b00104}
 }

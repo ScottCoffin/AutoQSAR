@@ -1,0 +1,15 @@
+name: Feature request
+description: Suggest a model, dataset, metric or workflow addition
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What would you like AutoQSAR to do?
+    validations:
+      required: true
+  - type: textarea
+    id: motivation
+    attributes:
+      label: Why is it useful?
+      description: If you are proposing a model or dataset, a reference or link helps.

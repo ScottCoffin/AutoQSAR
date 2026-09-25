@@ -6,7 +6,7 @@ Designed for Apptainer/Slurm job-array dispatch:
     python run_one.py \
         --dataset tdc_caco2_wang \
         --seed 3 \
-        --config /opt/autoqsar/run_config.json \
+        --config /opt/qsarena/run_config.json \
         --input-dir /in \
         --output-dir /out \
         --device auto \
@@ -232,7 +232,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     # Passthrough: any extra --key value pairs are forwarded verbatim to the benchmark runner.
     parser.add_argument(
         "extra_args", nargs=argparse.REMAINDER,
-        help="Extra flags forwarded verbatim to run_autoqsar_ga_benchmarks.py.",
+        help="Extra flags forwarded verbatim to run_qsarena_benchmarks.py.",
     )
     return parser.parse_args(argv)
 
@@ -243,7 +243,7 @@ def build_runner_argv(
     output_dir: Path,
 ) -> list[str]:
     """Assemble the argv list for the underlying benchmark runner."""
-    runner = Path(__file__).resolve().parent / "portable_colab_qsar_bundle" / "run_autoqsar_ga_benchmarks.py"
+    runner = Path(__file__).resolve().parent / "portable_colab_qsar_bundle" / "run_qsarena_benchmarks.py"
 
     argv = [
         sys.executable, str(runner),
@@ -297,7 +297,7 @@ def write_provenance(
     conformer_seed = getattr(args, "conformer_seed", 42)
 
     try:
-        from autoqsar.precision import precision_metadata
+        from qsarena.precision import precision_metadata
         prec_meta = precision_metadata(precision_mode, device)
     except ImportError:
         prec_meta = {"precision_mode": precision_mode}
@@ -344,7 +344,7 @@ def main(argv: list[str] | None = None) -> int:
     _set_env_before_imports(args.seed)
 
     # Propagate precision mode to subprocess before any torch is imported there.
-    os.environ["AUTOQSAR_PRECISION"] = args.precision
+    os.environ["QSARENA_PRECISION"] = args.precision
 
     resolved_device = _detect_device(args.device)
     _seed_everything(args.seed, resolved_device)
@@ -409,9 +409,9 @@ def main(argv: list[str] | None = None) -> int:
 def _run_conformer_generation(args: argparse.Namespace, cache_dir: Path) -> int:
     """Standalone conformer-generation step — runs on CPU, no GPU needed."""
     try:
-        from autoqsar.conformers import ConformerCache, generate_dataset_conformers
+        from qsarena.conformers import ConformerCache, generate_dataset_conformers
     except ImportError as exc:
-        print(f"ERROR: autoqsar.conformers not importable: {exc}", flush=True)
+        print(f"ERROR: qsarena.conformers not importable: {exc}", flush=True)
         return 1
 
     cache_dir.mkdir(parents=True, exist_ok=True)
@@ -439,8 +439,8 @@ def _run_unimolv2_workflow(
 ) -> str:
     """Run the Uni-Mol2 V2 workflow and return the conformer cache hash."""
     try:
-        from autoqsar.unimolv2 import UnimolV2Workflow
-        from autoqsar.conformers import ConformerCache
+        from qsarena.unimolv2 import UnimolV2Workflow
+        from qsarena.conformers import ConformerCache
     except ImportError as exc:
         print(f"WARNING: Uni-Mol2 workflow skipped — import failed: {exc}", flush=True)
         return "import_failed"

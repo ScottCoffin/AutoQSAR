@@ -1,0 +1,14 @@
+Model,Weight,Workflow
+SVR,0.07688699811917994,conventional
+Random forest,0.05778516481045364,conventional
+Extra trees,0.33856774865858585,conventional
+HistGradientBoosting,0.052036500483465996,conventional
+AdaBoost,0.016566545152564158,conventional
+Tabular MLP,0.09985641988424897,conventional
+Tabular CNN,0.018938473451047384,conventional
+CatBoost,0.02575445834156553,conventional
+MapLight CatBoost (Strict Parity),0.024923475999110156,conventional
+ChemML MLP (PyTorch),0.0920460358656178,ChemML deep learning
+ChemML MLP (TensorFlow),0.06287192752894143,ChemML deep learning
+"MapLight + GNN (CatBoost, Strict Parity)",0.025948472493465588,MapLight + GNN
+CFA (Combinatorial Fusion),0.1078177792117535,cfa
