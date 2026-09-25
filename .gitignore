@@ -226,6 +226,7 @@ data/*.zip
 **/benchmark_results/**/conventional_ml/
 **/benchmark_results/**/tuned_conventional_ml/
 benchmark_results/abandoned_*/
+benchmark_results/*/predictions.csv
 **/benchmark_results/*/*/predictions.csv
 **/benchmark_results/**/*.npy
 **/benchmark_results/**/*.npz
