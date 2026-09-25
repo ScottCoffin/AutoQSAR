@@ -1,0 +1,57 @@
+winning_family,task_kind,dataset_size_quartile,datasets,median_n_molecules,median_best_metric,median_estimated_rank
+Conventional ML,classification,"(37.999, 667.0]",3,640.0,0.8608247422680413,1.0
+CFA combinatorial fusion,classification,"(37.999, 667.0]",2,491.0,0.8794749767688836,2.5
+Ensemble meta-model,classification,"(37.999, 667.0]",2,571.0,0.7939212503065657,5.0
+3D foundation model,classification,"(37.999, 667.0]",0,,,
+Graph neural networks (Chemprop),classification,"(37.999, 667.0]",0,,,
+Graph transfer + tabular head,classification,"(37.999, 667.0]",0,,,
+TabPFN foundation model,classification,"(37.999, 667.0]",0,,,
+Conventional ML,classification,"(667.0, 1478.0]",2,1074.0,0.8327720589744027,5.0
+Ensemble meta-model,classification,"(667.0, 1478.0]",2,943.5,0.7052268711361585,3.0
+3D foundation model,classification,"(667.0, 1478.0]",0,,,
+CFA combinatorial fusion,classification,"(667.0, 1478.0]",0,,,
+Graph neural networks (Chemprop),classification,"(667.0, 1478.0]",0,,,
+Graph transfer + tabular head,classification,"(667.0, 1478.0]",0,,,
+TabPFN foundation model,classification,"(667.0, 1478.0]",0,,,
+Conventional ML,classification,"(1478.0, 4200.0]",2,1880.5,0.8618859600560987,1.5
+Ensemble meta-model,classification,"(1478.0, 4200.0]",1,2034.0,0.8056939830195645,
+3D foundation model,classification,"(1478.0, 4200.0]",0,,,
+CFA combinatorial fusion,classification,"(1478.0, 4200.0]",0,,,
+Graph neural networks (Chemprop),classification,"(1478.0, 4200.0]",0,,,
+Graph transfer + tabular head,classification,"(1478.0, 4200.0]",0,,,
+TabPFN foundation model,classification,"(1478.0, 4200.0]",0,,,
+Ensemble meta-model,classification,"(4200.0, 13445.0]",5,12579.0,0.9021504308793244,2.5
+Conventional ML,classification,"(4200.0, 13445.0]",3,7278.0,0.8122786304604486,2.0
+3D foundation model,classification,"(4200.0, 13445.0]",0,,,
+CFA combinatorial fusion,classification,"(4200.0, 13445.0]",0,,,
+Graph neural networks (Chemprop),classification,"(4200.0, 13445.0]",0,,,
+Graph transfer + tabular head,classification,"(4200.0, 13445.0]",0,,,
+TabPFN foundation model,classification,"(4200.0, 13445.0]",0,,,
+TabPFN foundation model,regression,"(37.999, 667.0]",3,500.0,0.0072789382647337,
+3D foundation model,regression,"(37.999, 667.0]",1,667.0,17.222253952148026,9.0
+CFA combinatorial fusion,regression,"(37.999, 667.0]",1,642.0,0.5564249428337948,1.0
+Graph neural networks (Chemprop),regression,"(37.999, 667.0]",1,642.0,1.0798592139451626,
+Conventional ML,regression,"(37.999, 667.0]",0,,,
+Ensemble meta-model,regression,"(37.999, 667.0]",0,,,
+Graph transfer + tabular head,regression,"(37.999, 667.0]",0,,,
+Graph transfer + tabular head,regression,"(667.0, 1478.0]",3,1130.0,4.66807207398872,3.0
+Ensemble meta-model,regression,"(667.0, 1478.0]",2,1019.0,0.4643058441064144,2.0
+3D foundation model,regression,"(667.0, 1478.0]",1,1102.0,35.888059718513354,10.0
+CFA combinatorial fusion,regression,"(667.0, 1478.0]",0,,,
+Conventional ML,regression,"(667.0, 1478.0]",0,,,
+Graph neural networks (Chemprop),regression,"(667.0, 1478.0]",0,,,
+TabPFN foundation model,regression,"(667.0, 1478.0]",0,,,
+3D foundation model,regression,"(1478.0, 4200.0]",4,2848.0,0.5436969324871003,4.0
+Ensemble meta-model,regression,"(1478.0, 4200.0]",3,2790.0,0.698689327028878,2.0
+Conventional ML,regression,"(1478.0, 4200.0]",1,2355.0,0.5507770607752229,2.0
+Graph transfer + tabular head,regression,"(1478.0, 4200.0]",1,1808.0,0.4492138661802479,3.0
+CFA combinatorial fusion,regression,"(1478.0, 4200.0]",0,,,
+Graph neural networks (Chemprop),regression,"(1478.0, 4200.0]",0,,,
+TabPFN foundation model,regression,"(1478.0, 4200.0]",0,,,
+3D foundation model,regression,"(4200.0, 13445.0]",1,9980.0,0.9888281816530252,2.0
+CFA combinatorial fusion,regression,"(4200.0, 13445.0]",1,7385.0,0.8337746668930903,5.0
+Conventional ML,regression,"(4200.0, 13445.0]",0,,,
+Ensemble meta-model,regression,"(4200.0, 13445.0]",0,,,
+Graph neural networks (Chemprop),regression,"(4200.0, 13445.0]",0,,,
+Graph transfer + tabular head,regression,"(4200.0, 13445.0]",0,,,
+TabPFN foundation model,regression,"(4200.0, 13445.0]",0,,,

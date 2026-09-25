@@ -1,0 +1,6 @@
+stage_order,stage,datasets_evaluated,datasets_improved_vs_previous,datasets_changed_winner,median_marginal_score_improvement,mean_marginal_score_improvement,median_relative_metric_improvement,improvement_fraction
+1,Conventional ML only,45,0,0,,,,0.0
+2,+ MapLight classic features,45,7,7,0.0,0.07194226894743008,0.0,0.15555555555555556
+3,+ neural/deep backends,45,26,26,0.005806451612903385,0.10049563636689858,0.014912253862451996,0.5777777777777777
+4,+ CFA fusion,45,8,8,0.0,0.0017222171631982339,0.0,0.17777777777777778
+5,Full pipeline incl. ensembles,45,15,15,0.0,0.011852820565887236,0.0,0.3333333333333333
