@@ -1,6 +1,9 @@
 {
-  "status": "running",
+  "status": "completed",
   "dataset": "polaris_adme_fang_hppb_1",
   "source": "Polaris ADME benchmark mirror: adme-fang-hppb-1",
-  "started_at": "2026-06-30 20:50:42"
+  "completed_at": "2026-06-30 21:18:26",
+  "elapsed_seconds": 1663.517,
+  "n_metrics_rows": 43,
+  "n_stage_records": 27
 }

@@ -1,0 +1,13 @@
+dataset,stage_index,total_stages,stage_label,step_type,model,workflow,started_at,started_epoch,status,ended_at,ended_epoch,duration_seconds
+tdc_carcinogens_lagunin,1,27,loading PyTDC Tox benchmark: carcinogens_lagunin,load_dataset,,,2026-06-25 14:45:55 UTC,1782398755.1865957,completed,2026-06-25 14:45:55 UTC,1782398755.259175,0.073
+tdc_carcinogens_lagunin,2,27,building molecular features,feature_generation,,,2026-06-25 14:45:55 UTC,1782398755.2592244,completed,2026-06-25 14:45:55 UTC,1782398755.2770066,0.018
+tdc_carcinogens_lagunin,3,27,splitting data and selecting features,feature_selection,,,2026-06-25 14:45:55 UTC,1782398755.2770917,completed,2026-06-25 14:46:08 UTC,1782398768.594084,13.317
+tdc_carcinogens_lagunin,4,27,conventional model LogisticRegression,model,LogisticRegression,conventional,2026-06-25 14:46:08 UTC,1782398768.594141,completed,2026-06-25 14:46:08 UTC,1782398768.8137982,0.22
+tdc_carcinogens_lagunin,5,27,conventional model SVC,model,SVC,conventional,2026-06-25 14:46:08 UTC,1782398768.8138251,completed,2026-06-25 14:46:10 UTC,1782398770.4035916,1.59
+tdc_carcinogens_lagunin,6,27,conventional model Random forest,model,Random forest,conventional,2026-06-25 14:46:10 UTC,1782398770.4036193,completed,2026-06-25 14:46:16 UTC,1782398776.9662619,6.563
+tdc_carcinogens_lagunin,7,27,conventional model Extra trees,model,Extra trees,conventional,2026-06-25 14:46:16 UTC,1782398776.9662979,completed,2026-06-25 14:46:23 UTC,1782398783.7952096,6.829
+tdc_carcinogens_lagunin,8,27,conventional model HistGradientBoosting,model,HistGradientBoosting,conventional,2026-06-25 14:46:23 UTC,1782398783.7952428,completed,2026-06-25 14:46:35 UTC,1782398795.6732328,11.878
+tdc_carcinogens_lagunin,9,27,"conventional model Voting Classifier (KNN, SVM)",model,"Voting Classifier (KNN, SVM)",conventional,2026-06-25 14:46:35 UTC,1782398795.67326,completed,2026-06-25 14:46:36 UTC,1782398796.0395305,0.366
+tdc_carcinogens_lagunin,10,27,conventional model AdaBoost,model,AdaBoost,conventional,2026-06-25 14:46:36 UTC,1782398796.0395577,completed,2026-06-25 14:46:37 UTC,1782398797.958061,1.919
+tdc_carcinogens_lagunin,11,27,conventional model Tabular MLP,model,Tabular MLP,conventional,2026-06-25 14:46:37 UTC,1782398797.9580913,completed,2026-06-25 14:46:41 UTC,1782398801.4354525,3.477
+tdc_carcinogens_lagunin,12,27,conventional model XGBoost,model,XGBoost,conventional,2026-06-25 14:46:41 UTC,1782398801.4354808,running,2026-06-25 14:46:41 UTC,1782398801.4354975,0.0

@@ -1,0 +1,10 @@
+{
+  "status": "running",
+  "dataset": "tdc_carcinogens_lagunin",
+  "source": "PyTDC Tox benchmark: carcinogens_lagunin",
+  "started_at": "2026-06-25 14:46:41",
+  "checkpoint_stage": "conventional:Tabular MLP",
+  "n_metrics_rows": 8,
+  "n_prediction_tables": 16,
+  "n_stage_records": 11
+}

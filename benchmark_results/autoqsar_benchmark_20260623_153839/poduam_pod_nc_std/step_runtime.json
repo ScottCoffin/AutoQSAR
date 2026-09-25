@@ -7,12 +7,12 @@
     "step_type": "load_dataset",
     "model": "",
     "workflow": "",
-    "started_at": "2026-06-29 23:20:37 UTC",
-    "started_epoch": 1782775237.3101022,
+    "started_at": "2026-06-30 21:18:26 UTC",
+    "started_epoch": 1782854306.464048,
     "status": "completed",
-    "ended_at": "2026-06-29 23:20:37 UTC",
-    "ended_epoch": 1782775237.7461448,
-    "duration_seconds": 0.436
+    "ended_at": "2026-06-30 21:18:26 UTC",
+    "ended_epoch": 1782854306.8938594,
+    "duration_seconds": 0.43
   },
   {
     "dataset": "poduam_pod_nc_std",
@@ -22,12 +22,12 @@
     "step_type": "feature_generation",
     "model": "",
     "workflow": "",
-    "started_at": "2026-06-29 23:20:37 UTC",
-    "started_epoch": 1782775237.746206,
+    "started_at": "2026-06-30 21:18:26 UTC",
+    "started_epoch": 1782854306.8939316,
     "status": "resumed_cache",
-    "ended_at": "2026-06-29 23:20:37 UTC",
-    "ended_epoch": 1782775237.7677927,
-    "duration_seconds": 0.022
+    "ended_at": "2026-06-30 21:18:26 UTC",
+    "ended_epoch": 1782854306.9193497,
+    "duration_seconds": 0.025
   },
   {
     "dataset": "poduam_pod_nc_std",
@@ -37,12 +37,12 @@
     "step_type": "feature_selection",
     "model": "",
     "workflow": "",
-    "started_at": "2026-06-29 23:20:37 UTC",
-    "started_epoch": 1782775237.767835,
+    "started_at": "2026-06-30 21:18:26 UTC",
+    "started_epoch": 1782854306.919394,
     "status": "resumed_cache",
-    "ended_at": "2026-06-29 23:20:50 UTC",
-    "ended_epoch": 1782775250.4250534,
-    "duration_seconds": 12.657
+    "ended_at": "2026-06-30 21:18:39 UTC",
+    "ended_epoch": 1782854319.990985,
+    "duration_seconds": 13.072
   },
   {
     "dataset": "poduam_pod_nc_std",
@@ -52,11 +52,11 @@
     "step_type": "model",
     "model": "ElasticNetCV",
     "workflow": "conventional",
-    "started_at": "2026-06-29 23:20:50 UTC",
-    "started_epoch": 1782775250.4251013,
+    "started_at": "2026-06-30 21:18:39 UTC",
+    "started_epoch": 1782854319.9910676,
     "status": "completed",
-    "ended_at": "2026-06-29 23:20:50 UTC",
-    "ended_epoch": 1782775250.4266913,
+    "ended_at": "2026-06-30 21:18:39 UTC",
+    "ended_epoch": 1782854319.9930813,
     "duration_seconds": 0.002
   },
   {
@@ -67,11 +67,11 @@
     "step_type": "model",
     "model": "SVR",
     "workflow": "conventional",
-    "started_at": "2026-06-29 23:20:50 UTC",
-    "started_epoch": 1782775250.4268284,
+    "started_at": "2026-06-30 21:18:39 UTC",
+    "started_epoch": 1782854319.9931133,
     "status": "completed",
-    "ended_at": "2026-06-29 23:20:50 UTC",
-    "ended_epoch": 1782775250.4279902,
+    "ended_at": "2026-06-30 21:18:39 UTC",
+    "ended_epoch": 1782854319.9944031,
     "duration_seconds": 0.001
   },
   {
@@ -82,11 +82,11 @@
     "step_type": "model",
     "model": "Random forest",
     "workflow": "conventional",
-    "started_at": "2026-06-29 23:20:50 UTC",
-    "started_epoch": 1782775250.4280186,
+    "started_at": "2026-06-30 21:18:39 UTC",
+    "started_epoch": 1782854319.994433,
     "status": "completed",
-    "ended_at": "2026-06-29 23:20:50 UTC",
-    "ended_epoch": 1782775250.429198,
+    "ended_at": "2026-06-30 21:18:39 UTC",
+    "ended_epoch": 1782854319.9956467,
     "duration_seconds": 0.001
   },
   {
@@ -97,11 +97,11 @@
     "step_type": "model",
     "model": "Extra trees",
     "workflow": "conventional",
-    "started_at": "2026-06-29 23:20:50 UTC",
-    "started_epoch": 1782775250.4292262,
+    "started_at": "2026-06-30 21:18:39 UTC",
+    "started_epoch": 1782854319.9956765,
     "status": "completed",
-    "ended_at": "2026-06-29 23:20:50 UTC",
-    "ended_epoch": 1782775250.4304318,
+    "ended_at": "2026-06-30 21:18:39 UTC",
+    "ended_epoch": 1782854319.9968884,
     "duration_seconds": 0.001
   },
   {
@@ -112,11 +112,11 @@
     "step_type": "model",
     "model": "HistGradientBoosting",
     "workflow": "conventional",
-    "started_at": "2026-06-29 23:20:50 UTC",
-    "started_epoch": 1782775250.4304597,
+    "started_at": "2026-06-30 21:18:39 UTC",
+    "started_epoch": 1782854319.996917,
     "status": "completed",
-    "ended_at": "2026-06-29 23:20:50 UTC",
-    "ended_epoch": 1782775250.4316669,
+    "ended_at": "2026-06-30 21:18:39 UTC",
+    "ended_epoch": 1782854319.9981282,
     "duration_seconds": 0.001
   },
   {
@@ -127,11 +127,11 @@
     "step_type": "model",
     "model": "Voting Regressor (KNN, SVM)",
     "workflow": "conventional",
-    "started_at": "2026-06-29 23:20:50 UTC",
-    "started_epoch": 1782775250.431694,
+    "started_at": "2026-06-30 21:18:39 UTC",
+    "started_epoch": 1782854319.9981568,
     "status": "completed",
-    "ended_at": "2026-06-29 23:20:50 UTC",
-    "ended_epoch": 1782775250.4329355,
+    "ended_at": "2026-06-30 21:18:39 UTC",
+    "ended_epoch": 1782854319.999432,
     "duration_seconds": 0.001
   },
   {
@@ -142,11 +142,11 @@
     "step_type": "model",
     "model": "AdaBoost",
     "workflow": "conventional",
-    "started_at": "2026-06-29 23:20:50 UTC",
-    "started_epoch": 1782775250.4329634,
+    "started_at": "2026-06-30 21:18:39 UTC",
+    "started_epoch": 1782854319.999461,
     "status": "completed",
-    "ended_at": "2026-06-29 23:20:50 UTC",
-    "ended_epoch": 1782775250.4342148,
+    "ended_at": "2026-06-30 21:18:40 UTC",
+    "ended_epoch": 1782854320.000737,
     "duration_seconds": 0.001
   },
   {
@@ -157,11 +157,11 @@
     "step_type": "model",
     "model": "Tabular MLP",
     "workflow": "conventional",
-    "started_at": "2026-06-29 23:20:50 UTC",
-    "started_epoch": 1782775250.4342425,
+    "started_at": "2026-06-30 21:18:40 UTC",
+    "started_epoch": 1782854320.0007653,
     "status": "completed",
-    "ended_at": "2026-06-29 23:20:50 UTC",
-    "ended_epoch": 1782775250.4355464,
+    "ended_at": "2026-06-30 21:18:40 UTC",
+    "ended_epoch": 1782854320.0020664,
     "duration_seconds": 0.001
   },
   {
@@ -172,11 +172,11 @@
     "step_type": "model",
     "model": "Tabular CNN",
     "workflow": "conventional",
-    "started_at": "2026-06-29 23:20:50 UTC",
-    "started_epoch": 1782775250.4355745,
+    "started_at": "2026-06-30 21:18:40 UTC",
+    "started_epoch": 1782854320.0020947,
     "status": "completed",
-    "ended_at": "2026-06-29 23:20:50 UTC",
-    "ended_epoch": 1782775250.436878,
+    "ended_at": "2026-06-30 21:18:40 UTC",
+    "ended_epoch": 1782854320.0034335,
     "duration_seconds": 0.001
   },
   {
@@ -187,11 +187,11 @@
     "step_type": "model",
     "model": "XGBoost",
     "workflow": "conventional",
-    "started_at": "2026-06-29 23:20:50 UTC",
-    "started_epoch": 1782775250.4369054,
+    "started_at": "2026-06-30 21:18:40 UTC",
+    "started_epoch": 1782854320.0034623,
     "status": "completed",
-    "ended_at": "2026-06-29 23:20:50 UTC",
-    "ended_epoch": 1782775250.4382136,
+    "ended_at": "2026-06-30 21:18:40 UTC",
+    "ended_epoch": 1782854320.0048087,
     "duration_seconds": 0.001
   },
   {
@@ -202,11 +202,11 @@
     "step_type": "model",
     "model": "CatBoost",
     "workflow": "conventional",
-    "started_at": "2026-06-29 23:20:50 UTC",
-    "started_epoch": 1782775250.4382408,
+    "started_at": "2026-06-30 21:18:40 UTC",
+    "started_epoch": 1782854320.004839,
     "status": "completed",
-    "ended_at": "2026-06-29 23:20:50 UTC",
-    "ended_epoch": 1782775250.4396465,
+    "ended_at": "2026-06-30 21:18:40 UTC",
+    "ended_epoch": 1782854320.006207,
     "duration_seconds": 0.001
   },
   {
@@ -217,11 +217,11 @@
     "step_type": "model",
     "model": "MapLight CatBoost (Strict Parity)",
     "workflow": "conventional",
-    "started_at": "2026-06-29 23:20:50 UTC",
-    "started_epoch": 1782775250.439675,
+    "started_at": "2026-06-30 21:18:40 UTC",
+    "started_epoch": 1782854320.0062358,
     "status": "completed",
-    "ended_at": "2026-06-29 23:20:50 UTC",
-    "ended_epoch": 1782775250.4420402,
+    "ended_at": "2026-06-30 21:18:40 UTC",
+    "ended_epoch": 1782854320.0086567,
     "duration_seconds": 0.002
   },
   {
@@ -232,11 +232,11 @@
     "step_type": "model",
     "model": "ChemML MLP (PyTorch)",
     "workflow": "ChemML deep learning",
-    "started_at": "2026-06-29 23:20:50 UTC",
-    "started_epoch": 1782775250.4420679,
+    "started_at": "2026-06-30 21:18:40 UTC",
+    "started_epoch": 1782854320.0086854,
     "status": "completed",
-    "ended_at": "2026-06-29 23:20:50 UTC",
-    "ended_epoch": 1782775250.4434564,
+    "ended_at": "2026-06-30 21:18:40 UTC",
+    "ended_epoch": 1782854320.0100741,
     "duration_seconds": 0.001
   },
   {
@@ -247,12 +247,12 @@
     "step_type": "model",
     "model": "ChemML MLP (TensorFlow)",
     "workflow": "ChemML deep learning",
-    "started_at": "2026-06-29 23:20:50 UTC",
-    "started_epoch": 1782775250.4434848,
+    "started_at": "2026-06-30 21:18:40 UTC",
+    "started_epoch": 1782854320.010103,
     "status": "completed",
-    "ended_at": "2026-06-29 23:20:50 UTC",
-    "ended_epoch": 1782775250.4449282,
-    "duration_seconds": 0.001
+    "ended_at": "2026-06-30 21:18:40 UTC",
+    "ended_epoch": 1782854320.0116162,
+    "duration_seconds": 0.002
   },
   {
     "dataset": "poduam_pod_nc_std",
@@ -262,12 +262,12 @@
     "step_type": "model",
     "model": "Chemprop v2 (D-MPNN, ensemble=3)",
     "workflow": "Chemprop v2",
-    "started_at": "2026-06-29 23:20:50 UTC",
-    "started_epoch": 1782775250.4449556,
+    "started_at": "2026-06-30 21:18:40 UTC",
+    "started_epoch": 1782854320.0116754,
     "status": "completed",
-    "ended_at": "2026-06-29 23:21:27 UTC",
-    "ended_epoch": 1782775287.0141346,
-    "duration_seconds": 36.569
+    "ended_at": "2026-06-30 21:19:17 UTC",
+    "ended_epoch": 1782854357.4276385,
+    "duration_seconds": 37.416
   },
   {
     "dataset": "poduam_pod_nc_std",
@@ -277,12 +277,12 @@
     "step_type": "model",
     "model": "Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",
     "workflow": "Chemprop v2",
-    "started_at": "2026-06-29 23:21:27 UTC",
-    "started_epoch": 1782775287.0141625,
+    "started_at": "2026-06-30 21:19:17 UTC",
+    "started_epoch": 1782854357.42767,
     "status": "completed",
-    "ended_at": "2026-06-29 23:22:04 UTC",
-    "ended_epoch": 1782775324.267665,
-    "duration_seconds": 37.254
+    "ended_at": "2026-06-30 21:19:56 UTC",
+    "ended_epoch": 1782854396.5861468,
+    "duration_seconds": 39.158
   },
   {
     "dataset": "poduam_pod_nc_std",
@@ -292,12 +292,12 @@
     "step_type": "model",
     "model": "Chemprop v2 (CMPNN, ensemble=3)",
     "workflow": "Chemprop v2",
-    "started_at": "2026-06-29 23:22:04 UTC",
-    "started_epoch": 1782775324.2676935,
+    "started_at": "2026-06-30 21:19:56 UTC",
+    "started_epoch": 1782854396.5861762,
     "status": "completed",
-    "ended_at": "2026-06-29 23:22:39 UTC",
-    "ended_epoch": 1782775359.1830676,
-    "duration_seconds": 34.915
+    "ended_at": "2026-06-30 21:20:34 UTC",
+    "ended_epoch": 1782854434.3082645,
+    "duration_seconds": 37.722
   },
   {
     "dataset": "poduam_pod_nc_std",
@@ -307,12 +307,12 @@
     "step_type": "model",
     "model": "Chemprop v2 (AttentiveFP, ensemble=3)",
     "workflow": "Chemprop v2",
-    "started_at": "2026-06-29 23:22:39 UTC",
-    "started_epoch": 1782775359.1831243,
+    "started_at": "2026-06-30 21:20:34 UTC",
+    "started_epoch": 1782854434.3083248,
     "status": "completed",
-    "ended_at": "2026-06-29 23:23:15 UTC",
-    "ended_epoch": 1782775395.829481,
-    "duration_seconds": 36.646
+    "ended_at": "2026-06-30 21:21:12 UTC",
+    "ended_epoch": 1782854472.1227005,
+    "duration_seconds": 37.814
   },
   {
     "dataset": "poduam_pod_nc_std",
@@ -322,12 +322,12 @@
     "step_type": "model",
     "model": "Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",
     "workflow": "Chemprop v2",
-    "started_at": "2026-06-29 23:23:15 UTC",
-    "started_epoch": 1782775395.8295093,
+    "started_at": "2026-06-30 21:21:12 UTC",
+    "started_epoch": 1782854472.122728,
     "status": "completed",
-    "ended_at": "2026-06-29 23:23:48 UTC",
-    "ended_epoch": 1782775428.820416,
-    "duration_seconds": 32.991
+    "ended_at": "2026-06-30 21:21:44 UTC",
+    "ended_epoch": 1782854504.7543623,
+    "duration_seconds": 32.632
   },
   {
     "dataset": "poduam_pod_nc_std",
@@ -337,12 +337,12 @@
     "step_type": "model",
     "model": "Uni-Mol V1",
     "workflow": "Uni-Mol",
-    "started_at": "2026-06-29 23:23:48 UTC",
-    "started_epoch": 1782775428.8204439,
+    "started_at": "2026-06-30 21:21:44 UTC",
+    "started_epoch": 1782854504.7543945,
     "status": "completed",
-    "ended_at": "2026-06-29 23:23:49 UTC",
-    "ended_epoch": 1782775429.1855013,
-    "duration_seconds": 0.365
+    "ended_at": "2026-06-30 21:21:45 UTC",
+    "ended_epoch": 1782854505.297339,
+    "duration_seconds": 0.543
   },
   {
     "dataset": "poduam_pod_nc_std",
@@ -352,12 +352,12 @@
     "step_type": "model",
     "model": "Uni-Mol V2 (84m)",
     "workflow": "Uni-Mol",
-    "started_at": "2026-06-29 23:23:49 UTC",
-    "started_epoch": 1782775429.1857834,
+    "started_at": "2026-06-30 21:21:45 UTC",
+    "started_epoch": 1782854505.297639,
     "status": "completed",
-    "ended_at": "2026-06-29 23:24:05 UTC",
-    "ended_epoch": 1782775445.6482432,
-    "duration_seconds": 16.462
+    "ended_at": "2026-06-30 21:22:02 UTC",
+    "ended_epoch": 1782854522.1328824,
+    "duration_seconds": 16.835
   },
   {
     "dataset": "poduam_pod_nc_std",
@@ -367,11 +367,11 @@
     "step_type": "model",
     "model": "MapLight + GNN (CatBoost, Strict Parity)",
     "workflow": "MapLight + GNN",
-    "started_at": "2026-06-29 23:24:05 UTC",
-    "started_epoch": 1782775445.6482732,
+    "started_at": "2026-06-30 21:22:02 UTC",
+    "started_epoch": 1782854522.1335454,
     "status": "completed",
-    "ended_at": "2026-06-29 23:24:05 UTC",
-    "ended_epoch": 1782775445.6498954,
+    "ended_at": "2026-06-30 21:22:02 UTC",
+    "ended_epoch": 1782854522.1354055,
     "duration_seconds": 0.002
   },
   {
@@ -382,11 +382,11 @@
     "step_type": "model",
     "model": "CFA (Combinatorial Fusion)",
     "workflow": "cfa",
-    "started_at": "2026-06-29 23:24:05 UTC",
-    "started_epoch": 1782775445.6499288,
+    "started_at": "2026-06-30 21:22:02 UTC",
+    "started_epoch": 1782854522.1354387,
     "status": "completed",
-    "ended_at": "2026-06-29 23:24:05 UTC",
-    "ended_epoch": 1782775445.6516004,
+    "ended_at": "2026-06-30 21:22:02 UTC",
+    "ended_epoch": 1782854522.137171,
     "duration_seconds": 0.002
   },
   {
@@ -397,11 +397,11 @@
     "step_type": "model",
     "model": "Ensemble",
     "workflow": "ensemble",
-    "started_at": "2026-06-29 23:24:05 UTC",
-    "started_epoch": 1782775445.6516292,
+    "started_at": "2026-06-30 21:22:02 UTC",
+    "started_epoch": 1782854522.1372352,
     "status": "completed",
-    "ended_at": "2026-06-29 23:24:06 UTC",
-    "ended_epoch": 1782775446.6648717,
-    "duration_seconds": 1.013
+    "ended_at": "2026-06-30 21:22:03 UTC",
+    "ended_epoch": 1782854523.1811297,
+    "duration_seconds": 1.044
   }
 ]
