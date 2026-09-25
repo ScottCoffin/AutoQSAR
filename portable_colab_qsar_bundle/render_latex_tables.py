@@ -44,7 +44,7 @@ TABLE_SPEC = {
     "table1_model_inventory": (
         "tab:models", False, 3,
         "Model inventory. ``Valid'' datasets are those on which the model produced a metric without an error; "
-        "differences from 45 reflect task-type applicability (regression-only or classification-only estimators), "
+        "differences from 44 reflect task-type applicability (regression-only or classification-only estimators), "
         "dataset-size guardrails, or backend failures (Section~\\ref{sec:coverage}).",
     ),
     "table2_dataset_catalog": (
@@ -55,9 +55,9 @@ TABLE_SPEC = {
     ),
     "table3_architecture_families": (
         "tab:families", False, 1,
-        "Architecture-family coverage and consistency. Gaps are relative to the per-dataset best primary metric. "
+        "Model-family coverage and consistency. Gaps are relative to the per-dataset best primary metric. "
         "``Within 5\\% of best'' counts datasets where the family's best member fell within 5\\% of the dataset winner. "
-        "Families evaluated on fewer than 45 datasets were limited by task applicability, size guardrails or backend "
+        "Families evaluated on fewer than 44 datasets were limited by task applicability, size guardrails or backend "
         "failures (Additional file~1, Table~S4); their percentages are computed over the datasets on which they ran. "
         "All values derive from a single split and seed, so adjacent rows are not separated (see Limitations).",
     ),

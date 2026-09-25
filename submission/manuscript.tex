@@ -37,6 +37,12 @@
 
 \raggedbottom
 
+% sn-jnl loads hyperref itself. Suppress the coloured link borders so the submitted PDF does not
+% look like a working draft; guarded because the class may be built without hyperref.
+\makeatletter
+\@ifpackageloaded{hyperref}{\hypersetup{hidelinks}}{}
+\makeatother
+
 \begin{document}
 
 \title[No Single Model Family Dominates]{No Single Model Family Dominates: Ensembles and Conventional Machine Learning Perform Comparably to Pretrained Molecular Models Across 44 Property-Prediction Benchmarks}
