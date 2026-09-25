@@ -1,0 +1,65 @@
+\begin{landscape}
+\begingroup\scriptsize
+\begin{xltabular}{\dimexpr\paperheight-5cm\relax}{@{}>{\raggedright\arraybackslash\hsize=1.597\hsize}X>{\raggedright\arraybackslash\hsize=0.517\hsize}X>{\raggedright\arraybackslash\hsize=0.658\hsize}Xrrr>{\raggedright\arraybackslash\hsize=0.752\hsize}X>{\raggedright\arraybackslash\hsize=0.564\hsize}X>{\raggedright\arraybackslash\hsize=0.658\hsize}X>{\raggedright\arraybackslash\hsize=2.255\hsize}Xr@{}}
+\caption{Dataset catalog. ``Ranking metric'' is the metric used for cross-dataset model ranking (RMSE for regression; the dataset's designated primary classification metric otherwise); leaderboard comparisons in Table~\ref{tab:leaderboard} use the leaderboard's own metric, which differs for several TDC regression tasks.}\label{tab:datasets}\\
+\toprule
+\textbf{Dataset} & \textbf{Suite} & \textbf{Task} & \textbf{Molecules} & \textbf{Train} & \textbf{Test} & \textbf{Split} & \textbf{Target scale} & \textbf{Ranking metric} & \textbf{Best model} & \textbf{Best value} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Dataset} & \textbf{Suite} & \textbf{Task} & \textbf{Molecules} & \textbf{Train} & \textbf{Test} & \textbf{Split} & \textbf{Target scale} & \textbf{Ranking metric} & \textbf{Best model} & \textbf{Best value} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{11}{r@{}}{\itshape continued on next page}\\
+\endfoot
+\bottomrule
+\endlastfoot
+tdc\_\allowbreak{}ames & TDC & classification & 7,278 & 5,821 & 1,457 & predefined & raw & roc\_\allowbreak{}auc & XGBoost & 0.875 \\
+tdc\_\allowbreak{}bbb\_\allowbreak{}martins & TDC & classification & 2,030 & 1,624 & 406 & predefined & raw & roc\_\allowbreak{}auc & Random forest & 0.932 \\
+tdc\_\allowbreak{}bioavailability\_\allowbreak{}ma & TDC & classification & 640 & 512 & 128 & predefined & raw & roc\_\allowbreak{}auc & Cat\allowbreak{}Boost & 0.777 \\
+tdc\_\allowbreak{}carcinogens\_\allowbreak{}lagunin & TDC & classification & 280 & 224 & 56 & random & raw & roc\_\allowbreak{}auc & Ada\allowbreak{}Boost & 0.863 \\
+tdc\_\allowbreak{}clintox & TDC & classification & 1,478 & 1,182 & 296 & random & raw & roc\_\allowbreak{}auc & Cat\allowbreak{}Boost & 0.949 \\
+tdc\_\allowbreak{}cyp1a2\_\allowbreak{}veith & TDC & classification & 12,579 & 10,061 & 2,518 & scaffold & raw & roc\_\allowbreak{}auc & Ensemble (Weighted average (inverse train RMSE)) & 0.970 \\
+tdc\_\allowbreak{}cyp2c19\_\allowbreak{}veith & TDC & classification & 12,665 & 10,131 & 2,534 & scaffold & raw & roc\_\allowbreak{}auc & Ensemble (Weighted average (inverse train RMSE)) & 0.921 \\
+tdc\_\allowbreak{}cyp2c9\_\allowbreak{}substrate\_\allowbreak{}carbonmangels & TDC & classification & 669 & 534 & 135 & predefined & raw & auprc & Ensemble (OOF Stacking (RidgeCV, 5-\allowbreak{}fold)) & 0.482 \\
+tdc\_\allowbreak{}cyp2c9\_\allowbreak{}veith & TDC & classification & 12,092 & 9,673 & 2,419 & predefined & raw & auprc & Ensemble (OOF Stacking (RidgeCV, 5-\allowbreak{}fold)) & 0.810 \\
+tdc\_\allowbreak{}cyp2d6\_\allowbreak{}substrate\_\allowbreak{}carbonmangels & TDC & classification & 667 & 532 & 135 & predefined & raw & auprc & Ensemble (Weighted average (inverse train RMSE)) & 0.673 \\
+tdc\_\allowbreak{}cyp2d6\_\allowbreak{}veith & TDC & classification & 13,130 & 10,504 & 2,626 & predefined & raw & auprc & XGBoost & 0.722 \\
+tdc\_\allowbreak{}cyp3a4\_\allowbreak{}substrate\_\allowbreak{}carbonmangels & TDC & classification & 670 & 535 & 135 & predefined & raw & auprc & Logistic\allowbreak{}Regression & 0.717 \\
+tdc\_\allowbreak{}cyp3a4\_\allowbreak{}veith & TDC & classification & 12,328 & 9,861 & 2,467 & predefined & raw & auprc & Ensemble (OOF Stacking (RidgeCV, 5-\allowbreak{}fold)) & 0.890 \\
+tdc\_\allowbreak{}dili & TDC & classification & 475 & 379 & 96 & predefined & raw & roc\_\allowbreak{}auc & Ensemble (OOF Stacking (RidgeCV, 5-\allowbreak{}fold)) & 0.915 \\
+tdc\_\allowbreak{}herg & TDC & classification & 655 & 523 & 132 & predefined & raw & roc\_\allowbreak{}auc & Ada\allowbreak{}Boost & 0.861 \\
+tdc\_\allowbreak{}herg\_\allowbreak{}karim & TDC & classification & 13,445 & 10,755 & 2,690 & scaffold & raw & roc\_\allowbreak{}auc & Ensemble (Weighted average (inverse train RMSE)) & 0.902 \\
+tdc\_\allowbreak{}hia\_\allowbreak{}hou & TDC & classification & 578 & 461 & 117 & predefined & raw & roc\_\allowbreak{}auc & CFA (Combinatorial Fusion) & 0.990 \\
+tdc\_\allowbreak{}pampa\_\allowbreak{}ncats & TDC & classification & 2,034 & 1,626 & 408 & scaffold & raw & roc\_\allowbreak{}auc & Ensemble (Weighted average (inverse train RMSE)) & 0.806 \\
+tdc\_\allowbreak{}pgp\_\allowbreak{}broccatelli & TDC & classification & 1,218 & 973 & 245 & predefined & raw & roc\_\allowbreak{}auc & Ensemble (Weighted average (inverse train RMSE)) & 0.929 \\
+tdc\_\allowbreak{}skin\_\allowbreak{}reaction & TDC & classification & 404 & 323 & 81 & random & raw & roc\_\allowbreak{}auc & CFA (Combinatorial Fusion) & 0.769 \\
+tdc\_\allowbreak{}tox21 & TDC & classification & 7,258 & 5,806 & 1,452 & random & raw & roc\_\allowbreak{}auc & XGBoost & 0.812 \\
+tdc\_\allowbreak{}toxcast & TDC & classification & 1,731 & 1,384 & 347 & random & raw & roc\_\allowbreak{}auc & Cat\allowbreak{}Boost & 0.791 \\
+chemml\_\allowbreak{}cep\_\allowbreak{}homo & ChemML & regression & 500 & 400 & 100 & target\_\allowbreak{}quartiles & raw & rmse & TabPFNRegressor & 0.086 \\
+chemml\_\allowbreak{}organic\_\allowbreak{}density & ChemML & regression & 500 & 400 & 100 & target\_\allowbreak{}quartiles & log10 & rmse & TabPFNRegressor & 0.005 \\
+chemml\_\allowbreak{}xyz\_\allowbreak{}polarizability & ChemML & regression & 38 & 30 & 8 & target\_\allowbreak{}quartiles & log10 & rmse & TabPFNRegressor & 0.007 \\
+esol\_\allowbreak{}delaney & Molecule\allowbreak{}Net & regression & 1,128 & 874 & 254 & scaffold & raw & rmse & Ensemble (Weighted average (inverse train RMSE)) & 0.592 \\
+freesolv\_\allowbreak{}sampl & Molecule\allowbreak{}Net & regression & 642 & 513 & 129 & random & raw & rmse & Chemprop v2 (AttentiveFP, ensemble=1) & 1.080 \\
+lipophilicity & Molecule\allowbreak{}Net & regression & 4,200 & 3,357 & 843 & scaffold & raw & rmse & Ensemble (Weighted average (inverse train RMSE)) & 0.582 \\
+poduam\_\allowbreak{}pod\_\allowbreak{}nc\_\allowbreak{}std & PODUAM & regression & 1,842 & 1,473 & 369 & target\_\allowbreak{}quartiles & raw & rmse & Ensemble (Weighted average (inverse train RMSE)) & 0.699 \\
+poduam\_\allowbreak{}pod\_\allowbreak{}rd\_\allowbreak{}std & PODUAM & regression & 2,355 & 1,884 & 471 & target\_\allowbreak{}quartiles & raw & rmse & XGBoost & 0.551 \\
+polaris\_\allowbreak{}adme\_\allowbreak{}fang\_\allowbreak{}hppb\_\allowbreak{}1 & Polaris & regression & 1,808 & 1,446 & 362 & predefined & raw & rmse & Map\allowbreak{}Light + GNN (Cat\allowbreak{}Boost, Strict Parity) & 0.449 \\
+polaris\_\allowbreak{}adme\_\allowbreak{}fang\_\allowbreak{}perm\_\allowbreak{}1 & Polaris & regression & 2,642 & 2,113 & 529 & predefined & raw & rmse & Uni-\allowbreak{}Mol V1 & 0.399 \\
+polaris\_\allowbreak{}adme\_\allowbreak{}fang\_\allowbreak{}rclint\_\allowbreak{}1 & Polaris & regression & 3,054 & 2,443 & 611 & predefined & raw & rmse & Uni-\allowbreak{}Mol V1 & 0.512 \\
+polaris\_\allowbreak{}adme\_\allowbreak{}fang\_\allowbreak{}rppb\_\allowbreak{}1 & Polaris & regression & 885 & 708 & 177 & predefined & raw & rmse & Map\allowbreak{}Light + GNN (Cat\allowbreak{}Boost, Strict Parity) & 0.494 \\
+polaris\_\allowbreak{}adme\_\allowbreak{}fang\_\allowbreak{}solu\_\allowbreak{}1 & Polaris & regression & 2,173 & 1,738 & 435 & predefined & raw & rmse & Uni-\allowbreak{}Mol V1 & 0.575 \\
+tdc\_\allowbreak{}caco2\_\allowbreak{}wang & TDC & regression & 910 & 728 & 182 & predefined & raw & rmse & Ensemble (Weighted average (inverse train RMSE)) & 0.336 \\
+tdc\_\allowbreak{}clearance\_\allowbreak{}hepatocyte\_\allowbreak{}az & TDC & regression & 1,213 & 970 & 243 & predefined & raw & rmse & Map\allowbreak{}Light + GNN (Cat\allowbreak{}Boost, Strict Parity) & 43.976 \\
+tdc\_\allowbreak{}clearance\_\allowbreak{}microsome\_\allowbreak{}az & TDC & regression & 1,102 & 881 & 221 & predefined & raw & rmse & Uni-\allowbreak{}Mol V1 & 35.888 \\
+tdc\_\allowbreak{}half\_\allowbreak{}life\_\allowbreak{}obach & TDC & regression & 667 & 532 & 135 & predefined & raw & rmse & Uni-\allowbreak{}Mol V1 & 17.222 \\
+tdc\_\allowbreak{}hydrationfreeenergy\_\allowbreak{}freesolv & TDC & regression & 642 & 513 & 129 & target\_\allowbreak{}quartiles & raw & rmse & CFA (Combinatorial Fusion) & 0.556 \\
+tdc\_\allowbreak{}ld50\_\allowbreak{}zhu & TDC & regression & 7,385 & 5,907 & 1,478 & predefined & raw & rmse & CFA (Combinatorial Fusion) & 0.834 \\
+tdc\_\allowbreak{}lipophilicity\_\allowbreak{}astrazeneca & TDC & regression & 4,200 & 3,360 & 840 & predefined & raw & rmse & Uni-\allowbreak{}Mol V1 & 0.587 \\
+tdc\_\allowbreak{}ppbr\_\allowbreak{}az & TDC & regression & 2,790 & 2,231 & 559 & predefined & raw & rmse & Ensemble (Weighted average (inverse train RMSE)) & 11.014 \\
+tdc\_\allowbreak{}solubility\_\allowbreak{}aqsoldb & TDC & regression & 9,980 & 7,985 & 1,995 & predefined & raw & rmse & Uni-\allowbreak{}Mol V1 & 0.989 \\
+tdc\_\allowbreak{}vdss\_\allowbreak{}lombardo & TDC & regression & 1,130 & 904 & 226 & predefined & raw & rmse & Map\allowbreak{}Light + GNN (Cat\allowbreak{}Boost, Strict Parity) & 4.668 \\
+\end{xltabular}
+\endgroup
+\end{landscape}

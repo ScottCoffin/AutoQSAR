@@ -21,6 +21,7 @@ always quote). Bash (Git Bash) and PowerShell are both available.
 | Dataset registry / catalog | `benchmark_registry.py`, `data/benchmark_dataset_catalog.csv` | |
 | Leaderboard references | `data/benchmark_leaderboards/*.csv` | Current-literature ESOL/Lipophilicity refs live in `ESOL_Lipophilicity_Current_Benchmarks_csv.csv`. |
 | Benchmark analysis, manuscript figures and tables | `portable_colab_qsar_bundle/benchmark_results_summary.ipynb` | Hand-maintained (no builder). The last cell (`# MANUSCRIPT_FIGURE_EXPORT`) writes `manuscript_assets/`. |
+| Graphical abstract | `portable_colab_qsar_bundle/render_graphical_abstract.py` | Writes `manuscript_assets/figures/graphical_abstract.svg`. It should summarize the paper's decision story, not duplicate Figure 1. |
 | Precision, Uni-Mol2, conformers (Update 2) | `autoqsar/` package, `run_one.py`, `js2/`, `hpc/` | |
 
 ## Manuscript workflow (the fast path)
@@ -49,6 +50,36 @@ always quote). Bash (Git Bash) and PowerShell are both available.
    counts — e.g. "MapLight+GNN mean gap 0.199", "selector slope 1.09", 44 datasets — come from the deleted April run).
 4. Figures are static matplotlib written by the notebook's last cell (`# MANUSCRIPT_FIGURE_EXPORT`); Plotly
    `kaleido` is not installed, so don't build figures with Plotly for the manuscript.
+5. Graphical abstract design: keep it as a decision-map, not a workflow diagram. Figure 1 already explains the
+   pipeline. The graphical abstract should show (left) 45 datasets / 5 suites / 25 model variants entering AutoQSAR,
+   (middle) base models running first, then post-model CFA fusion and ensemble layers, and (right) the three headline
+   results: broad winner distribution (largest family 15/45, 33%), task-dependent choices (classification favors
+   ensembles/conventional ML; regression is more heterogeneous with selective 3D wins), and published-reference
+   top-10 placement. Do not show bare fractions like 35/37 or 26/37 without explaining that they are the number of
+   comparable datasets where AutoQSAR placed in the published-reference top 10. Do not add a separate guardrails or
+   artifact-provenance box to this graphic. Include the compute trade-off that Uni-Mol V1 costs about 115x the median
+   conventional model. Use restrained scientific colors: blue core, green accessibility/conventional, purple
+   pretrained/3D, amber caution/selection.
+
+## LaTeX submission package (`submission/`)
+
+Journal of Cheminformatics **Software article**, Springer Nature `sn-jnl.cls`, `sn-vancouver-num`.
+
+- `body.tex` holds all prose and is shared by `manuscript.tex` (submission, needs `sn-jnl.cls`) and
+  `proof.tex` (local `article`-class proof; compiles on TeX Live with 0 errors). Edit prose once, in `body.tex`.
+- `submission/tables/*.tex` are **generated** from `manuscript_assets/tables/*.csv` by
+  `render_latex_tables.py`, which `render_manuscript_assets.py` now calls. Never hand-edit them.
+- `sn-jnl.cls` is not on CTAN and tlmgr here cannot sync (local TeX Live 2025 vs remote 2026), so the
+  submission file cannot be compiled locally. Use Overleaf's Springer Nature template, or drop the
+  class into `submission/`. `proof.tex` is the local verification path.
+- Table layout rules that were needed to stop overflow, all in `render_latex_tables.py`: every text
+  column is a tabularx `X`; `\hsize` weights must sum to the number of X columns; tables with >= 7
+  columns go landscape via `pdflscape`; tables over 16 rows use `xltabular` to break across pages;
+  long headers wrap via `makecell`; and `cell_escape` inserts `llowbreak` at underscores, hyphens
+  and CamelCase boundaries so identifiers like `polaris_adme_fang_rclint_1` and `LogisticRegression`
+  can wrap. Without these the build had 597 overfull boxes; it now has 0 above 50pt.
+- Preprints are allowed: Springer Nature does not treat them as prior publication, but disclose the
+  DOI and license at submission.
 
 ## Data and analysis traps (all verified; each one changed headline results)
 

@@ -1,0 +1,44 @@
+\begingroup\footnotesize
+\begin{xltabular}{\textwidth}{@{}>{\raggedright\arraybackslash}Xrr@{}}
+\caption{Model coverage: datasets attempted and datasets yielding a valid metric, per model.}\label{tab:s4}\\
+\toprule
+\textbf{model} & \makecell[r]{\textbf{datasets\_attempted}} & \textbf{datasets\_valid} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{model} & \makecell[r]{\textbf{datasets\_attempted}} & \textbf{datasets\_valid} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{3}{r@{}}{\itshape continued on next page}\\
+\endfoot
+\bottomrule
+\endlastfoot
+Ensemble (OOF Stacking (RidgeCV)) & 26 & 0 \\
+TabPFNClassifier & 10 & 10 \\
+Chemprop v2 (AttentiveFP, ensemble=1) & 45 & 21 \\
+Logistic\allowbreak{}Regression & 22 & 22 \\
+SVC & 22 & 22 \\
+Voting Classifier (KNN, SVM) & 22 & 22 \\
+Map\allowbreak{}Light Cat\allowbreak{}Boost (Strict Parity) & 23 & 23 \\
+Elastic\allowbreak{}NetCV & 23 & 23 \\
+SVR & 23 & 23 \\
+Chemprop v2 (AttentiveFP + Selected descriptors, ensemble=1) & 45 & 23 \\
+Voting Regressor (KNN, SVM) & 23 & 23 \\
+Tabular CNN & 23 & 23 \\
+TabPFNRegressor & 35 & 35 \\
+Map\allowbreak{}Light + GNN (Cat\allowbreak{}Boost, Strict Parity) & 45 & 42 \\
+Ada\allowbreak{}Boost & 45 & 45 \\
+ChemML MLP (Py\allowbreak{}Torch) & 45 & 45 \\
+Random forest & 45 & 45 \\
+Ensemble (Weighted average (inverse train RMSE)) & 45 & 45 \\
+Extra trees & 45 & 45 \\
+Hist\allowbreak{}Gradient\allowbreak{}Boosting & 45 & 45 \\
+Ensemble (OOF Stacking (RidgeCV, 5-\allowbreak{}fold)) & 45 & 45 \\
+Cat\allowbreak{}Boost & 45 & 45 \\
+CFA (Combinatorial Fusion) & 45 & 45 \\
+Tabular MLP & 45 & 45 \\
+Uni-\allowbreak{}Mol V1 & 45 & 45 \\
+XGBoost & 45 & 45 \\
+\end{xltabular}
+\endgroup

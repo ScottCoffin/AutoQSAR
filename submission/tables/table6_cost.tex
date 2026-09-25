@@ -1,0 +1,25 @@
+\begin{landscape}
+\begin{table}[htbp]
+\centering
+\scriptsize
+\caption{Per-family computational cost and model size in this benchmark, with published comparators. Wall-clock times are per model per dataset on the run hardware.}
+\label{tab:cost}
+\begin{tabularx}{\dimexpr\paperheight-5cm\relax}{@{}>{\raggedright\arraybackslash\hsize=0.633\hsize}Xrr>{\raggedright\arraybackslash\hsize=0.449\hsize}Xrr>{\raggedright\arraybackslash\hsize=1.918\hsize}X@{}}
+\toprule
+\textbf{Architecture family} & \makecell[r]{\textbf{Model-dataset}\\\textbf{fits timed}} & \makecell[r]{\textbf{Median own}\\\textbf{wall-clock}\\\textbf{(s)}} & \textbf{IQR own wall-clock (s)} & \makecell[r]{\textbf{Median cost}\\\textbf{incl. base pool}\\\textbf{(s)}} & \makecell[r]{\textbf{Median}\\\textbf{trainable}\\\textbf{parameters}} & \textbf{Notes} \\
+\midrule
+CFA combinatorial fusion & 44.0 & 0.2 & 0-\allowbreak{}-\allowbreak{}0 & 3,147 &  & fusion over fitted base-\allowbreak{}model predictions \\
+Ensemble (stacking /\allowbreak{} averaging) & 90.0 & 0.5 & 0-\allowbreak{}-\allowbreak{}1 & 3,047 &  & fusion over fitted base-\allowbreak{}model predictions \\
+Conventional ML & 472.0 & 17.1 & 5-\allowbreak{}-\allowbreak{}88 &  & 520,961 & measured in this run \\
+Deep tabular NN (ChemML MLP) & 45.0 & 18.1 & 8-\allowbreak{}-\allowbreak{}67 &  & 324,097 & measured in this run \\
+Chemprop v2 GNN & 44.0 & 97.9 & 83-\allowbreak{}-\allowbreak{}132 &  & 395,618 & measured in this run \\
+TabPFN (tabular foundation) & 18.0 & 125.2 & 40-\allowbreak{}-\allowbreak{}382 &  &  & measured in this run \\
+Map\allowbreak{}Light + GNN & 31.0 & 150.8 & 147-\allowbreak{}-\allowbreak{}208 &  &  & measured in this run \\
+Uni-\allowbreak{}Mol V1 (3D pretrained) & 44.0 & 1,964 & 383-\allowbreak{}-\allowbreak{}5571 &  & 47,331,652 & measured in this run \\
+MolGPS (published) &  &  &  &  &  & \textasciitilde{}3B parameters; GPU pretraining/\allowbreak{}inference reported in literature \\
+MolE (published) &  &  &  &  &  & \textasciitilde{}100M parameters; GPU pretraining reported in literature \\
+ADMET-\allowbreak{}AI (published) &  &  &  &  &  & Chemprop-\allowbreak{}RDKit; exact parameter count not recorded here; GPU-\allowbreak{}capable Chemprop-\allowbreak{}RDKit deployment \\
+\bottomrule
+\end{tabularx}
+\end{table}
+\end{landscape}

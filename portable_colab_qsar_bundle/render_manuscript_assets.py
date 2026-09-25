@@ -85,6 +85,16 @@ def main() -> int:
     if missing:
         print(f"manuscript.md references missing tables: {', '.join(missing)}", file=sys.stderr)
     print("Refreshed table blocks in manuscript.md. Prose numbers still need checking against manuscript_numbers.json.")
+
+    # Keep the LaTeX submission package in step with the Markdown: both are generated from the same CSVs.
+    try:
+        import subprocess
+        subprocess.run(
+            [sys.executable, str(REPO_ROOT / "portable_colab_qsar_bundle" / "render_latex_tables.py")],
+            cwd=REPO_ROOT, check=True,
+        )
+    except Exception as exc:  # pragma: no cover - the LaTeX package is optional
+        print(f"Could not refresh LaTeX tables: {exc}", file=sys.stderr)
     return 1 if errors else 0
 
 

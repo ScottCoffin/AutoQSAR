@@ -1,0 +1,65 @@
+\begin{landscape}
+\begingroup\scriptsize
+\begin{xltabular}{\dimexpr\paperheight-5cm\relax}{@{}>{\raggedright\arraybackslash\hsize=1.353\hsize}X>{\raggedright\arraybackslash\hsize=0.438\hsize}X>{\raggedright\arraybackslash\hsize=0.557\hsize}X>{\raggedright\arraybackslash\hsize=1.234\hsize}X>{\raggedright\arraybackslash\hsize=1.910\hsize}X>{\raggedright\arraybackslash\hsize=0.597\hsize}Xr>{\raggedright\arraybackslash\hsize=0.796\hsize}X>{\raggedright\arraybackslash\hsize=1.114\hsize}Xr@{}}
+\caption{Per-dataset winning model under the ranking metric, with the corresponding cross-validation-selected model and its relative gap to the dataset best (\%).}\label{tab:s1}\\
+\toprule
+\textbf{dataset} & \textbf{suite} & \textbf{task\_kind} & \textbf{family} & \textbf{model} & \textbf{analysis\_metric} & \makecell[r]{\textbf{analysis\_metric\_value}} & \textbf{cv\_selected\_model} & \textbf{cv\_selected\_family} & \makecell[r]{\textbf{cv\_selected\_gap\_to\_best}} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{dataset} & \textbf{suite} & \textbf{task\_kind} & \textbf{family} & \textbf{model} & \textbf{analysis\_metric} & \makecell[r]{\textbf{analysis\_metric\_value}} & \textbf{cv\_selected\_model} & \textbf{cv\_selected\_family} & \makecell[r]{\textbf{cv\_selected\_gap\_to\_best}} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{10}{r@{}}{\itshape continued on next page}\\
+\endfoot
+\bottomrule
+\endlastfoot
+tdc\_\allowbreak{}ames & TDC & classification & Conventional ML & XGBoost & test\_\allowbreak{}roc\_\allowbreak{}auc & 0.875 & Extra trees & Conventional ML & 0.777 \\
+tdc\_\allowbreak{}bbb\_\allowbreak{}martins & TDC & classification & Conventional ML & Random forest & test\_\allowbreak{}roc\_\allowbreak{}auc & 0.932 & Tabular MLP & Conventional ML & 5.108 \\
+tdc\_\allowbreak{}bioavailability\_\allowbreak{}ma & TDC & classification & Conventional ML & Cat\allowbreak{}Boost & test\_\allowbreak{}roc\_\allowbreak{}auc & 0.777 & Logistic\allowbreak{}Regression & Conventional ML & 7.943 \\
+tdc\_\allowbreak{}carcinogens\_\allowbreak{}lagunin & TDC & classification & Conventional ML & Ada\allowbreak{}Boost & test\_\allowbreak{}roc\_\allowbreak{}auc & 0.863 & Logistic\allowbreak{}Regression & Conventional ML & 3.747 \\
+tdc\_\allowbreak{}clintox & TDC & classification & Conventional ML & Cat\allowbreak{}Boost & test\_\allowbreak{}roc\_\allowbreak{}auc & 0.949 & Logistic\allowbreak{}Regression & Conventional ML & 3.552 \\
+tdc\_\allowbreak{}cyp1a2\_\allowbreak{}veith & TDC & classification & Ensemble (stacking /\allowbreak{} averaging) & Ensemble (Weighted average (inverse train RMSE)) & test\_\allowbreak{}roc\_\allowbreak{}auc & 0.970 & ChemML MLP (Py\allowbreak{}Torch) & Deep tabular NN (ChemML MLP) & 2.383 \\
+tdc\_\allowbreak{}cyp2c19\_\allowbreak{}veith & TDC & classification & Ensemble (stacking /\allowbreak{} averaging) & Ensemble (Weighted average (inverse train RMSE)) & test\_\allowbreak{}roc\_\allowbreak{}auc & 0.921 & XGBoost & Conventional ML & 8.809 \\
+tdc\_\allowbreak{}cyp2c9\_\allowbreak{}substrate\_\allowbreak{}carbonmangels & TDC & classification & Ensemble (stacking /\allowbreak{} averaging) & Ensemble (OOF Stacking (RidgeCV, 5-\allowbreak{}fold)) & test\_\allowbreak{}auprc & 0.482 & SVC & Conventional ML & 37.538 \\
+tdc\_\allowbreak{}cyp2c9\_\allowbreak{}veith & TDC & classification & Ensemble (stacking /\allowbreak{} averaging) & Ensemble (OOF Stacking (RidgeCV, 5-\allowbreak{}fold)) & test\_\allowbreak{}auprc & 0.810 & Ada\allowbreak{}Boost & Conventional ML & 12.949 \\
+tdc\_\allowbreak{}cyp2d6\_\allowbreak{}substrate\_\allowbreak{}carbonmangels & TDC & classification & Ensemble (stacking /\allowbreak{} averaging) & Ensemble (Weighted average (inverse train RMSE)) & test\_\allowbreak{}auprc & 0.673 & Ada\allowbreak{}Boost & Conventional ML & 3.067 \\
+tdc\_\allowbreak{}cyp2d6\_\allowbreak{}veith & TDC & classification & Conventional ML & XGBoost & test\_\allowbreak{}auprc & 0.722 & Ada\allowbreak{}Boost & Conventional ML & 14.842 \\
+tdc\_\allowbreak{}cyp3a4\_\allowbreak{}substrate\_\allowbreak{}carbonmangels & TDC & classification & Conventional ML & Logistic\allowbreak{}Regression & test\_\allowbreak{}auprc & 0.717 & Tabular MLP & Conventional ML & 5.325 \\
+tdc\_\allowbreak{}cyp3a4\_\allowbreak{}veith & TDC & classification & Ensemble (stacking /\allowbreak{} averaging) & Ensemble (OOF Stacking (RidgeCV, 5-\allowbreak{}fold)) & test\_\allowbreak{}auprc & 0.890 & Ada\allowbreak{}Boost & Conventional ML & 10.365 \\
+tdc\_\allowbreak{}dili & TDC & classification & Ensemble (stacking /\allowbreak{} averaging) & Ensemble (OOF Stacking (RidgeCV, 5-\allowbreak{}fold)) & test\_\allowbreak{}roc\_\allowbreak{}auc & 0.915 & Logistic\allowbreak{}Regression & Conventional ML & 6.036 \\
+tdc\_\allowbreak{}herg & TDC & classification & Conventional ML & Ada\allowbreak{}Boost & test\_\allowbreak{}roc\_\allowbreak{}auc & 0.861 & Tabular MLP & Conventional ML & 15.894 \\
+tdc\_\allowbreak{}herg\_\allowbreak{}karim & TDC & classification & Ensemble (stacking /\allowbreak{} averaging) & Ensemble (Weighted average (inverse train RMSE)) & test\_\allowbreak{}roc\_\allowbreak{}auc & 0.902 & SVC & Conventional ML & 9.739 \\
+tdc\_\allowbreak{}hia\_\allowbreak{}hou & TDC & classification & CFA combinatorial fusion & CFA (Combinatorial Fusion) & test\_\allowbreak{}roc\_\allowbreak{}auc & 0.990 & Logistic\allowbreak{}Regression & Conventional ML & 0.270 \\
+tdc\_\allowbreak{}pampa\_\allowbreak{}ncats & TDC & classification & Ensemble (stacking /\allowbreak{} averaging) & Ensemble (Weighted average (inverse train RMSE)) & test\_\allowbreak{}roc\_\allowbreak{}auc & 0.806 & Tabular MLP & Conventional ML & 5.601 \\
+tdc\_\allowbreak{}pgp\_\allowbreak{}broccatelli & TDC & classification & Ensemble (stacking /\allowbreak{} averaging) & Ensemble (Weighted average (inverse train RMSE)) & test\_\allowbreak{}roc\_\allowbreak{}auc & 0.929 & Tabular MLP & Conventional ML & 2.457 \\
+tdc\_\allowbreak{}skin\_\allowbreak{}reaction & TDC & classification & CFA combinatorial fusion & CFA (Combinatorial Fusion) & test\_\allowbreak{}roc\_\allowbreak{}auc & 0.769 & Logistic\allowbreak{}Regression & Conventional ML & 4.572 \\
+tdc\_\allowbreak{}tox21 & TDC & classification & Conventional ML & XGBoost & test\_\allowbreak{}roc\_\allowbreak{}auc & 0.812 & SVC & Conventional ML & 2.861 \\
+tdc\_\allowbreak{}toxcast & TDC & classification & Conventional ML & Cat\allowbreak{}Boost & test\_\allowbreak{}roc\_\allowbreak{}auc & 0.791 & Cat\allowbreak{}Boost & Conventional ML & 0.000 \\
+chemml\_\allowbreak{}cep\_\allowbreak{}homo & ChemML & regression & TabPFN (tabular foundation) & TabPFNRegressor & test\_\allowbreak{}rmse & 0.086 & Elastic\allowbreak{}NetCV & Conventional ML & 28.254 \\
+chemml\_\allowbreak{}organic\_\allowbreak{}density & ChemML & regression & TabPFN (tabular foundation) & TabPFNRegressor & test\_\allowbreak{}rmse & 0.005 & Elastic\allowbreak{}NetCV & Conventional ML & 26.007 \\
+chemml\_\allowbreak{}xyz\_\allowbreak{}polarizability & ChemML & regression & TabPFN (tabular foundation) & TabPFNRegressor & test\_\allowbreak{}rmse & 0.007 & TabPFNRegressor & TabPFN (tabular foundation) & 0.000 \\
+esol\_\allowbreak{}delaney & Molecule\allowbreak{}Net & regression & Ensemble (stacking /\allowbreak{} averaging) & Ensemble (Weighted average (inverse train RMSE)) & test\_\allowbreak{}rmse & 0.592 & Elastic\allowbreak{}NetCV & Conventional ML & 14.805 \\
+freesolv\_\allowbreak{}sampl & Molecule\allowbreak{}Net & regression & Chemprop v2 GNN & Chemprop v2 (AttentiveFP, ensemble=1) & test\_\allowbreak{}rmse & 1.080 & Elastic\allowbreak{}NetCV & Conventional ML & 15.792 \\
+lipophilicity & Molecule\allowbreak{}Net & regression & Ensemble (stacking /\allowbreak{} averaging) & Ensemble (Weighted average (inverse train RMSE)) & test\_\allowbreak{}rmse & 0.582 & Elastic\allowbreak{}NetCV & Conventional ML & 13.041 \\
+poduam\_\allowbreak{}pod\_\allowbreak{}nc\_\allowbreak{}std & PODUAM & regression & Ensemble (stacking /\allowbreak{} averaging) & Ensemble (Weighted average (inverse train RMSE)) & test\_\allowbreak{}rmse & 0.699 & XGBoost & Conventional ML & 5.154 \\
+poduam\_\allowbreak{}pod\_\allowbreak{}rd\_\allowbreak{}std & PODUAM & regression & Conventional ML & XGBoost & test\_\allowbreak{}rmse & 0.551 & Elastic\allowbreak{}NetCV & Conventional ML & 29.477 \\
+polaris\_\allowbreak{}adme\_\allowbreak{}fang\_\allowbreak{}hppb\_\allowbreak{}1 & Polaris & regression & Map\allowbreak{}Light + GNN & Map\allowbreak{}Light + GNN (Cat\allowbreak{}Boost, Strict Parity) & test\_\allowbreak{}rmse & 0.449 & Elastic\allowbreak{}NetCV & Conventional ML & 16.167 \\
+polaris\_\allowbreak{}adme\_\allowbreak{}fang\_\allowbreak{}perm\_\allowbreak{}1 & Polaris & regression & Uni-\allowbreak{}Mol V1 (3D pretrained) & Uni-\allowbreak{}Mol V1 & test\_\allowbreak{}rmse & 0.399 & ChemML MLP (Py\allowbreak{}Torch) & Deep tabular NN (ChemML MLP) & 18.507 \\
+polaris\_\allowbreak{}adme\_\allowbreak{}fang\_\allowbreak{}rclint\_\allowbreak{}1 & Polaris & regression & Uni-\allowbreak{}Mol V1 (3D pretrained) & Uni-\allowbreak{}Mol V1 & test\_\allowbreak{}rmse & 0.512 & ChemML MLP (Py\allowbreak{}Torch) & Deep tabular NN (ChemML MLP) & 12.570 \\
+polaris\_\allowbreak{}adme\_\allowbreak{}fang\_\allowbreak{}rppb\_\allowbreak{}1 & Polaris & regression & Map\allowbreak{}Light + GNN & Map\allowbreak{}Light + GNN (Cat\allowbreak{}Boost, Strict Parity) & test\_\allowbreak{}rmse & 0.494 & TabPFNRegressor & TabPFN (tabular foundation) & 8.043 \\
+polaris\_\allowbreak{}adme\_\allowbreak{}fang\_\allowbreak{}solu\_\allowbreak{}1 & Polaris & regression & Uni-\allowbreak{}Mol V1 (3D pretrained) & Uni-\allowbreak{}Mol V1 & test\_\allowbreak{}rmse & 0.575 & ChemML MLP (Py\allowbreak{}Torch) & Deep tabular NN (ChemML MLP) & 12.303 \\
+tdc\_\allowbreak{}caco2\_\allowbreak{}wang & TDC & regression & Ensemble (stacking /\allowbreak{} averaging) & Ensemble (Weighted average (inverse train RMSE)) & test\_\allowbreak{}rmse & 0.336 & Elastic\allowbreak{}NetCV & Conventional ML & 13.842 \\
+tdc\_\allowbreak{}clearance\_\allowbreak{}hepatocyte\_\allowbreak{}az & TDC & regression & Map\allowbreak{}Light + GNN & Map\allowbreak{}Light + GNN (Cat\allowbreak{}Boost, Strict Parity) & test\_\allowbreak{}rmse & 43.976 & TabPFNRegressor & TabPFN (tabular foundation) & 17.126 \\
+tdc\_\allowbreak{}clearance\_\allowbreak{}microsome\_\allowbreak{}az & TDC & regression & Uni-\allowbreak{}Mol V1 (3D pretrained) & Uni-\allowbreak{}Mol V1 & test\_\allowbreak{}rmse & 35.888 & Tabular MLP & Conventional ML & 13.242 \\
+tdc\_\allowbreak{}half\_\allowbreak{}life\_\allowbreak{}obach & TDC & regression & Uni-\allowbreak{}Mol V1 (3D pretrained) & Uni-\allowbreak{}Mol V1 & test\_\allowbreak{}rmse & 17.222 & TabPFNRegressor & TabPFN (tabular foundation) & 11.498 \\
+tdc\_\allowbreak{}hydrationfreeenergy\_\allowbreak{}freesolv & TDC & regression & CFA combinatorial fusion & CFA (Combinatorial Fusion) & test\_\allowbreak{}rmse & 0.556 & Elastic\allowbreak{}NetCV & Conventional ML & 143.019 \\
+tdc\_\allowbreak{}ld50\_\allowbreak{}zhu & TDC & regression & CFA combinatorial fusion & CFA (Combinatorial Fusion) & test\_\allowbreak{}rmse & 0.834 & XGBoost & Conventional ML & 1.097 \\
+tdc\_\allowbreak{}lipophilicity\_\allowbreak{}astrazeneca & TDC & regression & Uni-\allowbreak{}Mol V1 (3D pretrained) & Uni-\allowbreak{}Mol V1 & test\_\allowbreak{}rmse & 0.587 & Elastic\allowbreak{}NetCV & Conventional ML & 27.840 \\
+tdc\_\allowbreak{}ppbr\_\allowbreak{}az & TDC & regression & Ensemble (stacking /\allowbreak{} averaging) & Ensemble (Weighted average (inverse train RMSE)) & test\_\allowbreak{}rmse & 11.014 & ChemML MLP (Py\allowbreak{}Torch) & Deep tabular NN (ChemML MLP) & 28.555 \\
+tdc\_\allowbreak{}solubility\_\allowbreak{}aqsoldb & TDC & regression & Uni-\allowbreak{}Mol V1 (3D pretrained) & Uni-\allowbreak{}Mol V1 & test\_\allowbreak{}rmse & 0.989 & Extra trees & Conventional ML & 5.427 \\
+tdc\_\allowbreak{}vdss\_\allowbreak{}lombardo & TDC & regression & Map\allowbreak{}Light + GNN & Map\allowbreak{}Light + GNN (Cat\allowbreak{}Boost, Strict Parity) & test\_\allowbreak{}rmse & 4.668 & TabPFNRegressor & TabPFN (tabular foundation) & 16.999 \\
+\end{xltabular}
+\endgroup
+\end{landscape}
