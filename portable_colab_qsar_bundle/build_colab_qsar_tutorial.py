@@ -1,4 +1,5 @@
 import ast
+import base64
 import json
 import re
 import textwrap
@@ -24,6 +25,18 @@ except ModuleNotFoundError:
 
 OUT_PATH = Path(r"portable_colab_qsar_bundle/colab_qsar_tutorial.ipynb")
 EXAMPLE_DATASET_OPTIONS = notebook_example_dataset_options()
+WORKFLOW_MAP_PATH = Path(__file__).with_name("colab_qsar_workflow_map.png")
+
+
+def workflow_map_image_html():
+    if WORKFLOW_MAP_PATH.exists():
+        encoded = base64.b64encode(WORKFLOW_MAP_PATH.read_bytes()).decode("ascii")
+        return (
+            '<img alt="AutoQSAR Colab workflow map" '
+            f'src="data:image/png;base64,{encoded}" '
+            'style="max-width:100%; height:auto;">'
+        )
+    return "![AutoQSAR Colab workflow map](colab_qsar_workflow_map.png)"
 
 
 def src(text: str):
@@ -260,7 +273,7 @@ cells += [
         - In **local Jupyter**, parameterized steps are split into a **controls cell** and a **run cell**; first run the controls cell to display the widgets, then adjust the settings, then run the next cell
         - After step 0 finishes cleanly, continue to step 1 and move downward
         - If you change an earlier choice, rerun the later cells that depend on it
-        - Some optional sections, especially **hyperparameter tuning**, **deep learning**, and **Uni-Mol**, can take much longer than the basic conventional-model workflow
+        - Some optional sections, especially **hyperparameter tuning**, **deep learning**, **pretrained/graph models**, applicability-domain analysis, and ensembles, can take much longer than the basic conventional-model workflow
 
         **What you need for your own data**
 
@@ -280,6 +293,96 @@ cells += [
         - `references/test_explain.py`
 
         Most code cells are shown in **form view**, so you should mainly see controls rather than raw Python.
+        """
+    ),
+    md(
+        f"""
+        ## Workflow Map: Required Core Path And Optional Extensions
+
+        The fastest way through the tutorial is the **core path**: run setup, load and clean data, build features, split the data, train conventional models, and inspect the observed-vs-predicted plot.
+
+        {workflow_map_image_html()}
+
+        The image is embedded directly in this notebook. If your notebook viewer blocks embedded images, use the text map below.
+
+        ```text
+        REQUIRED CORE PATH
+
+        0 Setup
+          |
+          v
+        1A Load data -> 1B Choose columns -> 1C Clean data and choose target transform
+          |
+          v
+        2A Preview molecules -> 2B Generate molecular features
+          |
+          v
+        3A Similarity map (recommended diagnostic)
+          |
+          v
+        4A Split train/test -> 4A.5 Configure optional selector -> 4B Run selector/prep split
+          |
+          v
+        4C Train conventional models -> 4D Plot observed vs predicted
+        ```
+
+        ```text
+        OPTIONAL / ADVANCED PATHS
+
+        4E-4G Genetic-algorithm tuning
+        5A-5C Deep learning: ChemML, TabPFN, MapLight + GNN
+        6A-6H Pretrained and graph molecular models: Uni-Mol and Chemprop
+        7A-7B Ensembles
+        8A-8C Model explanation
+        9A-9D Predict new molecules, map new chemistry, and assess applicability domain
+        ```
+
+        **Recommended Colab route:** run the core path first with default settings. Once you have a working baseline and a reasonable `4D` plot, add one optional path at a time. Optional paths can install extra packages, use more RAM, require a GPU, or need a runtime restart.
+        """
+    ),
+    md(
+        """
+        ## Estimated Runtime By Runnable Cell
+
+        These are approximate **Google Colab** ranges for moderate QSAR datasets. Runtime can be much shorter when caches are reused and much longer for large datasets, many descriptors, slow package installs, or CPU-only deep-learning runs. Markdown-only cells are effectively instant.
+
+        | Cell | Typical time | Notes |
+        | --- | ---: | --- |
+        | `0` Setup | 2-12 min | First run may install packages and restart; cached environments are faster. |
+        | `1A` Load data | 5 sec-3 min | Example datasets that download from external sources can take longer. |
+        | `1B` Choose columns | <5 sec | Mostly validation and preview. |
+        | `1C` Missingness, curation, target transform | 10 sec-3 min | Larger datasets and difficult SMILES curation can take longer. |
+        | `2A` Molecule preview | 5-30 sec | RDKit drawing time depends on preview count. |
+        | `2B` Generate molecular features | 30 sec-10 min | Heavier feature families and uncached MapLight-style features increase runtime/RAM. |
+        | `3A` Similarity map | 30 sec-8 min | t-SNE/embedding cost grows with molecule count and selected features. |
+        | `4A` Split train/test | 5 sec-2 min | Scaffold splitting can be slower than random or target-quartile splitting. |
+        | `4A.5` Configure feature selection | <10 sec | Stores selector settings. |
+        | `4B` Run feature selection | 30 sec-20 min | ElasticNetCV can be slow for high feature counts; RF fallback is safer for Colab. |
+        | `4C` Train conventional models | 2-30 min | Depends on selected models, CV, rows, and feature count. |
+        | `4D` Plot conventional predictions | 5-30 sec | Usually quick. |
+        | `4E` GA tuning | 10 min-2+ hr | Optional; model count, generations, population size, and CV dominate runtime. |
+        | `4F` Plot tuned predictions | 5-30 sec | Usually quick. |
+        | `4G` GA convergence plots | 5-30 sec | Usually quick. |
+        | `5A` GPU check | <5 sec | Reports runtime hardware. |
+        | `5A.5` TabPFN auth check | 10 sec-2 min | Optional; depends on API/client availability. |
+        | `5B` Deep-learning models | 5-60+ min | GPU recommended; MapLight + GNN and TabPFN can be compatibility-sensitive. |
+        | `5C` Compare deep/conventional | 5-30 sec | Uses completed model results. |
+        | `6A` Install Uni-Mol packages | 1-10 min | May require runtime restart. |
+        | `6B` Prepare Uni-Mol files | 5 sec-2 min | Mostly file writing and split preparation. |
+        | `6C` Uni-Mol V1 | 10 min-2+ hr | Optional; GPU helps, CPU can be slow. |
+        | `6D` Uni-Mol V2 | 20 min-3+ hr | GPU strongly recommended; larger model sizes can exceed Colab memory. |
+        | `6E` Install Chemprop v2 | 1-10 min | May require runtime restart. |
+        | `6F` Chemprop v2 variants | 10 min-2+ hr | Depends on variants, epochs, descriptors, and GPU availability. |
+        | `6G` Plot Uni-Mol predictions | 5-30 sec | Usually quick. |
+        | `6H` Compare model families | 5-60 sec | Usually quick. |
+        | `7A` Build ensemble | 30 sec-10 min | Depends on available member models and ensemble method. |
+        | `7B` Plot ensemble | 5-30 sec | Usually quick. |
+        | `8A` Configure explanations | <10 sec | Stores explanation settings. |
+        | `8B` Explain conventional model | 30 sec-15 min | SHAP/permutation settings and feature count dominate runtime. |
+        | `8C` Explain ChemML deep model | 30 sec-20 min | DeepSHAP/LIME/LRP can be slow on CPU. |
+        | `9A` Predict new molecules | 10 sec-10 min | Optional; Uni-Mol/Chemprop predictions can be slower than conventional models. |
+        | `9B` Prediction UMAP | 30 sec-8 min | Optional; grows with train/test plus new molecules. |
+        | `9D` Applicability domain | 5-60+ min | Optional; MADML fitting and repeated validation can be expensive. |
         """
     ),
     code(
@@ -306,7 +409,7 @@ cells += [
         warnings.filterwarnings("ignore")
 
         PACKAGE_PROGRESS = {"done": 0, "total": 23}
-        SETUP_PROGRESS = {"done": 0, "total": 29}
+        SETUP_PROGRESS = {"done": 0, "total": 30}
         try:
             RUNNING_IN_COLAB = importlib.util.find_spec("google.colab") is not None
         except ModuleNotFoundError:
@@ -2654,6 +2757,45 @@ cells += [
             }
         setup_done("regression summary helper")
 
+        setup_start("target-scale helper")
+        def inverse_target_transform(values):
+            values_array = np.asarray(values, dtype=float)
+            output = values_array.astype(float, copy=True)
+            transform_label = str(STATE.get("target_transform", "none")).strip()
+            transform_label_lower = transform_label.lower()
+            if transform_label_lower in {"", "none", "raw", "no_transform"}:
+                return output
+            if transform_label_lower == "log10":
+                return np.power(10.0, output)
+            if transform_label_lower == "signed_log10":
+                return np.sign(output) * (np.power(10.0, np.abs(output)) - 1.0)
+            if transform_label_lower.startswith("shifted_log10"):
+                shift = float(STATE.get("target_transform_shift", 0.0) or 0.0)
+                return np.power(10.0, output) - shift
+            return output
+
+        def target_scale_label():
+            transform_label = str(STATE.get("target_transform", "none")).strip()
+            if transform_label.lower() in {"", "none", "raw", "no_transform"}:
+                return "original"
+            return f"transformed:{transform_label}"
+
+        def add_prediction_scale_columns(df, prediction_column="prediction"):
+            output_df = df.copy()
+            if prediction_column not in output_df.columns:
+                return output_df
+            prediction_values = pd.to_numeric(output_df[prediction_column], errors="coerce")
+            original_values = np.full(len(output_df), np.nan, dtype=float)
+            valid_mask = prediction_values.notna().to_numpy()
+            if bool(valid_mask.any()):
+                original_values[valid_mask] = inverse_target_transform(
+                    prediction_values.loc[valid_mask].to_numpy(dtype=float)
+                )
+            output_df["prediction_scale"] = target_scale_label()
+            output_df["prediction_original_scale"] = original_values
+            return output_df
+        setup_done("target-scale helper")
+
         setup_start("interactive table helper")
         def display_interactive_table(df, rows=20):
             if IN_COLAB and data_table is not None:
@@ -2684,7 +2826,7 @@ cells += [
         data_source = "Example dataset" # @param ["Upload CSV/XLSX (Colab only)", "File path", "Example dataset"]
         example_dataset = "ChemML | organic_density" # @param ["ChemML | organic_density", "ChemML | cep_homo", "ChemML | xyz_polarizability", "ChemML | comp_energy", "ChemML | crystal_structures", "TDC | ADME | caco2_wang", "TDC | ADME | lipophilicity_astrazeneca", "TDC | ADME | solubility_aqsoldb", "TDC | ADME | ppbr_az", "TDC | ADME | vdss_lombardo", "TDC | ADME | half_life_obach", "TDC | ADME | clearance_hepatocyte_az", "TDC | ADME | clearance_microsome_az", "TDC | Tox | ld50_zhu", "MoleculeNet | PhysChem | ESOL (Delaney)", "MoleculeNet | PhysChem | FreeSolv (SAMPL)", "MoleculeNet | PhysChem | Lipophilicity", "Polaris | ADME | adme-fang-perm-1", "Polaris | ADME | adme-fang-solu-1", "Polaris | ADME | adme-fang-rclint-1", "Polaris | ADME | adme-fang-hppb-1", "Polaris | ADME | adme-fang-rppb-1"]
         dataset_file_path = "/content/drive/MyDrive/your_dataset.csv" # @param {type:"string"}
-        log10_transform_target = True # @param {type:"boolean"}
+        default_target_transform = "AUTO" # @param ["AUTO", "none", "log10_positive_only", "signed_log10", "shifted_log10"]
         preview_rows = 5 # @param {type:"slider", min:3, max:15, step:1}
 
         if data_source == "Example dataset":
@@ -2735,7 +2877,8 @@ cells += [
             STATE["benchmark_metadata"] = None
 
         STATE["raw_df"] = raw_df.copy()
-        STATE["log10_transform_target"] = bool(log10_transform_target)
+        STATE["default_target_transform"] = str(default_target_transform)
+        STATE["log10_transform_target"] = str(default_target_transform).strip().lower() == "log10_positive_only"
         STATE["predefined_split_column"] = None
         STATE["benchmark_leaderboard_summary"] = None
         benchmark_meta = STATE.get("benchmark_metadata") or {}
@@ -2753,7 +2896,7 @@ cells += [
             STATE.pop("recommended_split_strategy", None)
             STATE.pop("recommended_primary_metric", None)
         print(f"Loaded {len(raw_df):,} rows and {raw_df.shape[1]:,} columns from: {STATE['data_source_label']}")
-        print(f"Log10-transform target after preprocessing: {'yes' if STATE['log10_transform_target'] else 'no'}")
+        print(f"Target transform default for preprocessing: {STATE['default_target_transform']}")
         print("Available columns:", list(raw_df.columns))
         if benchmark_meta:
             benchmark_suite = str(benchmark_meta.get("suite", "benchmark")).strip()
@@ -2812,13 +2955,15 @@ cells += [
         if benchmark_meta:
             display_note(
                 "**Next step:** In the next cell, you can usually leave both fields as `AUTO`. "
-                "The benchmark loader has already standardized the table to `smiles` and `target` columns."
+                "The benchmark loader has already standardized the table to `smiles` and `target` columns. "
+                "The preprocessing cell will profile the target values before applying any target transform."
             )
         else:
             display_note(
                 "**Next step:** In the next cell, enter the exact column name for the **SMILES** field and the exact column name for your **numeric target**. "
                 "If your file uses `smiles` and `target` in any capitalization, such as `SMILES`, `Smiles`, `TARGET`, or `Target`, you can leave the fields as `AUTO`. "
-                "In local Jupyter, prefer the **File path** option instead of the Colab-only upload option."
+                "In local Jupyter, prefer the **File path** option instead of the Colab-only upload option. "
+                "The preprocessing cell will profile the target values before applying any target transform."
             )
         """
     ),
@@ -2924,6 +3069,18 @@ cells += [
         - **`interpolate`**: interpolate missing target values, but still drop rows with missing SMILES
 
         Missing **SMILES** values can never be imputed meaningfully in this notebook, so those rows are always removed.
+
+        This block also profiles the numeric target before any optional transform. The default `AUTO` transform uses `log10`
+        only when all cleaned target values are positive. If the target contains zeros or negative values, `AUTO` keeps the
+        raw scale and flags that choice instead of deleting all non-positive rows.
+
+        **How to choose the target transform**
+
+        - Use **`AUTO`** for most runs; it protects Colab users from accidentally deleting all zero or negative targets.
+        - Use **`none`** when the endpoint is already centered, signed, standardized, or naturally includes negative values.
+        - Use **`log10_positive_only`** for strictly positive concentration, potency, solubility, or rate-like endpoints where a log scale is scientifically meaningful.
+        - Use **`signed_log10`** only when preserving the sign is important and compressing large magnitudes is defensible.
+        - Use **`shifted_log10`** only when a constant shift has a clear interpretation for the endpoint; predictions and metrics are then on the shifted-log scale.
         """
     ),
     code(
@@ -2931,6 +3088,8 @@ cells += [
         # @title 1C. Assess missingness and preprocess the selected columns { display-mode: "form" }
         missing_value_strategy = "Please choose if missing values are present" # @param ["Please choose if missing values are present", "ignore_row", "zero", "interpolate"]
         custom_missing_tokens = "missing, nan, NA, N/A, null, None" # @param {type:"string"}
+        target_transform_strategy = "AUTO" # @param ["AUTO", "none", "log10_positive_only", "signed_log10", "shifted_log10"]
+        shifted_log10_epsilon = 1e-6 # @param {type:"number"}
         collapse_duplicate_canonical_smiles = True # @param {type:"boolean"}
         preview_rows_after_cleaning = 5 # @param {type:"slider", min:3, max:15, step:1}
 
@@ -3048,18 +3207,104 @@ cells += [
                 else:
                     raise ValueError(f"Unsupported missing-value strategy for this QSAR workflow: {missing_value_strategy}")
 
-        target_transform_label = "raw"
-        if bool(STATE.get("log10_transform_target", False)):
-            nonpositive_mask = working_df[target_col].astype(float) <= 0
-            if bool(nonpositive_mask.any()):
-                removed_nonpositive = int(nonpositive_mask.sum())
-                working_df = working_df.loc[~nonpositive_mask].copy()
+        if working_df.empty:
+            raise ValueError("No rows remain after missing-value handling.")
+
+        target_values = pd.to_numeric(working_df[target_col], errors="coerce").astype(float)
+        finite_target_mask = np.isfinite(target_values.to_numpy(dtype=float))
+        if not bool(finite_target_mask.all()):
+            before_rows = len(working_df)
+            working_df = working_df.loc[finite_target_mask].copy()
+            target_values = target_values.loc[finite_target_mask].astype(float)
+            print(
+                "Target numeric cleanup: removed "
+                f"{before_rows - len(working_df):,} row(s) with non-finite target values after missing-value handling."
+            )
+        if working_df.empty:
+            raise ValueError("No rows remain after target numeric cleanup.")
+
+        target_values = pd.to_numeric(working_df[target_col], errors="coerce").astype(float)
+        negative_target_count = int((target_values < 0).sum())
+        zero_target_count = int((target_values == 0).sum())
+        positive_target_count = int((target_values > 0).sum())
+        nonpositive_target_count = int((target_values <= 0).sum())
+        target_profile_df = pd.DataFrame(
+            [
+                {"Check": "Rows after missing-value handling", "Count": int(len(working_df))},
+                {"Check": "Rows with negative target", "Count": negative_target_count},
+                {"Check": "Rows with zero target", "Count": zero_target_count},
+                {"Check": "Rows with positive target", "Count": positive_target_count},
+                {"Check": "Rows with non-positive target", "Count": nonpositive_target_count},
+            ]
+        )
+        target_profile_df["Percent"] = np.where(
+            len(working_df) > 0,
+            100.0 * target_profile_df["Count"] / float(len(working_df)),
+            0.0,
+        )
+        STATE["target_value_profile"] = target_profile_df.copy()
+
+        print("Target value profile before target transformation")
+        display(target_profile_df.round({"Percent": 2}))
+        print(
+            "Target range before transform: "
+            f"min={float(target_values.min()):.6g}, "
+            f"median={float(target_values.median()):.6g}, "
+            f"max={float(target_values.max()):.6g}"
+        )
+
+        requested_target_transform = str(target_transform_strategy).strip()
+        if requested_target_transform.upper() == "AUTO":
+            requested_target_transform = str(STATE.get("default_target_transform", "AUTO")).strip()
+        normalized_target_transform = requested_target_transform.strip().lower().replace("-", "_").replace(" ", "_")
+        target_transform_shift = 0.0
+        target_transform_label = "none"
+
+        if normalized_target_transform in {"", "auto"}:
+            if nonpositive_target_count == 0:
+                normalized_target_transform = "log10_positive_only"
+                print("AUTO target transform: all target values are positive, so log10 will be applied.")
+            else:
+                normalized_target_transform = "none"
                 print(
-                    "Log10 transform: removed "
-                    f"{removed_nonpositive:,} row(s) with non-positive target values."
+                    "AUTO target transform: non-positive target values were detected, so the raw target scale will be kept. "
+                    "If a transformed scale is scientifically appropriate, rerun this cell with `signed_log10` or `shifted_log10`."
                 )
-            working_df[target_col] = np.log10(working_df[target_col].astype(float))
+
+        if normalized_target_transform in {"none", "raw", "no_transform"}:
+            working_df[target_col] = target_values.to_numpy(dtype=float)
+            target_transform_label = "none"
+        elif normalized_target_transform in {"log10", "log10_positive_only"}:
+            if nonpositive_target_count > 0:
+                example_nonpositive = target_values.loc[target_values <= 0].head(5).tolist()
+                raise ValueError(
+                    "The `log10_positive_only` target transform requires every target value to be > 0. "
+                    f"Found {nonpositive_target_count:,} non-positive value(s); examples: {example_nonpositive}. "
+                    "Choose `none`, `signed_log10`, or `shifted_log10` instead."
+                )
+            working_df[target_col] = np.log10(target_values.to_numpy(dtype=float))
             target_transform_label = "log10"
+        elif normalized_target_transform == "signed_log10":
+            working_df[target_col] = (
+                np.sign(target_values.to_numpy(dtype=float))
+                * np.log10(1.0 + np.abs(target_values.to_numpy(dtype=float)))
+            )
+            target_transform_label = "signed_log10"
+        elif normalized_target_transform == "shifted_log10":
+            shifted_log10_epsilon = float(shifted_log10_epsilon)
+            if shifted_log10_epsilon <= 0:
+                raise ValueError("`shifted_log10_epsilon` must be > 0.")
+            target_min = float(target_values.min())
+            target_transform_shift = float((-target_min + shifted_log10_epsilon) if target_min <= 0 else 0.0)
+            shifted_values = target_values.to_numpy(dtype=float) + target_transform_shift
+            if bool((shifted_values <= 0).any()):
+                raise ValueError("Shifted log10 transform failed to make all target values positive.")
+            working_df[target_col] = np.log10(shifted_values)
+            target_transform_label = (
+                f"shifted_log10(shift={target_transform_shift:.6g}, epsilon={shifted_log10_epsilon:.6g})"
+            )
+        else:
+            raise ValueError(f"Unsupported target transform strategy: {target_transform_strategy}")
 
         curated_df, curation_stats = curate_smiles_dataframe(
             working_df,
@@ -3103,9 +3348,17 @@ cells += [
         STATE["missing_value_strategy"] = applied_strategy
         STATE["missing_value_tokens"] = parsed_tokens
         STATE["target_transform"] = target_transform_label
+        STATE["target_transform_requested"] = str(target_transform_strategy)
+        STATE["target_transform_shift"] = float(target_transform_shift)
+        STATE["target_value_profile"] = target_profile_df.copy()
 
         print(f"Applied missing-value strategy: {applied_strategy}")
         print(f"Target transform: {target_transform_label}")
+        if target_transform_label == "none" and nonpositive_target_count > 0:
+            print(
+                "Target transform note: non-positive target values were retained on the raw scale. "
+                "Downstream model metrics are therefore reported in the original target units."
+            )
         print("Preprocessing summary")
         print(f"- rows_removed_for_missing_smiles: {rows_removed_for_missing_smiles:,}")
         if int(any_missing_mask.sum()) > 0:
@@ -3136,6 +3389,31 @@ cells += [
         else:
             display_note(
                 "No missing values were detected in the selected SMILES and target columns, so the notebook proceeded directly to SMILES curation."
+            )
+
+        if target_transform_label == "none":
+            if nonpositive_target_count > 0:
+                display_note(
+                    "Target values were kept on the **raw scale**. This is the default `AUTO` behavior when zeros or negative values are present."
+                )
+            else:
+                display_note(
+                    "Target values were kept on the **raw scale** because `none` was selected for the target transform."
+                )
+        elif target_transform_label == "log10":
+            display_note(
+                "A **log10 target transform** was applied because all cleaned target values were positive. "
+                "Model metrics and predictions are reported on this transformed target scale."
+            )
+        elif target_transform_label == "signed_log10":
+            display_note(
+                "A **signed log10 target transform** was applied: `sign(y) * log10(1 + abs(y))`. "
+                "This preserves the sign of negative target values while compressing magnitude."
+            )
+        elif target_transform_label.startswith("shifted_log10"):
+            display_note(
+                "A **shifted log10 target transform** was applied after adding a constant shift so every target value was positive. "
+                f"Shift used: `{target_transform_shift:.6g}`. Model metrics and predictions are reported on the shifted-log scale."
             )
 
         if STATE.get("benchmark_metadata") is not None:
@@ -3207,6 +3485,8 @@ cells += [
 
         Select one or more molecular feature families below. Checking every box is the equivalent of an "all descriptors" representation.
 
+        **Safe Colab defaults:** for a first run, use **Morgan fingerprints**, **MACCS keys**, and **RDKit descriptors**. Leave MapLight classic and the extra fingerprint families off if Colab RAM becomes tight or feature generation is slow. You can always rerun this block with more feature families after the core workflow works.
+
         **Avalon note:** there is no separate Avalon checkbox because Avalon-count fingerprints are already included inside **MapLight classic** (`maplight` family), alongside Morgan-count, ErG, and MapLight descriptor blocks.
 
         This block now uses a persistent molecular feature store by default. The store is an append-only Parquet layout that keeps previously generated feature rows keyed by:
@@ -3227,16 +3507,16 @@ cells += [
         """
         # @title 2B. Generate molecular features { display-mode: "form" }
         use_morgan_features = True # @param {type:"boolean"}
-        use_ecfp6_features = True # @param {type:"boolean"}
-        use_fcfp6_features = True # @param {type:"boolean"}
-        use_layered_features = True # @param {type:"boolean"}
-        use_atom_pair_features = True # @param {type:"boolean"}
-        use_topological_torsion_features = True # @param {type:"boolean"}
-        use_rdk_path_features = True # @param {type:"boolean"}
+        use_ecfp6_features = False # @param {type:"boolean"}
+        use_fcfp6_features = False # @param {type:"boolean"}
+        use_layered_features = False # @param {type:"boolean"}
+        use_atom_pair_features = False # @param {type:"boolean"}
+        use_topological_torsion_features = False # @param {type:"boolean"}
+        use_rdk_path_features = False # @param {type:"boolean"}
         use_maccs_keys = True # @param {type:"boolean"}
         use_rdkit_descriptors = True # @param {type:"boolean"}
         # MapLight classic includes Avalon-count fingerprints (`avalon_count_*`) plus Morgan-count, ErG, and descriptor features.
-        use_maplight_classic = True # @param {type:"boolean"}
+        use_maplight_classic = False # @param {type:"boolean"}
         morgan_radius = 2 # @param {type:"slider", min:1, max:4, step:1}
         fingerprint_bits = "1024" # @param ["256", "512", "1024", "2048"]
         enable_persistent_feature_store = True # @param {type:"boolean"}
@@ -3351,7 +3631,7 @@ cells += [
         - **MACCS** provides a compact fixed key set
         - **RDKit descriptors** provide continuous physicochemical summary features
 
-        If the descriptor count becomes large relative to the number of molecules, configure the optional **train-only feature-selection** step in `2C` (placed just before `4B`). The selector is fit in `4B` after the train/test split so held-out test rows do not influence the selected feature set.
+        If the descriptor count becomes large relative to the number of molecules, configure the optional **train-only feature-selection** step in `4A.5` (placed just before `4B`). The selector is fit in `4B` after the train/test split so held-out test rows do not influence the selected feature set.
         """
     ),
     md(
@@ -3600,7 +3880,7 @@ cells += [
 
         - build a numerical representation from SMILES
         - split data into training and test sets
-        - optionally run the train-only feature selector configured in `2C`
+        - optionally run the train-only feature selector configured in `4A.5`
         - use scaling where the model benefits from it
         - compare several algorithms with the **same split**
         - judge the final models by both cross-validation and held-out test performance
@@ -3662,19 +3942,19 @@ cells += [
             f"Saved raw train/test split: {X_train.shape[0]:,} train row(s), "
             f"{X_test.shape[0]:,} test row(s), {X_train.shape[1]:,} feature(s) before selection."
         )
-        display_note("Configure selector settings in `2C` (now placed here), then run `4B` to fit or load the train-only feature selector.")
+        display_note("Configure selector settings in `4A.5`, then run `4B` to fit or load the train-only feature selector.")
         """
     ),
     md(
         """
-        ### 2C. Configure Train-Only Feature Selection
+        ### 4A.5. Configure Train-Only Feature Selection
 
-        This configuration block is placed here so selector settings are chosen right before the selector implementation in `4B`.
+        This configuration block is placed here so selector settings are chosen after the train/test split is defined and right before the selector implementation in `4B`.
         """
     ),
     code(
         """
-        # @title 2C. Configure train-only feature selection { display-mode: "form" }
+        # @title 4A.5. Configure train-only feature selection { display-mode: "form" }
         # @markdown ### Selector method
         feature_selector_method = "elasticnet_cv" # @param ["none", "fixed_lasso", "lasso_cv", "elasticnet_cv", "random_forest_importance"]
         # @markdown ### Fixed LASSO settings
@@ -4374,9 +4654,11 @@ cells += [
         display_note("Run `4C` next to train the conventional ML models on this prepared split.")
         """
     ),
+]
+tabpfn_auth_cells = [
     md(
         """
-        ### 4B.5. Configure TabPFN Authentication (PRIORLABS_API_KEY) Before 5B
+        ### 5A.5. Configure TabPFN Authentication (PRIORLABS_API_KEY)
 
         TabPFN can require a Prior Labs access token. Use this helper to set `PRIORLABS_API_KEY`
         for the current kernel session **without printing it**, then run a quick TabPFN preflight check.
@@ -4386,7 +4668,7 @@ cells += [
     ),
     code(
         """
-        # @title 4B.5. Set PRIORLABS_API_KEY securely and test TabPFN auth/access
+        # @title 5A.5. Set PRIORLABS_API_KEY securely and test TabPFN auth/access
         if "STATE" not in globals():
             raise RuntimeError("Please run step 0 first.")
 
@@ -4569,6 +4851,8 @@ cells += [
             _display_tabpfn_auth_result(_run_tabpfn_auth_check())
         """
     ),
+]
+cells += [
     md(
         """
         ### 4C. Conventional-Model CV Note
@@ -4584,6 +4868,20 @@ cells += [
 
         This section focuses on single-model conventional learners (linear/kernel/tree/boosting/tabular NN/CNN).
         Fusion methods (including **CFA**) are handled in section `7` so ensemble behavior is centralized.
+        """
+    ),
+    md(
+        """
+        ### 4C.2. How To Read The Metrics Table
+
+        The conventional-model table is the first main checkpoint in the tutorial.
+
+        - **Lower RMSE and MAE are better.** These are error sizes on the current target scale.
+        - **Higher R2 and Spearman are better.** R2 measures variance explained; Spearman measures rank-order agreement.
+        - **Train much better than test** suggests overfitting.
+        - **Cross-validation and held-out test should tell a similar story.** If they disagree strongly, the split may be unusually easy or hard, or the dataset may be small/clustered.
+
+        Use the held-out **Test RMSE/Test MAE** columns as the main practical comparison, then use the observed-vs-predicted plots in `4D` to check whether errors are evenly distributed or driven by a few molecules.
         """
     ),
     code(
@@ -5352,6 +5650,8 @@ cells += [
         The ElasticNet GA search space follows the installed ChemML AutoML implementation: alpha is searched from `1e-4` to `1e-1` on the log scale, and `l1_ratio` is chosen from `0.4, 0.8`. This is a model-tuning step, not a separate feature selector.
 
         The defaults below are intentionally moderate for Colab. If you need a deeper search, increase the population size or number of generations.
+
+        **Safe Colab defaults:** keep GA enabled only for one or two model families at first, use 3-5 CV folds, and keep generations/population near the defaults. GA tuning is optional; a good `4C` model is enough for the basic workflow.
         """
     ),
     code(
@@ -6650,18 +6950,23 @@ cells += [
 
         - **ChemML PyTorch** can run on CPU or GPU after the PyTorch dependency is installed
         - **ChemML TensorFlow** can run on CPU or GPU, but it requires TensorFlow to be installed
-        - **TabPFNRegressor** can run through local `tabpfn` (enable `run_tabpfn_local`) or API-backed `tabpfn_client` (set key in block `4B.5`); if the API gives a version error, use local mode
+        - **TabPFNRegressor** can run through local `tabpfn` (enable `run_tabpfn_local`) or API-backed `tabpfn_client` (set key in block `5A.5`); if the API gives a version error, use local mode
         - **MapLight + GNN** depends on `molfeat` + `dgl` + a PyTorch backend; the MapLight repo notes that it does not run reliably on Colab
         - this section does **not** train Uni-Mol; the dedicated Uni-Mol workflow appears in section `6`
+
+        **Safe Colab defaults:** start with `run_chemml_pytorch=True`, `run_chemml_tensorflow=False`, `run_maplight_gnn=False`, and `run_tabpfn_deep=False`. Turn on TabPFN after `5A.5` passes or after choosing local TabPFN mode. Turn on MapLight + GNN only if you are running locally or you know your Colab runtime has compatible DGL/PyTorch packages.
         """
     ),
+]
+cells += tabpfn_auth_cells
+cells += [
     code(
         """
         # @title 5B. Train selected deep-learning models { display-mode: "form" }
         run_chemml_pytorch = True # @param {type:"boolean"}
         run_chemml_tensorflow = False # @param {type:"boolean"}
-        run_maplight_gnn = True # @param {type:"boolean"}
-        run_tabpfn_deep = True # @param {type:"boolean"}
+        run_maplight_gnn = False # @param {type:"boolean"}
+        run_tabpfn_deep = False # @param {type:"boolean"}
         run_tabpfn_local = False # @param {type:"boolean"}
         tabpfn_max_train_rows = 1000 # @param {type:"integer"}
         chemml_hidden_layers = 2 # @param {type:"slider", min:1, max:4, step:1}
@@ -7940,14 +8245,14 @@ cells += [
                 print(f"[skip] TabPFN unavailable: {exc}", flush=True)
                 display_note(
                     f"TabPFN was enabled but the required package is unavailable: {exc}\\n"
-                    "Run block 4B.5 to check TabPFN preflight status."
+                    "Run block 5A.5 to check TabPFN preflight status."
                 )
 
             if tabpfn_model is not None and not bool(run_tabpfn_local):
                 if not bool(STATE.get("tabpfn_preflight_ok", False)):
                     display_note(
-                        "TabPFN was enabled but the API preflight failed in block 4B.5. "
-                        "Set PRIORLABS_API_KEY in block 4B.5 and rerun, "
+                        "TabPFN was enabled but the API preflight failed in block 5A.5. "
+                        "Set PRIORLABS_API_KEY in block 5A.5 and rerun, "
                         "or enable `run_tabpfn_local` to use local inference without the API."
                     )
                     tabpfn_model = None
@@ -8019,7 +8324,7 @@ cells += [
                         print(f"[skip] TabPFN training failed: {exc}", flush=True)
                         display_note(
                             f"TabPFN training failed: {exc}\\n"
-                            "If using the API backend, verify PRIORLABS_API_KEY in block 4B.5 or enable `run_tabpfn_local`."
+                            "If using the API backend, verify PRIORLABS_API_KEY in block 5A.5 or enable `run_tabpfn_local`."
                         )
 
                 if _tabpfn_preds is not None:
@@ -8534,7 +8839,16 @@ cells += [
     ),
     md(
         """
-        ## 6. Uni-Mol 3D Molecular Representation Learning
+        ## 6. Pretrained And Graph Molecular Models
+
+        This advanced section contains two separate families of molecular models:
+
+        - **Uni-Mol**, a pretrained 3D molecular representation workflow
+        - **Chemprop v2**, a graph neural network workflow that learns directly from molecular graphs
+
+        Both paths are optional. They are useful comparisons after the conventional-model baseline is working, but they are more sensitive to Colab runtime type, package versions, memory, and restart behavior.
+
+        **Safe Colab defaults:** start with the conventional workflow first. If you continue here, try **Uni-Mol V1** or **Uni-Mol V2 `84m`** on a GPU runtime before larger models. Leave Chemprop extras off for the first run and keep epochs modest. If an install cell says to restart, restart the runtime, rerun step `0`, and rerun the setup cells needed to rebuild notebook state.
 
         ### Pretrained Models and Why They Matter
 
@@ -8677,6 +8991,13 @@ cells += [
         print(f"Training molecules: {len(train_df)}")
         print(f"Test molecules: {len(test_df)}")
         display(train_df.head(3))
+        """
+    ),
+    md(
+        """
+        ### Safe Colab Defaults For Uni-Mol
+
+        Start with `6C` Uni-Mol V1 or `6D` Uni-Mol V2 using the `84m` model size. Keep epochs low until the pipeline completes once. Larger Uni-Mol V2 sizes can exceed free Colab GPU memory, especially after other models have already run in the same runtime.
         """
     ),
     code(
@@ -9326,6 +9647,13 @@ cells += [
             print("Chemprop package check complete.")
         """
     ),
+    md(
+        """
+        ### Safe Colab Defaults For Chemprop
+
+        Start with one graph variant, keep `chemprop_epochs` modest, and leave RDKit2D extras off unless you need them. Chemprop can be package-sensitive in Colab, so after `6E` installs or upgrades packages, a runtime restart is often the cleanest path.
+        """
+    ),
     code(
         """
         # @title 6F. Train and evaluate Chemprop v2 graph variants { display-mode: "form" }
@@ -9967,7 +10295,7 @@ cells += [
     ),
     code(
         """
-        # @title 6H. Compare conventional ML, ChemML deep learning, and Uni-Mol { display-mode: "form" }
+        # @title 6H. Compare conventional ML, ChemML deep learning, Uni-Mol, and Chemprop { display-mode: "form" }
         if "traditional_results" not in STATE:
             raise RuntimeError("Please run the conventional-model section first.")
         if "unimol_results" not in STATE:
@@ -11870,6 +12198,7 @@ cells += [
             input_df[prediction_smiles_column].astype(str).reset_index(drop=True),
             input_df,
         )
+        prediction_df = add_prediction_scale_columns(prediction_df, prediction_column="prediction")
         prediction_df.insert(0, "row_id", np.arange(len(prediction_df)))
         prediction_df["workflow"] = selected_workflow
         prediction_df["model_name"] = selected_model_name
@@ -11883,6 +12212,7 @@ cells += [
 
         print(f"Prediction source: {input_source_label}")
         print(f"Prediction model: {selected_model_name} ({selected_workflow})")
+        print(f"Prediction scale: {target_scale_label()}")
         print(
             f"Predicted {int(prediction_df['valid_smiles'].sum())} valid molecule(s); "
             f"{int((~prediction_df['valid_smiles']).sum())} row(s) were invalid."
@@ -11902,6 +12232,7 @@ cells += [
             "This block predicts on **new SMILES only**. Invalid SMILES are flagged and left with missing predictions. "
             "Conventional, tuned, and ChemML models reuse the notebook's saved molecular feature settings; Uni-Mol uses the saved Uni-Mol model directory; "
             "the ensemble averages the currently available member models. "
+            "`prediction` is reported on the model's current target scale; `prediction_original_scale` back-transforms it when a target transform was used. "
             "A bundled example file with 10 SMILES is provided by default at `./portable_colab_qsar_bundle/example_prediction_smiles.csv`."
         )
         """
@@ -11972,7 +12303,7 @@ cells += [
             {
                 "dataset_role": "Train",
                 "smiles": STATE["smiles_train"].astype(str).reset_index(drop=True),
-                "observed_target": pd.Series(np.asarray(STATE["y_train"], dtype=float)),
+                "observed_target": pd.Series(inverse_target_transform(np.asarray(STATE["y_train"], dtype=float))),
                 "predicted_value": np.nan,
                 "model_name": STATE["best_traditional_model_name"],
             }
@@ -11981,7 +12312,7 @@ cells += [
             {
                 "dataset_role": "Test",
                 "smiles": STATE["smiles_test"].astype(str).reset_index(drop=True),
-                "observed_target": pd.Series(np.asarray(STATE["y_test"], dtype=float)),
+                "observed_target": pd.Series(inverse_target_transform(np.asarray(STATE["y_test"], dtype=float))),
                 "predicted_value": np.nan,
                 "model_name": STATE["best_traditional_model_name"],
             }
@@ -11991,7 +12322,10 @@ cells += [
                 "dataset_role": "New prediction",
                 "smiles": prediction_df.loc[valid_prediction_rows, "canonical_smiles"].astype(str).reset_index(drop=True),
                 "observed_target": np.nan,
-                "predicted_value": prediction_df.loc[valid_prediction_rows, "prediction"].to_numpy(dtype=float),
+                "predicted_value": prediction_df.loc[
+                    valid_prediction_rows,
+                    "prediction_original_scale" if "prediction_original_scale" in prediction_df.columns else "prediction",
+                ].to_numpy(dtype=float),
                 "model_name": prediction_df.loc[valid_prediction_rows, "model_name"].astype(str).reset_index(drop=True),
             }
         )
@@ -12211,6 +12545,8 @@ cells += [
         - print a **runtime estimate** based on the current dataset size, feature count, and MADML settings
         - report whether it is using a cached fitted AD model or fitting a new one
         - report separately when it starts **fitting** and when it starts **applying** the AD model
+
+        **Safe Colab defaults:** keep `mastml_n_repeats=1`, keep the random forest size near the default, leave caching enabled, and run this only after `9A` predictions look reasonable. For a quick visual check before this heavier AD workflow, use `9B` first.
         """
     ),
     code(
@@ -12891,6 +13227,8 @@ cells += [
                 "row_id",
                 "canonical_smiles",
                 "prediction",
+                "prediction_original_scale",
+                "prediction_scale",
                 "workflow",
                 "model_name",
                 "ad_consensus_concern",
@@ -13019,6 +13357,8 @@ cells += [
                 "mastml_kde_dissimilarity": ":.4f",
                 "mastml_internal_rf_uncertainty_calibrated": ":.4f",
             }
+            if "prediction_original_scale" in plot_df.columns:
+                hover_data_map["prediction_original_scale"] = ":.4f"
             if concern_interpret_col_for_plot is not None:
                 hover_data_map[concern_interpret_col_for_plot] = True
             scatter_fig = px.scatter(
@@ -13088,6 +13428,8 @@ cells += [
                 "ad_knn_mean_distance": ":.4f",
                 "ad_mahalanobis_distance": ":.4f",
             }
+            if "prediction_original_scale" in plot_df.columns:
+                hover_cols["prediction_original_scale"] = ":.4f"
             if concern_interpret_col_for_plot is not None:
                 hover_cols[concern_interpret_col_for_plot] = True
             knn_mahal_fig = px.scatter(

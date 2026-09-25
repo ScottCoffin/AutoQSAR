@@ -1,0 +1,3361 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.9.38">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>manuscript</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+</style>
+
+
+<script src="manuscript_files/libs/clipboard/clipboard.min.js"></script>
+<script src="manuscript_files/libs/quarto-html/quarto.js" type="module"></script>
+<script src="manuscript_files/libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="manuscript_files/libs/quarto-html/popper.min.js"></script>
+<script src="manuscript_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="manuscript_files/libs/quarto-html/anchor.min.js"></script>
+<link href="manuscript_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="manuscript_files/libs/quarto-html/quarto-syntax-highlighting-15634bcf2e68342d4ad2dfa704d543f6.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="manuscript_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="manuscript_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="manuscript_files/libs/bootstrap/bootstrap-efbb37e9afcc02144ebbc7afd12a776f.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+
+
+</head>
+
+<body class="fullcontent quarto-light">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+
+<main class="content" id="quarto-document-content">
+
+
+
+
+<section id="no-single-architecture-wins-ensembles-and-conventional-machine-learning-match-pretrained-molecular-models-across-45-property-prediction-benchmarks" class="level1">
+<h1>No Single Architecture Wins: Ensembles and Conventional Machine Learning Match Pretrained Molecular Models Across 45 Property-Prediction Benchmarks</h1>
+<p><strong>Running title:</strong> AutoQSAR: an accessible, leakage-controlled AutoML workspace for molecular property prediction</p>
+<p><strong>Author:</strong> Scott Coffin<sup>1</sup></p>
+<p><sup>1</sup> California Office of Environmental Health Hazard Assessment, 1001 I Street, Sacramento, CA 95814, USA</p>
+<p><strong>Corresponding author:</strong> Scott Coffin (scott.l.coffin@gmail.com)</p>
+<blockquote class="blockquote">
+<p><strong>Author checklist before submission.</strong> Items still requiring author action are flagged inline with <strong>[AUTHOR]</strong>. They are: the ORCID identifier; the hardware statement in Section 2.12; the Zenodo DOI for the artifact archive; the repository release tag; and the two literature references flagged for final verification.</p>
+</blockquote>
+<hr>
+<section id="abstract" class="level2">
+<h2 class="anchored" data-anchor-id="abstract">Abstract</h2>
+<p><strong>Background.</strong> Prediction of absorption, distribution, metabolism, excretion and toxicity (ADMET) and related physicochemical properties from chemical structure has been dominated by an arms race toward ever-larger pretrained models, whose compute cost, accessibility and reproducibility limit adoption in academic, regulatory and small-laboratory settings. Whether that architectural scale is warranted has not been tested across benchmark suites under a single, leakage-controlled pipeline.</p>
+<p><strong>Implementation.</strong> We present AutoQSAR, a portable, open-source modelling and benchmarking workspace that predicts molecular properties from SMILES through one reproducible workflow: RDKit standardization, ten fingerprint and descriptor families including a MapLight-style composite, train-only filtering and ElasticNetCV feature selection, and a model library spanning conventional machine learning, gradient boosting, deep tabular networks, message-passing graph neural networks (Chemprop v2), a tabular foundation model (TabPFN), a 3D pretrained model (Uni-Mol V1), a descriptor–graph hybrid (MapLight + GNN), and combinatorial-fusion and stacking ensembles. It is delivered as both a code-free Jupyter/Colab notebook and a resume-safe command-line runner that share one workflow core.</p>
+<p><strong>Results.</strong> Across 45 datasets from five suites (TDC, MoleculeNet, Polaris ADME, PODUAM, ChemML; 23 regression and 22 classification tasks, 828 valid model–dataset evaluations), no architecture family won more than a third of datasets. Stacking and averaging ensembles won 15 datasets, conventional machine learning 11, the 3D pretrained Uni-Mol V1 seven (all regression), MapLight + GNN four, combinatorial fusion four, TabPFN three and Chemprop one. Ensembles and conventional models were also the most consistent, landing within 5% of the per-dataset best on 76% and 69% of datasets respectively, versus 62% for Uni-Mol V1 at roughly 115 times the median wall-clock cost. Against 430 published reference values on 37 datasets, the best AutoQSAR model per dataset placed in the estimated top ten on 35 and first on six. Because selecting that model uses held-out data, we also report a stricter protocol in which the model is chosen by cross-validation alone: top-ten placement then falls to 26 of 37 datasets, a gap we regard as the realistic estimate of deployable performance and one that applies to any leaderboard entry selected the same way. All results derive from a single split and seed per dataset — multi-seed replication was beyond the available compute budget — so individual model-to-model margins are provisional and we emphasize only findings resting on categorical rather than close differences.</p>
+<p><strong>Conclusions.</strong> A carefully engineered, GPU-optional AutoML pipeline matches or approaches specialized and pretrained models on most ADMET tasks; the optimal architecture is strongly dataset-dependent; and honest model selection costs roughly nine leaderboard placements out of 37. All results derive from a single split and seed per dataset, so individual model-to-model margins are provisional and the findings we emphasize are those resting on categorical differences rather than close comparisons. AutoQSAR makes competitive molecular property prediction accessible without specialized hardware and ships the artifacts needed to verify every number reported here.</p>
+<p><strong>Keywords:</strong> QSAR; ADMET; AutoML; molecular property prediction; benchmarking; reproducibility; data leakage; ensemble learning; foundation models</p>
+<hr>
+</section>
+<section id="background" class="level2">
+<h2 class="anchored" data-anchor-id="background">1. Background</h2>
+<p>Unfavourable ADMET properties remain among the most consequential causes of failure in drug development. The preclinical stage confronts an attrition rate of approximately 93%, and even among candidates that reach clinical testing more than 75% ultimately fail; undesirable ADME properties account for roughly 40% of candidate-molecule failures and toxicity contributes up to a further 30% [1]. The value of identifying these liabilities early is well established: after the pharmaceutical industry adopted systematic early ADMET screening in the late 1990s, the share of clinical failures attributable to ADME and pharmacokinetic causes fell from roughly 40% to 11% [2]. Because experimental ADMET assays are slow, costly and hard to scale to the growing number of synthesized and virtual compounds, <em>in silico</em> prediction of ADMET endpoints from chemical structure has become an indispensable complement to laboratory screening [1, 3].</p>
+<p>Standardized public benchmarks have driven much of this progress. MoleculeNet established curated datasets and evaluation protocols for molecular machine learning [4], and the Therapeutics Data Commons (TDC) consolidated a large collection of ADMET datasets into a benchmark group with fixed splits, per-task metrics and a public leaderboard enabling direct comparison [5]. More recent resources such as Polaris have emphasized immutable, standardized benchmarks as a route to reproducible comparison. These resources catalysed rapid methodological progress, but also fostered a leaderboard culture in which incremental gains are pursued through increasingly elaborate architectures.</p>
+<p>A prominent expression of this trend is the turn toward large pretrained “foundation” models. Graph-based models such as MolE, pretrained on roughly 842 million molecules [6], and MolGPS, scaled to three billion parameters with the aid of phenomics data [7], have established state-of-the-art results on subsets of the TDC ADMET tasks, and parameter-efficient successors such as MiniMol have continued this line of work [8]. Three-dimensional pretrained models such as Uni-Mol, which learns from conformer geometry rather than 2D topology alone, represent a distinct and comparatively cheap point on this spectrum [9]. While impressive, the largest of these models require very large pretraining corpora, specialized hardware and substantial engineering expertise, placing them out of practical reach for many of the settings in which ADMET prediction is most needed.</p>
+<p>Critically, the assumption that architectural scale translates into superior ADMET prediction is not well supported. In the most comprehensive benchmark of its kind, Xia et al.&nbsp;evaluated twelve representative models — three non-deep and nine deep — and found that deep models generally fail to outperform non-deep ones, with gradient-boosted trees and random forests on molecular fingerprints tending to perform best, because tree models suit the non-smooth target functions characteristic of molecular property prediction [10]. A review in the <em>Annual Review of Biomedical Data Science</em> reached a concordant conclusion: a substantial and consistent advantage of deep learning over standard machine learning across diverse datasets and properties has not been demonstrated, and success in compound-property prediction does not necessarily scale with model complexity [11]. These observations are borne out on the TDC leaderboard itself, where gradient boosting on combined fingerprint and descriptor representations remains highly competitive: extreme gradient boosting (ADMETboost) [12]; CatBoost paired with ECFP, Avalon and ErG fingerprints plus ~200 molecular properties, which achieved top-3 performance on 16 of 22 benchmarks (the MapLight submission) [13]; AutoML over descriptor sets (CaliciBoost) [14]; and automatic feature-combination frameworks built on simple learners (MaxQsaring, ranked first on 19 of 22 TDC tasks) [15]. Systematic representation studies reinforce this: the choice of molecular representation is often more decisive than model architecture, and optimal choices are strongly dataset-dependent [16].</p>
+<p>Compounding the questionable returns of architectural complexity is a deepening concern over reproducibility. Across the quantitative sciences, data leakage has been identified as a pervasive and often invisible cause of over-optimistic results, affecting at least 294 papers across 17 disciplines in one survey [17]. Cheminformatics is not exempt: leakage through structure duplication, preprocessing on combined train–test data, and feature selection performed before cross-validation systematically inflates QSAR performance estimates, and reproducibility, interpretability and generalizability deficits have hindered regulatory uptake of ML-based toxicity models [18]. A recent critical assessment of the TDC ADMET leaderboard found that only three top-ranked entries — CaliciBoost, MapLight and MapLight + GNN — passed all reproducibility checks, with most leading submissions exhibiting unavailable code, non-reproducible environments or methodological flaws [19]. Headline rankings therefore frequently fail to reflect either genuine methodological progress or deployable models.</p>
+<p>A less-discussed form of the same problem concerns model <em>selection</em>. Benchmark suites report the performance of a chosen model on a held-out test set, but when the choice among many candidate models is itself made by comparing test-set scores, the reported number is an optimistic maximum over candidates rather than an estimate of what a practitioner would obtain on new data. This affects AutoML systems especially, since their value proposition is precisely that they search over many models. We treat it here as a first-class result rather than a caveat.</p>
+<p>These problems are aggravated by a persistent accessibility gap. Many academic drug-discovery efforts founder in the preclinical “death valley” in part because researchers lack access to commercial ADME prediction software owing to high licensing fees [3]. Open tools have begun to address this. Web predictors such as ADMET-AI provide fast, accurate predictions with the highest average rank on the TDC leaderboard but do not allow users to retrain or extend models on their own data [20]. AutoML frameworks offer more flexibility: DeepMol delivered competitive, fully reproducible pipelines across 22 TDC ADMET datasets [21]; Auto-ADMET coupled grammar-based genetic programming with a Bayesian network to produce interpretable pipelines [22]; and code-light tools such as ChemXploreML have sought to lower the barrier for non-specialists [23]. Nonetheless, existing tools typically evaluate on a single benchmark suite, expose a limited subset of model families, and rarely combine a code-free interface with a rigorous, leakage-controlled batch-evaluation engine.</p>
+<p>Here we present AutoQSAR, a portable QSAR modelling and benchmarking workspace designed to close these gaps. AutoQSAR couples a code-free, GPU-optional notebook with a resume-safe command-line benchmark runner, both calling a shared workflow core that enforces train-only feature filtering and selection. The same pipeline spans conventional machine learning, gradient boosting, deep tabular and graph neural networks, a tabular foundation model, a 3D pretrained model, descriptor–graph hybrids, and combinatorial-fusion and stacking ensembles, and is evaluated uniformly across 45 datasets from five benchmark collections — a breadth of cross-suite coverage that, to our knowledge, exceeds prior single-tool studies. Using this framework we show that no single family dominates, that ensembles and conventional machine learning match pretrained models on most benchmarks at a small fraction of the compute, and that the apparent margin between an AutoML system and a published leaderboard depends heavily on whether model selection is honest about held-out data.</p>
+<hr>
+</section>
+<section id="implementation" class="level2">
+<h2 class="anchored" data-anchor-id="implementation">2. Implementation</h2>
+<section id="software-architecture" class="level3">
+<h3 class="anchored" data-anchor-id="software-architecture">2.1 Software architecture</h3>
+<p>AutoQSAR predicts molecular properties directly from SMILES strings and is distributed with two interoperable entry points sharing a common workflow core: <code>colab_qsar_tutorial.ipynb</code>, an interactive widget-driven Jupyter/Colab notebook for code-free model building on built-in or user-supplied data; and <code>run_autoqsar_ga_benchmarks.py</code>, a command-line runner for resume-safe model comparison across curated dataset collections. Both call the same feature-generation, splitting, fusion and evaluation library (<code>qsar_workflow_core.py</code>), so interactive and batch results are produced by identical code paths (Figure 1).</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="manuscript_assets/figures/figure1_workflow.png" class="img-fluid figure-img"></p>
+<figcaption>Figure 1. AutoQSAR workflow schematic.</figcaption>
+</figure>
+</div>
+<p><strong>Figure 1.</strong> The AutoQSAR workflow. Data ingestion and standardization, featurization, splitting and train-only feature selection are followed by a model library spanning conventional machine learning, deep and pretrained models, and fusion; every stage writes cached, resumable artifacts. The code-free notebook and the command-line runner share this core.</p>
+<p>For each dataset the runner executes a fixed sequence: build molecular features; apply the train/test split and train-only ElasticNetCV feature selection; evaluate conventional models; optionally run a genetic-algorithm tuning pass; run deep workflows (ChemML backends, Chemprop v2 variants, Uni-Mol V1, MapLight + GNN); optionally run combinatorial fusion over all successful predictions; build ensembles over available members; and write cross-dataset performance tables. Optional families are skipped gracefully when dependencies, hardware or dataset-size guardrails are unmet, allowing the rest of a run to continue. The model inventory and its per-dataset availability are given in Table 1.</p>
+<!-- TABLE:table1_model_inventory -->
+<table class="caption-top table">
+<colgroup>
+<col style="width: 16%">
+<col style="width: 16%">
+<col style="width: 16%">
+<col style="width: 16%">
+<col style="width: 16%">
+<col style="width: 16%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Architecture family</th>
+<th>Model</th>
+<th>Valid regression datasets</th>
+<th>Valid classification datasets</th>
+<th>Wins</th>
+<th>Datasets attempted</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>CFA combinatorial fusion</td>
+<td>CFA (Combinatorial Fusion)</td>
+<td>22</td>
+<td>22</td>
+<td>4</td>
+<td>45</td>
+</tr>
+<tr class="even">
+<td>Chemprop v2 GNN</td>
+<td>Chemprop v2 (AttentiveFP + Selected descriptors, ensemble=1)</td>
+<td>23</td>
+<td>0</td>
+<td>0</td>
+<td>45</td>
+</tr>
+<tr class="odd">
+<td>Chemprop v2 GNN</td>
+<td>Chemprop v2 (AttentiveFP, ensemble=1)</td>
+<td>21</td>
+<td>0</td>
+<td>1</td>
+<td>45</td>
+</tr>
+<tr class="even">
+<td>Conventional ML</td>
+<td>AdaBoost</td>
+<td>23</td>
+<td>22</td>
+<td>2</td>
+<td>45</td>
+</tr>
+<tr class="odd">
+<td>Conventional ML</td>
+<td>CatBoost</td>
+<td>23</td>
+<td>22</td>
+<td>3</td>
+<td>45</td>
+</tr>
+<tr class="even">
+<td>Conventional ML</td>
+<td>ElasticNetCV</td>
+<td>23</td>
+<td>0</td>
+<td>0</td>
+<td>23</td>
+</tr>
+<tr class="odd">
+<td>Conventional ML</td>
+<td>Extra trees</td>
+<td>23</td>
+<td>22</td>
+<td>0</td>
+<td>45</td>
+</tr>
+<tr class="even">
+<td>Conventional ML</td>
+<td>HistGradientBoosting</td>
+<td>23</td>
+<td>22</td>
+<td>0</td>
+<td>45</td>
+</tr>
+<tr class="odd">
+<td>Conventional ML</td>
+<td>LogisticRegression</td>
+<td>0</td>
+<td>22</td>
+<td>1</td>
+<td>22</td>
+</tr>
+<tr class="even">
+<td>Conventional ML</td>
+<td>MapLight CatBoost (Strict Parity)</td>
+<td>23</td>
+<td>0</td>
+<td>0</td>
+<td>23</td>
+</tr>
+<tr class="odd">
+<td>Conventional ML</td>
+<td>Random forest</td>
+<td>23</td>
+<td>22</td>
+<td>1</td>
+<td>45</td>
+</tr>
+<tr class="even">
+<td>Conventional ML</td>
+<td>SVC</td>
+<td>0</td>
+<td>22</td>
+<td>0</td>
+<td>22</td>
+</tr>
+<tr class="odd">
+<td>Conventional ML</td>
+<td>SVR</td>
+<td>23</td>
+<td>0</td>
+<td>0</td>
+<td>23</td>
+</tr>
+<tr class="even">
+<td>Conventional ML</td>
+<td>Tabular CNN</td>
+<td>23</td>
+<td>0</td>
+<td>0</td>
+<td>23</td>
+</tr>
+<tr class="odd">
+<td>Conventional ML</td>
+<td>Tabular MLP</td>
+<td>23</td>
+<td>22</td>
+<td>0</td>
+<td>45</td>
+</tr>
+<tr class="even">
+<td>Conventional ML</td>
+<td>Voting Classifier (KNN, SVM)</td>
+<td>0</td>
+<td>22</td>
+<td>0</td>
+<td>22</td>
+</tr>
+<tr class="odd">
+<td>Conventional ML</td>
+<td>Voting Regressor (KNN, SVM)</td>
+<td>23</td>
+<td>0</td>
+<td>0</td>
+<td>23</td>
+</tr>
+<tr class="even">
+<td>Conventional ML</td>
+<td>XGBoost</td>
+<td>23</td>
+<td>22</td>
+<td>4</td>
+<td>45</td>
+</tr>
+<tr class="odd">
+<td>Deep tabular NN (ChemML MLP)</td>
+<td>ChemML MLP (PyTorch)</td>
+<td>23</td>
+<td>22</td>
+<td>0</td>
+<td>45</td>
+</tr>
+<tr class="even">
+<td>Ensemble (stacking / averaging)</td>
+<td>Ensemble (OOF Stacking (RidgeCV, 5-fold))</td>
+<td>23</td>
+<td>22</td>
+<td>4</td>
+<td>45</td>
+</tr>
+<tr class="odd">
+<td>Ensemble (stacking / averaging)</td>
+<td>Ensemble (Weighted average (inverse train RMSE))</td>
+<td>23</td>
+<td>22</td>
+<td>11</td>
+<td>45</td>
+</tr>
+<tr class="even">
+<td>MapLight + GNN</td>
+<td>MapLight + GNN (CatBoost, Strict Parity)</td>
+<td>22</td>
+<td>20</td>
+<td>4</td>
+<td>45</td>
+</tr>
+<tr class="odd">
+<td>TabPFN (tabular foundation)</td>
+<td>TabPFNClassifier</td>
+<td>0</td>
+<td>10</td>
+<td>0</td>
+<td>10</td>
+</tr>
+<tr class="even">
+<td>TabPFN (tabular foundation)</td>
+<td>TabPFNRegressor</td>
+<td>12</td>
+<td>0</td>
+<td>3</td>
+<td>35</td>
+</tr>
+<tr class="odd">
+<td>Uni-Mol V1 (3D pretrained)</td>
+<td>Uni-Mol V1</td>
+<td>23</td>
+<td>22</td>
+<td>7</td>
+<td>45</td>
+</tr>
+</tbody>
+</table>
+<!-- /TABLE -->
+<p><strong>Table 1.</strong> Model inventory. “Valid” datasets are those on which the model produced a metric without an error; differences from 45 reflect task-type applicability (regression-only or classification-only estimators), dataset-size guardrails, or backend failures (Section 3.9).</p>
+</section>
+<section id="datasets-and-curation" class="level3">
+<h3 class="anchored" data-anchor-id="datasets-and-curation">2.2 Datasets and curation</h3>
+<p>Benchmark datasets were drawn from five public collections through dedicated loaders: ChemML bundled examples (<code>cep_homo</code>, <code>organic_density</code>, <code>xyz_polarizability</code>); TDC single-prediction ADME and Tox tasks; MoleculeNet physicochemical datasets (ESOL [24], FreeSolv [25], Lipophilicity); Polaris ADME benchmark mirrors; and the PODUAM point-of-departure datasets [26]. Each dataset is represented internally by a <code>DatasetSpec</code> recording the SMILES column, target column, recommended split, recommended metric, benchmark suite and any leaderboard reference metadata.</p>
+<p>All molecules were standardized before featurization. Canonicalization coerced the target to numeric, removed rows with missing or non-finite SMILES or target values, and parsed each SMILES with RDKit [27]; molecules that failed to parse were dropped and the remainder re-encoded as canonical SMILES. For datasets carrying a predefined split column, rows missing the split assignment were removed.</p>
+<p>Target transformation followed a suite-aware policy. Under the default <code>auto</code> mode, datasets from the TDC, MoleculeNet, Polaris, literature and PFAS auxiliary suites were kept on their native scale, while other datasets used a base-10 logarithmic transform when all target values were positive; non-positive targets disabled the transform.</p>
+<p>For TDC datasets, official splits were preferred over generic resampling. Where PyTDC exposes an official <code>admet_group</code> entry, the runner uses that train_val/test split in preference to legacy single-prediction cache entries; official split frames are cached under <code>data/_autoqsar_cache</code> and stale entries lacking an official split are refreshed automatically. This distinction matters for interpretation and we preserve it throughout: 22 TDC datasets and 5 Polaris datasets used official predefined splits, while the remaining 18 used locally generated scaffold, random or target-quartile splits and are therefore <em>not</em> directly leaderboard-equivalent (Section 3.4).</p>
+<p>Task kind was inferred automatically rather than taken from catalog metadata: strict binary 0/1 targets were routed to the classification workflow and all other numeric targets to regression. This inference overrides several catalog entries that record a regression metric for what are in fact binary endpoints (for example the CYP inhibition tasks), and the inferred kind is what all analyses below use.</p>
+</section>
+<section id="molecular-representations" class="level3">
+<h3 class="anchored" data-anchor-id="molecular-representations">2.3 Molecular representations</h3>
+<p>Ten configurable feature families were implemented on RDKit, all returning fixed-width numeric matrices. Circular and path-based fingerprints were generated at 1024 bits by default. Morgan fingerprints [28] used radius 2; ECFP6 and FCFP6 were generated with the RDKit MorganGenerator at radius 3, FCFP6 using feature-based atom invariants; RDKit layered, atom-pair, topological-torsion and RDKit path fingerprints were each computed at 1024 bits, the path fingerprint spanning path lengths 1–7. MACCS keys [29] were generated at their native 167-bit width, and the full RDKit 2D descriptor set was computed from <code>Descriptors._descList</code>.</p>
+<p>The “MapLight classic” family reproduces the feature construction of the MapLight TDC submission [13]: a hashed Morgan count fingerprint (radius 2, 1024 bits), an Avalon count fingerprint (1024 bits) [30], the extended reduced graph (ErG) fingerprint [31], and a curated panel of approximately 200 RDKit descriptors spanning connectivity and shape indices (BalabanJ, BertzCT, Chi and Kappa indices), VSA-family descriptors, physicochemical properties (ExactMolWt, MolLogP, TPSA, FractionCSP3), hydrogen-bonding and ring counts, functional-group fragment counts, and the QED drug-likeness score. In the feature-selection analyses below, this composite appears as its three constituent families (<code>avalon</code>, <code>erg</code> and the <code>maplight</code> descriptor panel), and we report both the components and their sum.</p>
+<p>After assembly, every feature matrix passed a common finalization step: infinities replaced with missing values, all columns coerced to numeric, values exceeding the float32 range masked, remaining gaps imputed with the per-column median (falling back to zero), and the matrix cast to float32.</p>
+</section>
+<section id="persistent-feature-store" class="level3">
+<h3 class="anchored" data-anchor-id="persistent-feature-store">2.4 Persistent feature store</h3>
+<p>To avoid recomputing expensive descriptors across datasets and runs, features were cached in a persistent, content-addressed store writing Parquet shards where <code>pyarrow</code> or <code>fastparquet</code> is available and CSV otherwise. Each representation is identified by a key derived from a SHA-256 hash of a canonical JSON payload listing the selected feature families, Morgan radius and fingerprint bit width, so distinct configurations never collide. A schema file records the representation payload and column order; a mismatch raises an error rather than silently mixing definitions. Feature rows are keyed by canonical SMILES, so only molecules absent from the cache are computed on a given run, and cached and new rows are merged back into the exact requested row order. Additional caches store assembled benchmark feature matrices and tuned conventional models.</p>
+</section>
+<section id="splitting-and-cross-validation" class="level3">
+<h3 class="anchored" data-anchor-id="splitting-and-cross-validation">2.5 Splitting and cross-validation</h3>
+<p>Four splitting strategies were supported — random, target-quartile, scaffold and predefined — selected per dataset with a benchmark-aware default. Command-line defaults set target-quartile stratification, a test fraction of 0.2 and random seed 13.</p>
+<p>Scaffold splitting used Bemis–Murcko scaffolds [32] computed after removing stereochemistry, with explicit fallbacks for molecules that failed scaffold perception or yielded no scaffold. Molecules were grouped by scaffold and assigned to the test set by a greedy, seeded procedure that packs whole scaffold groups until the target test fraction is reached, guaranteeing that no scaffold appears in both partitions. Target-quartile splitting binned the continuous target into quartiles with <code>pd.qcut</code> and stratified on those bins, reverting to random splitting when a dataset was too small or too low in target variance to form at least two populated bins per fold. For TDC benchmark datasets the official partition was used directly, with deterministic reassignment by SMILES so that the same molecule is never placed in both train and test.</p>
+<p>Cross-validation mirrored the split geometry: scaffold runs used <code>GroupKFold</code> over scaffold groups, target-quartile runs <code>StratifiedKFold</code> over quartile bins, and random runs shuffled <code>KFold</code>, each with a configurable fold count and a defined fallback to random folds when group or bin constraints could not be satisfied.</p>
+</section>
+<section id="feature-filtering-and-selection" class="level3">
+<h3 class="anchored" data-anchor-id="feature-filtering-and-selection">2.6 Feature filtering and selection</h3>
+<p>Before model fitting, a leak-free pre-filter removed degenerate and redundant columns using statistics computed on the training partition only and applied identically to the held-out set: near-constant columns below a variance threshold of 1 × 10⁻⁸ were dropped, binary columns whose positive prevalence fell outside 0.005–0.995 were removed, and exact-duplicate columns were pruned.</p>
+<p>Selection was then performed train-only with a cross-validated elastic net. The ElasticNetCV selector was fit in an isolated subprocess with a wall-clock timeout over a configurable L1-ratio grid and log-spaced alpha grid, using folds matched to the active split strategy. Features were retained when the absolute coefficient exceeded a threshold, with at least one feature always kept and the retained set capped at the larger of one feature or 10% of the training-row count. To bound runtime, the selector used a dataset-size runtime model: when predicted elastic-net runtime exceeded a configurable threshold (default 7200 s), or when the elastic net timed out or failed, selection fell back to RandomForest importance ranking. Selected features, coefficients and diagnostics were written per dataset.</p>
+</section>
+<section id="model-library" class="level3">
+<h3 class="anchored" data-anchor-id="model-library">2.7 Model library</h3>
+<p><strong>Conventional machine learning.</strong> For regression: elastic-net regression with internal cross-validated alpha/L1 search, support vector regression (C = 10, ε = 0.1, RBF kernel), random forests (400 trees), extremely randomized trees (500 trees), histogram gradient boosting (learning rate 0.05, up to 500 iterations, max depth 8), a soft-voting KNN+SVR regressor with adaptively chosen neighbour count, AdaBoost (500 estimators, learning rate 0.05), and a tabular multilayer perceptron (hidden layers 512 and 256, ReLU, Adam, L2 1 × 10⁻⁴, up to 300 iterations), all via scikit-learn [33]. Gradient-boosting libraries were added when installed: XGBoost (400 trees, depth 6, learning rate 0.05, subsample and column-sample 0.9) [34], LightGBM (500 trees, learning rate 0.05, 63 leaves) [35] and CatBoost (400 iterations, depth 6, learning rate 0.05) [36]. Numeric pipelines were preceded by median imputation and standardization where appropriate. The classification table substituted the analogous estimators (logistic regression, SVC with probability estimates, random forest, extra trees, histogram gradient boosting, soft-voting KNN+SVC, AdaBoost, tabular MLP and the gradient-boosting classifiers) with classification losses and metrics.</p>
+<p><strong>Specialized tabular and graph models.</strong> A compact one-dimensional convolutional regressor treats each standardized feature vector as a 1D signal and applies two same-padded ReLU convolutional blocks (64 filters, kernel size 5), global max pooling, a 128-unit dense layer with dropout and a linear output, trained with Adam and early stopping; it is intentionally small enough to run on CPU. The MapLight + GNN workflow fits a CatBoost model on the union of MapLight classic features and pretrained graph isomorphism network (GIN) fingerprints where the supporting DGL/PyTorch stack is available; a strict leaderboard-parity variant of the MapLight CatBoost model uses mean-absolute-error optimization, target scaling and five-seed averaging to reproduce the published protocol [13]. Graph neural networks were provided through Chemprop v2 [37, 38] with configured directed message-passing (D-MPNN), CMPNN-style and AttentiveFP-style architectures; optional variants augment the graph encoder with train-only selected tabular descriptors or an RDKit-2D featurizer. Uni-Mol V1 [9] was included as a 3D pretrained baseline, running automatically when a GPU was detected (10 epochs, learning rate 1 × 10⁻⁴, batch size 16, early stopping patience 5). The TabPFN tabular foundation model [39] was available for regression and classification, gated by a 1000-row training guardrail consistent with its design constraints.</p>
+<p><strong>Genetic-algorithm tuning.</strong> An optional stage tunes a small set of estimators (elastic net and CatBoost for regression; elastic-net-penalized logistic regression and CatBoost for classification). It is disabled by default unless explicitly requested or unless an <code>auto</code> mode finds prior evidence that a tuned family is worth rerunning. It was disabled in the benchmark reported here (Section 3.8).</p>
+</section>
+<section id="combinatorial-fusion-and-ensembling" class="level3">
+<h3 class="anchored" data-anchor-id="combinatorial-fusion-and-ensembling">2.8 Combinatorial fusion and ensembling</h3>
+<p>After base models produced aligned train and test prediction vectors, AutoQSAR optionally fused them by combinatorial fusion analysis (CFA) [40] in both score and rank spaces. To control combinatorial growth, inputs were first reduced to the best model per workflow and the subset search bounded by a budget guardrail. For each candidate subset the algorithm computed a performance strength as the inverse of the base model’s training error and a diversity strength from the mean pairwise distance between normalized, sorted score profiles, then evaluated three score-space weightings (equal, performance-weighted, diversity-weighted) plus the corresponding rank-space variants. Rank-space combinations were linearly calibrated back to the target scale and given a small metric discount when subset diversity exceeded a threshold, so that diverse rank fusions were preferred only when genuinely complementary. Candidates were ranked by the adjusted training metric and the best fused predictor returned with its selected models, weights and a candidate-diagnostics table. For regression, fusion minimized mean absolute error.</p>
+<p>Three further ensemble strategies were available over the same prediction pool: out-of-fold stacking with a RidgeCV meta-model (logistic for classification), an inverse-training-RMSE weighted average (weighting by the primary classification metric for classification), and a simple average. Ensemble construction supported optional member filtering, including removal of highly correlated members and exclusion of members with negative held-out R². We return to the implications of that last option in Section 3.3 and in the Limitations, because it consults held-out data.</p>
+</section>
+<section id="evaluation-metrics" class="level3">
+<h3 class="anchored" data-anchor-id="evaluation-metrics">2.9 Evaluation metrics</h3>
+<p>Regression performance was summarized by RMSE, mean absolute error, R² and Spearman rank correlation, computed separately on training and held-out sets; classification by AUROC, AUPRC, balanced accuracy and the Matthews correlation coefficient. Each dataset carries a primary metric: for cross-dataset ranking we used RMSE for regression and, for classification, the dataset’s designated primary metric — AUPRC for the imbalanced TDC CYP inhibition and substrate tasks and AUROC otherwise, consistent with the TDC leaderboard’s per-dataset assignments. For comparisons against published leaderboards we re-selected the best model per dataset under the <em>leaderboard’s</em> metric, which is MAE or Spearman rather than RMSE for several TDC regression tasks; the best model under RMSE and under the leaderboard metric therefore sometimes differ, and both are reported (Tables S1 and 4).</p>
+<p>Because absolute metric differences are not comparable across datasets with different target units — an RMSE gap of 1.0 is negligible for hepatocyte clearance and fatal for log-solubility — all cross-dataset summaries of how close a model came to the per-dataset best use a <strong>relative</strong> gap, |score − best| / |best|.</p>
+</section>
+<section id="leaderboard-comparison" class="level3">
+<h3 class="anchored" data-anchor-id="leaderboard-comparison">2.10 Leaderboard comparison</h3>
+<p>Where curated leaderboard references existed, the best AutoQSAR model was compared against published values using a normalized metric-matching procedure. Comparisons were made only when the leaderboard metric matched the dataset’s primary metric and a numeric reference value was available; the framework then computed the signed gap to the top-1 reference, the gap to the top-10 cutoff, and an estimated rank relative to the published entries. Reference rows were aggregated from TDC, MoleculeNet and Polaris leaderboards together with a manually curated set of TDC ADMET reference values and, for ESOL and Lipophilicity, current literature values in place of the 2017-era MoleculeNet baselines, which are no longer representative of the state of the art.</p>
+<p>Two limits of this procedure should be kept in view. First, “estimated rank” reflects the references available for a dataset, not a live leaderboard submission; a dataset with few references yields an optimistic-looking rank. Second, ranks are only leaderboard-equivalent where the split protocol matches, which is true for the 22 TDC <code>admet_group</code> datasets and the 5 Polaris datasets but not for the 10 comparable datasets evaluated on locally generated splits. We report results stratified by this distinction throughout.</p>
+</section>
+<section id="model-selection-protocols" class="level3">
+<h3 class="anchored" data-anchor-id="model-selection-protocols">2.11 Model selection protocols</h3>
+<p>We report every headline result under two selection protocols.</p>
+<p><strong>Test-selected.</strong> The best model per dataset is the one with the best held-out primary metric. This is the protocol used by AutoML leaderboard submissions generally, and it is what Sections 3.2–3.4 report as the primary analysis for comparability with published entries.</p>
+<p><strong>Cross-validation-selected.</strong> The model is chosen per dataset solely by its cross-validated primary metric on the training partition, and its held-out score is then read off without further choice. This estimates what a practitioner obtains when the test set is genuinely untouched. It is available for the models that emit cross-validated metrics — the conventional estimators, TabPFN and the ChemML MLP — but not for Chemprop, Uni-Mol, MapLight + GNN or the fusion methods, so it is a conservative lower bound on what a fully CV-driven AutoQSAR would achieve.</p>
+</section>
+<section id="reproducibility-caching-and-computing-environment" class="level3">
+<h3 class="anchored" data-anchor-id="reproducibility-caching-and-computing-environment">2.12 Reproducibility, caching and computing environment</h3>
+<p>The runner is designed for long, resumable runs. Completed datasets and compatible intermediates are reused on resume, and each run records a configuration signature, per-dataset run-status manifests, split-signature hashes and per-stage runtime diagnostics. Two cost profiles are provided: a default cost-optimized profile that disables historically low-value expensive variants, and a full profile restoring the broader model set. Each dataset directory retains metrics, predictions, selected features, a feature-deduplication report, the CFA candidate table and ensemble weights, supporting independent verification of every reported result.</p>
+<p>The workflow targets Python 3.11 and runs on Windows, macOS, Linux or Google Colab. The core workflow runs CPU-only; GPU availability primarily affects runtime and whether optional backends such as local TabPFN and Uni-Mol are practical. Pinned conda and pip/uv specifications are distributed with the repository, alongside an Apptainer/Singularity definition, Slurm submission scripts for NSF ACCESS HPC clusters, and an OpenStack orchestration path for Jetstream2 [41, 42] that routes GPU-dependent workflows to A100-backed instances and the remaining workflows to CPU instances under a tracked service-unit budget.</p>
+<p><strong>[AUTHOR: hardware statement requires confirmation.]</strong> The benchmark artifacts deposited with this paper record execution on a Windows workstation with an NVIDIA GeForce RTX 4060 Laptop GPU under conda environment <code>autoqsar-py311</code>, between 4 and 9 May 2026. We therefore describe the reported benchmark as having been produced on consumer-grade hardware, which is the more conservative claim and is directly supported by the deposited run artifacts; it also strengthens rather than weakens the accessibility argument of this work, since the results in Section 3 required no datacentre accelerator. If the reported run is instead to be attributed to the Jetstream2 A100 instances described above, the corresponding artifacts must replace those currently in <code>benchmark_results/benchmark_name_date/</code>, because every figure, table and number in this paper is regenerated from that directory (Section 2.12).</p>
+<p>All figures, tables and numerical claims in this paper are regenerated from committed benchmark artifacts by a single command, <code>python portable_colab_qsar_bundle/render_manuscript_assets.py</code>, which re-executes the analysis notebook and writes <code>manuscript_assets/</code> (figures, tables and a <code>manuscript_numbers.json</code> containing every headline number quoted in the text).</p>
+<hr>
+</section>
+</section>
+<section id="results-and-discussion" class="level2">
+<h2 class="anchored" data-anchor-id="results-and-discussion">3. Results and discussion</h2>
+<section id="benchmark-coverage" class="level3">
+<h3 class="anchored" data-anchor-id="benchmark-coverage">3.1 Benchmark coverage</h3>
+<p>We executed AutoQSAR across the full benchmark suite under a single fixed configuration (<code>cost_optimized</code> profile, random seed 13, Chemprop seed 42) on a GPU-equipped workstation. Of 46 datasets attempted, 45 completed; <code>tdc_herg_central</code>, the largest task attempted, was abandoned after more than 24 hours without completing and is excluded from all analyses. The 45 completed datasets comprise 23 regression and 22 classification tasks drawn from five collections: TDC (32), Polaris ADME (5), ChemML (3), MoleculeNet (3) and PODUAM (2). They span 38 to 13,445 molecules (median 1,478; 156,090 in total) and four split protocols (27 predefined, 6 scaffold, 6 random, 6 target-quartile). Twenty-five models produced at least one valid result, yielding 828 valid model–dataset evaluations. The dataset catalog is given in Table 2.</p>
+<!-- TABLE:table2_dataset_catalog -->
+<table class="caption-top table">
+<colgroup>
+<col style="width: 9%">
+<col style="width: 9%">
+<col style="width: 9%">
+<col style="width: 9%">
+<col style="width: 9%">
+<col style="width: 9%">
+<col style="width: 9%">
+<col style="width: 9%">
+<col style="width: 9%">
+<col style="width: 9%">
+<col style="width: 9%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Dataset</th>
+<th>Suite</th>
+<th>Task</th>
+<th>Molecules</th>
+<th>Train</th>
+<th>Test</th>
+<th>Split</th>
+<th>Target scale</th>
+<th>Ranking metric</th>
+<th>Best model</th>
+<th>Best value</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>tdc_ames</td>
+<td>TDC</td>
+<td>classification</td>
+<td>7278</td>
+<td>5821</td>
+<td>1457</td>
+<td>predefined</td>
+<td>raw</td>
+<td>roc_auc</td>
+<td>XGBoost</td>
+<td>0.875</td>
+</tr>
+<tr class="even">
+<td>tdc_bbb_martins</td>
+<td>TDC</td>
+<td>classification</td>
+<td>2030</td>
+<td>1624</td>
+<td>406</td>
+<td>predefined</td>
+<td>raw</td>
+<td>roc_auc</td>
+<td>Random forest</td>
+<td>0.932</td>
+</tr>
+<tr class="odd">
+<td>tdc_bioavailability_ma</td>
+<td>TDC</td>
+<td>classification</td>
+<td>640</td>
+<td>512</td>
+<td>128</td>
+<td>predefined</td>
+<td>raw</td>
+<td>roc_auc</td>
+<td>CatBoost</td>
+<td>0.777</td>
+</tr>
+<tr class="even">
+<td>tdc_carcinogens_lagunin</td>
+<td>TDC</td>
+<td>classification</td>
+<td>280</td>
+<td>224</td>
+<td>56</td>
+<td>random</td>
+<td>raw</td>
+<td>roc_auc</td>
+<td>AdaBoost</td>
+<td>0.863</td>
+</tr>
+<tr class="odd">
+<td>tdc_clintox</td>
+<td>TDC</td>
+<td>classification</td>
+<td>1478</td>
+<td>1182</td>
+<td>296</td>
+<td>random</td>
+<td>raw</td>
+<td>roc_auc</td>
+<td>CatBoost</td>
+<td>0.949</td>
+</tr>
+<tr class="even">
+<td>tdc_cyp1a2_veith</td>
+<td>TDC</td>
+<td>classification</td>
+<td>12579</td>
+<td>10061</td>
+<td>2518</td>
+<td>scaffold</td>
+<td>raw</td>
+<td>roc_auc</td>
+<td>Ensemble (Weighted average (inverse train RMSE))</td>
+<td>0.970</td>
+</tr>
+<tr class="odd">
+<td>tdc_cyp2c19_veith</td>
+<td>TDC</td>
+<td>classification</td>
+<td>12665</td>
+<td>10131</td>
+<td>2534</td>
+<td>scaffold</td>
+<td>raw</td>
+<td>roc_auc</td>
+<td>Ensemble (Weighted average (inverse train RMSE))</td>
+<td>0.921</td>
+</tr>
+<tr class="even">
+<td>tdc_cyp2c9_substrate_carbonmangels</td>
+<td>TDC</td>
+<td>classification</td>
+<td>669</td>
+<td>534</td>
+<td>135</td>
+<td>predefined</td>
+<td>raw</td>
+<td>auprc</td>
+<td>Ensemble (OOF Stacking (RidgeCV, 5-fold))</td>
+<td>0.482</td>
+</tr>
+<tr class="odd">
+<td>tdc_cyp2c9_veith</td>
+<td>TDC</td>
+<td>classification</td>
+<td>12092</td>
+<td>9673</td>
+<td>2419</td>
+<td>predefined</td>
+<td>raw</td>
+<td>auprc</td>
+<td>Ensemble (OOF Stacking (RidgeCV, 5-fold))</td>
+<td>0.810</td>
+</tr>
+<tr class="even">
+<td>tdc_cyp2d6_substrate_carbonmangels</td>
+<td>TDC</td>
+<td>classification</td>
+<td>667</td>
+<td>532</td>
+<td>135</td>
+<td>predefined</td>
+<td>raw</td>
+<td>auprc</td>
+<td>Ensemble (Weighted average (inverse train RMSE))</td>
+<td>0.673</td>
+</tr>
+<tr class="odd">
+<td>tdc_cyp2d6_veith</td>
+<td>TDC</td>
+<td>classification</td>
+<td>13130</td>
+<td>10504</td>
+<td>2626</td>
+<td>predefined</td>
+<td>raw</td>
+<td>auprc</td>
+<td>XGBoost</td>
+<td>0.722</td>
+</tr>
+<tr class="even">
+<td>tdc_cyp3a4_substrate_carbonmangels</td>
+<td>TDC</td>
+<td>classification</td>
+<td>670</td>
+<td>535</td>
+<td>135</td>
+<td>predefined</td>
+<td>raw</td>
+<td>auprc</td>
+<td>LogisticRegression</td>
+<td>0.717</td>
+</tr>
+<tr class="odd">
+<td>tdc_cyp3a4_veith</td>
+<td>TDC</td>
+<td>classification</td>
+<td>12328</td>
+<td>9861</td>
+<td>2467</td>
+<td>predefined</td>
+<td>raw</td>
+<td>auprc</td>
+<td>Ensemble (OOF Stacking (RidgeCV, 5-fold))</td>
+<td>0.890</td>
+</tr>
+<tr class="even">
+<td>tdc_dili</td>
+<td>TDC</td>
+<td>classification</td>
+<td>475</td>
+<td>379</td>
+<td>96</td>
+<td>predefined</td>
+<td>raw</td>
+<td>roc_auc</td>
+<td>Ensemble (OOF Stacking (RidgeCV, 5-fold))</td>
+<td>0.915</td>
+</tr>
+<tr class="odd">
+<td>tdc_herg</td>
+<td>TDC</td>
+<td>classification</td>
+<td>655</td>
+<td>523</td>
+<td>132</td>
+<td>predefined</td>
+<td>raw</td>
+<td>roc_auc</td>
+<td>AdaBoost</td>
+<td>0.861</td>
+</tr>
+<tr class="even">
+<td>tdc_herg_karim</td>
+<td>TDC</td>
+<td>classification</td>
+<td>13445</td>
+<td>10755</td>
+<td>2690</td>
+<td>scaffold</td>
+<td>raw</td>
+<td>roc_auc</td>
+<td>Ensemble (Weighted average (inverse train RMSE))</td>
+<td>0.902</td>
+</tr>
+<tr class="odd">
+<td>tdc_hia_hou</td>
+<td>TDC</td>
+<td>classification</td>
+<td>578</td>
+<td>461</td>
+<td>117</td>
+<td>predefined</td>
+<td>raw</td>
+<td>roc_auc</td>
+<td>CFA (Combinatorial Fusion)</td>
+<td>0.990</td>
+</tr>
+<tr class="even">
+<td>tdc_pampa_ncats</td>
+<td>TDC</td>
+<td>classification</td>
+<td>2034</td>
+<td>1626</td>
+<td>408</td>
+<td>scaffold</td>
+<td>raw</td>
+<td>roc_auc</td>
+<td>Ensemble (Weighted average (inverse train RMSE))</td>
+<td>0.806</td>
+</tr>
+<tr class="odd">
+<td>tdc_pgp_broccatelli</td>
+<td>TDC</td>
+<td>classification</td>
+<td>1218</td>
+<td>973</td>
+<td>245</td>
+<td>predefined</td>
+<td>raw</td>
+<td>roc_auc</td>
+<td>Ensemble (Weighted average (inverse train RMSE))</td>
+<td>0.929</td>
+</tr>
+<tr class="even">
+<td>tdc_skin_reaction</td>
+<td>TDC</td>
+<td>classification</td>
+<td>404</td>
+<td>323</td>
+<td>81</td>
+<td>random</td>
+<td>raw</td>
+<td>roc_auc</td>
+<td>CFA (Combinatorial Fusion)</td>
+<td>0.769</td>
+</tr>
+<tr class="odd">
+<td>tdc_tox21</td>
+<td>TDC</td>
+<td>classification</td>
+<td>7258</td>
+<td>5806</td>
+<td>1452</td>
+<td>random</td>
+<td>raw</td>
+<td>roc_auc</td>
+<td>XGBoost</td>
+<td>0.812</td>
+</tr>
+<tr class="even">
+<td>tdc_toxcast</td>
+<td>TDC</td>
+<td>classification</td>
+<td>1731</td>
+<td>1384</td>
+<td>347</td>
+<td>random</td>
+<td>raw</td>
+<td>roc_auc</td>
+<td>CatBoost</td>
+<td>0.791</td>
+</tr>
+<tr class="odd">
+<td>chemml_cep_homo</td>
+<td>ChemML</td>
+<td>regression</td>
+<td>500</td>
+<td>400</td>
+<td>100</td>
+<td>target_quartiles</td>
+<td>raw</td>
+<td>rmse</td>
+<td>TabPFNRegressor</td>
+<td>0.086</td>
+</tr>
+<tr class="even">
+<td>chemml_organic_density</td>
+<td>ChemML</td>
+<td>regression</td>
+<td>500</td>
+<td>400</td>
+<td>100</td>
+<td>target_quartiles</td>
+<td>log10</td>
+<td>rmse</td>
+<td>TabPFNRegressor</td>
+<td>0.005</td>
+</tr>
+<tr class="odd">
+<td>chemml_xyz_polarizability</td>
+<td>ChemML</td>
+<td>regression</td>
+<td>38</td>
+<td>30</td>
+<td>8</td>
+<td>target_quartiles</td>
+<td>log10</td>
+<td>rmse</td>
+<td>TabPFNRegressor</td>
+<td>0.007</td>
+</tr>
+<tr class="even">
+<td>esol_delaney</td>
+<td>MoleculeNet</td>
+<td>regression</td>
+<td>1128</td>
+<td>874</td>
+<td>254</td>
+<td>scaffold</td>
+<td>raw</td>
+<td>rmse</td>
+<td>Ensemble (Weighted average (inverse train RMSE))</td>
+<td>0.592</td>
+</tr>
+<tr class="odd">
+<td>freesolv_sampl</td>
+<td>MoleculeNet</td>
+<td>regression</td>
+<td>642</td>
+<td>513</td>
+<td>129</td>
+<td>random</td>
+<td>raw</td>
+<td>rmse</td>
+<td>Chemprop v2 (AttentiveFP, ensemble=1)</td>
+<td>1.080</td>
+</tr>
+<tr class="even">
+<td>lipophilicity</td>
+<td>MoleculeNet</td>
+<td>regression</td>
+<td>4200</td>
+<td>3357</td>
+<td>843</td>
+<td>scaffold</td>
+<td>raw</td>
+<td>rmse</td>
+<td>Ensemble (Weighted average (inverse train RMSE))</td>
+<td>0.582</td>
+</tr>
+<tr class="odd">
+<td>poduam_pod_nc_std</td>
+<td>PODUAM</td>
+<td>regression</td>
+<td>1842</td>
+<td>1473</td>
+<td>369</td>
+<td>target_quartiles</td>
+<td>raw</td>
+<td>rmse</td>
+<td>Ensemble (Weighted average (inverse train RMSE))</td>
+<td>0.699</td>
+</tr>
+<tr class="even">
+<td>poduam_pod_rd_std</td>
+<td>PODUAM</td>
+<td>regression</td>
+<td>2355</td>
+<td>1884</td>
+<td>471</td>
+<td>target_quartiles</td>
+<td>raw</td>
+<td>rmse</td>
+<td>XGBoost</td>
+<td>0.551</td>
+</tr>
+<tr class="odd">
+<td>polaris_adme_fang_hppb_1</td>
+<td>Polaris</td>
+<td>regression</td>
+<td>1808</td>
+<td>1446</td>
+<td>362</td>
+<td>predefined</td>
+<td>raw</td>
+<td>rmse</td>
+<td>MapLight + GNN (CatBoost, Strict Parity)</td>
+<td>0.449</td>
+</tr>
+<tr class="even">
+<td>polaris_adme_fang_perm_1</td>
+<td>Polaris</td>
+<td>regression</td>
+<td>2642</td>
+<td>2113</td>
+<td>529</td>
+<td>predefined</td>
+<td>raw</td>
+<td>rmse</td>
+<td>Uni-Mol V1</td>
+<td>0.399</td>
+</tr>
+<tr class="odd">
+<td>polaris_adme_fang_rclint_1</td>
+<td>Polaris</td>
+<td>regression</td>
+<td>3054</td>
+<td>2443</td>
+<td>611</td>
+<td>predefined</td>
+<td>raw</td>
+<td>rmse</td>
+<td>Uni-Mol V1</td>
+<td>0.512</td>
+</tr>
+<tr class="even">
+<td>polaris_adme_fang_rppb_1</td>
+<td>Polaris</td>
+<td>regression</td>
+<td>885</td>
+<td>708</td>
+<td>177</td>
+<td>predefined</td>
+<td>raw</td>
+<td>rmse</td>
+<td>MapLight + GNN (CatBoost, Strict Parity)</td>
+<td>0.494</td>
+</tr>
+<tr class="odd">
+<td>polaris_adme_fang_solu_1</td>
+<td>Polaris</td>
+<td>regression</td>
+<td>2173</td>
+<td>1738</td>
+<td>435</td>
+<td>predefined</td>
+<td>raw</td>
+<td>rmse</td>
+<td>Uni-Mol V1</td>
+<td>0.575</td>
+</tr>
+<tr class="even">
+<td>tdc_caco2_wang</td>
+<td>TDC</td>
+<td>regression</td>
+<td>910</td>
+<td>728</td>
+<td>182</td>
+<td>predefined</td>
+<td>raw</td>
+<td>rmse</td>
+<td>Ensemble (Weighted average (inverse train RMSE))</td>
+<td>0.336</td>
+</tr>
+<tr class="odd">
+<td>tdc_clearance_hepatocyte_az</td>
+<td>TDC</td>
+<td>regression</td>
+<td>1213</td>
+<td>970</td>
+<td>243</td>
+<td>predefined</td>
+<td>raw</td>
+<td>rmse</td>
+<td>MapLight + GNN (CatBoost, Strict Parity)</td>
+<td>43.976</td>
+</tr>
+<tr class="even">
+<td>tdc_clearance_microsome_az</td>
+<td>TDC</td>
+<td>regression</td>
+<td>1102</td>
+<td>881</td>
+<td>221</td>
+<td>predefined</td>
+<td>raw</td>
+<td>rmse</td>
+<td>Uni-Mol V1</td>
+<td>35.888</td>
+</tr>
+<tr class="odd">
+<td>tdc_half_life_obach</td>
+<td>TDC</td>
+<td>regression</td>
+<td>667</td>
+<td>532</td>
+<td>135</td>
+<td>predefined</td>
+<td>raw</td>
+<td>rmse</td>
+<td>Uni-Mol V1</td>
+<td>17.222</td>
+</tr>
+<tr class="even">
+<td>tdc_hydrationfreeenergy_freesolv</td>
+<td>TDC</td>
+<td>regression</td>
+<td>642</td>
+<td>513</td>
+<td>129</td>
+<td>target_quartiles</td>
+<td>raw</td>
+<td>rmse</td>
+<td>CFA (Combinatorial Fusion)</td>
+<td>0.556</td>
+</tr>
+<tr class="odd">
+<td>tdc_ld50_zhu</td>
+<td>TDC</td>
+<td>regression</td>
+<td>7385</td>
+<td>5907</td>
+<td>1478</td>
+<td>predefined</td>
+<td>raw</td>
+<td>rmse</td>
+<td>CFA (Combinatorial Fusion)</td>
+<td>0.834</td>
+</tr>
+<tr class="even">
+<td>tdc_lipophilicity_astrazeneca</td>
+<td>TDC</td>
+<td>regression</td>
+<td>4200</td>
+<td>3360</td>
+<td>840</td>
+<td>predefined</td>
+<td>raw</td>
+<td>rmse</td>
+<td>Uni-Mol V1</td>
+<td>0.587</td>
+</tr>
+<tr class="odd">
+<td>tdc_ppbr_az</td>
+<td>TDC</td>
+<td>regression</td>
+<td>2790</td>
+<td>2231</td>
+<td>559</td>
+<td>predefined</td>
+<td>raw</td>
+<td>rmse</td>
+<td>Ensemble (Weighted average (inverse train RMSE))</td>
+<td>11.014</td>
+</tr>
+<tr class="even">
+<td>tdc_solubility_aqsoldb</td>
+<td>TDC</td>
+<td>regression</td>
+<td>9980</td>
+<td>7985</td>
+<td>1995</td>
+<td>predefined</td>
+<td>raw</td>
+<td>rmse</td>
+<td>Uni-Mol V1</td>
+<td>0.989</td>
+</tr>
+<tr class="odd">
+<td>tdc_vdss_lombardo</td>
+<td>TDC</td>
+<td>regression</td>
+<td>1130</td>
+<td>904</td>
+<td>226</td>
+<td>predefined</td>
+<td>raw</td>
+<td>rmse</td>
+<td>MapLight + GNN (CatBoost, Strict Parity)</td>
+<td>4.668</td>
+</tr>
+</tbody>
+</table>
+<!-- /TABLE -->
+<p><strong>Table 2.</strong> Dataset catalog. “Ranking metric” is the metric used for cross-dataset model ranking (RMSE for regression; the dataset’s designated primary classification metric otherwise); leaderboard comparisons in Table 4 use the leaderboard’s own metric, which differs for several TDC regression tasks.</p>
+</section>
+<section id="no-single-architecture-dominates" class="level3">
+<h3 class="anchored" data-anchor-id="no-single-architecture-dominates">3.2 No single architecture dominates</h3>
+<p>The central finding is that no architecture family won across the benchmark (Figure 2, Table 3). Stacking and averaging ensembles produced the most outright wins (15 of 45 datasets: 10 classification, 5 regression), followed by conventional machine learning (11: 10 classification, 1 regression), the 3D pretrained Uni-Mol V1 (7, all regression), the MapLight + GNN descriptor–graph hybrid (4, all regression), combinatorial fusion (4: 2 regression, 2 classification), TabPFN (3, all regression) and Chemprop v2 (1). The deep tabular network won none. The largest single share is 33% of datasets.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="manuscript_assets/figures/figure2_wins_by_family.png" class="img-fluid figure-img"></p>
+<figcaption>Figure 2. Best-model win counts by architecture family.</figcaption>
+</figure>
+</div>
+<p><strong>Figure 2.</strong> Datasets won by each architecture family, split by task kind. A win is the best held-out primary metric on that dataset among all 25 models.</p>
+<p>The task split is sharp and, we think, the more useful result for practitioners. Classification was won almost entirely by ensembles and conventional gradient boosting (20 of 22 datasets between them); no pretrained model — 3D, graph or tabular — won a single classification task. Regression was far more heterogeneous: Uni-Mol V1 took 7 datasets, MapLight + GNN 4, ensembles 5, TabPFN 3, CFA 2, Chemprop 1 and conventional machine learning 1. The datasets Uni-Mol won are chemically coherent — permeability, clearance, half-life, lipophilicity and aqueous solubility — properties for which conformational and shape information is mechanistically plausible as a signal that 2D descriptors capture only indirectly. TabPFN’s three wins are all small, clean, low-noise physicochemical or quantum-chemical regressions (the ChemML <code>cep_homo</code>, <code>organic_density</code> and <code>xyz_polarizability</code> sets, the last with only 38 molecules), consistent with its design as a prior-fitted network for small tabular problems.</p>
+<p>Per-dataset winners, including the corresponding cross-validation-selected model, are listed in Table S1, and the full dataset × family landscape is shown in Figure 6. These are single-split, single-seed outcomes: an unknown fraction of individual winners would change under a different seed, so we read Figure 2 as a distribution of capability across families rather than as a precise ranking, and we base the claim below on its breadth rather than on any one dataset’s result (see Limitations).</p>
+</section>
+<section id="consistency-versus-peak-performance" class="level3">
+<h3 class="anchored" data-anchor-id="consistency-versus-peak-performance">3.3 Consistency versus peak performance</h3>
+<p>Win counts reward only the single best model per dataset and understate the reliability of models that are consistently near-best without winning. Table 3 therefore reports, for each family, the median relative gap to the per-dataset best, the fraction of datasets on which the family’s best member landed within 5% of the best result, and the median rank that member achieved.</p>
+<!-- TABLE:table3_architecture_families -->
+<table class="caption-top table">
+<colgroup>
+<col style="width: 11%">
+<col style="width: 11%">
+<col style="width: 11%">
+<col style="width: 11%">
+<col style="width: 11%">
+<col style="width: 11%">
+<col style="width: 11%">
+<col style="width: 11%">
+<col style="width: 11%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Architecture family</th>
+<th>Models</th>
+<th>Datasets with valid results</th>
+<th>Wins (regression)</th>
+<th>Wins (classification)</th>
+<th>Median gap to best, regression (%)</th>
+<th>Median gap to best, classification (%)</th>
+<th>Within 5% of best (% of datasets)</th>
+<th>Median rank of family-best model</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Ensemble (stacking / averaging)</td>
+<td>2</td>
+<td>45</td>
+<td>5</td>
+<td>10</td>
+<td>2.4</td>
+<td>0.0</td>
+<td>75.6</td>
+<td>2.0</td>
+</tr>
+<tr class="even">
+<td>Conventional ML</td>
+<td>15</td>
+<td>45</td>
+<td>1</td>
+<td>10</td>
+<td>3.9</td>
+<td>0.1</td>
+<td>68.9</td>
+<td>2.0</td>
+</tr>
+<tr class="odd">
+<td>Uni-Mol V1 (3D pretrained)</td>
+<td>1</td>
+<td>45</td>
+<td>7</td>
+<td>0</td>
+<td>3.7</td>
+<td>2.3</td>
+<td>62.2</td>
+<td>6.0</td>
+</tr>
+<tr class="even">
+<td>CFA combinatorial fusion</td>
+<td>1</td>
+<td>44</td>
+<td>2</td>
+<td>2</td>
+<td>12.6</td>
+<td>2.5</td>
+<td>43.2</td>
+<td>7.0</td>
+</tr>
+<tr class="odd">
+<td>MapLight + GNN</td>
+<td>1</td>
+<td>42</td>
+<td>4</td>
+<td>0</td>
+<td>7.6</td>
+<td>11.1</td>
+<td>26.2</td>
+<td>11.5</td>
+</tr>
+<tr class="even">
+<td>TabPFN (tabular foundation)</td>
+<td>2</td>
+<td>22</td>
+<td>3</td>
+<td>0</td>
+<td>9.8</td>
+<td>4.6</td>
+<td>40.9</td>
+<td>4.5</td>
+</tr>
+<tr class="odd">
+<td>Chemprop v2 GNN</td>
+<td>2</td>
+<td>23</td>
+<td>1</td>
+<td>0</td>
+<td>12.5</td>
+<td></td>
+<td>17.4</td>
+<td>9.0</td>
+</tr>
+<tr class="even">
+<td>Deep tabular NN (ChemML MLP)</td>
+<td>1</td>
+<td>45</td>
+<td>0</td>
+<td>0</td>
+<td>21.6</td>
+<td>7.9</td>
+<td>15.6</td>
+<td>14.0</td>
+</tr>
+</tbody>
+</table>
+<!-- /TABLE -->
+<p><strong>Table 3.</strong> Architecture-family coverage and consistency. Gaps are relative to the per-dataset best primary metric. “Within 5% of best” counts datasets where the family’s best member fell within 5% of the dataset winner. Families evaluated on fewer than 45 datasets were limited by task applicability, size guardrails or backend failures (Table S4); their percentages are computed over the datasets on which they ran.</p>
+<p>On this measure the ordering is clearer than the win counts suggest. Ensembles were within 5% of the best on 76% of datasets with a median rank of 2 and a median classification gap of 0.03%; conventional machine learning followed at 69% and median rank 2. Uni-Mol V1, despite winning more regression datasets than any other single architecture, was within 5% on 62% of datasets and had a median rank of 6, reflecting a bimodal profile: when 3D information helps it wins outright, and when it does not it falls well down the table. MapLight + GNN (26% within 5%, median rank 11.5) and Chemprop v2 (17%, median rank 9) were the least consistent of the model families, and the deep tabular network was last (16%, median rank 14).</p>
+<p>Three cautions apply to this table. Families with fewer models have fewer chances to produce a near-best member, so the 15-model conventional family is flattered relative to single-model families; the ensemble row is not a like-for-like competitor, because ensembles are built <em>from</em> the other families’ predictions and, under the configuration used here, their member filtering consults held-out R²; and every value derives from a single split and seed, so adjacent rows are not separated — the 76% versus 69% gap between ensembles and conventional machine learning, in particular, should be read as “indistinguishable at this resolution” rather than as an ordering. The ensemble family’s apparent consistency should be read as “the pipeline’s output is reliably near-best”, not as evidence that stacking is intrinsically superior to its members. Section 3.5 quantifies how much the fusion layer actually adds.</p>
+</section>
+<section id="leaderboard-competitiveness-and-the-cost-of-honest-model-selection" class="level3">
+<h3 class="anchored" data-anchor-id="leaderboard-competitiveness-and-the-cost-of-honest-model-selection">3.4 Leaderboard competitiveness, and the cost of honest model selection</h3>
+<p>Across the leaderboard-comparison layer, 37 datasets could be compared against 430 published reference values. The best AutoQSAR model per dataset placed within the estimated top ten on 35 of 37 datasets and first on six (<code>tdc_bioavailability_ma</code>, <code>tdc_carcinogens_lagunin</code>, <code>tdc_cyp2c9_substrate_carbonmangels</code>, <code>tdc_hydrationfreeenergy_freesolv</code>, <code>tdc_skin_reaction</code>, <code>tdc_toxcast</code>), with a median estimated rank of 3. The two datasets below the top ten were <code>polaris_adme_fang_solu_1</code> and <code>tdc_tox21</code>.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="manuscript_assets/figures/figure3_leaderboard_rank.png" class="img-fluid figure-img"></p>
+<figcaption>Figure 3. Estimated leaderboard rank distribution and per-dataset ranks.</figcaption>
+</figure>
+</div>
+<p><strong>Figure 3.</strong> Estimated leaderboard placement across 37 comparable datasets. (a) Rank distribution for the test-selected best model and for the model selected by cross-validation alone. (b) Per-dataset ranks; filled markers are the test-selected model coloured by architecture family, open markers the cross-validation-selected model. The dashed line marks the top-ten boundary.</p>
+<p>That headline, however, is produced by choosing the best of 25 models using held-out scores. Under the stricter protocol in which the model is chosen by cross-validation alone (Section 2.11), top-ten placement falls from 35 to 26 of 37 datasets, first places from six to one, and the median estimated rank from 3 to 7 (Figure 3). Across all 45 datasets, the cross-validation-selected model was the overall winner on only 2 and sat a median of 10.4% above the per-dataset best.</p>
+<p>Both protocols rest on a single split and seed, so the individual ranks in Figure 3 carry unquantified seed variance and the aggregate counts are the more trustworthy quantity (see Limitations). That caveat does not soften the direction of the effect: the shift is large and one-sided, and it would take implausibly favourable seed variance to erase a nine-dataset gap. This gap of roughly nine leaderboard placements is, in our view, the most practically important number in this paper. It is not a defect specific to AutoQSAR: any leaderboard entry that selects among candidate models or configurations using test-set feedback carries the same inflation, and the reproducibility audit of the TDC leaderboard [19] suggests that such selection is rarely documented. We report both protocols rather than only the favourable one, and we take the cross-validation-selected result — top ten on roughly 70% of comparable datasets — as the honest estimate of what a practitioner should expect. The cross-validation protocol is also a conservative bound here, since Chemprop, Uni-Mol, MapLight + GNN and the fusion methods do not emit cross-validated metrics in this run and were therefore ineligible for cross-validation-based selection; extending CV metrics to those backends is the single most valuable change we can make to the runner.</p>
+<p>Comparability also varies by dataset, and the aggregate obscures it. Restricted to the 22 TDC datasets evaluated on official <code>admet_group</code> splits — the only subset directly comparable to the public TDC leaderboard — the test-selected model placed in the top ten on all 22 with a median rank of 3 and first on two; the cross-validation-selected model placed in the top ten on 15 with a median rank of 8. On the 5 Polaris datasets the test-selected model placed in the top ten on 4. The remaining 10 comparable datasets used locally generated splits and are <em>not</em> leaderboard-equivalent; four of the six estimated first places fall in this group, and those four should be read as “competitive with published values under a comparable but not identical protocol”, not as leaderboard claims. Per-dataset detail, including both protocols and the reference counts behind each rank, is given in Table 4.</p>
+<!-- TABLE:table4_leaderboard_comparison -->
+<table class="caption-top table">
+<colgroup>
+<col style="width: 9%">
+<col style="width: 9%">
+<col style="width: 9%">
+<col style="width: 9%">
+<col style="width: 9%">
+<col style="width: 9%">
+<col style="width: 9%">
+<col style="width: 9%">
+<col style="width: 9%">
+<col style="width: 9%">
+<col style="width: 9%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Dataset</th>
+<th>Metric</th>
+<th>AutoQSAR best model (test-selected)</th>
+<th>AutoQSAR value</th>
+<th>Reference top-1</th>
+<th>Reference top-10 cutoff</th>
+<th>References (n)</th>
+<th>Est. rank</th>
+<th>CV-selected model</th>
+<th>CV-selected value</th>
+<th>CV-selected est. rank</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>tdc_bioavailability_ma</td>
+<td>ROC_AUC</td>
+<td>CatBoost</td>
+<td>0.777</td>
+<td>0.748</td>
+<td>0.640</td>
+<td>8</td>
+<td>1</td>
+<td>LogisticRegression</td>
+<td>0.715</td>
+<td>3</td>
+</tr>
+<tr class="even">
+<td>tdc_carcinogens_lagunin</td>
+<td>ROC_AUC</td>
+<td>AdaBoost</td>
+<td>0.863</td>
+<td>0.848</td>
+<td>0.795</td>
+<td>20</td>
+<td>1</td>
+<td>LogisticRegression</td>
+<td>0.830</td>
+<td>5</td>
+</tr>
+<tr class="odd">
+<td>tdc_cyp2c9_substrate_carbonmangels</td>
+<td>AUPRC</td>
+<td>Ensemble (OOF Stacking (RidgeCV, 5-fold))</td>
+<td>0.482</td>
+<td>0.450</td>
+<td>0.360</td>
+<td>6</td>
+<td>1</td>
+<td>SVC</td>
+<td>0.301</td>
+<td>7</td>
+</tr>
+<tr class="even">
+<td>tdc_hydrationfreeenergy_freesolv</td>
+<td>RMSE</td>
+<td>CFA (Combinatorial Fusion)</td>
+<td>0.556</td>
+<td>0.654</td>
+<td>1.211</td>
+<td>12</td>
+<td>1</td>
+<td>ElasticNetCV</td>
+<td>1.352</td>
+<td>&gt;10</td>
+</tr>
+<tr class="odd">
+<td>tdc_skin_reaction</td>
+<td>ROC_AUC</td>
+<td>CFA (Combinatorial Fusion)</td>
+<td>0.769</td>
+<td>0.741</td>
+<td>0.677</td>
+<td>21</td>
+<td>1</td>
+<td>LogisticRegression</td>
+<td>0.734</td>
+<td>3</td>
+</tr>
+<tr class="even">
+<td>tdc_toxcast</td>
+<td>ROC_AUC</td>
+<td>CatBoost</td>
+<td>0.791</td>
+<td>0.714</td>
+<td>0.714</td>
+<td>2</td>
+<td>1</td>
+<td>CatBoost</td>
+<td>0.791</td>
+<td>1</td>
+</tr>
+<tr class="odd">
+<td>poduam_pod_nc_std</td>
+<td>RMSE</td>
+<td>Ensemble (Weighted average (inverse train RMSE))</td>
+<td>0.699</td>
+<td>0.550</td>
+<td>0.730</td>
+<td>2</td>
+<td>2</td>
+<td>XGBoost</td>
+<td>0.735</td>
+<td>3</td>
+</tr>
+<tr class="even">
+<td>poduam_pod_rd_std</td>
+<td>RMSE</td>
+<td>XGBoost</td>
+<td>0.551</td>
+<td>0.410</td>
+<td>0.630</td>
+<td>2</td>
+<td>2</td>
+<td>ElasticNetCV</td>
+<td>0.713</td>
+<td>3</td>
+</tr>
+<tr class="odd">
+<td>tdc_ames</td>
+<td>ROC_AUC</td>
+<td>XGBoost</td>
+<td>0.875</td>
+<td>0.912</td>
+<td>0.834</td>
+<td>7</td>
+<td>2</td>
+<td>Extra trees</td>
+<td>0.868</td>
+<td>2</td>
+</tr>
+<tr class="even">
+<td>tdc_bbb_martins</td>
+<td>ROC_AUC</td>
+<td>Random forest</td>
+<td>0.932</td>
+<td>0.941</td>
+<td>0.903</td>
+<td>7</td>
+<td>2</td>
+<td>Tabular MLP</td>
+<td>0.885</td>
+<td>8</td>
+</tr>
+<tr class="odd">
+<td>tdc_cyp2d6_veith</td>
+<td>AUPRC</td>
+<td>XGBoost</td>
+<td>0.722</td>
+<td>0.811</td>
+<td>0.464</td>
+<td>6</td>
+<td>2</td>
+<td>AdaBoost</td>
+<td>0.615</td>
+<td>6</td>
+</tr>
+<tr class="even">
+<td>tdc_cyp3a4_veith</td>
+<td>AUPRC</td>
+<td>Ensemble (OOF Stacking (RidgeCV, 5-fold))</td>
+<td>0.890</td>
+<td>0.923</td>
+<td>0.750</td>
+<td>6</td>
+<td>2</td>
+<td>AdaBoost</td>
+<td>0.797</td>
+<td>6</td>
+</tr>
+<tr class="odd">
+<td>tdc_solubility_aqsoldb</td>
+<td>MAE</td>
+<td>Uni-Mol V1</td>
+<td>0.699</td>
+<td>0.557</td>
+<td>0.776</td>
+<td>17</td>
+<td>2</td>
+<td>Extra trees</td>
+<td>0.761</td>
+<td>8</td>
+</tr>
+<tr class="even">
+<td>polaris_adme_fang_hppb_1</td>
+<td>MSE</td>
+<td>MapLight + GNN (CatBoost, Strict Parity)</td>
+<td>0.202</td>
+<td>0.143</td>
+<td>0.383</td>
+<td>10</td>
+<td>3</td>
+<td>ElasticNetCV</td>
+<td>0.272</td>
+<td>7</td>
+</tr>
+<tr class="odd">
+<td>polaris_adme_fang_perm_1</td>
+<td>MSE</td>
+<td>Uni-Mol V1</td>
+<td>0.159</td>
+<td>0.113</td>
+<td>0.257</td>
+<td>10</td>
+<td>3</td>
+<td>ChemML MLP (PyTorch)</td>
+<td>0.224</td>
+<td>7</td>
+</tr>
+<tr class="even">
+<td>polaris_adme_fang_rppb_1</td>
+<td>MSE</td>
+<td>MapLight + GNN (CatBoost, Strict Parity)</td>
+<td>0.244</td>
+<td>0.230</td>
+<td>0.634</td>
+<td>10</td>
+<td>3</td>
+<td>TabPFNRegressor</td>
+<td>0.284</td>
+<td>4</td>
+</tr>
+<tr class="odd">
+<td>tdc_caco2_wang</td>
+<td>MAE</td>
+<td>Ensemble (Weighted average (inverse train RMSE))</td>
+<td>0.269</td>
+<td>0.256</td>
+<td>0.288</td>
+<td>20</td>
+<td>3</td>
+<td>ElasticNetCV</td>
+<td>0.302</td>
+<td>&gt;10</td>
+</tr>
+<tr class="even">
+<td>tdc_clearance_hepatocyte_az</td>
+<td>SPEARMAN</td>
+<td>MapLight + GNN (CatBoost, Strict Parity)</td>
+<td>0.517</td>
+<td>0.633</td>
+<td>0.440</td>
+<td>16</td>
+<td>3</td>
+<td>TabPFNRegressor</td>
+<td>0.345</td>
+<td>&gt;10</td>
+</tr>
+<tr class="odd">
+<td>tdc_clintox</td>
+<td>ROC_AUC</td>
+<td>CatBoost</td>
+<td>0.949</td>
+<td>0.996</td>
+<td>0.889</td>
+<td>12</td>
+<td>3</td>
+<td>LogisticRegression</td>
+<td>0.915</td>
+<td>3</td>
+</tr>
+<tr class="even">
+<td>tdc_cyp2c9_veith</td>
+<td>AUPRC</td>
+<td>Ensemble (OOF Stacking (RidgeCV, 5-fold))</td>
+<td>0.810</td>
+<td>0.877</td>
+<td>0.770</td>
+<td>6</td>
+<td>3</td>
+<td>AdaBoost</td>
+<td>0.705</td>
+<td>7</td>
+</tr>
+<tr class="odd">
+<td>tdc_herg</td>
+<td>ROC_AUC</td>
+<td>AdaBoost</td>
+<td>0.861</td>
+<td>0.880</td>
+<td>0.806</td>
+<td>7</td>
+<td>3</td>
+<td>Tabular MLP</td>
+<td>0.724</td>
+<td>8</td>
+</tr>
+<tr class="even">
+<td>tdc_ppbr_az</td>
+<td>MAE</td>
+<td>Ensemble (Weighted average (inverse train RMSE))</td>
+<td>7.315</td>
+<td>0.679</td>
+<td>7.914</td>
+<td>16</td>
+<td>3</td>
+<td>ChemML MLP (PyTorch)</td>
+<td>9.372</td>
+<td>&gt;10</td>
+</tr>
+<tr class="odd">
+<td>esol_delaney</td>
+<td>RMSE</td>
+<td>Ensemble (Weighted average (inverse train RMSE))</td>
+<td>0.592</td>
+<td>0.558</td>
+<td>0.743</td>
+<td>30</td>
+<td>4</td>
+<td>ElasticNetCV</td>
+<td>0.680</td>
+<td>9</td>
+</tr>
+<tr class="even">
+<td>polaris_adme_fang_rclint_1</td>
+<td>MSE</td>
+<td>Uni-Mol V1</td>
+<td>0.262</td>
+<td>0.216</td>
+<td>0.403</td>
+<td>10</td>
+<td>4</td>
+<td>ChemML MLP (PyTorch)</td>
+<td>0.333</td>
+<td>7</td>
+</tr>
+<tr class="odd">
+<td>tdc_hia_hou</td>
+<td>ROC_AUC</td>
+<td>CFA (Combinatorial Fusion)</td>
+<td>0.990</td>
+<td>0.994</td>
+<td>0.976</td>
+<td>8</td>
+<td>4</td>
+<td>LogisticRegression</td>
+<td>0.987</td>
+<td>4</td>
+</tr>
+<tr class="even">
+<td>tdc_lipophilicity_astrazeneca</td>
+<td>MAE</td>
+<td>Uni-Mol V1</td>
+<td>0.451</td>
+<td>0.406</td>
+<td>0.515</td>
+<td>17</td>
+<td>4</td>
+<td>ElasticNetCV</td>
+<td>0.559</td>
+<td>&gt;10</td>
+</tr>
+<tr class="odd">
+<td>tdc_cyp2d6_substrate_carbonmangels</td>
+<td>AUPRC</td>
+<td>Ensemble (Weighted average (inverse train RMSE))</td>
+<td>0.673</td>
+<td>0.766</td>
+<td>0.570</td>
+<td>7</td>
+<td>5</td>
+<td>AdaBoost</td>
+<td>0.652</td>
+<td>5</td>
+</tr>
+<tr class="even">
+<td>tdc_dili</td>
+<td>ROC_AUC</td>
+<td>Ensemble (OOF Stacking (RidgeCV, 5-fold))</td>
+<td>0.915</td>
+<td>0.945</td>
+<td>0.852</td>
+<td>6</td>
+<td>5</td>
+<td>LogisticRegression</td>
+<td>0.860</td>
+<td>6</td>
+</tr>
+<tr class="odd">
+<td>tdc_ld50_zhu</td>
+<td>MAE</td>
+<td>CFA (Combinatorial Fusion)</td>
+<td>0.577</td>
+<td>0.292</td>
+<td>0.605</td>
+<td>16</td>
+<td>5</td>
+<td>XGBoost</td>
+<td>0.584</td>
+<td>5</td>
+</tr>
+<tr class="even">
+<td>tdc_pgp_broccatelli</td>
+<td>ROC_AUC</td>
+<td>Ensemble (Weighted average (inverse train RMSE))</td>
+<td>0.929</td>
+<td>0.994</td>
+<td>0.911</td>
+<td>8</td>
+<td>5</td>
+<td>Tabular MLP</td>
+<td>0.906</td>
+<td>9</td>
+</tr>
+<tr class="odd">
+<td>tdc_vdss_lombardo</td>
+<td>SPEARMAN</td>
+<td>MapLight + GNN (CatBoost, Strict Parity)</td>
+<td>0.678</td>
+<td>0.942</td>
+<td>0.582</td>
+<td>16</td>
+<td>5</td>
+<td>TabPFNRegressor</td>
+<td>0.527</td>
+<td>&gt;10</td>
+</tr>
+<tr class="even">
+<td>lipophilicity</td>
+<td>RMSE</td>
+<td>Ensemble (Weighted average (inverse train RMSE))</td>
+<td>0.582</td>
+<td>0.549</td>
+<td>0.610</td>
+<td>27</td>
+<td>6</td>
+<td>ElasticNetCV</td>
+<td>0.658</td>
+<td>&gt;10</td>
+</tr>
+<tr class="odd">
+<td>tdc_cyp3a4_substrate_carbonmangels</td>
+<td>ROC_AUC</td>
+<td>LogisticRegression</td>
+<td>0.659</td>
+<td>0.692</td>
+<td>0.651</td>
+<td>7</td>
+<td>7</td>
+<td>Tabular MLP</td>
+<td>0.634</td>
+<td>8</td>
+</tr>
+<tr class="even">
+<td>tdc_half_life_obach</td>
+<td>SPEARMAN</td>
+<td>Uni-Mol V1</td>
+<td>0.533</td>
+<td>0.649</td>
+<td>0.485</td>
+<td>16</td>
+<td>9</td>
+<td>TabPFNRegressor</td>
+<td>0.396</td>
+<td>&gt;10</td>
+</tr>
+<tr class="odd">
+<td>tdc_clearance_microsome_az</td>
+<td>SPEARMAN</td>
+<td>MapLight + GNN (CatBoost, Strict Parity)</td>
+<td>0.606</td>
+<td>0.652</td>
+<td>0.599</td>
+<td>17</td>
+<td>10</td>
+<td>Tabular MLP</td>
+<td>0.500</td>
+<td>&gt;10</td>
+</tr>
+<tr class="even">
+<td>polaris_adme_fang_solu_1</td>
+<td>MSE</td>
+<td>Uni-Mol V1</td>
+<td>0.331</td>
+<td>0.222</td>
+<td>0.329</td>
+<td>10</td>
+<td>&gt;10</td>
+<td>ChemML MLP (PyTorch)</td>
+<td>0.417</td>
+<td>&gt;10</td>
+</tr>
+<tr class="odd">
+<td>tdc_tox21</td>
+<td>ROC_AUC</td>
+<td>XGBoost</td>
+<td>0.812</td>
+<td>0.867</td>
+<td>0.840</td>
+<td>12</td>
+<td>&gt;10</td>
+<td>SVC</td>
+<td>0.789</td>
+<td>&gt;10</td>
+</tr>
+</tbody>
+</table>
+<!-- /TABLE -->
+<p><strong>Table 4.</strong> Per-dataset leaderboard comparison, sorted by estimated rank. “References (n)” is the number of published values available for that dataset and metric; ranks from sparse reference sets are correspondingly uncertain. The <code>tdc_ppbr_az</code> top-1 reference (MAE 0.679) is inconsistent in scale with the rest of that dataset’s references (top-10 cutoff 7.914) and its top-1 gap should be disregarded.</p>
+<p>Two datasets warrant specific comment. For ESOL and Lipophilicity we deliberately replaced the public MoleculeNet leaderboard — whose only entries are a 2020-dated GCN and random forest — with current literature values, because scoring against the older baselines produced spurious first places in an earlier analysis of this work. Against contemporary references AutoQSAR reaches RMSE 0.592 on ESOL (estimated rank 4 of 30 references) and 0.582 on Lipophilicity (rank 6 of 27). These are competitive results and we make no state-of-the-art claim for either.</p>
+</section>
+<section id="what-the-pipelines-components-contribute" class="level3">
+<h3 class="anchored" data-anchor-id="what-the-pipelines-components-contribute">3.5 What the pipeline’s components contribute</h3>
+<p>Because fusion and ensembling add computational cost and interpretive complexity, we asked what each layer of the pipeline actually buys (Table 5).</p>
+<!-- TABLE:table5_ensemble_value_add -->
+<table class="caption-top table">
+<colgroup>
+<col style="width: 11%">
+<col style="width: 11%">
+<col style="width: 11%">
+<col style="width: 11%">
+<col style="width: 11%">
+<col style="width: 11%">
+<col style="width: 11%">
+<col style="width: 11%">
+<col style="width: 11%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Fusion method</th>
+<th>Task</th>
+<th>Datasets</th>
+<th>Overall wins</th>
+<th>Top-3</th>
+<th>Beats best base</th>
+<th>Loses to best base</th>
+<th>Median rank</th>
+<th>Median rel. change vs best base</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Inverse-RMSE weighted average</td>
+<td>classification</td>
+<td>22</td>
+<td>6</td>
+<td>12</td>
+<td>8</td>
+<td>14</td>
+<td>2.500</td>
+<td>-0.005</td>
+</tr>
+<tr class="even">
+<td>OOF stacking</td>
+<td>classification</td>
+<td>22</td>
+<td>4</td>
+<td>11</td>
+<td>6</td>
+<td>16</td>
+<td>3.500</td>
+<td>-0.008</td>
+</tr>
+<tr class="odd">
+<td>CFA fusion</td>
+<td>classification</td>
+<td>22</td>
+<td>2</td>
+<td>6</td>
+<td>5</td>
+<td>17</td>
+<td>7.000</td>
+<td>-0.022</td>
+</tr>
+<tr class="even">
+<td>Inverse-RMSE weighted average</td>
+<td>regression</td>
+<td>23</td>
+<td>5</td>
+<td>17</td>
+<td>5</td>
+<td>18</td>
+<td>3.000</td>
+<td>-0.024</td>
+</tr>
+<tr class="odd">
+<td>OOF stacking</td>
+<td>regression</td>
+<td>23</td>
+<td>0</td>
+<td>9</td>
+<td>1</td>
+<td>22</td>
+<td>5.000</td>
+<td>-0.055</td>
+</tr>
+<tr class="even">
+<td>CFA fusion</td>
+<td>regression</td>
+<td>22</td>
+<td>2</td>
+<td>3</td>
+<td>3</td>
+<td>19</td>
+<td>8.000</td>
+<td>-0.106</td>
+</tr>
+</tbody>
+</table>
+<!-- /TABLE -->
+<p><strong>Table 5.</strong> Ensemble and fusion value-add against the best single base model available on the same dataset, under each dataset’s primary metric.</p>
+<p>The answer differs sharply by task. For classification, fusion helped on about half the datasets: the inverse-RMSE weighted average beat the best single base model on 8 of 22 datasets and OOF stacking on 6 of 22, with median ranks of 2.5 and 3.5. Taking the best fusion method per dataset, some fusion beat the best single model on 12 of 22 classification datasets, with a median relative improvement of 0.5% where it won — small but consistent, which is what one expects when averaging decorrelated probability estimates. For regression the picture is worse: OOF stacking beat the best base model on 1 of 23 datasets and CFA on 3 of 22, and the typical fusion result was 2.4% <em>worse</em> than the best single model. Where regression fusion did win it won by a useful margin (median 3.3%), so the method is not worthless, but as a default it is not justified on regression tasks in this configuration. These margins are the smallest quantities we report — median relative changes below 3% on a single split and seed — and are correspondingly the most fragile; we therefore advance only the directional conclusion (fusion earns its cost on classification and not on regression), not the specific percentages.</p>
+<p>A staged ablation over the same artifacts (Table S2) tells a consistent story: starting from conventional machine learning alone, adding MapLight classic features improved the achievable result on 7 of 45 datasets, adding the neural and pretrained backends improved 26, adding CFA improved 8, and adding the ensemble layer improved 15. The deep and pretrained backends are therefore the single largest source of incremental accuracy — which is worth stating plainly, since it cuts against a purely “conventional models are enough” reading of Figure 2 — while the fusion layers contribute more modestly and mostly on classification. What Figure 2 and Table 3 add is that this incremental accuracy is concentrated in regression, is not free (Section 3.7), and does not make any pretrained family a reliable default.</p>
+</section>
+<section id="feature-representations" class="level3">
+<h3 class="anchored" data-anchor-id="feature-representations">3.6 Feature representations</h3>
+<p>We quantified which representation families the leak-free elastic-net selector actually retained, relative to a uniform-selection baseline (Figure 4, Table S3). Of 16,863 selected features across all datasets, the three components of the MapLight classic composite accounted for 37.8%, against 22.9% of the available feature pool — a clear but not overwhelming enrichment for the composite as a whole.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="manuscript_assets/figures/figure4_feature_family_enrichment.png" class="img-fluid figure-img"></p>
+<figcaption>Figure 4. Feature-family selection share and enrichment.</figcaption>
+</figure>
+</div>
+<p><strong>Figure 4.</strong> Feature-family representation among selected features. (a) Share of selected features (filled) against share of available features (outlined). (b) Per-feature selection enrichment relative to a uniform baseline, log2 scale. Components of the MapLight classic composite are highlighted.</p>
+<p>On a per-feature basis the ordering is more informative. The compact RDKit 2D descriptor panel was by far the most enriched family (3.90× uniform), followed by ErG (2.24×) and Avalon (1.99×); MACCS keys were marginally enriched (1.14×); and the large hashed circular and path fingerprints were all <em>de</em>-enriched, with Morgan lowest (0.52×). In other words, a few hundred interpretable physicochemical descriptors earn selection far above their numerical weight, while thousands of hashed fingerprint bits earn it below theirs. Avalon’s large absolute share (23% of selected features) reflects its size rather than unusual per-feature value.</p>
+<p>This nuance matters for how the MapLight result is usually described. The composite’s value comes substantially from its two compact, chemically interpretable components — the ErG pharmacophore fingerprint and the descriptor panel — rather than from its hashed Morgan block, which is the least-selected family in our analysis. For practitioners with limited compute, the practical implication is that the RDKit descriptor panel plus one compact pharmacophore representation captures most of the selectable signal, a conclusion consistent with representation-focused benchmarks reporting that descriptor sets outperform fingerprints as standalone representations [16].</p>
+</section>
+<section id="computational-cost" class="level3">
+<h3 class="anchored" data-anchor-id="computational-cost">3.7 Computational cost</h3>
+<p>A core motivation for AutoQSAR is that competitive accuracy should not require GPU-scale compute. The complete benchmark consumed 155.0 hours of recorded wall-clock time across 45 datasets (median 1.11 h per dataset; maximum 23.6 h for <code>tdc_herg_karim</code>, 13,445 molecules). We report per-model cost as each model’s own incremental wall-clock time, computed as the difference between consecutive entries of the runner’s cumulative per-session clock; fusion methods are additionally charged the summed cost of the base-model pool they consume, since a fusion result cannot be obtained without it.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="manuscript_assets/figures/figure5_cost_vs_value.png" class="img-fluid figure-img"></p>
+<figcaption>Figure 5. Cost versus value by model.</figcaption>
+</figure>
+</div>
+<p><strong>Figure 5.</strong> Median wall-clock time per dataset against median relative gap to the per-dataset best, by model, separately for regression (a) and classification (b). Both axes are logarithmic; diamonds mark fusion methods, whose cost excludes the base-model pool they consume.</p>
+<p>Per-family median cost spans four orders of magnitude (Table 6): 0.2 s for CFA and 0.5 s for the ensemble meta-models (excluding their base pool; ≈3,100 s and ≈3,050 s including it), 17 s for conventional machine learning, 18 s for the deep tabular network, 98 s for Chemprop v2, 125 s for TabPFN, 151 s for MapLight + GNN and 1,964 s for Uni-Mol V1. Uni-Mol therefore costs roughly 115 times the median conventional model per dataset, in exchange for 7 regression wins out of 23 and a median rank of 6 overall. Whether that trade is worth making is a defensible judgement either way, but it should be made explicitly, and on regression tasks only.</p>
+<!-- TABLE:table6_cost -->
+<table class="caption-top table">
+<colgroup>
+<col style="width: 14%">
+<col style="width: 14%">
+<col style="width: 14%">
+<col style="width: 14%">
+<col style="width: 14%">
+<col style="width: 14%">
+<col style="width: 14%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Architecture family</th>
+<th>Model-dataset fits timed</th>
+<th>Median own wall-clock (s)</th>
+<th>IQR own wall-clock (s)</th>
+<th>Median cost incl.&nbsp;base pool (s)</th>
+<th>Median trainable parameters</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>CFA combinatorial fusion</td>
+<td>44.0</td>
+<td>0.2</td>
+<td>0–0</td>
+<td>3,147</td>
+<td></td>
+<td>fusion over fitted base-model predictions</td>
+</tr>
+<tr class="even">
+<td>Ensemble (stacking / averaging)</td>
+<td>90.0</td>
+<td>0.5</td>
+<td>0–1</td>
+<td>3,047</td>
+<td></td>
+<td>fusion over fitted base-model predictions</td>
+</tr>
+<tr class="odd">
+<td>Conventional ML</td>
+<td>472.0</td>
+<td>17.1</td>
+<td>5–88</td>
+<td></td>
+<td>520,961</td>
+<td>measured in this run</td>
+</tr>
+<tr class="even">
+<td>Deep tabular NN (ChemML MLP)</td>
+<td>45.0</td>
+<td>18.1</td>
+<td>8–67</td>
+<td></td>
+<td>324,097</td>
+<td>measured in this run</td>
+</tr>
+<tr class="odd">
+<td>Chemprop v2 GNN</td>
+<td>44.0</td>
+<td>97.9</td>
+<td>83–132</td>
+<td></td>
+<td>395,618</td>
+<td>measured in this run</td>
+</tr>
+<tr class="even">
+<td>TabPFN (tabular foundation)</td>
+<td>18.0</td>
+<td>125.2</td>
+<td>40–382</td>
+<td></td>
+<td></td>
+<td>measured in this run</td>
+</tr>
+<tr class="odd">
+<td>MapLight + GNN</td>
+<td>31.0</td>
+<td>150.8</td>
+<td>147–208</td>
+<td></td>
+<td></td>
+<td>measured in this run</td>
+</tr>
+<tr class="even">
+<td>Uni-Mol V1 (3D pretrained)</td>
+<td>44.0</td>
+<td>1,964</td>
+<td>383–5571</td>
+<td></td>
+<td>47,331,652</td>
+<td>measured in this run</td>
+</tr>
+<tr class="odd">
+<td>MolGPS (published)</td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td>~3B parameters; GPU pretraining/inference reported in literature</td>
+</tr>
+<tr class="even">
+<td>MolE (published)</td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td>~100M parameters; GPU pretraining reported in literature</td>
+</tr>
+<tr class="odd">
+<td>ADMET-AI (published)</td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td>Chemprop-RDKit; exact parameter count not recorded here; GPU-capable Chemprop-RDKit deployment</td>
+</tr>
+</tbody>
+</table>
+<!-- /TABLE -->
+<p><strong>Table 6.</strong> Per-family computational cost and model size in this benchmark, with published comparators. Wall-clock times are per model per dataset on the run hardware.</p>
+<p>Recorded model sizes underline the accessibility argument. Uni-Mol V1 carried a median of 47.3 million trainable parameters, Chemprop v2 395,618 and the ChemML MLP 324,097, against published comparators MolE (~100 M parameters, pretrained on ~842 M molecules) [6] and MolGPS (~3 B parameters) [7]. The models that won most of our datasets — gradient-boosted trees and linear meta-models over them — carry no pretraining corpus at all.</p>
+<p>Feature selection, rather than model fitting, is the pipeline’s scaling bottleneck. A log–log fit of selector time against dataset size gives a slope of 1.36 (Pearson r = 0.67 across 45 datasets), i.e.&nbsp;super-linear scaling, with a median of 99 s but a maximum of 10,654 s (3.0 h) on <code>tdc_cyp2d6_veith</code>. The runtime model and RandomForest fallback described in Section 2.6 exist precisely to bound this term, and the fit above is the empirical basis for tuning it.</p>
+</section>
+<section id="genetic-algorithm-tuning-a-negative-result" class="level3">
+<h3 class="anchored" data-anchor-id="genetic-algorithm-tuning-a-negative-result">3.8 Genetic-algorithm tuning: a negative result</h3>
+<p>Genetic-algorithm hyperparameter tuning was disabled by default in this run (recorded resolution: mode <code>disabled</code>, reason <code>empty_ga_models</code>), and no GA-tuned model rows appear in the artifacts. Accordingly no GA-tuned model contributed any per-dataset win or near-best result. We report this as a deliberate negative result informing the recommended default configuration: the breadth of the fixed model library, not per-model evolutionary search, drives AutoQSAR’s competitiveness. This is consistent with the broader finding that representation and model-family choice dominate hyperparameter refinement in this domain [16].</p>
+</section>
+<section id="model-coverage-and-backend-failures" class="level3">
+<h3 class="anchored" data-anchor-id="model-coverage-and-backend-failures">3.9 Model coverage and backend failures</h3>
+<p>Not every model ran on every dataset, and we report the gaps rather than silently analysing only successes (Table S4). Three sources account for nearly all of them. Task applicability: regression-only and classification-only estimators are valid on at most 23 and 22 datasets respectively. Guardrails: TabPFN’s 1000-row training limit restricted the classifier to 10 datasets and the regressor to 35. Backend failures: Chemprop v2 produced valid results on only 21 and 23 of 45 datasets depending on variant, failing on essentially all classification tasks in this run through training-command failures, and MapLight + GNN failed on 3 of 45 through a DGL <code>graphbolt</code> library loading error, succeeding on retry elsewhere.</p>
+<p>The Chemprop failures are consequential for interpretation and we do not want them read as evidence against message-passing networks. Chemprop’s single win and poor consistency (Table 3) are measured over the subset of datasets where it ran, which excludes almost all classification tasks; a working Chemprop classification path could change its standing materially. We flag this as the largest known threat to the completeness of Figure 2 and as the first thing to fix before any follow-up benchmark.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="manuscript_assets/figures/figure6_family_gap_heatmap.png" class="img-fluid figure-img"></p>
+<figcaption>Figure 6. Per-dataset gap to best by architecture family.</figcaption>
+</figure>
+</div>
+<p><strong>Figure 6.</strong> Relative gap of each family’s best model to the per-dataset best (%, capped at 50), for every dataset. Stars mark the family containing the dataset winner; dashes mark families that produced no valid result for that dataset. Classification datasets are shown above the rule, regression below.</p>
+</section>
+<section id="reproducibility" class="level3">
+<h3 class="anchored" data-anchor-id="reproducibility">3.10 Reproducibility</h3>
+<p>Every reported result is backed by a complete artifact trail. Each of the 45 completed datasets retains metrics, selected-feature records, selector coefficients, split-signature hashes, per-stage runtimes, CFA candidate tables and ensemble weights; the run recorded a configuration signature, fixed seeds (random seed 13, Chemprop seed 42) and a <code>cost_optimized</code> profile; and a SHA-256 manifest covers repository-level and per-dataset artifacts. The benchmark artifacts analysed here were committed in repository revision <code>b7cd42c</code>. All figures, tables and quoted numbers in this paper regenerate from those artifacts with one command (Section 2.12), which also writes a machine-readable record of every headline number.</p>
+<p>Two limitations of the reproducibility claim should be stated. The benchmark was executed from a working tree containing uncommitted changes, so the recorded code state is the committed revision rather than a byte-exact snapshot of what ran; and per-molecule prediction files are excluded from the repository for size reasons, so prediction-level diagnostics (for example inter-model prediction diversity) cannot be reproduced from the public artifacts alone. Both are addressed in the archive described under Availability of data and materials. <strong>[AUTHOR]</strong> Re-tagging a clean release before submission would close the first gap entirely.</p>
+<hr>
+</section>
+</section>
+<section id="limitations" class="level2">
+<h2 class="anchored" data-anchor-id="limitations">4. Limitations</h2>
+<p><strong>Single split and single seed: the principal limitation of this work.</strong> Every result reported here derives from one split and one random seed per dataset. The TDC convention is to report mean ± standard deviation over five independent seeds, and we do not meet it. Multi-seed evaluation over the official TDC splits is implemented in the runner (<code>--run-tdc22-multiseed-best</code>) but was deliberately not executed, because repeating the benchmark five times over 45 datasets and 25 models was beyond the computational budget available for this study; the single-seed run alone consumed 155 hours of wall-clock time (Section 3.7), so a five-seed replication of the full suite would have required on the order of 775 hours.</p>
+<p>The consequences should be stated plainly rather than minimized. We report no variance estimates, no confidence intervals and no significance tests, and we therefore cannot distinguish a genuine difference between two models from seed-to-seed noise. Concretely, this means: (i) the per-dataset “winner” in Figure 2, Table 4 and Table S1 is the winner <em>on this split</em>, and an unknown fraction of the 45 winners would change under a different seed, so the win counts in Figure 2 should be read as a coarse distribution across families rather than as a precise ranking; (ii) the family orderings in Table 3 are indicative, and adjacent rows — for example ensembles at 76% versus conventional machine learning at 69% within 5% of best, both with median rank 2 — should not be treated as separated; (iii) the ensemble and fusion margins in Table 5 and Section 3.5 are small in absolute terms (median relative changes below 3%) and are the results most vulnerable to seed variance, so the conclusion we draw from them is directional (fusion helps on classification, not on regression) rather than quantitative; and (iv) estimated leaderboard ranks (Section 3.4) inherit the same instability, which compounds the model-selection effect quantified there.</p>
+<p>What we believe does survive this limitation is the qualitative headline, because it does not rest on close margins: no family won more than a third of datasets, the spread of winners across seven families is far wider than any plausible seed effect, the classification/regression asymmetry is categorical (no pretrained model won any classification task), and the ~115-fold cost differences in Table 6 are orders of magnitude rather than percentages. Readers should treat every specific numeric comparison in this paper as provisional pending multi-seed replication, which we regard as the necessary next step for this work and the first thing any user of AutoQSAR should run on a dataset that matters to them.</p>
+<p><strong>Model selection.</strong> As quantified in Section 3.4, the test-selected headline is an optimistic maximum over 25 models. The cross-validation-selected protocol is the honest comparator but is itself incomplete, since four model families do not emit cross-validated metrics in this run.</p>
+<p><strong>Estimated ranks are not submissions.</strong> Ranks are computed against curated reference values of varying density (2 to 30 references per dataset) rather than by submitting to a live leaderboard, and 10 of the 37 comparable datasets use locally generated splits that are not leaderboard-equivalent.</p>
+<p><strong>Incomplete backend coverage.</strong> Chemprop v2’s classification path failed in this run and TabPFN was size-gated, so the comparison in Figure 2 is not a fully balanced tournament (Section 3.9).</p>
+<p><strong>Ensemble member filtering consults held-out data.</strong> The <code>exclude_negative_test_r2_members</code> option, enabled in this run, drops ensemble members by held-out R², and the correlated-member tie-break uses a held-out metric. Ensemble results are therefore mildly optimistic relative to a strictly blinded implementation; this is a configuration default we intend to change rather than a limitation of the method.</p>
+<p><strong>One target per task.</strong> Multi-label datasets (Tox21, ToxCast) were reduced to a single label, so results on those datasets are not comparable to multi-task leaderboard entries.</p>
+<p><strong>Applicability domain and calibration.</strong> The workspace includes applicability-domain utilities, but this benchmark does not report uncertainty calibration or domain-of-applicability diagnostics, which matter for regulatory use of any of these models.</p>
+<hr>
+</section>
+<section id="conclusions" class="level2">
+<h2 class="anchored" data-anchor-id="conclusions">5. Conclusions</h2>
+<p>Across 45 molecular property benchmarks from five suites evaluated under one leakage-controlled pipeline, no architecture family won more than a third of datasets. Ensembles over conventional learners and conventional gradient boosting won the most datasets and were the most consistent performers, while a 3D pretrained model won the most regression tasks among single architectures at roughly 115 times the median compute cost, and won no classification task at all. Rich but compact molecular descriptors — the RDKit 2D panel and pharmacophore fingerprints — were selected far above their numerical share, while large hashed fingerprints were selected below theirs. Genetic-algorithm tuning added nothing; the breadth of the model library did.</p>
+<p>Set against published leaderboard values, the best AutoQSAR model per dataset placed in the estimated top ten on 35 of 37 comparable datasets. Choosing that model without consulting held-out data reduces this to 26 of 37, and we regard the latter as the number practitioners should plan around. We encourage the field to report both, because the difference between them is a property of the evaluation protocol rather than of any particular model, and it is large enough to account for much of the apparent distance between competing entries.</p>
+<p>These conclusions rest on a single split and seed per dataset, a limitation imposed by the computational cost of the benchmark and discussed in full in Section 4. The claims we advance are accordingly those that survive that limitation — the breadth of the winner distribution, the categorical classification/regression asymmetry, the one-sided model-selection effect and the order-of-magnitude cost differences — rather than any close model-to-model comparison. Multi-seed replication remains the necessary next step.</p>
+<p>AutoQSAR delivers these results through a code-free notebook and a resume-safe command-line runner that share one workflow core, run without specialized hardware, and emit the complete artifact trail needed to verify every number reported here. For practitioners who can run only one configuration, our results support a specific default: a MapLight-style descriptor panel with gradient-boosted trees, ensembled by inverse-error averaging, with a 3D pretrained model added only for regression tasks where conformational information is mechanistically plausible and the compute budget allows.</p>
+<hr>
+</section>
+<section id="availability-of-data-and-materials" class="level2">
+<h2 class="anchored" data-anchor-id="availability-of-data-and-materials">Availability of data and materials</h2>
+<p><strong>Project name:</strong> AutoQSAR <strong>Project home page:</strong> https://github.com/ScottCoffin/AutoQSAR <strong>Operating systems:</strong> Windows, macOS, Linux, Google Colab <strong>Programming language:</strong> Python 3.11 <strong>Other requirements:</strong> RDKit, scikit-learn; optional XGBoost, LightGBM, CatBoost, PyTorch, DGL, Chemprop v2, TabPFN, Uni-Mol <strong>License:</strong> See <code>LICENSE</code> in the repository <strong>Any restrictions to use by non-academics:</strong> None beyond the repository license</p>
+<p>The repository contains the workflow core, the notebook builder, the benchmark runner, the dataset registry, the leaderboard reference tables, the complete benchmark artifacts analysed here (<code>benchmark_results/benchmark_name_date/</code>), the analysis notebook (<code>portable_colab_qsar_bundle/benchmark_results_summary.ipynb</code>) and the one-command regeneration script for all figures, tables and reported numbers (<code>portable_colab_qsar_bundle/render_manuscript_assets.py</code>). Pinned conda and pip environment specifications, an Apptainer definition and Slurm submission scripts are included for reproduction on HPC.</p>
+<p>All benchmark datasets are public: TDC via PyTDC, MoleculeNet, Polaris, the PODUAM point-of-departure datasets [26] and the ChemML bundled examples.</p>
+<p><strong>[AUTHOR]</strong> A Zenodo archive of the benchmark artifacts, including the per-molecule prediction files excluded from the repository for size, will be deposited and its DOI cited here. A tagged release from a clean working tree should be created and cited alongside it.</p>
+</section>
+<section id="declarations" class="level2">
+<h2 class="anchored" data-anchor-id="declarations">Declarations</h2>
+<p><strong>Ethics approval and consent to participate:</strong> Not applicable. <strong>Consent for publication:</strong> Not applicable. <strong>Competing interests:</strong> The author declares no competing interests.</p>
+<p><strong>Funding:</strong> This work was supported by the California Office of Environmental Health Hazard Assessment (OEHHA). The funder had no role in study design, data collection and analysis, decision to publish, or preparation of the manuscript.</p>
+<p><strong>Authors’ contributions:</strong> SC conceived the study, developed the software, designed and executed the benchmark, analysed the results and wrote the manuscript. The author read and approved the final manuscript.</p>
+<p><strong>Acknowledgements:</strong> This work used Jetstream2 GPU at Indiana University through allocation CIS261142 from the Advanced Cyberinfrastructure Coordination Ecosystem: Services &amp; Support (ACCESS) program, which is supported by U.S. National Science Foundation grants #2138259, #2138286, #2138307, #2137603, and #2138296 [41, 42]. Jetstream2 is supported by the National Science Foundation under Grant 2005506. Any opinions, findings, and conclusions or recommendations expressed in this material are those of the authors and do not necessarily reflect the views of the National Science Foundation. <strong>[AUTHOR]</strong> Remaining acknowledgements to be completed.</p>
+<p><strong>Disclaimer:</strong> The views expressed are those of the authors and do not necessarily represent those of the California Environmental Protection Agency or the Office of Environmental Health Hazard Assessment.</p>
+<hr>
+</section>
+<section id="references" class="level2">
+<h2 class="anchored" data-anchor-id="references">References</h2>
+<p><em>DOIs and author lists below were verified during preparation except where explicitly flagged as requiring final confirmation.</em></p>
+<ol type="1">
+<li><p>Fu L, Shi S, Yi J, Wang N, He Y, Wu Z, Peng J, Deng Y, Wang W, Wu C, Lyu A, Zeng X, Zhao W, Hou T, Cao D. ADMETlab 3.0: an updated comprehensive online ADMET prediction platform enhanced with broader coverage, improved performance, API functionality and decision support. <em>Nucleic Acids Research</em>. 2024;52(W1):W422–W431. https://doi.org/10.1093/nar/gkae236</p></li>
+<li><p>ADDME – Avoiding Drug Development Mistakes Early: central nervous system drug discovery perspective. <em>BMC Neurology</em>. 2009;9(Suppl 1):S1. https://doi.org/10.1186/1471-2377-9-S1-S1 <em>[Author byline could not be verified from available metadata; confirm before submission.]</em></p></li>
+<li><p>Komura H, Watanabe R, Mizuguchi K. The trends and future prospective of in silico models from the viewpoint of ADME evaluation in drug discovery. <em>Pharmaceutics</em>. 2023;15(11):2619. https://doi.org/10.3390/pharmaceutics15112619</p></li>
+<li><p>Wu Z, Ramsundar B, Feinberg EN, Gomes J, Geniesse C, Pappu AS, Leswing K, Pande V. MoleculeNet: a benchmark for molecular machine learning. <em>Chemical Science</em>. 2018;9(2):513–530. https://doi.org/10.1039/C7SC02664A</p></li>
+<li><p>Huang K, Fu T, Gao W, Zhao Y, Roohani Y, Leskovec J, Coley CW, Xiao C, Sun J, Zitnik M. Therapeutics Data Commons: machine learning datasets and tasks for drug discovery and development. <em>Proceedings of the NeurIPS Datasets and Benchmarks Track</em>. 2021. arXiv:2102.09548</p></li>
+<li><p>Méndez-Lucio O, Nicolaou CA, Earnshaw B. MolE: a foundation model for molecular graphs using disentangled attention. <em>Nature Communications</em>. 2024;15:9431. https://doi.org/10.1038/s41467-024-53751-y <em>[Confirm article number; DOI verified.]</em></p></li>
+<li><p>Sypetkowski M, Wenkel F, Poursafaei F, Dickson N, Suri K, Fradkin P, Beaini D. On the scalability of GNNs for molecular graphs (MolGPS). <em>Advances in Neural Information Processing Systems 37</em>. 2024.</p></li>
+<li><p>Kläser K, Banaszewski B, Maddrell-Mander S, McLean C, Müller L, Parviz A, Huang S, Fitzgibbon A. MiniMol: a parameter-efficient foundation model for molecular learning. 2024. arXiv:2404.14986</p></li>
+<li><p>Zhou G, Gao Z, Ding Q, Zheng H, Xu H, Wei Z, Zhang L, Ke G. Uni-Mol: a universal 3D molecular representation learning framework. <em>International Conference on Learning Representations (ICLR)</em>. 2023.</p></li>
+<li><p>Xia J, Zhang L, Zhu X, Liu Y, Gao Z, Hu B, Tan C, Zheng J, Li S, Li SZ. Understanding the limitations of deep models for molecular property prediction: insights and solutions. <em>Advances in Neural Information Processing Systems 36</em>. 2023.</p></li>
+<li><p>Rodriguez-Perez R, Miljkovic F, Bajorath J. Machine learning in chemoinformatics and medicinal chemistry. <em>Annual Review of Biomedical Data Science</em>. 2022;5:43–65. https://doi.org/10.1146/annurev-biodatasci-122120-124216</p></li>
+<li><p>Tian H, Ketkar R, Tao P. ADMETboost: a web server for accurate ADMET prediction. <em>Journal of Molecular Modeling</em>. 2022;28:408. https://doi.org/10.1007/s00894-022-05373-8</p></li>
+<li><p>Notwell JH, Wood MW. ADMET property prediction through combinations of molecular fingerprints. 2023. arXiv:2310.00174</p></li>
+<li><p>Le HV, Ren W, Kim J, Yun Y, Park YB, Kim YJ, Han BK, Choi I, Park JI, Yun HY, Choi JM. CaliciBoost: performance-driven evaluation of molecular representations for Caco-2 permeability prediction. 2025. arXiv:2506.08059</p></li>
+<li><p>Xu C, Xu Y, Hu Z, Zhao X, Xie W, Chen W, Pei J. Unveiling optimal molecular features for hERG insights with automatic machine learning (MaxQsaring). <em>Journal of Pharmaceutical Analysis</em>. 2025;15(12):101411. https://doi.org/10.1016/j.jpha.2025.101411</p></li>
+<li><p>Kamuntavičius G, Paquet T, Bastas O, Šalkauskas D, Prat A, Abdel Aty H, Pabrinkis A, Norvaišas P, Tal R. Benchmarking ML in ADMET predictions: the practical impact of feature representations in ligand-based models. <em>Journal of Cheminformatics</em>. 2025;17:108. https://doi.org/10.1186/s13321-025-01041-0</p></li>
+<li><p>Kapoor S, Narayanan A. Leakage and the reproducibility crisis in machine-learning-based science. <em>Patterns</em>. 2023;4(9):100804. https://doi.org/10.1016/j.patter.2023.100804</p></li>
+<li><p>Belfield SJ, Cronin MTD, Enoch SJ, Firman JW. Guidance for good practice in the application of machine learning in development of toxicological quantitative structure-activity relationships (QSARs). <em>PLOS ONE</em>. 2023;18(5):e0282924. https://doi.org/10.1371/journal.pone.0282924</p></li>
+<li><p>Koleiev I, Stratiichuk R, Shevchuk N, Melnychenko M, Nyporko O, Todoryshyn D, Husak V, Starosyla S, Yesylevskyy S, Nafiiev A. Critical assessment of ML models for ADMET prediction in TDC leaderboards. <em>bioRxiv</em>. 2026. https://doi.org/10.64898/2026.02.26.708193</p></li>
+<li><p>Swanson K, Walther P, Leitz J, Mukherjee S, Wu JC, Shivnaraine RV, Zou J. ADMET-AI: a machine learning ADMET platform for evaluation of large-scale chemical libraries. <em>Bioinformatics</em>. 2024;40(7):btae416. https://doi.org/10.1093/bioinformatics/btae416</p></li>
+<li><p>Correia J, Capela J, Rocha M. DeepMol: an automated machine and deep learning framework for computational chemistry. <em>Journal of Cheminformatics</em>. 2024;16(1):136. https://doi.org/10.1186/s13321-024-00937-7</p></li>
+<li><p>de Sá AGC, Ascher DB. Auto-ADMET: an effective and interpretable AutoML method for chemical ADMET property prediction. 2025. arXiv:2502.16378</p></li>
+<li><p>Marimuthu APR, McGuire BA. ChemXploreML: a machine learning pipeline for molecular property prediction. 2025. arXiv:2505.08688 <em>[Confirm final journal/venue details.]</em></p></li>
+<li><p>Delaney JS. ESOL: estimating aqueous solubility directly from molecular structure. <em>Journal of Chemical Information and Computer Sciences</em>. 2004;44(3):1000–1005. https://doi.org/10.1021/ci034243x</p></li>
+<li><p>Mobley DL, Guthrie JP. FreeSolv: a database of experimental and calculated hydration free energies, with input files. <em>Journal of Computer-Aided Molecular Design</em>. 2014;28(7):711–720. https://doi.org/10.1007/s10822-014-9747-x</p></li>
+<li><p>von Borries K, Beckwith KV, Goodman JM, Chiu WA, Jolliet O, Fantke P. Uncertainty-aware machine learning to predict non-cancer human toxicity for the global chemicals market. <em>Nature Communications</em>. 2026;17:647. https://doi.org/10.1038/s41467-025-67374-4 Software: https://github.com/kejbo/PODUAM</p></li>
+<li><p>Landrum G. RDKit: open-source cheminformatics. https://www.rdkit.org</p></li>
+<li><p>Rogers D, Hahn M. Extended-connectivity fingerprints. <em>Journal of Chemical Information and Modeling</em>. 2010;50(5):742–754. https://doi.org/10.1021/ci100050t</p></li>
+<li><p>Durant JL, Leland BA, Henry DR, Nourse JG. Reoptimization of MDL keys for use in drug discovery. <em>Journal of Chemical Information and Computer Sciences</em>. 2002;42(6):1273–1280. https://doi.org/10.1021/ci010132r</p></li>
+<li><p>Gedeck P, Rohde B, Bartels C. QSAR — how good is it in practice? Comparison of descriptor sets on an unbiased cross section of corporate data sets. <em>Journal of Chemical Information and Modeling</em>. 2006;46(5):1924–1936. https://doi.org/10.1021/ci050413p</p></li>
+<li><p>Stiefl N, Watson IA, Baumann K, Zaliani A. ErG: 2D pharmacophore descriptions for scaffold hopping. <em>Journal of Chemical Information and Modeling</em>. 2006;46(1):208–220. https://doi.org/10.1021/ci050457y</p></li>
+<li><p>Bemis GW, Murcko MA. The properties of known drugs. 1. Molecular frameworks. <em>Journal of Medicinal Chemistry</em>. 1996;39(15):2887–2893. https://doi.org/10.1021/jm9602928</p></li>
+<li><p>Pedregosa F, Varoquaux G, Gramfort A, Michel V, Thirion B, Grisel O, et al.&nbsp;Scikit-learn: machine learning in Python. <em>Journal of Machine Learning Research</em>. 2011;12:2825–2830.</p></li>
+<li><p>Chen T, Guestrin C. XGBoost: a scalable tree boosting system. <em>Proceedings of the 22nd ACM SIGKDD International Conference on Knowledge Discovery and Data Mining</em>. 2016:785–794. https://doi.org/10.1145/2939672.2939785</p></li>
+<li><p>Ke G, Meng Q, Finley T, Wang T, Chen W, Ma W, Ye Q, Liu TY. LightGBM: a highly efficient gradient boosting decision tree. <em>Advances in Neural Information Processing Systems 30</em>. 2017.</p></li>
+<li><p>Prokhorenkova L, Gusev G, Vorobev A, Dorogush AV, Gulin A. CatBoost: unbiased boosting with categorical features. <em>Advances in Neural Information Processing Systems 31</em>. 2018.</p></li>
+<li><p>Yang K, Swanson K, Jin W, Coley C, Eiden P, Gao H, et al.&nbsp;Analyzing learned molecular representations for property prediction. <em>Journal of Chemical Information and Modeling</em>. 2019;59(8):3370–3388. https://doi.org/10.1021/acs.jcim.9b00237</p></li>
+<li><p>Heid E, Greenman KP, Chung Y, Li SC, Graff DE, Vermeire FH, et al.&nbsp;Chemprop: a machine learning package for chemical property prediction. <em>Journal of Chemical Information and Modeling</em>. 2024;64(1):9–17. https://doi.org/10.1021/acs.jcim.3c01250</p></li>
+<li><p>Hollmann N, Müller S, Eggensperger K, Hutter F. TabPFN: a transformer that solves small tabular classification problems in a second. <em>International Conference on Learning Representations (ICLR)</em>. 2023. arXiv:2207.01848</p></li>
+<li><p>Hsu DF, Chung YS, Kristal BS. Combinatorial fusion analysis: methods and practices of combining multiple scoring systems. In: <em>Advanced Data Mining Technologies in Bioinformatics</em>. IGI Global; 2006:32–62. <em>[Confirm pagination before submission.]</em></p></li>
+<li><p>Hancock DY, Fischer J, Lowe JM, Snapp-Childs W, Pierce M, Marru S, Coulter JE, Vaughn M, Beck B, Merchant N, Skidmore E, Jacobs G. Jetstream2: accelerating cloud computing via Jetstream. In: <em>Practice and Experience in Advanced Research Computing (PEARC ’21)</em>, July 18–22, 2021, Boston, MA, USA. ACM, New York, NY, USA. https://doi.org/10.1145/3437359.3465565</p></li>
+<li><p>Boerner TJ, Deems S, Furlani TR, Knuth SL, Towns J. ACCESS: Advancing Innovation: NSF’s Advanced Cyberinfrastructure Coordination Ecosystem: Services &amp; Support. In: <em>Practice and Experience in Advanced Research Computing (PEARC ’23)</em>, July 23–27, 2023, Portland, OR, USA. ACM, New York, NY, USA. https://doi.org/10.1145/3569951.3597559</p></li>
+</ol>
+<hr>
+</section>
+<section id="supplementary-tables" class="level2">
+<h2 class="anchored" data-anchor-id="supplementary-tables">Supplementary tables</h2>
+<!-- TABLE:tableS1_dataset_winners -->
+<table class="caption-top table">
+<colgroup>
+<col style="width: 10%">
+<col style="width: 10%">
+<col style="width: 10%">
+<col style="width: 10%">
+<col style="width: 10%">
+<col style="width: 10%">
+<col style="width: 10%">
+<col style="width: 10%">
+<col style="width: 10%">
+<col style="width: 10%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>dataset</th>
+<th>suite</th>
+<th>task_kind</th>
+<th>family</th>
+<th>model</th>
+<th>analysis_metric</th>
+<th>analysis_metric_value</th>
+<th>cv_selected_model</th>
+<th>cv_selected_family</th>
+<th>cv_selected_gap_to_best</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>tdc_ames</td>
+<td>TDC</td>
+<td>classification</td>
+<td>Conventional ML</td>
+<td>XGBoost</td>
+<td>test_roc_auc</td>
+<td>0.875</td>
+<td>Extra trees</td>
+<td>Conventional ML</td>
+<td>0.777</td>
+</tr>
+<tr class="even">
+<td>tdc_bbb_martins</td>
+<td>TDC</td>
+<td>classification</td>
+<td>Conventional ML</td>
+<td>Random forest</td>
+<td>test_roc_auc</td>
+<td>0.932</td>
+<td>Tabular MLP</td>
+<td>Conventional ML</td>
+<td>5.108</td>
+</tr>
+<tr class="odd">
+<td>tdc_bioavailability_ma</td>
+<td>TDC</td>
+<td>classification</td>
+<td>Conventional ML</td>
+<td>CatBoost</td>
+<td>test_roc_auc</td>
+<td>0.777</td>
+<td>LogisticRegression</td>
+<td>Conventional ML</td>
+<td>7.943</td>
+</tr>
+<tr class="even">
+<td>tdc_carcinogens_lagunin</td>
+<td>TDC</td>
+<td>classification</td>
+<td>Conventional ML</td>
+<td>AdaBoost</td>
+<td>test_roc_auc</td>
+<td>0.863</td>
+<td>LogisticRegression</td>
+<td>Conventional ML</td>
+<td>3.747</td>
+</tr>
+<tr class="odd">
+<td>tdc_clintox</td>
+<td>TDC</td>
+<td>classification</td>
+<td>Conventional ML</td>
+<td>CatBoost</td>
+<td>test_roc_auc</td>
+<td>0.949</td>
+<td>LogisticRegression</td>
+<td>Conventional ML</td>
+<td>3.552</td>
+</tr>
+<tr class="even">
+<td>tdc_cyp1a2_veith</td>
+<td>TDC</td>
+<td>classification</td>
+<td>Ensemble (stacking / averaging)</td>
+<td>Ensemble (Weighted average (inverse train RMSE))</td>
+<td>test_roc_auc</td>
+<td>0.970</td>
+<td>ChemML MLP (PyTorch)</td>
+<td>Deep tabular NN (ChemML MLP)</td>
+<td>2.383</td>
+</tr>
+<tr class="odd">
+<td>tdc_cyp2c19_veith</td>
+<td>TDC</td>
+<td>classification</td>
+<td>Ensemble (stacking / averaging)</td>
+<td>Ensemble (Weighted average (inverse train RMSE))</td>
+<td>test_roc_auc</td>
+<td>0.921</td>
+<td>XGBoost</td>
+<td>Conventional ML</td>
+<td>8.809</td>
+</tr>
+<tr class="even">
+<td>tdc_cyp2c9_substrate_carbonmangels</td>
+<td>TDC</td>
+<td>classification</td>
+<td>Ensemble (stacking / averaging)</td>
+<td>Ensemble (OOF Stacking (RidgeCV, 5-fold))</td>
+<td>test_auprc</td>
+<td>0.482</td>
+<td>SVC</td>
+<td>Conventional ML</td>
+<td>37.538</td>
+</tr>
+<tr class="odd">
+<td>tdc_cyp2c9_veith</td>
+<td>TDC</td>
+<td>classification</td>
+<td>Ensemble (stacking / averaging)</td>
+<td>Ensemble (OOF Stacking (RidgeCV, 5-fold))</td>
+<td>test_auprc</td>
+<td>0.810</td>
+<td>AdaBoost</td>
+<td>Conventional ML</td>
+<td>12.949</td>
+</tr>
+<tr class="even">
+<td>tdc_cyp2d6_substrate_carbonmangels</td>
+<td>TDC</td>
+<td>classification</td>
+<td>Ensemble (stacking / averaging)</td>
+<td>Ensemble (Weighted average (inverse train RMSE))</td>
+<td>test_auprc</td>
+<td>0.673</td>
+<td>AdaBoost</td>
+<td>Conventional ML</td>
+<td>3.067</td>
+</tr>
+<tr class="odd">
+<td>tdc_cyp2d6_veith</td>
+<td>TDC</td>
+<td>classification</td>
+<td>Conventional ML</td>
+<td>XGBoost</td>
+<td>test_auprc</td>
+<td>0.722</td>
+<td>AdaBoost</td>
+<td>Conventional ML</td>
+<td>14.842</td>
+</tr>
+<tr class="even">
+<td>tdc_cyp3a4_substrate_carbonmangels</td>
+<td>TDC</td>
+<td>classification</td>
+<td>Conventional ML</td>
+<td>LogisticRegression</td>
+<td>test_auprc</td>
+<td>0.717</td>
+<td>Tabular MLP</td>
+<td>Conventional ML</td>
+<td>5.325</td>
+</tr>
+<tr class="odd">
+<td>tdc_cyp3a4_veith</td>
+<td>TDC</td>
+<td>classification</td>
+<td>Ensemble (stacking / averaging)</td>
+<td>Ensemble (OOF Stacking (RidgeCV, 5-fold))</td>
+<td>test_auprc</td>
+<td>0.890</td>
+<td>AdaBoost</td>
+<td>Conventional ML</td>
+<td>10.365</td>
+</tr>
+<tr class="even">
+<td>tdc_dili</td>
+<td>TDC</td>
+<td>classification</td>
+<td>Ensemble (stacking / averaging)</td>
+<td>Ensemble (OOF Stacking (RidgeCV, 5-fold))</td>
+<td>test_roc_auc</td>
+<td>0.915</td>
+<td>LogisticRegression</td>
+<td>Conventional ML</td>
+<td>6.036</td>
+</tr>
+<tr class="odd">
+<td>tdc_herg</td>
+<td>TDC</td>
+<td>classification</td>
+<td>Conventional ML</td>
+<td>AdaBoost</td>
+<td>test_roc_auc</td>
+<td>0.861</td>
+<td>Tabular MLP</td>
+<td>Conventional ML</td>
+<td>15.894</td>
+</tr>
+<tr class="even">
+<td>tdc_herg_karim</td>
+<td>TDC</td>
+<td>classification</td>
+<td>Ensemble (stacking / averaging)</td>
+<td>Ensemble (Weighted average (inverse train RMSE))</td>
+<td>test_roc_auc</td>
+<td>0.902</td>
+<td>SVC</td>
+<td>Conventional ML</td>
+<td>9.739</td>
+</tr>
+<tr class="odd">
+<td>tdc_hia_hou</td>
+<td>TDC</td>
+<td>classification</td>
+<td>CFA combinatorial fusion</td>
+<td>CFA (Combinatorial Fusion)</td>
+<td>test_roc_auc</td>
+<td>0.990</td>
+<td>LogisticRegression</td>
+<td>Conventional ML</td>
+<td>0.270</td>
+</tr>
+<tr class="even">
+<td>tdc_pampa_ncats</td>
+<td>TDC</td>
+<td>classification</td>
+<td>Ensemble (stacking / averaging)</td>
+<td>Ensemble (Weighted average (inverse train RMSE))</td>
+<td>test_roc_auc</td>
+<td>0.806</td>
+<td>Tabular MLP</td>
+<td>Conventional ML</td>
+<td>5.601</td>
+</tr>
+<tr class="odd">
+<td>tdc_pgp_broccatelli</td>
+<td>TDC</td>
+<td>classification</td>
+<td>Ensemble (stacking / averaging)</td>
+<td>Ensemble (Weighted average (inverse train RMSE))</td>
+<td>test_roc_auc</td>
+<td>0.929</td>
+<td>Tabular MLP</td>
+<td>Conventional ML</td>
+<td>2.457</td>
+</tr>
+<tr class="even">
+<td>tdc_skin_reaction</td>
+<td>TDC</td>
+<td>classification</td>
+<td>CFA combinatorial fusion</td>
+<td>CFA (Combinatorial Fusion)</td>
+<td>test_roc_auc</td>
+<td>0.769</td>
+<td>LogisticRegression</td>
+<td>Conventional ML</td>
+<td>4.572</td>
+</tr>
+<tr class="odd">
+<td>tdc_tox21</td>
+<td>TDC</td>
+<td>classification</td>
+<td>Conventional ML</td>
+<td>XGBoost</td>
+<td>test_roc_auc</td>
+<td>0.812</td>
+<td>SVC</td>
+<td>Conventional ML</td>
+<td>2.861</td>
+</tr>
+<tr class="even">
+<td>tdc_toxcast</td>
+<td>TDC</td>
+<td>classification</td>
+<td>Conventional ML</td>
+<td>CatBoost</td>
+<td>test_roc_auc</td>
+<td>0.791</td>
+<td>CatBoost</td>
+<td>Conventional ML</td>
+<td>0.000</td>
+</tr>
+<tr class="odd">
+<td>chemml_cep_homo</td>
+<td>ChemML</td>
+<td>regression</td>
+<td>TabPFN (tabular foundation)</td>
+<td>TabPFNRegressor</td>
+<td>test_rmse</td>
+<td>0.086</td>
+<td>ElasticNetCV</td>
+<td>Conventional ML</td>
+<td>28.254</td>
+</tr>
+<tr class="even">
+<td>chemml_organic_density</td>
+<td>ChemML</td>
+<td>regression</td>
+<td>TabPFN (tabular foundation)</td>
+<td>TabPFNRegressor</td>
+<td>test_rmse</td>
+<td>0.005</td>
+<td>ElasticNetCV</td>
+<td>Conventional ML</td>
+<td>26.007</td>
+</tr>
+<tr class="odd">
+<td>chemml_xyz_polarizability</td>
+<td>ChemML</td>
+<td>regression</td>
+<td>TabPFN (tabular foundation)</td>
+<td>TabPFNRegressor</td>
+<td>test_rmse</td>
+<td>0.007</td>
+<td>TabPFNRegressor</td>
+<td>TabPFN (tabular foundation)</td>
+<td>0.000</td>
+</tr>
+<tr class="even">
+<td>esol_delaney</td>
+<td>MoleculeNet</td>
+<td>regression</td>
+<td>Ensemble (stacking / averaging)</td>
+<td>Ensemble (Weighted average (inverse train RMSE))</td>
+<td>test_rmse</td>
+<td>0.592</td>
+<td>ElasticNetCV</td>
+<td>Conventional ML</td>
+<td>14.805</td>
+</tr>
+<tr class="odd">
+<td>freesolv_sampl</td>
+<td>MoleculeNet</td>
+<td>regression</td>
+<td>Chemprop v2 GNN</td>
+<td>Chemprop v2 (AttentiveFP, ensemble=1)</td>
+<td>test_rmse</td>
+<td>1.080</td>
+<td>ElasticNetCV</td>
+<td>Conventional ML</td>
+<td>15.792</td>
+</tr>
+<tr class="even">
+<td>lipophilicity</td>
+<td>MoleculeNet</td>
+<td>regression</td>
+<td>Ensemble (stacking / averaging)</td>
+<td>Ensemble (Weighted average (inverse train RMSE))</td>
+<td>test_rmse</td>
+<td>0.582</td>
+<td>ElasticNetCV</td>
+<td>Conventional ML</td>
+<td>13.041</td>
+</tr>
+<tr class="odd">
+<td>poduam_pod_nc_std</td>
+<td>PODUAM</td>
+<td>regression</td>
+<td>Ensemble (stacking / averaging)</td>
+<td>Ensemble (Weighted average (inverse train RMSE))</td>
+<td>test_rmse</td>
+<td>0.699</td>
+<td>XGBoost</td>
+<td>Conventional ML</td>
+<td>5.154</td>
+</tr>
+<tr class="even">
+<td>poduam_pod_rd_std</td>
+<td>PODUAM</td>
+<td>regression</td>
+<td>Conventional ML</td>
+<td>XGBoost</td>
+<td>test_rmse</td>
+<td>0.551</td>
+<td>ElasticNetCV</td>
+<td>Conventional ML</td>
+<td>29.477</td>
+</tr>
+<tr class="odd">
+<td>polaris_adme_fang_hppb_1</td>
+<td>Polaris</td>
+<td>regression</td>
+<td>MapLight + GNN</td>
+<td>MapLight + GNN (CatBoost, Strict Parity)</td>
+<td>test_rmse</td>
+<td>0.449</td>
+<td>ElasticNetCV</td>
+<td>Conventional ML</td>
+<td>16.167</td>
+</tr>
+<tr class="even">
+<td>polaris_adme_fang_perm_1</td>
+<td>Polaris</td>
+<td>regression</td>
+<td>Uni-Mol V1 (3D pretrained)</td>
+<td>Uni-Mol V1</td>
+<td>test_rmse</td>
+<td>0.399</td>
+<td>ChemML MLP (PyTorch)</td>
+<td>Deep tabular NN (ChemML MLP)</td>
+<td>18.507</td>
+</tr>
+<tr class="odd">
+<td>polaris_adme_fang_rclint_1</td>
+<td>Polaris</td>
+<td>regression</td>
+<td>Uni-Mol V1 (3D pretrained)</td>
+<td>Uni-Mol V1</td>
+<td>test_rmse</td>
+<td>0.512</td>
+<td>ChemML MLP (PyTorch)</td>
+<td>Deep tabular NN (ChemML MLP)</td>
+<td>12.570</td>
+</tr>
+<tr class="even">
+<td>polaris_adme_fang_rppb_1</td>
+<td>Polaris</td>
+<td>regression</td>
+<td>MapLight + GNN</td>
+<td>MapLight + GNN (CatBoost, Strict Parity)</td>
+<td>test_rmse</td>
+<td>0.494</td>
+<td>TabPFNRegressor</td>
+<td>TabPFN (tabular foundation)</td>
+<td>8.043</td>
+</tr>
+<tr class="odd">
+<td>polaris_adme_fang_solu_1</td>
+<td>Polaris</td>
+<td>regression</td>
+<td>Uni-Mol V1 (3D pretrained)</td>
+<td>Uni-Mol V1</td>
+<td>test_rmse</td>
+<td>0.575</td>
+<td>ChemML MLP (PyTorch)</td>
+<td>Deep tabular NN (ChemML MLP)</td>
+<td>12.303</td>
+</tr>
+<tr class="even">
+<td>tdc_caco2_wang</td>
+<td>TDC</td>
+<td>regression</td>
+<td>Ensemble (stacking / averaging)</td>
+<td>Ensemble (Weighted average (inverse train RMSE))</td>
+<td>test_rmse</td>
+<td>0.336</td>
+<td>ElasticNetCV</td>
+<td>Conventional ML</td>
+<td>13.842</td>
+</tr>
+<tr class="odd">
+<td>tdc_clearance_hepatocyte_az</td>
+<td>TDC</td>
+<td>regression</td>
+<td>MapLight + GNN</td>
+<td>MapLight + GNN (CatBoost, Strict Parity)</td>
+<td>test_rmse</td>
+<td>43.976</td>
+<td>TabPFNRegressor</td>
+<td>TabPFN (tabular foundation)</td>
+<td>17.126</td>
+</tr>
+<tr class="even">
+<td>tdc_clearance_microsome_az</td>
+<td>TDC</td>
+<td>regression</td>
+<td>Uni-Mol V1 (3D pretrained)</td>
+<td>Uni-Mol V1</td>
+<td>test_rmse</td>
+<td>35.888</td>
+<td>Tabular MLP</td>
+<td>Conventional ML</td>
+<td>13.242</td>
+</tr>
+<tr class="odd">
+<td>tdc_half_life_obach</td>
+<td>TDC</td>
+<td>regression</td>
+<td>Uni-Mol V1 (3D pretrained)</td>
+<td>Uni-Mol V1</td>
+<td>test_rmse</td>
+<td>17.222</td>
+<td>TabPFNRegressor</td>
+<td>TabPFN (tabular foundation)</td>
+<td>11.498</td>
+</tr>
+<tr class="even">
+<td>tdc_hydrationfreeenergy_freesolv</td>
+<td>TDC</td>
+<td>regression</td>
+<td>CFA combinatorial fusion</td>
+<td>CFA (Combinatorial Fusion)</td>
+<td>test_rmse</td>
+<td>0.556</td>
+<td>ElasticNetCV</td>
+<td>Conventional ML</td>
+<td>143.019</td>
+</tr>
+<tr class="odd">
+<td>tdc_ld50_zhu</td>
+<td>TDC</td>
+<td>regression</td>
+<td>CFA combinatorial fusion</td>
+<td>CFA (Combinatorial Fusion)</td>
+<td>test_rmse</td>
+<td>0.834</td>
+<td>XGBoost</td>
+<td>Conventional ML</td>
+<td>1.097</td>
+</tr>
+<tr class="even">
+<td>tdc_lipophilicity_astrazeneca</td>
+<td>TDC</td>
+<td>regression</td>
+<td>Uni-Mol V1 (3D pretrained)</td>
+<td>Uni-Mol V1</td>
+<td>test_rmse</td>
+<td>0.587</td>
+<td>ElasticNetCV</td>
+<td>Conventional ML</td>
+<td>27.840</td>
+</tr>
+<tr class="odd">
+<td>tdc_ppbr_az</td>
+<td>TDC</td>
+<td>regression</td>
+<td>Ensemble (stacking / averaging)</td>
+<td>Ensemble (Weighted average (inverse train RMSE))</td>
+<td>test_rmse</td>
+<td>11.014</td>
+<td>ChemML MLP (PyTorch)</td>
+<td>Deep tabular NN (ChemML MLP)</td>
+<td>28.555</td>
+</tr>
+<tr class="even">
+<td>tdc_solubility_aqsoldb</td>
+<td>TDC</td>
+<td>regression</td>
+<td>Uni-Mol V1 (3D pretrained)</td>
+<td>Uni-Mol V1</td>
+<td>test_rmse</td>
+<td>0.989</td>
+<td>Extra trees</td>
+<td>Conventional ML</td>
+<td>5.427</td>
+</tr>
+<tr class="odd">
+<td>tdc_vdss_lombardo</td>
+<td>TDC</td>
+<td>regression</td>
+<td>MapLight + GNN</td>
+<td>MapLight + GNN (CatBoost, Strict Parity)</td>
+<td>test_rmse</td>
+<td>4.668</td>
+<td>TabPFNRegressor</td>
+<td>TabPFN (tabular foundation)</td>
+<td>16.999</td>
+</tr>
+</tbody>
+</table>
+<!-- /TABLE -->
+<p><strong>Table S1.</strong> Per-dataset winning model under the ranking metric, with the corresponding cross-validation-selected model and its relative gap to the dataset best (%).</p>
+<!-- TABLE:tableS2_component_ablation -->
+<table class="caption-top table">
+<colgroup>
+<col style="width: 20%">
+<col style="width: 20%">
+<col style="width: 20%">
+<col style="width: 20%">
+<col style="width: 20%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>stage_order</th>
+<th>stage</th>
+<th>datasets_evaluated</th>
+<th>datasets_improved_vs_previous</th>
+<th>improvement_fraction</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>1</td>
+<td>Conventional ML only</td>
+<td>45</td>
+<td>0</td>
+<td>0.000</td>
+</tr>
+<tr class="even">
+<td>2</td>
+<td>+ MapLight classic features</td>
+<td>45</td>
+<td>7</td>
+<td>0.156</td>
+</tr>
+<tr class="odd">
+<td>3</td>
+<td>+ neural/deep backends</td>
+<td>45</td>
+<td>26</td>
+<td>0.578</td>
+</tr>
+<tr class="even">
+<td>4</td>
+<td>+ CFA fusion</td>
+<td>45</td>
+<td>8</td>
+<td>0.178</td>
+</tr>
+<tr class="odd">
+<td>5</td>
+<td>Full pipeline incl.&nbsp;ensembles</td>
+<td>45</td>
+<td>15</td>
+<td>0.333</td>
+</tr>
+</tbody>
+</table>
+<!-- /TABLE -->
+<p><strong>Table S2.</strong> Staged component ablation: datasets whose best achievable primary metric improved when each pipeline stage was added, computed from the existing model results.</p>
+<!-- TABLE:tableS3_feature_families -->
+<table class="caption-top table">
+<colgroup>
+<col style="width: 16%">
+<col style="width: 16%">
+<col style="width: 16%">
+<col style="width: 16%">
+<col style="width: 16%">
+<col style="width: 16%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Feature family</th>
+<th>Datasets selected</th>
+<th>Available (sum)</th>
+<th>Selected (sum)</th>
+<th>% of selected</th>
+<th>Enrichment vs uniform</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>rdkit</td>
+<td>41</td>
+<td>8363</td>
+<td>1441</td>
+<td>8.55</td>
+<td>3.90</td>
+</tr>
+<tr class="even">
+<td>erg</td>
+<td>40</td>
+<td>12606</td>
+<td>1248</td>
+<td>7.40</td>
+<td>2.24</td>
+</tr>
+<tr class="odd">
+<td>avalon</td>
+<td>44</td>
+<td>44617</td>
+<td>3921</td>
+<td>23.25</td>
+<td>1.99</td>
+</tr>
+<tr class="even">
+<td>maccs</td>
+<td>41</td>
+<td>5980</td>
+<td>301</td>
+<td>1.78</td>
+<td>1.14</td>
+</tr>
+<tr class="odd">
+<td>fcfp6</td>
+<td>44</td>
+<td>42613</td>
+<td>1783</td>
+<td>10.57</td>
+<td>0.95</td>
+</tr>
+<tr class="even">
+<td>maplight</td>
+<td>41</td>
+<td>30122</td>
+<td>1197</td>
+<td>7.10</td>
+<td>0.90</td>
+</tr>
+<tr class="odd">
+<td>atom_pair</td>
+<td>42</td>
+<td>39820</td>
+<td>1393</td>
+<td>8.26</td>
+<td>0.79</td>
+</tr>
+<tr class="even">
+<td>ecfp6</td>
+<td>40</td>
+<td>43433</td>
+<td>1454</td>
+<td>8.62</td>
+<td>0.76</td>
+</tr>
+<tr class="odd">
+<td>rdk_path</td>
+<td>41</td>
+<td>45888</td>
+<td>1394</td>
+<td>8.27</td>
+<td>0.69</td>
+</tr>
+<tr class="even">
+<td>topological_torsion</td>
+<td>43</td>
+<td>23736</td>
+<td>713</td>
+<td>4.23</td>
+<td>0.68</td>
+</tr>
+<tr class="odd">
+<td>layered</td>
+<td>42</td>
+<td>43923</td>
+<td>1084</td>
+<td>6.43</td>
+<td>0.56</td>
+</tr>
+<tr class="even">
+<td>morgan</td>
+<td>42</td>
+<td>40996</td>
+<td>934</td>
+<td>5.54</td>
+<td>0.52</td>
+</tr>
+</tbody>
+</table>
+<!-- /TABLE -->
+<p><strong>Table S3.</strong> Feature-family selection summary across all datasets, sorted by per-feature enrichment relative to a uniform-selection baseline.</p>
+<!-- TABLE:tableS4_model_coverage -->
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>model</th>
+<th>datasets_attempted</th>
+<th>datasets_valid</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Ensemble (OOF Stacking (RidgeCV))</td>
+<td>26</td>
+<td>0</td>
+</tr>
+<tr class="even">
+<td>TabPFNClassifier</td>
+<td>10</td>
+<td>10</td>
+</tr>
+<tr class="odd">
+<td>Chemprop v2 (AttentiveFP, ensemble=1)</td>
+<td>45</td>
+<td>21</td>
+</tr>
+<tr class="even">
+<td>LogisticRegression</td>
+<td>22</td>
+<td>22</td>
+</tr>
+<tr class="odd">
+<td>SVC</td>
+<td>22</td>
+<td>22</td>
+</tr>
+<tr class="even">
+<td>Voting Classifier (KNN, SVM)</td>
+<td>22</td>
+<td>22</td>
+</tr>
+<tr class="odd">
+<td>MapLight CatBoost (Strict Parity)</td>
+<td>23</td>
+<td>23</td>
+</tr>
+<tr class="even">
+<td>ElasticNetCV</td>
+<td>23</td>
+<td>23</td>
+</tr>
+<tr class="odd">
+<td>SVR</td>
+<td>23</td>
+<td>23</td>
+</tr>
+<tr class="even">
+<td>Chemprop v2 (AttentiveFP + Selected descriptors, ensemble=1)</td>
+<td>45</td>
+<td>23</td>
+</tr>
+<tr class="odd">
+<td>Voting Regressor (KNN, SVM)</td>
+<td>23</td>
+<td>23</td>
+</tr>
+<tr class="even">
+<td>Tabular CNN</td>
+<td>23</td>
+<td>23</td>
+</tr>
+<tr class="odd">
+<td>TabPFNRegressor</td>
+<td>35</td>
+<td>35</td>
+</tr>
+<tr class="even">
+<td>MapLight + GNN (CatBoost, Strict Parity)</td>
+<td>45</td>
+<td>42</td>
+</tr>
+<tr class="odd">
+<td>AdaBoost</td>
+<td>45</td>
+<td>45</td>
+</tr>
+<tr class="even">
+<td>ChemML MLP (PyTorch)</td>
+<td>45</td>
+<td>45</td>
+</tr>
+<tr class="odd">
+<td>Random forest</td>
+<td>45</td>
+<td>45</td>
+</tr>
+<tr class="even">
+<td>Ensemble (Weighted average (inverse train RMSE))</td>
+<td>45</td>
+<td>45</td>
+</tr>
+<tr class="odd">
+<td>Extra trees</td>
+<td>45</td>
+<td>45</td>
+</tr>
+<tr class="even">
+<td>HistGradientBoosting</td>
+<td>45</td>
+<td>45</td>
+</tr>
+<tr class="odd">
+<td>Ensemble (OOF Stacking (RidgeCV, 5-fold))</td>
+<td>45</td>
+<td>45</td>
+</tr>
+<tr class="even">
+<td>CatBoost</td>
+<td>45</td>
+<td>45</td>
+</tr>
+<tr class="odd">
+<td>CFA (Combinatorial Fusion)</td>
+<td>45</td>
+<td>45</td>
+</tr>
+<tr class="even">
+<td>Tabular MLP</td>
+<td>45</td>
+<td>45</td>
+</tr>
+<tr class="odd">
+<td>Uni-Mol V1</td>
+<td>45</td>
+<td>45</td>
+</tr>
+<tr class="even">
+<td>XGBoost</td>
+<td>45</td>
+<td>45</td>
+</tr>
+</tbody>
+</table>
+<!-- /TABLE -->
+<p><strong>Table S4.</strong> Model coverage: datasets attempted and datasets yielding a valid metric, per model.</p>
+</section>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

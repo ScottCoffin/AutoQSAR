@@ -1,0 +1,38 @@
+Dataset,Metric,AutoQSAR best model (test-selected),AutoQSAR value,Reference top-1,Reference top-10 cutoff,References (n),Est. rank,CV-selected model,CV-selected value,CV-selected est. rank
+tdc_bioavailability_ma,ROC_AUC,CatBoost,0.7766877286331892,0.748,0.64,8,1,LogisticRegression,0.7149983372131693,3
+tdc_carcinogens_lagunin,ROC_AUC,AdaBoost,0.8626262626262626,0.848,0.795,20,1,LogisticRegression,0.8303030303030303,5
+tdc_cyp2c9_substrate_carbonmangels,AUPRC,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",0.481501462880155,0.45,0.36,6,1,SVC,0.3007556508489621,7
+tdc_hydrationfreeenergy_freesolv,RMSE,CFA (Combinatorial Fusion),0.5564249428337948,0.654,1.211,12,1,ElasticNetCV,1.352217515111766,>10
+tdc_skin_reaction,ROC_AUC,CFA (Combinatorial Fusion),0.7690322580645161,0.741,0.677,21,1,LogisticRegression,0.7338709677419356,3
+tdc_toxcast,ROC_AUC,CatBoost,0.7913532209252054,0.714,0.714,2,1,CatBoost,0.7913532209252054,1
+poduam_pod_nc_std,RMSE,Ensemble (Weighted average (inverse train RMSE)),0.698689327028878,0.55,0.73,2,2,XGBoost,0.734700269894928,3
+poduam_pod_rd_std,RMSE,XGBoost,0.5507770607752229,0.41,0.63,2,2,ElasticNetCV,0.7131293675884192,3
+tdc_ames,ROC_AUC,XGBoost,0.8746558577610684,0.912,0.834,7,2,Extra trees,0.8678621081282186,2
+tdc_bbb_martins,ROC_AUC,Random forest,0.932418699186992,0.941,0.903,7,2,Tabular MLP,0.8847912757973734,8
+tdc_cyp2d6_veith,AUPRC,XGBoost,0.7223933005560315,0.811,0.464,6,2,AdaBoost,0.6151767695742953,6
+tdc_cyp3a4_veith,AUPRC,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",0.8896540840739798,0.923,0.75,6,2,AdaBoost,0.7974414166883618,6
+tdc_solubility_aqsoldb,MAE,Uni-Mol V1,0.6993393124634129,0.557,0.776,17,2,Extra trees,0.7612735623406739,8
+polaris_adme_fang_hppb_1,MSE,"MapLight + GNN (CatBoost, Strict Parity)",0.20179309756860567,0.143,0.383,10,3,ElasticNetCV,0.2723169146469873,7
+polaris_adme_fang_perm_1,MSE,Uni-Mol V1,0.15924942584118143,0.113,0.257,10,3,ChemML MLP (PyTorch),0.22364854358183453,7
+polaris_adme_fang_rppb_1,MSE,"MapLight + GNN (CatBoost, Strict Parity)",0.24359944004300568,0.23,0.634,10,3,TabPFNRegressor,0.28436102544267294,4
+tdc_caco2_wang,MAE,Ensemble (Weighted average (inverse train RMSE)),0.2690789992423682,0.256,0.288,20,3,ElasticNetCV,0.3021752126244179,>10
+tdc_clearance_hepatocyte_az,SPEARMAN,"MapLight + GNN (CatBoost, Strict Parity)",0.5171343916849257,0.633,0.44,16,3,TabPFNRegressor,0.344501983175783,>10
+tdc_clintox,ROC_AUC,CatBoost,0.9488839285714286,0.996,0.889,12,3,LogisticRegression,0.9151785714285714,3
+tdc_cyp2c9_veith,AUPRC,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",0.8096466863698548,0.877,0.77,6,3,AdaBoost,0.7048091698681455,7
+tdc_herg,ROC_AUC,AdaBoost,0.8608247422680413,0.88,0.806,7,3,Tabular MLP,0.7240058910162003,8
+tdc_ppbr_az,MAE,Ensemble (Weighted average (inverse train RMSE)),7.315489266511964,0.679,7.914,16,3,ChemML MLP (PyTorch),9.371509885020249,>10
+esol_delaney,RMSE,Ensemble (Weighted average (inverse train RMSE)),0.5921183142490405,0.558,0.743,30,4,ElasticNetCV,0.679779311383549,9
+polaris_adme_fang_rclint_1,MSE,Uni-Mol V1,0.26244833577094107,0.216,0.403,10,4,ChemML MLP (PyTorch),0.33257515079235817,7
+tdc_hia_hou,ROC_AUC,CFA (Combinatorial Fusion),0.989917695473251,0.994,0.976,8,4,LogisticRegression,0.9872427983539096,4
+tdc_lipophilicity_astrazeneca,MAE,Uni-Mol V1,0.4507175638321011,0.406,0.515,17,4,ElasticNetCV,0.5588687830198379,>10
+tdc_cyp2d6_substrate_carbonmangels,AUPRC,Ensemble (Weighted average (inverse train RMSE)),0.6730598919174792,0.766,0.57,7,5,AdaBoost,0.6524187373451933,5
+tdc_dili,ROC_AUC,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",0.9147826086956522,0.945,0.852,6,5,LogisticRegression,0.8595652173913044,6
+tdc_ld50_zhu,MAE,CFA (Combinatorial Fusion),0.577401546398439,0.292,0.605,16,5,XGBoost,0.5842519512015203,5
+tdc_pgp_broccatelli,ROC_AUC,Ensemble (Weighted average (inverse train RMSE)),0.928952279392162,0.994,0.911,8,5,Tabular MLP,0.9061250333244468,9
+tdc_vdss_lombardo,SPEARMAN,"MapLight + GNN (CatBoost, Strict Parity)",0.6780525346683601,0.942,0.582,16,5,TabPFNRegressor,0.5273848215362947,>10
+lipophilicity,RMSE,Ensemble (Weighted average (inverse train RMSE)),0.5820225825970389,0.549,0.61,27,6,ElasticNetCV,0.6579216777471312,>10
+tdc_cyp3a4_substrate_carbonmangels,ROC_AUC,LogisticRegression,0.6587929475587704,0.692,0.651,7,7,Tabular MLP,0.6335895117540686,8
+tdc_half_life_obach,SPEARMAN,Uni-Mol V1,0.5332243104982155,0.649,0.485,16,9,TabPFNRegressor,0.3962206649069586,>10
+tdc_clearance_microsome_az,SPEARMAN,"MapLight + GNN (CatBoost, Strict Parity)",0.6055868591405584,0.652,0.599,17,10,Tabular MLP,0.4996026160400684,>10
+polaris_adme_fang_solu_1,MSE,Uni-Mol V1,0.3307362698847558,0.222,0.329,10,>10,ChemML MLP (PyTorch),0.41712572796829567,>10
+tdc_tox21,ROC_AUC,XGBoost,0.8122786304604486,0.867,0.84,12,>10,SVC,0.7890375617648344,>10
