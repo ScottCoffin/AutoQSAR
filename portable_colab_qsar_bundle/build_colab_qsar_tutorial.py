@@ -32,11 +32,11 @@ def workflow_map_image_html():
     if WORKFLOW_MAP_PATH.exists():
         encoded = base64.b64encode(WORKFLOW_MAP_PATH.read_bytes()).decode("ascii")
         return (
-            '<img alt="AutoQSAR Colab workflow map" '
+            '<img alt="QSARena Colab workflow map" '
             f'src="data:image/png;base64,{encoded}" '
             'style="max-width:100%; height:auto;">'
         )
-    return "![AutoQSAR Colab workflow map](colab_qsar_workflow_map.png)"
+    return "![QSARena Colab workflow map](colab_qsar_workflow_map.png)"
 
 
 def src(text: str):
@@ -214,20 +214,20 @@ cells += [
         """
         # Tutorial: Guided QSAR Workflow With Widgets
 
-        [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ScottCoffin/AutoQSAR/blob/master/portable_colab_qsar_bundle/colab_qsar_tutorial.ipynb)
+        [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ScottCoffin/QSARena/blob/main/portable_colab_qsar_bundle/colab_qsar_tutorial.ipynb)
 
         **Kernel note (local Jupyter users)**  
-        This notebook is configured to prefer the **AutoQSAR (py311)** kernel. If you do not see it in the kernel list, create it first:
+        This notebook is configured to prefer the **QSARena (py311)** kernel. If you do not see it in the kernel list, create it first:
 
         ```powershell
-        conda create -n autoqsar-py311 python=3.11 -y
-        conda activate autoqsar-py311
+        conda create -n qsarena-py311 python=3.11 -y
+        conda activate qsarena-py311
         python -m pip install --upgrade pip
         python -m pip install jupyter ipykernel
-        python -m ipykernel install --user --name autoqsar-py311 --display-name "AutoQSAR (py311)"
+        python -m ipykernel install --user --name qsarena-py311 --display-name "QSARena (py311)"
         ```
 
-        After that, switch the notebook kernel to **AutoQSAR (py311)** and rerun step 0.
+        After that, switch the notebook kernel to **QSARena (py311)** and rerun step 0.
 
         **Colab note (MapLight + GNN)**  
         The MapLight + GNN workflow depends on DGL, which the MapLight repo reports as unreliable on Colab. If you enable MapLight + GNN in Colab, the notebook will skip it with a message rather than crash. Use a local Python 3.11 kernel if you need that model.
@@ -389,7 +389,7 @@ cells += [
         """
         # @title 0. Install packages and initialize the tutorial { display-mode: "form" }
         persist_outputs_to_google_drive = False # @param {type:"boolean"}
-        google_drive_output_root = "/content/drive/MyDrive/AutoQSAR_outputs" # @param {type:"string"}
+        google_drive_output_root = "/content/drive/MyDrive/QSARena_outputs" # @param {type:"string"}
 
         import base64
         import importlib.util
@@ -418,7 +418,7 @@ cells += [
         RESTART_REQUIRED_PACKAGES = []
         PYTDC_SOURCE_URL = "https://files.pythonhosted.org/packages/db/bf/db7525f0e9c48d340a66ae11ed46bbb1966234660a6882ce47d1e1d52824/pytdc-1.1.15.tar.gz"
         CHEMML_ORGANIC_DENSITY_URL = "https://raw.githubusercontent.com/hachmannlab/chemml/master/chemml/datasets/data/moldescriptor_density_smiles.csv"
-        AUTOQSAR_QSAR_CORE_URL = "https://raw.githubusercontent.com/ScottCoffin/AutoQSAR/master/portable_colab_qsar_bundle/qsar_workflow_core.py"
+        QSARENA_QSAR_CORE_URL = "https://raw.githubusercontent.com/ScottCoffin/QSARena/main/portable_colab_qsar_bundle/qsar_workflow_core.py"
 
         def progress_message(package_label, status, extra=""):
             PACKAGE_PROGRESS["done"] += 1
@@ -646,14 +646,16 @@ cells += [
             RESTART_REQUIRED_PACKAGES.append(package_label)
             progress_message(package_label, "installed", f"{elapsed:.1f}s")
 
-        def ensure_autoqsar_bundle_source():
+        def ensure_qsarena_bundle_source():
             search_roots = [
                 Path.cwd(),
                 Path.cwd().parent,
                 Path("/content"),
-                Path("/content/AutoQSAR"),
+                Path("/content/QSARena"),
+                Path("/content/AutoQSAR"),  # clone made before the rename
                 Path("/content/drive/MyDrive"),
-                Path("/content/drive/MyDrive/AutoQSAR"),
+                Path("/content/drive/MyDrive/QSARena"),
+                Path("/content/drive/MyDrive/AutoQSAR"),  # clone made before the rename
             ]
             for root in search_roots:
                 candidate = root / "portable_colab_qsar_bundle" / "qsar_workflow_core.py"
@@ -671,8 +673,8 @@ cells += [
                 init_path.write_text("", encoding="utf-8")
             target_path = bundle_dir / "qsar_workflow_core.py"
             if not target_path.exists():
-                print(f"[downloading] AutoQSAR shared workflow core from: {AUTOQSAR_QSAR_CORE_URL}", flush=True)
-                urllib.request.urlretrieve(AUTOQSAR_QSAR_CORE_URL, target_path)
+                print(f"[downloading] QSARena shared workflow core from: {QSARENA_QSAR_CORE_URL}", flush=True)
+                urllib.request.urlretrieve(QSARENA_QSAR_CORE_URL, target_path)
             if str(target_root) not in sys.path:
                 sys.path.insert(0, str(target_root))
             importlib.invalidate_caches()
@@ -991,7 +993,7 @@ cells += [
 
                 print("Mounting Google Drive for persistent outputs...", flush=True)
                 drive.mount("/content/drive", force_remount=False)
-                configured_output_root = str(google_drive_output_root).strip() or "/content/drive/MyDrive/AutoQSAR_outputs"
+                configured_output_root = str(google_drive_output_root).strip() or "/content/drive/MyDrive/QSARena_outputs"
                 persistent_output_root = Path(configured_output_root).expanduser().resolve()
                 persistent_output_root.mkdir(parents=True, exist_ok=True)
                 print(f"Persistent output root: {persistent_output_root}", flush=True)
@@ -1010,7 +1012,7 @@ cells += [
         def detected_cpu_count():
             return max(1, int(os.cpu_count() or 1))
 
-        def autoqsar_n_jobs(value=0):
+        def qsarena_n_jobs(value=0):
             try:
                 requested = int(value)
             except Exception:
@@ -1060,7 +1062,7 @@ cells += [
             tf_gpu = len(tf_gpus) > 0
             resource_config = {
                 "detected_cpu_count": detected_cpu_count(),
-                "n_jobs": autoqsar_n_jobs(),
+                "n_jobs": qsarena_n_jobs(),
                 "auto_data_loader_workers": auto_data_loader_workers(),
                 "torch_gpu_available": bool(torch_gpu),
                 "tensorflow_gpu_count": int(len(tf_gpus)),
@@ -1397,8 +1399,8 @@ cells += [
                 "test": test_frame,
             }
 
-        setup_start("AutoQSAR shared workflow core")
-        ensure_autoqsar_bundle_source()
+        setup_start("QSARena shared workflow core")
+        ensure_qsarena_bundle_source()
         import importlib
         import portable_colab_qsar_bundle.qsar_workflow_core as qsar_core
         importlib.reload(qsar_core)
@@ -1420,7 +1422,7 @@ cells += [
             target_quartile_labels,
         )
         FEATURE_FAMILY_LABELS = dict(QSAR_CORE_FEATURE_FAMILY_LABELS)
-        setup_done("AutoQSAR shared workflow core")
+        setup_done("QSARena shared workflow core")
 
         def plot_train_test_target_distribution(y_train, y_test, split_strategy):
             import plotly.graph_objects as go
@@ -5050,7 +5052,7 @@ cells += [
         selector_cache_dir = Path(STATE["feature_selector_cache_dir"]) if STATE.get("feature_selector_cache_dir") else None
         selector_cache_paths = dict(STATE.get("feature_selector_cache_paths", {}))
         train_selector_summary = dict(STATE.get("traditional_train_only_feature_selector", {}))
-        resource_n_jobs = autoqsar_n_jobs()
+        resource_n_jobs = qsarena_n_jobs()
         _gpu_available_5a = bool(STATE.get("gpu_available", False))
         if _gpu_available_5a:
             _new_cnn_batch = 128 if cnn_batch_size < 128 else cnn_batch_size
@@ -5944,7 +5946,7 @@ cells += [
         y_train = np.asarray(STATE["y_train"], dtype=float)
         y_test = np.asarray(STATE["y_test"], dtype=float)
         feature_metadata = dict(STATE["traditional_feature_metadata"])
-        resource_n_jobs = autoqsar_n_jobs()
+        resource_n_jobs = qsarena_n_jobs()
         tuning_split_strategy = str(STATE.get("model_split_strategy", "target_quartiles"))
         tuning_test_fraction = float(STATE.get("model_test_fraction", 0.2))
         tuning_random_seed = int(STATE.get("model_split_random_seed", 42))
@@ -7154,7 +7156,7 @@ cells += [
         )
         feature_metadata = current_feature_metadata()
 
-        resource_n_jobs = autoqsar_n_jobs()
+        resource_n_jobs = qsarena_n_jobs()
         gpu_available = bool(STATE.get("gpu_available", False))
         STATE["deep_learning_execution_mode"] = "gpu" if gpu_available else "cpu"
         if gpu_available:
@@ -13081,7 +13083,7 @@ cells += [
         mastml_cluster_settings = [2, 3]
         if mastml_use_custom_bandwidth:
             mastml_params["bandwidth"] = float(mastml_bandwidth)
-        resource_n_jobs = autoqsar_n_jobs()
+        resource_n_jobs = qsarena_n_jobs()
         print(f"Applicability-domain resource plan: n_jobs={resource_n_jobs}", flush=True)
 
         class _MastmlPreprocessorShim:
@@ -13921,7 +13923,7 @@ for cell in cells:
 notebook = {
     "cells": flat_cells,
     "metadata": {
-        "kernelspec": {"display_name": "AutoQSAR (py311)", "language": "python", "name": "autoqsar-py311"},
+        "kernelspec": {"display_name": "QSARena (py311)", "language": "python", "name": "qsarena-py311"},
         "language_info": {"name": "python", "version": "3.11"},
         "colab": {"name": "colab_qsar_tutorial.ipynb", "provenance": [], "toc_visible": True},
     },

@@ -103,7 +103,10 @@ def hexagon(svg: Svg, cx: float, cy: float, r: float, color: str) -> None:
 
 SHORT_FAMILY = {
     "Ensemble (stacking / averaging)": "Ensembles",
-    "Uni-Mol V1 (3D pretrained)": "3D pretrained",
+    # Key must track the family label emitted by the notebook. It was renamed from
+    # "Uni-Mol V1 (3D pretrained)" once the family gained Uni-Mol V2; a stale key here silently
+    # falls through to the full name and overflows the panel.
+    "Uni-Mol (3D pretrained)": "3D pretrained",
     "Conventional ML": "Conventional ML",
     "MapLight + GNN": "MapLight+GNN",
     "Chemprop v2 GNN": "Chemprop",
@@ -121,7 +124,6 @@ def draw() -> str:
     top = sorted(wins.items(), key=lambda kv: -kv[1])[:3]
     n_ds = int(n["datasets_analyzed"])
     total = lb["datasets_compared"]
-    gap = lb["top10_test_selected"] - lb["top10_cv_selected"]
     share = round(100 * top[0][1] / n_ds)
 
     svg = Svg()
@@ -136,7 +138,7 @@ def draw() -> str:
              size=19, weight="700")
     svg.text(24, 45,
              f"One leakage-controlled pipeline, {n_ds} datasets, {n['models_with_valid_results']} models "
-             "- and no architecture dominates.",
+             "- and no model family dominates.",
              size=11.5, color=MUTED)
     svg.line(24, 56, WIDTH - 24, 56, color=RULE, sw=1)
 
@@ -170,25 +172,39 @@ def draw() -> str:
              color=MUTED, spacing="0.8")
 
     def bar(y, label, value, color, note):
-        svg.text(hx, y - 6, label, size=10.5, weight="600", color=INK)
-        svg.rect(hx, y, track_w, 19, rx=9.5, fill=TRACK)
-        svg.rect(hx, y, track_w * value / total, 19, rx=9.5, fill=color)
-        svg.text(hx + track_w + 9, y + 14.5, f"{value}/{total}", size=15, weight="700", color=color)
-        svg.text(hx, y + 33, note, size=9.5, color=MUTED)
+        svg.text(hx, y - 5, label, size=9.8, weight="600", color=INK)
+        svg.rect(hx, y, track_w, 16, rx=8, fill=TRACK)
+        svg.rect(hx, y, track_w * value / total, 16, rx=8, fill=color)
+        svg.text(hx + track_w + 9, y + 12.5, f"{value}/{total}", size=13.5, weight="700", color=color)
+        if note:
+            svg.text(hx, y + 27, note, size=8.8, color=MUTED)
 
-    bar(100, "Best model, chosen on the test set", lb["top10_test_selected"], GREEN,
+    # Three stages. Reading down, the first drop is the value of a broad model library and the
+    # second is the cost of refusing held-out information; the paper decomposes them in this order.
+    bar(96, "Best of 28 models, chosen on the test set", lb["top10_test_selected"], GREEN,
         f"{tdc['top10_test_selected']}/{tdc['datasets']} on official TDC splits "
         f"- median rank {int(lb['median_rank_test_selected'])}")
-    bar(163, "Model chosen by cross-validation only", lb["top10_cv_selected"], ORANGE,
-        f"median rank {int(lb['median_rank_cv_selected'])} - the honest estimate for new data")
+    bar(152, "Same protocol, cross-validation-eligible models only",
+        lb["top10_matched_pool"], BLUE,
+        f"median rank {int(lb['median_rank_matched_pool'])}")
+    bar(208, "Chosen by cross-validation only - the honest estimate",
+        lb["top10_cv_selected"], ORANGE,
+        f"median rank {int(lb['median_rank_cv_selected'])} - and zero first places")
 
-    # The gap between the two bars is the paper's methodological point; mark it explicitly.
-    gx = hx + track_w + 62
-    svg.path(f"M {gx} 104 L {gx + 7} 104 L {gx + 7} 178 L {gx} 178", stroke=VERMILION, sw=1.6)
-    svg.text(gx + 13, 134, f"-{gap}", size=16, weight="700", color=VERMILION)
-    svg.text(gx + 13, 148, "placements lost", size=9.5, color=VERMILION)
-    svg.text(gx + 13, 160, "to honest model", size=9.5, color=VERMILION)
-    svg.text(gx + 13, 172, "selection", size=9.5, color=VERMILION)
+    # Two labelled brackets attribute the 10-placement gap to its two distinct causes.
+    gx = hx + track_w + 58
+    drop_library = lb["top10_test_selected"] - lb["top10_matched_pool"]
+    drop_selection = lb["top10_matched_pool"] - lb["top10_cv_selected"]
+
+    svg.path(f"M {gx} 100 L {gx + 6} 100 L {gx + 6} 156 L {gx} 156", stroke=BLUE, sw=1.5)
+    svg.text(gx + 11, 122, f"-{drop_library}", size=14, weight="700", color=BLUE)
+    svg.text(gx + 11, 134, "model-library", size=8.6, color=BLUE)
+    svg.text(gx + 11, 144, "breadth", size=8.6, color=BLUE)
+
+    svg.path(f"M {gx} 156 L {gx + 6} 156 L {gx + 6} 212 L {gx} 212", stroke=VERMILION, sw=1.5)
+    svg.text(gx + 11, 178, f"-{drop_selection}", size=14, weight="700", color=VERMILION)
+    svg.text(gx + 11, 190, "held-out", size=8.6, color=VERMILION)
+    svg.text(gx + 11, 200, "selection", size=8.6, color=VERMILION)
 
     svg.line(640, 72, 640, 256, color=RULE, sw=1)
 
@@ -227,6 +243,32 @@ def main() -> None:
     OUT_PATH.write_text(draw(), encoding="utf-8")
     kb = OUT_PATH.stat().st_size / 1024
     print(f"Wrote {OUT_PATH} ({WIDTH}x{HEIGHT}, {kb:.1f} KB; journal limit 150 KB)")
+
+    # Also emit PNG and PDF from the same source. These used to be produced by hand, which meant a
+    # regenerated SVG left a stale PNG and PDF behind; the submission then carried a graphical
+    # abstract that contradicted the manuscript. Deriving all three here makes that impossible.
+    try:
+        import cairosvg
+    except ImportError:
+        print("  cairosvg not installed: PNG/PDF NOT regenerated (pip install cairosvg)")
+        return
+
+    svg_bytes = OUT_PATH.read_bytes()
+    png_path = OUT_PATH.with_suffix(".png")
+    pdf_path = OUT_PATH.with_suffix(".pdf")
+    cairosvg.svg2png(bytestring=svg_bytes, write_to=str(png_path),
+                     output_width=WIDTH, output_height=HEIGHT)
+    cairosvg.svg2pdf(bytestring=svg_bytes, write_to=str(pdf_path))
+    png_kb = png_path.stat().st_size / 1024
+    print(f"Wrote {png_path} ({png_kb:.1f} KB)" + ("  [OVER 150 KB LIMIT]" if png_kb > 150 else ""))
+    print(f"Wrote {pdf_path}")
+
+    # Keep the submission tree in step with the rendered assets.
+    submission_figs = OUT_PATH.parents[2] / "submission" / "figures"
+    if submission_figs.is_dir():
+        for src in (png_path, pdf_path, OUT_PATH):
+            (submission_figs / src.name).write_bytes(src.read_bytes())
+        print(f"Copied graphical abstract into {submission_figs}")
 
 
 if __name__ == "__main__":

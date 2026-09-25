@@ -114,6 +114,14 @@ notebook = [
     "tqdm>=4.65",
 ]
 
+# Test and lint tooling used by CI (`pip install -e .[dev]`). matplotlib is here because the
+# reliability study draws its reliability diagrams in the integration tests.
+dev = [
+    "pytest>=7.4",
+    "ruff>=0.5",
+    "matplotlib>=3.7",
+]
+
 # Everything that resolves cleanly on CPU from PyPI. `tdc` is excluded because
 # its pins are incompatible with a modern resolver (see above); `chemml` is
 # excluded because it drags in TensorFlow. Add either explicitly if you need it.
@@ -143,3 +151,20 @@ include-package-data = false
 
 [tool.setuptools.package-data]
 portable_colab_qsar_bundle = ["example_prediction_smiles.csv"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "gpu: needs a CUDA GPU; excluded from default CI (-m \"not gpu and not slow\")",
+    "slow: long-running or needs large downloads; excluded from default CI",
+]
+
+[tool.ruff]
+line-length = 120
+target-version = "py310"
+# The legacy bundle modules predate linting; CI lints the qsarena package and the tests.
+extend-exclude = ["portable_colab_qsar_bundle", "node_modules", "benchmark_results", "tmp"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I"]
+ignore = ["E501"]

@@ -1,12 +1,12 @@
 \begingroup\scriptsize
 \begin{xltabular}{\textwidth}{@{}>{\raggedright\arraybackslash\hsize=0.721\hsize}X>{\raggedright\arraybackslash\hsize=1.279\hsize}Xrrrr@{}}
-\caption{Model inventory. ``Valid'' datasets are those on which the model produced a metric without an error; differences from 45 reflect task-type applicability (regression-only or classification-only estimators), dataset-size guardrails, or backend failures (Section~\ref{sec:coverage}).}\label{tab:models}\\
+\caption{Model inventory. ``Valid'' datasets are those on which the model produced a metric without an error; differences from 44 reflect task-type applicability (regression-only or classification-only estimators), dataset-size guardrails, or backend failures (Section~\ref{sec:coverage}).}\label{tab:models}\\
 \toprule
-\textbf{Architecture family} & \textbf{Model} & \makecell[r]{\textbf{Valid}\\\textbf{regression}\\\textbf{datasets}} & \makecell[r]{\textbf{Valid}\\\textbf{classification}\\\textbf{datasets}} & \textbf{Wins} & \makecell[r]{\textbf{Datasets}\\\textbf{attempted}} \\
+\textbf{Model family} & \textbf{Model} & \makecell[r]{\textbf{Valid}\\\textbf{regression}\\\textbf{datasets}} & \makecell[r]{\textbf{Valid}\\\textbf{classification}\\\textbf{datasets}} & \textbf{Wins} & \makecell[r]{\textbf{Datasets}\\\textbf{attempted}} \\
 \midrule
 \endfirsthead
 \toprule
-\textbf{Architecture family} & \textbf{Model} & \makecell[r]{\textbf{Valid}\\\textbf{regression}\\\textbf{datasets}} & \makecell[r]{\textbf{Valid}\\\textbf{classification}\\\textbf{datasets}} & \textbf{Wins} & \makecell[r]{\textbf{Datasets}\\\textbf{attempted}} \\
+\textbf{Model family} & \textbf{Model} & \makecell[r]{\textbf{Valid}\\\textbf{regression}\\\textbf{datasets}} & \makecell[r]{\textbf{Valid}\\\textbf{classification}\\\textbf{datasets}} & \textbf{Wins} & \makecell[r]{\textbf{Datasets}\\\textbf{attempted}} \\
 \midrule
 \endhead
 \midrule
@@ -40,7 +40,7 @@ Deep tabular NN (ChemML MLP) & ChemML MLP (Tensor\allowbreak{}Flow) & 22 & 22 & 
 Ensemble (stacking /\allowbreak{} averaging) & Ensemble (OOF Stacking (RidgeCV, 5-\allowbreak{}fold)) & 22 & 22 & 7 & 44 \\
 Ensemble (stacking /\allowbreak{} averaging) & Ensemble (Weighted average (inverse train RMSE)) & 22 & 22 & 9 & 44 \\
 Map\allowbreak{}Light + GNN & Map\allowbreak{}Light + GNN (Cat\allowbreak{}Boost, Strict Parity) & 22 & 22 & 4 & 44 \\
-Uni-\allowbreak{}Mol V1 (3D pretrained) & Uni-\allowbreak{}Mol V1 & 22 & 22 & 7 & 44 \\
-Uni-\allowbreak{}Mol V1 (3D pretrained) & Uni-\allowbreak{}Mol V2 (84m) & 10 & 7 & 4 & 44 \\
+Uni-\allowbreak{}Mol (3D pretrained) & Uni-\allowbreak{}Mol V1 & 22 & 22 & 7 & 44 \\
+Uni-\allowbreak{}Mol (3D pretrained) & Uni-\allowbreak{}Mol V2 (84m) & 10 & 7 & 4 & 44 \\
 \end{xltabular}
 \endgroup

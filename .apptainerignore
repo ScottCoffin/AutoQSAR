@@ -1,4 +1,4 @@
-# AutoQSAR .apptainerignore (mirrors .dockerignore)
+# QSARena .apptainerignore (mirrors .dockerignore)
 benchmark_results/
 data/
 model_cache/

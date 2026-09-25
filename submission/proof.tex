@@ -22,6 +22,9 @@
 \usepackage[numbers,sort&compress]{natbib}
 \usepackage[htt]{hyphenat}   % allow hyphenation inside \texttt identifiers
 \usepackage{hyperref}
+% Suppress the coloured link borders. They make a proof look like a working draft, and a
+% reviewer reasonably flagged them as a production defect.
+\hypersetup{hidelinks}
 \setlength{\emergencystretch}{3em}
 
 \graphicspath{{figures/}}
@@ -30,8 +33,7 @@
 % sn-jnl provides \bmhead and \sur/\fnm; stub them so body.tex and the declarations compile here.
 \providecommand{\bmhead}[1]{\subsection*{#1}}
 
-\title{No Single Architecture Wins: Ensembles and Conventional Machine Learning Match Pretrained Molecular Models Across 44 Property-Prediction Benchmarks\\[0.4em]
-\large PROOF BUILD -- not the submission file}
+\title{No Single Model Family Dominates: Ensembles and Conventional Machine Learning Perform Comparably to Pretrained Molecular Models Across 44 Property-Prediction Benchmarks}
 \author{Scott Coffin\\\small California Office of Environmental Health Hazard Assessment, Sacramento, CA, USA}
 \date{\today}
 

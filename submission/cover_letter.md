@@ -17,7 +17,7 @@ To the Editors
 
 Dear Editors,
 
-Please consider the enclosed manuscript, **"No Single Architecture Wins: Ensembles and Conventional Machine Learning Match Pretrained Molecular Models Across 44 Property-Prediction Benchmarks,"** for publication as a **Software article** in the *Journal of Cheminformatics*.
+Please consider the enclosed manuscript, **"No Single Model Family Dominates: Ensembles and Conventional Machine Learning Perform Comparably to Pretrained Molecular Models Across 44 Property-Prediction Benchmarks,"** for publication as a **Software article** in the *Journal of Cheminformatics*.
 
 **What the paper reports.** We present QSARena, an open-source QSAR/AutoML workspace that predicts molecular properties from SMILES through one leakage-controlled workflow, delivered both as a code-free notebook that runs in Google Colab without any installation and as a command-line runner sharing the same core, and we use it to run what is, to our knowledge, the broadest single-tool cross-suite benchmark published to date: 44 datasets from five collections (Therapeutics Data Commons, MoleculeNet, Polaris ADME, PODUAM and ChemML), 28 models and 837 valid model–dataset evaluations, all under one fixed configuration, executed on an NSF ACCESS Jetstream2 A100 node. The model library spans conventional machine learning and gradient boosting, deep tabular and message-passing graph networks, 3D pretrained models (Uni-Mol V1 and V2), MapLight-style descriptor–graph hybrids, and combinatorial-fusion and stacking ensembles.
 

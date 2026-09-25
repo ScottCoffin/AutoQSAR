@@ -1,4 +1,4 @@
-Architecture family,Model,Valid regression datasets,Valid classification datasets,Wins,Datasets attempted
+Model family,Model,Valid regression datasets,Valid classification datasets,Wins,Datasets attempted
 CFA combinatorial fusion,CFA (Combinatorial Fusion),22,22,1,44
 Chemprop v2 GNN,"Chemprop v2 (AttentiveFP, ensemble=3)",2,4,1,44
 Chemprop v2 GNN,"Chemprop v2 (CMPNN, ensemble=3)",2,4,0,44
@@ -25,5 +25,5 @@ Deep tabular NN (ChemML MLP),ChemML MLP (TensorFlow),22,22,1,44
 Ensemble (stacking / averaging),"Ensemble (OOF Stacking (RidgeCV, 5-fold))",22,22,7,44
 Ensemble (stacking / averaging),Ensemble (Weighted average (inverse train RMSE)),22,22,9,44
 MapLight + GNN,"MapLight + GNN (CatBoost, Strict Parity)",22,22,4,44
-Uni-Mol V1 (3D pretrained),Uni-Mol V1,22,22,7,44
-Uni-Mol V1 (3D pretrained),Uni-Mol V2 (84m),10,7,4,44
+Uni-Mol (3D pretrained),Uni-Mol V1,22,22,7,44
+Uni-Mol (3D pretrained),Uni-Mol V2 (84m),10,7,4,44

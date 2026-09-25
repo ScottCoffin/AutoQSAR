@@ -43,7 +43,7 @@
       "classification": 6,
       "total": 8
     },
-    "Uni-Mol V1 (3D pretrained)": {
+    "Uni-Mol (3D pretrained)": {
       "regression": 6,
       "classification": 5,
       "total": 11
@@ -65,7 +65,7 @@
       "Within 5% of best (% of datasets)": 75.0,
       "Median rank of family-best model": 2.0
     },
-    "Uni-Mol V1 (3D pretrained)": {
+    "Uni-Mol (3D pretrained)": {
       "Models": 2,
       "Datasets with valid results": 44,
       "Wins (regression)": 6,
@@ -160,7 +160,11 @@
     "cv_selected_compared": 37,
     "top10_cv_selected": 25,
     "rank1_cv_selected": 0,
-    "median_rank_cv_selected": 8.0
+    "median_rank_cv_selected": 8.0,
+    "matched_pool_compared": 37,
+    "top10_matched_pool": 28,
+    "rank1_matched_pool": 3,
+    "median_rank_matched_pool": 6.0
   },
   "leaderboard_by_comparability": {
     "local_split": {
@@ -304,7 +308,7 @@
       "Deep tabular NN (ChemML MLP)": 39.761499999999984,
       "MapLight + GNN": 137.37350000000015,
       "Chemprop v2 GNN": 268.5799999999999,
-      "Uni-Mol V1 (3D pretrained)": 373.53600000000006
+      "Uni-Mol (3D pretrained)": 373.53600000000006
     }
   },
   "selector_scaling": {
@@ -541,7 +545,7 @@
     }
   },
   "reproducibility": {
-    "analysis_time_git_commit": "857037b9053c6a6b5ba951c9a1b918a404f25f20",
+    "analysis_time_git_commit": "611596da23bdd53937f6a63d72b492d7762c84bd",
     "analysis_time_git_is_dirty": true,
     "run_artifacts_committed_in": "bbfb188",
     "random_seed": 13,

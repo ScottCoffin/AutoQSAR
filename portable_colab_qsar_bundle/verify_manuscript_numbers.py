@@ -20,12 +20,18 @@ import re
 import sys
 
 d = json.load(open("manuscript_assets/manuscript_numbers.json"))
+rel = json.loads(pathlib.Path("results/reliability_tdc22/summary.json").read_text(encoding="utf-8"))
 t = pathlib.Path("manuscript.md").read_text(encoding="utf-8")
+body = pathlib.Path("submission/body.tex").read_text(encoding="utf-8")
 ok, bad = [], []
 
 
 def chk(label, cond, detail=""):
     (ok if cond else bad).append(f"{label} {detail}")
+
+
+def norm_text(s):
+    return re.sub(r"\s+", " ", s.replace("\\%", "%").replace("\\,", "").replace("~", " "))
 
 
 L, W, F, C, FF = d["leaderboard"], d["wins_by_family"], d["family_consistency"], d["cost"], d["feature_families"]
@@ -45,7 +51,7 @@ chk("no multiseed", d["multiseed_artifacts_present"] is False)
 # ---- wins -----------------------------------------------------------------------------------
 for fam, tot, r, c in [
     ("Ensemble (stacking / averaging)", 16, 7, 9),
-    ("Uni-Mol V1 (3D pretrained)", 11, 6, 5),
+    ("Uni-Mol (3D pretrained)", 11, 6, 5),
     ("Conventional ML", 8, 2, 6),
     ("MapLight + GNN", 4, 4, 0),
     ("Deep tabular NN (ChemML MLP)", 2, 2, 0),
@@ -55,12 +61,12 @@ for fam, tot, r, c in [
     chk(f"wins {fam}", (W[fam]["total"], W[fam]["regression"], W[fam]["classification"]) == (tot, r, c), str(W.get(fam)))
 chk("wins sum to 44", sum(v["total"] for v in W.values()) == 44)
 chk("largest share 36%", round(100 * max(v["total"] for v in W.values()) / 44) == 36)
-chk("3D wins 5 classification", W["Uni-Mol V1 (3D pretrained)"]["classification"] == 5)
+chk("3D wins 5 classification", W["Uni-Mol (3D pretrained)"]["classification"] == 5)
 
 # ---- consistency ----------------------------------------------------------------------------
 for fam, pct, rank in [
     ("Ensemble (stacking / averaging)", 75, 2.0),
-    ("Uni-Mol V1 (3D pretrained)", 70, 4.0),
+    ("Uni-Mol (3D pretrained)", 70, 4.0),
     ("Conventional ML", 66, 3.0),
     ("MapLight + GNN", 27, 8.5),
     ("Deep tabular NN (ChemML MLP)", 25, 12.5),
@@ -76,6 +82,11 @@ chk("chemprop only 6 datasets", F["Chemprop v2 GNN"]["Datasets with valid result
 chk("lb 37/430/35/5/med3",
     (L["datasets_compared"], L["reference_rows"], L["top10_test_selected"], L["rank1_test_selected"], L["median_rank_test_selected"]) == (37, 430, 35, 5, 3.0))
 chk("cv 25/0/med8", (L["top10_cv_selected"], L["rank1_cv_selected"], L["median_rank_cv_selected"]) == (25, 0, 8.0))
+# Matched-candidate-set control: holds the pool at the CV-eligible models and selects on test.
+# It decomposes the 35->25 drop into library breadth (35->28) and honest selection (28->25).
+chk("matched pool 28/3/med6", (L["top10_matched_pool"], L["rank1_matched_pool"], L["median_rank_matched_pool"]) == (28, 3, 6.0))
+chk("gap decomposition 7+3", (L["top10_test_selected"] - L["top10_matched_pool"],
+                             L["top10_matched_pool"] - L["top10_cv_selected"]) == (7, 3))
 chk("below top10", set(L["below_top10_datasets"]) == {"tdc_skin_reaction", "tdc_tox21"})
 chk("rank1 names", set(L["rank1_datasets"]) == {
     "tdc_bioavailability_ma", "tdc_carcinogens_lagunin", "tdc_clearance_microsome_az",
@@ -108,9 +119,9 @@ chk("cost totals", (round(C["total_recorded_wall_clock_hours"], 1), round(C["med
 m = C["per_family_median_own_seconds"]
 for fam, v, nd in [("CFA combinatorial fusion", 0.3, 1), ("Ensemble (stacking / averaging)", 0.6, 1),
                    ("Conventional ML", 6.8, 1), ("Deep tabular NN (ChemML MLP)", 39.8, 1),
-                   ("MapLight + GNN", 137, 0), ("Chemprop v2 GNN", 269, 0), ("Uni-Mol V1 (3D pretrained)", 374, 0)]:
+                   ("MapLight + GNN", 137, 0), ("Chemprop v2 GNN", 269, 0), ("Uni-Mol (3D pretrained)", 374, 0)]:
     chk(f"cost {fam}", round(m[fam], nd) == v, f"{m[fam]:.2f}")
-chk("unimol 55x conventional", round(m["Uni-Mol V1 (3D pretrained)"] / m["Conventional ML"]) == 55)
+chk("unimol 55x conventional", round(m["Uni-Mol (3D pretrained)"] / m["Conventional ML"]) == 55)
 S = d["selector_scaling"]
 chk("selector 0.77/0.58/295/1003", (round(S["log10_slope"], 2), round(S["pearson_r"], 2), round(S["median_selector_seconds"]), round(S["max_selector_seconds"]), S["max_selector_dataset"]) == (0.77, 0.58, 295, 1003, "tdc_herg_karim"))
 
@@ -124,12 +135,45 @@ chk("7 datasets re-split", len(R["datasets_respilt_to_scaffold"]) == 7)
 # ---- provenance --------------------------------------------------------------------------------
 chk("repro commit bbfb188", d["reproducibility"]["run_artifacts_committed_in"] == "bbfb188" and d["reproducibility"]["random_seed"] == 13)
 
+# ---- regulatory reliability study --------------------------------------------------------------
+Sstd, Sknn, Scons, Srel, Sconf = (rel["standardization"], rel["knn_tanimoto"], rel["consensus"],
+                                  rel["reliability"], rel["conformal"])
+chk("reliability study 22 official",
+    (rel["n_datasets"], rel["n_regression"], rel["n_classification"], rel["seed"]) == (22, 9, 13, 0))
+chk("reliability reference model",
+    rel["reference_model"] == "RandomForest (300 trees) on Morgan r=2 2048-bit + RDKit 2D descriptors")
+chk("reliability structural summary",
+    (round(100 * Sstd["median_coverage"], 1), round(100 * Sstd["min_coverage"], 1),
+     round(100 * Sstd["max_coverage"], 1), Sstd["n_datasets_out_error_higher"],
+     Sstd["n_datasets_with_both_groups"], round(Sstd["median_pct_higher_error_out"], 1),
+     round(Sstd["median_pct_higher_error_out_regression"], 1)) == (95.7, 92.6, 99.5, 8, 17, -8.6, 34.8))
+chk("reliability knn consensus summary",
+    (round(100 * Sknn["median_coverage"], 1), Sknn["n_datasets_out_error_higher"],
+     Sknn["n_datasets_with_both_groups"], round(Sknn["median_pct_higher_error_out"], 1),
+     round(100 * Scons["median_coverage"], 1), Scons["n_datasets_out_error_higher"],
+     round(Scons["median_pct_higher_error_out"], 1)) == (89.7, 13, 21, 15.3, 87.0, 14, 7.9))
+chk("reliability confidence summary",
+    (round(100 * Srel["median_coverage"], 1), Srel["n_datasets_out_error_higher"],
+     round(Srel["median_error_ratio_out_in"], 2), round(Srel["median_pct_higher_error_out"], 1),
+     round(Srel["median_pct_higher_error_out_regression"], 1),
+     round(Srel["median_pct_higher_error_out_classification"], 1)) == (51.2, 22, 3.30, 230.3, 108.0, 382.1))
+chk("reliability conformal summary",
+    (round(100 * Sconf["regression_median_coverage"], 1), round(100 * Sconf["classification_median_coverage"], 1),
+     round(Sconf["classification_median_ece"], 3), round(Sconf["classification_median_brier"], 3)) == (93.2, 90.9, 0.065, 0.137))
+for label, text in [("md", t), ("body", body)]:
+    nt = norm_text(text)
+    chk(f"sec oecd {label}", ("3.13 Regulatory alignment with the OECD" in nt if label == "md" else "label{sec:oecd}" in text))
+    chk(f"oecd numbers {label}",
+        all(s in nt for s in ["95.7%", "8 of 17", "89.7%", "13 of 21", "87.0%", "14 of 22",
+                              "51.2%", "230.3%", "93.2%", "90.9%", "0.065", "0.137"]))
+    chk(f"reference model caveat {label}", "not the per-dataset selected QSARena model" in nt)
+
 # ---- tables agree with the JSON ----------------------------------------------------------------
 t2 = list(csv.DictReader(io.StringIO(pathlib.Path("manuscript_assets/tables/table2_dataset_catalog.csv").read_text(encoding="utf-8"))))
 chk("table2 has leaderboard columns", {"Est. rank", "Best published", "Leaderboard metric", "Best published model"} <= set(t2[0].keys()))
 chk("table2 rows == datasets", len(t2) == d["datasets_analyzed"])
 chk("table2 ranks populated", sum(1 for r in t2 if str(r["Est. rank"]).strip()) == L["datasets_compared"])
-t6 = {r["Architecture family"]: r for r in csv.DictReader(io.StringIO(pathlib.Path("manuscript_assets/tables/table6_cost.csv").read_text(encoding="utf-8")))}
+t6 = {r["Model family"]: r for r in csv.DictReader(io.StringIO(pathlib.Path("manuscript_assets/tables/table6_cost.csv").read_text(encoding="utf-8")))}
 chk("table6 has published comparators", any("published" in k for k in t6))
 
 print(f"PASS {len(ok)} checks")

@@ -665,7 +665,7 @@ def _patch_select_for_windows_stdin() -> None:
     tabpfn/browser_auth.py uses select.select([sys.stdin], [], [], 0.5) inside
     _poll_for_token to allow keyboard cancellation during browser-based Prior Labs
     license auth.  On Windows, select.select does not accept non-socket file
-    descriptors and raises OSError: [WinError 10038] immediately — crashing the
+    descriptors and raises OSError: [WinError 10038] immediately â€” crashing the
     entire auth flow before the user can complete the browser step.
 
     This patch replaces stdin entries in the rlist with a short sleep so the poll
@@ -760,7 +760,7 @@ def _prepare_tabpfn_local_auth() -> tuple[bool, str]:
     step.  _patch_select_for_windows_stdin() is applied here so the loop keeps
     running and can detect the browser callback normally.
     """
-    # Must patch before any probe — the browser-auth poll loop runs inside fit().
+    # Must patch before any probe â€” the browser-auth poll loop runs inside fit().
     _patch_select_for_windows_stdin()
 
     hf_token = _get_effective_hf_token()
@@ -774,7 +774,7 @@ def _prepare_tabpfn_local_auth() -> tuple[bool, str]:
             pass
         print(
             "[TabPFN] Verifying local backend. On first use a browser will open for "
-            "Prior Labs license acceptance — please complete it, then return here.",
+            "Prior Labs license acceptance â€” please complete it, then return here.",
             flush=True,
         )
         probe_ok, probe_error = _probe_tabpfn_runtime_ready()
@@ -789,12 +789,12 @@ def _prepare_tabpfn_local_auth() -> tuple[bool, str]:
             f"Error: {probe_error}"
         )
 
-    # No token — safe to probe if weights already cached (no HF download needed),
+    # No token â€” safe to probe if weights already cached (no HF download needed),
     # but Prior Labs license browser flow may still be required on first run.
     if _is_tabpfn_model_cached():
         print(
             "[TabPFN] Model weights found in cache. On first use a browser will open for "
-            "Prior Labs license acceptance — please complete it, then return here.",
+            "Prior Labs license acceptance â€” please complete it, then return here.",
             flush=True,
         )
         probe_ok, probe_error = _probe_tabpfn_runtime_ready()
@@ -804,7 +804,7 @@ def _prepare_tabpfn_local_auth() -> tuple[bool, str]:
             return False, format_tabpfn_token_limit_notice(probe_error)
         return False, f"TabPFN local backend preflight failed: {probe_error}"
 
-    # No token, no cache — must collect HF token before probing; without it the
+    # No token, no cache â€” must collect HF token before probing; without it the
     # HuggingFace download step inside fit() will fail even after license acceptance.
     _hf_auth_prompt = (
         "TabPFN local backend needs a HuggingFace token to download model weights (first-time only).\n"
@@ -827,7 +827,7 @@ def _prepare_tabpfn_local_auth() -> tuple[bool, str]:
             pass
         print(
             "[TabPFN] Downloading model weights. A browser will open for Prior Labs license "
-            "acceptance — please complete it, then return here (one-time setup).",
+            "acceptance â€” please complete it, then return here (one-time setup).",
             flush=True,
         )
         probe_ok, probe_error = _probe_tabpfn_runtime_ready()
@@ -912,7 +912,7 @@ def prepare_tabpfn_auth(args: argparse.Namespace) -> tuple[bool, str]:
                 )
         else:
             # Non-interactive (piped / CI): probe for a locally cached client token
-            # before giving up — avoids triggering the browser OAuth flow.
+            # before giving up â€” avoids triggering the browser OAuth flow.
             probe_ok, probe_error = _probe_tabpfn_runtime_ready()
             if probe_ok:
                 return True, "TabPFN preflight passed using an existing local client token."
@@ -2654,7 +2654,7 @@ def extract_freesolv_expanded_scaled_paper_summary(workbook_path: Path) -> dict[
 
     references: list[dict[str, Any]] = []
     for model_name, idx in [
-        ("Temperature-Dependent Model (scaled; ln(-Δsolvgpuresat) vs 1/T)", int(scaled_idx)),
+        ("Temperature-Dependent Model (scaled; ln(-Î”solvgpuresat) vs 1/T)", int(scaled_idx)),
         ("Temperature-Dependent Model (non-scaled features)", int(non_scaled_idx)),
     ]:
         row = metrics_numeric.loc[idx]
@@ -2724,7 +2724,7 @@ def load_freesolv_expanded_scaled_dataset(path: str = "./data/free_solv") -> lis
         return datasets
 
     # Scaled benchmark block (columns F-H in the supplemental workbook):
-    # SMILES, 1/T, ln(-Δsolvgpuresat).
+    # SMILES, 1/T, ln(-Î”solvgpuresat).
     frame = pd.DataFrame(
         {
             "smiles": benchmark_df.iloc[:, 5],
@@ -9410,6 +9410,177 @@ def _multiseed_model_rows_for_dataset(dataset_df: pd.DataFrame) -> tuple[list[pd
     return [best_direct_row], "overall_best_direct_model", overall_model
 
 
+def _load_existing_multiseed_metrics(
+    seed_output_dir: Path,
+    dataset_id: str,
+    selected_models: Sequence[str],
+) -> pd.DataFrame:
+    metrics_path = Path(seed_output_dir) / str(dataset_id) / "metrics.csv"
+    if not metrics_path.exists():
+        return pd.DataFrame()
+    try:
+        existing = pd.read_csv(metrics_path)
+    except Exception:
+        return pd.DataFrame()
+    if existing.empty or "model" not in existing.columns:
+        return pd.DataFrame()
+    selected = {str(model).strip() for model in selected_models if str(model).strip()}
+    if not selected:
+        return pd.DataFrame()
+    existing = existing.loc[existing["model"].fillna("").astype(str).str.strip().isin(selected)].copy()
+    if existing.empty:
+        return pd.DataFrame()
+    if "primary_metric_value" in existing.columns:
+        values = pd.to_numeric(existing["primary_metric_value"], errors="coerce")
+        existing = existing.loc[values.notna()].copy()
+    if existing.empty:
+        return pd.DataFrame()
+    if "error" in existing.columns:
+        existing = existing.loc[~error_mask(existing)].copy()
+    present = {str(model).strip() for model in existing["model"].fillna("").astype(str)}
+    if not selected.issubset(present):
+        return pd.DataFrame()
+    return existing
+
+
+def _metric_within_one_sd(row: pd.Series) -> Any:
+    single = pd.to_numeric(pd.Series([row.get("single_seed_primary_metric_value")]), errors="coerce").iloc[0]
+    mean = pd.to_numeric(pd.Series([row.get("mean_primary_metric_value")]), errors="coerce").iloc[0]
+    std = pd.to_numeric(pd.Series([row.get("std_primary_metric_value")]), errors="coerce").iloc[0]
+    if not np.isfinite(single) or not np.isfinite(mean) or not np.isfinite(std):
+        return pd.NA
+    return bool(abs(float(single) - float(mean)) <= float(std))
+
+
+def _metric_direction_label(metric: Any) -> str:
+    metric_text = str(metric).strip()
+    if not metric_text:
+        return "unknown"
+    return "lower" if metric_lower_is_better(metric_text) else "higher"
+
+
+def summarize_tdc22_multiseed_metrics(metrics_out: pd.DataFrame, plan_df: pd.DataFrame) -> pd.DataFrame:
+    if metrics_out.empty:
+        return pd.DataFrame()
+    working = metrics_out.copy()
+    working["primary_metric_value"] = pd.to_numeric(working.get("primary_metric_value"), errors="coerce")
+    working["stage_duration_seconds"] = pd.to_numeric(working.get("stage_duration_seconds"), errors="coerce")
+    if "workflow" not in working.columns:
+        working["workflow"] = ""
+    if "family" not in working.columns:
+        working["family"] = working["workflow"]
+    if "multiseed_selected_model" not in working.columns:
+        working["multiseed_selected_model"] = working.get("model", "")
+    grouped = (
+        working.groupby(["dataset", "multiseed_selected_model"], dropna=False)
+        .agg(
+            selected_family=("family", "first"),
+            selected_workflow=("workflow", "first"),
+            seed_count=("multiseed_seed", "nunique"),
+            primary_metric=("primary_metric", "first"),
+            mean_primary_metric_value=("primary_metric_value", "mean"),
+            std_primary_metric_value=("primary_metric_value", "std"),
+            min_primary_metric_value=("primary_metric_value", "min"),
+            max_primary_metric_value=("primary_metric_value", "max"),
+            mean_model_stage_seconds=("stage_duration_seconds", "mean"),
+            total_model_stage_seconds=("stage_duration_seconds", "sum"),
+        )
+        .reset_index()
+        .rename(columns={"multiseed_selected_model": "selected_model"})
+    )
+    if not plan_df.empty and {"dataset", "selected_model"}.issubset(plan_df.columns):
+        plan_cols = [
+            column
+            for column in [
+                "dataset",
+                "selected_model",
+                "main_run_primary_metric_value",
+                "main_run_winner_model",
+                "selection_note",
+                "seeds",
+            ]
+            if column in plan_df.columns
+        ]
+        status_series = (
+            plan_df["status"].astype(str)
+            if "status" in plan_df.columns
+            else pd.Series(["planned"] * len(plan_df), index=plan_df.index)
+        )
+        plan_unique = plan_df.loc[status_series.eq("planned"), plan_cols].drop_duplicates(
+            subset=["dataset", "selected_model"],
+            keep="first",
+        )
+        grouped = grouped.merge(plan_unique, on=["dataset", "selected_model"], how="left")
+    grouped["metric_direction"] = grouped["primary_metric"].map(_metric_direction_label)
+    grouped = grouped.rename(columns={"main_run_primary_metric_value": "single_seed_primary_metric_value"})
+    if "single_seed_primary_metric_value" not in grouped.columns:
+        grouped["single_seed_primary_metric_value"] = np.nan
+    grouped["single_seed_winner_within_1sd"] = grouped.apply(_metric_within_one_sd, axis=1)
+    ordered_cols = [
+        "dataset",
+        "selected_model",
+        "selected_family",
+        "selected_workflow",
+        "primary_metric",
+        "metric_direction",
+        "seed_count",
+        "mean_primary_metric_value",
+        "std_primary_metric_value",
+        "min_primary_metric_value",
+        "max_primary_metric_value",
+        "single_seed_primary_metric_value",
+        "single_seed_winner_within_1sd",
+        "main_run_winner_model",
+        "selection_note",
+        "mean_model_stage_seconds",
+        "total_model_stage_seconds",
+        "seeds",
+    ]
+    return grouped[[column for column in ordered_cols if column in grouped.columns]]
+
+
+def _prepare_tdc22_seed_args(
+    seed: int,
+    args_vars: dict[str, Any],
+    seed_output_dir: Path,
+    selected_models: Sequence[str],
+) -> argparse.Namespace:
+    seed_args = argparse.Namespace(**args_vars)
+    seed_args.random_seed = int(seed)
+    seed_args.output_dir = seed_output_dir
+    seed_args.only_model_names = list(selected_models)
+    seed_args.run_cfa = False
+    seed_args.run_ensemble = False
+    seed_args.revisit_completed_datasets = False
+    seed_args.rebuild_ensemble = False
+    ga_models = [model_name[:-3].strip() for model_name in selected_models if str(model_name).endswith(" GA")]
+    if ga_models:
+        seed_args.ga_models_resolved = ",".join(ga_models)
+        seed_args.ga_models = seed_args.ga_models_resolved
+    return seed_args
+
+
+def _decorate_multiseed_metrics(
+    seed_metrics: pd.DataFrame,
+    *,
+    seed: int,
+    selection_note: str,
+    main_run_winner: str,
+) -> pd.DataFrame:
+    if seed_metrics.empty:
+        return pd.DataFrame()
+    seed_metrics = seed_metrics.copy()
+    seed_metrics["multiseed_seed"] = int(seed)
+    seed_metrics["multiseed_selected_model"] = (
+        seed_metrics["model"].fillna("").astype(str).str.strip()
+        if "model" in seed_metrics.columns
+        else ""
+    )
+    seed_metrics["multiseed_selection_note"] = selection_note
+    seed_metrics["multiseed_main_run_winner_model"] = main_run_winner
+    return seed_metrics
+
+
 def _run_tdc22_seed(
     seed: int,
     spec: Any,
@@ -9418,19 +9589,8 @@ def _run_tdc22_seed(
     selected_models: list[str],
 ) -> "tuple[int, Any]":
     """Top-level picklable helper: run one seed for one TDC-22 dataset."""
-    seed_args = argparse.Namespace(**args_vars)
-    seed_args.random_seed = int(seed)
     seed_output_dir = Path(multiseed_root_str) / f"seed_{int(seed)}"
-    seed_args.output_dir = seed_output_dir
-    seed_args.only_model_names = list(selected_models)
-    seed_args.run_cfa = False
-    seed_args.run_ensemble = False
-    seed_args.revisit_completed_datasets = False
-    seed_args.rebuild_ensemble = False
-    ga_models = [m[:-3].strip() for m in selected_models if m.endswith(" GA")]
-    if ga_models:
-        seed_args.ga_models_resolved = ",".join(ga_models)
-        seed_args.ga_models = seed_args.ga_models_resolved
+    seed_args = _prepare_tdc22_seed_args(seed, args_vars, seed_output_dir, selected_models)
     result = run_dataset(spec, seed_output_dir, seed_args, dataset_position=1, dataset_total=1)
     return int(seed), result
 
@@ -9501,59 +9661,63 @@ def run_tdc22_best_model_multiseed(
                 }
             )
 
-        _use_parallel_seeds = bool(getattr(args, "parallel_tdc22_seeds", True)) and len(seeds) > 1
+        pending_seeds: list[tuple[int, int]] = []
+        for seed_index, seed in enumerate(seeds, start=1):
+            seed_output_dir = multiseed_root / f"seed_{int(seed)}"
+            seed_metrics = (
+                _load_existing_multiseed_metrics(seed_output_dir, dataset_id, selected_models)
+                if bool(getattr(args, "resume", True))
+                else pd.DataFrame()
+            )
+            if seed_metrics.empty:
+                pending_seeds.append((seed_index, int(seed)))
+                continue
+            print(f"  Reusing completed seed metrics: {seed_output_dir / dataset_id / 'metrics.csv'}", flush=True)
+            decorated = _decorate_multiseed_metrics(
+                seed_metrics,
+                seed=int(seed),
+                selection_note=selection_note,
+                main_run_winner=main_run_winner,
+            )
+            if not decorated.empty:
+                metric_tables.append(decorated)
+
+        _use_parallel_seeds = bool(getattr(args, "parallel_tdc22_seeds", True)) and len(pending_seeds) > 1
         if _use_parallel_seeds:
             import concurrent.futures
             import multiprocessing as _mp
             _ctx = _mp.get_context("spawn")
             print(
-                f"\nTDC-22 multi-seed [{dataset_id}]: submitting {len(seeds)} seeds in parallel "
+                f"\nTDC-22 multi-seed [{dataset_id}]: submitting {len(pending_seeds)} missing seeds in parallel "
                 f"(models={', '.join(selected_models)})",
                 flush=True,
             )
             _seed_results: dict[int, Any] = {}
-            with concurrent.futures.ProcessPoolExecutor(max_workers=len(seeds), mp_context=_ctx) as _pool:
+            with concurrent.futures.ProcessPoolExecutor(max_workers=len(pending_seeds), mp_context=_ctx) as _pool:
                 _fs = {
-                    _pool.submit(_run_tdc22_seed, s, spec, str(multiseed_root), vars(args), selected_models): s
-                    for s in seeds
+                    _pool.submit(_run_tdc22_seed, seed, spec, str(multiseed_root), vars(args), selected_models): seed
+                    for _seed_index, seed in pending_seeds
                 }
                 for _f in concurrent.futures.as_completed(_fs):
-                    _s, _r = _f.result()
-                    _seed_results[_s] = _r
-                    print(f"  [tdc22 seed {_s}] {dataset_id} → {_r.status}", flush=True)
-            for seed in seeds:
+                    _seed, _result = _f.result()
+                    _seed_results[_seed] = _result
+                    print(f"  [tdc22 seed {_seed}] {dataset_id} -> {_result.status}", flush=True)
+            for _seed_index, seed in pending_seeds:
                 result = _seed_results[seed]
                 seed_output_dir = multiseed_root / f"seed_{int(seed)}"
-                if result.metrics_rows:
-                    seed_metrics = pd.DataFrame(result.metrics_rows)
-                else:
-                    seed_metrics = load_run_metrics_dataframe(seed_output_dir)
-                if not seed_metrics.empty:
-                    seed_metrics = seed_metrics.copy()
-                    seed_metrics["multiseed_seed"] = int(seed)
-                    seed_metrics["multiseed_selected_model"] = (
-                        seed_metrics["model"].fillna("").astype(str).str.strip()
-                        if "model" in seed_metrics.columns
-                        else ""
-                    )
-                    seed_metrics["multiseed_selection_note"] = selection_note
-                    seed_metrics["multiseed_main_run_winner_model"] = main_run_winner
-                    metric_tables.append(seed_metrics)
+                seed_metrics = pd.DataFrame(result.metrics_rows) if result.metrics_rows else load_run_metrics_dataframe(seed_output_dir)
+                decorated = _decorate_multiseed_metrics(
+                    seed_metrics,
+                    seed=int(seed),
+                    selection_note=selection_note,
+                    main_run_winner=main_run_winner,
+                )
+                if not decorated.empty:
+                    metric_tables.append(decorated)
         else:
-            for seed_index, seed in enumerate(seeds, start=1):
+            for seed_index, seed in pending_seeds:
                 seed_output_dir = multiseed_root / f"seed_{int(seed)}"
-                seed_args = argparse.Namespace(**vars(args))
-                seed_args.random_seed = int(seed)
-                seed_args.output_dir = seed_output_dir
-                seed_args.only_model_names = list(selected_models)
-                seed_args.run_cfa = False
-                seed_args.run_ensemble = False
-                seed_args.revisit_completed_datasets = False
-                seed_args.rebuild_ensemble = False
-                ga_models = [model_name[:-3].strip() for model_name in selected_models if model_name.endswith(" GA")]
-                if ga_models:
-                    seed_args.ga_models_resolved = ",".join(ga_models)
-                    seed_args.ga_models = seed_args.ga_models_resolved
+                seed_args = _prepare_tdc22_seed_args(seed, vars(args), seed_output_dir, selected_models)
                 print(
                     "\nTDC-22 multi-seed best-model evaluation "
                     f"[dataset {spec_index}/{len(run_specs)}, seed {seed_index}/{len(seeds)}]: "
@@ -9567,44 +9731,21 @@ def run_tdc22_best_model_multiseed(
                     dataset_position=seed_index,
                     dataset_total=len(seeds),
                 )
-                if result.metrics_rows:
-                    seed_metrics = pd.DataFrame(result.metrics_rows)
-                else:
-                    seed_metrics = load_run_metrics_dataframe(seed_output_dir)
-                if not seed_metrics.empty:
-                    seed_metrics = seed_metrics.copy()
-                    seed_metrics["multiseed_seed"] = int(seed)
-                    seed_metrics["multiseed_selected_model"] = (
-                        seed_metrics["model"].fillna("").astype(str).str.strip()
-                        if "model" in seed_metrics.columns
-                        else ""
-                    )
-                    seed_metrics["multiseed_selection_note"] = selection_note
-                    seed_metrics["multiseed_main_run_winner_model"] = main_run_winner
-                    metric_tables.append(seed_metrics)
-
+                seed_metrics = pd.DataFrame(result.metrics_rows) if result.metrics_rows else load_run_metrics_dataframe(seed_output_dir)
+                decorated = _decorate_multiseed_metrics(
+                    seed_metrics,
+                    seed=int(seed),
+                    selection_note=selection_note,
+                    main_run_winner=main_run_winner,
+                )
+                if not decorated.empty:
+                    metric_tables.append(decorated)
     plan_df = pd.DataFrame(plan_rows)
     plan_df.to_csv(multiseed_root / "tdc22_best_model_multiseed_plan.csv", index=False)
     metrics_out = pd.concat(metric_tables, ignore_index=True) if metric_tables else pd.DataFrame()
     if not metrics_out.empty:
         metrics_out.to_csv(multiseed_root / "tdc22_best_model_multiseed_metrics.csv", index=False)
-        working = metrics_out.copy()
-        working["primary_metric_value"] = pd.to_numeric(working.get("primary_metric_value"), errors="coerce")
-        working["stage_duration_seconds"] = pd.to_numeric(working.get("stage_duration_seconds"), errors="coerce")
-        grouped = (
-            working.groupby(["dataset", "multiseed_selected_model"], dropna=False)
-            .agg(
-                seed_count=("multiseed_seed", "nunique"),
-                primary_metric=("primary_metric", "first"),
-                mean_primary_metric_value=("primary_metric_value", "mean"),
-                std_primary_metric_value=("primary_metric_value", "std"),
-                min_primary_metric_value=("primary_metric_value", "min"),
-                max_primary_metric_value=("primary_metric_value", "max"),
-                mean_model_stage_seconds=("stage_duration_seconds", "mean"),
-                total_model_stage_seconds=("stage_duration_seconds", "sum"),
-            )
-            .reset_index()
-        )
+        grouped = summarize_tdc22_multiseed_metrics(metrics_out, plan_df)
         grouped.to_csv(multiseed_root / "tdc22_best_model_multiseed_summary.csv", index=False)
 
     runtime_summary = collect_nested_step_runtime_summary(multiseed_root)
@@ -9623,6 +9764,62 @@ def run_tdc22_best_model_multiseed(
         "metric_rows": int(len(metrics_out)),
         "runtime_rows": int(len(runtime_summary)),
     }
+
+
+def resolve_tdc22_multiseed_source_run(root: Path, args: argparse.Namespace, output_dir: Path) -> Path | None:
+    explicit = getattr(args, "tdc22_multiseed_source_run", None)
+    if explicit is not None:
+        candidate = Path(explicit)
+        if candidate.exists():
+            return candidate
+        return None
+    if (Path(output_dir) / "summary_metrics.csv").exists():
+        return Path(output_dir)
+    for candidate in discover_recent_benchmark_runs(root, exclude_dir=output_dir):
+        if (candidate / "summary_metrics.csv").exists() or any(candidate.glob("*/metrics.csv")):
+            return candidate
+    canonical = root / "benchmark_results" / "autoqsar_benchmark_20260623_153839"
+    if canonical.exists() and ((canonical / "summary_metrics.csv").exists() or any(canonical.glob("*/metrics.csv"))):
+        return canonical
+    return None
+
+
+def run_independent_tdc22_multiseed(
+    *,
+    root: Path,
+    datasets: list["DatasetSpec"],
+    output_dir: Path,
+    args: argparse.Namespace,
+) -> dict[str, Any]:
+    source_run = resolve_tdc22_multiseed_source_run(root, args, output_dir)
+    if source_run is None:
+        return {"status": "failed", "reason": "source_run_not_found"}
+    summary = load_summary_metrics_for_output_dir(source_run)
+    if summary.empty:
+        summary = build_summary_from_dataset_metrics(source_run)
+    if summary.empty:
+        return {"status": "failed", "reason": "source_run_has_no_metrics", "source_run": str(source_run)}
+
+    output_dir.mkdir(parents=True, exist_ok=True)
+    payload = run_tdc22_best_model_multiseed(
+        datasets=datasets,
+        output_dir=output_dir,
+        args=args,
+        summary=summary,
+    )
+    payload["source_run"] = str(source_run)
+
+    summary_path = Path(payload.get("output_dir", "")) / "tdc22_best_model_multiseed_summary.csv"
+    requested_csv = Path(getattr(args, "tdc22_multiseed_summary_csv", Path("results") / "tdc22_multiseed.csv"))
+    if not summary_path.exists():
+        payload["summary_csv"] = ""
+        return payload
+    requested_csv.parent.mkdir(parents=True, exist_ok=True)
+    table = pd.read_csv(summary_path)
+    table.to_csv(requested_csv, index=False, na_rep="NA")
+    payload["summary_csv"] = str(requested_csv)
+    payload["summary_rows"] = int(len(table))
+    return payload
 
 
 def write_run_vs_run_attribution_report(
@@ -10153,9 +10350,34 @@ def parse_args() -> argparse.Namespace:
         ),
     )
     parser.add_argument(
+        "--tdc22-multiseed",
+        action="store_true",
+        help=(
+            "Run only the independent, resumable TDC-22 multiseed stage. Selection is read from an "
+            "existing source run; artifacts are written under --output-dir and the compact summary to "
+            "--tdc22-multiseed-summary-csv."
+        ),
+    )
+    parser.add_argument(
+        "--tdc22-multiseed-source-run",
+        type=Path,
+        default=None,
+        help=(
+            "Existing benchmark run whose summary_metrics.csv or per-dataset metrics.csv files define "
+            "the selected models for --tdc22-multiseed. Defaults to --output-dir when it contains metrics, "
+            "otherwise the newest completed benchmark run."
+        ),
+    )
+    parser.add_argument(
         "--tdc22-multiseed-seeds",
         default="1,2,3,4,5",
         help="Comma-separated random seeds for the end-of-run TDC-22 best-model evaluation.",
+    )
+    parser.add_argument(
+        "--tdc22-multiseed-summary-csv",
+        type=Path,
+        default=Path("results") / "tdc22_multiseed.csv",
+        help="Compact mean/SD summary written by --tdc22-multiseed.",
     )
     parser.add_argument(
         "--tdc22-multiseed-output-name",
@@ -10288,7 +10510,7 @@ def _run_datasets_parallel(
 
     n_jobs in the worker args is divided equally so total CPU usage stays constant.
     progress_callback(completed, total, spec, result, elapsed, avg, eta) is called in
-    the main process after each future completes — safe to use closures like write_run_timing.
+    the main process after each future completes â€” safe to use closures like write_run_timing.
     """
     import concurrent.futures
     import multiprocessing as _mp
@@ -10335,7 +10557,7 @@ def _run_datasets_parallel(
             eta = avg * remaining if avg else 0.0
             print(
                 f"[parallel {completed_count}/{len(datasets)}] {getattr(spec, 'name', '?')} "
-                f"→ {result.status} | elapsed {format_seconds(elapsed)} | "
+                f"â†’ {result.status} | elapsed {format_seconds(elapsed)} | "
                 f"avg {format_seconds(avg) if avg else 'n/a'} | ETA {format_seconds(eta)}",
                 flush=True,
             )
@@ -10357,7 +10579,7 @@ def main() -> int:
         )
     gpu_available = detect_gpu_available()
     args.gpu_available = bool(gpu_available)
-    # Precision hook (§A): read QSARENA_PRECISION env var set by run_one.py.
+    # Precision hook (Â§A): read QSARENA_PRECISION env var set by run_one.py.
     # Must run after GPU detection, before any CUDA op. No-op when torch absent.
     try:
         from qsarena.precision import apply_global_precision
@@ -10480,6 +10702,13 @@ def main() -> int:
         return 1
 
     datasets = order_datasets_smallest_first(datasets)
+
+    if bool(getattr(args, "tdc22_multiseed", False)):
+        args.run_tdc22_multiseed_best = True
+        payload = run_independent_tdc22_multiseed(root=root, datasets=datasets, output_dir=output_dir, args=args)
+        status = str(payload.get("status", "")).lower()
+        print("Independent TDC-22 multiseed stage: " + json.dumps(payload, indent=2, default=str), flush=True)
+        return 0 if status in {"completed", "skipped"} else 1
 
     tabpfn_budget_estimate = None
     if bool(getattr(args, "run_tabpfn", False)) and str(TABPFN_REGRESSOR_SOURCE).strip().lower() == "tabpfn_client":
@@ -10663,6 +10892,17 @@ def main() -> int:
     config["config_signature"] = benchmark_config_signature(args)
     config["datasets"] = [{"name": item.name, "source": item.source, "smiles_column": item.smiles_column, "target_column": item.target_column} for item in datasets]
     (output_dir / "run_config.json").write_text(json.dumps(config, indent=2, default=str), encoding="utf-8")
+    # Environment manifest (package versions, pip-freeze list, git commit, hardware). Provenance
+    # must never abort a run, so any failure is reported and skipped.
+    try:
+        try:
+            from qsarena.provenance import write_environment_manifest
+        except ImportError:  # script-style run from a source checkout
+            sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+            from qsarena.provenance import write_environment_manifest
+        write_environment_manifest(output_dir, repo_dir=root, extra={"config_signature": config["config_signature"]})
+    except Exception as exc:
+        print(f"[warn] environment_manifest.json not written: {type(exc).__name__}: {exc}", flush=True)
     leaderboard_ref_df = write_leaderboard_reference_artifacts(root, output_dir, datasets)
     if bool(getattr(args, "run_tabpfn", False)) and tabpfn_budget_estimate is not None:
         tabpfn_budget_estimate["table"].to_csv(output_dir / "tabpfn_daily_budget_estimate.csv", index=False)
