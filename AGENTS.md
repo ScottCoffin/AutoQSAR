@@ -74,8 +74,13 @@ always quote). Bash (Git Bash) and PowerShell are both available.
 
 The paper makes three load-bearing claims. Keep them straight when editing:
 1. **Leaderboard placement**: top-10 on 35/37 (22/22 on official TDC splits), median rank 3.
-2. **Honest model selection costs ~10 placements**: CV-selected falls to 25/37, median rank 8. This
-   is the novel methodological contribution; never drop it to make the headline look better.
+2. **The 35/37 → 25/37 drop is real but has TWO causes, and the paper now decomposes them.** A
+   matched-candidate-set control (test-selected, restricted to the CV-eligible pool) gives 28/37,
+   3 firsts, median rank 6. So **7 of the 10 lost placements are the value of the broad model
+   library (35→28) and only 3 are the cost of honest selection (28→25)**; median rank 3 → 6 → 8.
+   Honest selection does remove *every* first place (5 → 3 → 0). Never re-attribute the whole
+   ten-dataset gap to selection — that was the pre-2026-09-25 error. Never drop the decomposition
+   to make the headline look better either. Verified by `chk("gap decomposition 7+3", ...)`.
 3. **No effort and no hardware required**: all 44 datasets ran under ONE fixed configuration with no
    per-dataset tuning and GA disabled, and the notebook runs code-free in Colab with no install.
    §3.12 states this and its limits. It is evidenced by the run design, not a marketing line.

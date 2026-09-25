@@ -76,6 +76,11 @@ chk("chemprop only 6 datasets", F["Chemprop v2 GNN"]["Datasets with valid result
 chk("lb 37/430/35/5/med3",
     (L["datasets_compared"], L["reference_rows"], L["top10_test_selected"], L["rank1_test_selected"], L["median_rank_test_selected"]) == (37, 430, 35, 5, 3.0))
 chk("cv 25/0/med8", (L["top10_cv_selected"], L["rank1_cv_selected"], L["median_rank_cv_selected"]) == (25, 0, 8.0))
+# Matched-candidate-set control: holds the pool at the CV-eligible models and selects on test.
+# It decomposes the 35->25 drop into library breadth (35->28) and honest selection (28->25).
+chk("matched pool 28/3/med6", (L["top10_matched_pool"], L["rank1_matched_pool"], L["median_rank_matched_pool"]) == (28, 3, 6.0))
+chk("gap decomposition 7+3", (L["top10_test_selected"] - L["top10_matched_pool"],
+                             L["top10_matched_pool"] - L["top10_cv_selected"]) == (7, 3))
 chk("below top10", set(L["below_top10_datasets"]) == {"tdc_skin_reaction", "tdc_tox21"})
 chk("rank1 names", set(L["rank1_datasets"]) == {
     "tdc_bioavailability_ma", "tdc_carcinogens_lagunin", "tdc_clearance_microsome_az",
