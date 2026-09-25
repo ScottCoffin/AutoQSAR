@@ -61,6 +61,16 @@ TABLE_SPEC = {
         "failures (Additional file~1, Table~S4); their percentages are computed over the datasets on which they ran. "
         "All values derive from a single split and seed, so adjacent rows are not separated (see Limitations).",
     ),
+    "table4_leaderboard_summary": (
+        "tab:leaderboardsummary", False, 1,
+        "Rank among curated published reference values, by comparison class. Only the 27 datasets with official "
+        "predefined splits --- 22 TDC ADMET Benchmark Group and 5 Polaris ADME --- are directly comparable to a "
+        "public leaderboard; the remaining 10 are scored against published values under a comparable but not "
+        "identical protocol and are reported separately rather than pooled. Columns: ``n'' is the number of datasets "
+        "in the class; ``test'' selects the best model per dataset on held-out data; ``CV'' selects by "
+        "cross-validation only. Per-dataset detail is in "
+        "Additional file~1, Table~S7. Single split and single seed, so individual placements are provisional.",
+    ),
     "table4_leaderboard_comparison": (
         "tab:leaderboard", True, 3,
         "Per-dataset leaderboard comparison, sorted by estimated rank. ``References (n)'' is the number of published "

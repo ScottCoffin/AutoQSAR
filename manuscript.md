@@ -195,62 +195,13 @@ All figures, tables and numerical claims in this paper are regenerated from comm
 
 ### 3.1 Benchmark coverage
 
-We executed QSARena across the full benchmark suite under a single fixed configuration (`full` profile, random seed 13, Chemprop seed 42) on an NVIDIA A100-SXM4-40GB GPU with 32 CPU cores, provided by NSF ACCESS Jetstream2. Of 45 datasets attempted, 43 completed; `tdc_herg_central`, the largest task attempted, was abandoned after running more than 24 hours without completing, and `polaris_adme_fang_hppb_1` was interrupted when the run ended but had already produced a full model table and is retained. The 44 analysed datasets comprise 22 regression and 22 classification tasks drawn from five collections: TDC (32), Polaris ADME (5), MoleculeNet (3), ChemML (2) and PODUAM (2). They span 280 to 13,445 molecules (median 1,605; 156,052 in total) and four split protocols (27 predefined, 12 scaffold, 4 target-quartile, 1 random). Twenty-eight models produced at least one valid result, yielding 837 valid model–dataset evaluations. The dataset catalog, with each dataset's estimated leaderboard rank and the best published value it is measured against, is given in Table 2.
+We executed QSARena across the full benchmark suite under a single fixed configuration (`full` profile, random seed 13, Chemprop seed 42) on an NVIDIA A100-SXM4-40GB GPU with 32 CPU cores, provided by NSF ACCESS Jetstream2. Of 45 datasets attempted, 43 completed; `tdc_herg_central`, the largest task attempted, was abandoned after running more than 24 hours without completing, and `polaris_adme_fang_hppb_1` was interrupted when the run ended but had already produced a full model table and is retained. The 44 analysed datasets comprise 22 regression and 22 classification tasks drawn from five collections: TDC (32), Polaris ADME (5), MoleculeNet (3), ChemML (2) and PODUAM (2). They span 280 to 13,445 molecules (median 1,605; 156,052 in total) and four split protocols (27 predefined, 12 scaffold, 4 target-quartile, 1 random). Twenty-eight models produced at least one valid result, yielding 837 valid model–dataset evaluations. The dataset catalog, with each dataset's estimated leaderboard rank and the best published value it is measured against, is given in Table S6.
 
-<!-- TABLE:table2_dataset_catalog -->
-| Dataset | Suite | Task | Molecules | Train | Test | Split | Target scale | Ranking metric | Best model | Best value | Leaderboard metric | QSARena (lb metric) | Est. rank | Best published | Best published model |
-|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| tdc_ames | TDC | classification | 7278 | 5821 | 1457 | predefined | raw | roc_auc | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 0.876 | ROC_AUC | 0.876 | 2 | 0.912 | QW-MTL |
-| tdc_bbb_martins | TDC | classification | 2030 | 1624 | 406 | predefined | raw | roc_auc | Random forest | 0.925 | ROC_AUC | 0.925 | 2 | 0.941 | MolGPS (3B) |
-| tdc_bioavailability_ma | TDC | classification | 640 | 512 | 128 | predefined | raw | roc_auc | CatBoost | 0.777 | ROC_AUC | 0.777 | 1 | 0.748 | MaxQsaring |
-| tdc_carcinogens_lagunin | TDC | classification | 280 | 223 | 57 | scaffold | raw | roc_auc | Chemprop v2 (AttentiveFP, ensemble=3) | 0.929 | ROC_AUC | 0.929 | 1 | 0.848 | FATE-Tox (MTL) |
-| tdc_clintox | TDC | classification | 1478 | 1180 | 298 | scaffold | raw | roc_auc | CFA (Combinatorial Fusion) | 0.974 | ROC_AUC | 0.974 | 3 | 0.996 | PrismNet |
-| tdc_cyp1a2_veith | TDC | classification | 12579 | 10061 | 2518 | scaffold | raw | roc_auc | Ensemble (Weighted average (inverse train RMSE)) | 0.971 |  |  |  |  |  |
-| tdc_cyp2c19_veith | TDC | classification | 12665 | 10131 | 2534 | scaffold | raw | roc_auc | Ensemble (Weighted average (inverse train RMSE)) | 0.923 |  |  |  |  |  |
-| tdc_cyp2c9_substrate_carbonmangels | TDC | classification | 669 | 534 | 135 | predefined | raw | auprc | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 0.466 | AUPRC | 0.466 | 1 | 0.450 | MaxQsaring |
-| tdc_cyp2c9_veith | TDC | classification | 12092 | 9673 | 2419 | predefined | raw | auprc | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 0.814 | AUPRC | 0.814 | 3 | 0.877 | MaxQsaring |
-| tdc_cyp2d6_substrate_carbonmangels | TDC | classification | 667 | 532 | 135 | predefined | raw | auprc | Uni-Mol V1 | 0.652 | AUPRC | 0.652 | 5 | 0.766 | MaxQsaring |
-| tdc_cyp2d6_veith | TDC | classification | 13130 | 10504 | 2626 | predefined | raw | auprc | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 0.734 | AUPRC | 0.734 | 2 | 0.811 | MaxQsaring |
-| tdc_cyp3a4_substrate_carbonmangels | TDC | classification | 670 | 535 | 135 | predefined | raw | auprc | Random forest | 0.706 | ROC_AUC | 0.655 | 7 | 0.692 | MolE |
-| tdc_cyp3a4_veith | TDC | classification | 12328 | 9861 | 2467 | predefined | raw | auprc | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 0.884 | AUPRC | 0.884 | 2 | 0.923 | MaxQsaring |
-| tdc_dili | TDC | classification | 475 | 379 | 96 | predefined | raw | roc_auc | Uni-Mol V1 | 0.922 | ROC_AUC | 0.922 | 4 | 0.945 | Meta-model (NIST) |
-| tdc_herg | TDC | classification | 655 | 523 | 132 | predefined | raw | roc_auc | AdaBoost | 0.848 | ROC_AUC | 0.848 | 4 | 0.880 | MaxQsaring |
-| tdc_herg_karim | TDC | classification | 13445 | 10755 | 2690 | scaffold | raw | roc_auc | Ensemble (Weighted average (inverse train RMSE)) | 0.905 |  |  |  |  |  |
-| tdc_hia_hou | TDC | classification | 578 | 461 | 117 | predefined | raw | roc_auc | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 0.988 | ROC_AUC | 0.988 | 4 | 0.994 | MiniMol (GINE) |
-| tdc_pampa_ncats | TDC | classification | 2034 | 1626 | 408 | scaffold | raw | roc_auc | Uni-Mol V1 | 0.763 |  |  |  |  |  |
-| tdc_pgp_broccatelli | TDC | classification | 1218 | 973 | 245 | predefined | raw | roc_auc | Uni-Mol V2 (84m) | 0.933 | ROC_AUC | 0.933 | 4 | 0.994 | MiniMol (GINE) |
-| tdc_skin_reaction | TDC | classification | 404 | 289 | 115 | scaffold | raw | roc_auc | Uni-Mol V2 (84m) | 0.658 | ROC_AUC | 0.658 | >10 | 0.741 | FATE-Tox (MTL) |
-| tdc_tox21 | TDC | classification | 7258 | 5797 | 1461 | scaffold | raw | roc_auc | AdaBoost | 0.556 | ROC_AUC | 0.556 | >10 | 0.867 | PrismNet |
-| tdc_toxcast | TDC | classification | 1731 | 1357 | 374 | scaffold | raw | roc_auc | HistGradientBoosting | 0.716 | ROC_AUC | 0.716 | 1 | 0.714 | PrismNet |
-| chemml_cep_homo | ChemML | regression | 500 | 400 | 100 | target_quartiles | raw | rmse | Ensemble (Weighted average (inverse train RMSE)) | 0.099 |  |  |  |  |  |
-| chemml_organic_density | ChemML | regression | 500 | 400 | 100 | target_quartiles | log10 | rmse | Chemprop v2 (D-MPNN + RDKit2D, ensemble=3) | 0.005 |  |  |  |  |  |
-| esol_delaney | MoleculeNet | regression | 1128 | 874 | 254 | scaffold | raw | rmse | Ensemble (Weighted average (inverse train RMSE)) | 0.617 | RMSE | 0.617 | 6 | 0.558 | GCN |
-| freesolv_sampl | MoleculeNet | regression | 642 | 513 | 129 | random | raw | rmse | ChemML MLP (PyTorch) | 0.993 |  |  |  |  |  |
-| lipophilicity | MoleculeNet | regression | 4200 | 3357 | 843 | scaffold | raw | rmse | Ensemble (Weighted average (inverse train RMSE)) | 0.589 | RMSE | 0.589 | 7 | 0.549 | GCN |
-| poduam_pod_nc_std | PODUAM | regression | 1842 | 1473 | 369 | target_quartiles | raw | rmse | Random forest | 0.720 | RMSE | 0.720 | 2 | 0.550 | PODUAM BNN (PODnc) |
-| poduam_pod_rd_std | PODUAM | regression | 2355 | 1884 | 471 | target_quartiles | raw | rmse | Random forest | 0.572 | RMSE | 0.572 | 2 | 0.410 | PODUAM BNN (PODrd) |
-| polaris_adme_fang_hppb_1 | Polaris | regression | 1808 | 1446 | 362 | predefined | raw | rmse | MapLight + GNN (CatBoost, Strict Parity) | 0.448 | MSE | 0.201 | 3 | 0.143 | 1B_MPNN_LargeMix-and-Phenomics |
-| polaris_adme_fang_perm_1 | Polaris | regression | 2642 | 2113 | 529 | predefined | raw | rmse | Uni-Mol V1 | 0.399 | MSE | 0.159 | 3 | 0.113 | 1B_MPNN_MolGPS-ens_LargeMix |
-| polaris_adme_fang_rclint_1 | Polaris | regression | 3054 | 2443 | 611 | predefined | raw | rmse | Uni-Mol V1 | 0.522 | MSE | 0.273 | 4 | 0.216 | 1B_MPNN_MolGPS-ens_LargeMix |
-| polaris_adme_fang_rppb_1 | Polaris | regression | 885 | 708 | 177 | predefined | raw | rmse | MapLight + GNN (CatBoost, Strict Parity) | 0.493 | MSE | 0.243 | 3 | 0.230 | 1B_MPNN_LargeMix-and-Phenomics |
-| polaris_adme_fang_solu_1 | Polaris | regression | 2173 | 1738 | 435 | predefined | raw | rmse | Uni-Mol V2 (84m) | 0.551 | MSE | 0.304 | 5 | 0.222 | 1B_MPNN_MolGPS-ens_LargeMix |
-| tdc_caco2_wang | TDC | regression | 910 | 728 | 182 | predefined | raw | rmse | Ensemble (Weighted average (inverse train RMSE)) | 0.342 | MAE | 0.272 | 3 | 0.256 | CaliciBoost |
-| tdc_clearance_hepatocyte_az | TDC | regression | 1213 | 970 | 243 | predefined | raw | rmse | Ensemble (Weighted average (inverse train RMSE)) | 43.841 | SPEARMAN | 0.516 | 3 | 0.633 | CFA |
-| tdc_clearance_microsome_az | TDC | regression | 1102 | 881 | 221 | predefined | raw | rmse | Uni-Mol V2 (84m) | 33.507 | SPEARMAN | 0.678 | 1 | 0.652 | MapLight + GNN |
-| tdc_half_life_obach | TDC | regression | 667 | 532 | 135 | predefined | raw | rmse | Ensemble (Weighted average (inverse train RMSE)) | 18.541 | SPEARMAN | 0.597 | 2 | 0.649 | CFA |
-| tdc_hydrationfreeenergy_freesolv | TDC | regression | 642 | 490 | 152 | scaffold | raw | rmse | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 1.112 | RMSE | 1.112 | 9 | 0.654 | PrismNet |
-| tdc_ld50_zhu | TDC | regression | 7385 | 5907 | 1478 | predefined | raw | rmse | ChemML MLP (TensorFlow) | 0.828 | MAE | 0.575 | 5 | 0.292 | BaseBoosting KyQVZ6b2 |
-| tdc_lipophilicity_astrazeneca | TDC | regression | 4200 | 3360 | 840 | predefined | raw | rmse | Uni-Mol V1 | 0.617 | MAE | 0.470 | 7 | 0.406 | MiniMol |
-| tdc_ppbr_az | TDC | regression | 2790 | 2231 | 559 | predefined | raw | rmse | MapLight + GNN (CatBoost, Strict Parity) | 11.356 | MAE | 7.306 | 3 | 0.679 | Gradient Boost |
-| tdc_solubility_aqsoldb | TDC | regression | 9980 | 7985 | 1995 | predefined | raw | rmse | Uni-Mol V1 | 1.007 | MAE | 0.710 | 2 | 0.557 | MiniMol |
-| tdc_vdss_lombardo | TDC | regression | 1130 | 904 | 226 | predefined | raw | rmse | MapLight + GNN (CatBoost, Strict Parity) | 4.670 | SPEARMAN | 0.680 | 5 | 0.942 | MapLight + GNN |
-<!-- /TABLE -->
 
-**Table 2.** Dataset catalog. "Ranking metric" is the metric used for cross-dataset model ranking (RMSE for regression; the dataset's designated primary classification metric otherwise). The final four columns give the leaderboard view: the leaderboard's own metric, QSARena's best value under that metric, its estimated rank against published results, and the best published value with the model achieving it. Blank leaderboard cells indicate datasets with no curated reference.
 
 ### 3.2 No single model family dominates
 
-The central finding is that no model family won across the benchmark (Figure 2, Table 3). Stacking and averaging ensembles produced the most outright wins (16 of 44 datasets: 9 classification, 7 regression), followed by the 3D pretrained Uni-Mol models (11: 5 classification, 6 regression), conventional machine learning (8: 6 classification, 2 regression), the MapLight + GNN descriptor–graph hybrid (4, all regression), deep tabular networks and Chemprop v2 (2 each) and combinatorial fusion (1). The largest single share is 36% of datasets. We flag immediately that the ensemble row is not a like-for-like competitor: ensembles are built *from* the other families' predictions, and under the configuration used here their member filtering consults held-out R², so their lead should be read as "the pipeline's output is reliably near-best" rather than as evidence that stacking is intrinsically superior to its members (§3.3, §3.5).
+The central finding is that no model family won across the benchmark (Figure 2, Table 2). Stacking and averaging ensembles produced the most outright wins (16 of 44 datasets: 9 classification, 7 regression), followed by the 3D pretrained Uni-Mol models (11: 5 classification, 6 regression), conventional machine learning (8: 6 classification, 2 regression), the MapLight + GNN descriptor–graph hybrid (4, all regression), deep tabular networks and Chemprop v2 (2 each) and combinatorial fusion (1). The largest single share is 36% of datasets. We flag immediately that the ensemble row is not a like-for-like competitor: ensembles are built *from* the other families' predictions, and under the configuration used here their member filtering consults held-out R², so their lead should be read as "the pipeline's output is reliably near-best" rather than as evidence that stacking is intrinsically superior to its members (§3.3, §3.5).
 
 ![Figure 2. Best-model win counts by model family.](manuscript_assets/figures/figure2_wins_by_family.png)
 
@@ -262,7 +213,7 @@ Per-dataset winners, including the corresponding cross-validation-selected model
 
 ### 3.3 Consistency versus peak performance
 
-Win counts reward only the single best model per dataset and understate the reliability of models that are consistently near-best without winning. Table 3 therefore reports, for each family, the median relative gap to the per-dataset best, the fraction of datasets on which the family's best member landed within 5% of the best result, and the median rank that member achieved.
+Win counts reward only the single best model per dataset and understate the reliability of models that are consistently near-best without winning. Table 2 therefore reports, for each family, the median relative gap to the per-dataset best, the fraction of datasets on which the family's best member landed within 5% of the best result, and the median rank that member achieved.
 
 <!-- TABLE:table3_architecture_families -->
 | Model family | Models | Datasets with valid results | Wins (regression) | Wins (classification) | Median gap to best, regression (%) | Median gap to best, classification (%) | Within 5% of best (% of datasets) | Median rank of family-best model |
@@ -276,11 +227,11 @@ Win counts reward only the single best model per dataset and understate the reli
 | CFA combinatorial fusion | 1 | 44 | 0 | 1 | 6.2 | 1.8 | 63.6 | 4.5 |
 <!-- /TABLE -->
 
-**Table 3.** Model-family coverage and consistency. Gaps are relative to the per-dataset best primary metric. "Within 5% of best" counts datasets where the family's best member fell within 5% of the dataset winner. Families evaluated on fewer than 44 datasets were limited by task applicability, size guardrails or backend failures (Table S4); their percentages are computed over the datasets on which they ran, which makes the Chemprop row in particular not comparable with the others. All values derive from a single split and seed, so adjacent rows are not separated. *Single split and single seed: individual placements are provisional and no variance is estimated (see Limitations).*
+**Table 2.** Model-family coverage and consistency. Gaps are relative to the per-dataset best primary metric. "Within 5% of best" counts datasets where the family's best member fell within 5% of the dataset winner. Families evaluated on fewer than 44 datasets were limited by task applicability, size guardrails or backend failures (Table S4); their percentages are computed over the datasets on which they ran, which makes the Chemprop row in particular not comparable with the others. All values derive from a single split and seed, so adjacent rows are not separated. *Single split and single seed: individual placements are provisional and no variance is estimated (see Limitations).*
 
 Ensembles were within 5% of the best on 75% of datasets with a median rank of 2; the 3D pretrained family followed closely at 70% and median rank 4, and conventional machine learning at 66% and median rank 3. The gap between these three is not resolvable at single-seed resolution, and we do not claim an ordering among them. Further back, MapLight + GNN (27% within 5%, median rank 8.5) and the deep tabular networks (25%, median rank 12.5) were markedly less consistent despite MapLight + GNN winning four datasets outright — a bimodal profile in which a model is either the best available or well down the table.
 
-Chemprop v2 shows the highest within-5% rate in the table (83%) and a median rank of 2, but on only 6 of 44 datasets, because four of its five configured variants failed on most tasks (§3.8). That number says Chemprop is strong where it ran, not that it is the most consistent family; it is the one row in Table 3 that should not be compared with the others.
+Chemprop v2 shows the highest within-5% rate in the table (83%) and a median rank of 2, but on only 6 of 44 datasets, because four of its five configured variants failed on most tasks (§3.8). That number says Chemprop is strong where it ran, not that it is the most consistent family; it is the one row in Table 2 that should not be compared with the others.
 
 Three further cautions apply. Families with more models have more chances to produce a near-best member, so the 15-model conventional family is flattered relative to single-model families; the ensemble row is not a like-for-like competitor, because ensembles are built *from* the other families' predictions and, under the configuration used here, their member filtering consults held-out R²; and the ensemble family's apparent consistency should therefore be read as "the pipeline's output is reliably near-best", not as evidence that stacking is intrinsically superior to its members. Section 3.5 quantifies how much the fusion layer actually adds.
 
@@ -292,51 +243,20 @@ Across the leaderboard-comparison layer, 37 datasets could be compared against 4
 
 **Figure 3.** Estimated leaderboard placement across 37 comparable datasets. (a) Rank distribution for the test-selected best model and for the model selected by cross-validation alone. (b) Per-dataset ranks; filled markers are the test-selected model coloured by model family, open markers the cross-validation-selected model. The dashed line marks the top-ten boundary. *Single split and single seed: individual placements are provisional and no variance is estimated (see Limitations).*
 
-Comparability varies by dataset, and the aggregate obscures it. Restricted to the 22 TDC datasets evaluated on official `admet_group` splits — the only subset directly comparable to the public TDC leaderboard — the test-selected model placed in the top ten on **all 22**, with a median rank of 3 and three estimated first places. On the 5 Polaris datasets it placed in the top ten on all 5, median rank 3. The remaining 10 comparable datasets used locally generated splits and are *not* leaderboard-equivalent; both sub-top-ten results and two of the five first places fall in this group, and those should be read as "competitive with published values under a comparable but not identical protocol", not as leaderboard claims. Per-dataset detail, including both selection protocols and the reference counts behind each rank, is given in Table 4.
+Comparability varies by dataset, and the aggregate obscures it. Restricted to the 22 TDC datasets evaluated on official `admet_group` splits — the only subset directly comparable to the public TDC leaderboard — the test-selected model placed in the top ten on **all 22**, with a median rank of 3 and three estimated first places. On the 5 Polaris datasets it placed in the top ten on all 5, median rank 3. The remaining 10 comparable datasets used locally generated splits and are *not* leaderboard-equivalent; both sub-top-ten results and two of the five first places fall in this group, and those should be read as "competitive with published values under a comparable but not identical protocol", not as leaderboard claims. Table 3 gives the breakdown by comparison class; per-dataset detail, including both selection protocols and the reference counts behind each rank, is given in Table S7.
 
-<!-- TABLE:table4_leaderboard_comparison -->
-| Dataset | Metric | QSARena best model (test-selected) | QSARena value | Reference top-1 | Reference top-10 cutoff | References (n) | Est. rank | CV-selected model | CV-selected value | CV-selected est. rank |
-|---|---|---|---|---|---|---|---|---|---|---|
-| tdc_bioavailability_ma | ROC_AUC | CatBoost | 0.777 | 0.748 | 0.640 | 8 | 1 | LogisticRegression | 0.715 | 3 |
-| tdc_carcinogens_lagunin | ROC_AUC | Chemprop v2 (AttentiveFP, ensemble=3) | 0.929 | 0.848 | 0.795 | 20 | 1 | Voting Classifier (KNN, SVM) | 0.837 | 5 |
-| tdc_clearance_microsome_az | SPEARMAN | Uni-Mol V2 (84m) | 0.678 | 0.652 | 0.599 | 17 | 1 | XGBoost | 0.305 | >10 |
-| tdc_cyp2c9_substrate_carbonmangels | AUPRC | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 0.466 | 0.450 | 0.360 | 6 | 1 | SVC | 0.301 | 7 |
-| tdc_toxcast | ROC_AUC | HistGradientBoosting | 0.716 | 0.714 | 0.714 | 2 | 1 | LogisticRegression | 0.595 | 3 |
-| poduam_pod_nc_std | RMSE | Random forest | 0.720 | 0.550 | 0.730 | 2 | 2 | ElasticNetCV | 0.792 | 3 |
-| poduam_pod_rd_std | RMSE | Random forest | 0.572 | 0.410 | 0.630 | 2 | 2 | ElasticNetCV | 0.703 | 3 |
-| tdc_ames | ROC_AUC | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 0.876 | 0.912 | 0.834 | 7 | 2 | Extra trees | 0.871 | 2 |
-| tdc_bbb_martins | ROC_AUC | Random forest | 0.925 | 0.941 | 0.903 | 7 | 2 | Tabular MLP | 0.898 | 8 |
-| tdc_cyp2d6_veith | AUPRC | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 0.734 | 0.811 | 0.464 | 6 | 2 | AdaBoost | 0.615 | 6 |
-| tdc_cyp3a4_veith | AUPRC | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 0.884 | 0.923 | 0.750 | 6 | 2 | AdaBoost | 0.798 | 6 |
-| tdc_half_life_obach | SPEARMAN | Uni-Mol V1 | 0.597 | 0.649 | 0.485 | 16 | 2 | Random forest | 0.108 | >10 |
-| tdc_solubility_aqsoldb | MAE | Uni-Mol V1 | 0.710 | 0.557 | 0.776 | 17 | 2 | XGBoost | 0.744 | 6 |
-| polaris_adme_fang_hppb_1 | MSE | MapLight + GNN (CatBoost, Strict Parity) | 0.201 | 0.143 | 0.383 | 10 | 3 | ElasticNetCV | 0.300 | 8 |
-| polaris_adme_fang_perm_1 | MSE | Uni-Mol V1 | 0.159 | 0.113 | 0.257 | 10 | 3 | ChemML MLP (PyTorch) | 0.212 | 7 |
-| polaris_adme_fang_rppb_1 | MSE | MapLight + GNN (CatBoost, Strict Parity) | 0.243 | 0.230 | 0.634 | 10 | 3 | ElasticNetCV | 0.361 | 5 |
-| tdc_caco2_wang | MAE | MapLight CatBoost (Strict Parity) | 0.272 | 0.256 | 0.288 | 20 | 3 | ElasticNetCV | 0.345 | >10 |
-| tdc_clearance_hepatocyte_az | SPEARMAN | MapLight + GNN (CatBoost, Strict Parity) | 0.516 | 0.633 | 0.440 | 16 | 3 | CatBoost | 0.224 | >10 |
-| tdc_clintox | ROC_AUC | CFA (Combinatorial Fusion) | 0.974 | 0.996 | 0.889 | 12 | 3 | LogisticRegression | 0.896 | 5 |
-| tdc_cyp2c9_veith | AUPRC | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 0.814 | 0.877 | 0.770 | 6 | 3 | AdaBoost | 0.705 | 7 |
-| tdc_ppbr_az | MAE | MapLight + GNN (CatBoost, Strict Parity) | 7.306 | 0.679 | 7.914 | 16 | 3 | ChemML MLP (PyTorch) | 9.741 | >10 |
-| polaris_adme_fang_rclint_1 | MSE | Uni-Mol V1 | 0.273 | 0.216 | 0.403 | 10 | 4 | ElasticNetCV | 0.365 | 10 |
-| tdc_dili | ROC_AUC | Uni-Mol V1 | 0.922 | 0.945 | 0.852 | 6 | 4 | LogisticRegression | 0.745 | 7 |
-| tdc_herg | ROC_AUC | AdaBoost | 0.848 | 0.880 | 0.806 | 7 | 4 | LogisticRegression | 0.709 | 8 |
-| tdc_hia_hou | ROC_AUC | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 0.988 | 0.994 | 0.976 | 8 | 4 | LogisticRegression | 0.983 | 7 |
-| tdc_pgp_broccatelli | ROC_AUC | Uni-Mol V2 (84m) | 0.933 | 0.994 | 0.911 | 8 | 4 | LogisticRegression | 0.868 | 9 |
-| polaris_adme_fang_solu_1 | MSE | Uni-Mol V2 (84m) | 0.304 | 0.222 | 0.329 | 10 | 5 | ChemML MLP (PyTorch) | 0.410 | >10 |
-| tdc_cyp2d6_substrate_carbonmangels | AUPRC | Uni-Mol V1 | 0.652 | 0.766 | 0.570 | 7 | 5 | AdaBoost | 0.620 | 7 |
-| tdc_ld50_zhu | MAE | Ensemble (Weighted average (inverse train RMSE)) | 0.575 | 0.292 | 0.605 | 16 | 5 | XGBoost | 0.588 | 8 |
-| tdc_vdss_lombardo | SPEARMAN | MapLight + GNN (CatBoost, Strict Parity) | 0.680 | 0.942 | 0.582 | 16 | 5 | Extra trees | 0.368 | >10 |
-| esol_delaney | RMSE | Ensemble (Weighted average (inverse train RMSE)) | 0.617 | 0.558 | 0.743 | 30 | 6 | ElasticNetCV | 0.726 | 9 |
-| lipophilicity | RMSE | Ensemble (Weighted average (inverse train RMSE)) | 0.589 | 0.549 | 0.610 | 27 | 7 | ElasticNetCV | 0.682 | >10 |
-| tdc_cyp3a4_substrate_carbonmangels | ROC_AUC | Voting Classifier (KNN, SVM) | 0.655 | 0.692 | 0.651 | 7 | 7 | LogisticRegression | 0.624 | 8 |
-| tdc_lipophilicity_astrazeneca | MAE | CFA (Combinatorial Fusion) | 0.470 | 0.406 | 0.515 | 17 | 7 | ChemML MLP (PyTorch) | 0.542 | >10 |
-| tdc_hydrationfreeenergy_freesolv | RMSE | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 1.112 | 0.654 | 1.211 | 12 | 9 | ElasticNetCV | 1.321 | >10 |
-| tdc_skin_reaction | ROC_AUC | Uni-Mol V2 (84m) | 0.658 | 0.741 | 0.677 | 21 | >10 | Voting Classifier (KNN, SVM) | 0.503 | >10 |
-| tdc_tox21 | ROC_AUC | AdaBoost | 0.556 | 0.867 | 0.840 | 12 | >10 | SVC | 0.467 | >10 |
+<!-- TABLE:table4_leaderboard_summary -->
+| Comparison class | n | Top-10 test | Median rank test | Top-10 CV | Median rank CV |
+|---|---|---|---|---|---|
+| TDC ADMET Group (official) | 22 | 22 | 3.000 | 15 | 8.000 |
+| Polaris ADME (official) | 5 | 5 | 3.000 | 4 | 8.000 |
+| Local splits (not leaderboard-equivalent) | 10 | 8 | 4.500 | 6 | 7.000 |
+| All comparable datasets | 37 | 35 | 3.000 | 25 | 8.000 |
 <!-- /TABLE -->
 
-**Table 4.** Per-dataset leaderboard comparison, sorted by estimated rank. "References (n)" is the number of published values available for that dataset and metric; ranks from sparse reference sets are correspondingly uncertain. The `tdc_ppbr_az` top-1 reference (MAE 0.679) is inconsistent in scale with the rest of that dataset's references (top-10 cutoff 7.914) and its top-1 gap should be disregarded. *Single split and single seed: individual placements are provisional and no variance is estimated (see Limitations).*
+**Table 3.** Rank among curated published reference values, by comparison class. Only the 27 datasets with official predefined splits — 22 TDC ADMET Benchmark Group and 5 Polaris ADME — are directly comparable to a public leaderboard; the remaining 10 are scored against published values under a comparable but not identical protocol and are reported separately rather than pooled. Columns: "n" is the number of datasets in the class; "test" selects the best model per dataset on held-out data; "CV" selects by cross-validation only. Per-dataset detail is in Table S7. Single split and single seed, so individual placements are provisional.
+
+
 
 That headline, however, is produced by choosing the best of 28 models using held-out scores. Under the stricter protocol in which the model is chosen by cross-validation alone (§2.11), top-ten placement falls from 35 to 25 of 37 datasets, first places from five to none, and the median estimated rank from 3 to 8 (Figure 3). On the official TDC subset the fall is from 22 of 22 to 15 of 22. Across all 44 datasets, the cross-validation-selected model was never the overall winner and sat a median of 16.1% above the per-dataset best.
 
@@ -358,7 +278,7 @@ Two datasets warrant specific comment. For ESOL and Lipophilicity we deliberatel
 
 ### 3.5 What the pipeline's components contribute
 
-Because fusion and ensembling add computational cost and interpretive complexity, we asked what each layer of the pipeline actually buys (Table 5).
+Because fusion and ensembling add computational cost and interpretive complexity, we asked what each layer of the pipeline actually buys (Table 4).
 
 <!-- TABLE:table5_ensemble_value_add -->
 | Fusion method | Task | Datasets | Overall wins | Top-3 | Beats best base | Loses to best base | Median rank | Median rel. change vs best base |
@@ -371,11 +291,11 @@ Because fusion and ensembling add computational cost and interpretive complexity
 | CFA fusion | regression | 22 | 0 | 5 | 1 | 21 | 6.000 | -0.051 |
 <!-- /TABLE -->
 
-**Table 5.** Ensemble and fusion value-add against the best single base model available on the same dataset, under each dataset's primary metric.
+**Table 4.** Ensemble and fusion value-add against the best single base model available on the same dataset, under each dataset's primary metric.
 
 Taking the best fusion method per dataset, some fusion beat the best single model on 10 of 22 classification datasets, with a median relative improvement of 0.8% where it won, and on 7 of 22 regression datasets, with a median improvement of 2.4% where it won. Across all datasets the typical fusion result was slightly worse than the best single model (median −0.1% for classification, −1.4% for regression), because fusion also loses on the datasets where it does not win. The directional conclusion is that fusion is worth its cost roughly half the time on classification and a third of the time on regression, and that a practitioner who can afford to run it should, but should not expect it to win by default. These margins are the smallest quantities we report — median relative changes below 3% on a single split and seed — and are correspondingly the most fragile.
 
-A staged ablation over the same artifacts (Table S2) tells a consistent story: starting from conventional machine learning alone, adding MapLight classic features improved the achievable result on 10 of 44 datasets, adding the neural and pretrained backends improved 26, adding CFA improved 6, and adding the ensemble layer improved 16. The deep and pretrained backends are therefore the single largest source of incremental accuracy — worth stating plainly, since it cuts against a purely "conventional models are enough" reading of Figure 2 — while the fusion layers contribute more modestly. What Figure 2 and Table 3 add is that this incremental accuracy is not free (§3.7) and does not make any pretrained family a reliable default.
+A staged ablation over the same artifacts (Table S2) tells a consistent story: starting from conventional machine learning alone, adding MapLight classic features improved the achievable result on 10 of 44 datasets, adding the neural and pretrained backends improved 26, adding CFA improved 6, and adding the ensemble layer improved 16. The deep and pretrained backends are therefore the single largest source of incremental accuracy — worth stating plainly, since it cuts against a purely "conventional models are enough" reading of Figure 2 — while the fusion layers contribute more modestly. What Figure 2 and Table 2 add is that this incremental accuracy is not free (§3.7) and does not make any pretrained family a reliable default.
 
 ### 3.6 Feature representations
 
@@ -397,7 +317,7 @@ A core motivation for QSARena is that competitive accuracy should not require GP
 
 **Figure 5.** Median wall-clock time per dataset against median relative gap to the per-dataset best, by model, separately for regression (a) and classification (b). Both axes are logarithmic; diamonds mark fusion methods, which are charged the summed cost of the base-model pool they consume in addition to their own, since a fusion result cannot be obtained without it.
 
-Per-family median cost spans more than three orders of magnitude (Table 6): 0.3 s for CFA and 0.6 s for the ensemble meta-models (excluding their base pool), 6.8 s for conventional machine learning, 39.8 s for the deep tabular networks, 137 s for MapLight + GNN, 269 s for Chemprop v2 and 374 s for the Uni-Mol models. The 3D pretrained family therefore costs roughly 55 times the median conventional model per dataset, in exchange for 11 wins out of 44 and a median rank of 4. That is a far better trade than the same comparison made under the shorter training schedule of our consumer-GPU run, and it is the clearest argument in this paper for spending GPU time — but it remains a trade to make deliberately, not a default.
+Per-family median cost spans more than three orders of magnitude (Table 5): 0.3 s for CFA and 0.6 s for the ensemble meta-models (excluding their base pool), 6.8 s for conventional machine learning, 39.8 s for the deep tabular networks, 137 s for MapLight + GNN, 269 s for Chemprop v2 and 374 s for the Uni-Mol models. The 3D pretrained family therefore costs roughly 55 times the median conventional model per dataset, in exchange for 11 wins out of 44 and a median rank of 4. That is a far better trade than the same comparison made under the shorter training schedule of our consumer-GPU run, and it is the clearest argument in this paper for spending GPU time — but it remains a trade to make deliberately, not a default.
 
 <!-- TABLE:table6_cost -->
 | Model family | Model-dataset fits timed | Median own wall-clock (s) | IQR own wall-clock (s) | Median cost incl. base pool (s) | Median trainable parameters | Notes |
@@ -414,7 +334,7 @@ Per-family median cost spans more than three orders of magnitude (Table 6): 0.3 
 | ADMET-AI (published) |  |  |  |  |  | Chemprop-RDKit; exact parameter count not recorded here; GPU-capable Chemprop-RDKit deployment |
 <!-- /TABLE -->
 
-**Table 6.** Per-family computational cost and model size in this benchmark, with published comparators. Wall-clock times are per model per dataset on the A100 run hardware.
+**Table 5.** Per-family computational cost and model size in this benchmark, with published comparators. Wall-clock times are per model per dataset on the A100 run hardware.
 
 Recorded model sizes underline the accessibility argument. The models that won most of our datasets — gradient-boosted trees and the linear meta-models over them — carry no pretraining corpus at all, against published comparators MolE (~100 M parameters, pretrained on ~842 M molecules) [6] and MolGPS (~3 B parameters) [7].
 
@@ -424,7 +344,7 @@ Feature selection scaled sub-linearly with dataset size in this run: a log–log
 
 Not every model ran on every dataset, and we report the gaps rather than silently analysing only successes (Table S4). Four sources account for nearly all of them. Task applicability: regression-only and classification-only estimators are valid on at most 22 datasets each. Configuration: TabPFN was disabled in this run, so the tabular foundation model is absent from the comparison entirely. Guardrails and capacity: Uni-Mol V2 produced valid results on 17 of 44 datasets at the 84 M-parameter size, and its 164 M and 310 M variants produced none, so the V2 results here are a partial view of that architecture. Backend failures: four of the five configured Chemprop v2 variants failed on most datasets, leaving all Chemprop variants valid on only 6 of 44.
 
-The Chemprop coverage is the most consequential gap for interpretation. Chemprop's two wins and its high within-5% rate (Table 3) are measured over those 6 datasets; a working Chemprop path across the full suite could change its standing substantially in either direction. We flag this as the largest known threat to the completeness of Figure 2 and as the first thing to fix before any follow-up benchmark, together with restoring TabPFN and diagnosing the larger Uni-Mol V2 variants.
+The Chemprop coverage is the most consequential gap for interpretation. Chemprop's two wins and its high within-5% rate (Table 2) are measured over those 6 datasets; a working Chemprop path across the full suite could change its standing substantially in either direction. We flag this as the largest known threat to the completeness of Figure 2 and as the first thing to fix before any follow-up benchmark, together with restoring TabPFN and diagnosing the larger Uni-Mol V2 variants.
 
 ![Figure 6. Per-dataset gap to best by model family.](manuscript_assets/figures/figure6_family_gap_heatmap.png)
 
@@ -464,7 +384,7 @@ Automating the QSAR model-building loop is not a new idea, and QSARena should be
 
 **Schrödinger AutoQSAR** [41] and its successor DeepAutoQSAR occupy the same application area as this work. AutoQSAR automates model building, validation and deployment, runs on Windows, macOS and Linux through either a command line or the Maestro GUI, and is distributed as closed-source software within the commercial Schrödinger Suite. Schrödinger has published a benchmark of DeepAutoQSAR against ChemProp and DeepPurpose on the ADMET subset of the Therapeutics Data Commons [43], reporting that DeepAutoQSAR ranked among the top performers on 20 of 22 cases and clearly outperformed the comparators on 9 of them.
 
-A direct accuracy comparison against that study is not possible, and we do not attempt one. The white paper defines "top performer" and "clearly outperforming" qualitatively rather than as a numerical criterion, does not report per-dataset metric values, and does not release per-molecule predictions, so its results cannot be re-scored under our protocol or ours under theirs. What can be compared is summarized in Table 7, and it is less than it first appears. DeepAutoQSAR's "top performer on 20 of 22" is its standing against two named comparators, ChemProp and DeepPurpose, not a position on the TDC leaderboard; QSARena's 22 of 22 is a rank among curated published reference values. The two numbers are not commensurable and we do not treat them as such. What the two systems can be compared on is every axis that governs who can actually use them, and there they differ sharply.
+A direct accuracy comparison against that study is not possible, and we do not attempt one. The white paper defines "top performer" and "clearly outperforming" qualitatively rather than as a numerical criterion, does not report per-dataset metric values, and does not release per-molecule predictions, so its results cannot be re-scored under our protocol or ours under theirs. What can be compared is summarized in Table 6, and it is less than it first appears. DeepAutoQSAR's "top performer on 20 of 22" is its standing against two named comparators, ChemProp and DeepPurpose, not a position on the TDC leaderboard; QSARena's 22 of 22 is a rank among curated published reference values. The two numbers are not commensurable and we do not treat them as such. What the two systems can be compared on is every axis that governs who can actually use them, and there they differ sharply.
 
 Three differences deserve emphasis. On **cost and access**, the Schrödinger tools require a commercial licence and QSAR Workbench requires a Pipeline Pilot licence, whereas QSARena is free, MIT-licensed, installable with `pip`, and runnable without any installation at all in a hosted notebook (§3.11). On **transparency**, the comparators' benchmark evidence is a vendor white paper and a demonstration study respectively; QSARena's is a deposited artifact trail from which every number in this paper regenerates, together with a script that fails if the text and the artifacts disagree. On **breadth**, both prior systems are single-suite; QSARena is evaluated across five.
 
@@ -482,7 +402,7 @@ Against that corrected reference set, QSARena's best model per dataset reaches a
 
 The same landscape view explains why "rigorous benchmarking" is a credibility differentiator rather than a market one. The most widely used tools in this space — SwissADME [55], pkCSM [56] and ADMETlab [1] — are free, fixed-model web services that do not report on the TDC leaderboard at all, and they are popular precisely because they are convenient. Users are won on accessibility, not on leaderboard position. QSARena is designed to offer both, and we separate the two claims rather than conflating them.
 
-**Table 7.** Positioning of QSARena relative to representative open-source, commercial and web-based molecular property-prediction tools. Performance entries report each tool's **own published results** and are **not** head-to-head comparisons: rows use different splits, seeds and selection protocols, and "—" indicates no public TDC leaderboard results. Where a published claim could be re-scored against the full reference set we give both, because they differ substantially: ADMETboost's 18 reported first places become 0 once all reference values are ranked together, and MaxQsaring's 19 become 7. None of the tools in this table appears in the TDC leaderboard snapshots we captured, so every performance entry is publication-reported. ADMET-AI's "highest average rank" is a 2024 self-reported aggregate, not per-endpoint supremacy. QSARena reuses ADMET-AI's Chemprop-RDKit architecture through its `Chemprop v2 (D-MPNN + RDKit2D)` variant but does not integrate ADMET-AI itself, and in this run that variant produced valid results on only 6 of 44 datasets, so parity with ADMET-AI is untested. "Code-free" means usable without scripting; "retrain" means the user can fit models on their own data; "suites" counts distinct benchmark collections the tool has been evaluated on in its own publications.
+**Table 6.** Positioning of QSARena relative to representative open-source, commercial and web-based molecular property-prediction tools. Performance entries report each tool's **own published results** and are **not** head-to-head comparisons: rows use different splits, seeds and selection protocols, and "—" indicates no public TDC leaderboard results. Where a published claim could be re-scored against the full reference set we give both, because they differ substantially: ADMETboost's 18 reported first places become 0 once all reference values are ranked together, and MaxQsaring's 19 become 7. None of the tools in this table appears in the TDC leaderboard snapshots we captured, so every performance entry is publication-reported. ADMET-AI's "highest average rank" is a 2024 self-reported aggregate, not per-endpoint supremacy. QSARena reuses ADMET-AI's Chemprop-RDKit architecture through its `Chemprop v2 (D-MPNN + RDKit2D)` variant but does not integrate ADMET-AI itself, and in this run that variant produced valid results on only 6 of 44 datasets, so parity with ADMET-AI is untested. "Code-free" means usable without scripting; "retrain" means the user can fit models on their own data; "suites" counts distinct benchmark collections the tool has been evaluated on in its own publications.
 
 | Tool | Access / licence | Code-free | Retrain | Architecture breadth | Suites | Published TDC ADMET performance |
 |---|---|---|---|---|---|---|
@@ -509,11 +429,11 @@ The same landscape view explains why "rigorous benchmarking" is a credibility di
 
 **Single split and single seed: the principal limitation of this work.** Every result reported here derives from one split and one random seed per dataset. The TDC convention is to report mean plus/minus standard deviation over five independent seeds, and we do not meet it. Multi-seed evaluation over the official TDC splits is implemented in the runner (`--run-tdc22-multiseed-best`) and was enabled in this run's configuration, but the stage executes only after all datasets finish and the run was interrupted before reaching it; repeating the full benchmark five times was in any case beyond the computational budget available for this study, since the single-seed run alone consumed 112 hours of A100 time (§3.7), implying roughly 560 hours for a five-seed replication.
 
-The consequences should be stated plainly rather than minimized. We report no variance estimates, no confidence intervals and no significance tests, and we therefore cannot distinguish a genuine difference between two models from seed-to-seed noise. Concretely: (i) the per-dataset "winner" in Figure 2, Table 4 and Table S1 is the winner *on this split*, and an unknown fraction of the 44 winners would change under a different seed, so the win counts in Figure 2 should be read as a coarse distribution across families rather than as a precise ranking; (ii) the family orderings in Table 3 are indicative, and the top three rows — ensembles at 75%, 3D pretrained at 70% and conventional machine learning at 66% within 5% of best — should be treated as a single indistinguishable group; (iii) the ensemble and fusion margins in Table 5 and §3.5 are small in absolute terms (median relative changes below 3%) and are the results most vulnerable to seed variance, so the conclusion we draw from them is directional rather than quantitative; and (iv) estimated leaderboard ranks (§3.4) inherit the same instability, which compounds the model-selection effect quantified there.
+The consequences should be stated plainly rather than minimized. We report no variance estimates, no confidence intervals and no significance tests, and we therefore cannot distinguish a genuine difference between two models from seed-to-seed noise. Concretely: (i) the per-dataset "winner" in Figure 2, Table S7 and Table S1 is the winner *on this split*, and an unknown fraction of the 44 winners would change under a different seed, so the win counts in Figure 2 should be read as a coarse distribution across families rather than as a precise ranking; (ii) the family orderings in Table 2 are indicative, and the top three rows — ensembles at 75%, 3D pretrained at 70% and conventional machine learning at 66% within 5% of best — should be treated as a single indistinguishable group; (iii) the ensemble and fusion margins in Table 4 and §3.5 are small in absolute terms (median relative changes below 3%) and are the results most vulnerable to seed variance, so the conclusion we draw from them is directional rather than quantitative; and (iv) estimated leaderboard ranks (§3.4) inherit the same instability, which compounds the model-selection effect quantified there.
 
 The hardware comparison in §3.10 gives an empirical sense of the noise floor: across 37 datasets with identical splits, changing the entire execution environment moved the best score by a median of 0.19%. Differences between models smaller than roughly a percent should not be interpreted.
 
-What we believe survives this limitation is the leaderboard placement and the breadth of the winner distribution, because neither rests on close margins: top-ten placement on 35 of 37 comparable datasets (and 22 of 22 on the official TDC subset) clears the top-ten cutoff by a wide margin on most datasets; no family won more than 36% of datasets; the model-selection gap is large and one-sided; and the cost differences in Table 6 are orders of magnitude rather than percentages. Readers should treat every specific model-to-model comparison in this paper as provisional pending multi-seed replication, which we regard as the necessary next step for this work and the first thing any user of QSARena should run on a dataset that matters to them.
+What we believe survives this limitation is the leaderboard placement and the breadth of the winner distribution, because neither rests on close margins: top-ten placement on 35 of 37 comparable datasets (and 22 of 22 on the official TDC subset) clears the top-ten cutoff by a wide margin on most datasets; no family won more than 36% of datasets; the model-selection gap is large and one-sided; and the cost differences in Table 5 are orders of magnitude rather than percentages. Readers should treat every specific model-to-model comparison in this paper as provisional pending multi-seed replication, which we regard as the necessary next step for this work and the first thing any user of QSARena should run on a dataset that matters to them.
 
 **Model selection.** As quantified in §3.4, the test-selected headline is an optimistic maximum over 28 models. The cross-validation-selected protocol is the honest comparator but is itself incomplete, since the Chemprop, Uni-Mol, MapLight + GNN and fusion families do not emit cross-validated metrics in this run.
 
@@ -871,3 +791,98 @@ All benchmark datasets are public: TDC via PyTDC, MoleculeNet, Polaris, the PODU
 <!-- /TABLE -->
 
 **Table S5.** Run-to-run comparison: the canonical NSF ACCESS Jetstream2 A100 benchmark against the earlier consumer-GPU (RTX 4060) run, analysed identically. "Same split" marks datasets where both runs used the identical held-out partition; the remainder were re-split to scaffold splits in the A100 run and are not directly comparable. Change is relative and metric-direction aware (positive favours the A100 run).
+
+<!-- TABLE:table2_dataset_catalog -->
+| Dataset | Suite | Task | Molecules | Train | Test | Split | Target scale | Ranking metric | Best model | Best value | Leaderboard metric | QSARena (lb metric) | Est. rank | Best published | Best published model |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| tdc_ames | TDC | classification | 7278 | 5821 | 1457 | predefined | raw | roc_auc | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 0.876 | ROC_AUC | 0.876 | 2 | 0.912 | QW-MTL |
+| tdc_bbb_martins | TDC | classification | 2030 | 1624 | 406 | predefined | raw | roc_auc | Random forest | 0.925 | ROC_AUC | 0.925 | 2 | 0.941 | MolGPS (3B) |
+| tdc_bioavailability_ma | TDC | classification | 640 | 512 | 128 | predefined | raw | roc_auc | CatBoost | 0.777 | ROC_AUC | 0.777 | 1 | 0.748 | MaxQsaring |
+| tdc_carcinogens_lagunin | TDC | classification | 280 | 223 | 57 | scaffold | raw | roc_auc | Chemprop v2 (AttentiveFP, ensemble=3) | 0.929 | ROC_AUC | 0.929 | 1 | 0.848 | FATE-Tox (MTL) |
+| tdc_clintox | TDC | classification | 1478 | 1180 | 298 | scaffold | raw | roc_auc | CFA (Combinatorial Fusion) | 0.974 | ROC_AUC | 0.974 | 3 | 0.996 | PrismNet |
+| tdc_cyp1a2_veith | TDC | classification | 12579 | 10061 | 2518 | scaffold | raw | roc_auc | Ensemble (Weighted average (inverse train RMSE)) | 0.971 |  |  |  |  |  |
+| tdc_cyp2c19_veith | TDC | classification | 12665 | 10131 | 2534 | scaffold | raw | roc_auc | Ensemble (Weighted average (inverse train RMSE)) | 0.923 |  |  |  |  |  |
+| tdc_cyp2c9_substrate_carbonmangels | TDC | classification | 669 | 534 | 135 | predefined | raw | auprc | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 0.466 | AUPRC | 0.466 | 1 | 0.450 | MaxQsaring |
+| tdc_cyp2c9_veith | TDC | classification | 12092 | 9673 | 2419 | predefined | raw | auprc | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 0.814 | AUPRC | 0.814 | 3 | 0.877 | MaxQsaring |
+| tdc_cyp2d6_substrate_carbonmangels | TDC | classification | 667 | 532 | 135 | predefined | raw | auprc | Uni-Mol V1 | 0.652 | AUPRC | 0.652 | 5 | 0.766 | MaxQsaring |
+| tdc_cyp2d6_veith | TDC | classification | 13130 | 10504 | 2626 | predefined | raw | auprc | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 0.734 | AUPRC | 0.734 | 2 | 0.811 | MaxQsaring |
+| tdc_cyp3a4_substrate_carbonmangels | TDC | classification | 670 | 535 | 135 | predefined | raw | auprc | Random forest | 0.706 | ROC_AUC | 0.655 | 7 | 0.692 | MolE |
+| tdc_cyp3a4_veith | TDC | classification | 12328 | 9861 | 2467 | predefined | raw | auprc | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 0.884 | AUPRC | 0.884 | 2 | 0.923 | MaxQsaring |
+| tdc_dili | TDC | classification | 475 | 379 | 96 | predefined | raw | roc_auc | Uni-Mol V1 | 0.922 | ROC_AUC | 0.922 | 4 | 0.945 | Meta-model (NIST) |
+| tdc_herg | TDC | classification | 655 | 523 | 132 | predefined | raw | roc_auc | AdaBoost | 0.848 | ROC_AUC | 0.848 | 4 | 0.880 | MaxQsaring |
+| tdc_herg_karim | TDC | classification | 13445 | 10755 | 2690 | scaffold | raw | roc_auc | Ensemble (Weighted average (inverse train RMSE)) | 0.905 |  |  |  |  |  |
+| tdc_hia_hou | TDC | classification | 578 | 461 | 117 | predefined | raw | roc_auc | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 0.988 | ROC_AUC | 0.988 | 4 | 0.994 | MiniMol (GINE) |
+| tdc_pampa_ncats | TDC | classification | 2034 | 1626 | 408 | scaffold | raw | roc_auc | Uni-Mol V1 | 0.763 |  |  |  |  |  |
+| tdc_pgp_broccatelli | TDC | classification | 1218 | 973 | 245 | predefined | raw | roc_auc | Uni-Mol V2 (84m) | 0.933 | ROC_AUC | 0.933 | 4 | 0.994 | MiniMol (GINE) |
+| tdc_skin_reaction | TDC | classification | 404 | 289 | 115 | scaffold | raw | roc_auc | Uni-Mol V2 (84m) | 0.658 | ROC_AUC | 0.658 | >10 | 0.741 | FATE-Tox (MTL) |
+| tdc_tox21 | TDC | classification | 7258 | 5797 | 1461 | scaffold | raw | roc_auc | AdaBoost | 0.556 | ROC_AUC | 0.556 | >10 | 0.867 | PrismNet |
+| tdc_toxcast | TDC | classification | 1731 | 1357 | 374 | scaffold | raw | roc_auc | HistGradientBoosting | 0.716 | ROC_AUC | 0.716 | 1 | 0.714 | PrismNet |
+| chemml_cep_homo | ChemML | regression | 500 | 400 | 100 | target_quartiles | raw | rmse | Ensemble (Weighted average (inverse train RMSE)) | 0.099 |  |  |  |  |  |
+| chemml_organic_density | ChemML | regression | 500 | 400 | 100 | target_quartiles | log10 | rmse | Chemprop v2 (D-MPNN + RDKit2D, ensemble=3) | 0.005 |  |  |  |  |  |
+| esol_delaney | MoleculeNet | regression | 1128 | 874 | 254 | scaffold | raw | rmse | Ensemble (Weighted average (inverse train RMSE)) | 0.617 | RMSE | 0.617 | 6 | 0.558 | GCN |
+| freesolv_sampl | MoleculeNet | regression | 642 | 513 | 129 | random | raw | rmse | ChemML MLP (PyTorch) | 0.993 |  |  |  |  |  |
+| lipophilicity | MoleculeNet | regression | 4200 | 3357 | 843 | scaffold | raw | rmse | Ensemble (Weighted average (inverse train RMSE)) | 0.589 | RMSE | 0.589 | 7 | 0.549 | GCN |
+| poduam_pod_nc_std | PODUAM | regression | 1842 | 1473 | 369 | target_quartiles | raw | rmse | Random forest | 0.720 | RMSE | 0.720 | 2 | 0.550 | PODUAM BNN (PODnc) |
+| poduam_pod_rd_std | PODUAM | regression | 2355 | 1884 | 471 | target_quartiles | raw | rmse | Random forest | 0.572 | RMSE | 0.572 | 2 | 0.410 | PODUAM BNN (PODrd) |
+| polaris_adme_fang_hppb_1 | Polaris | regression | 1808 | 1446 | 362 | predefined | raw | rmse | MapLight + GNN (CatBoost, Strict Parity) | 0.448 | MSE | 0.201 | 3 | 0.143 | 1B_MPNN_LargeMix-and-Phenomics |
+| polaris_adme_fang_perm_1 | Polaris | regression | 2642 | 2113 | 529 | predefined | raw | rmse | Uni-Mol V1 | 0.399 | MSE | 0.159 | 3 | 0.113 | 1B_MPNN_MolGPS-ens_LargeMix |
+| polaris_adme_fang_rclint_1 | Polaris | regression | 3054 | 2443 | 611 | predefined | raw | rmse | Uni-Mol V1 | 0.522 | MSE | 0.273 | 4 | 0.216 | 1B_MPNN_MolGPS-ens_LargeMix |
+| polaris_adme_fang_rppb_1 | Polaris | regression | 885 | 708 | 177 | predefined | raw | rmse | MapLight + GNN (CatBoost, Strict Parity) | 0.493 | MSE | 0.243 | 3 | 0.230 | 1B_MPNN_LargeMix-and-Phenomics |
+| polaris_adme_fang_solu_1 | Polaris | regression | 2173 | 1738 | 435 | predefined | raw | rmse | Uni-Mol V2 (84m) | 0.551 | MSE | 0.304 | 5 | 0.222 | 1B_MPNN_MolGPS-ens_LargeMix |
+| tdc_caco2_wang | TDC | regression | 910 | 728 | 182 | predefined | raw | rmse | Ensemble (Weighted average (inverse train RMSE)) | 0.342 | MAE | 0.272 | 3 | 0.256 | CaliciBoost |
+| tdc_clearance_hepatocyte_az | TDC | regression | 1213 | 970 | 243 | predefined | raw | rmse | Ensemble (Weighted average (inverse train RMSE)) | 43.841 | SPEARMAN | 0.516 | 3 | 0.633 | CFA |
+| tdc_clearance_microsome_az | TDC | regression | 1102 | 881 | 221 | predefined | raw | rmse | Uni-Mol V2 (84m) | 33.507 | SPEARMAN | 0.678 | 1 | 0.652 | MapLight + GNN |
+| tdc_half_life_obach | TDC | regression | 667 | 532 | 135 | predefined | raw | rmse | Ensemble (Weighted average (inverse train RMSE)) | 18.541 | SPEARMAN | 0.597 | 2 | 0.649 | CFA |
+| tdc_hydrationfreeenergy_freesolv | TDC | regression | 642 | 490 | 152 | scaffold | raw | rmse | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 1.112 | RMSE | 1.112 | 9 | 0.654 | PrismNet |
+| tdc_ld50_zhu | TDC | regression | 7385 | 5907 | 1478 | predefined | raw | rmse | ChemML MLP (TensorFlow) | 0.828 | MAE | 0.575 | 5 | 0.292 | BaseBoosting KyQVZ6b2 |
+| tdc_lipophilicity_astrazeneca | TDC | regression | 4200 | 3360 | 840 | predefined | raw | rmse | Uni-Mol V1 | 0.617 | MAE | 0.470 | 7 | 0.406 | MiniMol |
+| tdc_ppbr_az | TDC | regression | 2790 | 2231 | 559 | predefined | raw | rmse | MapLight + GNN (CatBoost, Strict Parity) | 11.356 | MAE | 7.306 | 3 | 0.679 | Gradient Boost |
+| tdc_solubility_aqsoldb | TDC | regression | 9980 | 7985 | 1995 | predefined | raw | rmse | Uni-Mol V1 | 1.007 | MAE | 0.710 | 2 | 0.557 | MiniMol |
+| tdc_vdss_lombardo | TDC | regression | 1130 | 904 | 226 | predefined | raw | rmse | MapLight + GNN (CatBoost, Strict Parity) | 4.670 | SPEARMAN | 0.680 | 5 | 0.942 | MapLight + GNN |
+<!-- /TABLE -->
+
+**Table S6.** Dataset catalog. "Ranking metric" is the metric used for cross-dataset model ranking (RMSE for regression; the dataset's designated primary classification metric otherwise). The final four columns give the leaderboard view: the leaderboard's own metric, QSARena's best value under that metric, its estimated rank against published results, and the best published value with the model achieving it. Blank leaderboard cells indicate datasets with no curated reference.
+
+<!-- TABLE:table4_leaderboard_comparison -->
+| Dataset | Metric | QSARena best model (test-selected) | QSARena value | Reference top-1 | Reference top-10 cutoff | References (n) | Est. rank | CV-selected model | CV-selected value | CV-selected est. rank |
+|---|---|---|---|---|---|---|---|---|---|---|
+| tdc_bioavailability_ma | ROC_AUC | CatBoost | 0.777 | 0.748 | 0.640 | 8 | 1 | LogisticRegression | 0.715 | 3 |
+| tdc_carcinogens_lagunin | ROC_AUC | Chemprop v2 (AttentiveFP, ensemble=3) | 0.929 | 0.848 | 0.795 | 20 | 1 | Voting Classifier (KNN, SVM) | 0.837 | 5 |
+| tdc_clearance_microsome_az | SPEARMAN | Uni-Mol V2 (84m) | 0.678 | 0.652 | 0.599 | 17 | 1 | XGBoost | 0.305 | >10 |
+| tdc_cyp2c9_substrate_carbonmangels | AUPRC | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 0.466 | 0.450 | 0.360 | 6 | 1 | SVC | 0.301 | 7 |
+| tdc_toxcast | ROC_AUC | HistGradientBoosting | 0.716 | 0.714 | 0.714 | 2 | 1 | LogisticRegression | 0.595 | 3 |
+| poduam_pod_nc_std | RMSE | Random forest | 0.720 | 0.550 | 0.730 | 2 | 2 | ElasticNetCV | 0.792 | 3 |
+| poduam_pod_rd_std | RMSE | Random forest | 0.572 | 0.410 | 0.630 | 2 | 2 | ElasticNetCV | 0.703 | 3 |
+| tdc_ames | ROC_AUC | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 0.876 | 0.912 | 0.834 | 7 | 2 | Extra trees | 0.871 | 2 |
+| tdc_bbb_martins | ROC_AUC | Random forest | 0.925 | 0.941 | 0.903 | 7 | 2 | Tabular MLP | 0.898 | 8 |
+| tdc_cyp2d6_veith | AUPRC | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 0.734 | 0.811 | 0.464 | 6 | 2 | AdaBoost | 0.615 | 6 |
+| tdc_cyp3a4_veith | AUPRC | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 0.884 | 0.923 | 0.750 | 6 | 2 | AdaBoost | 0.798 | 6 |
+| tdc_half_life_obach | SPEARMAN | Uni-Mol V1 | 0.597 | 0.649 | 0.485 | 16 | 2 | Random forest | 0.108 | >10 |
+| tdc_solubility_aqsoldb | MAE | Uni-Mol V1 | 0.710 | 0.557 | 0.776 | 17 | 2 | XGBoost | 0.744 | 6 |
+| polaris_adme_fang_hppb_1 | MSE | MapLight + GNN (CatBoost, Strict Parity) | 0.201 | 0.143 | 0.383 | 10 | 3 | ElasticNetCV | 0.300 | 8 |
+| polaris_adme_fang_perm_1 | MSE | Uni-Mol V1 | 0.159 | 0.113 | 0.257 | 10 | 3 | ChemML MLP (PyTorch) | 0.212 | 7 |
+| polaris_adme_fang_rppb_1 | MSE | MapLight + GNN (CatBoost, Strict Parity) | 0.243 | 0.230 | 0.634 | 10 | 3 | ElasticNetCV | 0.361 | 5 |
+| tdc_caco2_wang | MAE | MapLight CatBoost (Strict Parity) | 0.272 | 0.256 | 0.288 | 20 | 3 | ElasticNetCV | 0.345 | >10 |
+| tdc_clearance_hepatocyte_az | SPEARMAN | MapLight + GNN (CatBoost, Strict Parity) | 0.516 | 0.633 | 0.440 | 16 | 3 | CatBoost | 0.224 | >10 |
+| tdc_clintox | ROC_AUC | CFA (Combinatorial Fusion) | 0.974 | 0.996 | 0.889 | 12 | 3 | LogisticRegression | 0.896 | 5 |
+| tdc_cyp2c9_veith | AUPRC | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 0.814 | 0.877 | 0.770 | 6 | 3 | AdaBoost | 0.705 | 7 |
+| tdc_ppbr_az | MAE | MapLight + GNN (CatBoost, Strict Parity) | 7.306 | 0.679 | 7.914 | 16 | 3 | ChemML MLP (PyTorch) | 9.741 | >10 |
+| polaris_adme_fang_rclint_1 | MSE | Uni-Mol V1 | 0.273 | 0.216 | 0.403 | 10 | 4 | ElasticNetCV | 0.365 | 10 |
+| tdc_dili | ROC_AUC | Uni-Mol V1 | 0.922 | 0.945 | 0.852 | 6 | 4 | LogisticRegression | 0.745 | 7 |
+| tdc_herg | ROC_AUC | AdaBoost | 0.848 | 0.880 | 0.806 | 7 | 4 | LogisticRegression | 0.709 | 8 |
+| tdc_hia_hou | ROC_AUC | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 0.988 | 0.994 | 0.976 | 8 | 4 | LogisticRegression | 0.983 | 7 |
+| tdc_pgp_broccatelli | ROC_AUC | Uni-Mol V2 (84m) | 0.933 | 0.994 | 0.911 | 8 | 4 | LogisticRegression | 0.868 | 9 |
+| polaris_adme_fang_solu_1 | MSE | Uni-Mol V2 (84m) | 0.304 | 0.222 | 0.329 | 10 | 5 | ChemML MLP (PyTorch) | 0.410 | >10 |
+| tdc_cyp2d6_substrate_carbonmangels | AUPRC | Uni-Mol V1 | 0.652 | 0.766 | 0.570 | 7 | 5 | AdaBoost | 0.620 | 7 |
+| tdc_ld50_zhu | MAE | Ensemble (Weighted average (inverse train RMSE)) | 0.575 | 0.292 | 0.605 | 16 | 5 | XGBoost | 0.588 | 8 |
+| tdc_vdss_lombardo | SPEARMAN | MapLight + GNN (CatBoost, Strict Parity) | 0.680 | 0.942 | 0.582 | 16 | 5 | Extra trees | 0.368 | >10 |
+| esol_delaney | RMSE | Ensemble (Weighted average (inverse train RMSE)) | 0.617 | 0.558 | 0.743 | 30 | 6 | ElasticNetCV | 0.726 | 9 |
+| lipophilicity | RMSE | Ensemble (Weighted average (inverse train RMSE)) | 0.589 | 0.549 | 0.610 | 27 | 7 | ElasticNetCV | 0.682 | >10 |
+| tdc_cyp3a4_substrate_carbonmangels | ROC_AUC | Voting Classifier (KNN, SVM) | 0.655 | 0.692 | 0.651 | 7 | 7 | LogisticRegression | 0.624 | 8 |
+| tdc_lipophilicity_astrazeneca | MAE | CFA (Combinatorial Fusion) | 0.470 | 0.406 | 0.515 | 17 | 7 | ChemML MLP (PyTorch) | 0.542 | >10 |
+| tdc_hydrationfreeenergy_freesolv | RMSE | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 1.112 | 0.654 | 1.211 | 12 | 9 | ElasticNetCV | 1.321 | >10 |
+| tdc_skin_reaction | ROC_AUC | Uni-Mol V2 (84m) | 0.658 | 0.741 | 0.677 | 21 | >10 | Voting Classifier (KNN, SVM) | 0.503 | >10 |
+| tdc_tox21 | ROC_AUC | AdaBoost | 0.556 | 0.867 | 0.840 | 12 | >10 | SVC | 0.467 | >10 |
+<!-- /TABLE -->
+
+**Table S7.** Per-dataset leaderboard comparison, sorted by estimated rank. "References (n)" is the number of published values available for that dataset and metric; ranks from sparse reference sets are correspondingly uncertain. The `tdc_ppbr_az` top-1 reference (MAE 0.679) is inconsistent in scale with the rest of that dataset's references (top-10 cutoff 7.914) and its top-1 gap should be disregarded. *Single split and single seed: individual placements are provisional and no variance is estimated (see Limitations).*

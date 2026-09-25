@@ -18,6 +18,12 @@
 %% Add 'referee' for double-spaced review copy, 'lineno' for line numbers.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+%% Load url with 'hyphens' BEFORE the class, because sn-jnl pulls in hyperref (and hence url)
+%% itself and options cannot be added afterwards. Without this, long reference URLs are a single
+%% unbreakable box: the Schrodinger white-paper URL overflowed the Springer column by 57.6pt.
+%% \RequirePackage is the only package command permitted before \documentclass.
+\RequirePackage[hyphens]{url}
+
 %% sn-jnl declares the option 'sn-vancouver'. 'sn-vancouver-num' is NOT a valid option:
 %% LaTeX discards it with only an "Unused global option" warning, no reference style is
 %% selected, and bibtex then fails with "I found no bibstyle command" leaving every
