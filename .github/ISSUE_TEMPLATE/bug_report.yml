@@ -1,5 +1,5 @@
 name: Bug report
-description: Something in AutoQSAR does not work as documented
+description: Something in QSARena does not work as documented
 labels: ["bug"]
 body:
   - type: markdown
@@ -18,7 +18,7 @@ body:
     attributes:
       label: How can we reproduce it?
       description: The exact command or notebook cell, and the dataset (a public benchmark name is ideal).
-      placeholder: python portable_colab_qsar_bundle/run_autoqsar_ga_benchmarks.py --dataset tdc_caco2_wang ...
+      placeholder: python portable_colab_qsar_bundle/run_qsarena_benchmarks.py --dataset tdc_caco2_wang ...
     validations:
       required: true
   - type: textarea

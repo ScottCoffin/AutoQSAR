@@ -1,0 +1,70 @@
+{
+  "n_datasets": 22,
+  "n_regression": 9,
+  "n_classification": 13,
+  "standardization": {
+    "median_coverage": 0.9568269838440473,
+    "min_coverage": 0.925925925925926,
+    "max_coverage": 0.9945054945054944,
+    "min_group_size": 5,
+    "n_datasets_with_both_groups": 17,
+    "n_datasets_out_error_higher": 8,
+    "median_error_ratio_out_in": 0.9142650303364588,
+    "median_pct_higher_error_out": -8.57349696635412,
+    "median_pct_higher_error_out_regression": 34.76982787415797,
+    "median_pct_higher_error_out_classification": -17.545725395142142
+  },
+  "knn_tanimoto": {
+    "median_coverage": 0.8965753379070434,
+    "min_coverage": 0.7417582417582418,
+    "max_coverage": 0.9777777777777776,
+    "min_group_size": 5,
+    "n_datasets_with_both_groups": 21,
+    "n_datasets_out_error_higher": 13,
+    "median_error_ratio_out_in": 1.1527687526435109,
+    "median_pct_higher_error_out": 15.276875264351087,
+    "median_pct_higher_error_out_regression": 21.96073229366686,
+    "median_pct_higher_error_out_classification": 1.447105788423153
+  },
+  "consensus": {
+    "median_coverage": 0.8702570698023364,
+    "min_coverage": 0.7362637362637363,
+    "max_coverage": 0.9638009049773756,
+    "min_group_size": 5,
+    "n_datasets_with_both_groups": 22,
+    "n_datasets_out_error_higher": 14,
+    "median_error_ratio_out_in": 1.078556940980016,
+    "median_pct_higher_error_out": 7.855694098001598,
+    "median_pct_higher_error_out_regression": 18.727392071530513,
+    "median_pct_higher_error_out_classification": 0.0
+  },
+  "reliability": {
+    "median_coverage": 0.5119359772752103,
+    "min_coverage": 0.1703703703703703,
+    "max_coverage": 0.8035034272658035,
+    "min_group_size": 5,
+    "n_datasets_with_both_groups": 22,
+    "n_datasets_out_error_higher": 22,
+    "median_error_ratio_out_in": 3.303037730446917,
+    "median_pct_higher_error_out": 230.3037730446917,
+    "median_pct_higher_error_out_regression": 107.99718215892216,
+    "median_pct_higher_error_out_classification": 382.1428571428571
+  },
+  "conformal": {
+    "alpha": 0.1,
+    "nominal_coverage": 0.9,
+    "regression_median_coverage": 0.9320214669051878,
+    "regression_min_coverage": 0.8179972936400541,
+    "regression_max_coverage": 0.9513274336283186,
+    "classification_median_coverage": 0.909466721785862,
+    "classification_min_coverage": 0.8148148148148148,
+    "classification_max_coverage": 0.9479166666666666,
+    "classification_median_ece": 0.0653844107295667,
+    "classification_median_brier": 0.136665162037037,
+    "classification_median_singleton_fraction": 0.7589913187267466
+  },
+  "reference_model": "RandomForest (300 trees) on Morgan r=2 2048-bit + RDKit 2D descriptors",
+  "seed": 0,
+  "calibration_fraction_of_train_val": 0.2,
+  "wall_clock_seconds": 1839.0
+}

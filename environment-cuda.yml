@@ -1,4 +1,4 @@
-name: autoqsar-py311-cuda
+name: qsarena-py311-cuda
 channels:
   - conda-forge
   - defaults

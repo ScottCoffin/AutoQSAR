@@ -146,8 +146,8 @@ class UnimolV2Workflow:
         )
 
         # Compute metrics
-        from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
         from scipy.stats import spearmanr
+        from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
         test_arr = np.array(test_y, dtype=np.float32)
         pred_arr = np.array(test_preds, dtype=np.float32)
         metrics = {
@@ -179,6 +179,7 @@ class UnimolV2Workflow:
     ) -> tuple[list[str], list[float]]:
         """Load SMILES and target values from local files."""
         import csv
+
         from rdkit import Chem
 
         ds_stem = dataset_name.replace("tdc_", "")
@@ -300,6 +301,7 @@ class UnimolV2Workflow:
         Checkpoint path is resolved from self.checkpoint_dir / self.model_size.
         """
         from rdkit import Chem
+
         from qsarena.precision import amp_context
 
         # unimol_tools expects SMILES strings (it handles 3D internally via its
@@ -324,8 +326,8 @@ class UnimolV2Workflow:
         last_exc = None
         for attempt in range(_MAX_OOM_RETRIES + 1):
             try:
-                from unimol_tools import MolTrain, MolPredict
                 import torch
+                from unimol_tools import MolPredict, MolTrain
 
                 with amp_context("unimolv2", self.precision, self.device):
                     trainer = MolTrain(

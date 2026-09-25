@@ -46,7 +46,7 @@ def main():
     ax.text(
         0.35,
         7.12,
-        "AutoQSAR Colab Workflow",
+        "QSARena Colab Workflow",
         fontsize=18,
         weight="bold",
         color="#172033",

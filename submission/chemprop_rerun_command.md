@@ -43,7 +43,7 @@ Do not launch 44 datasets before confirming Chemprop trains at all on this host.
 datasets that survived the bug, so you can compare directly against a known-good result:
 
 ```bash
-export QSARENA_HOME=/path/to/AutoQSAR
+export QSARENA_HOME=/path/to/QSARena
 cd "$QSARENA_HOME"
 
 python portable_colab_qsar_bundle/run_qsarena_benchmarks.py \
@@ -85,7 +85,7 @@ variants buy nothing. `--run-chemprop-rdkit2d` is the ADMET-AI-equivalent varian
 matters for the parity claim, so keep both it and the plain D-MPNN.
 
 ```bash
-export QSARENA_HOME=/path/to/AutoQSAR
+export QSARENA_HOME=/path/to/QSARena
 cd "$QSARENA_HOME"
 
 nohup python portable_colab_qsar_bundle/run_qsarena_benchmarks.py \

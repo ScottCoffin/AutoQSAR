@@ -10,10 +10,10 @@ LaTeX submission built on the **Springer Nature template** (`sn-jnl.cls`), per
 | `manuscript.tex` | **The submission file.** Springer Nature `sn-jnl` class, Vancouver numbered references. |
 | `body.tex` | All manuscript sections. Shared by `manuscript.tex` and `proof.tex` — edit prose here, once. |
 | `references.bib` | BibTeX, 40 entries, diacritics written as TeX commands per Springer guidance. |
-| `additional_file_1.tex` | Additional file 1: supplementary tables S1–S4. Compiles standalone. |
+| `additional_file_1.tex` | Additional file 1: supplementary tables S1–S8. Compiles standalone. |
 | `cover_letter.md` / `.pdf` | Cover letter. |
 | `proof.tex` | Local proof build (standard `article` class, same `body.tex`). **Not for submission.** |
-| `tables/*.tex` | Generated table fragments (Tables 1–6, S1–S5) — **do not hand-edit** (see Regenerating). |
+| `tables/*.tex` | Generated table fragments (Tables 1–6, S1–S8) — **do not hand-edit** (see Regenerating). |
 | `figures/*.pdf` | Vector figures at publication resolution, including `graphical_abstract.pdf`. |
 
 ## Building

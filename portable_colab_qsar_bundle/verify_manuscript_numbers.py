@@ -20,12 +20,18 @@ import re
 import sys
 
 d = json.load(open("manuscript_assets/manuscript_numbers.json"))
+rel = json.loads(pathlib.Path("results/reliability_tdc22/summary.json").read_text(encoding="utf-8"))
 t = pathlib.Path("manuscript.md").read_text(encoding="utf-8")
+body = pathlib.Path("submission/body.tex").read_text(encoding="utf-8")
 ok, bad = [], []
 
 
 def chk(label, cond, detail=""):
     (ok if cond else bad).append(f"{label} {detail}")
+
+
+def norm_text(s):
+    return re.sub(r"\s+", " ", s.replace("\\%", "%").replace("\\,", "").replace("~", " "))
 
 
 L, W, F, C, FF = d["leaderboard"], d["wins_by_family"], d["family_consistency"], d["cost"], d["feature_families"]
@@ -128,6 +134,39 @@ chk("7 datasets re-split", len(R["datasets_respilt_to_scaffold"]) == 7)
 
 # ---- provenance --------------------------------------------------------------------------------
 chk("repro commit bbfb188", d["reproducibility"]["run_artifacts_committed_in"] == "bbfb188" and d["reproducibility"]["random_seed"] == 13)
+
+# ---- regulatory reliability study --------------------------------------------------------------
+Sstd, Sknn, Scons, Srel, Sconf = (rel["standardization"], rel["knn_tanimoto"], rel["consensus"],
+                                  rel["reliability"], rel["conformal"])
+chk("reliability study 22 official",
+    (rel["n_datasets"], rel["n_regression"], rel["n_classification"], rel["seed"]) == (22, 9, 13, 0))
+chk("reliability reference model",
+    rel["reference_model"] == "RandomForest (300 trees) on Morgan r=2 2048-bit + RDKit 2D descriptors")
+chk("reliability structural summary",
+    (round(100 * Sstd["median_coverage"], 1), round(100 * Sstd["min_coverage"], 1),
+     round(100 * Sstd["max_coverage"], 1), Sstd["n_datasets_out_error_higher"],
+     Sstd["n_datasets_with_both_groups"], round(Sstd["median_pct_higher_error_out"], 1),
+     round(Sstd["median_pct_higher_error_out_regression"], 1)) == (95.7, 92.6, 99.5, 8, 17, -8.6, 34.8))
+chk("reliability knn consensus summary",
+    (round(100 * Sknn["median_coverage"], 1), Sknn["n_datasets_out_error_higher"],
+     Sknn["n_datasets_with_both_groups"], round(Sknn["median_pct_higher_error_out"], 1),
+     round(100 * Scons["median_coverage"], 1), Scons["n_datasets_out_error_higher"],
+     round(Scons["median_pct_higher_error_out"], 1)) == (89.7, 13, 21, 15.3, 87.0, 14, 7.9))
+chk("reliability confidence summary",
+    (round(100 * Srel["median_coverage"], 1), Srel["n_datasets_out_error_higher"],
+     round(Srel["median_error_ratio_out_in"], 2), round(Srel["median_pct_higher_error_out"], 1),
+     round(Srel["median_pct_higher_error_out_regression"], 1),
+     round(Srel["median_pct_higher_error_out_classification"], 1)) == (51.2, 22, 3.30, 230.3, 108.0, 382.1))
+chk("reliability conformal summary",
+    (round(100 * Sconf["regression_median_coverage"], 1), round(100 * Sconf["classification_median_coverage"], 1),
+     round(Sconf["classification_median_ece"], 3), round(Sconf["classification_median_brier"], 3)) == (93.2, 90.9, 0.065, 0.137))
+for label, text in [("md", t), ("body", body)]:
+    nt = norm_text(text)
+    chk(f"sec oecd {label}", ("3.13 Regulatory alignment with the OECD" in nt if label == "md" else "label{sec:oecd}" in text))
+    chk(f"oecd numbers {label}",
+        all(s in nt for s in ["95.7%", "8 of 17", "89.7%", "13 of 21", "87.0%", "14 of 22",
+                              "51.2%", "230.3%", "93.2%", "90.9%", "0.065", "0.137"]))
+    chk(f"reference model caveat {label}", "not the per-dataset selected QSARena model" in nt)
 
 # ---- tables agree with the JSON ----------------------------------------------------------------
 t2 = list(csv.DictReader(io.StringIO(pathlib.Path("manuscript_assets/tables/table2_dataset_catalog.csv").read_text(encoding="utf-8"))))
