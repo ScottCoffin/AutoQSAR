@@ -1,11 +1,11 @@
 {
   "status": "running",
-  "started_at": "2026-06-30 14:12:57 UTC",
-  "started_epoch": 1782828777.6013212,
-  "updated_at": "2026-06-30 22:50:56 UTC",
-  "updated_epoch": 1782859856.864787,
-  "elapsed_seconds": 31079.263,
-  "dataset_count": 45,
+  "started_at": "2026-09-25 01:06:30 UTC",
+  "started_epoch": 1790298390.7886138,
+  "updated_at": "2026-09-25 01:06:30 UTC",
+  "updated_epoch": 1790298390.9097004,
+  "elapsed_seconds": 0.121,
+  "dataset_count": 2,
   "resource_config": {
     "detected_cpu_count": 32,
     "n_jobs": 32,
@@ -26,9 +26,9 @@
     "precision_mode": "fp32"
   },
   "phase": "main_dataset_loop",
-  "completed_dataset_count": 29,
-  "last_dataset": "poduam_pod_rd_std",
-  "last_dataset_status": "completed",
-  "average_finished_dataset_seconds": 1088.623,
-  "eta_seconds": 17417.975
+  "completed_dataset_count": 1,
+  "last_dataset": "polaris_adme_fang_perm_1",
+  "last_dataset_status": "resumed",
+  "average_finished_dataset_seconds": 232.119,
+  "eta_seconds": 232.119
 }

@@ -10,7 +10,10 @@
       "Bash(awk 'NR>=7000 && NR<=7280' \"c:/Users/scott/AutoQSAR/portable_colab_qsar_bundle/build_colab_qsar_tutorial.py\")",
       "Bash(python -c ' *)",
       "Bash(conda run *)",
-      "Bash(nvidia-smi)"
+      "Bash(nvidia-smi)",
+      "Bash(awk '{print $1, $2, $3, $11, $12}')",
+      "Bash(nvidia-smi --query-gpu=memory.used,utilization.gpu --format=csv,noheader)",
+      "Bash(awk '{print $2, $3, $8}')"
     ]
   }
 }

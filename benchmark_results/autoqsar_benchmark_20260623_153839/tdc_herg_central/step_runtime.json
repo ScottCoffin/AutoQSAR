@@ -7,12 +7,12 @@
     "step_type": "load_dataset",
     "model": "",
     "workflow": "",
-    "started_at": "2026-06-30 10:55:02 UTC",
-    "started_epoch": 1782816902.5297995,
+    "started_at": "2026-09-25 01:06:30 UTC",
+    "started_epoch": 1790298390.910914,
     "status": "completed",
-    "ended_at": "2026-06-30 10:56:23 UTC",
-    "ended_epoch": 1782816983.3213189,
-    "duration_seconds": 80.792
+    "ended_at": "2026-09-25 01:07:46 UTC",
+    "ended_epoch": 1790298466.6088908,
+    "duration_seconds": 75.698
   },
   {
     "dataset": "tdc_herg_central",
@@ -22,11 +22,11 @@
     "step_type": "feature_generation",
     "model": "",
     "workflow": "",
-    "started_at": "2026-06-30 10:56:23 UTC",
-    "started_epoch": 1782816983.321373,
+    "started_at": "2026-09-25 01:07:46 UTC",
+    "started_epoch": 1790298466.6089504,
     "status": "running",
-    "ended_at": "2026-06-30 10:56:23 UTC",
-    "ended_epoch": 1782816983.3213902,
+    "ended_at": "2026-09-25 01:07:46 UTC",
+    "ended_epoch": 1790298466.6089754,
     "duration_seconds": 0.0
   }
 ]

@@ -1,10 +1,9 @@
 {
-  "status": "running",
+  "status": "completed",
   "dataset": "polaris_adme_fang_perm_1",
   "source": "Polaris ADME benchmark mirror: adme-fang-perm-1",
-  "started_at": "2026-06-30 22:57:03",
-  "checkpoint_stage": "deep:Chemprop-v2:dmpnn",
-  "n_metrics_rows": 34,
-  "n_prediction_tables": 1,
-  "n_stage_records": 18
+  "completed_at": "2026-09-25 00:51:00",
+  "elapsed_seconds": 232.119,
+  "n_metrics_rows": 41,
+  "n_stage_records": 27
 }
