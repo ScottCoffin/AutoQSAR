@@ -1,0 +1,6 @@
+dataset,stage_index,total_stages,stage_label,step_type,model,workflow,started_at,started_epoch,status,ended_at,ended_epoch,duration_seconds
+tdc_lipophilicity_astrazeneca,1,5,loading PyTDC ADME benchmark group: lipophilicity_astrazeneca (official train_val/test split),load_dataset,,,2026-09-26 14:22:01 UTC,1790432521.406656,completed,2026-09-26 14:22:02 UTC,1790432522.5978737,1.191
+tdc_lipophilicity_astrazeneca,2,5,building molecular features (cached),feature_generation,,,2026-09-26 14:22:02 UTC,1790432522.5979328,resumed_cache,2026-09-26 14:22:02 UTC,1790432522.6219137,0.024
+tdc_lipophilicity_astrazeneca,3,5,splitting data and selecting features (cached),feature_selection,,,2026-09-26 14:22:02 UTC,1790432522.6219497,resumed_cache,2026-09-26 14:22:42 UTC,1790432562.1589801,39.537
+tdc_lipophilicity_astrazeneca,4,5,conventional model TabPFNRegressor,model,TabPFNRegressor,conventional,2026-09-26 14:22:42 UTC,1790432562.1590264,completed,2026-09-26 14:25:08 UTC,1790432708.7991877,146.64
+tdc_lipophilicity_astrazeneca,5,5,ensemble (2 method(s)),model,Ensemble,ensemble,2026-09-26 14:25:08 UTC,1790432708.7992158,completed,2026-09-26 14:25:10 UTC,1790432710.6328282,1.834

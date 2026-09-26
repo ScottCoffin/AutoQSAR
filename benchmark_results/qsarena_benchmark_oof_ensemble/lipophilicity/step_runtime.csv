@@ -1,0 +1,6 @@
+dataset,stage_index,total_stages,stage_label,step_type,model,workflow,started_at,started_epoch,status,ended_at,ended_epoch,duration_seconds
+lipophilicity,1,5,loading MoleculeNet PhysChem benchmark: Lipophilicity,load_dataset,,,2026-09-26 14:20:06 UTC,1790432406.607343,completed,2026-09-26 14:20:07 UTC,1790432407.8087604,1.201
+lipophilicity,2,5,building molecular features (cached),feature_generation,,,2026-09-26 14:20:07 UTC,1790432407.8089566,resumed_cache,2026-09-26 14:20:07 UTC,1790432407.8315976,0.023
+lipophilicity,3,5,splitting data and selecting features (cached),feature_selection,,,2026-09-26 14:20:07 UTC,1790432407.8316386,resumed_cache,2026-09-26 14:20:47 UTC,1790432447.409559,39.578
+lipophilicity,4,5,conventional model TabPFNRegressor,model,TabPFNRegressor,conventional,2026-09-26 14:20:47 UTC,1790432447.4096048,completed,2026-09-26 14:21:58 UTC,1790432518.9174001,71.508
+lipophilicity,5,5,ensemble (2 method(s)),model,Ensemble,ensemble,2026-09-26 14:21:58 UTC,1790432518.9174287,completed,2026-09-26 14:22:00 UTC,1790432520.6943371,1.777

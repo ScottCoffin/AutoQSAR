@@ -1,0 +1,11 @@
+dataset,stage_index,total_stages,stage_label,step_type,model,workflow,started_at,started_epoch,status,ended_at,ended_epoch,duration_seconds
+chemml_cep_homo,1,10,loading ChemML bundled dataset: cep_homo,load_dataset,,,2026-09-26 06:28:16 UTC,1790404096.1298962,completed,2026-09-26 06:28:16 UTC,1790404096.2653732,0.135
+chemml_cep_homo,2,10,building molecular features (cached),feature_generation,,,2026-09-26 06:28:16 UTC,1790404096.2654078,resumed_cache,2026-09-26 06:28:16 UTC,1790404096.2682505,0.003
+chemml_cep_homo,3,10,splitting data and selecting features (cached),feature_selection,,,2026-09-26 06:28:16 UTC,1790404096.2682807,resumed_cache,2026-09-26 06:28:21 UTC,1790404101.252484,4.984
+chemml_cep_homo,4,10,conventional model TabPFNRegressor,model,TabPFNRegressor,conventional,2026-09-26 06:28:21 UTC,1790404101.2525296,completed,2026-09-26 06:28:47 UTC,1790404127.250512,25.998
+chemml_cep_homo,5,10,"deep model Chemprop v2 (D-MPNN, ensemble=3) (cached)",model,"Chemprop v2 (D-MPNN, ensemble=3)",Chemprop v2,2026-09-26 06:28:47 UTC,1790404127.2505403,completed,2026-09-26 06:28:47 UTC,1790404127.2517395,0.001
+chemml_cep_homo,6,10,"deep model Chemprop v2 (D-MPNN + RDKit2D, ensemble=3) (cached)",model,"Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",Chemprop v2,2026-09-26 06:28:47 UTC,1790404127.2517695,completed,2026-09-26 06:28:47 UTC,1790404127.253021,0.001
+chemml_cep_homo,7,10,"deep model Chemprop v2 (CMPNN, ensemble=3) (cached)",model,"Chemprop v2 (CMPNN, ensemble=3)",Chemprop v2,2026-09-26 06:28:47 UTC,1790404127.2530503,completed,2026-09-26 06:28:47 UTC,1790404127.2542903,0.001
+chemml_cep_homo,8,10,"deep model Chemprop v2 (AttentiveFP, ensemble=3) (cached)",model,"Chemprop v2 (AttentiveFP, ensemble=3)",Chemprop v2,2026-09-26 06:28:47 UTC,1790404127.2543194,completed,2026-09-26 06:28:47 UTC,1790404127.2555594,0.001
+chemml_cep_homo,9,10,"deep model Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3) (cached)",model,"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",Chemprop v2,2026-09-26 06:28:47 UTC,1790404127.2555883,completed,2026-09-26 06:28:47 UTC,1790404127.2569652,0.001
+chemml_cep_homo,10,10,ensemble (2 method(s)),model,Ensemble,ensemble,2026-09-26 06:28:47 UTC,1790404127.2569945,completed,2026-09-26 06:28:48 UTC,1790404128.0916655,0.835

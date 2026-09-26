@@ -1,0 +1,11 @@
+dataset,stage_index,total_stages,stage_label,step_type,model,workflow,started_at,started_epoch,status,ended_at,ended_epoch,duration_seconds
+tdc_herg_karim,1,10,loading PyTDC Tox benchmark: herg_karim,load_dataset,,,2026-09-26 12:46:58 UTC,1790426818.124024,completed,2026-09-26 12:47:02 UTC,1790426822.3618562,4.238
+tdc_herg_karim,2,10,building molecular features (cached),feature_generation,,,2026-09-26 12:47:02 UTC,1790426822.361918,resumed_cache,2026-09-26 12:47:02 UTC,1790426822.4309945,0.069
+tdc_herg_karim,3,10,splitting data and selecting features (cached),feature_selection,,,2026-09-26 12:47:02 UTC,1790426822.4310496,resumed_cache,2026-09-26 12:49:27 UTC,1790426967.124352,144.693
+tdc_herg_karim,4,10,conventional model TabPFNClassifier,model,TabPFNClassifier,conventional,2026-09-26 12:49:27 UTC,1790426967.1244028,completed,2026-09-26 12:49:27 UTC,1790426967.8987448,0.774
+tdc_herg_karim,5,10,"deep model Chemprop v2 (D-MPNN, ensemble=3)",model,"Chemprop v2 (D-MPNN, ensemble=3)",Chemprop v2,2026-09-26 12:49:27 UTC,1790426967.8987756,completed,2026-09-26 13:01:20 UTC,1790427680.452436,712.554
+tdc_herg_karim,6,10,"deep model Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",model,"Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",Chemprop v2,2026-09-26 13:01:20 UTC,1790427680.4524674,completed,2026-09-26 13:15:53 UTC,1790428553.472642,873.02
+tdc_herg_karim,7,10,"deep model Chemprop v2 (CMPNN, ensemble=3)",model,"Chemprop v2 (CMPNN, ensemble=3)",Chemprop v2,2026-09-26 13:15:53 UTC,1790428553.4726865,completed,2026-09-26 13:27:55 UTC,1790429275.5529592,722.08
+tdc_herg_karim,8,10,"deep model Chemprop v2 (AttentiveFP, ensemble=3)",model,"Chemprop v2 (AttentiveFP, ensemble=3)",Chemprop v2,2026-09-26 13:27:55 UTC,1790429275.5529926,completed,2026-09-26 13:42:31 UTC,1790430151.4967446,875.944
+tdc_herg_karim,9,10,"deep model Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",model,"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",Chemprop v2,2026-09-26 13:42:31 UTC,1790430151.4967813,completed,2026-09-26 13:54:52 UTC,1790430892.35772,740.861
+tdc_herg_karim,10,10,ensemble (2 method(s)),model,Ensemble,ensemble,2026-09-26 13:54:52 UTC,1790430892.3577518,completed,2026-09-26 13:54:56 UTC,1790430896.6574953,4.3

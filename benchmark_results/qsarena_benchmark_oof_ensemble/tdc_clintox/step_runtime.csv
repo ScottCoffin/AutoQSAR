@@ -1,0 +1,11 @@
+dataset,stage_index,total_stages,stage_label,step_type,model,workflow,started_at,started_epoch,status,ended_at,ended_epoch,duration_seconds
+tdc_clintox,1,10,loading PyTDC Tox benchmark: clintox,load_dataset,,,2026-09-26 07:00:51 UTC,1790406051.299893,completed,2026-09-26 07:00:51 UTC,1790406051.69566,0.396
+tdc_clintox,2,10,building molecular features (cached),feature_generation,,,2026-09-26 07:00:51 UTC,1790406051.6957114,resumed_cache,2026-09-26 07:00:51 UTC,1790406051.7045343,0.009
+tdc_clintox,3,10,splitting data and selecting features (cached),feature_selection,,,2026-09-26 07:00:51 UTC,1790406051.7046018,resumed_cache,2026-09-26 07:01:06 UTC,1790406066.6544862,14.95
+tdc_clintox,4,10,conventional model TabPFNClassifier,model,TabPFNClassifier,conventional,2026-09-26 07:01:06 UTC,1790406066.6545453,completed,2026-09-26 07:02:07 UTC,1790406127.243658,60.589
+tdc_clintox,5,10,"deep model Chemprop v2 (D-MPNN, ensemble=3) (cached)",model,"Chemprop v2 (D-MPNN, ensemble=3)",Chemprop v2,2026-09-26 07:02:07 UTC,1790406127.2436862,completed,2026-09-26 07:02:07 UTC,1790406127.2449217,0.001
+tdc_clintox,6,10,"deep model Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",model,"Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",Chemprop v2,2026-09-26 07:02:07 UTC,1790406127.244951,completed,2026-09-26 07:06:35 UTC,1790406395.0979476,267.853
+tdc_clintox,7,10,"deep model Chemprop v2 (CMPNN, ensemble=3) (cached)",model,"Chemprop v2 (CMPNN, ensemble=3)",Chemprop v2,2026-09-26 07:06:35 UTC,1790406395.0979774,completed,2026-09-26 07:06:35 UTC,1790406395.0992372,0.001
+tdc_clintox,8,10,"deep model Chemprop v2 (AttentiveFP, ensemble=3)",model,"Chemprop v2 (AttentiveFP, ensemble=3)",Chemprop v2,2026-09-26 07:06:35 UTC,1790406395.099266,completed,2026-09-26 07:11:15 UTC,1790406675.5543523,280.455
+tdc_clintox,9,10,"deep model Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3) (cached)",model,"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",Chemprop v2,2026-09-26 07:11:15 UTC,1790406675.5543823,completed,2026-09-26 07:11:15 UTC,1790406675.5557024,0.001
+tdc_clintox,10,10,ensemble (2 method(s)),model,Ensemble,ensemble,2026-09-26 07:11:15 UTC,1790406675.5557315,completed,2026-09-26 07:11:17 UTC,1790406677.1727726,1.617

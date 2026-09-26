@@ -1,0 +1,10 @@
+Model,Weight,Workflow
+ElasticNetCV,0.02458761301636183,conventional
+Extra trees,0.8786499604495976,conventional
+AdaBoost,0.01107644754049878,conventional
+Tabular CNN,0.014903974054458998,conventional
+Uni-Mol V1,0.014445437402984745,Uni-Mol
+Uni-Mol V2 (84m),0.00976436819329638,Uni-Mol
+"Chemprop v2 (D-MPNN, ensemble=3)",0.014104554283589794,Chemprop v2
+"Chemprop v2 (CMPNN, ensemble=3)",0.013581550311391204,Chemprop v2
+"Chemprop v2 (AttentiveFP, ensemble=3)",0.018886094747820506,Chemprop v2

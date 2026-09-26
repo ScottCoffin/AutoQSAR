@@ -1,0 +1,9 @@
+{
+  "status": "completed",
+  "dataset": "tdc_ames",
+  "source": "PyTDC Tox benchmark group: ames (official train_val/test split)",
+  "completed_at": "2026-09-26 14:36:14",
+  "elapsed_seconds": 328.103,
+  "n_metrics_rows": 40,
+  "n_stage_records": 5
+}

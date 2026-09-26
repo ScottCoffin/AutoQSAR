@@ -1,0 +1,9 @@
+{
+  "status": "completed",
+  "dataset": "tdc_bioavailability_ma",
+  "source": "PyTDC ADME benchmark group: bioavailability_ma (official train_val/test split)",
+  "completed_at": "2026-09-26 06:31:30",
+  "elapsed_seconds": 56.379,
+  "n_metrics_rows": 63,
+  "n_stage_records": 10
+}

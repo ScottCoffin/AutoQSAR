@@ -1,0 +1,9 @@
+{
+  "status": "completed",
+  "dataset": "polaris_adme_fang_solu_1",
+  "source": "Polaris ADME benchmark mirror: adme-fang-solu-1",
+  "completed_at": "2026-09-26 07:29:31",
+  "elapsed_seconds": 62.28,
+  "n_metrics_rows": 46,
+  "n_stage_records": 10
+}

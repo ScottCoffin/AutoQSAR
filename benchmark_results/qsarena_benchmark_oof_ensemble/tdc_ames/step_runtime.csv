@@ -1,0 +1,6 @@
+dataset,stage_index,total_stages,stage_label,step_type,model,workflow,started_at,started_epoch,status,ended_at,ended_epoch,duration_seconds
+tdc_ames,1,5,loading PyTDC Tox benchmark group: ames (official train_val/test split),load_dataset,,,2026-09-26 14:30:47 UTC,1790433047.6727695,completed,2026-09-26 14:30:49 UTC,1790433049.0278227,1.355
+tdc_ames,2,5,building molecular features (cached),feature_generation,,,2026-09-26 14:30:49 UTC,1790433049.027876,resumed_cache,2026-09-26 14:30:49 UTC,1790433049.0613897,0.034
+tdc_ames,3,5,splitting data and selecting features (cached),feature_selection,,,2026-09-26 14:30:49 UTC,1790433049.0614343,resumed_cache,2026-09-26 14:31:34 UTC,1790433094.367208,45.306
+tdc_ames,4,5,conventional model TabPFNClassifier,model,TabPFNClassifier,conventional,2026-09-26 14:31:34 UTC,1790433094.3672645,completed,2026-09-26 14:36:11 UTC,1790433371.6474113,277.28
+tdc_ames,5,5,ensemble (2 method(s)),model,Ensemble,ensemble,2026-09-26 14:36:11 UTC,1790433371.6474426,completed,2026-09-26 14:36:14 UTC,1790433374.8773327,3.23

@@ -1,0 +1,6 @@
+dataset,stage_index,total_stages,stage_label,step_type,model,workflow,started_at,started_epoch,status,ended_at,ended_epoch,duration_seconds
+tdc_ld50_zhu,1,5,loading PyTDC Tox benchmark group: ld50_zhu (official train_val/test split),load_dataset,,,2026-09-26 14:36:15 UTC,1790433375.8606803,completed,2026-09-26 14:36:17 UTC,1790433377.1401498,1.279
+tdc_ld50_zhu,2,5,building molecular features (cached),feature_generation,,,2026-09-26 14:36:17 UTC,1790433377.140199,resumed_cache,2026-09-26 14:36:17 UTC,1790433377.1757734,0.036
+tdc_ld50_zhu,3,5,splitting data and selecting features (cached),feature_selection,,,2026-09-26 14:36:17 UTC,1790433377.1758323,resumed_cache,2026-09-26 14:37:00 UTC,1790433420.5268707,43.351
+tdc_ld50_zhu,4,5,conventional model TabPFNRegressor,model,TabPFNRegressor,conventional,2026-09-26 14:37:00 UTC,1790433420.52692,completed,2026-09-26 14:39:56 UTC,1790433596.6751168,176.148
+tdc_ld50_zhu,5,5,ensemble (2 method(s)),model,Ensemble,ensemble,2026-09-26 14:39:56 UTC,1790433596.6751554,completed,2026-09-26 14:39:59 UTC,1790433599.2192845,2.544

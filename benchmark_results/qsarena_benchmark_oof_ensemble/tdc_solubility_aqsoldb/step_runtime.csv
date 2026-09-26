@@ -1,0 +1,6 @@
+dataset,stage_index,total_stages,stage_label,step_type,model,workflow,started_at,started_epoch,status,ended_at,ended_epoch,duration_seconds
+tdc_solubility_aqsoldb,1,5,loading PyTDC ADME benchmark group: solubility_aqsoldb (official train_val/test split),load_dataset,,,2026-09-26 14:40:00 UTC,1790433600.4725375,completed,2026-09-26 14:40:02 UTC,1790433602.3488314,1.876
+tdc_solubility_aqsoldb,2,5,building molecular features (cached),feature_generation,,,2026-09-26 14:40:02 UTC,1790433602.348885,resumed_cache,2026-09-26 14:40:02 UTC,1790433602.3986883,0.05
+tdc_solubility_aqsoldb,3,5,splitting data and selecting features (cached),feature_selection,,,2026-09-26 14:40:02 UTC,1790433602.3987367,resumed_cache,2026-09-26 14:41:06 UTC,1790433666.7536647,64.355
+tdc_solubility_aqsoldb,4,5,conventional model TabPFNRegressor,model,TabPFNRegressor,conventional,2026-09-26 14:41:06 UTC,1790433666.7537136,completed,2026-09-26 14:43:36 UTC,1790433816.518013,149.764
+tdc_solubility_aqsoldb,5,5,ensemble (2 method(s)),model,Ensemble,ensemble,2026-09-26 14:43:36 UTC,1790433816.5180433,completed,2026-09-26 14:43:39 UTC,1790433819.921942,3.404

@@ -1,0 +1,9 @@
+{
+  "status": "completed",
+  "dataset": "chemml_organic_density",
+  "source": "ChemML bundled dataset: organic_density",
+  "completed_at": "2026-09-26 06:29:29",
+  "elapsed_seconds": 40.987,
+  "n_metrics_rows": 55,
+  "n_stage_records": 10
+}

@@ -1,0 +1,17 @@
+Model,Weight,Workflow
+ElasticNetCV,0.021217238615367704,conventional
+SVR,0.014089529225328218,conventional
+Random forest,0.04356028179403985,conventional
+Extra trees,0.5671813254913676,conventional
+HistGradientBoosting,0.02865117124957909,conventional
+"Voting Regressor (KNN, SVM)",0.028153010379887405,conventional
+AdaBoost,0.04684704345262971,conventional
+Tabular CNN,0.013730111082235126,conventional
+CatBoost,0.1031289820567249,conventional
+MapLight CatBoost (Strict Parity),0.01453345992384321,conventional
+ChemML MLP (TensorFlow),0.036277991549835055,ChemML deep learning
+Uni-Mol V1,0.01740688598469961,Uni-Mol
+"MapLight + GNN (CatBoost, Strict Parity)",0.015535953189095907,MapLight + GNN
+"Chemprop v2 (D-MPNN, ensemble=3)",0.017665285248522504,Chemprop v2
+"Chemprop v2 (CMPNN, ensemble=3)",0.017085740280294217,Chemprop v2
+"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",0.014935990476549905,Chemprop v2

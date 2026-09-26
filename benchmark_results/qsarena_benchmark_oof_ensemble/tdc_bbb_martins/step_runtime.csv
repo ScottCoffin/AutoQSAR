@@ -1,0 +1,11 @@
+dataset,stage_index,total_stages,stage_label,step_type,model,workflow,started_at,started_epoch,status,ended_at,ended_epoch,duration_seconds
+tdc_bbb_martins,1,10,loading PyTDC ADME benchmark group: bbb_martins (official train_val/test split),load_dataset,,,2026-09-26 07:14:40 UTC,1790406880.9338872,completed,2026-09-26 07:14:41 UTC,1790406881.4553084,0.521
+tdc_bbb_martins,2,10,building molecular features (cached),feature_generation,,,2026-09-26 07:14:41 UTC,1790406881.4553585,resumed_cache,2026-09-26 07:14:41 UTC,1790406881.4675505,0.012
+tdc_bbb_martins,3,10,splitting data and selecting features (cached),feature_selection,,,2026-09-26 07:14:41 UTC,1790406881.4675825,resumed_cache,2026-09-26 07:14:59 UTC,1790406899.285939,17.818
+tdc_bbb_martins,4,10,conventional model TabPFNClassifier,model,TabPFNClassifier,conventional,2026-09-26 07:14:59 UTC,1790406899.2859886,completed,2026-09-26 07:16:22 UTC,1790406982.524842,83.239
+tdc_bbb_martins,5,10,"deep model Chemprop v2 (D-MPNN, ensemble=3) (cached)",model,"Chemprop v2 (D-MPNN, ensemble=3)",Chemprop v2,2026-09-26 07:16:22 UTC,1790406982.5248728,completed,2026-09-26 07:16:22 UTC,1790406982.5261004,0.001
+tdc_bbb_martins,6,10,"deep model Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",model,"Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",Chemprop v2,2026-09-26 07:16:22 UTC,1790406982.5261302,completed,2026-09-26 07:21:14 UTC,1790407274.7836614,292.258
+tdc_bbb_martins,7,10,"deep model Chemprop v2 (CMPNN, ensemble=3) (cached)",model,"Chemprop v2 (CMPNN, ensemble=3)",Chemprop v2,2026-09-26 07:21:14 UTC,1790407274.7836905,completed,2026-09-26 07:21:14 UTC,1790407274.7849598,0.001
+tdc_bbb_martins,8,10,"deep model Chemprop v2 (AttentiveFP, ensemble=3)",model,"Chemprop v2 (AttentiveFP, ensemble=3)",Chemprop v2,2026-09-26 07:21:14 UTC,1790407274.7849884,completed,2026-09-26 07:26:23 UTC,1790407583.3723364,308.587
+tdc_bbb_martins,9,10,"deep model Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3) (cached)",model,"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",Chemprop v2,2026-09-26 07:26:23 UTC,1790407583.3723636,completed,2026-09-26 07:26:23 UTC,1790407583.374326,0.002
+tdc_bbb_martins,10,10,ensemble (2 method(s)),model,Ensemble,ensemble,2026-09-26 07:26:23 UTC,1790407583.3743854,completed,2026-09-26 07:26:25 UTC,1790407585.0392778,1.665

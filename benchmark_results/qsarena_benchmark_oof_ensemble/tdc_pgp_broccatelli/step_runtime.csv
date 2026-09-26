@@ -1,0 +1,11 @@
+dataset,stage_index,total_stages,stage_label,step_type,model,workflow,started_at,started_epoch,status,ended_at,ended_epoch,duration_seconds
+tdc_pgp_broccatelli,1,10,loading PyTDC ADME benchmark group: pgp_broccatelli (official train_val/test split),load_dataset,,,2026-09-26 06:59:35 UTC,1790405975.802618,completed,2026-09-26 06:59:36 UTC,1790405976.1441123,0.341
+tdc_pgp_broccatelli,2,10,building molecular features (cached),feature_generation,,,2026-09-26 06:59:36 UTC,1790405976.1441615,resumed_cache,2026-09-26 06:59:36 UTC,1790405976.150639,0.006
+tdc_pgp_broccatelli,3,10,splitting data and selecting features (cached),feature_selection,,,2026-09-26 06:59:36 UTC,1790405976.150672,resumed_cache,2026-09-26 06:59:47 UTC,1790405987.970787,11.82
+tdc_pgp_broccatelli,4,10,conventional model TabPFNClassifier,model,TabPFNClassifier,conventional,2026-09-26 06:59:47 UTC,1790405987.9708543,completed,2026-09-26 07:00:49 UTC,1790406049.3987868,61.428
+tdc_pgp_broccatelli,5,10,"deep model Chemprop v2 (D-MPNN, ensemble=3) (cached)",model,"Chemprop v2 (D-MPNN, ensemble=3)",Chemprop v2,2026-09-26 07:00:49 UTC,1790406049.3988397,completed,2026-09-26 07:00:49 UTC,1790406049.400041,0.001
+tdc_pgp_broccatelli,6,10,"deep model Chemprop v2 (D-MPNN + RDKit2D, ensemble=3) (cached)",model,"Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",Chemprop v2,2026-09-26 07:00:49 UTC,1790406049.400071,completed,2026-09-26 07:00:49 UTC,1790406049.401302,0.001
+tdc_pgp_broccatelli,7,10,"deep model Chemprop v2 (CMPNN, ensemble=3) (cached)",model,"Chemprop v2 (CMPNN, ensemble=3)",Chemprop v2,2026-09-26 07:00:49 UTC,1790406049.4013312,completed,2026-09-26 07:00:49 UTC,1790406049.4025867,0.001
+tdc_pgp_broccatelli,8,10,"deep model Chemprop v2 (AttentiveFP, ensemble=3) (cached)",model,"Chemprop v2 (AttentiveFP, ensemble=3)",Chemprop v2,2026-09-26 07:00:49 UTC,1790406049.4026158,completed,2026-09-26 07:00:49 UTC,1790406049.4038756,0.001
+tdc_pgp_broccatelli,9,10,"deep model Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3) (cached)",model,"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",Chemprop v2,2026-09-26 07:00:49 UTC,1790406049.4039044,completed,2026-09-26 07:00:49 UTC,1790406049.405206,0.001
+tdc_pgp_broccatelli,10,10,ensemble (2 method(s)),model,Ensemble,ensemble,2026-09-26 07:00:49 UTC,1790406049.4052353,completed,2026-09-26 07:00:50 UTC,1790406050.9650037,1.56

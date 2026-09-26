@@ -1,0 +1,11 @@
+dataset,stage_index,total_stages,stage_label,step_type,model,workflow,started_at,started_epoch,status,ended_at,ended_epoch,duration_seconds
+tdc_ppbr_az,1,10,loading PyTDC ADME benchmark group: ppbr_az (official train_val/test split),load_dataset,,,2026-09-26 07:32:02 UTC,1790407922.716079,completed,2026-09-26 07:32:03 UTC,1790407923.5299728,0.814
+tdc_ppbr_az,2,10,building molecular features (cached),feature_generation,,,2026-09-26 07:32:03 UTC,1790407923.5300229,resumed_cache,2026-09-26 07:32:03 UTC,1790407923.5472572,0.017
+tdc_ppbr_az,3,10,splitting data and selecting features (cached),feature_selection,,,2026-09-26 07:32:03 UTC,1790407923.547295,resumed_cache,2026-09-26 07:32:31 UTC,1790407951.7341561,28.187
+tdc_ppbr_az,4,10,conventional model TabPFNRegressor,model,TabPFNRegressor,conventional,2026-09-26 07:32:31 UTC,1790407951.7342038,completed,2026-09-26 07:33:18 UTC,1790407998.3200676,46.586
+tdc_ppbr_az,5,10,"deep model Chemprop v2 (D-MPNN, ensemble=3) (cached)",model,"Chemprop v2 (D-MPNN, ensemble=3)",Chemprop v2,2026-09-26 07:33:18 UTC,1790407998.3201365,completed,2026-09-26 07:33:18 UTC,1790407998.3218498,0.002
+tdc_ppbr_az,6,10,"deep model Chemprop v2 (D-MPNN + RDKit2D, ensemble=3) (cached)",model,"Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",Chemprop v2,2026-09-26 07:33:18 UTC,1790407998.3218818,completed,2026-09-26 07:33:18 UTC,1790407998.3231695,0.001
+tdc_ppbr_az,7,10,"deep model Chemprop v2 (CMPNN, ensemble=3) (cached)",model,"Chemprop v2 (CMPNN, ensemble=3)",Chemprop v2,2026-09-26 07:33:18 UTC,1790407998.3231988,completed,2026-09-26 07:33:18 UTC,1790407998.324476,0.001
+tdc_ppbr_az,8,10,"deep model Chemprop v2 (AttentiveFP, ensemble=3) (cached)",model,"Chemprop v2 (AttentiveFP, ensemble=3)",Chemprop v2,2026-09-26 07:33:18 UTC,1790407998.3245056,completed,2026-09-26 07:33:18 UTC,1790407998.3257873,0.001
+tdc_ppbr_az,9,10,"deep model Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3) (cached)",model,"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",Chemprop v2,2026-09-26 07:33:18 UTC,1790407998.3258352,completed,2026-09-26 07:33:18 UTC,1790407998.327191,0.001
+tdc_ppbr_az,10,10,ensemble (2 method(s)),model,Ensemble,ensemble,2026-09-26 07:33:18 UTC,1790407998.3272202,completed,2026-09-26 07:33:19 UTC,1790407999.8384752,1.511

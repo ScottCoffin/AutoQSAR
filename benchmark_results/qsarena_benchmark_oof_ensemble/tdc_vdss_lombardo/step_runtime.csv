@@ -1,0 +1,11 @@
+dataset,stage_index,total_stages,stage_label,step_type,model,workflow,started_at,started_epoch,status,ended_at,ended_epoch,duration_seconds
+tdc_vdss_lombardo,1,10,loading PyTDC ADME benchmark group: vdss_lombardo (official train_val/test split),load_dataset,,,2026-09-26 06:48:58 UTC,1790405338.3603966,completed,2026-09-26 06:48:58 UTC,1790405338.6995335,0.339
+tdc_vdss_lombardo,2,10,building molecular features (cached),feature_generation,,,2026-09-26 06:48:58 UTC,1790405338.69959,resumed_cache,2026-09-26 06:48:58 UTC,1790405338.708341,0.009
+tdc_vdss_lombardo,3,10,splitting data and selecting features (cached),feature_selection,,,2026-09-26 06:48:58 UTC,1790405338.708375,resumed_cache,2026-09-26 06:49:12 UTC,1790405352.4290538,13.721
+tdc_vdss_lombardo,4,10,conventional model TabPFNRegressor,model,TabPFNRegressor,conventional,2026-09-26 06:49:12 UTC,1790405352.4291024,completed,2026-09-26 06:49:40 UTC,1790405380.9664655,28.537
+tdc_vdss_lombardo,5,10,"deep model Chemprop v2 (D-MPNN, ensemble=3) (cached)",model,"Chemprop v2 (D-MPNN, ensemble=3)",Chemprop v2,2026-09-26 06:49:40 UTC,1790405380.9664953,completed,2026-09-26 06:49:40 UTC,1790405380.967688,0.001
+tdc_vdss_lombardo,6,10,"deep model Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",model,"Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",Chemprop v2,2026-09-26 06:49:40 UTC,1790405380.9677184,completed,2026-09-26 06:53:58 UTC,1790405638.4201045,257.452
+tdc_vdss_lombardo,7,10,"deep model Chemprop v2 (CMPNN, ensemble=3) (cached)",model,"Chemprop v2 (CMPNN, ensemble=3)",Chemprop v2,2026-09-26 06:53:58 UTC,1790405638.4201329,completed,2026-09-26 06:53:58 UTC,1790405638.4213855,0.001
+tdc_vdss_lombardo,8,10,"deep model Chemprop v2 (AttentiveFP, ensemble=3)",model,"Chemprop v2 (AttentiveFP, ensemble=3)",Chemprop v2,2026-09-26 06:53:58 UTC,1790405638.421415,completed,2026-09-26 06:58:04 UTC,1790405884.1665266,245.745
+tdc_vdss_lombardo,9,10,"deep model Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3) (cached)",model,"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",Chemprop v2,2026-09-26 06:58:04 UTC,1790405884.1665552,completed,2026-09-26 06:58:04 UTC,1790405884.1679366,0.001
+tdc_vdss_lombardo,10,10,ensemble (2 method(s)),model,Ensemble,ensemble,2026-09-26 06:58:04 UTC,1790405884.1679986,completed,2026-09-26 06:58:05 UTC,1790405885.2500012,1.082

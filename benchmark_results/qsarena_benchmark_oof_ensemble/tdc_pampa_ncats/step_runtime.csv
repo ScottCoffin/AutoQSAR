@@ -1,0 +1,11 @@
+dataset,stage_index,total_stages,stage_label,step_type,model,workflow,started_at,started_epoch,status,ended_at,ended_epoch,duration_seconds
+tdc_pampa_ncats,1,10,loading PyTDC ADME benchmark: pampa_ncats,load_dataset,,,2026-09-26 07:26:25 UTC,1790407585.4829419,completed,2026-09-26 07:26:26 UTC,1790407586.0300906,0.547
+tdc_pampa_ncats,2,10,building molecular features (cached),feature_generation,,,2026-09-26 07:26:26 UTC,1790407586.0301404,resumed_cache,2026-09-26 07:26:26 UTC,1790407586.0415707,0.011
+tdc_pampa_ncats,3,10,splitting data and selecting features (cached),feature_selection,,,2026-09-26 07:26:26 UTC,1790407586.0416245,resumed_cache,2026-09-26 07:26:46 UTC,1790407606.076216,20.035
+tdc_pampa_ncats,4,10,conventional model TabPFNClassifier,model,TabPFNClassifier,conventional,2026-09-26 07:26:46 UTC,1790407606.0762632,completed,2026-09-26 07:28:27 UTC,1790407707.4285443,101.352
+tdc_pampa_ncats,5,10,"deep model Chemprop v2 (D-MPNN, ensemble=3) (cached)",model,"Chemprop v2 (D-MPNN, ensemble=3)",Chemprop v2,2026-09-26 07:28:27 UTC,1790407707.4285746,completed,2026-09-26 07:28:27 UTC,1790407707.429782,0.001
+tdc_pampa_ncats,6,10,"deep model Chemprop v2 (D-MPNN + RDKit2D, ensemble=3) (cached)",model,"Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",Chemprop v2,2026-09-26 07:28:27 UTC,1790407707.4298322,completed,2026-09-26 07:28:27 UTC,1790407707.4310813,0.001
+tdc_pampa_ncats,7,10,"deep model Chemprop v2 (CMPNN, ensemble=3) (cached)",model,"Chemprop v2 (CMPNN, ensemble=3)",Chemprop v2,2026-09-26 07:28:27 UTC,1790407707.4311104,completed,2026-09-26 07:28:27 UTC,1790407707.4323578,0.001
+tdc_pampa_ncats,8,10,"deep model Chemprop v2 (AttentiveFP, ensemble=3) (cached)",model,"Chemprop v2 (AttentiveFP, ensemble=3)",Chemprop v2,2026-09-26 07:28:27 UTC,1790407707.4323874,completed,2026-09-26 07:28:27 UTC,1790407707.4336627,0.001
+tdc_pampa_ncats,9,10,"deep model Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3) (cached)",model,"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",Chemprop v2,2026-09-26 07:28:27 UTC,1790407707.4336927,completed,2026-09-26 07:28:27 UTC,1790407707.435026,0.001
+tdc_pampa_ncats,10,10,ensemble (2 method(s)),model,Ensemble,ensemble,2026-09-26 07:28:27 UTC,1790407707.4350562,completed,2026-09-26 07:28:29 UTC,1790407709.2349796,1.8

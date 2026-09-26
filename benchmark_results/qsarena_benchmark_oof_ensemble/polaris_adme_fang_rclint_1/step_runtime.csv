@@ -1,0 +1,6 @@
+dataset,stage_index,total_stages,stage_label,step_type,model,workflow,started_at,started_epoch,status,ended_at,ended_epoch,duration_seconds
+polaris_adme_fang_rclint_1,1,5,loading Polaris ADME benchmark mirror: adme-fang-rclint-1,load_dataset,,,2026-09-26 14:11:06 UTC,1790431866.2745245,completed,2026-09-26 14:11:07 UTC,1790431867.0458312,0.771
+polaris_adme_fang_rclint_1,2,5,building molecular features (cached),feature_generation,,,2026-09-26 14:11:07 UTC,1790431867.0458848,resumed_cache,2026-09-26 14:11:07 UTC,1790431867.0614405,0.016
+polaris_adme_fang_rclint_1,3,5,splitting data and selecting features (cached),feature_selection,,,2026-09-26 14:11:07 UTC,1790431867.061486,resumed_cache,2026-09-26 14:11:31 UTC,1790431891.773081,24.712
+polaris_adme_fang_rclint_1,4,5,conventional model TabPFNRegressor,model,TabPFNRegressor,conventional,2026-09-26 14:11:31 UTC,1790431891.7731295,completed,2026-09-26 14:12:42 UTC,1790431962.4544525,70.681
+polaris_adme_fang_rclint_1,5,5,ensemble (2 method(s)),model,Ensemble,ensemble,2026-09-26 14:12:42 UTC,1790431962.4544857,completed,2026-09-26 14:12:44 UTC,1790431964.031179,1.577

@@ -1,0 +1,11 @@
+dataset,stage_index,total_stages,stage_label,step_type,model,workflow,started_at,started_epoch,status,ended_at,ended_epoch,duration_seconds
+tdc_cyp2d6_veith,1,10,loading PyTDC ADME benchmark group: cyp2d6_veith (official train_val/test split),load_dataset,,,2026-09-26 11:43:32 UTC,1790423012.5589707,completed,2026-09-26 11:43:36 UTC,1790423016.0680058,3.509
+tdc_cyp2d6_veith,2,10,building molecular features (cached),feature_generation,,,2026-09-26 11:43:36 UTC,1790423016.0680554,resumed_cache,2026-09-26 11:43:36 UTC,1790423016.1310763,0.063
+tdc_cyp2d6_veith,3,10,splitting data and selecting features (cached),feature_selection,,,2026-09-26 11:43:36 UTC,1790423016.1311388,resumed_cache,2026-09-26 11:45:30 UTC,1790423130.3055992,114.174
+tdc_cyp2d6_veith,4,10,conventional model TabPFNClassifier,model,TabPFNClassifier,conventional,2026-09-26 11:45:30 UTC,1790423130.3056605,completed,2026-09-26 11:45:31 UTC,1790423131.0713942,0.766
+tdc_cyp2d6_veith,5,10,"deep model Chemprop v2 (D-MPNN, ensemble=3)",model,"Chemprop v2 (D-MPNN, ensemble=3)",Chemprop v2,2026-09-26 11:45:31 UTC,1790423131.0714245,completed,2026-09-26 11:56:39 UTC,1790423799.667389,668.596
+tdc_cyp2d6_veith,6,10,"deep model Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",model,"Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",Chemprop v2,2026-09-26 11:56:39 UTC,1790423799.6674204,completed,2026-09-26 12:10:01 UTC,1790424601.3265047,801.659
+tdc_cyp2d6_veith,7,10,"deep model Chemprop v2 (CMPNN, ensemble=3)",model,"Chemprop v2 (CMPNN, ensemble=3)",Chemprop v2,2026-09-26 12:10:01 UTC,1790424601.3265345,completed,2026-09-26 12:21:36 UTC,1790425296.177983,694.851
+tdc_cyp2d6_veith,8,10,"deep model Chemprop v2 (AttentiveFP, ensemble=3)",model,"Chemprop v2 (AttentiveFP, ensemble=3)",Chemprop v2,2026-09-26 12:21:36 UTC,1790425296.178015,completed,2026-09-26 12:35:15 UTC,1790426115.632317,819.454
+tdc_cyp2d6_veith,9,10,"deep model Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",model,"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",Chemprop v2,2026-09-26 12:35:15 UTC,1790426115.6323586,completed,2026-09-26 12:46:52 UTC,1790426812.554772,696.922
+tdc_cyp2d6_veith,10,10,ensemble (2 method(s)),model,Ensemble,ensemble,2026-09-26 12:46:52 UTC,1790426812.5548556,completed,2026-09-26 12:46:56 UTC,1790426816.8212955,4.266

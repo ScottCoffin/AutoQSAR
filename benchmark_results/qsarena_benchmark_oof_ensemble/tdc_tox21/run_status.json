@@ -1,0 +1,9 @@
+{
+  "status": "completed",
+  "dataset": "tdc_tox21",
+  "source": "PyTDC Tox benchmark: tox21 [label=NR-AR]",
+  "completed_at": "2026-09-26 14:30:46",
+  "elapsed_seconds": 336.083,
+  "n_metrics_rows": 42,
+  "n_stage_records": 5
+}

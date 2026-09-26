@@ -1,0 +1,9 @@
+{
+  "status": "completed",
+  "dataset": "tdc_herg",
+  "source": "PyTDC Tox benchmark group: herg (official train_val/test split)",
+  "completed_at": "2026-09-26 06:33:45",
+  "elapsed_seconds": 62.171,
+  "n_metrics_rows": 49,
+  "n_stage_records": 10
+}

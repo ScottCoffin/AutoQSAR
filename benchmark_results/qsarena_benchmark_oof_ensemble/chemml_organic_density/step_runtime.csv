@@ -1,0 +1,11 @@
+dataset,stage_index,total_stages,stage_label,step_type,model,workflow,started_at,started_epoch,status,ended_at,ended_epoch,duration_seconds
+chemml_organic_density,1,10,loading ChemML bundled dataset: organic_density,load_dataset,,,2026-09-26 06:28:48 UTC,1790404128.3883185,completed,2026-09-26 06:28:48 UTC,1790404128.5053782,0.117
+chemml_organic_density,2,10,building molecular features (cached),feature_generation,,,2026-09-26 06:28:48 UTC,1790404128.5054207,resumed_cache,2026-09-26 06:28:48 UTC,1790404128.5084379,0.003
+chemml_organic_density,3,10,splitting data and selecting features (cached),feature_selection,,,2026-09-26 06:28:48 UTC,1790404128.50847,resumed_cache,2026-09-26 06:28:52 UTC,1790404132.8624537,4.354
+chemml_organic_density,4,10,conventional model TabPFNRegressor,model,TabPFNRegressor,conventional,2026-09-26 06:28:52 UTC,1790404132.8625038,completed,2026-09-26 06:29:28 UTC,1790404168.2449226,35.382
+chemml_organic_density,5,10,"deep model Chemprop v2 (D-MPNN, ensemble=3) (cached)",model,"Chemprop v2 (D-MPNN, ensemble=3)",Chemprop v2,2026-09-26 06:29:28 UTC,1790404168.2449517,completed,2026-09-26 06:29:28 UTC,1790404168.2461667,0.001
+chemml_organic_density,6,10,"deep model Chemprop v2 (D-MPNN + RDKit2D, ensemble=3) (cached)",model,"Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",Chemprop v2,2026-09-26 06:29:28 UTC,1790404168.2461965,completed,2026-09-26 06:29:28 UTC,1790404168.24742,0.001
+chemml_organic_density,7,10,"deep model Chemprop v2 (CMPNN, ensemble=3) (cached)",model,"Chemprop v2 (CMPNN, ensemble=3)",Chemprop v2,2026-09-26 06:29:28 UTC,1790404168.2474494,completed,2026-09-26 06:29:28 UTC,1790404168.2486744,0.001
+chemml_organic_density,8,10,"deep model Chemprop v2 (AttentiveFP, ensemble=3) (cached)",model,"Chemprop v2 (AttentiveFP, ensemble=3)",Chemprop v2,2026-09-26 06:29:28 UTC,1790404168.2487333,completed,2026-09-26 06:29:28 UTC,1790404168.2500265,0.001
+chemml_organic_density,9,10,"deep model Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3) (cached)",model,"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",Chemprop v2,2026-09-26 06:29:28 UTC,1790404168.250055,completed,2026-09-26 06:29:28 UTC,1790404168.2513812,0.001
+chemml_organic_density,10,10,ensemble (2 method(s)),model,Ensemble,ensemble,2026-09-26 06:29:28 UTC,1790404168.2514417,completed,2026-09-26 06:29:29 UTC,1790404169.079974,0.829

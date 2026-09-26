@@ -1,0 +1,11 @@
+dataset,stage_index,total_stages,stage_label,step_type,model,workflow,started_at,started_epoch,status,ended_at,ended_epoch,duration_seconds
+tdc_half_life_obach,1,10,loading PyTDC ADME benchmark group: half_life_obach (official train_val/test split),load_dataset,,,2026-09-26 06:34:45 UTC,1790404485.622717,completed,2026-09-26 06:34:45 UTC,1790404485.810978,0.188
+tdc_half_life_obach,2,10,building molecular features (cached),feature_generation,,,2026-09-26 06:34:45 UTC,1790404485.8110166,resumed_cache,2026-09-26 06:34:45 UTC,1790404485.8157647,0.005
+tdc_half_life_obach,3,10,splitting data and selecting features (cached),feature_selection,,,2026-09-26 06:34:45 UTC,1790404485.8158405,resumed_cache,2026-09-26 06:34:53 UTC,1790404493.1059122,7.29
+tdc_half_life_obach,4,10,conventional model TabPFNRegressor,model,TabPFNRegressor,conventional,2026-09-26 06:34:53 UTC,1790404493.1059601,completed,2026-09-26 06:35:20 UTC,1790404520.6363106,27.53
+tdc_half_life_obach,5,10,"deep model Chemprop v2 (D-MPNN, ensemble=3) (cached)",model,"Chemprop v2 (D-MPNN, ensemble=3)",Chemprop v2,2026-09-26 06:35:20 UTC,1790404520.6363392,completed,2026-09-26 06:35:20 UTC,1790404520.6375625,0.001
+tdc_half_life_obach,6,10,"deep model Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",model,"Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",Chemprop v2,2026-09-26 06:35:20 UTC,1790404520.637592,completed,2026-09-26 06:39:11 UTC,1790404751.2911224,230.654
+tdc_half_life_obach,7,10,"deep model Chemprop v2 (CMPNN, ensemble=3) (cached)",model,"Chemprop v2 (CMPNN, ensemble=3)",Chemprop v2,2026-09-26 06:39:11 UTC,1790404751.291151,completed,2026-09-26 06:39:11 UTC,1790404751.2923732,0.001
+tdc_half_life_obach,8,10,"deep model Chemprop v2 (AttentiveFP, ensemble=3)",model,"Chemprop v2 (AttentiveFP, ensemble=3)",Chemprop v2,2026-09-26 06:39:11 UTC,1790404751.2924027,completed,2026-09-26 06:43:00 UTC,1790404980.6399653,229.348
+tdc_half_life_obach,9,10,"deep model Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3) (cached)",model,"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",Chemprop v2,2026-09-26 06:43:00 UTC,1790404980.639994,completed,2026-09-26 06:43:00 UTC,1790404980.641323,0.001
+tdc_half_life_obach,10,10,ensemble (2 method(s)),model,Ensemble,ensemble,2026-09-26 06:43:00 UTC,1790404980.6413834,completed,2026-09-26 06:43:01 UTC,1790404981.5826967,0.941

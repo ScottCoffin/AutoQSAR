@@ -1,0 +1,9 @@
+{
+  "status": "completed",
+  "dataset": "tdc_dili",
+  "source": "PyTDC Tox benchmark group: dili (official train_val/test split)",
+  "completed_at": "2026-09-26 06:28:15",
+  "elapsed_seconds": 87.842,
+  "n_metrics_rows": 47,
+  "n_stage_records": 10
+}
