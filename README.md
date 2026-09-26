@@ -148,9 +148,32 @@ After base models produce aligned train/test predictions, QSARena can run:
   selection before bounded combinatorial fusion
 - `Ensemble (OOF Stacking (RidgeCV))` for regression, with a logistic
   meta-model fallback for binary classification
-- `Ensemble (Weighted average (inverse train RMSE))`; for classification this
-  weights by the configured primary classification metric
+- `Ensemble (Weighted average (inverse OOF error))`: weights are the inverse
+  out-of-fold RMSE (regression) or the inverse out-of-fold RMS probability error
+  (classification)
 - `Ensemble (Simple average)`
+
+Ensembles are built only from **out-of-fold (OOF)** member predictions
+(`--ensemble-member-selection-split oof`, the default). Member filtering, the
+correlated-pair tie-break, the weights and the stacking meta-model never see the
+test split, and never see a member's in-sample predictions for its own training
+molecules (which would hand the ensemble to whichever model memorises the
+training set). OOF predictions come from, in order:
+
+1. predictions a backend already saved (Uni-Mol writes its internal 5-fold
+   predictions to `cv.data`; conventional models reuse their CV fold fits);
+2. refitting the member on `--ensemble-oof-folds` folds of the training split,
+   with the same fold geometry as `--cv-folds`.
+
+`--ensemble-oof-scope all` also refits Chemprop per fold on the GPU. `cpu` does
+not, and Chemprop is then left out of the ensemble. Members that call a metered API
+(TabPFN via the Prior Labs client) are refitted only with
+`--ensemble-oof-allow-api-refits`. Fold results are cached
+under `<dataset>/ensemble_oof/` and saved as `split="oof"` rows in
+`predictions.csv`, so the stage resumes after an interruption. To rebuild
+ensembles for an existing run without retraining any full model, see
+`submission/chemprop_rerun_command.md` §7. `--ensemble-member-selection-split
+train|test` exist only to reproduce earlier runs.
 
 The notebook's applicability-domain section also fits internal diagnostic
 models, including random-forest-based uncertainty/coverage helpers, but those
@@ -439,6 +462,24 @@ This updates:
 ```text
 portable_colab_qsar_bundle/colab_qsar_tutorial.ipynb
 ```
+
+## Guided Tutorial (Your Own Data)
+
+[`docs/tutorial.md`](docs/tutorial.md) (also Additional file 2 of the paper) walks through installation, a
+single-dataset quickstart, all fifteen groups of options, batch mode over any number of your own datasets,
+resume, the HTML/Markdown reports, applicability domain and troubleshooting. Every command in it is run by
+the test suite (`tests/docs/test_tutorial_runs.py`). The short version:
+
+```bash
+qsarena-examples qsarena_tutorial          # synthetic example data + a starter run.yaml
+cd qsarena_tutorial
+qsarena-benchmark --dataset solubility.csv --target-col logS --benchmark-profile quick --output-dir runs/quick
+qsarena-benchmark --batch batch_manifest.csv --benchmark-profile quick --output-dir runs/batch
+qsarena-benchmark --config run.yaml         # every option can live in a run.yaml
+```
+
+Every option is listed in [`docs/options_reference.md`](docs/options_reference.md); a commented template
+with all defaults is [`configs/run.example.yaml`](configs/run.example.yaml).
 
 ## Running Benchmarks
 
@@ -955,7 +996,7 @@ resource-aware settings explicitly so runs are reproducible across machines.
 **Fresh run:**
 
 ```bash
-cd ~/AutoQSAR
+cd ~/QSARena
 bash js2/run_a100_benchmark.sh
 ```
 
@@ -963,7 +1004,7 @@ bash js2/run_a100_benchmark.sh
 
 ```bash
 bash js2/run_a100_benchmark.sh \
-  --output-dir benchmark_results/autoqsar_benchmark_<timestamp>
+  --output-dir benchmark_results/qsarena_benchmark_<timestamp>
 ```
 
 **Monitor progress (live, updates every 10 seconds):**
@@ -984,19 +1025,19 @@ dataset and checkpoint stage.
 # On the source machine — copy results (skip large model weight files)
 rsync -av \
   --exclude='*.pth' --exclude='*.pt' --exclude='*.joblib' \
-  benchmark_results/autoqsar_benchmark_<timestamp>/ \
-  user@new-a100:~/AutoQSAR/benchmark_results/autoqsar_benchmark_<timestamp>/
+  benchmark_results/qsarena_benchmark_<timestamp>/ \
+  user@new-a100:~/QSARena/benchmark_results/qsarena_benchmark_<timestamp>/
 
 # On the new machine:
 bash js2/run_a100_benchmark.sh \
-  --output-dir benchmark_results/autoqsar_benchmark_<timestamp>
+  --output-dir benchmark_results/qsarena_benchmark_<timestamp>
 ```
 
 **Parallelism (opt-in, serial by default):**
 
 ```bash
 # Run 2 datasets concurrently — useful on many-core nodes with enough VRAM:
-AUTOQSAR_PARALLEL_DATASETS=2 bash js2/run_a100_benchmark.sh
+QSARENA_PARALLEL_DATASETS=2 bash js2/run_a100_benchmark.sh
 ```
 
 **Runtime settings encoded in `js2/run_a100_benchmark.sh`:**
@@ -1052,6 +1093,32 @@ python portable_colab_qsar_bundle\run_qsarena_benchmarks.py `
 
 This writes run-vs-run split, config, error, and leaderboard comparability files
 when enough matching data are available.
+
+## Applicability Domain, Calibration And OECD Reports
+
+The `qsarena` package carries the regulatory-facing utilities (OECD (Q)SAR principles 3-5):
+
+| Module | Provides |
+|---|---|
+| `qsarena.applicability_domain` | Roy-Kar-Ambure (2015) descriptor standardization AD; kNN Tanimoto AD with a training-only threshold |
+| `qsarena.uncertainty` | Split-conformal intervals and prediction sets, probability-confidence flag, ECE, Brier, reliability bins |
+| `qsarena.interpretability` | Normalised native/permutation importances; "no per-feature attribution" for graph/3D models |
+| `qsarena.qmrf` | QMRF-style Markdown/JSON report under the five OECD principles; fails loudly on missing inputs |
+| `qsarena.provenance` | `environment_manifest.json` (versions, pip-freeze list, git commit, hardware) and split hashes |
+
+Reproduce the applicability-domain and calibration study on the 22 official TDC splits
+(CPU only, about 15 minutes on 12 cores; needs `data/admet_group/`):
+
+```bash
+python -m qsarena.reliability_study --out results/reliability_tdc22
+python -m qsarena.admet_ai_parity --out results/admet_ai_parity.csv
+```
+
+The study uses one fixed reference model (random forest on Morgan + RDKit 2D descriptors), not
+the benchmark's per-dataset winner, because the canonical run's per-molecule predictions are not
+in the repository.
+
+Tests: `pip install -e .[dev]` then `pytest -q -m "not gpu and not slow"`.
 
 ## Development Notes
 

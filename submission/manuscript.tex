@@ -18,7 +18,24 @@
 %% Add 'referee' for double-spaced review copy, 'lineno' for line numbers.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\documentclass[pdflatex,sn-vancouver-num]{sn-jnl}
+%% Load url with 'hyphens' BEFORE the class, because sn-jnl pulls in hyperref (and hence url)
+%% itself and options cannot be added afterwards. Without this, long reference URLs are a single
+%% unbreakable box: the Schrodinger white-paper URL overflowed the Springer column by 57.6pt.
+%% \RequirePackage is the only package command permitted before \documentclass.
+\RequirePackage[hyphens]{url}
+
+%% sn-jnl declares the option 'sn-vancouver'. 'sn-vancouver-num' is NOT a valid option:
+%% LaTeX discards it with only an "Unused global option" warning, no reference style is
+%% selected, and bibtex then fails with "I found no bibstyle command" leaving every
+%% citation undefined. Numbered Vancouver is the J. Cheminform. style.
+\documentclass[pdflatex,sn-vancouver,Numbered]{sn-jnl}
+
+% sn-jnl.cls calls \DeclareNewFootnote (manyfoot) and \definecolor (xcolor) from its
+% \AtBeginDocument hook but does not load either package itself: Springer's own sample preamble
+% loads them, so a document that omits them fails at \begin{document} with a cascade of
+% "Undefined control sequence" errors. Keep these first.
+\usepackage{manyfoot}
+\usepackage{xcolor}
 
 \usepackage{graphicx}
 \usepackage{booktabs}
@@ -37,9 +54,15 @@
 
 \raggedbottom
 
+% sn-jnl loads hyperref itself. Suppress the coloured link borders so the submitted PDF does not
+% look like a working draft; guarded because the class may be built without hyperref.
+\makeatletter
+\@ifpackageloaded{hyperref}{\hypersetup{hidelinks}}{}
+\makeatother
+
 \begin{document}
 
-\title[No Single Architecture Wins]{No Single Architecture Wins: Ensembles and Conventional Machine Learning Match Pretrained Molecular Models Across 44 Property-Prediction Benchmarks}
+\title[No Single Model Family Dominates]{No Single Model Family Dominates: Ensembles and Conventional Machine Learning Perform Comparably to Pretrained Molecular Models Across 44 Property-Prediction Benchmarks}
 
 \author*[1]{\fnm{Scott} \sur{Coffin}}\email{scott.l.coffin@gmail.com}
 
@@ -57,7 +80,7 @@
 \begin{figure*}[htbp]
 \centering
 \includegraphics[width=\textwidth]{figures/graphical_abstract.pdf}
-\caption*{\textbf{Graphical abstract.} QSARena evaluates conventional, ensemble and pretrained molecular models under one leakage-controlled pipeline across 44 benchmarks. No architecture family wins more than 36\% of datasets; the best model per dataset reaches the estimated published top ten on 35 of 37 comparable datasets, falling to 25 of 37 when the model is chosen without consulting held-out data.}
+\caption*{\textbf{Graphical abstract.} QSARena evaluates conventional, ensemble and pretrained molecular models under one leakage-controlled pipeline across 44 benchmarks. No model family wins more than 36\% of datasets. Choosing the model by cross-validation instead of on held-out data costs 10 of 35 estimated top-ten placements against published values: 7 reflect the breadth of the model library and 3 the selection protocol, which also accounts for every first place. Absolute ranks are provisional.}
 \end{figure*}
 
 \clearpage
@@ -70,7 +93,9 @@ ADMET: absorption, distribution, metabolism, excretion and toxicity; ADME: absor
 
 \section*{Supplementary information}
 
-\textbf{Additional file 1.} Supplementary tables S1--S4: per-dataset winning models with cross-validation-selected comparators (S1), staged component ablation (S2), feature-family selection summary (S3), and model coverage (S4).
+\textbf{Additional file 1.} Supplementary tables S1--S8: per-dataset winning models with cross-validation-selected comparators (S1), staged component ablation (S2), feature-family selection summary (S3), model coverage (S4), hardware comparison (S5), dataset catalog (S6), leaderboard comparison (S7), and applicability-domain/calibration audit (S8).
+
+\textbf{Additional file 2.} Guided installation and usage tutorial: choosing between the notebook and the command-line runner, installation, a single-dataset quickstart, a reference for all fifteen groups of workflow options, batch mode over any number of datasets, resume, the HTML/Markdown run reports, applicability domain, reproducibility, and troubleshooting. Every command in the tutorial is executed on the bundled example data by an automated test.
 
 \input{declarations}
 

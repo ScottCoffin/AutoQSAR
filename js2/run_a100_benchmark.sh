@@ -11,18 +11,18 @@
 #   bash js2/run_a100_benchmark.sh
 #
 # Usage (resume an interrupted run on the same or a different A100):
-#   bash js2/run_a100_benchmark.sh --output-dir /path/to/existing/benchmark_results/autoqsar_benchmark_<timestamp>
+#   bash js2/run_a100_benchmark.sh --output-dir /path/to/existing/benchmark_results/qsarena_benchmark_<timestamp>
 #
 # Transfer an in-progress run to a new machine:
 #   rsync -av --exclude='*.pth' --exclude='*.pt' --exclude='*.joblib' \
-#       benchmark_results/autoqsar_benchmark_<timestamp>/ \
-#       user@new-a100:/path/to/AutoQSAR/benchmark_results/autoqsar_benchmark_<timestamp>/
-#   Then run: bash js2/run_a100_benchmark.sh --output-dir benchmark_results/autoqsar_benchmark_<timestamp>
+#       benchmark_results/qsarena_benchmark_<timestamp>/ \
+#       user@new-a100:/path/to/QSARena/benchmark_results/qsarena_benchmark_<timestamp>/
+#   Then run: bash js2/run_a100_benchmark.sh --output-dir benchmark_results/qsarena_benchmark_<timestamp>
 #
 # Parallelism controls (environment variables — override before invoking the script):
-#   AUTOQSAR_PARALLEL_DATASETS   number of datasets run concurrently (default: 2 on A100, set to 1 for serial)
-#                                Example: AUTOQSAR_PARALLEL_DATASETS=1 bash js2/run_a100_benchmark.sh
-#   AUTOQSAR_PARALLEL_TDC22_SEEDS  "true" or "false" (default: true) — whether to run TDC-22 multi-seeds in parallel
+#   QSARENA_PARALLEL_DATASETS   number of datasets run concurrently (default: 2 on A100, set to 1 for serial)
+#                                Example: QSARENA_PARALLEL_DATASETS=1 bash js2/run_a100_benchmark.sh
+#   QSARENA_PARALLEL_TDC22_SEEDS  "true" or "false" (default: true) — whether to run TDC-22 multi-seeds in parallel
 #
 # Settings rationale (A100-40 GB, 32 cores):
 #   --n-jobs 0                    use all 32 detected CPU cores for conventional ML
@@ -51,14 +51,14 @@
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-CONDA_ENV="${AUTOQSAR_CONDA_ENV:-autoqsar-py311}"
+CONDA_ENV="${QSARENA_CONDA_ENV:-${AUTOQSAR_CONDA_ENV:-qsarena-py311}}"
 OUTPUT_DIR_ARG=""
 
 # Parallelism: off by default (serial). Opt in via env var when confident in stability.
-#   AUTOQSAR_PARALLEL_DATASETS=2 bash js2/run_a100_benchmark.sh   # 2 concurrent datasets
-#   AUTOQSAR_PARALLEL_TDC22_SEEDS=true bash js2/run_a100_benchmark.sh   # parallel seeds
-PARALLEL_DATASETS="${AUTOQSAR_PARALLEL_DATASETS:-1}"
-PARALLEL_TDC22_SEEDS="${AUTOQSAR_PARALLEL_TDC22_SEEDS:-false}"
+#   QSARENA_PARALLEL_DATASETS=2 bash js2/run_a100_benchmark.sh   # 2 concurrent datasets
+#   QSARENA_PARALLEL_TDC22_SEEDS=true bash js2/run_a100_benchmark.sh   # parallel seeds
+PARALLEL_DATASETS="${QSARENA_PARALLEL_DATASETS:-${AUTOQSAR_PARALLEL_DATASETS:-1}}"
+PARALLEL_TDC22_SEEDS="${QSARENA_PARALLEL_TDC22_SEEDS:-${AUTOQSAR_PARALLEL_TDC22_SEEDS:-false}}"
 
 # Parse --output-dir; everything else passes through to the Python script
 PASSTHROUGH_ARGS=()
@@ -84,16 +84,16 @@ else
 fi
 
 LOG_FILE="$REPO_ROOT/benchmark_run.log"
-MAX_RETRIES="${AUTOQSAR_MAX_RETRIES:-20}"
-RETRY_DELAY="${AUTOQSAR_RETRY_DELAY:-15}"
+MAX_RETRIES="${QSARENA_MAX_RETRIES:-${AUTOQSAR_MAX_RETRIES:-20}}"
+RETRY_DELAY="${QSARENA_RETRY_DELAY:-${AUTOQSAR_RETRY_DELAY:-15}}"
 
 echo "=== QSARena A100 Full Benchmark ==="
 echo "Repo:               $REPO_ROOT"
 echo "Conda env:          $CONDA_ENV"
 echo "Output:             ${OUTPUT_DIR_ARG:-auto-timestamped under benchmark_results/}"
-echo "Parallel datasets:  $PARALLEL_DATASETS  (set AUTOQSAR_PARALLEL_DATASETS=1 for serial/low-resource)"
-echo "Parallel TDC-22:    $PARALLEL_TDC22_SEEDS  (set AUTOQSAR_PARALLEL_TDC22_SEEDS=false to disable)"
-echo "Auto-resume:        up to $MAX_RETRIES retries on crash (AUTOQSAR_MAX_RETRIES to change)"
+echo "Parallel datasets:  $PARALLEL_DATASETS  (set QSARENA_PARALLEL_DATASETS=1 for serial/low-resource)"
+echo "Parallel TDC-22:    $PARALLEL_TDC22_SEEDS  (set QSARENA_PARALLEL_TDC22_SEEDS=false to disable)"
+echo "Auto-resume:        up to $MAX_RETRIES retries on crash (QSARENA_MAX_RETRIES to change)"
 echo "Started:            $(date -u '+%Y-%m-%dT%H:%M:%SZ')"
 echo ""
 
@@ -102,7 +102,7 @@ cd "$REPO_ROOT"
 # Lockfile: prevent two wrapper instances from running simultaneously.
 # The auto-resume loop means kills of the Python child won't start a second wrapper,
 # but manually launching a second script invocation would cause dual GPU usage.
-LOCKFILE="/tmp/autoqsar_benchmark_${USER}.lock"
+LOCKFILE="/tmp/qsarena_benchmark_${USER}.lock"
 if [ -f "$LOCKFILE" ]; then
     LOCK_PID=$(cat "$LOCKFILE" 2>/dev/null)
     if kill -0 "$LOCK_PID" 2>/dev/null; then

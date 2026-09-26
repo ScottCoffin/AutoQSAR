@@ -4,9 +4,53 @@ Live to-do list for the manuscript submission and the tool. Items are ordered by
 `publication_recommendations.md` holds the longer-form reviewer-risk analysis; this file is the
 actionable checklist.
 
-Last updated: 2026-09-24.
+Last updated: 2026-09-25.
 
 ---
+
+## Ensemble OOF repair (2026-09-26) — blocks the manuscript update
+
+- [x] Runner: `--ensemble-member-selection-split oof` (default) builds ensembles from out-of-fold
+      member predictions; `train` mode rewarded memorisation (chemprop_fixed ensembles invalid).
+- [ ] **Run the OOF ensemble repair on the A100** → `benchmark_results/qsarena_benchmark_oof_ensemble`
+      ([submission/chemprop_rerun_command.md](submission/chemprop_rerun_command.md) §7). No full model
+      is retrained: Uni-Mol reads its saved `cv.data` OOF predictions, and CPU members refit on 5 folds
+      (~10 h in total). **Decide on Chemprop**: `--ensemble-oof-scope all` refits it per fold (~65 h,
+      or ~40 h with `--ensemble-oof-folds 3`); `cpu` leaves it out of the ensembles, and the paper
+      must say so. TabPFN (metered API, credits capped until 2026-10-01) is left out of the
+      ensembles unless `--ensemble-oof-allow-api-refits` is passed or local `tabpfn` is installed.
+- [ ] Then regenerate every asset from that run, move `verify_manuscript_numbers.py` to it, and
+      update the prose (both formats), abstract, graphical abstract and AGENTS.md framing. Take
+      selector scaling and dataset wall-clock from the canonical run, not the repair runs.
+- [ ] Disclose the ensemble history in the paper: held-out selection (canonical), then in-sample
+      selection (rejected, memorisation), then OOF. Report how much the leak was worth.
+- [x] **Colab notebook ensemble leak fixed** (block 7A in `build_colab_qsar_tutorial.py`). Members were
+      "best per workflow by test RMSE"; the filters, CFA best-per-workflow and the downstream strategy
+      used test metrics; weights and stacking used in-sample predictions. Everything now runs on OOF
+      predictions (conventional/tuned models refitted on K folds in the cell and cached in `STATE`;
+      Uni-Mol from `cv.data`).
+- [ ] **Manuscript §2.1** says the notebook and runner "share identical code paths". That holds for
+      features, splits, selection and the base models, but notebook ensembles draw only on
+      conventional, tuned and Uni-Mol members; ChemML, TabPFN, MapLight + GNN and Chemprop have no OOF
+      predictions inside a notebook session. Qualify the sentence in both formats.
+
+## Raised by focused peer review (2026-09-25, second report)
+
+Source: `Peer_Review_Report_QSARena_No_Single_Model_Family_Dominates.docx`; itemised response in
+[submission/response_to_focused_review_2026-09-25.md](submission/response_to_focused_review_2026-09-25.md).
+
+- [x] Novelty re-centred on the uniform cross-suite benchmark + the breadth-vs-selection
+      decomposition; explicit differentiation vs DeepChem, QSPRpred, OCHEM, ChemSAR, ADMET-AI.
+- [x] Estimated ranks demoted to a provisional, bias-flagged secondary analysis in the abstract,
+      conclusions, graphical abstract, Limitations and cover letter.
+- [x] 45/43/44 dataset reconciliation; data-availability wording with per-dataset identifiers;
+      duplicated-sentence artifact; style pass.
+- [ ] **Decide the article type**: Research (benchmarking) article, recommended by the reviewer, or
+      Software article, which then needs a real head-to-head vs QSPRpred/DeepChem/ADMET-AI on the
+      TDC-22 splits. Switching changes the section structure. The cover letter has an [AUTHOR] flag.
+- [ ] **Confirm the generative-AI statement** (tools and scope) in `declarations.tex` / `manuscript.md`.
+- [ ] Zenodo deposit must include the per-molecule `predictions.csv` files (reviewer 5.3).
+- [ ] Rebuild `submission/cover_letter.pdf` from the updated `cover_letter.md` (it is stale).
 
 ## Raised by peer review (2026-09-25)
 
@@ -21,6 +65,9 @@ Last updated: 2026-09-24.
 - [ ] **Five-seed replication on the 22 official TDC datasets** — the reviewer's primary required
       change. Until it is run, every rank/win figure and table caption is explicitly marked
       provisional (the reviewer's stated alternative). This is the single highest-value open item.
+      The runner-side work is now separated from the compute job: use
+      `qsarena-benchmark --tdc22-multiseed --tdc22-multiseed-source-run <existing-run>
+      --output-dir <new-run>` to run/resume it independently and write `results/tdc22_multiseed.csv`.
 - [x] Reference-set contamination (MC-2) discussed and linked to the CV-vs-test analysis.
 - [x] Ensemble information-access caveat (MC-3) moved adjacent to the headline claim.
 - [x] Chemprop coverage boundary (MC-4) stated in the abstract.
@@ -115,10 +162,11 @@ Last updated: 2026-09-24.
 ## Science: the known gaps in the benchmark
 
 - [ ] **Multi-seed replication (highest scientific value).** The single-split, single-seed design is
-      the paper's principal stated limitation. The runner already supports it
-      (`--run-tdc22-multiseed-best`, seeds 1–5) and the A100 run had it enabled, but the stage only
-      executes after all datasets finish and that run was interrupted. Re-running the TDC-22 subset
-      would let us report mean ± SD and drop most of the hedging in §4.
+      the paper's principal stated limitation. The runner now supports both the original end-of-run
+      stage (`--run-tdc22-multiseed-best`, seeds 1–5) and an independent/resumable stage
+      (`--tdc22-multiseed`) that reads selected models from an existing source run and writes
+      `results/tdc22_multiseed.csv`. Re-running the TDC-22 subset would let us report mean ± SD and
+      drop most of the hedging in §4.
 - [ ] **Fix the Chemprop backend.** Four of five configured variants failed, leaving Chemprop valid
       on only 6 of 44 datasets. This is the largest known threat to the completeness of Figure 2.
 - [ ] **Restore TabPFN** (disabled in the canonical run) and **diagnose Uni-Mol V2 164M/310M**, which
@@ -141,9 +189,9 @@ Last updated: 2026-09-24.
       and agents alike.
 - [ ] **Add a linter to CI** (`ruff` or `black`) — the last unmet item on the journal's seven-point
       repository checklist.
-- [ ] **Keep the two manuscript formats in sync.** `manuscript.md` and `submission/body.tex` carry the
-      same prose, but `verify_manuscript_numbers.py` only checks the Markdown, so a number corrected
-      in one and not the other passes silently. Grep both after any numeric edit.
+- [x] **Keep the two manuscript formats in sync.** `manuscript.md` and `submission/body.tex` carry the
+      same prose for the OECD reliability section, and `verify_manuscript_numbers.py` now checks the
+      §3.13 numbers in both formats.
 
 ## Done
 

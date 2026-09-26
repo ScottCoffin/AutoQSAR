@@ -11,6 +11,126 @@ QSARena: SMILES → molecular property QSAR/AutoML workspace plus a 45-dataset b
 (`manuscript.md`, target: *Journal of Cheminformatics*). Windows + OneDrive checkout (paths contain spaces:
 always quote). Bash (Git Bash) and PowerShell are both available.
 
+## A100 task: regenerate the clean (out-of-fold) ensemble results — Jetstream2 credits are low
+
+**Read this whole section before running anything on the A100.** The goal is
+`benchmark_results/qsarena_benchmark_oof_ensemble`: the same base models as
+`qsarena_benchmark_chemprop_fixed`, with ensembles rebuilt from out-of-fold (OOF) member
+predictions. Background: "Run lineage" and the ensemble trap below, and
+[submission/chemprop_rerun_command.md](submission/chemprop_rerun_command.md) §7.
+
+**Hard rules**
+- **No full model is ever retrained.** Every base model's train/test predictions already exist in
+  the seeded `predictions.csv`. The only training allowed is *fold* models for OOF predictions, and
+  in step 5 only CPU ones.
+- **No GPU fold refits (Chemprop, `--ensemble-oof-scope all`) without the user's explicit approval**
+  in the current conversation. Report the planner's GPU estimate and stop.
+- **Never enable `--ensemble-oof-allow-api-refits`.** TabPFN runs on a capped Prior Labs credit
+  budget and is left out of the ensembles by default.
+- **Never write into `autoqsar_benchmark_20260623_153839` or `qsarena_benchmark_chemprop_fixed`.**
+  They are read-only inputs. Everything goes to `qsarena_benchmark_oof_ensemble`.
+- **Jetstream2 bills instance uptime, not GPU use.** Don't leave the instance idle between steps.
+  Shelving it when work is done is the user's decision: tell them when the run finishes.
+- **If any check below fails, stop and report. Do not work around it.**
+
+**Step 0 — code and tests (CPU, ~1 min).**
+```bash
+git pull origin main
+python -m pytest -q tests/unit/test_ensemble_oof.py tests/unit/test_plan_ensemble_oof_repair.py
+```
+All must pass. `portable_colab_qsar_bundle/plan_ensemble_oof_repair.py` must exist.
+
+**Step 1 — inputs exist (no compute).**
+```bash
+ls benchmark_results/qsarena_benchmark_chemprop_fixed/*/predictions.csv | wc -l           # expect 44
+find benchmark_results/autoqsar_benchmark_20260623_153839 -name cv.data | wc -l          # Uni-Mol OOF files; expect ~61 (44 V1 + 17 V2)
+```
+If `predictions.csv` is missing, stop: the ensemble cannot be rebuilt without retraining.
+
+**Step 2 — seed the new run (file copy only).**
+```bash
+python portable_colab_qsar_bundle/prepare_chemprop_repair_run.py \
+  benchmark_results/qsarena_benchmark_chemprop_fixed \
+  benchmark_results/qsarena_benchmark_oof_ensemble
+```
+
+**Step 3 — plan without training (the check that nothing unnecessary is refitted).**
+```bash
+python portable_colab_qsar_bundle/plan_ensemble_oof_repair.py \
+  benchmark_results/qsarena_benchmark_oof_ensemble --scope cpu --folds 5 \
+  --source-run benchmark_results/autoqsar_benchmark_20260623_153839
+python portable_colab_qsar_bundle/plan_ensemble_oof_repair.py \
+  benchmark_results/qsarena_benchmark_oof_ensemble --scope all --folds 5 \
+  --source-run benchmark_results/autoqsar_benchmark_20260623_153839   # report only; do NOT run 'all'
+```
+It writes `ensemble_oof_plan.csv`. Pass criteria for the `cpu` plan:
+- exit code 0, and no `missing_inputs` rows;
+- zero `gpu_refit` rows;
+- every Uni-Mol member has source `unimol_cvdata`. Its OOF predictions are read from disk and it is
+  never refitted. List any Uni-Mol member that is `excluded` for the user.
+- `cpu_refit` covers only conventional, ChemML and MapLight members. Chemprop, TabPFN and CFA are
+  `excluded`.
+
+Re-running the planner after step 5 must show the `cpu_refit` members as `saved_oof`. That confirms
+nothing will be refitted twice.
+
+**Step 4 — pilot on the smallest dataset (CPU scope) before the full run.** Take the dataset with
+the smallest `n_train` from `ensemble_oof_plan.csv`. Copy its `metrics.csv` first
+(`cp .../<ds>/metrics.csv /tmp/<ds>_metrics_before.csv`). Then run the step 5 command with a single
+`--dataset-name <ds>`, logging to `logs/oof_pilot.log`. Pass criteria, all required:
+```bash
+L=logs/oof_pilot.log
+# (a) nothing retrained: every model/feature stage must say "(cached)"
+grep -E "stage [0-9]+/[0-9]+: (building molecular features|splitting data|conventional model|deep model|GA tuning|CFA)" $L | grep -v "(cached)"   # must print nothing
+grep -c "config signature changed" $L          # must be 0
+# (b) Uni-Mol read from disk; no GPU fold refits
+grep "ensemble-oof" $L | grep -i "uni-mol"      # must say "read saved Uni-Mol internal-fold predictions"
+grep "ensemble-oof" $L | grep -iE "(chemprop|uni-mol).*fold [0-9]"   # must print nothing
+```
+(c) The base-model rows in `metrics.csv` are unchanged. `primary_metric_value` must be identical
+for every non-ensemble model in `/tmp/<ds>_metrics_before.csv` and the new file.
+(d) The new ensemble rows have `ensemble_member_selection_split == oof`, and
+`ensemble_member_filter_notes` mentions no unexpected `refit failed`.
+
+Record the pilot's wall-clock and extrapolate to 44 datasets. Tell the user before starting step 5
+if the estimate is far above ~10 h.
+
+**Step 5 — full run, CPU scope.**
+```bash
+dataset_args=()
+for m in benchmark_results/qsarena_benchmark_oof_ensemble/*/metrics.csv; do
+  dataset_args+=(--dataset-name "$(basename "$(dirname "$m")")"); done
+nohup python portable_colab_qsar_bundle/run_qsarena_benchmarks.py \
+  --output-dir benchmark_results/qsarena_benchmark_oof_ensemble --benchmark-profile full \
+  "${dataset_args[@]}" --only-model-names 'Ensemble' --run-ensemble --rebuild-ensemble \
+  --ensemble-member-selection-split oof --ensemble-oof-folds 5 --ensemble-oof-scope cpu \
+  --ensemble-oof-source-run benchmark_results/autoqsar_benchmark_20260623_153839 \
+  --run-tabpfn --tabpfn-max-train-rows 11000 --unimol-batch-size 32 --unimol-max-atoms 64 \
+  --run-chemprop-mpnn --run-chemprop-dmpnn --run-chemprop-rdkit2d --run-chemprop-cmpnn \
+  --run-chemprop-attentivefp --run-chemprop-selected-features \
+  --chemprop-epochs 40 --chemprop-ensemble-size 3 --chemprop-random-seed 42 \
+  --reuse-persistent-feature-store --reuse-shared-feature-matrix-cache \
+  --resume --no-run-tdc22-multiseed-best > logs/oof_ensemble.log 2>&1 &
+```
+`--only-model-names 'Ensemble'` is what prevents full-model retraining: every other model stage is
+filtered out. The `--run-tabpfn` / `--run-chemprop-*` / Uni-Mol flags only tell the runner which
+members exist and which settings their fold refits would use. Don't drop them, and don't add a
+model name to `--only-model-names`. If the run is interrupted, re-run the identical command: fold
+results are cached under `<dataset>/ensemble_oof/` and completed OOF vectors are saved in
+`predictions.csv`. Re-apply check (a) to `logs/oof_ensemble.log` periodically.
+
+**Step 6 — Chemprop only if the user approves.** Re-run the step 5 command with
+`--ensemble-oof-scope all`. The CPU fold results are reused; only the Chemprop fold trainings run
+(the planner's `--scope all` estimate is roughly 65 h). Otherwise the ensembles exclude Chemprop,
+and the paper must say so (TODO.md).
+
+**Step 7 — verify and commit the run.** Run the checks in `chemprop_rerun_command.md` §7 ("Checks
+after the run"). Then commit `benchmark_results/qsarena_benchmark_oof_ensemble` (predictions,
+`ensemble_oof/` fold caches and model files are gitignored), with the scope used and the planner
+summary in the commit message, and push to `main`. Don't regenerate the manuscript on the A100:
+that runs on the workstation (`render_manuscript_assets.py --run-dir
+benchmark_results/qsarena_benchmark_oof_ensemble`), and it costs no allocation.
+
 ## Where to edit (source of truth)
 
 | Want to change | Edit | Notes |
@@ -21,9 +141,14 @@ always quote). Bash (Git Bash) and PowerShell are both available.
 | Dataset registry / catalog | `benchmark_registry.py`, `data/benchmark_dataset_catalog.csv` | |
 | Leaderboard references | `data/benchmark_leaderboards/*.csv` | Current-literature ESOL/Lipophilicity refs live in `ESOL_Lipophilicity_Current_Benchmarks_csv.csv`. |
 | Benchmark analysis, manuscript figures and tables | `portable_colab_qsar_bundle/benchmark_results_summary.ipynb` | Hand-maintained (no builder). The last cell (`# MANUSCRIPT_FIGURE_EXPORT`) writes `manuscript_assets/`. |
+| OECD reliability audit / Table S8 | `qsarena/reliability_study.py`, `qsarena/reliability_tables.py` | Writes `results/reliability_tdc22/`, `submission/tables/tableS8_applicability_domain.tex`; not regenerated by `render_manuscript_assets.py`. |
 | Graphical abstract | `portable_colab_qsar_bundle/render_graphical_abstract.py` | Writes `manuscript_assets/figures/graphical_abstract.svg`. It should summarize the paper's decision story, not duplicate Figure 1. |
 | Precision, Uni-Mol2, conformers (Update 2) | `qsarena/` package, `run_one.py`, `js2/`, `hpc/` | |
 | pip packaging (deps, extras, console scripts) | `pyproject.toml` | See "Packaging" below. |
+| Any user-facing run option (the 15 decision groups) | `qsarena/config.py` (`RunConfig`) | Then `python -m qsarena.config --write-docs` (regenerates `docs/options_reference.md`, `configs/run.example.yaml`, the tutorial's option tables). Tests fail if they are stale. |
+| Batch mode, preflight/dry-run, reports, run.log/events, atomic writes | `qsarena/batch.py`, `preflight.py`, `reporting.py`, `run_events.py`, `artifacts.py` | Wired into the runner's `prepare_args()` / `_run_main()`. |
+| Tutorial = Additional file 2 | `docs/tutorial.md` | Every command runs in `tests/docs` (~6 min). PDF: `python submission/build_additional_file_2.py`; never edit the generated `.tex`. Work order: `docs/AGENT_WORK_ORDER_tutorial.md`. |
+| Tutorial example data | `tests/fixtures/tutorial/make_tutorial_data.py` -> `qsarena/examples/data/` | Synthetic targets; shipped in the wheel; `qsarena-examples DIR` copies them out. |
 
 ## Packaging (`pip install qsarena`)
 
@@ -54,28 +179,74 @@ always quote). Bash (Git Bash) and PowerShell are both available.
    `polaris_adme_fang_hppb_1` interrupted but has a full model table.
    The earlier **RTX 4060** run (`benchmark_results/benchmark_name_date`, `cost_optimized`) is kept
    deliberately: §3.11 / Table S5 compare the two. Do not delete it.
+
+   **Run lineage since 2026-09-26: the manuscript is moving off the canonical run.** Repair runs are
+   seeded from the previous run's metrics + predictions (`prepare_chemprop_repair_run.py`) and only
+   train what is missing:
+   - `benchmark_results/qsarena_benchmark_chemprop_fixed` (A100, committed `ab8d52f`): adds working
+     Chemprop (valid on 38-42/44 per variant), TabPFN (31/44; the API daily limit hit the rest) and a
+     clean `polaris_adme_fang_hppb_1`; all 44 complete. **Its ensembles are flawed. Do not report
+     them.** It used `--ensemble-member-selection-split train`, which rewards memorisation (see the
+     trap below). Its selector times and wall-clock totals come from reusing cached features and
+     selections, so they are not real costs either. Take selector scaling and dataset wall-clock from
+     the canonical run.
+   - `benchmark_results/qsarena_benchmark_oof_ensemble`: **pending A100 run.** Same base models, with
+     ensembles rebuilt on out-of-fold predictions and no full model retrained. This is the run the
+     manuscript should be regenerated from. Uni-Mol OOF comes free from its saved `cv.data`, CPU
+     members refit on 5 folds (~10 h), and Chemprop is the only GPU cost (~65 h with
+     `--ensemble-oof-scope all`; excluded with `cpu`). Command and checks:
+     [submission/chemprop_rerun_command.md](submission/chemprop_rerun_command.md) §7.
+   - Regenerate with `render_manuscript_assets.py --run-dir <run>`. `verify_manuscript_numbers.py`
+     is pinned to the canonical run and will fail until its assertions are moved to the new run
+     (update each value; never loosen a check).
 2. Regenerate every figure, table and number (~1.5 min; system Python suffices):
    ```bash
    python portable_colab_qsar_bundle/render_manuscript_assets.py   # notebook + figures + tables + numbers JSON + LaTeX tables
    python portable_colab_qsar_bundle/render_graphical_abstract.py  # 920x300 J.Cheminform graphical abstract
-   python portable_colab_qsar_bundle/verify_manuscript_numbers.py  # 64 assertions; non-zero exit on drift
+   python portable_colab_qsar_bundle/verify_manuscript_numbers.py  # 78 assertions; non-zero exit on drift
    ```
    The first also rewrites the `<!-- TABLE:stem -->` blocks in `manuscript.md` and
    `submission/tables/*.tex`. **Never hand-edit inside those blocks or those .tex files.**
-3. **Two manuscript formats must stay in sync**: `manuscript.md` (working doc, checked by the
-   verifier) and `submission/body.tex` (the submission). Prose edits must be made in both.
-   `verify_manuscript_numbers.py` only checks `manuscript.md`, so a number fixed there but not in
-   `body.tex` will pass silently — grep `body.tex` after any numeric change.
+3. **Two manuscript formats must stay in sync**: `manuscript.md` (working doc) and
+   `submission/body.tex` (the submission). Prose edits must be made in both. The verifier now checks
+   many numbers in both formats, but it is not a complete sync checker — grep `body.tex` after any
+   numeric prose edit.
 4. Numbers come only from `manuscript_assets/manuscript_numbers.json` or
    `manuscript_assets/tables/*.csv`. Never from old notebook outputs, `Manuscript Outline.md` or
    `publication_recommendations.md` (all predate the A100 run).
+   Update after the OECD reliability work: `verify_manuscript_numbers.py` now also checks the 3.13
+   reliability numbers in `submission/body.tex`, and the verifier currently runs 78 checks. Still
+   grep both manuscript formats after other numeric prose edits.
+5. Table S8 / 3.13 comes from the separate reliability study, not the manuscript-assets notebook:
+   ```bash
+   python -m qsarena.reliability_study --out results/reliability_tdc22 --resummarize
+   python -m qsarena.reliability_tables
+   ```
+   `results/reliability_tdc22/summary.json` is the only source for 3.13 OECD reliability numbers.
+   It describes a fixed reference random forest on the 22 official TDC ADMET splits, **not** the
+   benchmark-selected model, and it is single-seed only. Table S8 is included by
+   `submission/additional_file_1.tex` on a landscape page.
 
 ## Paper's framing (do not weaken these without evidence)
 
 The paper makes three load-bearing claims. Keep them straight when editing:
 1. **Leaderboard placement**: top-10 on 35/37 (22/22 on official TDC splits), median rank 3.
-2. **Honest model selection costs ~10 placements**: CV-selected falls to 25/37, median rank 8. This
-   is the novel methodological contribution; never drop it to make the headline look better.
+   **Since the focused review of 2026-09-25 this is a provisional, secondary result**: the
+   reference set contains leaked and self-reported entries (see traps below). The abstract,
+   conclusions and graphical abstract lead with claim 2 and with the internal CV-vs-test gap
+   (CV selection never picks the winner; median relative gap 16.1%). Don't move the ranks back
+   into the headline. The novelty claim is the uniform cross-suite benchmark plus the
+   decomposition; code-free access is described as a usability feature (OCHEM/ChemSAR already
+   offer it).
+2. **The 35/37 → 25/37 drop is real but has TWO causes, and the paper now decomposes them.** A
+   matched-candidate-set control (test-selected, restricted to the CV-eligible pool) gives 28/37,
+   3 firsts, median rank 6. So **7 of the 10 lost placements are the value of the broad model
+   library (35→28) and only 3 are the cost of honest selection (28→25)**; median rank 3 → 6 → 8.
+   In the canonical run honest selection removed *every* first place (5 → 3 → 0). With TabPFN
+   eligible for CV selection (chemprop_fixed), that becomes 5 → 3 → **1**; re-check this against the
+   OOF-ensemble run before quoting it. Never re-attribute the whole
+   ten-dataset gap to selection — that was the pre-2026-09-25 error. Never drop the decomposition
+   to make the headline look better either. Verified by `chk("gap decomposition 7+3", ...)`.
 3. **No effort and no hardware required**: all 44 datasets ran under ONE fixed configuration with no
    per-dataset tuning and GA disabled, and the notebook runs code-free in Colab with no install.
    §3.12 states this and its limits. It is evidenced by the run design, not a marketing line.
@@ -108,14 +279,37 @@ Open work is tracked in [TODO.md](TODO.md); the Zenodo deposit is the last block
   magnitude (the old "MapLight+GNN ≈ 13 h" was an artifact; the real median is ≈150 s).
 - **`analysis_delta_from_best` is an absolute difference**, so it mixes units (clearance RMSE ≈ 40 vs LogS ≈ 0.6).
   Use `relative_gap_to_best` from the export cell for cross-dataset summaries.
-- **Test-set leakage:** the per-dataset "best model" is still chosen on the test set (disclose this). Ensemble
-  member filtering **was** leaky too and is now **fixed**: `build_ensemble_result` takes
-  `member_selection_split`, exposed as `--ensemble-member-selection-split {train,test}` and defaulting to
-  `train`. The deposited run predates the flag, so a `run_config.json` with no
-  `ensemble_member_selection_split` key means the legacy leaky `test` behaviour — pass `--ensemble-member-selection-split test`
-  to reproduce it exactly. **Ensembles must be re-run for the fix to show up in results**; see
-  [submission/chemprop_rerun_command.md](submission/chemprop_rerun_command.md). The export cell reports a
-  CV-selected sensitivity analysis (only conventional models, TabPFN and ChemML MLP have CV metrics).
+- **Test-set leakage:** the per-dataset "best model" is still chosen on the test set (disclose this).
+  `--ensemble-member-selection-split` decides what ensembles are selected, weighted and stacked on.
+  There are three modes, and only one is correct:
+  - `test`: the canonical run. It leaks held-out R² into member selection. A `run_config.json` with no
+    `ensemble_member_selection_split` key means this mode.
+  - `train`: the chemprop_fixed run. It doesn't leak, but it reads **in-sample** training predictions.
+    A 500-tree extra-trees model has a training RMSE near 0, so it wins the correlated-pair tie-break
+    and takes ~100% of the stacking weight. On ESOL it pushed MapLight CatBoost out of the ensemble.
+    Across that run ensemble regression wins fell from 7 to 1. That was the artefact, not a finding.
+  - `oof` (the default): uses only out-of-fold predictions, taken first from what a backend already
+    saved and otherwise from refitting on K folds of the training split (same folds as `--cv-folds`).
+    Uni-Mol's saved `cv.data` holds its internal 5-fold predictions: they are on the normalised
+    target scale, so regression values are inverse-transformed with `target_scaler.ss`. Conventional
+    models reuse their CV fold fits in fresh runs. Chemprop (only with `--ensemble-oof-scope all`),
+    MapLight+GNN and ChemML are refitted per fold into `<dataset>/ensemble_oof/`. Saved model
+    weights do **not** remove the need for this: they give in-sample predictions for training
+    molecules. The OOF predictions are saved as `split="oof"` rows in
+    `predictions.csv`, so the stage resumes. Members without OOF predictions, and CFA, are excluded
+    and noted in `ensemble_member_filter_notes`. Tests: `tests/unit/test_ensemble_oof.py`.
+  Downstream code must not assume `predictions.csv` holds only `train`/`test` rows.
+  **The Colab notebook has its own copy of the ensemble code** (block 7A in
+  `build_colab_qsar_tutorial.py`; regenerate the `.ipynb` with the builder). It is also OOF-only now:
+  conventional and tuned models are refitted on K folds inside the cell (cached in
+  `STATE["ensemble_oof_cache"]`), Uni-Mol comes from `cv.data`, and other deep workflows are not
+  members there. It must never go back to choosing members, filters, CFA inputs or the downstream
+  strategy by *test* metrics, all four of which it used to do.
+- **Leakage-free CV selection is no longer model-starved.** TabPFN emits CV metrics. In the
+  chemprop_fixed run, the CV-selected model picked the per-dataset winner on 3 datasets (it was 0),
+  sat a median 8.7% from the best (it was 16.1%), and reached **one** estimated first place (it was
+  0). The top-10 counts 35 → 28 → 25 were unchanged. After the OOF run, re-check the "every first
+  place" and "CV never picks the winner" wording before quoting it.
 - **All `subprocess.run` calls must use `_SUBPROCESS_TEXT_KWARGS`** (`text`/`encoding="utf-8"`/`errors="replace"`),
   never bare `text=True`. Bare `text=True` decodes with the ambient locale; under the C/POSIX locale on
   Jetstream2 that was ASCII, and Chemprop v2's UTF-8 progress output (`0xe2`) made `subprocess.run` itself
@@ -172,9 +366,19 @@ Open work is tracked in [TODO.md](TODO.md); the Zenodo deposit is the last block
   MapLight+GNN hit a DGL `graphbolt` DLL error on first attempts (retries succeeded on 42/45). See `tableS4_model_coverage`.
 - `tdc_herg_central` is the one dataset with `status: "running"` and no metrics: it is very large, ran >24 h without
   finishing, and was deliberately abandoned (user, 2026-09-24). Report it as dropped for compute budget, not as a failure.
-- **Multi-seed was never run, by choice, not oversight** (user, 2026-09-24): repeating 45 datasets × 25 models five times
-  was beyond budget (the single-seed run alone took 155 h). `--run-tdc22-multiseed-best` exists but has no artifacts.
-  The manuscript hedges this at length in §4; do not soften that hedging or present margins as established.
+- **Multi-seed TDC-22 machinery exists, but no five-seed artifacts exist yet.** Use
+  `qsarena-benchmark --tdc22-multiseed --tdc22-multiseed-source-run <existing-run> --output-dir <new-run>`
+  to run/resume the work-order C2 stage independently; it writes `results/tdc22_multiseed.csv` by
+  default. The older `--run-tdc22-multiseed-best` remains an end-of-run hook. The actual 5-seed TDC-22
+  replication has not been run, so the manuscript must keep the single-seed limitation until those
+  artifacts exist.
+- **OECD / applicability-domain results are reference-model diagnostics, not selected-model evidence.**
+  3.13 and Table S8 use `results/reliability_tdc22/summary.json`: a fixed random forest on Morgan
+  r=2 fingerprints + RDKit 2D descriptors with 20% of train/val held out for conformal calibration.
+  Structural AD is mixed (Roy standardization median out/in error ratio 0.91; kNN Tanimoto 1.15;
+  consensus 1.08), while reliability/conformal-width flags are stronger (median out/in error ratio
+  3.30; 230.3% higher outside; higher error on all 22 datasets). Do not imply this was run for all
+  28 benchmark model families, do not claim multi-seed, and keep the Section 4 limitation.
 - **Host provenance: resolved.** The A100 run is real and is now canonical (see above). The RTX 4060
   evidence applies only to `benchmark_results/benchmark_name_date`, which is retained as the
   hardware-comparison arm. On 37 identically split datasets the two runs differ by a median of
@@ -193,6 +397,21 @@ Open work is tracked in [TODO.md](TODO.md); the Zenodo deposit is the last block
   `all_benchmarks_no_unimol_20260425_223505`, which that same commit deleted from the repo. Recover it if you need it:
   `git archive 745b820 benchmark_results/all_benchmarks_no_unimol_20260425_223505 | tar -x -C <dir>`.
 - Committed notebook outputs before 2026-09-24 came from another machine (`C:\Users\scott\QSARena`) and a mixed state.
+
+## Run options, resume and reports (tutorial work order, 2026-09-25)
+
+- **RunConfig defaults must reproduce the old runner behaviour** (user decision). New options (salt
+  stripping, dedup, ...) default off; Appendix A's differing "intended defaults" were NOT adopted.
+  `tests/fixtures/config/appendix_a_run.yaml` is Appendix A verbatim and must keep loading.
+- **Resume is config-signature aware.** Each `metrics.csv` row carries `stage_config_signature`
+  (stage 2/3 signature + that model family's args); a changed arg recomputes only that family plus
+  fusion/ensembles. Rows and `run_status.json` files from before this change have no signature and are
+  reused unvalidated with a printed notice, so resuming older runs never discards work.
+- The stage 2/3 cache signature is unchanged for default configs (new keys enter only when non-default),
+  so pre-existing `stage23_resume_cache.pkl` files still hit.
+- A failing dataset is recorded (`run_status.json` status `failed` + error + remedy) and the run
+  continues; `dataset_summary.csv` and `report.html`/`report.md` are written for every mode.
+- Test cost: `tests/integration` ~10 min and `tests/docs` ~6 min of CLI runs on the example data.
 
 ## Don'ts (cost savers)
 

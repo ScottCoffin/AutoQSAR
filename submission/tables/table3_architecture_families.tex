@@ -2,14 +2,14 @@
 \begin{table}[htbp]
 \centering
 \scriptsize
-\caption{Architecture-family coverage and consistency. Gaps are relative to the per-dataset best primary metric. ``Within 5\% of best'' counts datasets where the family's best member fell within 5\% of the dataset winner. Families evaluated on fewer than 45 datasets were limited by task applicability, size guardrails or backend failures (Additional file~1, Table~S4); their percentages are computed over the datasets on which they ran. All values derive from a single split and seed, so adjacent rows are not separated (see Limitations).}
+\caption{Model-family coverage and consistency. Gaps are relative to the per-dataset best primary metric. ``Within 5\% of best'' counts datasets where the family's best member fell within 5\% of the dataset winner. Families evaluated on fewer than 44 datasets were limited by task applicability, size guardrails or backend failures (Additional file~1, Table~S4); their percentages are computed over the datasets on which they ran. All values derive from a single split and seed, so adjacent rows are not separated (see Limitations).}
 \label{tab:families}
-\begin{tabularx}{\dimexpr\paperheight-5cm\relax}{@{}>{\raggedright\arraybackslash}Xrrrrrrrr@{}}
+\begin{tabularx}{\linewidth}{@{}>{\raggedright\arraybackslash}Xrrrrrrrr@{}}
 \toprule
-\textbf{Architecture family} & \textbf{Models} & \makecell[r]{\textbf{Datasets}\\\textbf{with}\\\textbf{valid}\\\textbf{results}} & \makecell[r]{\textbf{Wins}\\\textbf{(regression)}} & \makecell[r]{\textbf{Wins}\\\textbf{(classification)}} & \makecell[r]{\textbf{Median}\\\textbf{gap to}\\\textbf{best,}\\\textbf{regression}\\\textbf{(\%)}} & \makecell[r]{\textbf{Median}\\\textbf{gap to}\\\textbf{best,}\\\textbf{classification}\\\textbf{(\%)}} & \makecell[r]{\textbf{Within}\\\textbf{5\% of}\\\textbf{best (\%}\\\textbf{of}\\\textbf{datasets)}} & \makecell[r]{\textbf{Median}\\\textbf{rank of}\\\textbf{family-best}\\\textbf{model}} \\
+\textbf{Model family} & \textbf{Models} & \makecell[r]{\textbf{Datasets}\\\textbf{with}\\\textbf{valid}\\\textbf{results}} & \makecell[r]{\textbf{Wins}\\\textbf{(regression)}} & \makecell[r]{\textbf{Wins}\\\textbf{(classification)}} & \makecell[r]{\textbf{Median}\\\textbf{gap to}\\\textbf{best,}\\\textbf{regression}\\\textbf{(\%)}} & \makecell[r]{\textbf{Median}\\\textbf{gap to}\\\textbf{best,}\\\textbf{classification}\\\textbf{(\%)}} & \makecell[r]{\textbf{Within}\\\textbf{5\% of}\\\textbf{best (\%}\\\textbf{of}\\\textbf{datasets)}} & \makecell[r]{\textbf{Median}\\\textbf{rank of}\\\textbf{family-best}\\\textbf{model}} \\
 \midrule
 Ensemble (stacking /\allowbreak{} averaging) & 2 & 44 & 7 & 9 & 1.6 & 0.3 & 75.0 & 2.0 \\
-Uni-\allowbreak{}Mol V1 (3D pretrained) & 2 & 44 & 6 & 5 & 3.8 & 1.7 & 70.5 & 4.0 \\
+Uni-\allowbreak{}Mol (3D pretrained) & 2 & 44 & 6 & 5 & 3.8 & 1.7 & 70.5 & 4.0 \\
 Conventional ML & 15 & 44 & 2 & 6 & 2.8 & 1.5 & 65.9 & 3.0 \\
 Map\allowbreak{}Light + GNN & 1 & 44 & 4 & 0 & 7.5 & 11.1 & 27.3 & 8.5 \\
 Chemprop v2 GNN & 5 & 6 & 1 & 1 & 10.1 & 1.0 & 83.3 & 2.0 \\

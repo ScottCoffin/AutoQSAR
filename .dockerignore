@@ -1,4 +1,4 @@
-# AutoQSAR .dockerignore
+# QSARena .dockerignore
 # Prevents large/irrelevant content from being sent to the Docker build context.
 # These paths are bind-mounted at runtime, not baked into the image.
 

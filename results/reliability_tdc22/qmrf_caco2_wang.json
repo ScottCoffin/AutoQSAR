@@ -1,0 +1,107 @@
+{
+  "title": "QMRF-style report: Random forest reference model (300 trees) on TDC ADMET Benchmark Group: caco2_wang",
+  "1. Defined endpoint": {
+    "dataset": "TDC ADMET Benchmark Group: caco2_wang",
+    "endpoint": "Caco-2 cell effective permeability",
+    "task_type": "regression",
+    "units": "log10(cm/s)",
+    "data_source": "Therapeutics Data Commons, official train_val/test split (scaffold)"
+  },
+  "2. Unambiguous algorithm": {
+    "model": "Random forest reference model (300 trees)",
+    "features": "Morgan fingerprint (radius 2, 2048 bits) + RDKit 2D descriptors",
+    "software": "qsarena 0.1.0",
+    "random_seed": 0,
+    "split": {
+      "strategy": "TDC official scaffold split",
+      "train_hash": "729d7d7a0da3ebf611664245fc8509b21dec920925b88e5b8d800e156467839c",
+      "test_hash": "17c1867cfa548e0c99eac0a039bbc9b8510dbe3a449a724ee8513bb84bc9e300"
+    },
+    "reproduction": "python -m qsarena.reliability_study --out results/reliability_tdc22"
+  },
+  "3. Defined domain of applicability": {
+    "method": "consensus of Roy standardization (RDKit descriptors, 3 SD) and 5-NN Tanimoto distance (95th percentile of training leave-one-out distances)",
+    "test_coverage": 0.7362637362637363,
+    "error_in_domain": 0.3004146720963106,
+    "error_out_of_domain": 0.23268591672604155,
+    "reliability": "split-conformal 90% intervals, test coverage 0.951"
+  },
+  "4. Goodness-of-fit, robustness and predictivity": {
+    "train": {
+      "n_fit": 582,
+      "out_of_bag_note": "fit on 80% of train_val; 20% held for calibration"
+    },
+    "internal_validation": {
+      "n_calibration": 146,
+      "conformal_quantile_source": "calibration partition of train_val"
+    },
+    "test": {
+      "n_test": 182,
+      "mae": 0.2825521432074484
+    },
+    "uncertainty": {
+      "alpha": 0.1,
+      "coverage": 0.9505494505494505
+    }
+  },
+  "5. Mechanistic interpretation": {
+    "status": "feature",
+    "top_features": [
+      {
+        "rank": 1,
+        "feature": "rdkit_NHOHCount",
+        "importance": 0.13703458422349823
+      },
+      {
+        "rank": 2,
+        "feature": "rdkit_NumHDonors",
+        "importance": 0.13682523987906764
+      },
+      {
+        "rank": 3,
+        "feature": "rdkit_TPSA",
+        "importance": 0.08033136554480869
+      },
+      {
+        "rank": 4,
+        "feature": "rdkit_VSA_EState3",
+        "importance": 0.03600706458939493
+      },
+      {
+        "rank": 5,
+        "feature": "rdkit_qed",
+        "importance": 0.025092878227920477
+      },
+      {
+        "rank": 6,
+        "feature": "rdkit_MolLogP",
+        "importance": 0.024880766337650847
+      },
+      {
+        "rank": 7,
+        "feature": "rdkit_NOCount",
+        "importance": 0.01966069919384997
+      },
+      {
+        "rank": 8,
+        "feature": "rdkit_PEOE_VSA1",
+        "importance": 0.01897117092629734
+      },
+      {
+        "rank": 9,
+        "feature": "rdkit_VSA_EState8",
+        "importance": 0.015545240977126562
+      },
+      {
+        "rank": 10,
+        "feature": "rdkit_BalabanJ",
+        "importance": 0.013967538186266015
+      }
+    ],
+    "note": "Impurity-based importances of the reference model; statistical association, not mechanism."
+  },
+  "caveats": [
+    "Reference model for applicability-domain and calibration analysis; not the benchmark's selected model.",
+    "Single seed and single official split."
+  ]
+}

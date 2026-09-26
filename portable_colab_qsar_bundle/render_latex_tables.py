@@ -44,7 +44,7 @@ TABLE_SPEC = {
     "table1_model_inventory": (
         "tab:models", False, 3,
         "Model inventory. ``Valid'' datasets are those on which the model produced a metric without an error; "
-        "differences from 45 reflect task-type applicability (regression-only or classification-only estimators), "
+        "differences from 44 reflect task-type applicability (regression-only or classification-only estimators), "
         "dataset-size guardrails, or backend failures (Section~\\ref{sec:coverage}).",
     ),
     "table2_dataset_catalog": (
@@ -55,11 +55,21 @@ TABLE_SPEC = {
     ),
     "table3_architecture_families": (
         "tab:families", False, 1,
-        "Architecture-family coverage and consistency. Gaps are relative to the per-dataset best primary metric. "
+        "Model-family coverage and consistency. Gaps are relative to the per-dataset best primary metric. "
         "``Within 5\\% of best'' counts datasets where the family's best member fell within 5\\% of the dataset winner. "
-        "Families evaluated on fewer than 45 datasets were limited by task applicability, size guardrails or backend "
+        "Families evaluated on fewer than 44 datasets were limited by task applicability, size guardrails or backend "
         "failures (Additional file~1, Table~S4); their percentages are computed over the datasets on which they ran. "
         "All values derive from a single split and seed, so adjacent rows are not separated (see Limitations).",
+    ),
+    "table4_leaderboard_summary": (
+        "tab:leaderboardsummary", False, 1,
+        "Rank among curated published reference values, by comparison class. Only the 27 datasets with official "
+        "predefined splits --- 22 TDC ADMET Benchmark Group and 5 Polaris ADME --- are directly comparable to a "
+        "public leaderboard; the remaining 10 are scored against published values under a comparable but not "
+        "identical protocol and are reported separately rather than pooled. Columns: ``n'' is the number of datasets "
+        "in the class; ``test'' selects the best model per dataset on held-out data; ``CV'' selects by "
+        "cross-validation only. Per-dataset detail is in "
+        "Additional file~1, Table~S7. Single split and single seed, so individual placements are provisional.",
     ),
     "table4_leaderboard_comparison": (
         "tab:leaderboard", True, 3,
@@ -233,12 +243,18 @@ def build_table(rows: list[list[str]], landscape: bool, label: str, digits: int,
     header_row = " & ".join(header_cell(i, h) for i, h in enumerate(header)) + " \\\\"
     body_rows = [" & ".join(cell_escape(c) for c in row) + " \\\\" for row in formatted]
 
-    # A landscape table is rotated onto its own PDF page (pdflscape) and measured against the paper
-    # height, which is the only way a wide table fits without shrinking it to illegibility.
-    # Seven or more columns never fits portrait here: the numeric columns' multi-line headers eat the
-    # width and the text column collapses to one character per line.
+    # A landscape table is rotated onto its own PDF page (pdflscape), which is the only way a wide
+    # table fits without shrinking it to illegibility. Seven or more columns never fits portrait
+    # here: the numeric columns' multi-line headers eat the width and the text column collapses to
+    # one character per line.
+    #
+    # Inside a pdflscape `landscape`, \textwidth is NOT updated but \linewidth is, so \linewidth is
+    # the only correct target. This previously hard-coded \paperheight-5cm, which happened to fit
+    # the article-class proof and overflowed the real Springer class by exactly 150pt
+    # (702.8pt requested against 552.7pt available in sn-jnl). The proof could never reveal it:
+    # sn-jnl's text block is 372.0pt against the proof's 472.3pt.
     landscape = landscape or len(header) >= 7
-    width = "\\dimexpr\\paperheight-5cm\\relax" if landscape else "\\textwidth"
+    width = "\\linewidth" if landscape else "\\textwidth"
 
     lines = []
     if len(body) > LONG_TABLE_ROWS:

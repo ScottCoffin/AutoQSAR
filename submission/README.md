@@ -10,10 +10,11 @@ LaTeX submission built on the **Springer Nature template** (`sn-jnl.cls`), per
 | `manuscript.tex` | **The submission file.** Springer Nature `sn-jnl` class, Vancouver numbered references. |
 | `body.tex` | All manuscript sections. Shared by `manuscript.tex` and `proof.tex` — edit prose here, once. |
 | `references.bib` | BibTeX, 40 entries, diacritics written as TeX commands per Springer guidance. |
-| `additional_file_1.tex` | Additional file 1: supplementary tables S1–S4. Compiles standalone. |
+| `additional_file_1.tex` | Additional file 1: supplementary tables S1–S8. Compiles standalone. |
+| `additional_file_2_qsarena_tutorial.pdf` / `.tex` | Additional file 2: guided installation and usage tutorial. **Generated** from `../docs/tutorial.md` by `build_additional_file_2.py` — edit the Markdown, never the `.tex`. |
 | `cover_letter.md` / `.pdf` | Cover letter. |
 | `proof.tex` | Local proof build (standard `article` class, same `body.tex`). **Not for submission.** |
-| `tables/*.tex` | Generated table fragments (Tables 1–6, S1–S5) — **do not hand-edit** (see Regenerating). |
+| `tables/*.tex` | Generated table fragments (Tables 1–6, S1–S8) — **do not hand-edit** (see Regenerating). |
 | `figures/*.pdf` | Vector figures at publication resolution, including `graphical_abstract.pdf`. |
 
 ## Building
@@ -38,9 +39,17 @@ pdflatex proof && bibtex proof && pdflatex proof && pdflatex proof
 pdflatex additional_file_1 && pdflatex additional_file_1
 ```
 
+Additional file 2 (the tutorial) is built from its Markdown source, which is tested command by command
+(`tests/docs/test_tutorial_runs.py` runs every command on the bundled example data and checks every
+output excerpt). It needs pandoc, `pdflatex` with `fvextra`, and `cairosvg` for the figures:
+
+```bash
+python build_additional_file_2.py            # from this directory: .tex + .pdf
+```
+
 `proof.tex` compiles the identical `body.tex` under the `article` class, so it catches every content
 error; only the class-specific front matter differs. Current status: **0 errors, 0 undefined
-references or citations, 33 pages** (supplementary: 10 pages).
+references or citations, 38 pages** (Additional file 1: 17 pages; Additional file 2: 32 pages).
 
 ## Regenerating tables and figures
 
@@ -71,6 +80,8 @@ Structure follows the BMC/Springer **Software article** format.
 - [x] Declarations in order: Ethics approval · Consent for publication · Availability of data and materials · Competing interests · Funding · Authors' contributions · Acknowledgements
 - [x] Abbreviations section
 - [x] Additional file 1 cited in the text
+- [x] Additional file 2 (guided tutorial, `additional_file_2_qsarena_tutorial.pdf`) cited in `Availability and
+  requirements` and listed under Supplementary information; every command in it is tested (`tests/docs`)
 - [x] Vancouver numbered references (`sn-vancouver-num`)
 - [x] Figures as vector PDF, cited in order, captions below
 - [x] Code repository linked in Availability of data and materials

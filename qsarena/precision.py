@@ -31,10 +31,7 @@ vGPU unified-memory guard (A5):
 
 from __future__ import annotations
 
-import contextlib
 import logging
-import os
-from typing import Iterator
 
 logger = logging.getLogger(__name__)
 

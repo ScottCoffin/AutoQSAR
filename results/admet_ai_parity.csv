@@ -1,0 +1,23 @@
+dataset,leaderboard_metric,ours_variant,ours_value,ours_status,reference_model,reference_value,reference_tdc_rank,reference_status,delta_ours_minus_reference,parity_holds_within_5pct
+ames,AUROC,Chemprop v2 (D-MPNN + RDKit2D),NA,variant failed,Chemprop-RDKit,NA,NA,Chemprop-RDKit not in captured TDC top-10,NA,NA
+bbb_martins,AUROC,Chemprop v2 (D-MPNN + RDKit2D),NA,variant failed,Chemprop-RDKit,NA,NA,Chemprop-RDKit not in captured TDC top-10,NA,NA
+bioavailability_ma,AUROC,Chemprop v2 (D-MPNN + RDKit2D),NA,variant failed,Chemprop-RDKit,NA,NA,Chemprop-RDKit not in captured TDC top-10,NA,NA
+caco2_wang,MAE,Chemprop v2 (D-MPNN + RDKit2D),NA,variant failed,Chemprop-RDKit,NA,NA,Chemprop-RDKit not in captured TDC top-10,NA,NA
+clearance_hepatocyte_az,Spearman,Chemprop v2 (D-MPNN + RDKit2D),NA,variant failed,Chemprop-RDKit,0.43,10.0,ok,NA,NA
+clearance_microsome_az,Spearman,Chemprop v2 (D-MPNN + RDKit2D),NA,variant failed,Chemprop-RDKit,0.599,6.0,ok,NA,NA
+cyp2c9_substrate_carbonmangels,AUPRC,Chemprop v2 (D-MPNN + RDKit2D),NA,variant failed,Chemprop-RDKit,NA,NA,Chemprop-RDKit not in captured TDC top-10,NA,NA
+cyp2c9_veith,AUPRC,Chemprop v2 (D-MPNN + RDKit2D),NA,variant failed,Chemprop-RDKit,NA,NA,Chemprop-RDKit not in captured TDC top-10,NA,NA
+cyp2d6_substrate_carbonmangels,AUPRC,Chemprop v2 (D-MPNN + RDKit2D),NA,variant failed,Chemprop-RDKit,NA,NA,Chemprop-RDKit not in captured TDC top-10,NA,NA
+cyp2d6_veith,AUPRC,Chemprop v2 (D-MPNN + RDKit2D),NA,variant failed,Chemprop-RDKit,NA,NA,Chemprop-RDKit not in captured TDC top-10,NA,NA
+cyp3a4_substrate_carbonmangels,AUROC,Chemprop v2 (D-MPNN + RDKit2D),NA,variant failed,Chemprop-RDKit,NA,NA,Chemprop-RDKit not in captured TDC top-10,NA,NA
+cyp3a4_veith,AUPRC,Chemprop v2 (D-MPNN + RDKit2D),NA,variant failed,Chemprop-RDKit,NA,NA,Chemprop-RDKit not in captured TDC top-10,NA,NA
+dili,AUROC,Chemprop v2 (D-MPNN + RDKit2D),0.8773913043478261,ok,Chemprop-RDKit,NA,NA,Chemprop-RDKit not in captured TDC top-10,NA,NA
+half_life_obach,Spearman,Chemprop v2 (D-MPNN + RDKit2D),NA,variant failed,Chemprop-RDKit,NA,NA,Chemprop-RDKit not in captured TDC top-10,NA,NA
+herg,AUROC,Chemprop v2 (D-MPNN + RDKit2D),NA,variant failed,Chemprop-RDKit,NA,NA,Chemprop-RDKit not in captured TDC top-10,NA,NA
+hia_hou,AUROC,Chemprop v2 (D-MPNN + RDKit2D),0.97119341563786,ok,Chemprop-RDKit,NA,NA,Chemprop-RDKit not in captured TDC top-10,NA,NA
+ld50_zhu,MAE,Chemprop v2 (D-MPNN + RDKit2D),NA,variant failed,Chemprop-RDKit,0.625,9.0,ok,NA,NA
+lipophilicity_astrazeneca,MAE,Chemprop v2 (D-MPNN + RDKit2D),NA,variant failed,Chemprop-RDKit,0.467,2.0,ok,NA,NA
+pgp_broccatelli,AUROC,Chemprop v2 (D-MPNN + RDKit2D),NA,variant failed,Chemprop-RDKit,NA,NA,Chemprop-RDKit not in captured TDC top-10,NA,NA
+ppbr_az,MAE,Chemprop v2 (D-MPNN + RDKit2D),NA,variant failed,Chemprop-RDKit,8.288,9.0,ok,NA,NA
+solubility_aqsoldb,MAE,Chemprop v2 (D-MPNN + RDKit2D),NA,variant failed,Chemprop-RDKit,0.761,2.0,ok,NA,NA
+vdss_lombardo,Spearman,Chemprop v2 (D-MPNN + RDKit2D),NA,variant failed,Chemprop-RDKit,NA,NA,Chemprop-RDKit not in captured TDC top-10,NA,NA

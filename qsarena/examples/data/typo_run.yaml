@@ -1,0 +1,8 @@
+# A deliberately mistyped run.yaml: the tutorial runs it to show QSARena's configuration errors.
+input:
+  path: solubility.csv
+  target_col: logS
+split:
+  strategy: scafold
+models:
+  profle: quick
