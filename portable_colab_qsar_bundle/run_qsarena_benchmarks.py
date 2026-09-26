@@ -307,6 +307,18 @@ except ModuleNotFoundError:
         TDC_QSAR_OPTIONS,
     )
 
+# RunConfig is the single source of truth for user-facing options (qsarena/config.py). Same
+# installed-package / source-checkout fallback as the bundle imports above.
+try:
+    from qsarena import config as qsarena_config
+    from qsarena import artifacts as qsarena_artifacts
+    from qsarena import run_events as qsarena_events
+except ModuleNotFoundError:
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+    from qsarena import config as qsarena_config
+    from qsarena import artifacts as qsarena_artifacts
+    from qsarena import run_events as qsarena_events
+
 try:
     from catboost import CatBoostClassifier, CatBoostRegressor
 except Exception:
@@ -436,6 +448,21 @@ DEFAULT_BENCHMARK_FEATURE_FAMILIES = [
     "rdkit",
     "maplight",
 ]
+
+
+def resolved_feature_families(args: argparse.Namespace | None) -> list[str]:
+    """features.families + features.maplight_classic. The defaults reproduce
+    DEFAULT_BENCHMARK_FEATURE_FAMILIES exactly (same order), so existing caches stay valid."""
+    requested = getattr(args, "feature_families", None) if args is not None else None
+    if requested is None:
+        families = [family for family in DEFAULT_BENCHMARK_FEATURE_FAMILIES if family != "maplight"]
+    else:
+        families = [str(family) for family in requested]
+    maplight_on = bool(getattr(args, "maplight_classic", True)) if args is not None else True
+    if maplight_on and "maplight" not in families:
+        families.append("maplight")
+    return families
+
 
 CURRENT_DATASET_SPEC: "DatasetSpec | None" = None
 
@@ -1041,6 +1068,10 @@ class DatasetSpec:
     predefined_split_column: str | None = None
     auxiliary_feature_columns: list[str] | None = None
     task_type: str | None = None
+    id_column: str | None = None
+    classification_threshold: float | None = None
+    # Per-dataset argparse overrides (batch-manifest columns); applied by dataset_args().
+    arg_overrides: dict[str, Any] | None = None
 
 
 @dataclass
@@ -1343,9 +1374,21 @@ def stage23_resume_signature(
             input_meta.get("auxiliary_feature_columns", []),
         ),
         "target_transform": str(input_meta.get("target_transform", "")),
-        "smiles_column": str(input_meta.get("smiles_column", "")),
-        "target_column": str(input_meta.get("target_column", "")),
-        "feature_families": list(DEFAULT_BENCHMARK_FEATURE_FAMILIES),
+    }
+    payload.update(stage23_args_payload(args, spec))
+    signature = hashlib.sha256(
+        json.dumps(payload, sort_keys=True, default=str).encode("utf-8")
+    ).hexdigest()
+    return signature, payload
+
+
+def stage23_args_payload(args: argparse.Namespace, spec: "DatasetSpec") -> dict[str, Any]:
+    """The configuration half of the stage 2/3 signature (no data content), shared with the
+    cheap completed-dataset check in dataset_resume_fingerprint()."""
+    payload = {
+        "smiles_column": str(spec.smiles_column),
+        "target_column": str(spec.target_column),
+        "feature_families": resolved_feature_families(args),
         "fingerprint_bits": int(getattr(args, "fingerprint_bits", 1024)),
         "enable_persistent_feature_store": bool(getattr(args, "enable_persistent_feature_store", True)),
         "reuse_persistent_feature_store": bool(getattr(args, "reuse_persistent_feature_store", True)),
@@ -1368,15 +1411,23 @@ def stage23_resume_signature(
         "selector_elasticnet_timeout_seconds": float(getattr(args, "selector_elasticnet_timeout_seconds", 7200.0)),
         "selector_rf_fallback_n_estimators": int(getattr(args, "selector_rf_fallback_n_estimators", 400)),
         "max_selected_features": int(getattr(args, "max_selected_features", 0)),
-        "dedup_variance_threshold": 1e-8,
-        "dedup_binary_prevalence_min": 0.005,
-        "dedup_binary_prevalence_max": 0.995,
+        "dedup_variance_threshold": float(getattr(args, "dedup_variance_threshold", 1e-8)),
+        "dedup_binary_prevalence_min": float(dedup_prevalence_range(args)[0]),
+        "dedup_binary_prevalence_max": float(dedup_prevalence_range(args)[1]),
         "predefined_split_column": str(spec.predefined_split_column or ""),
     }
-    signature = hashlib.sha256(
-        json.dumps(payload, sort_keys=True, default=str).encode("utf-8")
-    ).hexdigest()
-    return signature, payload
+    # Options added with RunConfig enter the signature only when they differ from the historical
+    # behaviour, so caches written before they existed keep matching.
+    if not bool(getattr(args, "drop_duplicate_feature_columns", True)):
+        payload["drop_duplicate_feature_columns"] = False
+    standardization = _standardization_options(args)
+    if standardization != _standardization_options(None):
+        payload["standardization"] = standardization
+    if getattr(spec, "classification_threshold", None) is not None:
+        payload["classification_threshold"] = float(spec.classification_threshold)
+    if str(getattr(spec, "task_type", "") or "").strip():
+        payload["task_type"] = str(spec.task_type)
+    return payload
 
 
 def stage23_resume_cache_path(dataset_dir: Path) -> Path:
@@ -1463,8 +1514,7 @@ def write_stage23_resume_cache(
     }
     cache_path = stage23_resume_cache_path(dataset_dir)
     try:
-        with cache_path.open("wb") as handle:
-            pickle.dump(payload, handle, protocol=pickle.HIGHEST_PROTOCOL)
+        qsarena_artifacts.atomic_write_pickle(cache_path, payload)
     except Exception as exc:
         print(f"[warn] failed to write stage 2/3 resume cache for {dataset_dir.name}: {exc}", flush=True)
 
@@ -1591,7 +1641,22 @@ def model_filter_values(args: argparse.Namespace) -> set[str]:
     }
 
 
+def model_disabled_by_config(args: argparse.Namespace, model_name: Any) -> bool:
+    """models.disable_models and models.enable_families (conventional_ml / gradient_boosting are
+    only reachable this way; the other families also switch their run_* flags off in main())."""
+    name = str(model_name or "").strip()
+    disabled_names = {str(item).strip() for item in (getattr(args, "disable_models", None) or []) if str(item).strip()}
+    if name in disabled_names:
+        return True
+    disabled_families = set(getattr(args, "disabled_model_families", None) or [])
+    if disabled_families and qsarena_config.model_family(name.removesuffix(" GA")) in disabled_families:
+        return True
+    return False
+
+
 def model_filter_allows(args: argparse.Namespace, model_name: Any) -> bool:
+    if model_disabled_by_config(args, model_name):
+        return False
     filters = model_filter_values(args)
     if not filters:
         return True
@@ -1599,10 +1664,7 @@ def model_filter_allows(args: argparse.Namespace, model_name: Any) -> bool:
 
 
 def model_filter_allows_any(args: argparse.Namespace, model_names: Sequence[Any]) -> bool:
-    filters = model_filter_values(args)
-    if not filters:
-        return True
-    return any(str(name or "").strip() in filters for name in model_names)
+    return any(model_filter_allows(args, name) for name in model_names)
 
 
 def _normalize_workflow_label(workflow_name: Any) -> str:
@@ -2062,8 +2124,13 @@ def meaningful_ga_models_from_reference(
 
 def resolve_requested_ga_models(args: argparse.Namespace, root: Path, *, exclude_dir: Path | None = None) -> tuple[list[str], dict[str, Any]]:
     requested_text = str(getattr(args, "ga_models", "")).strip()
-    if not requested_text:
+    if not requested_text or requested_text.lower() == "off":
         return [], {"mode": "disabled", "reason": "empty_ga_models"}
+    if requested_text.lower() == "on":
+        # ga_tuning.mode: on -> the estimators of ga_tuning.estimators (--ga-estimators)
+        names = [{"elastic_net": "ElasticNet", "catboost": "CatBoost"}.get(str(n).lower(), str(n))
+                 for n in (getattr(args, "ga_estimators", None) or ["elastic_net", "catboost"])]
+        return names, {"mode": "manual", "source": "ga_estimators"}
     if requested_text.lower() != "auto":
         return parse_comma_list(requested_text), {"mode": "manual"}
 
@@ -2147,18 +2214,125 @@ def infer_column(columns: list[str], candidates: list[str]) -> str | None:
     return None
 
 
-def discover_local_datasets(root: Path, explicit_paths: list[str] | None = None) -> list[DatasetSpec]:
+class DatasetDiscoveryError(ValueError):
+    """A user dataset that cannot be loaded. ``remedy`` is shown in the log, summary and report."""
+
+    def __init__(self, message: str, remedy: str = "") -> None:
+        super().__init__(message)
+        self.remedy = remedy
+
+
+def _resolve_named_column(columns: list[str], requested: str | None, candidates: list[str], role: str, path: Path) -> str:
+    if requested:
+        if requested in columns:
+            return requested
+        matches = [column for column in columns if str(column).strip().lower() == str(requested).strip().lower()]
+        if len(matches) == 1:
+            return matches[0]
+        raise DatasetDiscoveryError(
+            f"{path.name}: {role} column {requested!r} not found. Columns: {', '.join(map(str, columns[:20]))}",
+            remedy=f"Pass the right name with --{'smiles' if role == 'SMILES' else 'target'}-col (or input.{'smiles' if role == 'SMILES' else 'target'}_col).",
+        )
+    inferred = infer_column(columns, candidates)
+    if inferred is None:
+        raise DatasetDiscoveryError(
+            f"{path.name}: could not infer the {role} column (looked for {', '.join(candidates)}). "
+            f"Columns: {', '.join(map(str, columns[:20]))}",
+            remedy=f"Name the column with --{'smiles' if role == 'SMILES' else 'target'}-col COLUMN.",
+        )
+    return inferred
+
+
+def load_user_dataset_specs(
+    path: Path,
+    *,
+    name: str | None = None,
+    smiles_column: str | None = None,
+    target_columns: list[str] | None = None,
+    id_column: str | None = None,
+    task_type: str | None = None,
+    classification_threshold: float | None = None,
+    predefined_split_column: str | None = None,
+    arg_overrides: dict[str, Any] | None = None,
+) -> list[DatasetSpec]:
+    """Load one user CSV into one DatasetSpec per target column. Raises DatasetDiscoveryError."""
+    path = Path(path)
+    if not path.exists():
+        raise DatasetDiscoveryError(f"{path}: file not found.", remedy="Check the path (relative paths in a manifest are relative to the manifest).")
+    try:
+        frame = pd.read_csv(path, low_memory=False)
+    except Exception as exc:
+        raise DatasetDiscoveryError(f"{path.name}: could not be read as CSV ({type(exc).__name__}: {exc}).", remedy="Save the file as comma-separated UTF-8 text with a header row.") from None
+    if frame.empty:
+        raise DatasetDiscoveryError(f"{path.name}: contains no data rows.", remedy="Add rows or remove the file from the batch.")
+    columns = [str(column) for column in frame.columns]
+    frame.columns = columns
+    smiles_col = _resolve_named_column(columns, smiles_column, SMILES_CANDIDATES, "SMILES", path)
+    requested_targets = [str(item) for item in (target_columns or []) if str(item).strip()]
+    if requested_targets:
+        targets = [_resolve_named_column(columns, target, TARGET_CANDIDATES, "target", path) for target in requested_targets]
+    else:
+        targets = [_resolve_named_column(columns, None, TARGET_CANDIDATES, "target", path)]
+    if id_column and id_column not in columns:
+        raise DatasetDiscoveryError(f"{path.name}: id column {id_column!r} not found.", remedy="Fix --id-col / input.id_col or drop it.")
+    if predefined_split_column and predefined_split_column not in columns:
+        raise DatasetDiscoveryError(
+            f"{path.name}: predefined split column {predefined_split_column!r} not found.",
+            remedy="Fix --predefined-split-col / split.predefined_split_col.",
+        )
+    base_name = name or path.stem
+    specs: list[DatasetSpec] = []
+    for target in targets:
+        numeric = pd.to_numeric(frame[target], errors="coerce")
+        if int(numeric.notna().sum()) == 0:
+            raise DatasetDiscoveryError(
+                f"{path.name}: target column {target!r} has no numeric values.",
+                remedy="Targets must be numbers (use 0/1 for classes).",
+            )
+        dataset_name = base_name if len(targets) == 1 else f"{base_name}__{target}"
+        specs.append(
+            DatasetSpec(
+                dataset_name,
+                str(path),
+                frame,
+                smiles_col,
+                target,
+                predefined_split_column=predefined_split_column or None,
+                task_type=(None if str(task_type or "auto").lower() == "auto" else str(task_type).lower()),
+                id_column=id_column or None,
+                classification_threshold=classification_threshold,
+                arg_overrides=dict(arg_overrides or {}),
+                recommended_split="predefined" if predefined_split_column else None,
+            )
+        )
+    return specs
+
+
+def discover_local_datasets(
+    root: Path,
+    explicit_paths: list[str] | None = None,
+    args: argparse.Namespace | None = None,
+    failures: list[dict[str, Any]] | None = None,
+) -> list[DatasetSpec]:
     paths = [Path(path) for path in explicit_paths or []]
     datasets: list[DatasetSpec] = []
     for path in paths:
-        frame = pd.read_csv(path, low_memory=False)
-        columns = list(frame.columns)
-        smiles_column = infer_column(columns, SMILES_CANDIDATES)
-        target_column = infer_column(columns, TARGET_CANDIDATES)
-        if smiles_column is None or target_column is None:
-            print(f"[skip] {path}: could not infer SMILES/target columns")
-            continue
-        datasets.append(DatasetSpec(path.stem, str(path), frame, smiles_column, target_column))
+        try:
+            datasets.extend(
+                load_user_dataset_specs(
+                    path,
+                    smiles_column=getattr(args, "smiles_column", None) if args is not None else None,
+                    target_columns=getattr(args, "target_columns", None) if args is not None else None,
+                    id_column=getattr(args, "id_column", None) if args is not None else None,
+                    task_type=getattr(args, "task_type", None) if args is not None else None,
+                    classification_threshold=getattr(args, "classification_threshold", None) if args is not None else None,
+                    predefined_split_column=getattr(args, "predefined_split_column", None) if args is not None else None,
+                )
+            )
+        except DatasetDiscoveryError as exc:
+            print(f"[skip] {path}: {exc}" + (f" Remedy: {exc.remedy}" if exc.remedy else ""))
+            if failures is not None:
+                failures.append({"dataset": path.stem, "source": str(path), "stage": "discovery", "error": str(exc), "remedy": exc.remedy})
     return datasets
 
 
@@ -3265,10 +3439,21 @@ def normalize_benchmark_metric(recommended_metric: str | None, fallback: str = "
     return fallback
 
 
+#: evaluation.primary_metric override for the dataset being processed (None = automatic).
+CURRENT_PRIMARY_METRIC_OVERRIDE: str | None = None
+
+
 def current_dataset_primary_metric(fallback: str = "rmse") -> str:
+    if CURRENT_PRIMARY_METRIC_OVERRIDE:
+        return normalize_benchmark_metric(CURRENT_PRIMARY_METRIC_OVERRIDE, fallback=fallback)
     if CURRENT_DATASET_SPEC is not None and CURRENT_DATASET_SPEC.recommended_metric:
         return normalize_benchmark_metric(CURRENT_DATASET_SPEC.recommended_metric, fallback=fallback)
     if CURRENT_DATASET_SPEC is not None:
+        explicit_task = str(getattr(CURRENT_DATASET_SPEC, "task_type", "") or "").strip().lower()
+        if explicit_task == "classification" or getattr(CURRENT_DATASET_SPEC, "classification_threshold", None) is not None:
+            return "roc_auc"
+        if explicit_task == "regression":
+            return str(fallback).strip().lower() if not is_classification_metric(fallback) else "rmse"
         try:
             target_col = str(getattr(CURRENT_DATASET_SPEC, "target_column", "") or "").strip()
             frame = getattr(CURRENT_DATASET_SPEC, "frame", None)
@@ -3306,6 +3491,8 @@ def current_dataset_task_type() -> str:
         explicit_task = str(getattr(CURRENT_DATASET_SPEC, "task_type", "") or "").strip().lower()
         if explicit_task in {"classification", "regression"}:
             return explicit_task
+        if getattr(CURRENT_DATASET_SPEC, "classification_threshold", None) is not None:
+            return "classification"
         try:
             target_col = str(getattr(CURRENT_DATASET_SPEC, "target_column", "") or "").strip()
             frame = getattr(CURRENT_DATASET_SPEC, "frame", None)
@@ -3927,13 +4114,80 @@ def primary_metric_scorer(metric_name: str):
     return make_scorer(lambda y_true, y_pred: math.sqrt(mean_squared_error(y_true, y_pred)), greater_is_better=False)
 
 
-def canonicalize_frame(spec: DatasetSpec, log10_target: bool) -> tuple[pd.DataFrame, dict[str, Any]]:
+_STANDARDIZER_CACHE: dict[str, Any] = {}
+
+
+def _rdkit_standardizers() -> dict[str, Any]:
+    if not _STANDARDIZER_CACHE:
+        from rdkit.Chem.MolStandardize import rdMolStandardize
+
+        _STANDARDIZER_CACHE["fragment"] = rdMolStandardize.LargestFragmentChooser(preferOrganic=True)
+        _STANDARDIZER_CACHE["uncharger"] = rdMolStandardize.Uncharger()
+        _STANDARDIZER_CACHE["tautomer"] = rdMolStandardize.TautomerEnumerator()
+    return _STANDARDIZER_CACHE
+
+
+def standardize_molecule(
+    mol: Any,
+    *,
+    strip_salts: bool = False,
+    normalize_charges: bool = False,
+    normalize_tautomers: bool = False,
+) -> Any:
+    """Apply the standardize.* options to an RDKit molecule (returns a new molecule or None)."""
+    if mol is None or not (strip_salts or normalize_charges or normalize_tautomers):
+        return mol
+    tools = _rdkit_standardizers()
+    try:
+        if strip_salts:
+            mol = tools["fragment"].choose(mol)
+        if normalize_charges:
+            mol = tools["uncharger"].uncharge(mol)
+        if normalize_tautomers:
+            mol = tools["tautomer"].Canonicalize(mol)
+    except Exception:
+        return None
+    return mol
+
+
+def _standardization_options(args: argparse.Namespace | None) -> dict[str, Any]:
+    return {
+        "drop_unparseable": bool(getattr(args, "drop_unparseable_smiles", True)) if args is not None else True,
+        "strip_salts": bool(getattr(args, "strip_salts", False)) if args is not None else False,
+        "normalize_charges": bool(getattr(args, "normalize_charges", False)) if args is not None else False,
+        "normalize_tautomers": bool(getattr(args, "normalize_tautomers", False)) if args is not None else False,
+        "deduplicate": str(getattr(args, "deduplicate", "none") or "none") if args is not None else "none",
+    }
+
+
+def dataset_is_classification(spec: DatasetSpec, target_values: pd.Series | None = None) -> bool:
+    explicit = str(getattr(spec, "task_type", "") or "").strip().lower()
+    if explicit in {"classification", "regression"}:
+        return explicit == "classification"
+    if getattr(spec, "classification_threshold", None) is not None:
+        return True
+    values = target_values
+    if values is None:
+        values = pd.to_numeric(spec.frame[spec.target_column], errors="coerce") if spec.target_column in spec.frame.columns else pd.Series(dtype=float)
+    values = pd.to_numeric(pd.Series(values), errors="coerce").dropna()
+    return bool(len(pd.unique(values)) == 2)
+
+
+def canonicalize_frame(
+    spec: DatasetSpec,
+    log10_target: bool,
+    args: argparse.Namespace | None = None,
+) -> tuple[pd.DataFrame, dict[str, Any]]:
     global CURRENT_DATASET_SPEC
     CURRENT_DATASET_SPEC = spec
+    options = _standardization_options(args)
     keep_columns = [spec.smiles_column, spec.target_column]
     include_predefined_split = bool(spec.predefined_split_column and spec.predefined_split_column in spec.frame.columns)
     if include_predefined_split:
         keep_columns.append(str(spec.predefined_split_column))
+    include_id = bool(spec.id_column and spec.id_column in spec.frame.columns and spec.id_column not in keep_columns)
+    if include_id:
+        keep_columns.append(str(spec.id_column))
     auxiliary_columns = [
         str(column)
         for column in list(spec.auxiliary_feature_columns or [])
@@ -3944,7 +4198,10 @@ def canonicalize_frame(spec: DatasetSpec, log10_target: bool) -> tuple[pd.DataFr
     rename_map = {spec.smiles_column: "smiles", spec.target_column: "target"}
     if include_predefined_split:
         rename_map[str(spec.predefined_split_column)] = "__predefined_split"
+    if include_id:
+        rename_map[str(spec.id_column)] = "__id"
     df = df.rename(columns=rename_map)
+    n_input_rows = int(len(df))
     df["target"] = pd.to_numeric(df["target"], errors="coerce")
     for column in auxiliary_columns:
         if column in df.columns:
@@ -3955,21 +4212,84 @@ def canonicalize_frame(spec: DatasetSpec, log10_target: bool) -> tuple[pd.DataFr
         df = df.replace([np.inf, -np.inf], np.nan).dropna(subset=["smiles", "target"])
     df["smiles"] = df["smiles"].astype(str).str.strip()
     df = df[~df["smiles"].str.lower().isin(["", "nan", "none", "na"])].reset_index(drop=True)
+    n_missing = int(n_input_rows - len(df))
     canonical = []
     keep = []
+    unparseable: list[tuple[int, str]] = []
+    changed_by_standardization = 0
     for idx, smiles in enumerate(df["smiles"]):
         mol = Chem.MolFromSmiles(smiles)
         if mol is None:
+            unparseable.append((idx, smiles))
             continue
+        standardized = standardize_molecule(
+            mol,
+            strip_salts=options["strip_salts"],
+            normalize_charges=options["normalize_charges"],
+            normalize_tautomers=options["normalize_tautomers"],
+        )
+        if standardized is None or standardized.GetNumAtoms() == 0:
+            unparseable.append((idx, smiles))
+            continue
+        canonical_text = Chem.MolToSmiles(standardized, canonical=True)
+        if standardized is not mol and canonical_text != Chem.MolToSmiles(mol, canonical=True):
+            changed_by_standardization += 1
         keep.append(idx)
-        canonical.append(Chem.MolToSmiles(mol, canonical=True))
+        canonical.append(canonical_text)
+    if unparseable and not options["drop_unparseable"]:
+        examples = "; ".join(f"row {i + 2}: {text!r}" for i, text in unparseable[:10])
+        raise ValueError(
+            f"{spec.name}: {len(unparseable)} SMILES could not be parsed by RDKit ({examples}). "
+            "Fix or remove them, or rerun with --drop-unparseable (standardize.drop_unparseable: true)."
+        )
+    if unparseable:
+        print(f"[info] {spec.name}: dropped {len(unparseable)} unparseable SMILES.", flush=True)
     df = df.iloc[keep].reset_index(drop=True)
     df["canonical_smiles"] = canonical
+
+    classification = dataset_is_classification(spec, df["target"])
+    threshold = getattr(spec, "classification_threshold", None)
+    if threshold is not None:
+        df["target"] = (df["target"].astype(float) >= float(threshold)).astype(float)
+
+    n_before_dedup = int(len(df))
+    dedup_mode = options["deduplicate"]
+    if dedup_mode == "exact":
+        subset = ["smiles", "target"] + (["__predefined_split"] if "__predefined_split" in df.columns else [])
+        df = df.drop_duplicates(subset=subset, keep="first").reset_index(drop=True)
+    elif dedup_mode == "canonical_smiles":
+        group_keys = ["canonical_smiles"] + (["__predefined_split"] if "__predefined_split" in df.columns else [])
+        aggregations: dict[str, Any] = {}
+        for column in df.columns:
+            if column in group_keys:
+                continue
+            if column == "target":
+                aggregations[column] = (
+                    (lambda values: float(pd.Series(values).mode().iloc[0])) if classification else "mean"
+                )
+            elif column == "__id":
+                aggregations[column] = lambda values: ";".join(dict.fromkeys(str(v) for v in values))
+            elif column in auxiliary_columns:
+                aggregations[column] = "mean"
+            else:
+                aggregations[column] = "first"
+        df = df.groupby(group_keys, sort=False, as_index=False).agg(aggregations)
+    n_duplicates_removed = int(n_before_dedup - len(df))
+    if n_duplicates_removed:
+        print(f"[info] {spec.name}: deduplicate={dedup_mode} removed {n_duplicates_removed} row(s).", flush=True)
+
+    id_map: dict[str, str] = {}
+    if "__id" in df.columns:
+        for canonical_text, id_value in zip(df["canonical_smiles"], df["__id"]):
+            existing = id_map.get(str(canonical_text))
+            id_text = str(id_value)
+            id_map[str(canonical_text)] = id_text if existing is None else ";".join(dict.fromkeys([existing, id_text]))
+        df = df.drop(columns=["__id"])
     if "__predefined_split" in df.columns and spec.predefined_split_column:
         df[str(spec.predefined_split_column)] = df["__predefined_split"].astype(str)
         df = df.drop(columns=["__predefined_split"])
     transform = "raw"
-    if log10_target:
+    if log10_target and not classification:
         if (df["target"] <= 0).any():
             print(f"[info] {spec.name}: non-positive target values; using raw target.")
         else:
@@ -3981,6 +4301,18 @@ def canonicalize_frame(spec: DatasetSpec, log10_target: bool) -> tuple[pd.DataFr
         "target_column": spec.target_column,
         "auxiliary_feature_columns": auxiliary_columns,
         "auxiliary_feature_count": len(auxiliary_columns),
+        "standardization": dict(options),
+        "cleanup_counts": {
+            "input_rows": n_input_rows,
+            "missing_smiles_or_target": n_missing,
+            "unparseable_smiles": int(len(unparseable)),
+            "changed_by_standardization": int(changed_by_standardization),
+            "duplicates_removed": n_duplicates_removed,
+            "final_rows": int(len(df)),
+        },
+        "unparseable_examples": [text for _idx, text in unparseable[:10]],
+        "id_map": id_map,
+        "task_type": "classification" if classification else "regression",
     }
 
 
@@ -3993,6 +4325,13 @@ def resolve_dataset_log10_target(spec: DatasetSpec, args: argparse.Namespace) ->
     if str(spec.benchmark_suite or "").strip().lower() in {"tdc", "moleculenet", "polaris", "literature", "pfas_aux_workbook"}:
         return False
     return bool(getattr(args, "log10_target", True))
+
+
+def dedup_prevalence_range(args: argparse.Namespace | None) -> tuple[float, float]:
+    raw = getattr(args, "binary_prevalence_range", None) if args is not None else None
+    if not raw or len(raw) != 2:
+        return 0.005, 0.995
+    return float(raw[0]), float(raw[1])
 
 
 def parse_l1_grid(text: str) -> list[float]:
@@ -4250,6 +4589,7 @@ def select_features(
     cv_splits = list(selector_cv) if isinstance(selector_cv, list) else list(selector_cv.split(X_train, y_train))
     selector_fit: dict[str, Any]
     auto_rf_large_dataset = False
+    rf_requested = str(getattr(args, "selector_method", "")) == "rf_importance"
     predicted_selector_seconds = estimate_elasticnet_selector_seconds_from_dataset_size(
         int(len(y_train)),
         log10_slope=float(getattr(args, "selector_auto_rf_log10_slope", 1.225)),
@@ -4261,7 +4601,13 @@ def select_features(
         log10_slope=float(getattr(args, "selector_auto_rf_log10_slope", 1.225)),
         log10_intercept=float(getattr(args, "selector_auto_rf_log10_intercept", -0.658)),
     )
-    if bool(getattr(args, "selector_auto_rf_by_dataset_size", True)):
+    if rf_requested:
+        selector_fit = {
+            "ok": False,
+            "timed_out": False,
+            "error": "random-forest importance requested (--selector-method rf_importance)",
+        }
+    elif bool(getattr(args, "selector_auto_rf_by_dataset_size", True)):
         if (
             np.isfinite(predicted_selector_seconds)
             and np.isfinite(auto_rf_threshold_seconds)
@@ -4356,6 +4702,8 @@ def select_features(
             "falling back to RandomForest feature importance.",
             flush=True,
         )
+    elif rf_requested:
+        print("[selector] using RandomForest feature importance (--selector-method rf_importance).", flush=True)
     else:
         print(
             f"[selector] ElasticNetCV unavailable ({fallback_reason}); "
@@ -4384,7 +4732,7 @@ def select_features(
     columns = X_train.columns[mask].tolist()
     imp_df = pd.DataFrame({"feature": X_train.columns, "importance": importances})
     return X_train[columns].copy(), X_test[columns].copy(), {
-        "selector_method": "random_forest_importance_fallback",
+        "selector_method": "random_forest_importance" if rf_requested else "random_forest_importance_fallback",
         "selector_timed_out": bool(selector_fit.get("timed_out", False)),
         "selector_auto_rf_large_dataset_triggered": bool(auto_rf_large_dataset),
         "selected_feature_count": int(len(columns)),
@@ -5340,13 +5688,26 @@ def run_simple_ga(
     population = [random_individual() for _ in range(args.ga_population_size)]
     evaluated: dict[str, tuple[dict[str, Any], float]] = {}
     history = []
+    ga_started = time.time()
+    time_budget_minutes = getattr(args, "ga_time_budget_minutes", None)
+    time_budget_seconds = float(time_budget_minutes) * 60.0 if time_budget_minutes is not None else None
+    max_configs = getattr(args, "ga_max_configs", None)
+    stop_reason = ""
     for generation in range(args.ga_generations):
+        if generation > 0 and time_budget_seconds is not None and time.time() - ga_started >= time_budget_seconds:
+            stop_reason = f"time budget {float(time_budget_minutes):g} min reached after {generation} generation(s)"
+            break
         scored = []
         for individual in population:
             key = json.dumps(individual, sort_keys=True)
             if key not in evaluated:
+                if max_configs is not None and len(evaluated) >= int(max_configs):
+                    stop_reason = stop_reason or f"max_configs={int(max_configs)} reached"
+                    continue
                 evaluated[key] = (individual, score(individual))
             scored.append(evaluated[key])
+        if not scored:
+            break
         scored = sorted(scored, key=lambda item: item[1])
         best_individual, best_score = scored[0]
         best_primary = _objective_to_primary(best_score)
@@ -5360,12 +5721,16 @@ def run_simple_ga(
                 "best_params": json.dumps(decode(best_individual), sort_keys=True),
             }
         )
+        if stop_reason or len(scored) < 2:
+            break
         elites = [item[0] for item in scored[: max(2, len(scored) // 2)]]
         next_population = elites[: max(1, args.ga_elites)]
         while len(next_population) < args.ga_population_size:
             parent_a, parent_b = rng.sample(elites, 2)
             next_population.append({key: mutate_value(rng.choice([parent_a[key], parent_b[key]]), space[key], rng, args.ga_mutation_probability) for key in keys})
         population = next_population
+    if stop_reason:
+        print(f"[ga] {name}: stopped early ({stop_reason}).", flush=True)
     best_individual, best_score = min(evaluated.values(), key=lambda item: item[1])
     best_primary = _objective_to_primary(best_score)
     fitted = build_estimator(best_individual)
@@ -5383,6 +5748,8 @@ def run_simple_ga(
         "cv_primary": best_primary,
         "primary_metric_value": float(primary_test_value) if np.isfinite(float(primary_test_value)) else np.nan,
         "best_params": json.dumps(decode(best_individual), sort_keys=True),
+        "ga_configs_evaluated": int(len(evaluated)),
+        "ga_stop_reason": stop_reason,
     }
     row.update(regression_metrics(y_train, pred_train, y_test, pred_test))
     row.update(
@@ -7075,7 +7442,272 @@ def is_ensemble_result_row(model_name: Any, workflow_name: Any = "") -> bool:
 
 def write_dataset_status(dataset_dir: Path, payload: dict[str, Any]) -> None:
     status_path, _metrics_path = dataset_status_paths(dataset_dir)
-    status_path.write_text(json.dumps(payload, indent=2, default=str), encoding="utf-8")
+    qsarena_artifacts.atomic_write_json(status_path, payload)
+
+
+# ---------------------------------------------------------------------------------------------
+# Config-signature-aware resume (caching.validate_against_config_signature)
+# ---------------------------------------------------------------------------------------------
+
+#: Arguments that change the result of each model family (beyond the data/split/feature/selector
+#: settings already captured by the stage 2/3 signature, which every row signature includes).
+_FAMILY_SIGNATURE_ARGS: dict[str, tuple[str, ...]] = {
+    "conventional_ml": ("cv_folds", "elasticnet_l1_ratio_grid", "elasticnet_alpha_min_log10", "elasticnet_alpha_max_log10",
+                        "elasticnet_alpha_grid_size", "elasticnet_cv_folds", "elasticnet_max_iter"),
+    "gradient_boosting": ("cv_folds", "maplight_leaderboard_parity_mode", "maplight_parity_seeds"),
+    "deep_tabular": ("cv_folds", "chemml_hidden_layers", "chemml_hidden_width", "chemml_training_epochs", "chemml_batch_size",
+                     "chemml_learning_rate", "chemml_use_cross_validation", "chemml_cv_folds", "tabpfn_max_train_rows"),
+    "graph_nn": ("chemprop_epochs", "chemprop_batch_size", "chemprop_ensemble_size", "chemprop_random_seed"),
+    "pretrained_3d": ("unimol_internal_split", "unimol_epochs", "unimol_learning_rate", "unimol_batch_size",
+                      "unimol_early_stopping", "unimol_model_size", "unimol_max_atoms", "unimol_use_amp"),
+    "maplight_gnn": ("maplight_gnn_kind", "maplight_leaderboard_parity_mode", "maplight_parity_seeds"),
+    "fusion": ("cfa_min_models", "cfa_max_models", "cfa_max_candidate_subsets", "cfa_optimize_metric", "cfa_source_workflows",
+               "cfa_include_rank_combinations", "cfa_rank_prefer_when_diverse", "cfa_rank_diversity_threshold",
+               "cfa_rank_metric_discount"),
+    "ensemble": ("ensemble_methods", "ensemble_stacking_cv_folds", "ensemble_drop_highly_correlated_members",
+                 "ensemble_max_train_correlation", "ensemble_exclude_negative_test_r2_members",
+                 "ensemble_member_selection_split"),
+}
+_GA_SIGNATURE_ARGS = ("ga_generations", "ga_population_size", "ga_elites", "ga_cv_folds", "ga_mutation_probability",
+                      "ga_time_budget_minutes", "ga_max_configs", "elasticnet_l1_ratio_grid", "elasticnet_max_iter")
+#: Families whose rows are built from other models' predictions.
+_DERIVED_FAMILIES = {"fusion", "ensemble"}
+
+
+def _signature_family(model_name: Any) -> str:
+    name = str(model_name or "").strip()
+    return "ga" if name.endswith(" GA") else qsarena_config.model_family(name)
+
+
+def family_arg_signature(args: argparse.Namespace, family: str) -> str:
+    keys = _GA_SIGNATURE_ARGS if family == "ga" else _FAMILY_SIGNATURE_ARGS.get(family, ())
+    payload = {
+        "family": family,
+        "args": {key: getattr(args, key, None) for key in keys},
+        "primary_metric_override": getattr(args, "primary_metric_override", None) or None,
+    }
+    return hashlib.sha256(json.dumps(payload, sort_keys=True, default=str).encode("utf-8")).hexdigest()[:16]
+
+
+def model_stage_signature(args: argparse.Namespace, model_name: Any, stage23_signature: str) -> str:
+    """Recorded in every metrics row as ``stage_config_signature``: data + split + features +
+    selection (stage 2/3 signature) + the arguments of this model's family."""
+    family = _signature_family(model_name)
+    text = f"{stage23_signature}|{family_arg_signature(args, family)}"
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()[:20]
+
+
+def _raw_input_hash(spec: "DatasetSpec") -> str:
+    columns = [c for c in [spec.smiles_column, spec.target_column, spec.predefined_split_column, spec.id_column,
+                           *(spec.auxiliary_feature_columns or [])] if c and c in spec.frame.columns]
+    try:
+        hashed = pd.util.hash_pandas_object(spec.frame[columns].astype(str), index=False).to_numpy()
+        return hashlib.sha256(hashed.tobytes()).hexdigest()[:20]
+    except Exception:
+        return ""
+
+
+def dataset_resume_fingerprint(spec: "DatasetSpec", args: argparse.Namespace) -> str:
+    """Cheap fingerprint (no RDKit parsing) of everything that can change a dataset's results;
+    stored in run_status.json when the dataset completes."""
+    payload = {
+        "input": _raw_input_hash(spec),
+        "stage23": stage23_args_payload(args, spec),
+        "target_transform": str(getattr(args, "target_transform", "auto")),
+        "log10_target": bool(getattr(args, "log10_target", True)),
+        "row_limit": int(getattr(args, "row_limit", 0) or 0),
+        "families": {family: family_arg_signature(args, family) for family in [*_FAMILY_SIGNATURE_ARGS, "ga"]},
+    }
+    return hashlib.sha256(json.dumps(payload, sort_keys=True, default=str).encode("utf-8")).hexdigest()[:24]
+
+
+def completed_dataset_is_current(dataset_dir: Path, spec: "DatasetSpec", args: argparse.Namespace) -> tuple[bool, str]:
+    """(reusable?, reason). Legacy status files without a fingerprint are reused unvalidated."""
+    if not bool(getattr(args, "resume_validate_signature", True)):
+        return True, "signature validation disabled"
+    status = qsarena_artifacts.read_json(dataset_dir / "run_status.json", default={}) or {}
+    stored = str(status.get("resume_fingerprint", "") or "")
+    if not stored:
+        return True, "legacy checkpoint without a config fingerprint"
+    current = dataset_resume_fingerprint(spec, args)
+    return (stored == current), ("config fingerprint matches" if stored == current else "configuration or input changed")
+
+
+def split_stale_metric_rows(
+    metrics_rows: list[dict[str, Any]],
+    args: argparse.Namespace,
+    stage23_signature: str,
+) -> tuple[list[dict[str, Any]], set[str], int]:
+    """(kept rows, stale model names, legacy rows without a signature)."""
+    if not bool(getattr(args, "resume_validate_signature", True)):
+        return list(metrics_rows), set(), 0
+    stale: set[str] = set()
+    legacy = 0
+    for row in metrics_rows:
+        recorded = str(row.get("stage_config_signature", "") or "").strip()
+        if not recorded or recorded.lower() == "nan":
+            legacy += 1
+            continue
+        if recorded != model_stage_signature(args, row.get("model", ""), stage23_signature):
+            stale.add(str(row.get("model", "")).strip())
+    if any(_signature_family(name) not in _DERIVED_FAMILIES for name in stale):
+        # Fusion and ensembles are built from the other models' predictions: recompute them too.
+        stale.update(
+            str(row.get("model", "")).strip()
+            for row in metrics_rows
+            if _signature_family(row.get("model", "")) in _DERIVED_FAMILIES
+        )
+    kept = [row for row in metrics_rows if str(row.get("model", "")).strip() not in stale]
+    return kept, stale, legacy
+
+
+def dataset_args(args: argparse.Namespace, spec: "DatasetSpec") -> argparse.Namespace:
+    """Run-level args with this dataset's batch-manifest overrides applied."""
+    overrides = dict(getattr(spec, "arg_overrides", None) or {})
+    if not overrides:
+        return args
+    merged = argparse.Namespace(**vars(args))
+    for key, value in overrides.items():
+        setattr(merged, key, value)
+    apply_model_family_switches(merged)
+    return merged
+
+
+def _attach_ids(frame: pd.DataFrame, id_map: dict[str, str]) -> pd.DataFrame:
+    if not id_map or frame is None or frame.empty or "smiles" not in frame.columns:
+        return frame
+    out = frame.copy()
+    ids = out["smiles"].astype(str).map(id_map)
+    if "id" in out.columns:
+        out["id"] = ids
+    else:
+        out.insert(list(out.columns).index("smiles") + 1, "id", ids)
+    return out
+
+
+def _morgan_bits(smiles: Sequence[str], n_bits: int = 2048) -> np.ndarray:
+    from rdkit.Chem import rdFingerprintGenerator
+
+    generator = rdFingerprintGenerator.GetMorganGenerator(radius=2, fpSize=int(n_bits))
+    rows = np.zeros((len(smiles), int(n_bits)), dtype=np.uint8)
+    for index, text in enumerate(smiles):
+        mol = Chem.MolFromSmiles(str(text))
+        if mol is not None:
+            rows[index] = generator.GetFingerprintAsNumPy(mol)
+    return rows
+
+
+def compute_applicability_domain(
+    *,
+    args: argparse.Namespace,
+    dataset_dir: Path,
+    dataset_id: str,
+    split: dict[str, Any],
+    X_train: pd.DataFrame,
+    X_test: pd.DataFrame,
+    prediction_payloads: dict[str, dict[str, Any]],
+    metrics_rows: list[dict[str, Any]],
+    task_type: str,
+    id_map: dict[str, str],
+) -> dict[str, Any]:
+    """applicability_domain.* for the test split: writes applicability_domain.csv, returns a summary."""
+    method = str(getattr(args, "ad_method", "both") or "both").lower()
+    if method == "off":
+        return {}
+    try:
+        from qsarena.applicability_domain import knn_similarity_ad, standardization_ad
+        from qsarena.reporting import best_model_rows
+        from qsarena.uncertainty import probability_confidence
+    except ImportError:  # pragma: no cover - source checkout without the package importable
+        sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+        from qsarena.applicability_domain import knn_similarity_ad, standardization_ad
+        from qsarena.reporting import best_model_rows
+        from qsarena.uncertainty import probability_confidence
+
+    smiles_test = pd.Series(split["smiles_test"], dtype=str).reset_index(drop=True)
+    table = pd.DataFrame({"smiles": smiles_test, "observed": pd.Series(split["y_test"], dtype=float).reset_index(drop=True)})
+    methods: dict[str, float] = {}
+    notes: list[str] = []
+    flags: list[np.ndarray] = []
+
+    selected_model = ""
+    metrics_df = pd.DataFrame(metrics_rows)
+    if not metrics_df.empty:
+        best = best_model_rows(metrics_df, primary_metric=current_dataset_primary_metric("roc_auc" if task_type == "classification" else "rmse"))
+        protocol = str(getattr(args, "selection_protocol", "both"))
+        pick = best.get("cv") if protocol in {"cv", "both"} and best.get("cv") else best.get("test")
+        if pick and pick["model"] in prediction_payloads:
+            selected_model = pick["model"]
+    payload = prediction_payloads.get(selected_model) if selected_model else None
+    aligned_predictions = None
+    if payload is not None:
+        payload_smiles = pd.Series(payload.get("test_smiles", []), dtype=str).reset_index(drop=True)
+        predictions = np.asarray(payload.get("test", []), dtype=float)
+        if len(payload_smiles) == len(smiles_test) and bool((payload_smiles == smiles_test).all()):
+            aligned_predictions = predictions
+            table["selected_model"] = selected_model
+            table["predicted"] = predictions
+
+    if method in {"standardization", "both"}:
+        try:
+            result = standardization_ad(X_train.to_numpy(dtype=float), X_test.to_numpy(dtype=float))
+            table["ad_standardization_s_new"] = result.s_new
+            table["ad_standardization_in_domain"] = result.in_domain
+            methods["standardization"] = float(np.mean(result.in_domain))
+            flags.append(result.in_domain)
+        except ValueError as exc:
+            notes.append(f"standardization AD not computed: {exc}")
+    if method in {"confidence", "both"}:
+        if task_type == "classification":
+            if aligned_predictions is not None:
+                confidence, reliable = probability_confidence(
+                    np.clip(aligned_predictions, 0.0, 1.0), threshold=float(getattr(args, "ad_confidence_threshold", 0.5))
+                )
+                table["ad_confidence"] = confidence
+                table["ad_confidence_in_domain"] = reliable
+                methods["confidence"] = float(np.mean(reliable))
+                flags.append(np.asarray(reliable, dtype=bool))
+            else:
+                notes.append("confidence AD not computed: no aligned test predictions for the selected model")
+        else:
+            try:
+                fp_train = _morgan_bits(pd.Series(split["smiles_train"], dtype=str).tolist())
+                fp_test = _morgan_bits(smiles_test.tolist())
+                result = knn_similarity_ad(fp_train, fp_test, k=5, quantile=float(getattr(args, "ad_knn_quantile", 0.95)))
+                table["ad_knn_mean_tanimoto_distance"] = result.mean_knn_distance
+                table["ad_knn_in_domain"] = result.in_domain
+                methods["knn_similarity"] = float(np.mean(result.in_domain))
+                flags.append(np.asarray(result.in_domain, dtype=bool))
+            except ValueError as exc:
+                notes.append(f"kNN similarity AD not computed: {exc}")
+    if not flags:
+        return {"method": method, "notes": notes}
+    consensus = np.logical_and.reduce(flags)
+    table["in_domain"] = consensus
+    summary: dict[str, Any] = {
+        "method": method,
+        "n_test": int(len(table)),
+        "in_domain_fraction": float(np.mean(consensus)),
+        "methods": methods,
+        "selected_model": selected_model,
+        "notes": notes,
+    }
+    if aligned_predictions is not None and task_type != "classification":
+        errors = np.abs(table["observed"].to_numpy(dtype=float) - aligned_predictions)
+        if consensus.any():
+            summary["mae_in_domain"] = float(np.mean(errors[consensus]))
+        if (~consensus).any():
+            summary["mae_out_of_domain"] = float(np.mean(errors[~consensus]))
+    qsarena_artifacts.atomic_write_csv(dataset_dir / "applicability_domain.csv", _attach_ids(table, id_map))
+    out_fraction = 1.0 - summary["in_domain_fraction"]
+    if out_fraction > 0.2:
+        qsarena_events.EVENTS.warn(
+            "ad_out_of_domain",
+            f"{out_fraction:.0%} of test molecules are outside the applicability domain.",
+            remedy="Treat their predictions as extrapolations (applicability_domain.csv lists them).",
+            dataset=dataset_id,
+        )
+    return summary
 
 
 def selected_conventional_model_names(args: argparse.Namespace) -> list[str]:
@@ -7100,10 +7732,7 @@ def selected_conventional_model_names(args: argparse.Namespace) -> list[str]:
         names.append(maplight_catboost_model_label(args))
     if bool(getattr(args, "run_tabpfn", False)) and TabPFNRegressor is not None:
         names.append("TabPFNRegressor")
-    filters = model_filter_values(args)
-    if filters:
-        names = [name for name in names if name in filters]
-    return names
+    return [name for name in names if model_filter_allows(args, name)]
 
 
 def _row_has_error_text(row: dict[str, Any]) -> bool:
@@ -7149,12 +7778,13 @@ def expected_model_targets_for_args(args: argparse.Namespace) -> tuple[set[str],
         expected_names.add("Uni-Mol V1")
     if bool(getattr(args, "run_maplight_gnn", False)):
         expected_names.add(maplight_gnn_model_label(args))
+    expected_names = {name for name in expected_names if model_filter_allows(args, name)}
     filters = model_filter_values(args)
+    ensemble_expected = bool(getattr(args, "run_ensemble", False)) and not model_disabled_by_config(args, "Ensemble")
     if filters:
-        expected_names = {name for name in expected_names if name in filters}
-    ensemble_expected = bool(getattr(args, "run_ensemble", False))
-    if filters:
-        ensemble_expected = any(name == "Ensemble" or name.startswith("Ensemble (") for name in filters)
+        ensemble_expected = ensemble_expected and any(
+            name == "Ensemble" or name.startswith("Ensemble (") for name in filters
+        )
     return expected_names, ensemble_expected
 
 
@@ -7325,7 +7955,13 @@ def chemprop_variant_specs(args: argparse.Namespace) -> list[dict[str, Any]]:
 
 
 def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, dataset_position: int | None = None, dataset_total: int | None = None) -> DatasetRunResult:
+    global CURRENT_PRIMARY_METRIC_OVERRIDE
     start = time.time()
+    args = dataset_args(args, spec)
+    override_text = str(getattr(args, "primary_metric_override", "") or "").strip().lower()
+    CURRENT_PRIMARY_METRIC_OVERRIDE = None if override_text in {"", "auto", "none"} else override_text
+    qsarena_artifacts.set_atomic_writes(bool(getattr(args, "atomic_writes", True)))
+    granularity = set(getattr(args, "resume_granularity", None) or ["dataset", "stage"])
     dataset_id = slugify(spec.name)
     dataset_dir = output_dir / dataset_id
     dataset_dir.mkdir(parents=True, exist_ok=True)
@@ -7333,7 +7969,18 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
     predictions_path = dataset_dir / "predictions.csv"
     ga_history_path = dataset_dir / "ga_history.csv"
     rebuild_ensemble_requested = bool(getattr(args, "rebuild_ensemble", False)) and bool(getattr(args, "run_ensemble", False))
-    completed_result = load_completed_dataset_result(dataset_dir)
+    completed_result = load_completed_dataset_result(dataset_dir) if "dataset" in granularity else None
+    if completed_result is not None:
+        is_current, current_reason = completed_dataset_is_current(dataset_dir, spec, args)
+        if not is_current:
+            print(
+                f"[resume] {dataset_id}: {current_reason} since this dataset completed; "
+                "re-validating each cached stage against the new config signature.",
+                flush=True,
+            )
+            completed_result = None
+        elif current_reason.startswith("legacy"):
+            print(f"[resume] {dataset_id}: reusing a {current_reason} (use --fresh to recompute).", flush=True)
     if completed_result is not None:
         prefix = f"[{dataset_position}/{dataset_total}] " if dataset_position is not None and dataset_total is not None else ""
         missing_models, missing_ensemble = missing_requested_models_for_dataset(
@@ -7482,11 +8129,8 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
 
     def _write_stage_runtime_outputs() -> None:
         runtime_rows = _stage_runtime_rows_snapshot()
-        pd.DataFrame(runtime_rows).to_csv(step_runtime_csv_path, index=False)
-        step_runtime_json_path.write_text(
-            json.dumps(runtime_rows, indent=2, default=str),
-            encoding="utf-8",
-        )
+        qsarena_artifacts.atomic_write_csv(step_runtime_csv_path, pd.DataFrame(runtime_rows))
+        qsarena_artifacts.atomic_write_json(step_runtime_json_path, runtime_rows)
 
     def active_stage_duration_seconds() -> float:
         if active_stage_record is None:
@@ -7499,6 +8143,8 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
         output["dataset_elapsed_seconds"] = output["elapsed_seconds"]
         output["cost_scope"] = str(cost_scope)
         output["stage_duration_seconds"] = active_stage_duration_seconds()
+        if stage23_signature_value:
+            output["stage_config_signature"] = model_stage_signature(args, output.get("model", ""), stage23_signature_value)
         if active_stage_record is not None:
             output["cost_stage_index"] = active_stage_record.get("stage_index", np.nan)
             output["cost_stage_label"] = active_stage_record.get("stage_label", "")
@@ -7540,9 +8186,18 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
             f"\n{prefix}{dataset_id} | stage {stage_index}/{total_stages}: {label} "
             f"| started {stage_started_at} | elapsed {format_seconds(elapsed)} | dataset ETA {format_seconds(eta)}"
         )
+        qsarena_events.EVENTS.emit(
+            "stage_started", level="detail", dataset=dataset_id, stage_index=int(stage_index),
+            total_stages=int(total_stages), label=str(label), eta_seconds=round(float(eta), 1),
+        )
         _write_stage_runtime_outputs()
 
-    metrics_rows, prediction_tables, ga_history_tables = load_partial_dataset_artifacts(dataset_dir)
+    if "stage" in granularity:
+        metrics_rows, prediction_tables, ga_history_tables = load_partial_dataset_artifacts(dataset_dir)
+    else:
+        metrics_rows, prediction_tables, ga_history_tables = [], [], []
+    stage23_signature_value = ""
+    dataset_id_map: dict[str, str] = {}
     prediction_payloads = rebuild_prediction_payloads(prediction_tables)
     if (
         bool(getattr(args, "run_ensemble", False))
@@ -7627,12 +8282,26 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
     def persist_partial(stage_label: str) -> None:
         annotated_rows = current_annotated_metrics_rows()
         if annotated_rows:
-            pd.DataFrame(annotated_rows).to_csv(metrics_path, index=False)
+            qsarena_artifacts.atomic_write_csv(metrics_path, pd.DataFrame(annotated_rows))
         if prediction_tables:
-            pd.concat(prediction_tables, ignore_index=True).to_csv(predictions_path, index=False)
+            qsarena_artifacts.atomic_write_csv(
+                predictions_path, _attach_ids(pd.concat(prediction_tables, ignore_index=True), dataset_id_map)
+            )
         if ga_history_tables:
-            pd.concat(ga_history_tables, ignore_index=True).to_csv(ga_history_path, index=False)
+            qsarena_artifacts.atomic_write_csv(ga_history_path, pd.concat(ga_history_tables, ignore_index=True))
         _write_stage_runtime_outputs()
+        if metrics_rows:
+            last = metrics_rows[-1]
+            error_text = str(last.get("error", "") or "").strip()
+            qsarena_events.EVENTS.emit(
+                "model_finished" if not error_text else "model_failed",
+                level="info" if not error_text else "warning",
+                dataset=dataset_id,
+                model=str(last.get("model", "")),
+                stage=stage_label,
+                status=str(last.get("status", "") or ("error" if error_text else "ok")),
+                error=error_text[:300],
+            )
         write_dataset_status(
             dataset_dir,
             {
@@ -7659,14 +8328,40 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
 
     stage_message(1, f"loading {spec.source}", step_type="load_dataset")
     use_log10_target = resolve_dataset_log10_target(spec, args)
-    df, input_meta = canonicalize_frame(spec, use_log10_target)
+    df, input_meta = canonicalize_frame(spec, use_log10_target, args)
+    dataset_id_map = dict(input_meta.get("id_map") or {})
     if len(df) < args.minimum_rows:
         print(f"[skip] {dataset_id}: only {len(df)} valid rows after cleanup")
+        qsarena_events.EVENTS.warn(
+            "too_few_rows",
+            f"only {len(df)} valid rows after cleanup (minimum_rows={int(args.minimum_rows)}); dataset skipped.",
+            remedy="Add data, fix unparseable SMILES, or lower --minimum-rows.",
+            dataset=dataset_id,
+        )
         _set_active_stage_status("skipped")
         _close_active_stage(default_status="skipped")
         _write_stage_runtime_outputs()
-        write_dataset_status(dataset_dir, {"status": "skipped", "reason": "too_few_rows_after_cleanup", "n_rows": int(len(df))})
+        write_dataset_status(dataset_dir, {
+            "status": "skipped", "dataset": dataset_id, "source": spec.source,
+            "reason": f"too few rows after cleanup ({len(df)} < minimum_rows {int(args.minimum_rows)})",
+            "remedy": "Add data, fix unparseable SMILES, or lower --minimum-rows.",
+            "n_rows": int(len(df)), "cleanup_counts": input_meta.get("cleanup_counts", {}),
+            "task_type": input_meta.get("task_type", ""),
+        })
         return DatasetRunResult([], [], [], "skipped", time.time() - start)
+    dataset_task_for_checks = str(input_meta.get("task_type", "regression"))
+    if dataset_task_for_checks == "classification":
+        n_classes = int(pd.Series(df["target"]).nunique())
+        if n_classes != 2:
+            raise ValueError(
+                f"{dataset_id}: classification needs exactly two target values after cleanup, found {n_classes}. "
+                "Binarize with --classification-threshold VALUE or use --task regression."
+            )
+    if CURRENT_PRIMARY_METRIC_OVERRIDE and is_classification_metric(CURRENT_PRIMARY_METRIC_OVERRIDE) != (dataset_task_for_checks == "classification"):
+        raise ValueError(
+            f"{dataset_id}: --primary-metric {CURRENT_PRIMARY_METRIC_OVERRIDE} does not fit a {dataset_task_for_checks} task. "
+            "Use rmse/mae/r2/spearman for regression or roc_auc/auprc/balanced_accuracy/mcc for classification."
+        )
     if args.row_limit and len(df) > args.row_limit:
         df = df.sample(n=args.row_limit, random_state=args.random_seed).reset_index(drop=True)
 
@@ -7681,7 +8376,32 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
         input_meta=input_meta,
         predefined_split=predefined_split,
     )
-    stage23_cache_payload = load_stage23_resume_cache(dataset_dir, expected_signature=stage23_signature_value)
+    stage23_cache_payload = (
+        load_stage23_resume_cache(dataset_dir, expected_signature=stage23_signature_value) if "stage" in granularity else None
+    )
+    if metrics_rows:
+        kept_rows, stale_models, legacy_rows = split_stale_metric_rows(metrics_rows, args, stage23_signature_value)
+        if stale_models:
+            print(
+                f"[resume] {dataset_id}: config signature changed for {len(stale_models)} cached model stage(s) "
+                f"({', '.join(sorted(stale_models)[:6])}{' ...' if len(stale_models) > 6 else ''}); recomputing them.",
+                flush=True,
+            )
+            qsarena_events.EVENTS.emit("stages_invalidated", dataset=dataset_id, models=sorted(stale_models))
+            metrics_rows[:] = kept_rows
+            prediction_tables[:] = [
+                table.loc[~table["model"].astype(str).str.strip().isin(stale_models)].reset_index(drop=True)
+                if isinstance(table, pd.DataFrame) and "model" in table.columns else table
+                for table in prediction_tables
+            ]
+            prediction_payloads = rebuild_prediction_payloads(prediction_tables)
+            completed_model_names.difference_update(stale_models)
+        if legacy_rows and bool(getattr(args, "resume_validate_signature", True)):
+            print(
+                f"[resume] {dataset_id}: {legacy_rows} cached row(s) predate config signatures and are reused unvalidated "
+                "(use --fresh to recompute).",
+                flush=True,
+            )
     maplight_parity_mode = bool(getattr(args, "maplight_leaderboard_parity_mode", True))
     maplight_seed_values = maplight_parity_seed_values(args)
     maplight_direct_X_train = pd.DataFrame()
@@ -7730,7 +8450,7 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
         stage_message(2, "building molecular features", step_type="feature_generation")
         shared_signature, shared_signature_payload = shared_feature_matrix_signature(
             smiles_values=df["canonical_smiles"],
-            selected_families=list(DEFAULT_BENCHMARK_FEATURE_FAMILIES),
+            selected_families=resolved_feature_families(args),
             radius=2,
             n_bits=int(args.fingerprint_bits),
         )
@@ -7750,7 +8470,7 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
         if not shared_cache_hit:
             X, feature_meta = build_feature_matrix_from_smiles(
                 df["canonical_smiles"].tolist(),
-                selected_feature_families=list(DEFAULT_BENCHMARK_FEATURE_FAMILIES),
+                selected_feature_families=resolved_feature_families(args),
                 radius=2,
                 n_bits=args.fingerprint_bits,
                 enable_persistent_feature_store=args.enable_persistent_feature_store,
@@ -7807,9 +8527,10 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
         split["X_train"], split["X_test"], feature_dedup_meta = drop_exact_and_near_duplicate_features(
             split["X_train"],
             split["X_test"],
-            variance_threshold=1e-8,
-            binary_prevalence_min=0.005,
-            binary_prevalence_max=0.995,
+            variance_threshold=float(getattr(args, "dedup_variance_threshold", 1e-8)),
+            binary_prevalence_min=float(dedup_prevalence_range(args)[0]),
+            binary_prevalence_max=float(dedup_prevalence_range(args)[1]),
+            drop_exact_duplicates=bool(getattr(args, "drop_duplicate_feature_columns", True)),
         )
         dedup_dropped_count = int(feature_dedup_meta.get("dropped_feature_count", 0))
         if dedup_dropped_count > 0:
@@ -7874,9 +8595,20 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
             flush=True,
         )
 
-    if maplight_parity_mode:
+    maplight_catboost_pending = (
+        CatBoostRegressor is not None
+        and model_filter_allows(args, maplight_catboost_model_label(args))
+        and maplight_catboost_model_label(args) not in completed_model_names
+    )
+    maplight_gnn_pending = (
+        bool(args.run_maplight_gnn)
+        and model_filter_allows(args, maplight_gnn_model_label(args))
+        and maplight_gnn_model_label(args) not in completed_model_names
+    )
+    if maplight_parity_mode and (maplight_catboost_pending or maplight_gnn_pending):
         # Build MapLight classic features directly from split SMILES so parity
-        # mode is not affected by global feature de-duplication/pruning.
+        # mode is not affected by global feature de-duplication/pruning. Skipped
+        # when no MapLight model will run (e.g. the quick profile or a resumed dataset).
         maplight_direct_X_train = build_maplight_parity_matrix(split["smiles_train"], args)
         maplight_direct_X_test = build_maplight_parity_matrix(split["smiles_test"], args)
         if list(maplight_direct_X_test.columns) != list(maplight_direct_X_train.columns):
@@ -8941,11 +9673,63 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
 
     final_metrics_rows = current_annotated_metrics_rows()
     if final_metrics_rows:
-        pd.DataFrame(final_metrics_rows).to_csv(metrics_path, index=False)
+        qsarena_artifacts.atomic_write_csv(metrics_path, pd.DataFrame(final_metrics_rows))
     if prediction_tables:
-        pd.concat(prediction_tables, ignore_index=True).to_csv(predictions_path, index=False)
+        qsarena_artifacts.atomic_write_csv(
+            predictions_path, _attach_ids(pd.concat(prediction_tables, ignore_index=True), dataset_id_map)
+        )
     if ga_history_tables:
-        pd.concat(ga_history_tables, ignore_index=True).to_csv(ga_history_path, index=False)
+        qsarena_artifacts.atomic_write_csv(ga_history_path, pd.concat(ga_history_tables, ignore_index=True))
+    ad_summary: dict[str, Any] = {}
+    try:
+        ad_summary = compute_applicability_domain(
+            args=args,
+            dataset_dir=dataset_dir,
+            dataset_id=dataset_id,
+            split=split,
+            X_train=X_train,
+            X_test=X_test,
+            prediction_payloads=prediction_payloads,
+            metrics_rows=final_metrics_rows,
+            task_type=dataset_task_type,
+            id_map=dataset_id_map,
+        )
+    except Exception as exc:
+        print(f"[warn] {dataset_id}: applicability domain not computed ({type(exc).__name__}: {exc}).", flush=True)
+        ad_summary = {"method": str(getattr(args, "ad_method", "")), "notes": [f"{type(exc).__name__}: {exc}"]}
+    failed_models = [
+        str(row.get("model", ""))
+        for row in final_metrics_rows
+        if _row_has_error_text(row) and not _row_is_terminal_skip(row)
+    ]
+    for row in final_metrics_rows:
+        if _row_has_error_text(row) and not _row_is_terminal_skip(row):
+            try:
+                from qsarena.reporting import remedy_for_error
+            except ImportError:  # pragma: no cover
+                remedy_for_error = lambda _e: ""  # noqa: E731
+            qsarena_events.EVENTS.warn(
+                "backend_failure",
+                f"{row.get('model', '')} failed: {str(row.get('error', ''))[:160]}",
+                remedy=remedy_for_error(row.get("error", "")),
+                dataset=dataset_id,
+            )
+    if int(len(df)) < 100:
+        qsarena_events.EVENTS.warn(
+            "small_dataset",
+            f"{len(df)} molecules ({len(split['y_test'])} in the test split): test metrics and rankings are noisy.",
+            remedy="Prefer the CV-selected model and repeat the run with other --random-seed values.",
+            dataset=dataset_id,
+            echo=False,
+        )
+    top10_count = int((spec.leaderboard_summary or {}).get("top10", []) and len((spec.leaderboard_summary or {}).get("top10", [])) or 0)
+    if spec.leaderboard_summary and 0 < top10_count < 10:
+        qsarena_events.EVENTS.warn(
+            "sparse_reference_rank",
+            f"only {top10_count} published leaderboard entries: the estimated rank is coarse.",
+            remedy="Quote the metric value, not the rank, for this dataset.",
+            dataset=dataset_id,
+        )
     _set_active_stage_status("completed")
     _close_active_stage(default_status="completed")
     _write_stage_runtime_outputs()
@@ -8960,6 +9744,15 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
             "elapsed_seconds": round(elapsed_seconds, 3),
             "n_metrics_rows": len(final_metrics_rows),
             "n_stage_records": len(stage_records),
+            "n_rows": int(len(df)),
+            "task_type": dataset_task_type,
+            "primary_metric": current_dataset_primary_metric("roc_auc" if dataset_task_type == "classification" else "rmse"),
+            "cleanup_counts": input_meta.get("cleanup_counts", {}),
+            "standardization": input_meta.get("standardization", {}),
+            "failed_models": failed_models,
+            "applicability_domain": ad_summary,
+            "stage23_signature": stage23_signature_value,
+            "resume_fingerprint": dataset_resume_fingerprint(spec, args),
         },
     )
     return DatasetRunResult(final_metrics_rows, prediction_tables, ga_history_tables, "completed", elapsed_seconds)
@@ -9913,8 +10706,26 @@ def write_run_vs_run_attribution_report(
     return summary_payload
 
 
-def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description=__doc__)
+def _package_version() -> str:
+    try:
+        from qsarena import __version__ as version_text
+    except Exception:  # pragma: no cover - source checkout without the package on sys.path
+        version_text = "unknown"
+    return str(version_text)
+
+
+def build_arg_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        prog="qsarena-benchmark",
+        description=__doc__,
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog=(
+            "Every option belongs to one of 15 decision groups (listed above). The same options can be set in a\n"
+            "run.yaml passed with --config (precedence: command line > file > defaults); see\n"
+            "configs/run.example.yaml and docs/options_reference.md."
+        ),
+    )
+    parser.add_argument("--version", action="version", version=f"qsarena {_package_version()}")
     parser.add_argument("--dataset", action="append", help="CSV dataset path. Repeat to override the default notebook example set with local CSVs only.")
     parser.add_argument(
         "--pfas-aux-workbook",
@@ -9949,11 +10760,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--output-dir", type=Path, default=None, help="Output directory. Defaults to benchmark_results/qsarena_benchmark_<timestamp>.")
     parser.add_argument(
         "--benchmark-profile",
-        choices=["cost_optimized", "full"],
+        choices=["cost_optimized", "full", "quick"],
         default="cost_optimized",
         help=(
             "Runtime/performance profile. cost_optimized disables historically low-value expensive model variants by default; "
-            "full restores the broader model set."
+            "full restores the broader model set; quick keeps only the scikit-learn families plus fusion and ensembles."
         ),
     )
     parser.add_argument("--dry-run", action="store_true", help="List discovered datasets and planned configuration without fitting models.")
@@ -10015,7 +10826,12 @@ def parse_args() -> argparse.Namespace:
         help="Shared cache directory for full feature matrices. AUTO resolves to model_cache/benchmark_feature_matrix_cache.",
     )
 
-    parser.add_argument("--selector-method", choices=["elasticnet_cv", "none"], default="elasticnet_cv")
+    parser.add_argument(
+        "--selector-method",
+        choices=["elasticnet_cv", "rf_importance", "none"],
+        default="elasticnet_cv",
+        help="Train-only feature selector. rf_importance skips ElasticNetCV and ranks by random-forest importance.",
+    )
     parser.add_argument("--selector-l1-ratio-grid", default="0.3,0.7")
     parser.add_argument("--selector-alpha-min-log10", type=float, default=-5)
     parser.add_argument("--selector-alpha-max-log10", type=float, default=-1)
@@ -10088,7 +10904,7 @@ def parse_args() -> argparse.Namespace:
         default="",
         help=(
             "Comma-separated GA models to tune (example: ElasticNet,CatBoost). "
-            "Default is disabled (empty). "
+            "Default is disabled (empty). 'on' tunes the estimators of --ga-estimators. "
             "Use 'auto' to enable only GA models that showed meaningful value in the most recent comparable run."
         ),
     )
@@ -10388,7 +11204,7 @@ def parse_args() -> argparse.Namespace:
         "--only-model-names",
         action="append",
         default=[],
-        help=argparse.SUPPRESS,
+        help="Run only these model labels (repeat the flag for several). Include 'Ensemble' to keep the ensemble.",
     )
     parser.add_argument("--resume", action=argparse.BooleanOptionalAction, default=True, help="Resume a compatible incomplete run when possible.")
     parser.add_argument(
@@ -10407,10 +11223,22 @@ def parse_args() -> argparse.Namespace:
         default=False,
         help="Run TDC-22 multi-seed evaluations in parallel across seeds. Default: False (serial).",
     )
-    return parser.parse_args()
+    qsarena_config.add_run_config_arguments(parser)
+    qsarena_config.regroup_parser_help(parser)
+    return parser
+
+
+def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
+    return build_arg_parser().parse_args(argv)
+
+
+#: argparse destinations set from --config (they count as "provided" for profile/resource defaults).
+_CONFIG_PROVIDED_DESTS: set[str] = set()
 
 
 def _cli_option_provided(argv_tokens: list[str], option_name: str) -> bool:
+    if str(option_name).strip().replace("-", "_") in _CONFIG_PROVIDED_DESTS:
+        return True
     option = f"--{str(option_name).strip().replace('_', '-')}"
     negated = f"--no-{option[2:]}"
     for token in argv_tokens:
@@ -10425,9 +11253,13 @@ def _cli_option_provided(argv_tokens: list[str], option_name: str) -> bool:
     return False
 
 
+#: Families the quick profile switches off (it keeps conventional_ml, fusion and ensemble).
+QUICK_PROFILE_DISABLED_FAMILIES = ["gradient_boosting", "deep_tabular", "graph_nn", "pretrained_3d", "maplight_gnn"]
+
+
 def apply_benchmark_profile_defaults(args: argparse.Namespace, argv_tokens: list[str]) -> None:
     profile = str(getattr(args, "benchmark_profile", "cost_optimized")).strip().lower()
-    if profile not in {"cost_optimized", "full"}:
+    if profile not in {"cost_optimized", "full", "quick"}:
         profile = "cost_optimized"
 
     profile_defaults: dict[str, Any]
@@ -10442,6 +11274,18 @@ def apply_benchmark_profile_defaults(args: argparse.Namespace, argv_tokens: list
             "chemprop_ensemble_size": 3,
             "selector_auto_rf_by_dataset_size": False,
         }
+    elif profile == "quick":
+        profile_defaults = {
+            "run_chemml_tensorflow": False,
+            "run_tabpfn": False,
+            "run_cnn": False,
+            "run_chemprop_dmpnn": False,
+            "run_chemprop_cmpnn": False,
+            "run_chemprop_rdkit2d": False,
+            "selector_auto_rf_by_dataset_size": True,
+            "run_tdc22_multiseed_best": False,
+            "disabled_model_families": list(QUICK_PROFILE_DISABLED_FAMILIES),
+        }
     else:
         profile_defaults = {
             "run_chemml_tensorflow": False,
@@ -10455,6 +11299,49 @@ def apply_benchmark_profile_defaults(args: argparse.Namespace, argv_tokens: list
     for arg_name, value in profile_defaults.items():
         if not _cli_option_provided(argv_tokens, arg_name):
             setattr(args, arg_name, value)
+
+
+def apply_gpu_policy(args: argparse.Namespace) -> bool:
+    """deep.use_gpu: auto detects, false hides the GPU from every backend, true assumes one."""
+    policy = str(getattr(args, "gpu_policy", "auto") or "auto").lower()
+    if policy == "false":
+        # No detection at all (it imports torch): hide any GPU from every backend.
+        os.environ["CUDA_VISIBLE_DEVICES"] = ""
+        args.gpu_available = False
+        return False
+    detected = detect_gpu_available()
+    if policy == "true":
+        gpu_available = True
+        if not detected:
+            print("[warn] --use-gpu true but no CUDA GPU was detected; GPU-only stages will likely fail.", flush=True)
+    else:
+        gpu_available = detected
+    args.gpu_available = bool(gpu_available)
+    return bool(gpu_available)
+
+
+def apply_model_family_switches(args: argparse.Namespace) -> None:
+    """models.enable_families: switch the per-family run flags off. conventional_ml and
+    gradient_boosting have no run flag and are filtered model by model (model_filter_allows)."""
+    disabled = set(getattr(args, "disabled_model_families", None) or [])
+    if "graph_nn" in disabled:
+        args.run_chemprop_mpnn = False
+    if "pretrained_3d" in disabled:
+        args.run_unimol_v1 = False
+        args.run_unimol_v2 = False
+    if "maplight_gnn" in disabled:
+        args.run_maplight_gnn = False
+    if "fusion" in disabled:
+        args.run_cfa = False
+    if "ensemble" in disabled:
+        args.run_ensemble = False
+    if "deep_tabular" in disabled:
+        args.run_chemml_pytorch = False
+        args.run_chemml_tensorflow = False
+        args.run_cnn = False
+        args.run_tabpfn = False
+    if not str(getattr(args, "ensemble_methods", "") or "").strip():
+        args.run_ensemble = False
 
 
 def apply_resource_defaults(args: argparse.Namespace, argv_tokens: list[str]) -> None:
@@ -10510,7 +11397,8 @@ def _run_datasets_parallel(
 
     n_jobs in the worker args is divided equally so total CPU usage stays constant.
     progress_callback(completed, total, spec, result, elapsed, avg, eta) is called in
-    the main process after each future completes â€” safe to use closures like write_run_timing.
+    the main process after each future completes, so closures like write_run_timing are safe.
+    A dataset whose worker raises is recorded as failed (record_dataset_failure).
     """
     import concurrent.futures
     import multiprocessing as _mp
@@ -10545,6 +11433,9 @@ def _run_datasets_parallel(
                     f"[parallel] FAILED {getattr(spec, 'name', str(spec))}: {exc}",
                     flush=True,
                 )
+                record_dataset_failure(output_dir, spec, exc, stage="run")
+                if not bool(getattr(args, "continue_on_error", True)):
+                    raise
                 continue
             all_metrics.extend(result.metrics_rows)
             all_predictions.extend(result.prediction_tables)
@@ -10557,7 +11448,7 @@ def _run_datasets_parallel(
             eta = avg * remaining if avg else 0.0
             print(
                 f"[parallel {completed_count}/{len(datasets)}] {getattr(spec, 'name', '?')} "
-                f"â†’ {result.status} | elapsed {format_seconds(elapsed)} | "
+                f"-> {result.status} | elapsed {format_seconds(elapsed)} | "
                 f"avg {format_seconds(avg) if avg else 'n/a'} | ETA {format_seconds(eta)}",
                 flush=True,
             )
@@ -10567,19 +11458,475 @@ def _run_datasets_parallel(
     return all_metrics, all_predictions, all_histories, completed_times
 
 
-def main() -> int:
-    args = parse_args()
-    apply_benchmark_profile_defaults(args, sys.argv[1:])
-    if _cli_option_provided(sys.argv[1:], "ensemble_method") and not _cli_option_provided(sys.argv[1:], "ensemble_methods"):
+# ---------------------------------------------------------------------------------------------
+# Run lifecycle helpers (RunConfig / batch / preflight / reports)
+# ---------------------------------------------------------------------------------------------
+
+
+def record_dataset_failure(
+    output_dir: Path,
+    spec_or_name: Any,
+    exc: BaseException | str,
+    *,
+    stage: str,
+    remedy: str = "",
+    source: str = "",
+) -> dict[str, Any]:
+    """Write status=failed for one dataset so the batch can continue and the summary lists it."""
+    import traceback
+
+    name = getattr(spec_or_name, "name", None) or str(spec_or_name)
+    dataset_id = slugify(name)
+    dataset_dir = Path(output_dir) / dataset_id
+    dataset_dir.mkdir(parents=True, exist_ok=True)
+    error_text = f"{type(exc).__name__}: {exc}" if isinstance(exc, BaseException) else str(exc)
+    if isinstance(exc, DatasetDiscoveryError) and not remedy:
+        remedy = exc.remedy
+    if not remedy:
+        try:
+            from qsarena.reporting import remedy_for_error
+
+            remedy = remedy_for_error(error_text)
+        except Exception:  # pragma: no cover
+            remedy = ""
+    payload = {
+        "status": "failed",
+        "dataset": dataset_id,
+        "source": source or str(getattr(spec_or_name, "source", "")),
+        "failed_stage": stage,
+        "error": error_text,
+        "remedy": remedy,
+        "failed_at": time.strftime("%Y-%m-%d %H:%M:%S"),
+    }
+    if isinstance(exc, BaseException) and exc.__traceback__ is not None:
+        payload["traceback"] = "".join(traceback.format_exception(type(exc), exc, exc.__traceback__))[-4000:]
+    write_dataset_status(dataset_dir, payload)
+    qsarena_events.EVENTS.warn("dataset_failed", f"failed during {stage}: {error_text[:240]}", remedy=remedy, dataset=dataset_id)
+    return payload
+
+
+def discover_batch_datasets(args: argparse.Namespace, failures: list[dict[str, Any]]) -> list[DatasetSpec]:
+    """--batch: manifest / directory / list. A bad entry is recorded in ``failures``."""
+    try:
+        from qsarena import batch as qsarena_batch
+    except ModuleNotFoundError:  # pragma: no cover
+        sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+        from qsarena import batch as qsarena_batch
+
+    entries = qsarena_batch.unique_names(qsarena_batch.resolve_batch_entries(args.batch, getattr(args, "batch_mode", "auto")))
+    print(f"Batch source: {len(entries)} dataset(s) from {', '.join(str(s) for s in args.batch)}", flush=True)
+    specs: list[DatasetSpec] = []
+    for entry in entries:
+        try:
+            overrides = qsarena_config.per_dataset_arg_overrides(entry.overrides, source=entry.origin)
+            merged = argparse.Namespace(**vars(args))
+            for key, value in overrides.items():
+                setattr(merged, key, value)
+            specs.extend(
+                load_user_dataset_specs(
+                    entry.path,
+                    name=entry.name,
+                    smiles_column=getattr(merged, "smiles_column", None),
+                    target_columns=getattr(merged, "target_columns", None),
+                    id_column=getattr(merged, "id_column", None),
+                    task_type=getattr(merged, "task_type", None),
+                    classification_threshold=getattr(merged, "classification_threshold", None),
+                    predefined_split_column=getattr(merged, "predefined_split_column", None),
+                    arg_overrides=overrides,
+                )
+            )
+        except (DatasetDiscoveryError, qsarena_config.ConfigError) as exc:
+            remedy = getattr(exc, "remedy", "") or "Fix this manifest row; the other datasets still run."
+            print(f"[fail] {entry.name} ({entry.origin}): {exc}", flush=True)
+            failures.append({"dataset": entry.name, "source": str(entry.path), "stage": "discovery",
+                             "error": str(exc), "remedy": remedy})
+    return specs
+
+
+def _backend_wants(args: argparse.Namespace) -> dict[str, bool]:
+    return {
+        "boosting": "gradient_boosting" not in set(getattr(args, "disabled_model_families", None) or []),
+        "chemml_pytorch": bool(getattr(args, "run_chemml_pytorch", False)),
+        "cnn": bool(getattr(args, "run_cnn", False)),
+        "chemprop": bool(getattr(args, "run_chemprop_mpnn", False)) and bool(chemprop_variant_specs(args)),
+        "unimol_v1": bool(getattr(args, "run_unimol_v1", False)),
+        "unimol_v2": bool(getattr(args, "run_unimol_v2", False)),
+        "unimol_auto": bool(getattr(args, "unimol_auto_requested", False)) and "pretrained_3d" not in set(getattr(args, "disabled_model_families", None) or []),
+        "tabpfn": bool(getattr(args, "run_tabpfn", False)),
+        "maplight_gnn": bool(getattr(args, "run_maplight_gnn", False)),
+    }
+
+
+def planned_models_for_dataset(args: argparse.Namespace, spec: DatasetSpec, backends: dict[str, dict[str, Any]]) -> list[dict[str, Any]]:
+    """Every model stage the run would consider, with planned / skipped (+ reason)."""
+    args = dataset_args(args, spec)
+    classification = dataset_is_classification(spec)
+
+    def installed(name: str) -> bool:
+        return bool(backends.get(name, {}).get("available", False))
+
+    rows: list[dict[str, Any]] = []
+
+    def add(model: str, *, flag: bool = True, flag_reason: str = "", available: bool = True, missing: str = "") -> None:
+        family = qsarena_config.model_family(model.removesuffix(" GA"))
+        if model_disabled_by_config(args, model):
+            if family in set(getattr(args, "disabled_model_families", None) or []):
+                profile_note = " by the quick profile" if str(getattr(args, "benchmark_profile", "")) == "quick" else ""
+                status, reason = "skipped", f"family {family} switched off{profile_note}"
+            else:
+                status, reason = "skipped", "listed in models.disable_models"
+        elif model_filter_values(args) and not model_filter_allows(args, model):
+            status, reason = "skipped", "not listed in models.only_models"
+        elif not flag:
+            status, reason = "skipped", flag_reason
+        elif not available:
+            status, reason = "skipped", missing
+        else:
+            status, reason = "planned", ""
+        rows.append({"model": model, "family": family, "status": status, "reason": reason})
+
+    base = (
+        ["LogisticRegression", "SVC", "Random forest", "Extra trees", "HistGradientBoosting", "Voting Classifier (KNN, SVM)", "AdaBoost", "Tabular MLP"]
+        if classification
+        else ["ElasticNetCV", "SVR", "Random forest", "Extra trees", "HistGradientBoosting", "Voting Regressor (KNN, SVM)", "AdaBoost", "Tabular MLP"]
+    )
+    for name in base:
+        add(name)
+    if not classification:
+        add("Tabular CNN", flag=bool(getattr(args, "run_cnn", True)), flag_reason="deep.cnn is off", available=installed("tensorflow"),
+            missing="TensorFlow not installed (qsarena[deep])")
+    for name, backend in (("XGBoost", "xgboost"), ("LightGBM", "lightgbm"), ("CatBoost", "catboost")):
+        add(name, available=installed(backend), missing=f"{backend} not installed (qsarena[boosting])")
+    add(maplight_catboost_model_label(args), available=installed("catboost"), missing="catboost not installed (qsarena[boosting])")
+    add("TabPFNClassifier" if classification else "TabPFNRegressor", flag=bool(getattr(args, "run_tabpfn", False)),
+        flag_reason="deep.tabpfn is off", available=installed("tabpfn"), missing="tabpfn not installed (qsarena[foundation])")
+    for ga_name in parse_comma_list(getattr(args, "ga_models_resolved", getattr(args, "ga_models", ""))):
+        add(f"{ga_name} GA", available=(ga_name != "CatBoost" or installed("catboost")), missing="catboost not installed")
+    add("ChemML MLP (PyTorch)", flag=bool(getattr(args, "run_chemml_pytorch", False)), flag_reason="deep.chemml.pytorch is off",
+        available=installed("torch"), missing="PyTorch not installed (qsarena[deep])")
+    add("ChemML MLP (TensorFlow)", flag=bool(getattr(args, "run_chemml_tensorflow", False)), flag_reason="deep.chemml.tensorflow is off",
+        available=installed("tensorflow"), missing="TensorFlow not installed (qsarena[deep])")
+    chemprop_specs = chemprop_variant_specs(args) if bool(getattr(args, "run_chemprop_mpnn", False)) else []
+    if chemprop_specs:
+        for variant in chemprop_specs:
+            add(str(variant.get("label", "Chemprop v2")), available=installed("chemprop"), missing="chemprop not installed (qsarena[graph])")
+    else:
+        add("Chemprop v2 (all variants)", flag=False, flag_reason="graph_nn family off or no variants selected")
+    gpu = bool(backends.get("gpu", {}).get("available", False))
+    add("Uni-Mol V1", flag=bool(getattr(args, "run_unimol_v1", False)),
+        flag_reason=("no GPU detected (auto)" if not gpu else "deep.unimol.v1 is off"),
+        available=installed("unimol_tools"), missing="unimol_tools not installed (qsarena[foundation])")
+    add(f"Uni-Mol V2 ({getattr(args, 'unimol_model_size', '84m')})", flag=bool(getattr(args, "run_unimol_v2", False)),
+        flag_reason=("needs a GPU" if not gpu else "deep.unimol.v2 is off"),
+        available=installed("unimol_tools"), missing="unimol_tools not installed (qsarena[foundation])")
+    add(maplight_gnn_model_label(args), flag=bool(getattr(args, "run_maplight_gnn", False)), flag_reason="maplight_gnn family off",
+        available=installed("dgl"), missing="dgl/dgllife not installed")
+    add("CFA (Combinatorial Fusion)", flag=bool(getattr(args, "run_cfa", False)), flag_reason="fusion.cfa_score is off")
+    for method in resolved_ensemble_methods(args) if bool(getattr(args, "run_ensemble", False)) else []:
+        add(f"Ensemble ({method})")
+    if not bool(getattr(args, "run_ensemble", False)):
+        add("Ensemble", flag=False, flag_reason="ensemble family off or no ensemble method selected")
+    return rows
+
+
+def estimate_dataset_seconds(args: argparse.Namespace, spec: DatasetSpec, planned: list[dict[str, Any]], n_rows: int) -> dict[str, float]:
+    try:
+        from qsarena import preflight as qsarena_preflight
+    except ModuleNotFoundError:  # pragma: no cover
+        sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+        from qsarena import preflight as qsarena_preflight
+
+    args = dataset_args(args, spec)
+    families = [row["family"] for row in planned if row["status"] == "planned" and not row["model"].endswith(" GA")]
+    ga_models = [row for row in planned if row["status"] == "planned" and row["model"].endswith(" GA")]
+    ga_fits = len(ga_models) * int(getattr(args, "ga_generations", 12)) * int(getattr(args, "ga_population_size", 16)) * int(getattr(args, "ga_cv_folds", 5))
+    n_train = int(round(n_rows * (1.0 - float(getattr(args, "test_fraction", 0.2)))))
+    selector_seconds = 0.0
+    if str(getattr(args, "selector_method", "elasticnet_cv")) == "elasticnet_cv":
+        predicted = estimate_elasticnet_selector_seconds_from_dataset_size(
+            n_train,
+            log10_slope=float(getattr(args, "selector_auto_rf_log10_slope", 1.225)),
+            log10_intercept=float(getattr(args, "selector_auto_rf_log10_intercept", -0.658)),
+        )
+        cap = float(getattr(args, "selector_elasticnet_timeout_seconds", 7200.0))
+        selector_seconds = min(predicted, cap) if np.isfinite(predicted) else cap
+    else:
+        selector_seconds = 2.0 + 0.002 * n_train
+    return qsarena_preflight.estimate_pipeline_seconds(
+        n_rows, families, gpu=bool(getattr(args, "gpu_available", False)), selector_seconds=selector_seconds, ga_fits=ga_fits,
+    )
+
+
+def run_preflight(args: argparse.Namespace, datasets: list[DatasetSpec], output_dir: Path) -> dict[str, Any]:
+    """Preflight every dataset and the backends; print actionable messages; write preflight.json."""
+    try:
+        from qsarena import preflight as qsarena_preflight
+    except ModuleNotFoundError:  # pragma: no cover
+        sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+        from qsarena import preflight as qsarena_preflight
+
+    backends = qsarena_preflight.backend_status(bool(getattr(args, "gpu_available", False)))
+    backend_msgs = qsarena_preflight.backend_messages(backends, _backend_wants(args))
+    results = []
+    plans = []
+    total_seconds = 0.0
+    print("\nPreflight checks:", flush=True)
+    for spec in datasets:
+        spec_args = dataset_args(args, spec)
+        try:
+            result = qsarena_preflight.preflight_dataset(
+                spec.frame[spec.smiles_column].tolist(),
+                spec.frame[spec.target_column].tolist(),
+                name=slugify(spec.name),
+                task=str(spec.task_type or "auto"),
+                classification_threshold=spec.classification_threshold,
+                minimum_rows=int(getattr(spec_args, "minimum_rows", 20)),
+                drop_unparseable=bool(getattr(spec_args, "drop_unparseable_smiles", True)),
+                test_fraction=float(getattr(spec_args, "test_fraction", 0.2)),
+            )
+        except Exception as exc:  # preflight must never stop a run
+            print(f"[preflight] warning {slugify(spec.name)}: preflight failed ({type(exc).__name__}: {exc})", flush=True)
+            continue
+        results.append(result)
+        planned = planned_models_for_dataset(args, spec, backends)
+        n_rows = int(result.n_valid if not getattr(spec_args, "row_limit", 0) else min(result.n_valid, int(spec_args.row_limit)))
+        seconds = estimate_dataset_seconds(args, spec, planned, n_rows)
+        total_seconds += sum(seconds.values())
+        plans.append({"dataset": slugify(spec.name), "n_rows": n_rows, "task": result.task, "models": planned,
+                      "estimated_seconds": seconds, "estimated_total_seconds": float(sum(seconds.values()))})
+        print(
+            f"  - {slugify(spec.name)}: {result.n_rows} rows, parse rate {result.parse_rate:.1%} "
+            f"({result.n_unparseable} unparseable, {result.n_missing} missing), duplicates {result.duplicate_fraction:.1%}, "
+            f"task={result.task}" + (f", classes={result.class_balance}" if result.class_balance else ""),
+            flush=True,
+        )
+        for message in result.messages:
+            if message.level == "info" and message.code == "task":
+                continue
+            print("    " + message.console_text(), flush=True)
+            if message.level in {"warning", "error"}:
+                qsarena_events.EVENTS.warn(
+                    f"preflight_{message.code}", message.message, remedy=message.remedy, dataset=message.dataset, echo=False
+                )
+    for message in backend_msgs:
+        print("  " + message.console_text(), flush=True)
+        if message.level in {"warning", "error"}:
+            qsarena_events.EVENTS.warn(f"preflight_{message.code}", message.message, remedy=message.remedy, echo=False)
+    payload = {
+        "datasets": [r.as_dict() for r in results],
+        "backends": backends,
+        "backend_messages": [m.as_dict() for m in backend_msgs],
+        "plans": plans,
+        "estimated_total_seconds": total_seconds,
+        "estimate_note": (
+            "Order-of-magnitude estimate: median per-fit wall-clock by model family from the paper's A100 run "
+            "(Table 6) scaled linearly with dataset size; GPU-accelerated families are assumed 2-8x slower without a GPU."
+        ),
+    }
+    qsarena_artifacts.atomic_write_json(output_dir / "preflight.json", payload)
+    qsarena_events.EVENTS.emit(
+        "preflight", datasets=len(results), estimated_total_seconds=round(total_seconds, 1),
+        warnings=sum(1 for r in results for m in r.messages if m.level != "info") + len(backend_msgs),
+    )
+    return payload
+
+
+def _plan_markdown(plan_payload: dict[str, Any], args: argparse.Namespace, output_dir: Path) -> str:
+    try:
+        from qsarena.preflight import format_duration
+    except ModuleNotFoundError:  # pragma: no cover
+        sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+        from qsarena.preflight import format_duration
+
+    lines = [
+        "# QSARena dry-run plan",
+        "",
+        f"- Output directory: `{output_dir}`",
+        f"- Profile: {getattr(args, 'benchmark_profile', '')}; GPU: {'yes' if getattr(args, 'gpu_available', False) else 'no'}",
+        f"- Estimated wall-clock: ~{format_duration(plan_payload.get('estimated_total_seconds', 0.0))} "
+        "(order of magnitude; see preflight.json for the method)",
+        "",
+    ]
+    for plan in plan_payload.get("plans", []):
+        planned = [m for m in plan["models"] if m["status"] == "planned"]
+        skipped = [m for m in plan["models"] if m["status"] != "planned"]
+        lines += [
+            f"## {plan['dataset']} ({plan['n_rows']} rows, {plan['task']})",
+            "",
+            "Stages: 1 load + standardize, 2 features, 3 split + train-only feature selection, then one stage per model.",
+            f"Estimated: ~{format_duration(plan['estimated_total_seconds'])}.",
+            "",
+            "| Model | Family | Status | Reason |",
+            "|---|---|---|---|",
+        ]
+        lines += [f"| {m['model']} | {m['family']} | {m['status']} | {m['reason']} |" for m in planned + skipped]
+        lines.append("")
+    return "\n".join(lines) + "\n"
+
+
+def _print_run_header(args: argparse.Namespace, datasets: list[DatasetSpec], resume_plan: Any, tabpfn_budget_estimate: Any) -> None:
+    selector_threshold_size = elasticnet_selector_timeout_dataset_size_threshold(
+        float(args.selector_auto_rf_threshold_seconds),
+        log10_slope=float(args.selector_auto_rf_log10_slope),
+        log10_intercept=float(args.selector_auto_rf_log10_intercept),
+    )
+    selector_threshold_size_text = (
+        f"{int(round(selector_threshold_size)):,}"
+        if np.isfinite(selector_threshold_size)
+        else "unknown"
+    )
+    print(f"Benchmark profile: {args.benchmark_profile}")
+    resource_config = resource_config_payload(args)
+    gpu_names = ", ".join(item.get("name", "") for item in resource_config["gpu_inventory"]) or "none"
+    print(
+        "Resource plan: "
+        f"cpu_count={resource_config['detected_cpu_count']}, "
+        f"n_jobs={resource_config['n_jobs']}, "
+        f"chemprop_workers={resource_config['chemprop_num_workers']}, "
+        f"unimol_workers={resource_config['unimol_num_workers']}, "
+        f"gpu={gpu_names}"
+    )
+    print(f".env loaded: {dotenv_status_text()}")
+    print(
+        "Prior Labs API key: "
+        f"{'available' if priorlabs_api_key_available() else 'not found'} "
+        "(PRIORLABS_API_KEY/TABPFN_API_KEY)"
+    )
+    print(f"Molecular feature families: {', '.join(resolved_feature_families(args))}")
+    print(
+        "Persistent feature store: "
+        f"{'on' if bool(getattr(args, 'enable_persistent_feature_store', True)) else 'off'} "
+        f"(reuse={'on' if bool(getattr(args, 'reuse_persistent_feature_store', True)) else 'off'}, "
+        f"path={args.persistent_feature_store_path})"
+    )
+    print(
+        "Shared feature matrix cache: "
+        f"{'on' if bool(getattr(args, 'enable_shared_feature_matrix_cache', True)) else 'off'} "
+        f"(reuse={'on' if bool(getattr(args, 'reuse_shared_feature_matrix_cache', True)) else 'off'}, "
+        f"path={args.shared_feature_matrix_cache_path})"
+    )
+    print(f"MapLight pretrained cache dir: {default_maplight_pretrained_cache_dir()}")
+    print(
+        "Selector auto-RF by dataset size: "
+        f"{'on' if bool(args.selector_auto_rf_by_dataset_size) else 'off'} "
+        f"(threshold={float(args.selector_auto_rf_threshold_seconds):,.0f}s, threshold_n~{selector_threshold_size_text})"
+    )
+    print(
+        "GA models for this run: "
+        + (", ".join(parse_comma_list(getattr(args, "ga_models_resolved", ""))) if parse_comma_list(getattr(args, "ga_models_resolved", "")) else "(none)")
+    )
+    print(
+        "CFA stage: "
+        f"{'on' if bool(getattr(args, 'run_cfa', False)) else 'off'} "
+        f"(min_models={int(getattr(args, 'cfa_min_models', 2))}, "
+        f"max_models={'all' if int(getattr(args, 'cfa_max_models', 0)) <= 0 else int(getattr(args, 'cfa_max_models', 0))}, "
+        f"subset_budget={int(getattr(args, 'cfa_max_candidate_subsets', 250000)):,}, "
+        "best_per_workflow=on (fixed), "
+        f"opt_metric={str(getattr(args, 'cfa_optimize_metric', 'mae'))}, "
+        f"sources={str(getattr(args, 'cfa_source_workflows', 'all'))}, "
+        f"rank={'on' if bool(getattr(args, 'cfa_include_rank_combinations', True)) else 'off'}, "
+        f"rank_pref={'on' if bool(getattr(args, 'cfa_rank_prefer_when_diverse', True)) else 'off'}, "
+        f"rank_threshold={float(getattr(args, 'cfa_rank_diversity_threshold', 0.15)):.3f}, "
+        f"rank_discount={float(getattr(args, 'cfa_rank_metric_discount', 0.98)):.3f})"
+    )
+    print(
+        "MapLight parity mode: "
+        f"{'strict' if bool(getattr(args, 'maplight_leaderboard_parity_mode', True)) else 'legacy'} "
+        f"(seeds={','.join(str(seed) for seed in maplight_parity_seed_values(args))})"
+    )
+    tdc22_specs = tdc22_official_dataset_specs(datasets)
+    print(
+        "TDC-22 best-model multi-seed evaluation: "
+        f"{'on' if bool(getattr(args, 'run_tdc22_multiseed_best', True)) else 'off'} "
+        f"(official admet_group datasets={len(tdc22_specs)}, "
+        f"seeds={','.join(str(seed) for seed in parse_int_list(getattr(args, 'tdc22_multiseed_seeds', '1,2,3,4,5')) or [1, 2, 3, 4, 5])})"
+    )
+    if resume_plan is not None:
+        print_resume_execution_plan(resume_plan)
+    if bool(getattr(args, "run_tabpfn", False)):
+        print(f"TabPFN backend source: {tabpfn_backend_status_text()}")
+    if tabpfn_budget_estimate is not None:
+        print(
+            "TabPFN daily-budget estimate: "
+            f"{tabpfn_budget_estimate['individually_fit_count']}/{len(datasets)} dataset(s) are estimated to fit "
+            f"individually within {TABPFN_DAILY_TOKEN_BUDGET:,} tokens/day. "
+            f"At most {tabpfn_budget_estimate['smallest_first_count']}/{len(datasets)} dataset(s) are estimated to fit "
+            f"if run smallest-first in one day. "
+            f"Estimator multiplier={int(tabpfn_budget_estimate['estimators_per_dataset'])}. "
+            f"{TABPFN_DAILY_RESET_NOTE}"
+        )
+    print(
+        "Uni-Mol V1 stage: "
+        f"{'on' if bool(getattr(args, 'run_unimol_v1', False)) else 'off'} "
+        f"(gpu_detected={'yes' if bool(getattr(args, 'gpu_available', False)) else 'no'})"
+    )
+    print(
+        "Uni-Mol V2 stage: "
+        f"{'on' if bool(getattr(args, 'run_unimol_v2', False)) else 'off'} "
+        f"(model_size={getattr(args, 'unimol_model_size', '84m')}, "
+        f"max_atoms={getattr(args, 'unimol_max_atoms', 96)}, "
+        f"amp={'on' if bool(getattr(args, 'unimol_use_amp', True)) else 'off'})"
+    )
+
+
+def effective_target_transform(spec: DatasetSpec, args: argparse.Namespace) -> str:
+    """What canonicalize_frame will do: log10 only for a regression target whose values are all > 0."""
+    if not resolve_dataset_log10_target(spec, args) or dataset_is_classification(spec):
+        return "raw"
+    values = pd.to_numeric(spec.frame[spec.target_column], errors="coerce").dropna()
+    return "log10" if len(values) and bool((values > 0).all()) else "raw (non-positive values)"
+
+
+def _print_dataset_list(args: argparse.Namespace, datasets: list[DatasetSpec]) -> None:
+    print("Datasets:")
+    for dataset in datasets:
+        leaderboard_metric = ((dataset.leaderboard_summary or {}).get("metric_name") or "").strip()
+        leaderboard_value = ((dataset.leaderboard_summary or {}).get("metric_value") or "").strip()
+        leaderboard_note = f", leaderboard={leaderboard_metric} {leaderboard_value}".strip()
+        target_transform_note = effective_target_transform(dataset, dataset_args(args, dataset))
+        print(
+            f"  - {dataset.name}: smiles={dataset.smiles_column}, target={dataset.target_column}, "
+            f"source={dataset.source}, split={dataset.recommended_split or dataset_args(args, dataset).split_strategy}"
+            f", target_transform={target_transform_note}"
+            f"{leaderboard_note if leaderboard_metric or leaderboard_value else ''}"
+        )
+
+
+def prepare_args(argv: Sequence[str] | None = None) -> tuple[argparse.Namespace, dict[str, Any]]:
+    """Parse the command line, merge --config (CLI > file > defaults), apply profile, GPU,
+    family and resource defaults, and validate the resolved RunConfig. Raises ConfigError."""
+    argv_tokens = [str(token) for token in (sys.argv[1:] if argv is None else argv)]
+    parser = build_arg_parser()
+    args = parser.parse_args(argv_tokens)
+    cli_dests = qsarena_config.cli_provided_dests(parser, argv_tokens)
+    _CONFIG_PROVIDED_DESTS.clear()
+    info: dict[str, Any] = {"config_file": "", "config_explicit_keys": [], "cli_dests": sorted(cli_dests)}
+    if args.config is not None:
+        file_cfg = qsarena_config.load_run_config(args.config)
+        config_dir = Path(args.config).resolve().parent
+        for dest, value in file_cfg.to_arg_values().items():
+            if dest in cli_dests:
+                continue
+            if dest in {"dataset", "batch"} and value:
+                value = [str(p if Path(p).is_absolute() else (config_dir / p).resolve()) for p in value]
+            if dest == "output_dir" and value:
+                value = Path(value) if Path(value).is_absolute() else (config_dir / value).resolve()
+            setattr(args, dest, value)
+            _CONFIG_PROVIDED_DESTS.add(dest)
+        info["config_file"] = str(Path(args.config).resolve())
+        info["config_explicit_keys"] = sorted(file_cfg.explicit_keys)
+    if bool(getattr(args, "fresh", False)):
+        args.resume = False
+    apply_benchmark_profile_defaults(args, argv_tokens)
+    if _cli_option_provided(argv_tokens, "ensemble_method") and not _cli_option_provided(argv_tokens, "ensemble_methods"):
         args.ensemble_methods = str(getattr(args, "ensemble_method", "")).strip()
     if bool(getattr(args, "run_cnn", True)) and not TF_AVAILABLE_FOR_CNN:
         print(
             "Tabular CNN was requested but TensorFlow is unavailable in this environment; the CNN model will be skipped.",
             flush=True,
         )
-    gpu_available = detect_gpu_available()
-    args.gpu_available = bool(gpu_available)
-    # Precision hook (Â§A): read QSARENA_PRECISION env var set by run_one.py.
+    gpu_available = apply_gpu_policy(args)
+    # Precision hook: read QSARENA_PRECISION env var set by run_one.py.
     # Must run after GPU detection, before any CUDA op. No-op when torch absent.
     try:
         from qsarena.precision import apply_global_precision
@@ -10588,6 +11935,7 @@ def main() -> int:
         args.precision_mode = _precision_mode
     except ImportError:
         args.precision_mode = "fp32"
+    args.unimol_auto_requested = getattr(args, "run_unimol_v1", None) is None or getattr(args, "run_unimol_v2", None) is None
     if getattr(args, "run_unimol_v1", None) is None:
         args.run_unimol_v1 = bool(gpu_available)
     elif bool(args.run_unimol_v1) and not gpu_available:
@@ -10603,7 +11951,38 @@ def main() -> int:
             flush=True,
         )
         args.run_unimol_v2 = False
-    apply_resource_defaults(args, sys.argv[1:])
+    apply_model_family_switches(args)
+    apply_resource_defaults(args, argv_tokens)
+    if str(getattr(args, "verbosity", "normal")) in {"verbose", "debug"} and not _cli_option_provided(argv_tokens, "chemprop_echo_commands"):
+        args.chemprop_echo_commands = True
+    mode = str(getattr(args, "run_mode", "auto") or "auto")
+    if mode == "auto":
+        mode = "batch" if getattr(args, "batch", None) else ("single" if getattr(args, "dataset", None) else "benchmark")
+    info["mode"] = mode
+    resolved = qsarena_config.RunConfig.from_namespace(args)
+    resolved.validate(resolved=True)
+    # run_config.yaml is meant to be re-loaded from inside the run directory, so store absolute paths.
+    for key in ("input.path", "batch.source"):
+        value = resolved.get(key)
+        if value:
+            items = value if isinstance(value, list) else [value]
+            absolute = [str(Path(item).resolve()) for item in items]
+            resolved.set(key, absolute if isinstance(value, list) else absolute[0])
+    if resolved.run.output_dir:
+        resolved.set("run.output_dir", str(Path(resolved.run.output_dir).resolve()))
+    info["resolved_config"] = resolved.to_dict()
+    info["resolved_config_signature"] = resolved.config_signature()
+    info["resolved_config_yaml"] = qsarena_config.render_example_yaml(resolved, comments=False)
+    qsarena_artifacts.set_atomic_writes(bool(getattr(args, "atomic_writes", True)))
+    return args, info
+
+
+def main(argv: Sequence[str] | None = None) -> int:
+    try:
+        args, info = prepare_args(argv)
+    except qsarena_config.ConfigError as exc:
+        print(f"[error] configuration: {exc}", file=sys.stderr, flush=True)
+        return 2
     root = workspace_root()
     if str(getattr(args, "persistent_feature_store_path", "AUTO")).strip().upper() == "AUTO":
         args.persistent_feature_store_path = str((root / "model_cache" / "feature_store_parquet").resolve())
@@ -10662,7 +12041,7 @@ def main() -> int:
                     ],
                     keep="last",
                 ).reset_index(drop=True)
-        historical_cache_df.to_csv(latest_cache_path, index=False)
+        qsarena_artifacts.atomic_write_csv(latest_cache_path, historical_cache_df)
     output_dir = select_output_dir(root, args)
 
     if bool(args.refresh_leaderboards_only):
@@ -10678,16 +12057,63 @@ def main() -> int:
             print(f"Shared cache CSV: {root / 'data' / 'benchmark_leaderboards' / 'leaderboard_top10_reference_latest.csv'}")
         return 0
 
-    if args.pfas_aux_workbook:
-        datasets = discover_pfas_aux_workbook_datasets(args.pfas_aux_workbook, include_sheets=args.pfas_aux_sheet)
-        args.split_strategy = "predefined"
-        args.target_transform = "raw"
-    elif args.dataset:
-        datasets = discover_local_datasets(root, args.dataset)
-    else:
-        datasets = discover_default_example_datasets(root)
-        if args.include_local_csv:
-            datasets.extend(discover_local_datasets(root, args.include_local_csv))
+    if bool(getattr(args, "fresh", False)) and not bool(args.dry_run):
+        superseded = qsarena_artifacts.supersede_directory(output_dir)
+        if superseded is not None:
+            print(f"--fresh: moved the previous contents of {output_dir} to {superseded}", flush=True)
+
+    output_dir.mkdir(parents=True, exist_ok=True)
+    verbosity = str(getattr(args, "verbosity", "normal") or "normal")
+    qsarena_events.EVENTS.configure(output_dir, verbosity)
+    try:
+        from qsarena.run_events import RunLogSession
+    except ModuleNotFoundError:  # pragma: no cover
+        sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+        from qsarena.run_events import RunLogSession
+    with RunLogSession(output_dir, verbosity):
+        try:
+            return _run_main(args, info, root, output_dir)
+        except KeyboardInterrupt:
+            print("[error] interrupted; rerun the same command to resume from the last completed stage.", flush=True)
+            qsarena_events.EVENTS.emit("run_interrupted", level="error")
+            raise
+
+
+def _run_main(args: argparse.Namespace, info: dict[str, Any], root: Path, output_dir: Path) -> int:
+    mode = info.get("mode", "benchmark")
+    if info.get("resolved_config") and not (info["resolved_config"].get("run") or {}).get("output_dir"):
+        # A default (timestamped) output directory: record it so run_config.yaml resumes into it.
+        resolved = qsarena_config.RunConfig.from_dict(info["resolved_config"], source="resolved configuration")
+        resolved.set("run.output_dir", str(Path(output_dir).resolve()))
+        info["resolved_config"] = resolved.to_dict()
+        info["resolved_config_yaml"] = qsarena_config.render_example_yaml(resolved, comments=False)
+    qsarena_events.EVENTS.emit(
+        "run_started", mode=mode, output_dir=str(output_dir), dry_run=bool(args.dry_run),
+        config_file=info.get("config_file", ""), config_signature=info.get("resolved_config_signature", ""),
+    )
+    discovery_failures: list[dict[str, Any]] = []
+    try:
+        if args.pfas_aux_workbook:
+            datasets = discover_pfas_aux_workbook_datasets(args.pfas_aux_workbook, include_sheets=args.pfas_aux_sheet)
+            args.split_strategy = "predefined"
+            args.target_transform = "raw"
+        elif mode == "batch":
+            datasets = discover_batch_datasets(args, discovery_failures)
+        elif mode == "single":
+            datasets = discover_local_datasets(root, args.dataset, args, discovery_failures)
+        else:
+            datasets = discover_default_example_datasets(root)
+            if args.include_local_csv:
+                datasets.extend(discover_local_datasets(root, args.include_local_csv, args, discovery_failures))
+    except Exception as exc:
+        try:
+            from qsarena.batch import BatchSourceError
+        except ModuleNotFoundError:  # pragma: no cover
+            BatchSourceError = ValueError  # type: ignore
+        if isinstance(exc, BatchSourceError):
+            print(f"[error] batch source: {exc}", flush=True)
+            return 2
+        raise
     if args.dataset_name:
         requested = {str(item).strip().lower() for item in args.dataset_name if str(item).strip()}
         datasets = [item for item in datasets if item.name.strip().lower() in requested]
@@ -10697,11 +12123,16 @@ def main() -> int:
                 "Use --dry-run without --dataset-name to list discovered dataset names."
             )
             return 1
-    if not datasets:
+    if not args.dry_run:
+        for failure in discovery_failures:
+            record_dataset_failure(output_dir, failure["dataset"], failure["error"], stage="discovery",
+                                   remedy=failure.get("remedy", ""), source=failure.get("source", ""))
+    if not datasets and not discovery_failures:
         print("No datasets found. Provide --dataset PATH or verify benchmark data access/dependencies are available.")
         return 1
 
-    datasets = order_datasets_smallest_first(datasets)
+    datasets = order_datasets_smallest_first(datasets) if mode != "batch" else list(datasets)
+    dataset_ids = [slugify(spec.name) for spec in datasets] + [slugify(f["dataset"]) for f in discovery_failures]
 
     if bool(getattr(args, "tdc22_multiseed", False)):
         args.run_tdc22_multiseed_best = True
@@ -10715,101 +12146,18 @@ def main() -> int:
         tabpfn_budget_estimate = estimate_tabpfn_daily_dataset_capacity(datasets, args)
 
     resume_plan = None
-    if bool(getattr(args, "resume", False)):
+    if bool(getattr(args, "resume", False)) and datasets:
         resume_plan = build_resume_execution_plan(datasets, output_dir, args)
 
+    preflight_payload = run_preflight(args, datasets, output_dir) if datasets else {}
+
     if args.dry_run:
-        selector_threshold_size = elasticnet_selector_timeout_dataset_size_threshold(
-            float(args.selector_auto_rf_threshold_seconds),
-            log10_slope=float(args.selector_auto_rf_log10_slope),
-            log10_intercept=float(args.selector_auto_rf_log10_intercept),
-        )
-        selector_threshold_size_text = (
-            f"{int(round(selector_threshold_size)):,}"
-            if np.isfinite(selector_threshold_size)
-            else "unknown"
-        )
+        try:
+            from qsarena.preflight import format_duration
+        except ModuleNotFoundError:  # pragma: no cover
+            from qsarena.preflight import format_duration  # type: ignore
         print(f"Planned output directory: {output_dir}")
-        print(f"Benchmark profile: {args.benchmark_profile}")
-        resource_config = resource_config_payload(args)
-        gpu_names = ", ".join(item.get("name", "") for item in resource_config["gpu_inventory"]) or "none"
-        print(
-            "Resource plan: "
-            f"cpu_count={resource_config['detected_cpu_count']}, "
-            f"n_jobs={resource_config['n_jobs']}, "
-            f"chemprop_workers={resource_config['chemprop_num_workers']}, "
-            f"unimol_workers={resource_config['unimol_num_workers']}, "
-            f"gpu={gpu_names}"
-        )
-        print(f".env loaded: {dotenv_status_text()}")
-        print(
-            "Prior Labs API key: "
-            f"{'available' if priorlabs_api_key_available() else 'not found'} "
-            "(PRIORLABS_API_KEY/TABPFN_API_KEY)"
-        )
-        print(f"Default molecular feature families: {', '.join(DEFAULT_BENCHMARK_FEATURE_FAMILIES)}")
-        print(
-            "Persistent feature store: "
-            f"{'on' if bool(getattr(args, 'enable_persistent_feature_store', True)) else 'off'} "
-            f"(reuse={'on' if bool(getattr(args, 'reuse_persistent_feature_store', True)) else 'off'}, "
-            f"path={args.persistent_feature_store_path})"
-        )
-        print(
-            "Shared feature matrix cache: "
-            f"{'on' if bool(getattr(args, 'enable_shared_feature_matrix_cache', True)) else 'off'} "
-            f"(reuse={'on' if bool(getattr(args, 'reuse_shared_feature_matrix_cache', True)) else 'off'}, "
-            f"path={args.shared_feature_matrix_cache_path})"
-        )
-        print(f"MapLight pretrained cache dir: {default_maplight_pretrained_cache_dir()}")
-        print(
-            "Selector auto-RF by dataset size: "
-            f"{'on' if bool(args.selector_auto_rf_by_dataset_size) else 'off'} "
-            f"(threshold={float(args.selector_auto_rf_threshold_seconds):,.0f}s, threshold_n~{selector_threshold_size_text})"
-        )
-        print(
-            "GA models for this run: "
-            + (", ".join(parse_comma_list(getattr(args, "ga_models_resolved", ""))) if parse_comma_list(getattr(args, "ga_models_resolved", "")) else "(none)")
-        )
-        print(
-            "CFA stage: "
-            f"{'on' if bool(getattr(args, 'run_cfa', False)) else 'off'} "
-            f"(min_models={int(getattr(args, 'cfa_min_models', 2))}, "
-            f"max_models={'all' if int(getattr(args, 'cfa_max_models', 0)) <= 0 else int(getattr(args, 'cfa_max_models', 0))}, "
-            f"subset_budget={int(getattr(args, 'cfa_max_candidate_subsets', 250000)):,}, "
-            "best_per_workflow=on (fixed), "
-            f"opt_metric={str(getattr(args, 'cfa_optimize_metric', 'mae'))}, "
-            f"sources={str(getattr(args, 'cfa_source_workflows', 'all'))}, "
-            f"rank={'on' if bool(getattr(args, 'cfa_include_rank_combinations', True)) else 'off'}, "
-            f"rank_pref={'on' if bool(getattr(args, 'cfa_rank_prefer_when_diverse', True)) else 'off'}, "
-            f"rank_threshold={float(getattr(args, 'cfa_rank_diversity_threshold', 0.15)):.3f}, "
-            f"rank_discount={float(getattr(args, 'cfa_rank_metric_discount', 0.98)):.3f})"
-        )
-        print(
-            "MapLight parity mode: "
-            f"{'strict' if bool(getattr(args, 'maplight_leaderboard_parity_mode', True)) else 'legacy'} "
-            f"(seeds={','.join(str(seed) for seed in maplight_parity_seed_values(args))})"
-        )
-        tdc22_specs = tdc22_official_dataset_specs(datasets)
-        print(
-            "TDC-22 best-model multi-seed evaluation: "
-            f"{'on' if bool(getattr(args, 'run_tdc22_multiseed_best', True)) else 'off'} "
-            f"(official admet_group datasets={len(tdc22_specs)}, "
-            f"seeds={','.join(str(seed) for seed in parse_int_list(getattr(args, 'tdc22_multiseed_seeds', '1,2,3,4,5')) or [1, 2, 3, 4, 5])})"
-        )
-        if resume_plan is not None:
-            print_resume_execution_plan(resume_plan)
-        if bool(getattr(args, "run_tabpfn", False)):
-            print(f"TabPFN backend source: {tabpfn_backend_status_text()}")
-        if tabpfn_budget_estimate is not None:
-            print(
-                "TabPFN daily-budget estimate: "
-                f"{tabpfn_budget_estimate['individually_fit_count']}/{len(datasets)} dataset(s) are estimated to fit "
-                f"individually within {TABPFN_DAILY_TOKEN_BUDGET:,} tokens/day. "
-                f"At most {tabpfn_budget_estimate['smallest_first_count']}/{len(datasets)} dataset(s) are estimated to fit "
-                f"if run smallest-first in one day. "
-                f"Estimator multiplier={int(tabpfn_budget_estimate['estimators_per_dataset'])}. "
-                f"{TABPFN_DAILY_RESET_NOTE}"
-            )
+        _print_run_header(args, datasets, resume_plan, tabpfn_budget_estimate)
         has_leaderboard_references = any(
             bool(getattr(dataset, "leaderboard_url", None))
             or bool(((dataset.leaderboard_summary or {}).get("metric_name") or "").strip())
@@ -10820,18 +12168,29 @@ def main() -> int:
             print(f"Leaderboard top10 reference rows fetched: {len(leaderboard_refs)}")
         else:
             print("Leaderboard top10 reference rows fetched: 0 (no leaderboard references for selected datasets)")
-        print("Datasets:")
-        for dataset in datasets:
-            leaderboard_metric = ((dataset.leaderboard_summary or {}).get("metric_name") or "").strip()
-            leaderboard_value = ((dataset.leaderboard_summary or {}).get("metric_value") or "").strip()
-            leaderboard_note = f", leaderboard={leaderboard_metric} {leaderboard_value}".strip()
-            target_transform_note = "log10" if resolve_dataset_log10_target(dataset, args) else "raw"
-            print(
-                f"  - {dataset.name}: smiles={dataset.smiles_column}, target={dataset.target_column}, "
-                f"source={dataset.source}, split={dataset.recommended_split or args.split_strategy}"
-                f", target_transform={target_transform_note}"
-                f"{leaderboard_note if leaderboard_metric or leaderboard_value else ''}"
-            )
+        _print_dataset_list(args, datasets)
+        print("\nPlanned model stages (datasets x models):")
+        for plan in preflight_payload.get("plans", []):
+            planned = [m["model"] for m in plan["models"] if m["status"] == "planned"]
+            skipped = [f"{m['model']} ({m['reason']})" for m in plan["models"] if m["status"] != "planned"]
+            print(f"  - {plan['dataset']}: {len(planned)} planned, {len(skipped)} skipped; est. ~{format_duration(plan['estimated_total_seconds'])}")
+            print(f"      planned: {', '.join(planned) if planned else '(none)'}")
+            if skipped:
+                print(f"      skipped: {'; '.join(skipped)}")
+        total = float(preflight_payload.get("estimated_total_seconds", 0.0) or 0.0)
+        print(f"Estimated total wall-clock: ~{format_duration(total)} (order of magnitude; method in preflight.json)")
+        plan_payload = {
+            "output_dir": str(output_dir),
+            "mode": mode,
+            "config": info.get("resolved_config", {}),
+            "config_signature": info.get("resolved_config_signature", ""),
+            "preflight": preflight_payload,
+            "discovery_failures": discovery_failures,
+        }
+        qsarena_artifacts.atomic_write_json(output_dir / "dry_run_plan.json", plan_payload)
+        qsarena_artifacts.atomic_write_text(output_dir / "dry_run_plan.md", _plan_markdown(preflight_payload, args, output_dir))
+        qsarena_events.EVENTS.emit("dry_run_complete", datasets=len(datasets), estimated_total_seconds=round(total, 1))
+        print(f"Dry run complete: no model was fitted. Plan written to {output_dir / 'dry_run_plan.md'}")
         return 0
 
     if bool(getattr(args, "run_tabpfn", False)):
@@ -10859,12 +12218,11 @@ def main() -> int:
         tabpfn_budget_estimate = estimate_tabpfn_daily_dataset_capacity(datasets, args)
     else:
         tabpfn_budget_estimate = None
-    if bool(getattr(args, "resume", False)):
+    if bool(getattr(args, "resume", False)) and datasets:
         resume_plan = build_resume_execution_plan(datasets, output_dir, args)
 
     overall_start = time.time()
     overall_started_at = local_timestamp_text()
-    output_dir.mkdir(parents=True, exist_ok=True)
 
     def write_run_timing(status: str, **extra: Any) -> None:
         now_epoch = time.time()
@@ -10879,19 +12237,32 @@ def main() -> int:
             "resource_config": resource_config_payload(args),
         }
         payload.update(extra)
-        (output_dir / "run_timing.json").write_text(
-            json.dumps(payload, indent=2, default=str),
-            encoding="utf-8",
-        )
+        qsarena_artifacts.atomic_write_json(output_dir / "run_timing.json", payload)
 
     write_run_timing("running", phase="initializing_outputs", completed_dataset_count=0)
     config = vars(args).copy()
     config["output_dir"] = str(output_dir)
     config["default_feature_families"] = list(DEFAULT_BENCHMARK_FEATURE_FAMILIES)
+    config["resolved_feature_families"] = resolved_feature_families(args)
     config["resource_config"] = resource_config_payload(args)
     config["config_signature"] = benchmark_config_signature(args)
-    config["datasets"] = [{"name": item.name, "source": item.source, "smiles_column": item.smiles_column, "target_column": item.target_column} for item in datasets]
-    (output_dir / "run_config.json").write_text(json.dumps(config, indent=2, default=str), encoding="utf-8")
+    config["run_mode"] = mode
+    config["config_file"] = info.get("config_file", "")
+    config["config_explicit_keys"] = info.get("config_explicit_keys", [])
+    config["run_config"] = info.get("resolved_config", {})
+    config["run_config_signature"] = info.get("resolved_config_signature", "")
+    config["datasets"] = [
+        {"name": item.name, "source": item.source, "smiles_column": item.smiles_column, "target_column": item.target_column,
+         "overrides": dict(item.arg_overrides or {})}
+        for item in datasets
+    ]
+    config["discovery_failures"] = discovery_failures
+    qsarena_artifacts.atomic_write_json(output_dir / "run_config.json", config)
+    qsarena_artifacts.atomic_write_text(
+        output_dir / "run_config.yaml",
+        "# Resolved configuration of this run (qsarena-benchmark --config run_config.yaml reproduces it).\n"
+        + info.get("resolved_config_yaml", ""),
+    )
     # Environment manifest (package versions, pip-freeze list, git commit, hardware). Provenance
     # must never abort a run, so any failure is reported and skipped.
     try:
@@ -10900,130 +12271,32 @@ def main() -> int:
         except ImportError:  # script-style run from a source checkout
             sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
             from qsarena.provenance import write_environment_manifest
-        write_environment_manifest(output_dir, repo_dir=root, extra={"config_signature": config["config_signature"]})
+        write_environment_manifest(output_dir, repo_dir=root, extra={
+            "config_signature": config["config_signature"],
+            "run_config_signature": config["run_config_signature"],
+        })
     except Exception as exc:
         print(f"[warn] environment_manifest.json not written: {type(exc).__name__}: {exc}", flush=True)
-    leaderboard_ref_df = write_leaderboard_reference_artifacts(root, output_dir, datasets)
+    leaderboard_ref_df = write_leaderboard_reference_artifacts(root, output_dir, datasets) if datasets else pd.DataFrame()
     if bool(getattr(args, "run_tabpfn", False)) and tabpfn_budget_estimate is not None:
         tabpfn_budget_estimate["table"].to_csv(output_dir / "tabpfn_daily_budget_estimate.csv", index=False)
 
     print(f"Output directory: {output_dir}")
-    selector_threshold_size = elasticnet_selector_timeout_dataset_size_threshold(
-        float(args.selector_auto_rf_threshold_seconds),
-        log10_slope=float(args.selector_auto_rf_log10_slope),
-        log10_intercept=float(args.selector_auto_rf_log10_intercept),
-    )
-    selector_threshold_size_text = (
-        f"{int(round(selector_threshold_size)):,}"
-        if np.isfinite(selector_threshold_size)
-        else "unknown"
-    )
-    print(f"Benchmark profile: {args.benchmark_profile}")
-    resource_config = resource_config_payload(args)
-    gpu_names = ", ".join(item.get("name", "") for item in resource_config["gpu_inventory"]) or "none"
-    print(
-        "Resource plan: "
-        f"cpu_count={resource_config['detected_cpu_count']}, "
-        f"n_jobs={resource_config['n_jobs']}, "
-        f"chemprop_workers={resource_config['chemprop_num_workers']}, "
-        f"unimol_workers={resource_config['unimol_num_workers']}, "
-        f"gpu={gpu_names}"
-    )
-    print(f".env loaded: {dotenv_status_text()}")
-    print(
-        "Prior Labs API key: "
-        f"{'available' if priorlabs_api_key_available() else 'not found'} "
-        "(PRIORLABS_API_KEY/TABPFN_API_KEY)"
-    )
-    print(f"Default molecular feature families: {', '.join(DEFAULT_BENCHMARK_FEATURE_FAMILIES)}")
-    print(
-        "Persistent feature store: "
-        f"{'on' if bool(getattr(args, 'enable_persistent_feature_store', True)) else 'off'} "
-        f"(reuse={'on' if bool(getattr(args, 'reuse_persistent_feature_store', True)) else 'off'}, "
-        f"path={args.persistent_feature_store_path})"
-    )
-    print(
-        "Shared feature matrix cache: "
-        f"{'on' if bool(getattr(args, 'enable_shared_feature_matrix_cache', True)) else 'off'} "
-        f"(reuse={'on' if bool(getattr(args, 'reuse_shared_feature_matrix_cache', True)) else 'off'}, "
-        f"path={args.shared_feature_matrix_cache_path})"
-    )
-    print(f"MapLight pretrained cache dir: {default_maplight_pretrained_cache_dir()}")
-    print(
-        "Selector auto-RF by dataset size: "
-        f"{'on' if bool(args.selector_auto_rf_by_dataset_size) else 'off'} "
-        f"(threshold={float(args.selector_auto_rf_threshold_seconds):,.0f}s, threshold_n~{selector_threshold_size_text})"
-    )
+    if info.get("config_file"):
+        print(f"Config file: {info['config_file']} ({len(info.get('config_explicit_keys', []))} key(s) set; CLI flags override them)")
+    print(f"Run mode: {mode} ({len(datasets)} dataset(s){', ' + str(len(discovery_failures)) + ' failed to load' if discovery_failures else ''})")
+    _print_run_header(args, datasets, resume_plan, tabpfn_budget_estimate)
     if bool(getattr(args, "run_tabpfn", False)) and tabpfn_budget_estimate is not None:
-        print(
-            "TabPFN daily-budget estimate: "
-            f"{tabpfn_budget_estimate['individually_fit_count']}/{len(datasets)} dataset(s) are estimated to fit "
-            f"individually within {TABPFN_DAILY_TOKEN_BUDGET:,} tokens/day. "
-            f"At most {tabpfn_budget_estimate['smallest_first_count']}/{len(datasets)} dataset(s) are estimated to fit "
-            f"if run smallest-first in one day. "
-            f"Estimator multiplier={int(tabpfn_budget_estimate['estimators_per_dataset'])}. "
-            f"{TABPFN_DAILY_RESET_NOTE}"
-        )
         print(f"TabPFN budget detail CSV: {output_dir / 'tabpfn_daily_budget_estimate.csv'}")
-    print(
-        "GA models for this run: "
-        + (", ".join(parse_comma_list(getattr(args, "ga_models_resolved", ""))) if parse_comma_list(getattr(args, "ga_models_resolved", "")) else "(none)")
-    )
-    print(
-        "CFA stage: "
-        f"{'on' if bool(getattr(args, 'run_cfa', False)) else 'off'} "
-        f"(min_models={int(getattr(args, 'cfa_min_models', 2))}, "
-        f"max_models={'all' if int(getattr(args, 'cfa_max_models', 0)) <= 0 else int(getattr(args, 'cfa_max_models', 0))}, "
-        f"subset_budget={int(getattr(args, 'cfa_max_candidate_subsets', 250000)):,}, "
-        "best_per_workflow=on (fixed), "
-        f"opt_metric={str(getattr(args, 'cfa_optimize_metric', 'mae'))}, "
-        f"sources={str(getattr(args, 'cfa_source_workflows', 'all'))}, "
-        f"rank={'on' if bool(getattr(args, 'cfa_include_rank_combinations', True)) else 'off'}, "
-        f"rank_pref={'on' if bool(getattr(args, 'cfa_rank_prefer_when_diverse', True)) else 'off'}, "
-        f"rank_threshold={float(getattr(args, 'cfa_rank_diversity_threshold', 0.15)):.3f}, "
-        f"rank_discount={float(getattr(args, 'cfa_rank_metric_discount', 0.98)):.3f})"
-    )
-    print(
-        "MapLight parity mode: "
-        f"{'strict' if bool(getattr(args, 'maplight_leaderboard_parity_mode', True)) else 'legacy'} "
-        f"(seeds={','.join(str(seed) for seed in maplight_parity_seed_values(args))})"
-    )
-    if resume_plan is not None:
-        print_resume_execution_plan(resume_plan)
-    if bool(getattr(args, "run_tabpfn", False)):
-        print(f"TabPFN backend source: {tabpfn_backend_status_text()}")
-    print(
-        "Uni-Mol V1 stage: "
-        f"{'on' if bool(getattr(args, 'run_unimol_v1', False)) else 'off'} "
-        f"(gpu_detected={'yes' if bool(getattr(args, 'gpu_available', False)) else 'no'})"
-    )
-    print(
-        "Uni-Mol V2 stage: "
-        f"{'on' if bool(getattr(args, 'run_unimol_v2', False)) else 'off'} "
-        f"(model_size={getattr(args, 'unimol_model_size', '84m')}, "
-        f"max_atoms={getattr(args, 'unimol_max_atoms', 96)}, "
-        f"amp={'on' if bool(getattr(args, 'unimol_use_amp', True)) else 'off'})"
-    )
     print(f"Leaderboard reference rows stored: {len(leaderboard_ref_df)}")
-    print("Datasets:")
-    for dataset in datasets:
-        leaderboard_metric = ((dataset.leaderboard_summary or {}).get("metric_name") or "").strip()
-        leaderboard_value = ((dataset.leaderboard_summary or {}).get("metric_value") or "").strip()
-        leaderboard_note = f", leaderboard={leaderboard_metric} {leaderboard_value}".strip()
-        target_transform_note = "log10" if resolve_dataset_log10_target(dataset, args) else "raw"
-        print(
-            f"  - {dataset.name}: smiles={dataset.smiles_column}, target={dataset.target_column}, "
-            f"source={dataset.source}, split={dataset.recommended_split or args.split_strategy}"
-            f", target_transform={target_transform_note}"
-            f"{leaderboard_note if leaderboard_metric or leaderboard_value else ''}"
-        )
+    _print_dataset_list(args, datasets)
 
     all_metrics: list[dict[str, Any]] = []
     all_predictions: list[pd.DataFrame] = []
     all_histories: list[pd.DataFrame] = []
     completed_dataset_times: list[float] = []
     n_parallel_datasets = max(1, int(getattr(args, "parallel_datasets", 1)))
-    if n_parallel_datasets > 1:
+    if n_parallel_datasets > 1 and datasets:
         def _par_progress(completed: int, total: int, spec: Any, result: Any, elapsed: float, avg: float, eta: float) -> None:
             write_run_timing(
                 "running",
@@ -11034,12 +12307,29 @@ def main() -> int:
                 average_finished_dataset_seconds=round(float(avg), 3) if avg else np.nan,
                 eta_seconds=round(float(eta), 3) if avg else np.nan,
             )
+            qsarena_events.EVENTS.emit("dataset_finished", dataset=slugify(spec.name), status=str(result.status),
+                                       completed=int(completed), total=int(total), eta_seconds=round(float(eta), 1))
         all_metrics, all_predictions, all_histories, completed_dataset_times = _run_datasets_parallel(
             datasets, output_dir, args, n_parallel_datasets, overall_start, _par_progress
         )
     else:
+        progress_bar = None
+        if qsarena_events.tqdm_progress_enabled() and len(datasets) > 1:
+            from tqdm import tqdm
+
+            progress_bar = tqdm(total=len(datasets), desc="datasets", unit="dataset", file=sys.__stderr__)
         for index, spec in enumerate(datasets, start=1):
-            result = run_dataset(spec, output_dir, args, dataset_position=index, dataset_total=len(datasets))
+            qsarena_events.EVENTS.emit("dataset_started", dataset=slugify(spec.name), position=index, total=len(datasets))
+            dataset_start = time.time()
+            try:
+                result = run_dataset(spec, output_dir, args, dataset_position=index, dataset_total=len(datasets))
+            except KeyboardInterrupt:
+                raise
+            except Exception as exc:
+                record_dataset_failure(output_dir, spec, exc, stage="run")
+                result = DatasetRunResult([], [], [], "failed", time.time() - dataset_start)
+                if not bool(getattr(args, "continue_on_error", True)):
+                    raise
             all_metrics.extend(result.metrics_rows)
             all_predictions.extend(result.prediction_tables)
             all_histories.extend(result.ga_history_tables)
@@ -11055,6 +12345,12 @@ def main() -> int:
                 f"average per finished dataset {format_seconds(avg_dataset_time) if avg_dataset_time else 'n/a'} | "
                 f"ETA {format_seconds(eta)}"
             )
+            qsarena_events.EVENTS.emit(
+                "dataset_finished", dataset=slugify(spec.name), status=str(result.status), position=index,
+                total=len(datasets), elapsed_seconds=round(float(result.elapsed_seconds), 2), eta_seconds=round(float(eta), 1),
+            )
+            if progress_bar is not None:
+                progress_bar.update(1)
             write_run_timing(
                 "running",
                 phase="main_dataset_loop",
@@ -11064,22 +12360,24 @@ def main() -> int:
                 average_finished_dataset_seconds=round(float(avg_dataset_time), 3) if avg_dataset_time else np.nan,
                 eta_seconds=round(float(eta), 3) if avg_dataset_time else np.nan,
             )
+        if progress_bar is not None:
+            progress_bar.close()
 
     summary = build_summary_from_dataset_metrics(output_dir)
     if summary.empty and all_metrics:
         summary = deduplicate_metrics_rows(pd.DataFrame(all_metrics))
     if not summary.empty:
-        summary.to_csv(output_dir / "summary_metrics.csv", index=False)
+        qsarena_artifacts.atomic_write_csv(output_dir / "summary_metrics.csv", summary)
         leaderboard_comparison_df = leaderboard_comparison_by_dataset(summary)
         if not leaderboard_comparison_df.empty:
-            leaderboard_comparison_df.to_csv(output_dir / "leaderboard_comparison_by_dataset.csv", index=False)
+            qsarena_artifacts.atomic_write_csv(output_dir / "leaderboard_comparison_by_dataset.csv", leaderboard_comparison_df)
         if {"dataset", "model", "test_rmse"}.issubset(summary.columns):
             pivot = summary.pivot_table(index="dataset", columns="model", values="test_rmse", aggfunc="min")
-            pivot.to_csv(output_dir / "test_rmse_pivot.csv")
+            qsarena_artifacts.atomic_write_csv(output_dir / "test_rmse_pivot.csv", pivot, index=True)
     if all_predictions:
-        pd.concat(all_predictions, ignore_index=True).to_csv(output_dir / "predictions.csv", index=False)
+        qsarena_artifacts.atomic_write_csv(output_dir / "predictions.csv", pd.concat(all_predictions, ignore_index=True))
     if all_histories:
-        pd.concat(all_histories, ignore_index=True).to_csv(output_dir / "ga_history.csv", index=False)
+        qsarena_artifacts.atomic_write_csv(output_dir / "ga_history.csv", pd.concat(all_histories, ignore_index=True))
 
     if summary.empty:
         summary = load_summary_metrics_for_output_dir(output_dir)
@@ -11102,7 +12400,7 @@ def main() -> int:
         )
 
     attribution_payload = {}
-    if bool(getattr(args, "emit_run_vs_run_report", True)):
+    if bool(getattr(args, "emit_run_vs_run_report", True)) and not summary.empty:
         attribution_payload = write_run_vs_run_attribution_report(
             root=root,
             output_dir=output_dir,
@@ -11115,8 +12413,8 @@ def main() -> int:
             flush=True,
         )
     multiseed_payload: dict[str, Any] = {}
+    tdc22_specs = tdc22_official_dataset_specs(datasets)
     if bool(getattr(args, "run_tdc22_multiseed_best", True)):
-        tdc22_specs = tdc22_official_dataset_specs(datasets)
         if tdc22_specs:
             write_run_timing(
                 "running",
@@ -11141,37 +12439,90 @@ def main() -> int:
                 "reason": "no selected official PyTDC admet_group datasets",
                 "dataset_count": 0,
             }
+
+    # Aggregate cross-dataset summary (one row per dataset, including failed and skipped ones).
+    try:
+        from qsarena import batch as qsarena_batch
+        from qsarena import reporting as qsarena_reporting
+    except ModuleNotFoundError:  # pragma: no cover
+        sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+        from qsarena import batch as qsarena_batch
+        from qsarena import reporting as qsarena_reporting
+    dataset_summary_path = None
+    if bool(getattr(args, "batch_aggregate_summary", True)):
+        dataset_summary_path = qsarena_batch.write_dataset_summary(
+            output_dir, dataset_ids, protocol=str(getattr(args, "selection_protocol", "both"))
+        )
+    status_counts: dict[str, int] = {}
+    for dataset_id in dataset_ids:
+        status = (qsarena_artifacts.read_json(output_dir / dataset_id / "run_status.json", default={}) or {}).get("status", "not_run")
+        status_counts[status] = status_counts.get(status, 0) + 1
+    try:
+        from qsarena import __version__ as qsarena_version
+    except Exception:  # pragma: no cover
+        qsarena_version = "unknown"
+    report_data = qsarena_reporting.collect_run_report_data(
+        output_dir,
+        dataset_ids=dataset_ids,
+        run_info={
+            "mode": mode,
+            "profile": str(getattr(args, "benchmark_profile", "")),
+            "gpu_available": bool(getattr(args, "gpu_available", False)),
+            "qsarena_version": qsarena_version,
+            "config_signature": info.get("resolved_config_signature", ""),
+            "tdc22_datasets": [slugify(spec.name) for spec in tdc22_specs],
+            "tdc22_multiseed_done": str(multiseed_payload.get("status", "")).lower() == "completed",
+            "deep_skipped_without_gpu": bool(getattr(args, "unimol_auto_requested", False))
+            and not bool(getattr(args, "gpu_available", False))
+            and "pretrained_3d" not in set(getattr(args, "disabled_model_families", None) or []),
+            "elapsed_seconds": round(time.time() - overall_start, 1),
+            "single_seed": True,
+        },
+        config=info.get("resolved_config", {}),
+        config_yaml=info.get("resolved_config_yaml", ""),
+        warnings=[w.as_dict() for w in qsarena_events.EVENTS.warnings],
+    )
+    html_path, md_path = qsarena_reporting.write_run_reports(
+        output_dir,
+        report_data,
+        include_plots=bool(getattr(args, "report_include_plots", True)),
+        what_next=bool(getattr(args, "report_what_next", True)),
+        manifest=bool(getattr(args, "report_manifest", True)),
+    )
+
     write_run_timing(
         "completed",
         phase="completed",
         completed_dataset_count=int(len(datasets)),
         tdc22_best_model_multiseed=multiseed_payload,
     )
-    (output_dir / "run_complete.json").write_text(
-        json.dumps(
-            {
-                "started_at": overall_started_at,
-                "completed_at": time.strftime("%Y-%m-%d %H:%M:%S"),
-                "elapsed_seconds": round(time.time() - overall_start, 3),
-                "dataset_count": len(datasets),
-                "resource_config": resource_config_payload(args),
-                "ga_models_resolved": parse_comma_list(getattr(args, "ga_models_resolved", "")),
-                "run_vs_run_attribution": attribution_payload,
-                "tdc22_best_model_multiseed": multiseed_payload,
-            },
-            indent=2,
-        ),
-        encoding="utf-8",
+    qsarena_artifacts.atomic_write_json(
+        output_dir / "run_complete.json",
+        {
+            "started_at": overall_started_at,
+            "completed_at": time.strftime("%Y-%m-%d %H:%M:%S"),
+            "elapsed_seconds": round(time.time() - overall_start, 3),
+            "dataset_count": len(dataset_ids),
+            "dataset_status_counts": status_counts,
+            "resource_config": resource_config_payload(args),
+            "ga_models_resolved": parse_comma_list(getattr(args, "ga_models_resolved", "")),
+            "run_vs_run_attribution": attribution_payload,
+            "tdc22_best_model_multiseed": multiseed_payload,
+        },
     )
+    qsarena_events.EVENTS.emit("run_completed", status_counts=status_counts, elapsed_seconds=round(time.time() - overall_start, 1))
 
-    primary_files = ["summary_metrics.csv", "test_rmse_pivot.csv", "predictions.csv", "run_config.json", "run_timing.json", "run_complete.json"]
+    primary_files = ["summary_metrics.csv", "test_rmse_pivot.csv", "predictions.csv", "run_config.json", "run_config.yaml",
+                     "run_timing.json", "run_complete.json", "preflight.json", "run.log", "events.jsonl"]
+    if dataset_summary_path is not None:
+        primary_files.append("dataset_summary.csv")
     if all_histories:
         primary_files.append("ga_history.csv")
     if not step_runtime_summary.empty:
         primary_files.append("step_runtime_summary.csv")
     if not model_value_report.empty:
         primary_files.extend(["model_value_report.csv", "model_zero_value_candidates.csv"])
-    if bool(getattr(args, "emit_run_vs_run_report", True)):
+    if bool(getattr(args, "emit_run_vs_run_report", True)) and attribution_payload:
         primary_files.extend(
             [
                 "run_vs_run_attribution_summary.json",
@@ -11191,9 +12542,13 @@ def main() -> int:
                 f"{multiseed_name}/tdc22_best_model_multiseed_step_runtime_summary.csv",
             ]
         )
-    print(f"\nWrote benchmark outputs to {output_dir}")
+    counts_text = ", ".join(f"{count} {status}" for status, count in sorted(status_counts.items()))
+    print(f"\nDataset summary: {counts_text} (see dataset_summary.csv)")
+    print(f"Wrote benchmark outputs to {output_dir}")
     print("Primary files: " + ", ".join(primary_files))
-    return 0
+    print(f"Reports written: {html_path.name} and {md_path.name} in {output_dir}")
+    succeeded = sum(count for status, count in status_counts.items() if status in {"completed", "resumed"})
+    return 0 if succeeded or not dataset_ids else 1
 
 
 if __name__ == "__main__":

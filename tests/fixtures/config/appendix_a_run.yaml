@@ -1,0 +1,139 @@
+# Verbatim copy of Appendix A of the tutorial work order
+# (QSARena_IDE_Agent_Work_Order_Tutorial_Usability_Additional_File.docx). The acceptance criterion is
+# that this file loads cleanly; tests/unit/test_run_config.py checks it. Do not edit.
+# ============================================================
+# QSARena run configuration
+# Precedence: CLI flags > this file > built-in defaults
+# ============================================================
+run:
+  mode: single                 # single | batch
+  output_dir: ./qsarena_runs   # where artifacts + reports are written
+  resume: true                 # skip completed datasets/stages if cached (see caching:)
+  overwrite: false             # true = ignore cache and recompute (same as --fresh)
+  verbosity: normal            # quiet | normal | verbose | debug
+  dry_run: false               # true = print the resolved plan + cost estimate, then exit
+
+# ---------- 1. Input & column mapping ----------
+input:
+  path: ./data/my_dataset.csv  # single-mode input CSV
+  smiles_col: smiles
+  target_col: target           # for multi-target, provide a list: [t1, t2]
+  id_col: null                 # optional identifier column
+  task: auto                   # auto | regression | classification
+  classification_threshold: null   # numeric cutoff if binarizing a continuous target
+
+# ---------- 2. Standardization ----------
+standardize:
+  drop_unparseable: true       # drop rows RDKit cannot parse (recommended)
+  strip_salts: true
+  normalize_charges: true
+  normalize_tautomers: false   # off by default (slower; can change identity)
+  deduplicate: exact           # none | exact | canonical_smiles
+
+# ---------- 3. Featurization (ten families) ----------
+features:
+  families: [rdkit, morgan, ecfp6, fcfp6, atom_pair, topological_torsion,
+             rdk_path, layered, maccs, avalon, erg]   # enable/disable per family
+  maplight_classic: true       # composite: morgan + avalon + erg + ~200 RDKit descriptors
+  cache: true                  # reuse cached feature matrices across models/runs
+
+# ---------- 4. Splitting ----------
+split:
+  strategy: target_quartile    # random | scaffold | target_quartile | predefined
+  test_fraction: 0.2
+  seed: 13
+  cv_folds: 5                  # used for CV selection and OOF stacking
+
+# ---------- 5. Feature selection (train-only) ----------
+feature_selection:
+  method: elasticnetcv         # elasticnetcv | rf_fallback | none
+  variance_threshold: 1.0e-8
+  binary_prevalence_range: [0.005, 0.995]
+  drop_duplicate_columns: true
+
+# ---------- 6. Model library ----------
+models:
+  profile: cost_optimized      # cost_optimized | full
+  enable_families:             # master switches per family
+    conventional_ml: true
+    gradient_boosting: true    # xgboost / lightgbm / catboost (needs qsarena[boosting])
+    deep_tabular: true         # ChemML MLP (needs qsarena[deep])
+    graph_nn: true             # Chemprop v2 variants (needs qsarena[graph])
+    pretrained_3d: true        # Uni-Mol V1/V2 (needs qsarena[foundation] + GPU)
+    maplight_gnn: true
+    fusion: true
+    ensemble: true
+  disable_models: []           # e.g., ["Tabular CNN", "Uni-Mol V2 (84m)"]
+
+# ---------- 7. Genetic-algorithm tuning ----------
+ga_tuning:
+  mode: off                    # off | on | auto  (auto reruns a family only if prior evidence supports it)
+  estimators: [elastic_net, catboost]   # regression; classification uses EN-LR + catboost
+  time_budget_min: null
+  max_configs: null
+
+# ---------- 8. Deep / pretrained backends ----------
+deep:
+  use_gpu: auto                # auto | true | false
+  chemprop:
+    variants: [dmpnn, dmpnn_rdkit2d, dmpnn_selected, cmpnn, attentivefp]
+    ensemble_size: 3
+    seed: 42
+  unimol:
+    v1: true
+    v2_84m: true
+    epochs: 10
+    lr: 1.0e-4
+    batch_size: 16
+    early_stopping_patience: 5
+  tabpfn: false                # disabled by default
+
+# ---------- 9. Fusion ----------
+fusion:
+  cfa_score: true
+  cfa_rank: true
+
+# ---------- 10. Ensembles ----------
+ensemble:
+  oof_stacking: true           # RidgeCV over out-of-fold predictions
+  inverse_rmse_average: true
+  member_selection_metric: cv  # cv | test   (cv = leakage-free; default)
+  exclude_negative_test_r2_members: false   # leakage-free default (do NOT enable for blinded results)
+  drop_correlated_members: true
+
+# ---------- 11. Applicability domain ----------
+applicability_domain:
+  method: both                 # standardization | confidence | both | off
+  confidence_threshold: 0.5    # posterior-probability cutoff for classifiers
+
+# ---------- 12. Evaluation metrics ----------
+evaluation:
+  regression_metrics: [rmse, mae, r2, spearman]
+  classification_metrics: [auroc, auprc, balanced_accuracy, mcc]
+  primary_metric: auto         # auto = TDC per-dataset assignment; or override e.g. "rmse"
+
+# ---------- 13. Model-selection protocol ----------
+selection:
+  protocol: both               # test | cv | both  (both is recommended; reports the honest CV estimate too)
+
+# ---------- 14. Outputs & reporting ----------
+report:
+  formats: [html, md]          # locked: emit both
+  include_plots: true          # won-by-family, cost-vs-gap, AD coverage
+  what_next: true              # actionable "next steps" section
+  machine_readable_manifest: true
+
+# ---------- 15. Execution / batch / multi-seed ----------
+batch:
+  source: null                 # path to manifest.csv OR a directory of CSVs (mode: batch)
+  continue_on_error: true      # record a failed dataset and keep going
+  aggregate_summary: true
+multiseed:
+  enabled: false
+  seeds: 5                     # e.g., 5 for the TDC mean ± SD convention
+
+# ---------- Caching / reproducibility ----------
+caching:
+  granularity: [dataset, stage]   # resume skips completed datasets and stages
+  validate_against_config_signature: true   # recompute if the config changed
+  atomic_writes: true

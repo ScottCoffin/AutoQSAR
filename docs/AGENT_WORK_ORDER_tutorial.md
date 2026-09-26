@@ -664,14 +664,14 @@ Implementation notes:
 
 - [x] `docs/AGENT_WORK_ORDER_tutorial.md` committed with gap analysis, per-task plan
   (files/functions/tests), locked decisions, and a status log (Step 0).
-- [ ] `RunConfig` single source of truth; all 15 decision groups via CLI + notebook + `--config`;
+- [x] `RunConfig` single source of truth; all 15 decision groups via CLI + notebook + `--config`;
   `docs/options_reference.md` generated; `run.yaml` loads (F1).
-- [ ] Single-dataset run verified end-to-end (F2).
-- [ ] Batch over manifest + directory for arbitrary N; isolates datasets; continues past failures;
+- [x] Single-dataset run verified end-to-end (F2).
+- [x] Batch over manifest + directory for arbitrary N; isolates datasets; continues past failures;
   aggregate summary (F3).
-- [ ] Resume verified at dataset + stage granularity, config-signature-aware, interrupt-safe;
+- [x] Resume verified at dataset + stage granularity, config-signature-aware, interrupt-safe;
   `--resume/--fresh` documented (F4).
-- [ ] Preflight/`--dry-run`, progress+ETA, actionable warnings, and `report.html` and `report.md`
+- [x] Preflight/`--dry-run`, progress+ETA, actionable warnings, and `report.html` and `report.md`
   present and tested (F5).
 - [ ] Tutorial published as Additional file 2 (all 10 sections); Availability + Additional-file list
   updated; Additional file 1 intact (D1).
@@ -691,6 +691,40 @@ Implementation notes:
 - 2026-09-25: Wrote Step 0 gap analysis and implementation plan in this file. No Part A code was
   implemented in this commit.
 
+## Decisions Made During Implementation (read before changing defaults)
+
+- **Defaults = previous runner behaviour** (user decision, 2026-09-25). Where Appendix A's "intended
+  defaults" differ (salt stripping / charge normalization / exact dedup on,
+  `exclude_negative_test_r2_members: false`, TabPFN off, Uni-Mol batch 16), RunConfig keeps the old
+  runner values so existing runs, the canonical A100 config and in-flight resumes are unchanged. The
+  new options exist and default off. `configs/run.example.yaml` shows the real defaults;
+  `tests/fixtures/config/appendix_a_run.yaml` is Appendix A verbatim and must keep loading.
+- **Profile-dependent options are `null` in RunConfig** (e.g. `deep.chemprop.epochs`,
+  `deep.tabpfn`, `deep.unimol.v1`): null = decided by the cost profile / GPU detection; the manifest
+  records the resolved value.
+- **Ensemble member selection**: `member_selection_metric: cv` maps to the runner's
+  `--ensemble-member-selection-split train` (training-split predictions; leakage-free). Documented as
+  such; it is not k-fold CV. `test` reproduces the deposited run.
+- **`avalon` / `erg`** are not separate feature families in the code; they are accepted as aliases
+  for the MapLight-classic composite (`maplight`).
+- **GA**: `ga_tuning.mode: on` maps to `--ga-models on` + `--ga-estimators`; legacy
+  `--ga-models ElasticNet,CatBoost` still works.
+- **Applicability domain in the runner** (`applicability_domain.method`, default `both`) is
+  diagnostic only (no metric changes): Roy standardization on the selected features; "confidence" is
+  |2p-1| of the selected model for classification and kNN Tanimoto similarity for regression.
+- **CV scores are optimistic in absolute terms** (feature selection uses the whole training split
+  before CV). The report says so and recommends quoting the test score of the CV-selected model.
+- **Notebook**: it runs its own pipeline, so "the notebook exposes the same options" is implemented
+  as a mapping (`qsarena.config.NOTEBOOK_WIDGETS`): step 0B loads a run.yaml into the matching
+  `# @param` widgets (generic override injected by the builder into every mapped widget cell), step
+  9E exports widget choices to run.yaml. Options without a widget are listed as "CLI / run.yaml only"
+  in the options reference.
+- **Tutorial fixtures** live in `qsarena/examples/data` (shipped in the wheel, copied out by
+  `qsarena-examples DIR`) rather than `tests/fixtures/tutorial/`, so tutorial readers and tests use
+  the same files; `tests/fixtures/tutorial/make_tutorial_data.py` regenerates them.
+- **Exact-duplicate feature scan** was sped up (~15x) with byte-identical results, including the
+  original's quirk that -0.0 and 0.0 columns are never merged (equivalence test).
+
 ## Open Coordination Notes
 
 - The normal repo checkout is intentionally left on its existing branch because `main` is reported to be
@@ -701,3 +735,20 @@ Implementation notes:
   runs.
 - Before adding YAML support, decide whether `PyYAML` is acceptable as a package dependency or only a dev/doc
   dependency.
+
+## Running Status Log (continued)
+
+- 2026-09-25: Step 0 committed on `docs/tutorial-usability-plan` (fac2c8e).
+- 2026-09-25: F1 done: `qsarena/config.py` (RunConfig, 99 options, 15 groups), runner `--config`,
+  grouped `--help`, `--version`, generated docs, notebook steps 0B/9E. Tests:
+  `tests/unit/test_run_config.py`, `tests/integration/test_config_precedence.py`.
+- 2026-09-25: F2 done: `tests/integration/test_single_dataset_cli.py`.
+- 2026-09-25: F4 done: `qsarena/artifacts.py`, row-level `stage_config_signature`, completed-dataset
+  fingerprint, `--fresh`, granularity switch. Tests: `tests/unit/test_atomic_artifacts.py`,
+  `tests/integration/test_resume_cli.py` (incl. kill mid-stage and mid-batch).
+- 2026-09-25: F3 done: `qsarena/batch.py`, `--batch`, `dataset_summary.csv`. Tests:
+  `tests/unit/test_batch.py`, `tests/integration/test_batch_cli.py`.
+- 2026-09-25: F5 done: `qsarena/preflight.py`, `qsarena/run_events.py`, `qsarena/reporting.py`,
+  dry-run plan, run.log/events.jsonl, in-run AD. Tests: `tests/unit/test_preflight.py`,
+  `tests/unit/test_run_events.py`, `tests/unit/test_reporting.py`, `tests/integration/test_run_reports.py`.
+- Next: D1 (docs/tutorial.md -> Additional file 2 PDF, manuscript references), D2 (tests/docs).

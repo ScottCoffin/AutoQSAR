@@ -1,0 +1,4 @@
+dataset_name,path,smiles_col,target_col,id_col,task,split,test_fraction
+solubility,solubility.csv,smiles,logS,compound_id,regression,random,0.25
+bbb,bbb.csv,smiles,bbb_penetrant,molecule,classification,random,
+broken,broken.csv,,,,,,
