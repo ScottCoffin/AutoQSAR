@@ -221,8 +221,14 @@ data/*.zip
 # Keep lightweight CSVs/JSONs in benchmark runs (needed by benchmark_results_summary.ipynb)
 # Ignore heavy model artifacts by subdirectory and extension
 **/benchmark_results/**/chemprop_v2/
-**/benchmark_results/**/unimol_v1/
-**/benchmark_results/**/unimol_v2/
+# Uni-Mol run dirs hold ~189 MB model_*.pth files; exclude everything EXCEPT cv.data,
+# which carries the internal-fold (OOF) predictions the ensemble rebuild reads (61 files, 1.25 MB).
+**/benchmark_results/**/unimol_v1/**
+!**/benchmark_results/**/unimol_v1/**/
+!**/benchmark_results/**/unimol_v1/**/cv.data
+**/benchmark_results/**/unimol_v2/**
+!**/benchmark_results/**/unimol_v2/**/
+!**/benchmark_results/**/unimol_v2/**/cv.data
 **/benchmark_results/**/chemml_deep_learning/
 **/benchmark_results/**/conventional_ml/
 **/benchmark_results/**/tuned_conventional_ml/
@@ -241,6 +247,10 @@ benchmark_results/*/predictions.csv
 **/benchmark_results/**/*.ss
 **/benchmark_results/**/*.dat
 **/benchmark_results/**/*.data
+# cv.data carries Uni-Mol internal-fold (OOF) predictions, which the ensemble rebuild reads
+# instead of refitting Uni-Mol on GPU. 61 files, 1.25 MB, and the only *.data under
+# benchmark_results. Must come after the *.data rule above: last matching rule wins.
+!**/benchmark_results/**/cv.data
 **/benchmark_results/**/*.result
 gin_supervised_masking_pre_trained.pth
 **/trainer_logs/

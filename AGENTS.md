@@ -163,11 +163,11 @@ Treat 10.7% as an **upper bound**: the weighted-average method weights by invers
 Chemprop's train predictions are 90% in-sample, so its train RMSE is artificially low and its
 weight inflated. Its honest OOF weight is lower.
 
-**Continuing on another machine needs ~0.6 GB of gitignored files** that the repo does not carry:
-`benchmark_results/qsarena_benchmark_chemprop_fixed/*/predictions.csv` (45 files, 0.57 GB) and
-`benchmark_results/autoqsar_benchmark_20260623_153839/**/cv.data` (61 files, <10 MB). Without
-`predictions.csv` the ensembles cannot be rebuilt at all and `prepare_chemprop_repair_run.py`
-cannot reseed. The seeded run's 6.11 GB of `stage23_resume_cache.pkl` is regenerable and need not
+**Continuing on another machine needs ~0.57 GB of gitignored files**:
+`benchmark_results/qsarena_benchmark_chemprop_fixed/*/predictions.csv` (45 files). Without them
+the ensembles cannot be rebuilt at all and `prepare_chemprop_repair_run.py` cannot reseed.
+The Uni-Mol `cv.data` files (61, 1.25 MB) are **now committed** - they were un-gitignored for this
+handoff, so they arrive with a clone. See [docs/HANDOFF_local_cpu_oof.md](docs/HANDOFF_local_cpu_oof.md). The seeded run's 6.11 GB of `stage23_resume_cache.pkl` is regenerable and need not
 be copied (omitting it only means features are rebuilt on CPU).
 
 **GPU driver mismatch on this host (not a results problem).** Unattended-upgrades replaced the
