@@ -47,6 +47,7 @@ ALLOWED_PATHS = (
     "CHANGELOG.md",
     "BUILD_PROVENANCE.md",
     "CHEMPROP_FIX_PLAN.md",
+    "docs/AGENT_WORK_ORDER_shared_ensemble.md",
     "LEADERBOARD_PROVENANCE_FINDINGS.md",
     "Manuscript Outline.md",
     "publication_recommendations.md",
@@ -74,6 +75,7 @@ ALLOWED_LINE_PATTERNS = [
         r"AutoQSAR automates model building",
         r"AUTOQSAR_[A-Z0-9_]+",
         r"autoqsar(?:\\?_)benchmark(?:\\?_)20260623(?:\\?_)153839",
+        r"https://raw\.githubusercontent\.com/ScottCoffin/AutoQSAR/main/portable_colab_qsar_bundle/qsar_workflow_core\.py",
         r"^.*# clone made before the rename.*$",
     )
 ]

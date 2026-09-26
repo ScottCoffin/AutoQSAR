@@ -442,7 +442,7 @@ cells += [
         RESTART_REQUIRED_PACKAGES = []
         PYTDC_SOURCE_URL = "https://files.pythonhosted.org/packages/db/bf/db7525f0e9c48d340a66ae11ed46bbb1966234660a6882ce47d1e1d52824/pytdc-1.1.15.tar.gz"
         CHEMML_ORGANIC_DENSITY_URL = "https://raw.githubusercontent.com/hachmannlab/chemml/master/chemml/datasets/data/moldescriptor_density_smiles.csv"
-        QSARENA_QSAR_CORE_URL = "https://raw.githubusercontent.com/ScottCoffin/QSARena/main/portable_colab_qsar_bundle/qsar_workflow_core.py"
+        QSARENA_QSAR_CORE_URL = "https://raw.githubusercontent.com/ScottCoffin/AutoQSAR/main/portable_colab_qsar_bundle/qsar_workflow_core.py"
 
         def progress_message(package_label, status, extra=""):
             PACKAGE_PROGRESS["done"] += 1
@@ -1431,13 +1431,19 @@ cells += [
         from portable_colab_qsar_bundle.qsar_workflow_core import (
             FEATURE_FAMILY_LABELS as QSAR_CORE_FEATURE_FAMILY_LABELS,
             TabularCNNRegressor,
+            build_ensemble as build_shared_ensemble,
             align_feature_matrix_to_training_columns,
             build_feature_matrix_from_smiles,
             cfa_candidate_subset_count,
+            choose_ensemble_by_oof,
             drop_exact_and_near_duplicate_features,
+            fill_oof_predictions,
+            load_unimol_saved_oof,
             list_supported_chemprop_architectures,
+            make_oof_folds,
             make_qsar_cv_splitter,
             make_reusable_inner_cv_splitter,
+            oof_fold_signature,
             normalize_selected_feature_families,
             resolve_cfa_max_models_for_budget,
             run_cfa_regression_fusion,
@@ -10793,25 +10799,23 @@ cells += [
             # never read test-set metrics or in-sample training predictions. Choosing members on test
             # metrics leaks the test set; weighting on in-sample predictions hands the ensemble to
             # whichever model memorises the training set.
-            import hashlib as _hashlib
-            import joblib as _joblib
             from sklearn.base import clone as _clone
-            from sklearn.model_selection import KFold as _KFold
 
             y_train_state = np.asarray(STATE["y_train"], dtype=float)
             smiles_train_state = STATE["smiles_train"].astype(str).reset_index(drop=True)
             smiles_test_state = STATE["smiles_test"].astype(str).reset_index(drop=True)
-            n_oof_folds = int(min(max(2, int(ensemble_oof_folds)), len(y_train_state)))
-            oof_splits = list(
-                _KFold(n_splits=n_oof_folds, shuffle=True, random_state=int(stacking_random_seed)).split(
-                    np.zeros(len(y_train_state))
-                )
+            ensemble_cv_strategy = current_cv_split_strategy(default_strategy="random", fallback="random")
+            ensemble_cv_seed = int(STATE.get("model_split_random_seed", stacking_random_seed))
+            oof_splits = make_oof_folds(
+                pd.DataFrame(STATE["X_train"]).reset_index(drop=True),
+                pd.Series(y_train_state),
+                smiles_train_state,
+                split_strategy=ensemble_cv_strategy,
+                n_folds=int(ensemble_oof_folds),
+                random_seed=ensemble_cv_seed,
             )
-            oof_cache_key = (
-                n_oof_folds,
-                int(stacking_random_seed),
-                _hashlib.sha256("|".join(smiles_train_state).encode("utf-8")).hexdigest(),
-            )
+            n_oof_folds = int(len(oof_splits))
+            fold_signature = oof_fold_signature(oof_splits)
             oof_cache = STATE.setdefault("ensemble_oof_cache", {})
 
             def _feature_matrix_for(model_name):
@@ -10821,40 +10825,6 @@ cells += [
                     if isinstance(source, pd.DataFrame) and columns and set(columns).issubset(source.columns):
                         return source.loc[:, columns].reset_index(drop=True)
                 return pd.DataFrame(STATE["X_train"]).reset_index(drop=True)
-
-            def _refit_oof(cache_name, fitted_model, X_frame):
-                # Refit an unfitted copy of the model on K-1 folds and predict the held-in fold.
-                key = (cache_name,) + oof_cache_key
-                if key in oof_cache:
-                    return oof_cache[key]
-                oof = np.full(len(y_train_state), np.nan, dtype=float)
-                for fit_idx, val_idx in oof_splits:
-                    fold_model = _clone(fitted_model)
-                    fold_model.fit(X_frame.iloc[fit_idx], y_train_state[fit_idx])
-                    oof[val_idx] = np.asarray(fold_model.predict(X_frame.iloc[val_idx]), dtype=float).reshape(-1)
-                if not np.isfinite(oof).all():
-                    raise ValueError("non-finite out-of-fold predictions")
-                oof_cache[key] = oof
-                return oof
-
-            def _unimol_saved_oof(model_dir, n_rows):
-                # Uni-Mol trains 5 internal folds and saves each training molecule's out-of-fold
-                # prediction to cv.data (normalised scale; target_scaler.ss maps it back).
-                if not model_dir:
-                    return None
-                cv_path = Path(str(model_dir)) / "cv.data"
-                if not cv_path.exists():
-                    return None
-                values = np.asarray(_joblib.load(cv_path), dtype=float).reshape(-1, 1)
-                scaler_path = Path(str(model_dir)) / "target_scaler.ss"
-                if scaler_path.exists():
-                    scaler = _joblib.load(scaler_path)
-                    if scaler is not None and hasattr(scaler, "inverse_transform"):
-                        values = np.asarray(scaler.inverse_transform(values), dtype=float)
-                values = values.reshape(-1)
-                if len(values) != int(n_rows) or not np.isfinite(values).all():
-                    return None
-                return values
 
             def _base_payload(train_pred, test_pred, workflow_label):
                 return {
@@ -10868,29 +10838,33 @@ cells += [
                 }
 
             payloads = {}
+            refitters = {}
+            providers = {}
             skipped_members = []
             if include_conventional and "traditional_models" in STATE:
                 for model_name, fitted_model in STATE["traditional_models"].items():
                     prediction = STATE.get("traditional_predictions", {}).get(model_name)
                     if prediction is None:
                         continue
-                    try:
-                        payload = _base_payload(prediction["train"], prediction["test"], "Conventional ML")
-                        payload["oof"] = _refit_oof(("conventional", str(model_name)), fitted_model, _feature_matrix_for(model_name))
-                        payloads[str(model_name)] = payload
-                    except Exception as exc:
-                        skipped_members.append(f"{model_name}: out-of-fold refit failed ({exc})")
+                    member_name = str(model_name)
+                    payloads[member_name] = _base_payload(prediction["train"], prediction["test"], "Conventional ML")
+                    X_frame = _feature_matrix_for(model_name)
+                    refitters[member_name] = (
+                        lambda fit_idx, val_idx, _fold_dir, fitted_model=fitted_model, X_frame=X_frame:
+                        np.asarray(_clone(fitted_model).fit(X_frame.iloc[fit_idx], y_train_state[fit_idx]).predict(X_frame.iloc[val_idx]), dtype=float).reshape(-1)
+                    )
             if include_tuned_conventional and "tuned_traditional_models" in STATE:
                 for model_name, fitted_model in STATE["tuned_traditional_models"].items():
                     prediction = STATE.get("tuned_traditional_predictions", {}).get(model_name)
                     if prediction is None:
                         continue
-                    try:
-                        payload = _base_payload(prediction["train"], prediction["test"], "Tuned conventional ML")
-                        payload["oof"] = _refit_oof(("tuned", str(model_name)), fitted_model, pd.DataFrame(STATE["X_train"]).reset_index(drop=True))
-                        payloads[f"Tuned {model_name}"] = payload
-                    except Exception as exc:
-                        skipped_members.append(f"Tuned {model_name}: out-of-fold refit failed ({exc})")
+                    member_name = f"Tuned {model_name}"
+                    payloads[member_name] = _base_payload(prediction["train"], prediction["test"], "Tuned conventional ML")
+                    X_frame = pd.DataFrame(STATE["X_train"]).reset_index(drop=True)
+                    refitters[member_name] = (
+                        lambda fit_idx, val_idx, _fold_dir, fitted_model=fitted_model, X_frame=X_frame:
+                        np.asarray(_clone(fitted_model).fit(X_frame.iloc[fit_idx], y_train_state[fit_idx]).predict(X_frame.iloc[val_idx]), dtype=float).reshape(-1)
+                    )
             if include_unimol and "unimol_predictions" in STATE:
                 unimol_dirs = dict(STATE.get("unimol_model_dirs", {}) or {})
                 for model_name, prediction in STATE["unimol_predictions"].items():
@@ -10906,11 +10880,8 @@ cells += [
                         test_smiles_u = pd.Series(prediction["test_smiles"], dtype=str).reset_index(drop=True)
                         train_obs_u = np.asarray(prediction["train_observed"], dtype=float)
                         test_obs_u = np.asarray(prediction["test_observed"], dtype=float)
-                    saved_oof = _unimol_saved_oof(prediction.get("model_dir") or unimol_dirs.get(model_name), len(train_smiles_u))
-                    if saved_oof is None:
-                        skipped_members.append(f"{model_name}: no usable saved out-of-fold predictions (cv.data)")
-                        continue
-                    payloads[str(model_name)] = {
+                    member_name = str(model_name)
+                    payloads[member_name] = {
                         "train": np.asarray(prediction["train"], dtype=float),
                         "test": np.asarray(prediction["test"], dtype=float),
                         "train_observed": train_obs_u,
@@ -10918,8 +10889,13 @@ cells += [
                         "train_smiles": train_smiles_u,
                         "test_smiles": test_smiles_u,
                         "workflow": "Uni-Mol",
-                        "oof": saved_oof,
                     }
+                    model_dir = prediction.get("model_dir") or unimol_dirs.get(model_name)
+                    providers[member_name] = (
+                        lambda model_dir=model_dir, n_rows=len(train_smiles_u), reference=np.asarray(prediction["train"], dtype=float):
+                        load_unimol_saved_oof(Path(str(model_dir)), n_train=int(n_rows), reference_train_pred=reference)
+                        if model_dir else (None, "no model directory")
+                    )
             if "deep_results" in STATE:
                 other_workflows = sorted(
                     set(pd.DataFrame(STATE["deep_results"]).get("Workflow", pd.Series(dtype=str)).dropna().astype(str))
@@ -10932,13 +10908,29 @@ cells += [
                         + ". The command-line runner builds these by refitting per fold."
                     )
 
+            oof_notes = fill_oof_predictions(
+                payloads,
+                refitters=refitters,
+                providers=providers,
+                folds=oof_splits,
+                fold_signature=fold_signature,
+                n_train=len(y_train_state),
+                memory_cache=oof_cache,
+                log=None,
+            )
+            skipped_members.extend(note for note in oof_notes if "read saved Uni-Mol internal-fold predictions" not in note)
+            payloads = {name: payload for name, payload in payloads.items() if payload.get("oof") is not None}
+
             for payload_key, payload in payloads.items():
                 ensure_global_split_signature(
                     payload["train_smiles"],
                     payload["test_smiles"],
                     source_label=f"7A ensemble member: {payload_key}",
                 )
-            print(f"Ensemble candidates (out-of-fold predictions from {n_oof_folds}-fold refits or saved Uni-Mol folds):")
+            print(
+                f"Ensemble candidates (out-of-fold predictions from {n_oof_folds} {ensemble_cv_strategy} folds "
+                "or saved Uni-Mol folds):"
+            )
             for payload_key, payload in payloads.items():
                 print(f"  - {payload['workflow']}: {payload_key}")
             for note in skipped_members:
@@ -11295,46 +11287,51 @@ cells += [
                         else pd.DataFrame()
                     )
                 elif method_name == "OOF Stacking (RidgeCV)":
-                    n_splits = int(min(max(2, int(stacking_cv_folds)), len(aligned_train)))
-                    if n_splits < 2:
-                        raise ValueError("At least two aligned training molecules are required for OOF stacking.")
-                    cv = KFold(n_splits=n_splits, shuffle=True, random_state=int(stacking_random_seed))
-                    meta_model = RidgeCV(alphas=np.logspace(-6, 3, 30), fit_intercept=True)
-                    oof_train_pred = np.asarray(
-                        cross_val_predict(meta_model, X_meta_train_current, y_meta_train_current, cv=cv, method="predict")
-                    ).reshape(-1)
-                    meta_model.fit(X_meta_train_current, y_meta_train_current)
-                    ensemble_test_pred = np.asarray(meta_model.predict(X_meta_test_current)).reshape(-1)
-                    ensemble_train_pred = oof_train_pred
-                    ensemble_method_label = f"OOF Stacking (RidgeCV, {n_splits}-fold)"
-                    ensemble_intercept = float(getattr(meta_model, "intercept_", 0.0))
-                    raw_coeffs = np.asarray(getattr(meta_model, "coef_", np.zeros(len(current_prediction_columns))), dtype=float).reshape(-1)
-                    abs_total = float(np.abs(raw_coeffs).sum())
-                    norm_contrib = np.abs(raw_coeffs) / abs_total if abs_total > 0 else np.zeros_like(raw_coeffs)
-                    weight_df = pd.DataFrame(
-                        {
-                            "Model": current_prediction_columns,
-                            "Weight": raw_coeffs,
-                            "Abs normalized contribution": norm_contrib,
-                            "Workflow": [payloads[name]["workflow"] for name in current_prediction_columns],
-                        }
+                    shared_build = build_shared_ensemble(
+                        payloads,
+                        method="OOF Stacking (RidgeCV)",
+                        task_type="regression",
+                        primary_metric="rmse",
+                        lower_is_better=True,
+                        selection_split="oof",
+                        stacking_cv_folds=int(stacking_cv_folds),
+                        random_seed=int(stacking_random_seed),
+                        drop_highly_correlated=bool(drop_highly_correlated_members),
+                        max_correlation=float(max_train_prediction_correlation),
+                        exclude_nonpositive_r2=bool(exclude_negative_oof_r2_members),
                     )
+                    current_prediction_columns = list(shared_build.members)
+                    ensemble_train_pred = np.asarray(shared_build.train_pred, dtype=float)
+                    ensemble_test_pred = np.asarray(shared_build.test_pred, dtype=float)
+                    ensemble_method_label = str(shared_build.label)
+                    meta_model = shared_build.meta_model
+                    ensemble_intercept = float(getattr(meta_model, "intercept_", 0.0)) if meta_model is not None else 0.0
+                    weight_df = shared_build.weights.copy()
+                    for note in shared_build.notes:
+                        if note not in member_filter_notes:
+                            member_filter_notes.append(note)
                 else:
-                    raw_weights = []
-                    for model_name in current_prediction_columns:
-                        oof_rmse = float(member_metrics[model_name]["OOF RMSE"])
-                        raw_weights.append(1.0 / max(oof_rmse, 1e-8))
-                    raw_weights = np.asarray(raw_weights, dtype=float)
-                    weights = raw_weights / raw_weights.sum()
-                    ensemble_train_pred = np.dot(X_meta_train_current, weights)
-                    ensemble_test_pred = np.dot(X_meta_test_current, weights)
-                    weight_df = pd.DataFrame(
-                        {
-                            "Model": current_prediction_columns,
-                            "Weight": weights,
-                            "Workflow": [payloads[name]["workflow"] for name in current_prediction_columns],
-                        }
+                    shared_build = build_shared_ensemble(
+                        payloads,
+                        method="Weighted average (inverse train RMSE)",
+                        task_type="regression",
+                        primary_metric="rmse",
+                        lower_is_better=True,
+                        selection_split="oof",
+                        stacking_cv_folds=int(stacking_cv_folds),
+                        random_seed=int(stacking_random_seed),
+                        drop_highly_correlated=bool(drop_highly_correlated_members),
+                        max_correlation=float(max_train_prediction_correlation),
+                        exclude_nonpositive_r2=bool(exclude_negative_oof_r2_members),
                     )
+                    current_prediction_columns = list(shared_build.members)
+                    ensemble_train_pred = np.asarray(shared_build.train_pred, dtype=float)
+                    ensemble_test_pred = np.asarray(shared_build.test_pred, dtype=float)
+                    ensemble_method_label = str(shared_build.label)
+                    weight_df = shared_build.weights.copy()
+                    for note in shared_build.notes:
+                        if note not in member_filter_notes:
+                            member_filter_notes.append(note)
 
                 ensemble_row = {"Model": f"Ensemble ({ensemble_method_label})", "Workflow": "Ensemble"}
                 # For ensembles the training-side prediction is itself out-of-fold, so "Train" = "OOF".

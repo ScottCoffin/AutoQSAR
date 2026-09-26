@@ -185,7 +185,7 @@ stack stopped first). Only matters for step 6.
 |---|---|---|
 | Interactive Colab notebook | `portable_colab_qsar_bundle/build_colab_qsar_tutorial.py` | Regenerates `colab_qsar_tutorial.ipynb`; never hand-edit that notebook. |
 | Benchmark runner | `portable_colab_qsar_bundle/run_qsarena_benchmarks.py` | ~10k lines. `run_qsarena_benchmarks.txt` is a **stale mirror**: do not read or grep it as source. |
-| Features, splits, CFA | `portable_colab_qsar_bundle/qsar_workflow_core.py` | (`qsar_workflow_core.txt` is a mirror.) |
+| Features, splits, CFA, shared ensemble logic | `portable_colab_qsar_bundle/qsar_workflow_core.py` | Runner orchestration stays in `run_qsarena_benchmarks.py`; notebook member collection stays in builder block 7A. (`qsar_workflow_core.txt` is a mirror.) |
 | Dataset registry / catalog | `benchmark_registry.py`, `data/benchmark_dataset_catalog.csv` | |
 | Leaderboard references | `data/benchmark_leaderboards/*.csv` | Current-literature ESOL/Lipophilicity refs live in `ESOL_Lipophilicity_Current_Benchmarks_csv.csv`. |
 | Benchmark analysis, manuscript figures and tables | `portable_colab_qsar_bundle/benchmark_results_summary.ipynb` | Hand-maintained (no builder). The last cell (`# MANUSCRIPT_FIGURE_EXPORT`) writes `manuscript_assets/`. |
@@ -347,12 +347,12 @@ Open work is tracked in [TODO.md](TODO.md); the Zenodo deposit is the last block
     `predictions.csv`, so the stage resumes. Members without OOF predictions, and CFA, are excluded
     and noted in `ensemble_member_filter_notes`. Tests: `tests/unit/test_ensemble_oof.py`.
   Downstream code must not assume `predictions.csv` holds only `train`/`test` rows.
-  **The Colab notebook has its own copy of the ensemble code** (block 7A in
-  `build_colab_qsar_tutorial.py`; regenerate the `.ipynb` with the builder). It is also OOF-only now:
-  conventional and tuned models are refitted on K folds inside the cell (cached in
-  `STATE["ensemble_oof_cache"]`), Uni-Mol comes from `cv.data`, and other deep workflows are not
-  members there. It must never go back to choosing members, filters, CFA inputs or the downstream
-  strategy by *test* metrics, all four of which it used to do.
+  The command-line runner and Colab notebook now call shared ensemble helpers in
+  `qsar_workflow_core.py`. Notebook block 7A still owns member collection: conventional and tuned
+  models are refitted on K folds inside the cell (cached in `STATE["ensemble_oof_cache"]`), Uni-Mol
+  comes from `cv.data`, and other deep workflows are not members there. It must never go back to
+  choosing members, filters, CFA inputs or the downstream strategy by *test* metrics, all four of
+  which it used to do.
 - **Leakage-free CV selection is no longer model-starved.** TabPFN emits CV metrics. In the
   chemprop_fixed run, the CV-selected model picked the per-dataset winner on 3 datasets (it was 0),
   sat a median 8.7% from the best (it was 16.1%), and reached **one** estimated first place (it was
