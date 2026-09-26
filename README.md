@@ -148,9 +148,30 @@ After base models produce aligned train/test predictions, QSARena can run:
   selection before bounded combinatorial fusion
 - `Ensemble (OOF Stacking (RidgeCV))` for regression, with a logistic
   meta-model fallback for binary classification
-- `Ensemble (Weighted average (inverse train RMSE))`; for classification this
-  weights by the configured primary classification metric
+- `Ensemble (Weighted average (inverse OOF error))`: weights are the inverse
+  out-of-fold RMSE (regression) or the inverse out-of-fold RMS probability error
+  (classification)
 - `Ensemble (Simple average)`
+
+Ensembles are built only from **out-of-fold (OOF)** member predictions
+(`--ensemble-member-selection-split oof`, the default). Member filtering, the
+correlated-pair tie-break, the weights and the stacking meta-model never see the
+test split, and never see a member's in-sample predictions for its own training
+molecules (which would hand the ensemble to whichever model memorises the
+training set). OOF predictions come from, in order:
+
+1. predictions a backend already saved (Uni-Mol writes its internal 5-fold
+   predictions to `cv.data`; conventional models reuse their CV fold fits);
+2. refitting the member on `--ensemble-oof-folds` folds of the training split,
+   with the same fold geometry as `--cv-folds`.
+
+`--ensemble-oof-scope all` also refits Chemprop per fold on the GPU. `cpu` does
+not, and Chemprop is then left out of the ensemble. Fold results are cached
+under `<dataset>/ensemble_oof/` and saved as `split="oof"` rows in
+`predictions.csv`, so the stage resumes after an interruption. To rebuild
+ensembles for an existing run without retraining any full model, see
+`submission/chemprop_rerun_command.md` §7. `--ensemble-member-selection-split
+train|test` exist only to reproduce earlier runs.
 
 The notebook's applicability-domain section also fits internal diagnostic
 models, including random-forest-based uncertainty/coverage helpers, but those

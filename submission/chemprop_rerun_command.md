@@ -201,3 +201,106 @@ Keep the deposited run as the hardware/legacy comparison arm, exactly as
 `benchmark_results/benchmark_name_date` is kept today, and report the ensemble score change from
 removing the held-out-R² filter explicitly. That delta is a result in its own right: it quantifies
 what the leakage was worth, which is a stronger paper than having never leaked.
+
+---
+
+## 7. Ensemble OOF repair (2026-09-26) — run this before regenerating the manuscript
+
+**Why.** The Chemprop repair run (`qsarena_benchmark_chemprop_fixed`) removed the held-out leak
+with `--ensemble-member-selection-split train`, but that mode selects, weights and stacks members on
+their *in-sample* training predictions, which rewards memorisation. On ESOL the stacking meta-model
+put 99.99% of its weight on extra trees (training RMSE 0.026) and dropped MapLight CatBoost; across
+the run ensemble regression wins fell from 7 to 1 and OOF stacking sat a median 16% behind the best
+single model. Those ensemble results must not be reported.
+
+**What an honest ensemble needs, and what is already on disk.** Stacking and inverse-error
+weighting need, for every training molecule, a prediction from a model that did not train on it
+(out-of-fold, OOF). The saved full models and their `predictions.csv` are reused as they are; no
+base model is retrained. But their predictions for training molecules are in-sample, so rebuilding
+the ensemble from saved files alone can only reproduce the memorisation bias (`train`) or the leak
+(`test`). What each family needs:
+
+| Members | OOF source | Cost |
+|---|---|---|
+| Uni-Mol V1 / V2 | **Already saved.** `unimol_tools` trains 5 internal folds and writes each training molecule's out-of-fold prediction to `cv.data` in the model folder. These are the reported model's own fold models. | none (read from disk) |
+| Conventional ML, MapLight CatBoost, TabPFN | Their CV fold models were not kept, so they are refitted on 5 folds | CPU; TabPFN uses API tokens |
+| ChemML MLPs, MapLight + GNN | Refitted on 5 folds | CPU, minutes per dataset |
+| Chemprop (5 variants) | Only a random 10% was held out, for early stopping; there is no full OOF vector | **GPU fold refits: the only expensive part** |
+
+`--ensemble-member-selection-split oof` (the default) does all of this: saved OOF first, then fold
+refits, cached per fold under `<dataset>/ensemble_oof/` and saved as `split="oof"` rows in
+`predictions.csv`, so the stage resumes. CFA is not an ensemble member. The weighted ensemble is
+labelled `Ensemble (Weighted average (inverse OOF error))`. Tests: `tests/unit/test_ensemble_oof.py`.
+
+**Choose the Chemprop option.** Everything else is the same either way.
+
+| `--ensemble-oof-scope` | Chemprop in ensembles? | A100 time (estimate) |
+|---|---|---|
+| `cpu` | No: left out of the ensembles, with the reason logged | ~10 h of CPU refits (mostly MapLight + GNN) |
+| `all` | Yes: 5 variants × 5 folds refitted on the GPU | ~65 h (≈1.5 h per median dataset); `--ensemble-oof-folds 3` cuts that to ~40 h |
+
+If you choose `cpu`, the paper must say that the ensembles exclude Chemprop.
+
+```bash
+export QSARENA_HOME=/path/to/QSARena
+cd "$QSARENA_HOME"
+
+python portable_colab_qsar_bundle/prepare_chemprop_repair_run.py \
+  benchmark_results/qsarena_benchmark_chemprop_fixed \
+  benchmark_results/qsarena_benchmark_oof_ensemble
+
+dataset_args=()
+for metrics_file in benchmark_results/qsarena_benchmark_oof_ensemble/*/metrics.csv; do
+  dataset_args+=(--dataset-name "$(basename "$(dirname "$metrics_file")")")
+done
+
+# Uni-Mol folders are found through the path recorded in metrics.csv; --ensemble-oof-source-run is
+# a fallback for when the run was moved. The Uni-Mol / Chemprop / TabPFN settings are the ones that
+# produced the reported models (canonical run for Uni-Mol, chemprop_fixed for Chemprop and TabPFN),
+# so any fold refit matches them.
+nohup python portable_colab_qsar_bundle/run_qsarena_benchmarks.py \
+  --output-dir benchmark_results/qsarena_benchmark_oof_ensemble \
+  --benchmark-profile full \
+  "${dataset_args[@]}" \
+  --only-model-names 'Ensemble' \
+  --run-ensemble --rebuild-ensemble \
+  --ensemble-member-selection-split oof --ensemble-oof-folds 5 \
+  --ensemble-oof-scope all \
+  --ensemble-oof-source-run benchmark_results/autoqsar_benchmark_20260623_153839 \
+  --run-tabpfn --tabpfn-max-train-rows 11000 \
+  --unimol-batch-size 32 --unimol-max-atoms 64 \
+  --run-chemprop-mpnn --run-chemprop-dmpnn --run-chemprop-rdkit2d \
+  --run-chemprop-cmpnn --run-chemprop-attentivefp --run-chemprop-selected-features \
+  --chemprop-epochs 40 --chemprop-ensemble-size 3 --chemprop-random-seed 42 \
+  --reuse-persistent-feature-store --reuse-shared-feature-matrix-cache \
+  --resume --no-run-tdc22-multiseed-best \
+  > logs/oof_ensemble.log 2>&1 &
+# --only-model-names 'Ensemble' keeps every full model from being retrained. The --run-chemprop-*
+# flags only list the Chemprop variants whose OOF predictions to build.
+```
+
+**TabPFN** runs through the API client, and the repair run already hit its daily token limit. Its
+fold refits may hit it again. That is not fatal: that member is left out of that dataset's
+ensembles, with the reason in `ensemble_member_filter_notes`. Running TabPFN locally on the GPU
+avoids the limit.
+
+**Checks after the run.**
+
+```bash
+grep -c "config signature changed" logs/oof_ensemble.log     # must be 0, otherwise stop and investigate
+grep "cv.data" logs/oof_ensemble.log | head                  # Uni-Mol should read saved OOF, not refit
+python - <<'PY'
+import pandas as pd, pathlib
+run = pathlib.Path("benchmark_results/qsarena_benchmark_oof_ensemble")
+rows = pd.concat([pd.read_csv(p, low_memory=False).assign(dataset=p.parent.name)
+                  for p in run.glob("*/metrics.csv")])
+ens = rows[rows["model"].astype(str).str.startswith("Ensemble (") & rows["error"].isna()]
+print(ens["ensemble_member_selection_split"].value_counts(dropna=False))
+print(ens.groupby("model").size())
+notes = ens["ensemble_member_filter_notes"].fillna("")
+print(notes[notes.str.contains("refit failed|no out-of-fold|unusable", regex=True)].head(20).to_string())
+PY
+```
+
+Then regenerate from the new run:
+`python portable_colab_qsar_bundle/render_manuscript_assets.py --run-dir benchmark_results/qsarena_benchmark_oof_ensemble`.

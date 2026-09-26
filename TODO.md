@@ -8,6 +8,27 @@ Last updated: 2026-09-25.
 
 ---
 
+## Ensemble OOF repair (2026-09-26) — blocks the manuscript update
+
+- [x] Runner: `--ensemble-member-selection-split oof` (default) builds ensembles from out-of-fold
+      member predictions; `train` mode rewarded memorisation (chemprop_fixed ensembles invalid).
+- [ ] **Run the OOF ensemble repair on the A100** → `benchmark_results/qsarena_benchmark_oof_ensemble`
+      ([submission/chemprop_rerun_command.md](submission/chemprop_rerun_command.md) §7). No full model
+      is retrained: Uni-Mol reads its saved `cv.data` OOF predictions, and CPU members refit on 5 folds
+      (~10 h in total). **Decide on Chemprop**: `--ensemble-oof-scope all` refits it per fold (~65 h,
+      or ~40 h with `--ensemble-oof-folds 3`); `cpu` leaves it out of the ensembles, and the paper
+      must say so.
+- [ ] Then regenerate every asset from that run, move `verify_manuscript_numbers.py` to it, and
+      update the prose (both formats), abstract, graphical abstract and AGENTS.md framing. Take
+      selector scaling and dataset wall-clock from the canonical run, not the repair runs.
+- [ ] Disclose the ensemble history in the paper: held-out selection (canonical), then in-sample
+      selection (rejected, memorisation), then OOF. Report how much the leak was worth.
+- [ ] **Colab notebook ensembles still leak** (`build_colab_qsar_tutorial.py` ~L10990-11360, a
+      separate copy of the ensemble code). Member exclusion and the correlated-pair tie-break read
+      *test* R² and RMSE. CFA best-per-workflow picks on *test* metrics. Weights and stacking use
+      in-sample training predictions. §2.1 says the notebook and runner share identical code paths,
+      which is false for ensembles until this is fixed or the text is qualified.
+
 ## Raised by focused peer review (2026-09-25, second report)
 
 Source: `Peer_Review_Report_QSARena_No_Single_Model_Family_Dominates.docx`; itemised response in

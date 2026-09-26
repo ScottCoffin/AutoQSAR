@@ -90,6 +90,7 @@ def _non_default_value(spec: qc.OptionSpec):
     """A valid value different from the default, for every option kind."""
     special = {
         "run.output_dir": "some/dir",
+        "ensemble.oof_source_run": "benchmark_results/earlier_run",
         "input.path": "a.csv",
         "input.target_col": ["t1", "t2"],
         "batch.source": "manifest.csv",
