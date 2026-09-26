@@ -25,6 +25,10 @@ always quote). Bash (Git Bash) and PowerShell are both available.
 | Graphical abstract | `portable_colab_qsar_bundle/render_graphical_abstract.py` | Writes `manuscript_assets/figures/graphical_abstract.svg`. It should summarize the paper's decision story, not duplicate Figure 1. |
 | Precision, Uni-Mol2, conformers (Update 2) | `qsarena/` package, `run_one.py`, `js2/`, `hpc/` | |
 | pip packaging (deps, extras, console scripts) | `pyproject.toml` | See "Packaging" below. |
+| Any user-facing run option (the 15 decision groups) | `qsarena/config.py` (`RunConfig`) | Then `python -m qsarena.config --write-docs` (regenerates `docs/options_reference.md`, `configs/run.example.yaml`, the tutorial's option tables). Tests fail if they are stale. |
+| Batch mode, preflight/dry-run, reports, run.log/events, atomic writes | `qsarena/batch.py`, `preflight.py`, `reporting.py`, `run_events.py`, `artifacts.py` | Wired into the runner's `prepare_args()` / `_run_main()`. |
+| Tutorial = Additional file 2 | `docs/tutorial.md` | Every command runs in `tests/docs` (~6 min). PDF: `python submission/build_additional_file_2.py`; never edit the generated `.tex`. Work order: `docs/AGENT_WORK_ORDER_tutorial.md`. |
+| Tutorial example data | `tests/fixtures/tutorial/make_tutorial_data.py` -> `qsarena/examples/data/` | Synthetic targets; shipped in the wheel; `qsarena-examples DIR` copies them out. |
 
 ## Packaging (`pip install qsarena`)
 
@@ -221,6 +225,21 @@ Open work is tracked in [TODO.md](TODO.md); the Zenodo deposit is the last block
   `all_benchmarks_no_unimol_20260425_223505`, which that same commit deleted from the repo. Recover it if you need it:
   `git archive 745b820 benchmark_results/all_benchmarks_no_unimol_20260425_223505 | tar -x -C <dir>`.
 - Committed notebook outputs before 2026-09-24 came from another machine (`C:\Users\scott\QSARena`) and a mixed state.
+
+## Run options, resume and reports (tutorial work order, 2026-09-25)
+
+- **RunConfig defaults must reproduce the old runner behaviour** (user decision). New options (salt
+  stripping, dedup, ...) default off; Appendix A's differing "intended defaults" were NOT adopted.
+  `tests/fixtures/config/appendix_a_run.yaml` is Appendix A verbatim and must keep loading.
+- **Resume is config-signature aware.** Each `metrics.csv` row carries `stage_config_signature`
+  (stage 2/3 signature + that model family's args); a changed arg recomputes only that family plus
+  fusion/ensembles. Rows and `run_status.json` files from before this change have no signature and are
+  reused unvalidated with a printed notice, so resuming older runs never discards work.
+- The stage 2/3 cache signature is unchanged for default configs (new keys enter only when non-default),
+  so pre-existing `stage23_resume_cache.pkl` files still hit.
+- A failing dataset is recorded (`run_status.json` status `failed` + error + remedy) and the run
+  continues; `dataset_summary.csv` and `report.html`/`report.md` are written for every mode.
+- Test cost: `tests/integration` ~10 min and `tests/docs` ~6 min of CLI runs on the example data.
 
 ## Don'ts (cost savers)
 

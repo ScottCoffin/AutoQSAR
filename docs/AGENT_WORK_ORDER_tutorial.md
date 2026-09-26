@@ -673,10 +673,10 @@ Implementation notes:
   `--resume/--fresh` documented (F4).
 - [x] Preflight/`--dry-run`, progress+ETA, actionable warnings, and `report.html` and `report.md`
   present and tested (F5).
-- [ ] Tutorial published as Additional file 2 (all 10 sections); Availability + Additional-file list
+- [x] Tutorial published as Additional file 2 (all 10 sections); Availability + Additional-file list
   updated; Additional file 1 intact (D1).
-- [ ] Every tutorial command runs green in CI on the fixture; no documented flag missing from `--help` (D2).
-- [ ] `pytest -q` green; `CHANGELOG.md` + `docs/AGENT_WORK_ORDER_tutorial.md` updated;
+- [x] Every tutorial command runs green in CI on the fixture; no documented flag missing from `--help` (D2).
+- [x] `pytest -q` green; `CHANGELOG.md` + `docs/AGENT_WORK_ORDER_tutorial.md` updated;
   supplementary builds cleanly.
 
 ## Running Status Log
@@ -751,4 +751,24 @@ Implementation notes:
 - 2026-09-25: F5 done: `qsarena/preflight.py`, `qsarena/run_events.py`, `qsarena/reporting.py`,
   dry-run plan, run.log/events.jsonl, in-run AD. Tests: `tests/unit/test_preflight.py`,
   `tests/unit/test_run_events.py`, `tests/unit/test_reporting.py`, `tests/integration/test_run_reports.py`.
-- Next: D1 (docs/tutorial.md -> Additional file 2 PDF, manuscript references), D2 (tests/docs).
+- 2026-09-25: F1-F5 committed (28af8cc).
+- 2026-09-25: D1 done: `docs/tutorial.md` (10 sections, flowchart, generated option tables per group,
+  embedded run.example.yaml), `submission/build_additional_file_2.py` -> 
+  `submission/additional_file_2_qsarena_tutorial.{tex,pdf}` (32 pages, pdflatex, figures via cairosvg),
+  Additional file 2 cited in `submission/body.tex` (Availability and requirements) and listed in
+  `submission/manuscript.tex` (Supplementary information); `manuscript.md` mirrors both. Additional
+  file 1 untouched. `verify_manuscript_numbers.py`: PASS 78; `proof.tex` builds with no undefined refs.
+- 2026-09-25: D2 done: `tests/docs/test_tutorial_runs.py` + `tests/docs/tutorial_command_runner.py`
+  (21 executed command blocks, excerpt matching, --help flag checks, YAML validation, generated-block and
+  plot-asset freshness, byte-identical example-data regeneration). Also added `artifact_manifest.csv`
+  (per-run SHA-256 manifest) documented in tutorial Section 9.
+- Maintenance: after changing an option run `python -m qsarena.config --write-docs`; after changing
+  report plots run `python tests/docs/tutorial_command_runner.py --refresh-assets`; then rebuild the PDF
+  with `python submission/build_additional_file_2.py`.
+- Not done / out of scope: pushing the branch or opening a PR (needs the user's go-ahead); the branch is
+  based on `integration/main-work-order-merge` and should not be merged into `main` until that branch
+  consolidation is settled (see Open Coordination Notes).
+- 2026-09-25: Full CI selection `pytest -q -m "not gpu and not slow"`: 238 passed (13m48s, Windows,
+  Python 3.14 venv). `ruff check qsarena tests` clean. Wheel verified to ship `qsarena/examples/data` and
+  the `qsarena-examples` console script. Additional file 2 builds with pdflatex (32 pages).
+

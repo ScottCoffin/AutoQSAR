@@ -27,6 +27,7 @@ DATA_FILES = (
     "batch_manifest.csv",
     "batch_dir/permeability.csv",
     "batch_dir/lipophilicity.csv",
+    "typo_run.yaml",
 )
 
 #: Starter configuration written as ``run.yaml`` next to the data.

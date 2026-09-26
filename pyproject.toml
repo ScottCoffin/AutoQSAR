@@ -155,7 +155,7 @@ include-package-data = false
 [tool.setuptools.package-data]
 portable_colab_qsar_bundle = ["example_prediction_smiles.csv"]
 # Tutorial example data (synthetic targets), copied out by `qsarena-examples DIR`.
-"qsarena.examples" = ["data/*.csv", "data/batch_dir/*.csv"]
+"qsarena.examples" = ["data/*.csv", "data/*.yaml", "data/batch_dir/*.csv"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

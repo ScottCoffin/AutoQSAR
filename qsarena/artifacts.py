@@ -12,6 +12,7 @@ exists only for file systems where rename-over is not allowed.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import pickle
@@ -30,6 +31,7 @@ __all__ = [
     "atomic_write_csv",
     "atomic_write_pickle",
     "supersede_directory",
+    "write_artifact_manifest",
 ]
 
 _ATOMIC = True
@@ -138,3 +140,24 @@ def merge_json(path: str | Path, updates: Mapping[str, Any]) -> Path:
         payload = {}
     payload.update(dict(updates))
     return atomic_write_json(path, payload)
+
+
+#: Files that change after the manifest is written (or are the manifest itself).
+_MANIFEST_EXCLUDE = {"artifact_manifest.csv", "run.log", "events.jsonl"}
+
+
+def write_artifact_manifest(output_dir: str | Path) -> Path:
+    """``artifact_manifest.csv``: path, size and SHA-256 of every file in a run directory, so a
+    copy of the run can be checked byte for byte (``--fresh`` backups and temp files excluded)."""
+    root = Path(output_dir)
+    rows = ["path,bytes,sha256"]
+    for path in sorted(p for p in root.rglob("*") if p.is_file()):
+        relative = path.relative_to(root).as_posix()
+        if relative in _MANIFEST_EXCLUDE or path.name.endswith(".tmp"):
+            continue
+        digest = hashlib.sha256()
+        with path.open("rb") as handle:
+            for chunk in iter(lambda: handle.read(1 << 20), b""):
+                digest.update(chunk)
+        rows.append(f"{relative},{path.stat().st_size},{digest.hexdigest()}")
+    return atomic_write_text(root / "artifact_manifest.csv", "\n".join(rows) + "\n")

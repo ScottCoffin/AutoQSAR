@@ -487,8 +487,8 @@ QSARena delivers these results through a code-free notebook and a resume-safe co
 **Project home page:** https://github.com/ScottCoffin/QSARena
 **Operating systems:** Windows, macOS, Linux, Google Colab
 **Programming language:** Python 3.11
-**Installation:** `pip install qsarena` (console scripts `qsarena-benchmark` and `qsarena-applicability-domain`), or clone the repository and run the scripts directly; the code-free notebook requires no installation at all and runs in Google Colab
-**Other requirements:** RDKit, scikit-learn, pandas, NumPy, SciPy, joblib; heavy backends are optional extras (`qsarena[boosting]`, `[deep]`, `[graph]`, `[foundation]`, `[notebook]`). Exact versions for reproducing the benchmark are pinned in `requirements-cpu.txt` / `requirements-cuda.txt` and the conda environment files, which should be used in preference to the pip extras for exact reproduction
+**Installation:** `pip install qsarena` (console scripts `qsarena-benchmark`, `qsarena-applicability-domain` and `qsarena-examples`), or clone the repository and run the scripts directly; the code-free notebook requires no installation at all and runs in Google Colab. A step-by-step installation and usage tutorial, in which every command is executed by an automated test on bundled example data, is provided as Additional file 2
+**Other requirements:** RDKit, scikit-learn, pandas, NumPy, SciPy, joblib, PyYAML; heavy backends are optional extras (`qsarena[boosting]`, `[deep]`, `[graph]`, `[foundation]`, `[notebook]`). Exact versions for reproducing the benchmark are pinned in `requirements-cpu.txt` / `requirements-cuda.txt` and the conda environment files, which should be used in preference to the pip extras for exact reproduction
 **License:** See `LICENSE` in the repository
 **Any restrictions to use by non-academics:** None beyond the repository license
 
@@ -643,6 +643,12 @@ All benchmark datasets are public: TDC via PyTDC, MoleculeNet, Polaris, the PODU
 59. Organisation for Economic Co-operation and Development. (Q)SAR Assessment Framework: guidance for the regulatory assessment of (quantitative) structure activity relationship models and predictions. OECD Series on Testing and Assessment. Paris: OECD Publishing; 2023. https://doi.org/10.1787/d96118f6-en
 
 60. Roy K, Kar S, Ambure P. On a simple approach for determining applicability domain of QSAR models. *Chemometrics and Intelligent Laboratory Systems*. 2015;145:22–29. https://doi.org/10.1016/j.chemolab.2015.04.013
+
+## Additional files
+
+**Additional file 1.** Supplementary tables S1–S8: per-dataset winning models with cross-validation-selected comparators (S1), staged component ablation (S2), feature-family selection summary (S3), model coverage (S4), hardware comparison (S5), dataset catalog (S6), leaderboard comparison (S7), and applicability-domain/calibration audit (S8). They are reproduced below under *Supplementary tables*.
+
+**Additional file 2.** Guided installation and usage tutorial: choosing between the notebook and the command-line runner, installation, a single-dataset quickstart, a reference for all fifteen groups of workflow options, batch mode over any number of datasets, resume, the HTML/Markdown run reports, applicability domain, reproducibility, and troubleshooting. Every command in the tutorial is executed on the bundled example data by an automated test. Source: `docs/tutorial.md`; PDF: `submission/additional_file_2_qsarena_tutorial.pdf`.
 
 ## Supplementary tables
 

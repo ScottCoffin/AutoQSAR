@@ -440,6 +440,24 @@ This updates:
 portable_colab_qsar_bundle/colab_qsar_tutorial.ipynb
 ```
 
+## Guided Tutorial (Your Own Data)
+
+[`docs/tutorial.md`](docs/tutorial.md) (also Additional file 2 of the paper) walks through installation, a
+single-dataset quickstart, all fifteen groups of options, batch mode over any number of your own datasets,
+resume, the HTML/Markdown reports, applicability domain and troubleshooting. Every command in it is run by
+the test suite (`tests/docs/test_tutorial_runs.py`). The short version:
+
+```bash
+qsarena-examples qsarena_tutorial          # synthetic example data + a starter run.yaml
+cd qsarena_tutorial
+qsarena-benchmark --dataset solubility.csv --target-col logS --benchmark-profile quick --output-dir runs/quick
+qsarena-benchmark --batch batch_manifest.csv --benchmark-profile quick --output-dir runs/batch
+qsarena-benchmark --config run.yaml         # every option can live in a run.yaml
+```
+
+Every option is listed in [`docs/options_reference.md`](docs/options_reference.md); a commented template
+with all defaults is [`configs/run.example.yaml`](configs/run.example.yaml).
+
 ## Running Benchmarks
 
 The benchmark runner evaluates the same core workflow across a curated dataset

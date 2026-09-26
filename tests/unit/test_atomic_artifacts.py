@@ -50,6 +50,21 @@ def test_direct_writes_when_atomic_disabled(tmp_path):
     assert (tmp_path / "d.txt").read_text(encoding="utf-8") == "direct"
 
 
+def test_artifact_manifest_lists_sha256_of_every_file(tmp_path):
+    import hashlib
+
+    (tmp_path / "ds").mkdir()
+    (tmp_path / "ds" / "metrics.csv").write_bytes(b"a,b\n1,2\n")
+    (tmp_path / "report.md").write_text("# r\n", encoding="utf-8")
+    (tmp_path / "run.log").write_text("changes after the manifest\n", encoding="utf-8")
+    manifest = artifacts.write_artifact_manifest(tmp_path)
+    rows = manifest.read_text(encoding="utf-8").splitlines()
+    assert rows[0] == "path,bytes,sha256"
+    entries = {row.split(",")[0]: row.split(",") for row in rows[1:]}
+    assert set(entries) == {"ds/metrics.csv", "report.md"}
+    assert entries["ds/metrics.csv"][2] == hashlib.sha256(b"a,b\n1,2\n").hexdigest()
+
+
 def test_supersede_directory_renames_and_never_deletes(tmp_path):
     run = tmp_path / "run"
     run.mkdir()

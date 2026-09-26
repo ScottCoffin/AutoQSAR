@@ -30,6 +30,7 @@ import dataclasses
 import difflib
 import hashlib
 import json
+import re
 from dataclasses import dataclass, field, fields
 from pathlib import Path
 from typing import Any, Callable, Iterable, Mapping, Sequence
@@ -1867,7 +1868,7 @@ def _yaml_scalar(value: Any) -> str:
     return json.dumps(text) if needs_quote else text
 
 
-def _wrap_comment(text: str, indent: str, width: int = 100) -> list[str]:
+def _wrap_comment(text: str, indent: str, width: int = 90) -> list[str]:
     import textwrap
 
     return [f"{indent}# {line}" for line in textwrap.wrap(text, width=width - len(indent) - 2)]
@@ -1935,6 +1936,95 @@ def _md_cell(text: Any) -> str:
     return str(text).replace("|", "\\|").replace("\n", " ")
 
 
+def _option_cells(spec: OptionSpec, *, aliases: bool = True) -> dict[str, str]:
+    """Markdown cell texts describing one option (shared by the reference and the tutorial)."""
+    default = spec.default
+    if default is None and spec.null_means:
+        default_text = f"`null` ({spec.null_means})"
+    elif spec.kind == "family_map":
+        default_text = "all `true`"
+    else:
+        default_text = f"`{_yaml_scalar(default)}`"
+    if spec.kind == "bool":
+        allowed = "true / false"
+    elif spec.kind == "tristate":
+        allowed = "auto / true / false"
+    elif spec.choices:
+        allowed = ", ".join(f"`{c}`" for c in spec.choices)
+        if spec.kind == "list":
+            allowed = "list of " + allowed
+    elif spec.kind == "family_map":
+        allowed = "mapping of " + ", ".join(f"`{c}`" for c in MODEL_FAMILIES) + " to true/false"
+    elif spec.kind in {"int", "float"}:
+        bounds = []
+        if spec.minimum is not None:
+            bounds.append(f">= {spec.minimum}")
+        if spec.maximum is not None:
+            bounds.append(f"<= {spec.maximum}")
+        allowed = spec.kind + (f" ({', '.join(bounds)})" if bounds else "")
+    elif spec.kind == "float_pair":
+        allowed = "[low, high]"
+    elif spec.kind == "int_or_list":
+        allowed = "int or list of int"
+    elif spec.kind == "str_or_list":
+        allowed = "path/name or list"
+    else:
+        allowed = "text"
+    if spec.aliases and aliases:
+        allowed += " (aliases: " + ", ".join(f"`{a}`->`{b}`" for a, b in spec.aliases.items()) + ")"
+    widgets = NOTEBOOK_WIDGETS.get(spec.key)
+    widget_text = ", ".join(f"`{w}`" for w in widgets) if widgets else "CLI / run.yaml only"
+    cli = f"`{spec.cli}`" if spec.cli and spec.cli != "(fixed)" else "(fixed)"
+    description = spec.help + (" *Per dataset.*" if spec.per_dataset else "")
+    return {"key": f"`{spec.key}`", "default": default_text, "allowed": allowed, "cli": cli,
+            "widget": widget_text, "description": description}
+
+
+def render_group_table(group: int, *, descriptions: bool = True) -> str:
+    """Markdown table of one decision group's options.
+
+    ``descriptions=True`` is the full table of docs/options_reference.md. ``descriptions=False`` is the
+    compact tutorial table: no descriptions or aliases, and dash counts in the separator row that
+    give pandoc relative column widths for the PDF."""
+    columns = ["key", "default", "allowed", "cli", "widget"] + (["description"] if descriptions else [])
+    titles = {"key": "Key", "default": "Default", "allowed": "Allowed values", "cli": "CLI flag",
+              "widget": "Notebook widget", "description": "Description"}
+    if descriptions:
+        separator = "|" + "---|" * len(columns)
+    else:
+        widths = {"key": 24, "default": 16, "allowed": 24, "cli": 20, "widget": 16}
+        separator = "|" + "|".join("-" * widths[c] for c in columns) + "|"
+    lines = ["| " + " | ".join(titles[c] for c in columns) + " |", separator]
+    for spec in iter_options():
+        if spec.group != group:
+            continue
+        cells = _option_cells(spec, aliases=descriptions)
+        lines.append("| " + " | ".join(_md_cell(cells[c]) for c in columns) + " |")
+    return "\n".join(lines)
+
+
+_GENERATED_BLOCK = re.compile(
+    r"(<!-- BEGIN GENERATED: (?P<name>[\w.\- ]+) -->\n)(?P<body>.*?)(<!-- END GENERATED -->)", re.DOTALL
+)
+
+
+def refresh_generated_blocks(markdown: str) -> str:
+    """Rewrite the ``<!-- BEGIN GENERATED: ... -->`` blocks of a document (docs/tutorial.md):
+    ``options-group N`` -> that group's option table; ``run.example.yaml`` -> the commented template."""
+
+    def replace(match: "re.Match[str]") -> str:
+        name = match.group("name").strip()
+        if name.startswith("options-group "):
+            body = render_group_table(int(name.split()[-1]), descriptions=False)
+        elif name == "run.example.yaml":
+            body = "```yaml\n" + render_example_yaml().rstrip("\n") + "\n```"
+        else:
+            raise ValueError(f"unknown generated block {name!r}")
+        return f"{match.group(1)}{body}\n{match.group(4)}"
+
+    return _GENERATED_BLOCK.sub(replace, markdown)
+
+
 def render_options_reference() -> str:
     """``docs/options_reference.md``: every option, grouped by the fifteen decision groups."""
     lines = [
@@ -1965,50 +2055,7 @@ def render_options_reference() -> str:
     lines.append("")
     for number, name in GROUPS.items():
         lines += [f"## {number}. {name}", ""]
-        lines += ["| Key | Default | Allowed values | CLI flag | Notebook widget | Description |", "|---|---|---|---|---|---|"]
-        for spec in by_group.get(number, []):
-            default = spec.default
-            if default is None and spec.null_means:
-                default_text = f"`null` ({spec.null_means})"
-            elif spec.kind == "family_map":
-                default_text = "all `true`"
-            else:
-                default_text = f"`{_yaml_scalar(default)}`"
-            if spec.kind == "bool":
-                allowed = "true / false"
-            elif spec.kind == "tristate":
-                allowed = "auto / true / false"
-            elif spec.choices:
-                allowed = ", ".join(f"`{c}`" for c in spec.choices)
-                if spec.kind == "list":
-                    allowed = "list of " + allowed
-            elif spec.kind == "family_map":
-                allowed = "mapping of " + ", ".join(f"`{c}`" for c in MODEL_FAMILIES) + " to true/false"
-            elif spec.kind in {"int", "float"}:
-                bounds = []
-                if spec.minimum is not None:
-                    bounds.append(f">= {spec.minimum}")
-                if spec.maximum is not None:
-                    bounds.append(f"<= {spec.maximum}")
-                allowed = spec.kind + (f" ({', '.join(bounds)})" if bounds else "")
-            elif spec.kind == "float_pair":
-                allowed = "[low, high]"
-            elif spec.kind == "int_or_list":
-                allowed = "int or list of int"
-            elif spec.kind == "str_or_list":
-                allowed = "path/name or list"
-            else:
-                allowed = "text"
-            if spec.aliases:
-                allowed += " (aliases: " + ", ".join(f"`{a}`->`{b}`" for a, b in spec.aliases.items()) + ")"
-            widgets = NOTEBOOK_WIDGETS.get(spec.key)
-            widget_text = ", ".join(f"`{w}`" for w in widgets) if widgets else "CLI / run.yaml only"
-            cli = f"`{spec.cli}`" if spec.cli and spec.cli != "(fixed)" else "(fixed)"
-            description = spec.help + (" *Per dataset.*" if spec.per_dataset else "")
-            lines.append(
-                f"| `{spec.key}` | {_md_cell(default_text)} | {_md_cell(allowed)} | {_md_cell(cli)} | "
-                f"{_md_cell(widget_text)} | {_md_cell(description)} |"
-            )
+        lines += render_group_table(number, descriptions=True).splitlines()
         lines.append("")
     lines += [
         "## Model families",
@@ -2034,7 +2081,11 @@ def _main(argv: Sequence[str] | None = None) -> int:  # pragma: no cover - thin 
     (args.root / "configs").mkdir(parents=True, exist_ok=True)
     (args.root / "docs" / "options_reference.md").write_text(render_options_reference(), encoding="utf-8", newline="\n")
     (args.root / "configs" / "run.example.yaml").write_text(render_example_yaml(), encoding="utf-8", newline="\n")
-    print("Wrote docs/options_reference.md and configs/run.example.yaml")
+    tutorial = args.root / "docs" / "tutorial.md"
+    if tutorial.exists():
+        text = tutorial.read_text(encoding="utf-8")
+        tutorial.write_text(refresh_generated_blocks(text), encoding="utf-8", newline="\n")
+    print("Wrote docs/options_reference.md and configs/run.example.yaml (and refreshed docs/tutorial.md)")
     return 0
 
 

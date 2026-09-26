@@ -53,13 +53,13 @@ def descriptors(text: str) -> dict[str, float]:
     }
 
 
-def write(frame: pd.DataFrame, relative: str) -> None:
-    path = OUT / relative
+def write(frame: pd.DataFrame, relative: str, out: Path) -> None:
+    path = out / relative
     path.parent.mkdir(parents=True, exist_ok=True)
     frame.to_csv(path, index=False, lineterminator="\n", float_format="%.4f")
 
 
-def main() -> None:
+def main(out: Path = OUT) -> None:
     rng = np.random.default_rng(20260925)
     molecules = pool()
     d = pd.DataFrame([descriptors(s) for s in molecules])
@@ -83,7 +83,7 @@ def main() -> None:
         "logS": [float(log_s.iloc[0]), -3.0, float(log_s.iloc[1])],
         "logD": [float(log_d.iloc[0]), 1.0, float(log_d.iloc[1])],
     })
-    write(pd.concat([solubility, extras], ignore_index=True), "solubility.csv")
+    write(pd.concat([solubility, extras], ignore_index=True), "solubility.csv", out)
 
     # 2. bbb.csv — binary classification (0/1) from a TPSA/logP rule with 10% label noise.
     bbb_smiles = molecules[40:84]
@@ -92,20 +92,20 @@ def main() -> None:
     flip = rng.random(len(label)) < 0.10
     label = np.where(flip, 1 - label, label)
     write(pd.DataFrame({"molecule": [f"BBB-{i + 1:03d}" for i in range(len(b))], "smiles": bbb_smiles,
-                        "bbb_penetrant": label}), "bbb.csv")
+                        "bbb_penetrant": label}), "bbb.csv", out)
 
     # 3. batch_dir/ — two regression CSVs with auto-detectable column names (smiles, target).
     perm = d.iloc[10:50]
     write(pd.DataFrame({"smiles": molecules[10:50],
                         "target": (-4.6 + 0.35 * perm.logp - 0.012 * perm.tpsa + rng.normal(0, 0.2, len(perm))).round(4)}),
-          "batch_dir/permeability.csv")
+          "batch_dir/permeability.csv", out)
     lipo = d.iloc[50:90]
     write(pd.DataFrame({"smiles": molecules[50:90],
                         "target": (0.85 * lipo.logp + 0.3 * lipo.rings - 0.5 + rng.normal(0, 0.2, len(lipo))).round(4)}),
-          "batch_dir/lipophilicity.csv")
+          "batch_dir/lipophilicity.csv", out)
 
     # 4. broken.csv — deliberately malformed (no SMILES column) to show batch failure handling.
-    write(pd.DataFrame({"name": ["a", "b", "c"], "value": [1.0, 2.0, 3.0]}), "broken.csv")
+    write(pd.DataFrame({"name": ["a", "b", "c"], "value": [1.0, 2.0, 3.0]}), "broken.csv", out)
 
     # 5. batch_manifest.csv — three datasets, one malformed, with per-dataset overrides.
     manifest = pd.DataFrame([
@@ -116,9 +116,14 @@ def main() -> None:
         {"dataset_name": "broken", "path": "broken.csv", "smiles_col": "", "target_col": "", "id_col": "",
          "task": "", "split": "", "test_fraction": ""},
     ])
-    manifest.to_csv(OUT / "batch_manifest.csv", index=False, lineterminator="\n")
-    print(f"wrote tutorial example data to {OUT}")
+    out.mkdir(parents=True, exist_ok=True)
+    manifest.to_csv(out / "batch_manifest.csv", index=False, lineterminator="\n")
+    print(f"wrote tutorial example data to {out}")
 
 
 if __name__ == "__main__":
-    main()
+    import argparse
+
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--out", type=Path, default=OUT, help="Output directory (default: qsarena/examples/data).")
+    main(parser.parse_args().out)

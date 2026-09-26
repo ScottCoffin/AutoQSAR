@@ -12193,7 +12193,7 @@ def _run_main(args: argparse.Namespace, info: dict[str, Any], root: Path, output
         print(f"Dry run complete: no model was fitted. Plan written to {output_dir / 'dry_run_plan.md'}")
         return 0
 
-    if bool(getattr(args, "run_tabpfn", False)):
+    if bool(getattr(args, "run_tabpfn", False)) and datasets:
         if not ensure_tabpfn_installed(prefer_local_backend=bool(getattr(args, "gpu_available", False))):
             args.run_tabpfn = False
             print(
@@ -12542,10 +12542,12 @@ def _run_main(args: argparse.Namespace, info: dict[str, Any], root: Path, output
                 f"{multiseed_name}/tdc22_best_model_multiseed_step_runtime_summary.csv",
             ]
         )
+    primary_files.append("artifact_manifest.csv")
+    qsarena_artifacts.write_artifact_manifest(output_dir)
     counts_text = ", ".join(f"{count} {status}" for status, count in sorted(status_counts.items()))
     print(f"\nDataset summary: {counts_text} (see dataset_summary.csv)")
     print(f"Wrote benchmark outputs to {output_dir}")
-    print("Primary files: " + ", ".join(primary_files))
+    print("Primary files: " + ", ".join(name for name in primary_files if (output_dir / name).exists()))
     print(f"Reports written: {html_path.name} and {md_path.name} in {output_dir}")
     succeeded = sum(count for status, count in status_counts.items() if status in {"completed", "resumed"})
     return 0 if succeeded or not dataset_ids else 1
