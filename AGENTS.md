@@ -11,6 +11,126 @@ QSARena: SMILES → molecular property QSAR/AutoML workspace plus a 45-dataset b
 (`manuscript.md`, target: *Journal of Cheminformatics*). Windows + OneDrive checkout (paths contain spaces:
 always quote). Bash (Git Bash) and PowerShell are both available.
 
+## A100 task: regenerate the clean (out-of-fold) ensemble results — Jetstream2 credits are low
+
+**Read this whole section before running anything on the A100.** The goal is
+`benchmark_results/qsarena_benchmark_oof_ensemble`: the same base models as
+`qsarena_benchmark_chemprop_fixed`, with ensembles rebuilt from out-of-fold (OOF) member
+predictions. Background: "Run lineage" and the ensemble trap below, and
+[submission/chemprop_rerun_command.md](submission/chemprop_rerun_command.md) §7.
+
+**Hard rules**
+- **No full model is ever retrained.** Every base model's train/test predictions already exist in
+  the seeded `predictions.csv`. The only training allowed is *fold* models for OOF predictions, and
+  in step 5 only CPU ones.
+- **No GPU fold refits (Chemprop, `--ensemble-oof-scope all`) without the user's explicit approval**
+  in the current conversation. Report the planner's GPU estimate and stop.
+- **Never enable `--ensemble-oof-allow-api-refits`.** TabPFN runs on a capped Prior Labs credit
+  budget and is left out of the ensembles by default.
+- **Never write into `autoqsar_benchmark_20260623_153839` or `qsarena_benchmark_chemprop_fixed`.**
+  They are read-only inputs. Everything goes to `qsarena_benchmark_oof_ensemble`.
+- **Jetstream2 bills instance uptime, not GPU use.** Don't leave the instance idle between steps.
+  Shelving it when work is done is the user's decision: tell them when the run finishes.
+- **If any check below fails, stop and report. Do not work around it.**
+
+**Step 0 — code and tests (CPU, ~1 min).**
+```bash
+git pull origin main
+python -m pytest -q tests/unit/test_ensemble_oof.py tests/unit/test_plan_ensemble_oof_repair.py
+```
+All must pass. `portable_colab_qsar_bundle/plan_ensemble_oof_repair.py` must exist.
+
+**Step 1 — inputs exist (no compute).**
+```bash
+ls benchmark_results/qsarena_benchmark_chemprop_fixed/*/predictions.csv | wc -l           # expect 44
+find benchmark_results/autoqsar_benchmark_20260623_153839 -name cv.data | wc -l          # Uni-Mol OOF files; expect ~61 (44 V1 + 17 V2)
+```
+If `predictions.csv` is missing, stop: the ensemble cannot be rebuilt without retraining.
+
+**Step 2 — seed the new run (file copy only).**
+```bash
+python portable_colab_qsar_bundle/prepare_chemprop_repair_run.py \
+  benchmark_results/qsarena_benchmark_chemprop_fixed \
+  benchmark_results/qsarena_benchmark_oof_ensemble
+```
+
+**Step 3 — plan without training (the check that nothing unnecessary is refitted).**
+```bash
+python portable_colab_qsar_bundle/plan_ensemble_oof_repair.py \
+  benchmark_results/qsarena_benchmark_oof_ensemble --scope cpu --folds 5 \
+  --source-run benchmark_results/autoqsar_benchmark_20260623_153839
+python portable_colab_qsar_bundle/plan_ensemble_oof_repair.py \
+  benchmark_results/qsarena_benchmark_oof_ensemble --scope all --folds 5 \
+  --source-run benchmark_results/autoqsar_benchmark_20260623_153839   # report only; do NOT run 'all'
+```
+It writes `ensemble_oof_plan.csv`. Pass criteria for the `cpu` plan:
+- exit code 0, and no `missing_inputs` rows;
+- zero `gpu_refit` rows;
+- every Uni-Mol member has source `unimol_cvdata`. Its OOF predictions are read from disk and it is
+  never refitted. List any Uni-Mol member that is `excluded` for the user.
+- `cpu_refit` covers only conventional, ChemML and MapLight members. Chemprop, TabPFN and CFA are
+  `excluded`.
+
+Re-running the planner after step 5 must show the `cpu_refit` members as `saved_oof`. That confirms
+nothing will be refitted twice.
+
+**Step 4 — pilot on the smallest dataset (CPU scope) before the full run.** Take the dataset with
+the smallest `n_train` from `ensemble_oof_plan.csv`. Copy its `metrics.csv` first
+(`cp .../<ds>/metrics.csv /tmp/<ds>_metrics_before.csv`). Then run the step 5 command with a single
+`--dataset-name <ds>`, logging to `logs/oof_pilot.log`. Pass criteria, all required:
+```bash
+L=logs/oof_pilot.log
+# (a) nothing retrained: every model/feature stage must say "(cached)"
+grep -E "stage [0-9]+/[0-9]+: (building molecular features|splitting data|conventional model|deep model|GA tuning|CFA)" $L | grep -v "(cached)"   # must print nothing
+grep -c "config signature changed" $L          # must be 0
+# (b) Uni-Mol read from disk; no GPU fold refits
+grep "ensemble-oof" $L | grep -i "uni-mol"      # must say "read saved Uni-Mol internal-fold predictions"
+grep "ensemble-oof" $L | grep -iE "(chemprop|uni-mol).*fold [0-9]"   # must print nothing
+```
+(c) The base-model rows in `metrics.csv` are unchanged. `primary_metric_value` must be identical
+for every non-ensemble model in `/tmp/<ds>_metrics_before.csv` and the new file.
+(d) The new ensemble rows have `ensemble_member_selection_split == oof`, and
+`ensemble_member_filter_notes` mentions no unexpected `refit failed`.
+
+Record the pilot's wall-clock and extrapolate to 44 datasets. Tell the user before starting step 5
+if the estimate is far above ~10 h.
+
+**Step 5 — full run, CPU scope.**
+```bash
+dataset_args=()
+for m in benchmark_results/qsarena_benchmark_oof_ensemble/*/metrics.csv; do
+  dataset_args+=(--dataset-name "$(basename "$(dirname "$m")")"); done
+nohup python portable_colab_qsar_bundle/run_qsarena_benchmarks.py \
+  --output-dir benchmark_results/qsarena_benchmark_oof_ensemble --benchmark-profile full \
+  "${dataset_args[@]}" --only-model-names 'Ensemble' --run-ensemble --rebuild-ensemble \
+  --ensemble-member-selection-split oof --ensemble-oof-folds 5 --ensemble-oof-scope cpu \
+  --ensemble-oof-source-run benchmark_results/autoqsar_benchmark_20260623_153839 \
+  --run-tabpfn --tabpfn-max-train-rows 11000 --unimol-batch-size 32 --unimol-max-atoms 64 \
+  --run-chemprop-mpnn --run-chemprop-dmpnn --run-chemprop-rdkit2d --run-chemprop-cmpnn \
+  --run-chemprop-attentivefp --run-chemprop-selected-features \
+  --chemprop-epochs 40 --chemprop-ensemble-size 3 --chemprop-random-seed 42 \
+  --reuse-persistent-feature-store --reuse-shared-feature-matrix-cache \
+  --resume --no-run-tdc22-multiseed-best > logs/oof_ensemble.log 2>&1 &
+```
+`--only-model-names 'Ensemble'` is what prevents full-model retraining: every other model stage is
+filtered out. The `--run-tabpfn` / `--run-chemprop-*` / Uni-Mol flags only tell the runner which
+members exist and which settings their fold refits would use. Don't drop them, and don't add a
+model name to `--only-model-names`. If the run is interrupted, re-run the identical command: fold
+results are cached under `<dataset>/ensemble_oof/` and completed OOF vectors are saved in
+`predictions.csv`. Re-apply check (a) to `logs/oof_ensemble.log` periodically.
+
+**Step 6 — Chemprop only if the user approves.** Re-run the step 5 command with
+`--ensemble-oof-scope all`. The CPU fold results are reused; only the Chemprop fold trainings run
+(the planner's `--scope all` estimate is roughly 65 h). Otherwise the ensembles exclude Chemprop,
+and the paper must say so (TODO.md).
+
+**Step 7 — verify and commit the run.** Run the checks in `chemprop_rerun_command.md` §7 ("Checks
+after the run"). Then commit `benchmark_results/qsarena_benchmark_oof_ensemble` (predictions,
+`ensemble_oof/` fold caches and model files are gitignored), with the scope used and the planner
+summary in the commit message, and push to `main`. Don't regenerate the manuscript on the A100:
+that runs on the workstation (`render_manuscript_assets.py --run-dir
+benchmark_results/qsarena_benchmark_oof_ensemble`), and it costs no allocation.
+
 ## Where to edit (source of truth)
 
 | Want to change | Edit | Notes |

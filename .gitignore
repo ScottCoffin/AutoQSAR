@@ -226,6 +226,7 @@ data/*.zip
 **/benchmark_results/**/chemml_deep_learning/
 **/benchmark_results/**/conventional_ml/
 **/benchmark_results/**/tuned_conventional_ml/
+**/benchmark_results/**/ensemble_oof/
 benchmark_results/abandoned_*/
 benchmark_results/qsarena_benchmark_a100_probe*/
 benchmark_results/*/predictions.csv
