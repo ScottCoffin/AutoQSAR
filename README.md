@@ -158,7 +158,10 @@ Ensembles are built only from **out-of-fold (OOF)** member predictions
 correlated-pair tie-break, the weights and the stacking meta-model never see the
 test split, and never see a member's in-sample predictions for its own training
 molecules (which would hand the ensemble to whichever model memorises the
-training set). OOF predictions come from, in order:
+training set). The runner and Colab notebook call the same shared ensemble
+implementation in `portable_colab_qsar_bundle/qsar_workflow_core.py`; the
+notebook supplies only the members it can build or read OOF predictions for in
+an interactive session. OOF predictions come from, in order:
 
 1. predictions a backend already saved (Uni-Mol writes its internal 5-fold
    predictions to `cv.data`; conventional models reuse their CV fold fits);

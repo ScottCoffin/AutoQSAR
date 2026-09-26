@@ -29,11 +29,11 @@ Last updated: 2026-09-25.
       used test metrics; weights and stacking used in-sample predictions. Everything now runs on OOF
       predictions (conventional/tuned models refitted on K folds in the cell and cached in `STATE`;
       Uni-Mol from `cv.data`).
-- [ ] **Manuscript §2.1** says the notebook and runner "share identical code paths". That holds for
+- [x] **Manuscript §2.1** says the notebook and runner "share identical code paths". That holds for
       features, splits, selection and the base models, but notebook ensembles draw only on
       conventional, tuned and Uni-Mol members; ChemML, TabPFN, MapLight + GNN and Chemprop have no OOF
       predictions inside a notebook session. Qualify the sentence in both formats.
-- [ ] **Refactor: one shared ensemble implementation** in `qsar_workflow_core.py` for the runner and
+- [x] **Refactor: one shared ensemble implementation** in `qsar_workflow_core.py` for the runner and
       the notebook (they are two copies today, which is how the notebook's leak outlived the
       runner's fix). Plan, specs and acceptance tests:
       [docs/AGENT_WORK_ORDER_shared_ensemble.md](docs/AGENT_WORK_ORDER_shared_ensemble.md).
