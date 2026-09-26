@@ -150,6 +150,11 @@ excluded), and `cpu_refit` is only conventional/ChemML/MapLight.
 | `excluded` | chemprop 202, fusion 131, tabpfn 38 | 371 | 0 |
 
 Under `--scope all`, chemprop moves to `gpu_refit`: 1010 GPU fold trainings, **~63 h**.
+**That is now out of reach and the question is closed.** The allocation had 1,092 SUs left at
+64 SUs/hr (17.1 h); 63 h would have cost 4,032 SUs. CPU is not a substitute either: measured on
+32 cores, 523 rows / 40 epochs / ensemble=3 took 344 s, extrapolating to ~480 h on 32 cores
+(~7.6x the GPU figure). Shrinking folds/epochs/ensemble-size would bias Chemprop's ensemble
+weight downward by making fold models weaker than the deployed ones. Chemprop stays excluded.
 
 **Chemprop cannot be shortcut -- it is refit-or-exclude.** Its only saved artifacts are full-fit
 `train_predictions.csv` / `test_predictions.csv`. `splits.json` is a list of length **1**, so all

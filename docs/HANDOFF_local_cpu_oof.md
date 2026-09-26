@@ -1,8 +1,28 @@
 # Handoff: finish the OOF ensemble rebuild on a local CPU machine
 
 You are picking up work that was started on an NSF Jetstream2 A100 instance and stopped so the
-instance could be shelved. **Nothing here needs a GPU.** Read this file and the AGENTS.md section
+instance could be shelved. **Nothing here needs a GPU, and all remaining work runs on this
+local machine** - the allocation no longer has the credits to finish it remotely. Read this file and the AGENTS.md section
 "A100 task: regenerate the clean (out-of-fold) ensemble results" before running anything.
+
+## Chemprop is out of scope - this is settled, not an open question
+
+Do not propose running `--ensemble-oof-scope all`, and do not try it on CPU.
+
+Chemprop OOF needs 1010 GPU fold trainings, ~63 h on an A100. The Jetstream2 allocation had
+**1,092 SUs left at 64 SUs/hr = 17.1 h**, and 63 h would have cost 4,032 SUs - short by ~2,940.
+The instance was shelved instead.
+
+CPU is not an alternative. Measured on the A100's 32 CPU cores with `GPU available: False`:
+523 rows / 40 epochs / ensemble=3 took **344 s**. Extrapolated over the real member-size
+distribution (202 members x 5 folds, 602,115 training rows) that is **~480 h on 32 cores**,
+~960 h on 16, ~1,920 h on 8 - roughly 7.6x the GPU figure.
+
+Cutting scope does not rescue it and damages the result: ensemble=1 + 3 folds + 20 epochs would
+be ~48 h on 32 cores, but the fold models would then be weaker than the deployed 3-member,
+40-epoch models, so their OOF predictions understate Chemprop and bias its ensemble weight
+**downward**. That is a subtler version of the leakage being removed. Better to exclude Chemprop
+honestly and say so.
 
 ## What the job is
 
