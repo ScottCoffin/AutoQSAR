@@ -1,11 +1,6 @@
 dataset,stage_index,total_stages,stage_label,step_type,model,workflow,started_at,started_epoch,status,ended_at,ended_epoch,duration_seconds
-lipophilicity,1,10,loading MoleculeNet PhysChem benchmark: Lipophilicity,load_dataset,,,2026-09-26 07:34:28 UTC,1790408068.6940515,completed,2026-09-26 07:34:29 UTC,1790408069.8824992,1.188
-lipophilicity,2,10,building molecular features (cached),feature_generation,,,2026-09-26 07:34:29 UTC,1790408069.88255,resumed_cache,2026-09-26 07:34:29 UTC,1790408069.914015,0.031
-lipophilicity,3,10,splitting data and selecting features (cached),feature_selection,,,2026-09-26 07:34:29 UTC,1790408069.9140728,resumed_cache,2026-09-26 07:35:09 UTC,1790408109.6401222,39.726
-lipophilicity,4,10,conventional model TabPFNRegressor,model,TabPFNRegressor,conventional,2026-09-26 07:35:09 UTC,1790408109.6401696,completed,2026-09-26 07:35:55 UTC,1790408155.1322231,45.492
-lipophilicity,5,10,"deep model Chemprop v2 (D-MPNN, ensemble=3) (cached)",model,"Chemprop v2 (D-MPNN, ensemble=3)",Chemprop v2,2026-09-26 07:35:55 UTC,1790408155.1322522,completed,2026-09-26 07:35:55 UTC,1790408155.133486,0.001
-lipophilicity,6,10,"deep model Chemprop v2 (D-MPNN + RDKit2D, ensemble=3) (cached)",model,"Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",Chemprop v2,2026-09-26 07:35:55 UTC,1790408155.1335163,completed,2026-09-26 07:35:55 UTC,1790408155.1347604,0.001
-lipophilicity,7,10,"deep model Chemprop v2 (CMPNN, ensemble=3) (cached)",model,"Chemprop v2 (CMPNN, ensemble=3)",Chemprop v2,2026-09-26 07:35:55 UTC,1790408155.1347902,completed,2026-09-26 07:35:55 UTC,1790408155.136065,0.001
-lipophilicity,8,10,"deep model Chemprop v2 (AttentiveFP, ensemble=3) (cached)",model,"Chemprop v2 (AttentiveFP, ensemble=3)",Chemprop v2,2026-09-26 07:35:55 UTC,1790408155.1360948,completed,2026-09-26 07:35:55 UTC,1790408155.137353,0.001
-lipophilicity,9,10,"deep model Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3) (cached)",model,"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",Chemprop v2,2026-09-26 07:35:55 UTC,1790408155.1373944,completed,2026-09-26 07:35:55 UTC,1790408155.138727,0.001
-lipophilicity,10,10,ensemble (2 method(s)),model,Ensemble,ensemble,2026-09-26 07:35:55 UTC,1790408155.13879,completed,2026-09-26 07:35:56 UTC,1790408156.870951,1.732
+lipophilicity,1,5,loading MoleculeNet PhysChem benchmark: Lipophilicity,load_dataset,,,2026-09-26 14:20:06 UTC,1790432406.607343,completed,2026-09-26 14:20:07 UTC,1790432407.8087604,1.201
+lipophilicity,2,5,building molecular features (cached),feature_generation,,,2026-09-26 14:20:07 UTC,1790432407.8089566,resumed_cache,2026-09-26 14:20:07 UTC,1790432407.8315976,0.023
+lipophilicity,3,5,splitting data and selecting features (cached),feature_selection,,,2026-09-26 14:20:07 UTC,1790432407.8316386,resumed_cache,2026-09-26 14:20:47 UTC,1790432447.409559,39.578
+lipophilicity,4,5,conventional model TabPFNRegressor,model,TabPFNRegressor,conventional,2026-09-26 14:20:47 UTC,1790432447.4096048,completed,2026-09-26 14:21:58 UTC,1790432518.9174001,71.508
+lipophilicity,5,5,ensemble (2 method(s)),model,Ensemble,ensemble,2026-09-26 14:21:58 UTC,1790432518.9174287,completed,2026-09-26 14:22:00 UTC,1790432520.6943371,1.777

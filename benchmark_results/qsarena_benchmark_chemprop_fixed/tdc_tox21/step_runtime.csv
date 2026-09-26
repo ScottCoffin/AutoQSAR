@@ -1,11 +1,6 @@
 dataset,stage_index,total_stages,stage_label,step_type,model,workflow,started_at,started_epoch,status,ended_at,ended_epoch,duration_seconds
-tdc_tox21,1,10,loading PyTDC Tox benchmark: tox21 [label=NR-AR],load_dataset,,,2026-09-26 07:37:27 UTC,1790408247.618839,completed,2026-09-26 07:37:29 UTC,1790408249.044893,1.426
-tdc_tox21,2,10,building molecular features (cached),feature_generation,,,2026-09-26 07:37:29 UTC,1790408249.0449452,resumed_cache,2026-09-26 07:37:29 UTC,1790408249.0789855,0.034
-tdc_tox21,3,10,splitting data and selecting features (cached),feature_selection,,,2026-09-26 07:37:29 UTC,1790408249.0790458,resumed_cache,2026-09-26 07:38:18 UTC,1790408298.5080318,49.429
-tdc_tox21,4,10,conventional model TabPFNClassifier,model,TabPFNClassifier,conventional,2026-09-26 07:38:18 UTC,1790408298.5080862,completed,2026-09-26 07:39:59 UTC,1790408399.29245,100.784
-tdc_tox21,5,10,"deep model Chemprop v2 (D-MPNN, ensemble=3) (cached)",model,"Chemprop v2 (D-MPNN, ensemble=3)",Chemprop v2,2026-09-26 07:39:59 UTC,1790408399.29249,completed,2026-09-26 07:39:59 UTC,1790408399.2946596,0.002
-tdc_tox21,6,10,"deep model Chemprop v2 (D-MPNN + RDKit2D, ensemble=3) (cached)",model,"Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",Chemprop v2,2026-09-26 07:39:59 UTC,1790408399.2946906,completed,2026-09-26 07:39:59 UTC,1790408399.295944,0.001
-tdc_tox21,7,10,"deep model Chemprop v2 (CMPNN, ensemble=3) (cached)",model,"Chemprop v2 (CMPNN, ensemble=3)",Chemprop v2,2026-09-26 07:39:59 UTC,1790408399.2959747,completed,2026-09-26 07:39:59 UTC,1790408399.2972221,0.001
-tdc_tox21,8,10,"deep model Chemprop v2 (AttentiveFP, ensemble=3) (cached)",model,"Chemprop v2 (AttentiveFP, ensemble=3)",Chemprop v2,2026-09-26 07:39:59 UTC,1790408399.2972507,completed,2026-09-26 07:39:59 UTC,1790408399.2985191,0.001
-tdc_tox21,9,10,"deep model Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3) (cached)",model,"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",Chemprop v2,2026-09-26 07:39:59 UTC,1790408399.2985485,completed,2026-09-26 07:39:59 UTC,1790408399.2998948,0.001
-tdc_tox21,10,10,ensemble (2 method(s)),model,Ensemble,ensemble,2026-09-26 07:39:59 UTC,1790408399.2999532,completed,2026-09-26 07:40:02 UTC,1790408402.1686544,2.869
+tdc_tox21,1,5,loading PyTDC Tox benchmark: tox21 [label=NR-AR],load_dataset,,,2026-09-26 14:25:11 UTC,1790432711.5309803,completed,2026-09-26 14:25:12 UTC,1790432712.9903297,1.459
+tdc_tox21,2,5,building molecular features (cached),feature_generation,,,2026-09-26 14:25:12 UTC,1790432712.9903796,resumed_cache,2026-09-26 14:25:13 UTC,1790432713.025703,0.035
+tdc_tox21,3,5,splitting data and selecting features (cached),feature_selection,,,2026-09-26 14:25:13 UTC,1790432713.02576,resumed_cache,2026-09-26 14:26:02 UTC,1790432762.17002,49.144
+tdc_tox21,4,5,conventional model TabPFNClassifier,model,TabPFNClassifier,conventional,2026-09-26 14:26:02 UTC,1790432762.1700683,completed,2026-09-26 14:30:43 UTC,1790433043.7112021,281.541
+tdc_tox21,5,5,ensemble (2 method(s)),model,Ensemble,ensemble,2026-09-26 14:30:43 UTC,1790433043.7112656,completed,2026-09-26 14:30:46 UTC,1790433046.736625,3.025

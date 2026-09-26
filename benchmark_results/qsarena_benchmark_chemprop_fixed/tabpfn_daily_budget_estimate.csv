@@ -1,2 +1,7 @@
 dataset,estimated_train_rows,estimated_columns,estimated_estimators,estimated_tabpfn_tokens,fits_single_day_budget
-polaris_adme_fang_rclint_1,2443,244,11,6557012,True
+lipophilicity,3360,336,11,12418560,True
+tdc_lipophilicity_astrazeneca,3360,336,11,12418560,True
+tdc_tox21,5812,581,11,37144492,True
+tdc_ames,5822,582,11,37272444,True
+tdc_ld50_zhu,5908,591,11,38407908,True
+tdc_solubility_aqsoldb,7986,799,11,70188954,True

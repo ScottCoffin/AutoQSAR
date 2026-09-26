@@ -1,11 +1,6 @@
 dataset,stage_index,total_stages,stage_label,step_type,model,workflow,started_at,started_epoch,status,ended_at,ended_epoch,duration_seconds
-tdc_solubility_aqsoldb,1,10,loading PyTDC ADME benchmark group: solubility_aqsoldb (official train_val/test split),load_dataset,,,2026-09-26 08:47:19 UTC,1790412439.2218573,completed,2026-09-26 08:47:21 UTC,1790412441.0759954,1.854
-tdc_solubility_aqsoldb,2,10,building molecular features (cached),feature_generation,,,2026-09-26 08:47:21 UTC,1790412441.0760727,resumed_cache,2026-09-26 08:47:21 UTC,1790412441.1275673,0.051
-tdc_solubility_aqsoldb,3,10,splitting data and selecting features (cached),feature_selection,,,2026-09-26 08:47:21 UTC,1790412441.1276078,resumed_cache,2026-09-26 08:48:25 UTC,1790412505.5381122,64.411
-tdc_solubility_aqsoldb,4,10,conventional model TabPFNRegressor,model,TabPFNRegressor,conventional,2026-09-26 08:48:25 UTC,1790412505.5381663,completed,2026-09-26 08:49:26 UTC,1790412566.587377,61.049
-tdc_solubility_aqsoldb,5,10,"deep model Chemprop v2 (D-MPNN, ensemble=3)",model,"Chemprop v2 (D-MPNN, ensemble=3)",Chemprop v2,2026-09-26 08:49:26 UTC,1790412566.5874085,completed,2026-09-26 08:58:02 UTC,1790413082.3420742,515.755
-tdc_solubility_aqsoldb,6,10,"deep model Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",model,"Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",Chemprop v2,2026-09-26 08:58:02 UTC,1790413082.3421044,completed,2026-09-26 09:07:11 UTC,1790413631.3827825,549.041
-tdc_solubility_aqsoldb,7,10,"deep model Chemprop v2 (CMPNN, ensemble=3)",model,"Chemprop v2 (CMPNN, ensemble=3)",Chemprop v2,2026-09-26 09:07:11 UTC,1790413631.3828366,completed,2026-09-26 09:16:08 UTC,1790414168.9784052,537.596
-tdc_solubility_aqsoldb,8,10,"deep model Chemprop v2 (AttentiveFP, ensemble=3)",model,"Chemprop v2 (AttentiveFP, ensemble=3)",Chemprop v2,2026-09-26 09:16:08 UTC,1790414168.979475,completed,2026-09-26 09:25:21 UTC,1790414721.136113,552.157
-tdc_solubility_aqsoldb,9,10,"deep model Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",model,"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",Chemprop v2,2026-09-26 09:25:21 UTC,1790414721.1361403,completed,2026-09-26 09:34:26 UTC,1790415266.5985894,545.462
-tdc_solubility_aqsoldb,10,10,ensemble (2 method(s)),model,Ensemble,ensemble,2026-09-26 09:34:26 UTC,1790415266.5986192,completed,2026-09-26 09:34:29 UTC,1790415269.780788,3.182
+tdc_solubility_aqsoldb,1,5,loading PyTDC ADME benchmark group: solubility_aqsoldb (official train_val/test split),load_dataset,,,2026-09-26 14:40:00 UTC,1790433600.4725375,completed,2026-09-26 14:40:02 UTC,1790433602.3488314,1.876
+tdc_solubility_aqsoldb,2,5,building molecular features (cached),feature_generation,,,2026-09-26 14:40:02 UTC,1790433602.348885,resumed_cache,2026-09-26 14:40:02 UTC,1790433602.3986883,0.05
+tdc_solubility_aqsoldb,3,5,splitting data and selecting features (cached),feature_selection,,,2026-09-26 14:40:02 UTC,1790433602.3987367,resumed_cache,2026-09-26 14:41:06 UTC,1790433666.7536647,64.355
+tdc_solubility_aqsoldb,4,5,conventional model TabPFNRegressor,model,TabPFNRegressor,conventional,2026-09-26 14:41:06 UTC,1790433666.7537136,completed,2026-09-26 14:43:36 UTC,1790433816.518013,149.764
+tdc_solubility_aqsoldb,5,5,ensemble (2 method(s)),model,Ensemble,ensemble,2026-09-26 14:43:36 UTC,1790433816.5180433,completed,2026-09-26 14:43:39 UTC,1790433819.921942,3.404

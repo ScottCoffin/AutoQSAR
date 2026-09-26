@@ -11,7 +11,7 @@ polaris_adme_fang_perm_1,Uni-Mol V1,Uni-Mol,mse,0.1593775760725137,mean_squared_
 polaris_adme_fang_rclint_1,"Chemprop v2 (D-MPNN, ensemble=3)",Chemprop v2,mse,0.2675523311182626,mean_squared_error,0.216,,6.0,True,-0.0694476688817374,https://polarishub.io/benchmarks/polaris/adme-fang-rclint-1
 polaris_adme_fang_rppb_1,"Chemprop v2 (AttentiveFP, ensemble=3)",Chemprop v2,mse,0.2483155697022983,mean_squared_error,0.235,,3.0,True,-0.3856844302977017,https://polarishub.io/benchmarks/polaris/adme-fang-rppb-1
 polaris_adme_fang_solu_1,Uni-Mol V2 (84m),Uni-Mol,mse,0.3035273265509489,mean_squared_error,0.222,,7.0,True,-0.0194726734490511,https://polarishub.io/benchmarks/polaris/adme-fang-solu-1
-tdc_ames,Ensemble (Weighted average (inverse train RMSE)),ensemble,roc_auc,0.8753568701169007,None,,,,,,
+tdc_ames,TabPFNClassifier,conventional,roc_auc,0.876108793984609,None,,,,,,
 tdc_bbb_martins,Random forest,conventional,roc_auc,0.9250703564727956,None,,,,,,
 tdc_bioavailability_ma,CatBoost,conventional,roc_auc,0.7766877286331892,None,,,,,,
 tdc_caco2_wang,MapLight CatBoost (Strict Parity),conventional,mae,0.2724363311989904,MAE,0.256,0.0164363311989904,2.0,True,-0.0535636688010096,https://tdcommons.ai/benchmark/admet_group/01caco2/
@@ -33,13 +33,13 @@ tdc_herg,"Chemprop v2 (AttentiveFP, ensemble=3)",Chemprop v2,roc_auc,0.857290132
 tdc_herg_karim,CFA (Combinatorial Fusion),cfa,rmse,0.3572377593193441,None,,,,,,
 tdc_hia_hou,CFA (Combinatorial Fusion),cfa,roc_auc,0.987448559670782,None,,,,,,
 tdc_hydrationfreeenergy_freesolv,TabPFNRegressor,conventional,rmse,1.115739039250064,RMSE,0.654,0.4617390392500639,5.0,True,-0.145260960749936,
-tdc_ld50_zhu,Ensemble (Weighted average (inverse train RMSE)),ensemble,mae,0.5692574457374975,MAE,0.552,,2.0,True,-0.0607425542625025,https://tdcommons.ai/benchmark/admet_group/19ld50/
+tdc_ld50_zhu,TabPFNRegressor,conventional,mae,0.5519263788056793,MAE,0.552,-7.362119432074987e-05,1.0,True,-0.0780736211943207,https://tdcommons.ai/benchmark/admet_group/19ld50/
 tdc_lipophilicity_astrazeneca,"Chemprop v2 (D-MPNN, ensemble=3)",Chemprop v2,mae,0.4249491776440476,MAE,0.456,,1.0,True,-0.1140508223559524,https://tdcommons.ai/benchmark/admet_group/05lipo/
 tdc_pampa_ncats,Uni-Mol V1,Uni-Mol,rmse,0.298979975440823,None,,,,,,
 tdc_pgp_broccatelli,Uni-Mol V2 (84m),Uni-Mol,roc_auc,0.9328845641162358,None,,,,,,
 tdc_ppbr_az,"MapLight + GNN (CatBoost, Strict Parity)",MapLight + GNN,mae,7.3061861151788605,MAE,7.44,-0.1338138848211398,1.0,True,-1.3738138848211392,https://tdcommons.ai/benchmark/admet_group/08ppbr/
 tdc_skin_reaction,Uni-Mol V2 (84m),Uni-Mol,roc_auc,0.6577560240963856,AUROC,0.741,,7.0,True,-0.2067560240963855,
-tdc_solubility_aqsoldb,Uni-Mol V1,Uni-Mol,mae,0.7104110986585406,MAE,0.741,,1.0,True,-0.1185889013414593,https://tdcommons.ai/benchmark/admet_group/06aqsol/
+tdc_solubility_aqsoldb,TabPFNRegressor,conventional,mae,0.6860771429534456,MAE,0.741,-0.0549228570465544,1.0,True,-0.1429228570465543,https://tdcommons.ai/benchmark/admet_group/06aqsol/
 tdc_tox21,"Chemprop v2 (AttentiveFP, ensemble=3)",Chemprop v2,roc_auc,0.5974251913709115,AUROC,0.867,,7.0,True,0.2355748086290884,
 tdc_toxcast,HistGradientBoosting,conventional,roc_auc,0.7156874524410268,AUROC,0.714,0.0016874524410268,1.0,True,-0.0016874524410268,
 tdc_vdss_lombardo,Uni-Mol V1,Uni-Mol,spearman,0.6051388081030048,Spearman,0.713,,6.0,True,-0.1081388081030048,https://tdcommons.ai/benchmark/admet_group/09vdss/
