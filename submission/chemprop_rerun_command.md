@@ -233,6 +233,11 @@ refits, cached per fold under `<dataset>/ensemble_oof/` and saved as `split="oof
 `predictions.csv`, so the stage resumes. CFA is not an ensemble member. The weighted ensemble is
 labelled `Ensemble (Weighted average (inverse OOF error))`. Tests: `tests/unit/test_ensemble_oof.py`.
 
+**On the A100, follow the step-by-step runbook in `AGENTS.md`** ("A100 task: regenerate the clean
+ensemble results"). It runs `plan_ensemble_oof_repair.py` first, which classifies every member's OOF
+source without training anything, and then a one-dataset pilot whose log must show that no model
+was retrained before the full run starts.
+
 **Choose the Chemprop option.** Everything else is the same either way.
 
 | `--ensemble-oof-scope` | Chemprop in ensembles? | A100 time (estimate) |
