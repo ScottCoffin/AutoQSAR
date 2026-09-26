@@ -608,22 +608,44 @@ class FusionSection:
 class EnsembleSection:
     oof_stacking: bool = _opt(
         True, group=10, kind="bool", cli="--ensemble-methods", dest=None, per_dataset=True,
-        help="RidgeCV stacker fitted on out-of-fold training predictions.",
+        help="RidgeCV stacker fitted on the members' out-of-fold training predictions.",
     )
     inverse_rmse_average: bool = _opt(
         True, group=10, kind="bool", cli="--ensemble-methods", dest=None, per_dataset=True,
-        help="Average weighted by inverse training RMSE.",
+        help="Average weighted by inverse member error (out-of-fold under member_selection_metric oof).",
     )
     simple_average: bool = _opt(
         False, group=10, kind="bool", cli="--ensemble-methods", dest=None, per_dataset=True,
         help="Unweighted average of the members.",
     )
     member_selection_metric: str = _opt(
-        "cv", group=10, kind="choice", choices=("cv", "test"), aliases={"train": "cv"},
+        "oof", group=10, kind="choice", choices=("oof", "cv", "test"), aliases={"train": "cv"},
         cli="--ensemble-member-selection-split", dest="ensemble_member_selection_split", per_dataset=True,
-        help="Which split may decide ensemble membership. cv (alias train) uses training-split predictions "
-        "only and is leakage-free; test reproduces the originally deposited benchmark run and is "
-        "optimistically biased.",
+        help="Which predictions drive ensemble membership, weights and the stacking meta-model. oof refits "
+        "each member on K folds of the training split and uses its out-of-fold predictions: leakage-free "
+        "and not biased toward models that memorise the training set. cv (alias train) uses in-sample "
+        "training predictions and favours overfit members; it only reproduces the "
+        "qsarena_benchmark_chemprop_fixed run. test reproduces the originally deposited benchmark run "
+        "and is optimistically biased.",
+    )
+    oof_folds: int = _opt(
+        5, group=10, kind="int", minimum=2, cli="--ensemble-oof-folds", dest="ensemble_oof_folds",
+        per_dataset=True,
+        help="Folds for the out-of-fold member predictions (member_selection_metric oof). Same fold "
+        "geometry as cross-validation.",
+    )
+    oof_scope: str = _opt(
+        "all", group=10, kind="choice", choices=("all", "cpu"), cli="--ensemble-oof-scope",
+        dest="ensemble_oof_scope", per_dataset=True,
+        help="Which members may be refitted per fold for out-of-fold predictions. Uni-Mol reuses its saved "
+        "internal-fold predictions (cv.data) and is not refitted. all also refits Chemprop per fold on the GPU; "
+        "cpu refits only CPU models, and Chemprop is then left out of the ensemble.",
+    )
+    oof_source_run: str | None = _opt(
+        None, group=10, kind="str", nullable=True, cli="--ensemble-oof-source-run",
+        dest="ensemble_oof_source_run", signature=False, null_means="look only in this run",
+        help="Earlier run directory searched for saved Uni-Mol model folders (cv.data) when building "
+        "out-of-fold predictions.",
     )
     exclude_negative_test_r2_members: bool = _opt(
         True, group=10, kind="bool",
@@ -1323,7 +1345,7 @@ def _value_to_arg(spec: OptionSpec, value: Any) -> Any:
     if key == "feature_selection.method":
         return _SELECTOR_TO_ARG[value]
     if key == "ensemble.member_selection_metric":
-        return "train" if value == "cv" else "test"
+        return {"oof": "oof", "cv": "train"}.get(value, "test")
     if key == "evaluation.primary_metric":
         return None if value == "auto" else value
     if key == "deep.use_gpu":
@@ -1351,7 +1373,7 @@ def _value_from_arg(spec: OptionSpec, value: Any) -> Any:
     if key == "feature_selection.method":
         return _SELECTOR_FROM_ARG.get(value, value)
     if key == "ensemble.member_selection_metric":
-        return "test" if str(value) == "test" else "cv"
+        return {"oof": "oof", "test": "test"}.get(str(value), "cv")
     if key == "evaluation.primary_metric":
         return "auto" if value in (None, "", "auto") else value
     if spec.kind == "tristate" and key != "deep.use_gpu":

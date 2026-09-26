@@ -38,7 +38,7 @@ def _payload(train_pred, test_pred):
     }
 
 
-def test_ensemble_default_member_selection_uses_train_split() -> None:
+def test_ensemble_train_member_selection_never_reads_test_split() -> None:
     previous = runner.CURRENT_DATASET_SPEC
     runner.CURRENT_DATASET_SPEC = runner.DatasetSpec(
         name="toy",

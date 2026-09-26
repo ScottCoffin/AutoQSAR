@@ -278,17 +278,33 @@ fusion:
 
 # ---------- 10. Ensembles ----------
 ensemble:
-  # RidgeCV stacker fitted on out-of-fold training predictions. CLI: --ensemble-methods.
+  # RidgeCV stacker fitted on the members' out-of-fold training predictions. CLI:
+  # --ensemble-methods.
   oof_stacking: true
-  # Average weighted by inverse training RMSE. CLI: --ensemble-methods.
+  # Average weighted by inverse member error (out-of-fold under member_selection_metric
+  # oof). CLI: --ensemble-methods.
   inverse_rmse_average: true
   # Unweighted average of the members. CLI: --ensemble-methods.
   simple_average: false
-  # Which split may decide ensemble membership. cv (alias train) uses training-split
-  # predictions only and is leakage-free; test reproduces the originally deposited
-  # benchmark run and is optimistically biased. Choices: cv, test. CLI: --ensemble-member-
-  # selection-split.
-  member_selection_metric: cv
+  # Which predictions drive ensemble membership, weights and the stacking meta-model. oof
+  # refits each member on K folds of the training split and uses its out-of-fold
+  # predictions: leakage-free and not biased toward models that memorise the training set.
+  # cv (alias train) uses in-sample training predictions and favours overfit members; it
+  # only reproduces the qsarena_benchmark_chemprop_fixed run. test reproduces the
+  # originally deposited benchmark run and is optimistically biased. Choices: oof, cv,
+  # test. CLI: --ensemble-member-selection-split.
+  member_selection_metric: oof
+  # Folds for the out-of-fold member predictions (member_selection_metric oof). Same fold
+  # geometry as cross-validation. CLI: --ensemble-oof-folds.
+  oof_folds: 5
+  # Which members may be refitted per fold for out-of-fold predictions. Uni-Mol reuses its
+  # saved internal-fold predictions (cv.data) and is not refitted. all also refits
+  # Chemprop per fold on the GPU; cpu refits only CPU models, and Chemprop is then left
+  # out of the ensemble. Choices: all, cpu. CLI: --ensemble-oof-scope.
+  oof_scope: all
+  # Earlier run directory searched for saved Uni-Mol model folders (cv.data) when building
+  # out-of-fold predictions. null = look only in this run. CLI: --ensemble-oof-source-run.
+  oof_source_run: null
   # Drop members with negative R2 on the member-selection split (train when
   # member_selection_metric is cv, so the default is leakage-free). CLI: --ensemble-
   # exclude-negative-test-r2-members / --no-ensemble-exclude-negative-test-r2-members.

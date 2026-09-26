@@ -5373,6 +5373,14 @@ def count_torch_parameters_from_checkpoint_dir(model_dir: Path) -> tuple[float, 
     return np.nan, "checkpoint_unavailable"
 
 
+try:
+    import inspect as _inspect
+
+    _CROSS_VALIDATE_RETURNS_INDICES = "return_indices" in _inspect.signature(cross_validate).parameters
+except (TypeError, ValueError):  # pragma: no cover - signature introspection unavailable
+    _CROSS_VALIDATE_RETURNS_INDICES = False
+
+
 def evaluate_model(
     name: str,
     estimator: Any,
@@ -5384,7 +5392,14 @@ def evaluate_model(
     args: argparse.Namespace,
     primary_metric: str | None = None,
     split_strategy_for_cv: str | None = None,
+    oof_sink: dict[str, Any] | None = None,
 ):
+    """Cross-validate, then fit on the full training split.
+
+    When ``oof_sink`` is given, the cross-validation fold models' predictions on their held-in fold
+    are assembled into out-of-fold predictions and stored as ``oof_sink["oof"]`` with the fold
+    signature in ``oof_sink["oof_signature"]``, so the ensemble stage need not refit this model.
+    """
     effective_split_strategy = effective_split_strategy_for_dataset(
         str(split_strategy_for_cv or args.split_strategy),
         allow_predefined=False,
@@ -5418,6 +5433,9 @@ def evaluate_model(
                 "mse": "neg_mean_squared_error",
                 "primary": primary_scorer,
             }
+        # return_indices needs scikit-learn >= 1.3 (the [tdc] extra pins 1.2.2); without it the
+        # ensemble stage simply refits this model on the same folds.
+        want_oof = oof_sink is not None and _CROSS_VALIDATE_RETURNS_INDICES
         scores = cross_validate(
             clone(estimator),
             X_train,
@@ -5430,7 +5448,28 @@ def evaluate_model(
                 args=args,
                 cv_folds=cv_folds,
             ),
+            **({"return_estimator": True, "return_indices": True} if want_oof else {}),
         )
+        if want_oof:
+            try:
+                X_frame = pd.DataFrame(X_train).reset_index(drop=True)
+                oof = np.full(len(X_frame), np.nan, dtype=float)
+                fold_pairs = []
+                for fold_estimator, fit_idx, val_idx in zip(
+                    scores["estimator"], scores["indices"]["train"], scores["indices"]["test"]
+                ):
+                    val_idx = np.asarray(val_idx, dtype=int)
+                    oof[val_idx] = np.asarray(
+                        predict_values_for_metric(fold_estimator, X_frame.iloc[val_idx], str(primary_metric)),
+                        dtype=float,
+                    ).reshape(-1)
+                    fold_pairs.append((np.asarray(fit_idx, dtype=int), val_idx))
+                if np.isfinite(oof).all():
+                    oof_sink["oof"] = oof
+                    oof_sink["oof_signature"] = ensemble_oof_fold_signature(fold_pairs)
+            except Exception as oof_exc:  # OOF capture is an optimisation; the ensemble stage refits instead.
+                print(f"[ensemble-oof] {name}: could not capture CV out-of-fold predictions ({oof_exc})", flush=True)
+            scores.pop("estimator", None)
         fitted = clone(estimator)
         fitted.fit(X_train, y_train)
         pred_train, train_inference_seconds = timed_predict_values_for_metric(fitted, X_train, str(primary_metric))
@@ -6932,6 +6971,239 @@ def train_unimol_v2_model(
     return row, np.asarray(pred_train, dtype=float), np.asarray(pred_test, dtype=float)
 
 
+# ---------------------------------------------------------------------------------------------
+# Out-of-fold (OOF) member predictions for the ensemble stage
+# ---------------------------------------------------------------------------------------------
+# Ensembles must be fitted on predictions the members made for molecules they were NOT trained
+# on. In-sample training predictions reward memorisation (a 500-tree extra-trees model reaches a
+# training RMSE near zero), so selecting, weighting or stacking on them hands the ensemble to the
+# most overfit member. Each candidate member is therefore refitted on K folds of the training
+# split, with the same fold geometry as cross-validation, and its predictions on the held-in fold
+# are assembled into one OOF vector per model. Fold results are cached on disk so an interrupted
+# run resumes, and the assembled vector is persisted as split="oof" rows of predictions.csv.
+
+ENSEMBLE_OOF_EXPENSIVE_WORKFLOWS = ("chemprop", "uni-mol")
+
+
+def is_fusion_payload(model_name: Any, payload: dict[str, Any] | None = None) -> bool:
+    """CFA and ensembles are built from other members' predictions and are never members."""
+    name = str(model_name or "").strip().lower()
+    workflow = str((payload or {}).get("workflow", "")).strip().lower()
+    return name.startswith("cfa") or workflow == "cfa" or is_ensemble_result_row(model_name, workflow)
+
+
+def ensemble_oof_folds(
+    *,
+    X_train: pd.DataFrame,
+    y_train: pd.Series,
+    smiles_train: pd.Series,
+    split_strategy: str,
+    cv_folds: int,
+    random_seed: int,
+) -> list[tuple[np.ndarray, np.ndarray]]:
+    """Materialise the K training-split folds, using the same geometry as evaluate_model's CV."""
+    cv, _n_folds, _strategy = make_qsar_cv_splitter(
+        X_train,
+        y_train,
+        smiles_train,
+        split_strategy=split_strategy,
+        cv_folds=int(cv_folds),
+        random_seed=int(random_seed),
+    )
+    y_arr = pd.Series(y_train, dtype=float).to_numpy()
+    raw = list(cv) if isinstance(cv, list) else list(cv.split(pd.DataFrame(X_train).reset_index(drop=True), y_arr))
+    return [(np.asarray(fit_idx, dtype=int), np.asarray(val_idx, dtype=int)) for fit_idx, val_idx in raw]
+
+
+def ensemble_oof_fold_signature(folds: list[tuple[np.ndarray, np.ndarray]]) -> str:
+    digest = hashlib.sha256()
+    for fold_index, (_fit_idx, val_idx) in enumerate(folds):
+        digest.update(f"{fold_index}:".encode("utf-8"))
+        digest.update(np.sort(np.asarray(val_idx, dtype=np.int64)).tobytes())
+    return digest.hexdigest()[:16]
+
+
+def load_unimol_saved_oof(
+    model_dir: Path,
+    *,
+    n_train: int,
+    reference_train_pred: np.ndarray | None = None,
+) -> tuple[np.ndarray | None, str]:
+    """Out-of-fold training predictions that unimol_tools already saved, or ``(None, reason)``.
+
+    ``MolTrain`` trains ``kfold`` models (default 5) on internal folds of the training CSV and dumps
+    each molecule's prediction from the fold model that did not see it to ``cv.data``, on the
+    normalised target scale. The reported Uni-Mol model averages those same fold models, so these
+    are the reported model's own OOF predictions, and no refitting is needed. Regression targets are
+    mapped back with the saved ``target_scaler.ss``; classification predictions are probabilities,
+    the same scale ``MolPredict.predict`` returns.
+
+    A saved vector is used only if it has one value per training row and correlates with the
+    model's in-sample training predictions (guards against row-order mismatches).
+    """
+    model_dir = Path(model_dir)
+    cv_path = model_dir / "cv.data"
+    if not cv_path.exists():
+        return None, f"no cv.data in {model_dir}"
+    try:
+        import joblib
+
+        raw = np.asarray(joblib.load(cv_path), dtype=float)
+        if raw.ndim == 2 and raw.shape[1] == 1:
+            raw = raw.reshape(-1, 1)
+        elif raw.ndim != 1:
+            return None, f"cv.data has unexpected shape {raw.shape}"
+        scaler_path = model_dir / "target_scaler.ss"
+        if scaler_path.exists():
+            scaler = joblib.load(scaler_path)
+            if scaler is not None and hasattr(scaler, "inverse_transform"):
+                raw = np.asarray(scaler.inverse_transform(raw.reshape(-1, 1)), dtype=float)
+        oof = np.asarray(raw, dtype=float).reshape(-1)
+    except Exception as exc:
+        return None, f"could not read {cv_path} ({str(exc)[:160]})"
+    if len(oof) != int(n_train):
+        return None, f"cv.data has {len(oof)} rows for {int(n_train)} training molecules"
+    if not np.isfinite(oof).all():
+        return None, "cv.data contains non-finite values"
+    if reference_train_pred is not None:
+        reference = np.asarray(reference_train_pred, dtype=float).reshape(-1)
+        if len(reference) == len(oof) and np.std(reference) > 0 and np.std(oof) > 0:
+            corr = float(np.corrcoef(reference, oof)[0, 1])
+            if not np.isfinite(corr) or corr < 0.3:
+                return None, f"cv.data does not line up with the training rows (correlation {corr:.2f})"
+    return oof, f"read saved Uni-Mol internal-fold predictions from {cv_path}"
+
+
+def ensure_ensemble_oof_predictions(
+    *,
+    payloads: dict[str, dict[str, Any]],
+    refitters: dict[str, Callable[[np.ndarray, np.ndarray, Path], np.ndarray]],
+    folds: list[tuple[np.ndarray, np.ndarray]],
+    fold_signature: str,
+    cache_root: Path,
+    n_train: int,
+    dataset_id: str = "",
+    on_model_done: Callable[[str, np.ndarray], None] | None = None,
+    providers: dict[str, Callable[[], tuple[np.ndarray | None, str]]] | None = None,
+) -> list[str]:
+    """Attach ``payload["oof"]`` (aligned to ``payload["train_row_id"]``) to every refittable member.
+
+    ``providers[name]()`` may return already-saved OOF predictions for all training rows (in split
+    order), e.g. Uni-Mol's ``cv.data``; they are used in preference to refitting. Otherwise
+    ``refitters[name](fit_idx, val_idx, fold_dir)`` must return predictions for ``val_idx`` after
+    fitting on ``fit_idx`` only; indices are positions in the dataset's training split. Payloads that
+    already carry OOF predictions for the same folds are left untouched. Returns notes describing
+    where OOF predictions came from when not refitted, and members that could not be given any (they
+    are then excluded from the ensemble).
+    """
+    notes: list[str] = []
+    for model_name, payload in payloads.items():
+        if is_fusion_payload(model_name, payload):
+            continue
+        row_ids = np.asarray(payload.get("train_row_id", np.arange(len(payload["train"]))), dtype=int)
+        existing = payload.get("oof")
+        if (
+            existing is not None
+            and str(payload.get("oof_signature", "")) == fold_signature
+            and len(np.asarray(existing).reshape(-1)) == len(row_ids)
+        ):
+            continue
+        payload.pop("oof", None)
+        payload.pop("oof_signature", None)
+        provider = (providers or {}).get(str(model_name))
+        if provider is not None and not (len(row_ids) and (row_ids.min() < 0 or row_ids.max() >= int(n_train))):
+            saved_oof, provider_note = provider()
+            if saved_oof is not None and len(saved_oof) == int(n_train):
+                payload["oof"] = np.asarray(saved_oof, dtype=float)[row_ids]
+                payload["oof_signature"] = fold_signature
+                notes.append(f"{model_name}: {provider_note}")
+                if on_model_done is not None:
+                    on_model_done(str(model_name), np.asarray(saved_oof, dtype=float))
+                continue
+            notes.append(f"{model_name}: saved OOF predictions unusable ({provider_note})")
+        refit = refitters.get(str(model_name))
+        if refit is None:
+            notes.append(f"{model_name}: no out-of-fold refit available for this model")
+            continue
+        if len(row_ids) and (row_ids.min() < 0 or row_ids.max() >= int(n_train)):
+            notes.append(f"{model_name}: training rows do not map onto the current split")
+            continue
+        model_dir = Path(cache_root) / slugify(str(model_name)) / fold_signature
+        oof_full = np.full(int(n_train), np.nan, dtype=float)
+        try:
+            for fold_index, (fit_idx, val_idx) in enumerate(folds):
+                cache_path = model_dir / f"fold_{fold_index}.npy"
+                values: np.ndarray | None = None
+                if cache_path.exists():
+                    cached = np.asarray(np.load(cache_path), dtype=float).reshape(-1)
+                    if len(cached) == len(val_idx):
+                        values = cached
+                if values is None:
+                    started = time.perf_counter()
+                    values = np.asarray(refit(fit_idx, val_idx, model_dir / f"fold_{fold_index}"), dtype=float).reshape(-1)
+                    if len(values) != len(val_idx):
+                        raise ValueError(f"fold {fold_index} returned {len(values)} predictions for {len(val_idx)} rows")
+                    model_dir.mkdir(parents=True, exist_ok=True)
+                    np.save(cache_path, values)
+                    print(
+                        f"[ensemble-oof] {dataset_id} {model_name} fold {fold_index + 1}/{len(folds)} "
+                        f"({time.perf_counter() - started:.1f}s)",
+                        flush=True,
+                    )
+                oof_full[np.asarray(val_idx, dtype=int)] = values
+        except Exception as exc:
+            notes.append(f"{model_name}: out-of-fold refit failed ({str(exc)[:200]})")
+            continue
+        aligned = oof_full[row_ids]
+        if not np.isfinite(aligned).all():
+            notes.append(f"{model_name}: out-of-fold predictions incomplete or non-finite")
+            continue
+        payload["oof"] = aligned
+        payload["oof_signature"] = fold_signature
+        if on_model_done is not None:
+            on_model_done(str(model_name), oof_full)
+    return notes
+
+
+def build_maplight_gnn_fusion_frames(
+    *,
+    args: argparse.Namespace,
+    split: dict[str, Any],
+    maplight_parity_mode: bool,
+    maplight_direct_X_train: pd.DataFrame,
+    maplight_direct_X_test: pd.DataFrame,
+    maplight_feature_cols: list[str],
+) -> tuple[pd.DataFrame, pd.DataFrame, str]:
+    """MapLight classic features concatenated with pretrained GIN embeddings (train, test, backend)."""
+    embedder, embedding_backend = _build_maplight_gnn_embedder(str(args.maplight_gnn_kind))
+    train_embeddings_raw = embedder(split["smiles_train"].astype(str).tolist())
+    test_embeddings_raw = embedder(split["smiles_test"].astype(str).tolist())
+    emb_train = _embeddings_to_matrix(train_embeddings_raw)
+    emb_test = _embeddings_to_matrix(test_embeddings_raw, reference_width=emb_train.shape[1])
+    train_fill = np.nanmean(emb_train, axis=0)
+    train_fill = np.where(np.isfinite(train_fill), train_fill, 0.0)
+    emb_train = np.where(np.isfinite(emb_train), emb_train, train_fill)
+    emb_test = np.where(np.isfinite(emb_test), emb_test, train_fill)
+    if maplight_parity_mode:
+        maplight_base_train = maplight_direct_X_train.to_numpy(dtype=float)
+        maplight_base_test = maplight_direct_X_test.to_numpy(dtype=float)
+        maplight_columns = [str(col) for col in maplight_direct_X_train.columns]
+    else:
+        maplight_base_train = split["X_train"].loc[:, maplight_feature_cols].to_numpy(dtype=float)
+        maplight_base_test = split["X_test"].loc[:, maplight_feature_cols].to_numpy(dtype=float)
+        maplight_columns = list(maplight_feature_cols)
+    gnn_feature_names = [f"gin_emb_{idx:03d}" for idx in range(int(emb_train.shape[1]))]
+    fusion_train = pd.DataFrame(
+        np.concatenate([maplight_base_train, emb_train], axis=1),
+        columns=maplight_columns + gnn_feature_names,
+    )
+    fusion_test = pd.DataFrame(
+        np.concatenate([maplight_base_test, emb_test], axis=1),
+        columns=maplight_columns + gnn_feature_names,
+    )
+    return fusion_train, fusion_test, str(embedding_backend)
+
+
 def build_ensemble_result(
     *,
     payloads: dict[str, dict[str, Any]],
@@ -6941,20 +7213,42 @@ def build_ensemble_result(
     drop_highly_correlated_members: bool,
     max_train_prediction_correlation: float,
     exclude_negative_test_r2_members: bool,
-    member_selection_split: str = "train",
+    member_selection_split: str = "oof",
 ) -> tuple[pd.DataFrame, pd.DataFrame, np.ndarray, np.ndarray, list[str], list[str], Any]:
     """Build a stacked or weighted ensemble from per-model train/test predictions.
 
-    ``member_selection_split`` governs which split decides *which members are admitted*:
+    ``member_selection_split`` decides which training-side predictions drive member exclusion,
+    the correlated-pair tie-break, the inverse-error weights and the stacking meta-model:
 
-    ``"train"`` (default)
-        Leakage-free. Member exclusion and the correlated-pair tie-break both read training
-        metrics, so no held-out value influences ensemble composition.
+    ``"oof"`` (default)
+        Leakage-free and memorisation-free. Every member must carry out-of-fold predictions for
+        the training rows (``payload["oof"]``, see ``ensure_ensemble_oof_predictions``); members
+        without them, and fusion outputs such as CFA, are excluded. The meta-model is fitted on
+        the OOF matrix and applied to the members' full-fit test predictions (standard stacking).
+    ``"train"``
+        Uses the members' in-sample training predictions. It never reads held-out data, but it
+        rewards memorisation: a model that fits the training set almost perfectly (extra trees,
+        random forest) dominates both the tie-break and the weights. Retained only to reproduce
+        ``benchmark_results/qsarena_benchmark_chemprop_fixed``.
     ``"test"``
         The original behaviour, retained only to reproduce the deposited benchmark run
         bit-for-bit. It consults held-out R^2 and the held-out primary metric, which biases the
         reported ensemble score upward. Do not use it for new results.
     """
+    selection_split = str(member_selection_split or "oof").strip().lower()
+    if selection_split not in {"oof", "train", "test"}:
+        raise ValueError(f"member_selection_split must be 'oof', 'train' or 'test', got {member_selection_split!r}")
+    oof_exclusion_notes: list[str] = []
+    if selection_split == "oof":
+        eligible = {
+            name: payload
+            for name, payload in payloads.items()
+            if payload.get("oof") is not None and not is_fusion_payload(name, payload)
+        }
+        no_oof = sorted(name for name in payloads if name not in eligible)
+        if no_oof:
+            oof_exclusion_notes.append("Excluded (no out-of-fold predictions, or a fusion output): " + ", ".join(no_oof))
+        payloads = eligible
     if len(payloads) < 2:
         raise ValueError("At least two model predictions are required to build an ensemble.")
     primary_metric = current_dataset_primary_metric("rmse")
@@ -6967,11 +7261,13 @@ def build_ensemble_result(
     def build_split_frame(split_name: str) -> tuple[pd.DataFrame, list[str]]:
         merged: pd.DataFrame | None = None
         prediction_columns: list[str] = []
-        row_id_key = f"{split_name}_row_id"
+        # The "oof" split reuses the training rows' identity and labels with out-of-fold predictions.
+        source_split = "train" if split_name == "oof" else split_name
+        row_id_key = f"{source_split}_row_id"
         alignment_key = "row_id" if all(row_id_key in payload for payload in payloads.values()) else "SMILES"
         for model_name, payload in payloads.items():
-            smiles_values = pd.Series(payload[f"{split_name}_smiles"], dtype=str).str.strip().reset_index(drop=True)
-            observed_values = np.asarray(payload[f"{split_name}_observed"], dtype=float).reshape(-1)
+            smiles_values = pd.Series(payload[f"{source_split}_smiles"], dtype=str).str.strip().reset_index(drop=True)
+            observed_values = np.asarray(payload[f"{source_split}_observed"], dtype=float).reshape(-1)
             predicted_values = np.asarray(payload[split_name], dtype=float).reshape(-1)
             row_ids = (
                 np.asarray(payload[row_id_key], dtype=int).reshape(-1)
@@ -7012,7 +7308,10 @@ def build_ensemble_result(
             raise ValueError("No predictions were available for ensemble alignment.")
         return merged.reset_index(drop=True), prediction_columns
 
-    aligned_train, prediction_columns = build_split_frame("train")
+    # In "oof" mode every training-side quantity below (member metrics, correlation, weights, the
+    # stacking meta-model and the reported ensemble train predictions) is computed from OOF
+    # predictions, so the "Train ..." metric names refer to out-of-fold values.
+    aligned_train, prediction_columns = build_split_frame("oof" if selection_split == "oof" else "train")
     aligned_test, _ = build_split_frame("test")
     if aligned_train.empty or aligned_test.empty:
         raise ValueError("Selected models do not share molecules for ensemble alignment.")
@@ -7055,17 +7354,18 @@ def build_ensemble_result(
             )
         member_metrics[model_name] = split_metrics
 
-    member_filter_notes: list[str] = []
+    member_filter_notes: list[str] = list(oof_exclusion_notes)
     active_columns = list(prediction_columns)
 
-    # Which split may inform ensemble COMPOSITION. "train" keeps the selection leakage-free;
-    # "test" reproduces the deposited run and is optimistically biased. See the docstring.
-    selection_split = str(member_selection_split or "train").strip().lower()
-    if selection_split not in {"train", "test"}:
-        raise ValueError(f"member_selection_split must be 'train' or 'test', got {member_selection_split!r}")
+    # Which split may inform ensemble COMPOSITION. "oof" is leakage- and memorisation-free;
+    # "train" and "test" only reproduce earlier runs. See the docstring.
     sel_r2_key = "Test R2" if selection_split == "test" else "Train R2"
     sel_primary_key = "Test Primary" if selection_split == "test" else "Train Primary"
-    member_filter_notes.append(f"Member selection metrics read from the {selection_split} split")
+    member_filter_notes.append(
+        "Member selection, weights and meta-model read out-of-fold training predictions"
+        if selection_split == "oof"
+        else f"Member selection metrics read from the {selection_split} split"
+    )
 
     if bool(exclude_negative_test_r2_members) and not is_classification:
         positive_columns = [name for name in active_columns if float(member_metrics[name][sel_r2_key]) > 0.0]
@@ -7185,7 +7485,26 @@ def build_ensemble_result(
             }
         )
     elif str(method) == "Weighted average (inverse train RMSE)":
-        if is_classification:
+        if is_classification and selection_split == "oof":
+            # Inverse RMS probability error (sqrt of the Brier score) on out-of-fold predictions: the
+            # classification analogue of inverse RMSE. The legacy 1 / (1 - AUC) weighting below gives
+            # a member with a perfect OOF rank score effectively all the weight (1 / 1e-8); a proper
+            # score does not collapse to zero that way. Members whose outputs are not probabilities
+            # (decision scores outside [0, 1]) fall back to the rank-metric error, floored at 0.05.
+            observed_labels = np.asarray(aligned_train["Observed"], dtype=float)
+            raw_weights = []
+            for name in prediction_columns:
+                member_pred = np.asarray(aligned_train[name], dtype=float)
+                if np.all((member_pred >= 0.0) & (member_pred <= 1.0)):
+                    error_value = float(np.sqrt(np.mean((member_pred - observed_labels) ** 2)))
+                else:
+                    train_primary = float(member_metrics[name]["Train Primary"])
+                    error_value = (train_primary if lower_is_better else 1.0 - train_primary)
+                    error_value = max(error_value, 0.05)
+                raw_weights.append(1.0 / max(error_value, 1e-8))
+            raw_weights = np.asarray(raw_weights, dtype=float)
+            member_filter_notes.append("Classification weights: inverse out-of-fold RMS probability error")
+        elif is_classification:
             raw_weights = []
             for name in prediction_columns:
                 train_primary = float(member_metrics[name]["Train Primary"])
@@ -7198,6 +7517,9 @@ def build_ensemble_result(
         else:
             raw_weights = np.asarray([1.0 / max(float(member_metrics[name]["Train RMSE"]), 1e-8) for name in prediction_columns], dtype=float)
         weights = raw_weights / raw_weights.sum()
+        if selection_split == "oof":
+            # Same method key, but the label must say what the weights were computed from.
+            ensemble_method_label = "Weighted average (inverse OOF error)"
         ensemble_train_pred = np.dot(X_meta_train, weights)
         ensemble_test_pred = np.dot(X_meta_test, weights)
         weight_df = pd.DataFrame({"Model": prediction_columns, "Weight": weights, "Workflow": [payloads[name]["workflow"] for name in prediction_columns]})
@@ -7295,6 +7617,9 @@ def ensemble_model_name_matches_method(model_name: Any, method_name: str) -> boo
     method_text = str(method_name or "").strip()
     if method_text == "OOF Stacking (RidgeCV)":
         return "OOF Stacking (RidgeCV" in model_text
+    if method_text == "Weighted average (inverse train RMSE)":
+        # Emitted as "... (inverse OOF error)" under --ensemble-member-selection-split oof.
+        return "Weighted average (inverse" in model_text
     return method_text in model_text
 
 
@@ -7425,6 +7750,19 @@ def rebuild_prediction_payloads(prediction_tables: list[pd.DataFrame]) -> dict[s
                 else np.arange(len(split_tables["test"]), dtype=int)
             ),
         }
+        # Out-of-fold training predictions written by the ensemble stage (split="oof"), aligned to
+        # the training rows by row_index. Partial or unaligned OOF rows are ignored and recomputed.
+        oof_df = model_df.loc[model_df["split"].astype(str).str.lower() == "oof"].copy()
+        if not oof_df.empty and "row_index" in oof_df.columns and oof_df["row_index"].notna().all():
+            oof_df["predicted"] = pd.to_numeric(oof_df["predicted"], errors="coerce")
+            oof_df = oof_df.drop_duplicates(subset=["row_index"], keep="last")
+            oof_by_row = dict(zip(oof_df["row_index"].astype(int), oof_df["predicted"]))
+            train_ids = payloads[str(model_name)]["train_row_id"]
+            aligned = np.asarray([oof_by_row.get(int(row_id), np.nan) for row_id in train_ids], dtype=float)
+            if len(aligned) and np.isfinite(aligned).all():
+                payloads[str(model_name)]["oof"] = aligned
+                if "oof_signature" in oof_df.columns and oof_df["oof_signature"].notna().any():
+                    payloads[str(model_name)]["oof_signature"] = str(oof_df["oof_signature"].dropna().iloc[-1])
     return payloads
 
 
@@ -7466,7 +7804,7 @@ _FAMILY_SIGNATURE_ARGS: dict[str, tuple[str, ...]] = {
                "cfa_rank_metric_discount"),
     "ensemble": ("ensemble_methods", "ensemble_stacking_cv_folds", "ensemble_drop_highly_correlated_members",
                  "ensemble_max_train_correlation", "ensemble_exclude_negative_test_r2_members",
-                 "ensemble_member_selection_split"),
+                 "ensemble_member_selection_split", "ensemble_oof_folds", "ensemble_oof_scope"),
 }
 _GA_SIGNATURE_ARGS = ("ga_generations", "ga_population_size", "ga_elites", "ga_cv_folds", "ga_mutation_probability",
                       "ga_time_budget_minutes", "ga_max_configs", "elasticnet_l1_ratio_grid", "elasticnet_max_iter")
@@ -8834,6 +9172,7 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
                 persist_partial(f"conventional:{model_name}")
                 stage_index += 1
                 continue
+        conventional_oof_sink: dict[str, Any] = {}
         try:
             if model_name == maplight_catboost_label and maplight_parity_mode:
                 maplight_primary_metric = (
@@ -8864,6 +9203,7 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
                     split["smiles_train"],
                     args,
                     split_strategy_for_cv=cv_strategy_for_workflows,
+                    oof_sink=conventional_oof_sink,
                 )
         except Exception as exc:
             error_text = str(exc)
@@ -8893,6 +9233,16 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
                 pred_train=pred_train,
                 pred_test=pred_test,
             )
+            captured_oof = conventional_oof_sink.get("oof")
+            if captured_oof is not None and len(captured_oof) == len(pred_train):
+                # Reused by the ensemble stage only when its folds have the same signature.
+                prediction_payloads[model_name]["oof"] = np.asarray(captured_oof, dtype=float)
+                prediction_payloads[model_name]["oof_signature"] = str(conventional_oof_sink["oof_signature"])
+                oof_frame = prediction_frame(
+                    dataset_id, model_name, "conventional", "oof", split["smiles_train"], split["y_train"], captured_oof
+                )
+                oof_frame["oof_signature"] = str(conventional_oof_sink["oof_signature"])
+                prediction_tables.append(oof_frame)
         persist_partial(f"conventional:{model_name}")
         stage_index += 1
 
@@ -9255,37 +9605,19 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
                 completed_model_names.add(maplight_label)
             else:
                 try:
-                    embedder, embedding_backend = _build_maplight_gnn_embedder(str(args.maplight_gnn_kind))
+                    fusion_train, fusion_test, embedding_backend = build_maplight_gnn_fusion_frames(
+                        args=args,
+                        split=split,
+                        maplight_parity_mode=maplight_parity_mode,
+                        maplight_direct_X_train=maplight_direct_X_train,
+                        maplight_direct_X_test=maplight_direct_X_test,
+                        maplight_feature_cols=maplight_feature_cols,
+                    )
                     if str(embedding_backend) != "molfeat-store":
                         print(
                             f"[info] {dataset_id} MapLight + GNN embedding backend: {embedding_backend}",
                             flush=True,
                         )
-                    train_embeddings_raw = embedder(split["smiles_train"].astype(str).tolist())
-                    test_embeddings_raw = embedder(split["smiles_test"].astype(str).tolist())
-                    emb_train = _embeddings_to_matrix(train_embeddings_raw)
-                    emb_test = _embeddings_to_matrix(test_embeddings_raw, reference_width=emb_train.shape[1])
-                    train_fill = np.nanmean(emb_train, axis=0)
-                    train_fill = np.where(np.isfinite(train_fill), train_fill, 0.0)
-                    emb_train = np.where(np.isfinite(emb_train), emb_train, train_fill)
-                    emb_test = np.where(np.isfinite(emb_test), emb_test, train_fill)
-                    if maplight_parity_mode:
-                        maplight_base_train = maplight_direct_X_train.to_numpy(dtype=float)
-                        maplight_base_test = maplight_direct_X_test.to_numpy(dtype=float)
-                        maplight_columns = [str(col) for col in maplight_direct_X_train.columns]
-                    else:
-                        maplight_base_train = split["X_train"].loc[:, maplight_feature_cols].to_numpy(dtype=float)
-                        maplight_base_test = split["X_test"].loc[:, maplight_feature_cols].to_numpy(dtype=float)
-                        maplight_columns = list(maplight_feature_cols)
-                    gnn_feature_names = [f"gin_emb_{idx:03d}" for idx in range(int(emb_train.shape[1]))]
-                    fusion_train = pd.DataFrame(
-                        np.concatenate([maplight_base_train, emb_train], axis=1),
-                        columns=maplight_columns + gnn_feature_names,
-                    )
-                    fusion_test = pd.DataFrame(
-                        np.concatenate([maplight_base_test, emb_test], axis=1),
-                        columns=maplight_columns + gnn_feature_names,
-                    )
                     if maplight_parity_mode:
                         row, pred_train, pred_test = evaluate_maplight_seeded_catboost(
                             model_name=maplight_label,
@@ -9537,6 +9869,271 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
             persist_partial("cfa")
             stage_index += 1
 
+    def run_ensemble_oof_stage() -> list[str]:
+        """Give every candidate ensemble member out-of-fold training predictions (see
+        ensure_ensemble_oof_predictions). Each refitter repeats that model's own training call on a
+        fold of the training split, so the OOF predictions come from the same configuration as the
+        reported model."""
+        X_tr = X_train.reset_index(drop=True)
+        y_tr = split["y_train"].reset_index(drop=True)
+        smi_tr = split["smiles_train"].reset_index(drop=True)
+        folds = ensemble_oof_folds(
+            X_train=X_tr,
+            y_train=y_tr,
+            smiles_train=smi_tr,
+            split_strategy=effective_split_strategy_for_dataset(
+                str(cv_strategy_for_workflows or args.split_strategy), allow_predefined=False
+            ),
+            cv_folds=int(getattr(args, "ensemble_oof_folds", 5)),
+            random_seed=int(args.random_seed),
+        )
+        fold_signature = ensemble_oof_fold_signature(folds)
+        scope = str(getattr(args, "ensemble_oof_scope", "all") or "all").strip().lower()
+        oof_metric = str(current_dataset_primary_metric("rmse"))
+        refitters: dict[str, Callable[[np.ndarray, np.ndarray, Path], np.ndarray]] = {}
+
+        def rows(frame: pd.DataFrame | pd.Series, idx: np.ndarray):
+            return frame.iloc[np.asarray(idx, dtype=int)].reset_index(drop=True)
+
+        # Conventional estimators (including TabPFN and the MapLight CatBoost models).
+        for bundle_name, bundle_estimator in model_bundle.items():
+            bundle_name = str(bundle_name)
+            if bundle_name.startswith("_"):
+                continue
+            if bundle_name == maplight_catboost_label and maplight_parity_mode:
+                if maplight_direct_X_train.empty:
+                    continue
+                parity_X = maplight_direct_X_train.reset_index(drop=True)
+                parity_metric = (
+                    current_dataset_primary_metric("roc_auc")
+                    if current_dataset_task_type() == "classification"
+                    else "mae"
+                )
+
+                def refit_parity(fit_idx, val_idx, fold_dir, _name=bundle_name, _X=parity_X, _metric=parity_metric):
+                    _row, _pred_fit, pred_val = evaluate_maplight_seeded_catboost(
+                        model_name=_name,
+                        workflow_name="conventional",
+                        X_train=rows(_X, fit_idx),
+                        X_test=rows(_X, val_idx),
+                        y_train=rows(y_tr, fit_idx),
+                        y_test=rows(y_tr, val_idx),
+                        seed_values=maplight_seed_values,
+                        feature_source="direct_maplight_classic_from_smiles_no_dedup",
+                        primary_metric=_metric,
+                        n_jobs=benchmark_n_jobs(args),
+                    )
+                    return pred_val
+
+                refitters[bundle_name] = refit_parity
+                continue
+            if bundle_name == maplight_catboost_label:
+                if not maplight_feature_cols:
+                    continue
+                base_X = split["X_train"].loc[:, maplight_feature_cols].reset_index(drop=True)
+            else:
+                base_X = X_tr
+
+            def refit_estimator(fit_idx, val_idx, fold_dir, _estimator=bundle_estimator, _X=base_X):
+                fitted = clone(_estimator)
+                fitted.fit(rows(_X, fit_idx), rows(y_tr, fit_idx))
+                return predict_values_for_metric(fitted, rows(_X, val_idx), oof_metric)
+
+            refitters[bundle_name] = refit_estimator
+
+        # ChemML MLPs: the internal cross-validation is only for reported CV metrics, so skip it here.
+        chemml_args = argparse.Namespace(**{**vars(args), "chemml_use_cross_validation": False})
+        for chemml_label, chemml_engine in (("ChemML MLP (PyTorch)", "pytorch"), ("ChemML MLP (TensorFlow)", "tensorflow")):
+            def refit_chemml(fit_idx, val_idx, fold_dir, _label=chemml_label, _engine=chemml_engine):
+                _row, _pred_fit, pred_val = train_chemml_model(
+                    label=_label,
+                    engine_name=_engine,
+                    X_train=rows(X_tr, fit_idx),
+                    X_test=rows(X_tr, val_idx),
+                    y_train=rows(y_tr, fit_idx),
+                    y_test=rows(y_tr, val_idx),
+                    smiles_train=rows(smi_tr, fit_idx),
+                    args=chemml_args,
+                    split_strategy_for_cv=cv_strategy_for_workflows,
+                )
+                return pred_val
+
+            refitters[chemml_label] = refit_chemml
+
+        # Uni-Mol already saved its own out-of-fold predictions (cv.data) when it was trained, so it
+        # is never refitted when those files are present. Model directories are looked up in the
+        # metrics row (absolute path recorded at training time), this dataset's directory, and the
+        # optional --ensemble-oof-source-run.
+        unimol_v2_oof_label = f"Uni-Mol V2 ({getattr(args, 'unimol_model_size', '84m')})"
+        unimol_subdirs = {
+            "Uni-Mol V1": Path("unimol_v1") / f"seed_{int(args.random_seed)}",
+            unimol_v2_oof_label: Path("unimol_v2") / f"{getattr(args, 'unimol_model_size', '84m')}_seed_{int(args.random_seed)}",
+        }
+        source_run = getattr(args, "ensemble_oof_source_run", None)
+        providers: dict[str, Callable[[], tuple[np.ndarray | None, str]]] = {}
+        for unimol_label, unimol_subdir in unimol_subdirs.items():
+            candidates: list[Path] = []
+            for row in metrics_rows:
+                if str(row.get("model", "")) == unimol_label and str(row.get("unimol_model_dir", "") or "").strip() not in {"", "nan"}:
+                    candidates.append(Path(str(row["unimol_model_dir"])))
+            candidates.append(dataset_dir / unimol_subdir)
+            if source_run:
+                candidates.append(Path(source_run) / dataset_id / unimol_subdir)
+
+            def provide_unimol(_candidates=tuple(candidates), _label=unimol_label):
+                reference = prediction_payloads.get(_label, {}).get("train")
+                reasons = []
+                for candidate in _candidates:
+                    oof, reason = load_unimol_saved_oof(candidate, n_train=len(y_tr), reference_train_pred=reference)
+                    if oof is not None:
+                        return oof, reason
+                    reasons.append(reason)
+                return None, "; ".join(reasons)
+
+            providers[unimol_label] = provide_unimol
+
+        if scope == "all":
+            # Chemprop (and Uni-Mol, only when its saved cv.data is missing) train into
+            # fold-specific directories, so fold models never reuse or overwrite the
+            # full-training-split model caches.
+            for variant in chemprop_variant_specs(args):
+                variant_label = str(variant.get("label", f"Chemprop v2 (ensemble={int(args.chemprop_ensemble_size)})"))
+
+                def refit_chemprop(fit_idx, val_idx, fold_dir, _variant=variant, _label=variant_label):
+                    _row, _pred_fit, pred_val = train_chemprop_model(
+                        label=_label,
+                        X_train=rows(X_tr, fit_idx),
+                        X_test=rows(X_tr, val_idx),
+                        y_train=rows(y_tr, fit_idx),
+                        y_test=rows(y_tr, val_idx),
+                        smiles_train=rows(smi_tr, fit_idx),
+                        smiles_test=rows(smi_tr, val_idx),
+                        args=args,
+                        dataset_dir=Path(fold_dir),
+                        split_strategy_for_cv=cv_strategy_for_workflows,
+                        featurizers=[str(item).strip() for item in list(_variant.get("featurizers", [])) if str(item).strip()],
+                        variant_tag=str(_variant.get("variant_tag", "base")),
+                        architecture_key=str(_variant.get("architecture_key", "dmpnn")),
+                        workflow_label=str(_variant.get("workflow", "Chemprop v2")),
+                        extra_train_args=[str(item).strip() for item in list(_variant.get("train_args", [])) if str(item).strip()],
+                        use_selected_descriptors=bool(_variant.get("use_selected_descriptors", False)),
+                    )
+                    return pred_val
+
+                refitters[variant_label] = refit_chemprop
+
+            def refit_unimol_v1(fit_idx, val_idx, fold_dir):
+                _row, _pred_fit, pred_val = train_unimol_v1_model(
+                    label="Uni-Mol V1",
+                    y_train=rows(y_tr, fit_idx),
+                    y_test=rows(y_tr, val_idx),
+                    smiles_train=rows(smi_tr, fit_idx),
+                    smiles_test=rows(smi_tr, val_idx),
+                    args=args,
+                    dataset_dir=Path(fold_dir),
+                )
+                return pred_val
+
+            refitters["Uni-Mol V1"] = refit_unimol_v1
+
+            def refit_unimol_v2(fit_idx, val_idx, fold_dir, _label=unimol_v2_oof_label):
+                _row, _pred_fit, pred_val = train_unimol_v2_model(
+                    label=_label,
+                    y_train=rows(y_tr, fit_idx),
+                    y_test=rows(y_tr, val_idx),
+                    smiles_train=rows(smi_tr, fit_idx),
+                    smiles_test=rows(smi_tr, val_idx),
+                    args=args,
+                    dataset_dir=Path(fold_dir),
+                )
+                return pred_val
+
+            refitters[unimol_v2_oof_label] = refit_unimol_v2
+
+        gnn_frames: dict[str, pd.DataFrame] = {}
+
+        def refit_maplight_gnn(fit_idx, val_idx, fold_dir, _label=maplight_gnn_model_label(args)):
+            if "train" not in gnn_frames:
+                fusion_train_all, _fusion_test_all, _backend = build_maplight_gnn_fusion_frames(
+                    args=args,
+                    split=split,
+                    maplight_parity_mode=maplight_parity_mode,
+                    maplight_direct_X_train=maplight_direct_X_train,
+                    maplight_direct_X_test=maplight_direct_X_test,
+                    maplight_feature_cols=maplight_feature_cols,
+                )
+                gnn_frames["train"] = fusion_train_all.reset_index(drop=True)
+            fusion_X = gnn_frames["train"]
+            if maplight_parity_mode:
+                _row, _pred_fit, pred_val = evaluate_maplight_seeded_catboost(
+                    model_name=_label,
+                    workflow_name="MapLight + GNN",
+                    X_train=rows(fusion_X, fit_idx),
+                    X_test=rows(fusion_X, val_idx),
+                    y_train=rows(y_tr, fit_idx),
+                    y_test=rows(y_tr, val_idx),
+                    seed_values=maplight_seed_values,
+                    feature_source="direct_maplight_classic_plus_gnn_no_dedup",
+                    primary_metric="mae",
+                    n_jobs=benchmark_n_jobs(args),
+                )
+                return pred_val
+            estimator = CatBoostRegressor(
+                iterations=400,
+                depth=6,
+                learning_rate=0.05,
+                loss_function="RMSE",
+                random_seed=args.random_seed,
+                thread_count=benchmark_n_jobs(args),
+                verbose=False,
+            )
+            estimator.fit(rows(fusion_X, fit_idx), rows(y_tr, fit_idx))
+            return predict_values_for_metric(estimator, rows(fusion_X, val_idx), oof_metric)
+
+        if CatBoostRegressor is not None:
+            refitters[maplight_gnn_model_label(args)] = refit_maplight_gnn
+
+        def persist_oof(model_name: str, oof_full: np.ndarray) -> None:
+            # Replace any stale OOF rows for this model, then checkpoint so a crash keeps the work.
+            prediction_tables[:] = [
+                table.loc[
+                    ~(
+                        table["model"].astype(str).eq(model_name)
+                        & table["split"].astype(str).str.lower().eq("oof")
+                    )
+                ].reset_index(drop=True)
+                if isinstance(table, pd.DataFrame) and {"model", "split"} <= set(table.columns)
+                else table
+                for table in prediction_tables
+            ]
+            frame = prediction_frame(
+                dataset_id,
+                model_name,
+                str(prediction_payloads[model_name].get("workflow", "")),
+                "oof",
+                split["smiles_train"],
+                split["y_train"],
+                oof_full,
+            )
+            frame["oof_signature"] = fold_signature
+            prediction_tables.append(frame)
+            persist_partial(f"ensemble-oof:{model_name}")
+
+        notes = ensure_ensemble_oof_predictions(
+            payloads=prediction_payloads,
+            refitters=refitters,
+            folds=folds,
+            fold_signature=fold_signature,
+            cache_root=dataset_dir / "ensemble_oof",
+            n_train=len(y_tr),
+            dataset_id=dataset_id,
+            on_model_done=persist_oof,
+            providers=providers,
+        )
+        for note in notes:
+            print(f"[ensemble-oof] {dataset_id} {note}", flush=True)
+        return notes
+
     if bool(args.run_ensemble) and model_filter_allows_any(
         args,
         ["Ensemble", *[f"Ensemble ({method})" for method in resolved_ensemble_methods(args)]],
@@ -9580,6 +10177,12 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
                 workflow="ensemble",
                 step_type="model",
             )
+            ensemble_selection_split = str(
+                getattr(args, "ensemble_member_selection_split", "oof") or "oof"
+            ).strip().lower()
+            ensemble_oof_notes: list[str] = []
+            if ensemble_selection_split == "oof" and len(prediction_payloads) >= 2:
+                ensemble_oof_notes = run_ensemble_oof_stage()
             if len(prediction_payloads) < 2:
                 print(f"[skip] {dataset_id} ensemble: fewer than two models produced predictions")
             else:
@@ -9602,17 +10205,21 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
                             drop_highly_correlated_members=bool(args.ensemble_drop_highly_correlated_members),
                             max_train_prediction_correlation=float(args.ensemble_max_train_correlation),
                             exclude_negative_test_r2_members=bool(args.ensemble_exclude_negative_test_r2_members),
-                            member_selection_split=str(
-                                getattr(args, "ensemble_member_selection_split", "train")
-                            ),
+                            member_selection_split=ensemble_selection_split,
                         )
                         final_ensemble_row = ensemble_results.loc[
                             ensemble_results["workflow"].astype(str) == "ensemble"
                         ].iloc[0].to_dict()
                         final_ensemble_row["ensemble_method"] = str(method_name)
+                        final_ensemble_row["ensemble_member_selection_split"] = ensemble_selection_split
+                        if ensemble_selection_split == "oof":
+                            final_ensemble_row["ensemble_oof_folds"] = int(getattr(args, "ensemble_oof_folds", 5))
+                            final_ensemble_row["ensemble_oof_scope"] = str(getattr(args, "ensemble_oof_scope", "all"))
                         final_ensemble_row["ensemble_member_count"] = int(len(ensemble_members))
                         final_ensemble_row["ensemble_members"] = ", ".join(ensemble_members)
-                        final_ensemble_row["ensemble_member_filter_notes"] = " | ".join(member_filter_notes)
+                        final_ensemble_row["ensemble_member_filter_notes"] = " | ".join(
+                            [*member_filter_notes, *ensemble_oof_notes]
+                        )
                         metrics_rows.append(
                             add_cost_columns({**base_meta, **final_ensemble_row})
                         )
@@ -11144,14 +11751,46 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--ensemble-exclude-negative-test-r2-members", action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument(
         "--ensemble-member-selection-split",
-        choices=["train", "test"],
-        default="train",
+        choices=["oof", "train", "test"],
+        default="oof",
         help=(
-            "Which split may inform ensemble MEMBERSHIP (not the reported score). "
-            "'train' (default) keeps member exclusion and the correlated-pair tie-break "
-            "leakage-free. 'test' reproduces the originally deposited benchmark run, which "
-            "consulted held-out R2 and is therefore optimistically biased; use it only for "
-            "exact reproduction."
+            "Which predictions drive ensemble member exclusion, the correlated-pair tie-break, the "
+            "inverse-error weights and the stacking meta-model. 'oof' (default) refits each member on "
+            "K folds of the training split and uses its out-of-fold predictions: leakage-free and not "
+            "biased toward models that memorise the training set. 'train' uses in-sample training "
+            "predictions and reproduces benchmark_results/qsarena_benchmark_chemprop_fixed; it favours "
+            "overfit members. 'test' reproduces the originally deposited run, which consulted held-out "
+            "R2 and is optimistically biased."
+        ),
+    )
+    parser.add_argument(
+        "--ensemble-oof-folds",
+        type=int,
+        default=5,
+        help=(
+            "Folds used to generate out-of-fold member predictions when "
+            "--ensemble-member-selection-split oof. Uses the same fold geometry as --cv-folds, so "
+            "equal values reproduce the cross-validation partition."
+        ),
+    )
+    parser.add_argument(
+        "--ensemble-oof-scope",
+        choices=["all", "cpu"],
+        default="all",
+        help=(
+            "Which members may be refitted per fold to obtain out-of-fold predictions. Uni-Mol is "
+            "never refitted when its saved cv.data exists (its own internal-fold predictions). 'all' "
+            "also refits Chemprop per fold on the GPU. 'cpu' refits only CPU models; Chemprop (and "
+            "Uni-Mol without cv.data) is then left out of the ensemble."
+        ),
+    )
+    parser.add_argument(
+        "--ensemble-oof-source-run",
+        type=Path,
+        default=None,
+        help=(
+            "Optional earlier run directory to search for saved Uni-Mol model folders "
+            "(<run>/<dataset>/unimol_v1|unimol_v2/...) when building out-of-fold predictions."
         ),
     )
     parser.add_argument("--compare-run-dir", type=Path, default=None, help="Optional previous run directory for automatic run-vs-run attribution diagnostics.")

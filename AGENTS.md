@@ -59,6 +59,26 @@ always quote). Bash (Git Bash) and PowerShell are both available.
    `polaris_adme_fang_hppb_1` interrupted but has a full model table.
    The earlier **RTX 4060** run (`benchmark_results/benchmark_name_date`, `cost_optimized`) is kept
    deliberately: §3.11 / Table S5 compare the two. Do not delete it.
+
+   **Run lineage since 2026-09-26: the manuscript is moving off the canonical run.** Repair runs are
+   seeded from the previous run's metrics + predictions (`prepare_chemprop_repair_run.py`) and only
+   train what is missing:
+   - `benchmark_results/qsarena_benchmark_chemprop_fixed` (A100, committed `ab8d52f`): adds working
+     Chemprop (valid on 38-42/44 per variant), TabPFN (31/44; the API daily limit hit the rest) and a
+     clean `polaris_adme_fang_hppb_1`; all 44 complete. **Its ensembles are flawed. Do not report
+     them.** It used `--ensemble-member-selection-split train`, which rewards memorisation (see the
+     trap below). Its selector times and wall-clock totals come from reusing cached features and
+     selections, so they are not real costs either. Take selector scaling and dataset wall-clock from
+     the canonical run.
+   - `benchmark_results/qsarena_benchmark_oof_ensemble`: **pending A100 run.** Same base models, with
+     ensembles rebuilt on out-of-fold predictions and no full model retrained. This is the run the
+     manuscript should be regenerated from. Uni-Mol OOF comes free from its saved `cv.data`, CPU
+     members refit on 5 folds (~10 h), and Chemprop is the only GPU cost (~65 h with
+     `--ensemble-oof-scope all`; excluded with `cpu`). Command and checks:
+     [submission/chemprop_rerun_command.md](submission/chemprop_rerun_command.md) §7.
+   - Regenerate with `render_manuscript_assets.py --run-dir <run>`. `verify_manuscript_numbers.py`
+     is pinned to the canonical run and will fail until its assertions are moved to the new run
+     (update each value; never loosen a check).
 2. Regenerate every figure, table and number (~1.5 min; system Python suffices):
    ```bash
    python portable_colab_qsar_bundle/render_manuscript_assets.py   # notebook + figures + tables + numbers JSON + LaTeX tables
@@ -102,7 +122,9 @@ The paper makes three load-bearing claims. Keep them straight when editing:
    matched-candidate-set control (test-selected, restricted to the CV-eligible pool) gives 28/37,
    3 firsts, median rank 6. So **7 of the 10 lost placements are the value of the broad model
    library (35→28) and only 3 are the cost of honest selection (28→25)**; median rank 3 → 6 → 8.
-   Honest selection does remove *every* first place (5 → 3 → 0). Never re-attribute the whole
+   In the canonical run honest selection removed *every* first place (5 → 3 → 0). With TabPFN
+   eligible for CV selection (chemprop_fixed), that becomes 5 → 3 → **1**; re-check this against the
+   OOF-ensemble run before quoting it. Never re-attribute the whole
    ten-dataset gap to selection — that was the pre-2026-09-25 error. Never drop the decomposition
    to make the headline look better either. Verified by `chk("gap decomposition 7+3", ...)`.
 3. **No effort and no hardware required**: all 44 datasets ran under ONE fixed configuration with no
@@ -137,14 +159,34 @@ Open work is tracked in [TODO.md](TODO.md); the Zenodo deposit is the last block
   magnitude (the old "MapLight+GNN ≈ 13 h" was an artifact; the real median is ≈150 s).
 - **`analysis_delta_from_best` is an absolute difference**, so it mixes units (clearance RMSE ≈ 40 vs LogS ≈ 0.6).
   Use `relative_gap_to_best` from the export cell for cross-dataset summaries.
-- **Test-set leakage:** the per-dataset "best model" is still chosen on the test set (disclose this). Ensemble
-  member filtering **was** leaky too and is now **fixed**: `build_ensemble_result` takes
-  `member_selection_split`, exposed as `--ensemble-member-selection-split {train,test}` and defaulting to
-  `train`. The deposited run predates the flag, so a `run_config.json` with no
-  `ensemble_member_selection_split` key means the legacy leaky `test` behaviour — pass `--ensemble-member-selection-split test`
-  to reproduce it exactly. **Ensembles must be re-run for the fix to show up in results**; see
-  [submission/chemprop_rerun_command.md](submission/chemprop_rerun_command.md). The export cell reports a
-  CV-selected sensitivity analysis (only conventional models, TabPFN and ChemML MLP have CV metrics).
+- **Test-set leakage:** the per-dataset "best model" is still chosen on the test set (disclose this).
+  `--ensemble-member-selection-split` decides what ensembles are selected, weighted and stacked on.
+  There are three modes, and only one is correct:
+  - `test`: the canonical run. It leaks held-out R² into member selection. A `run_config.json` with no
+    `ensemble_member_selection_split` key means this mode.
+  - `train`: the chemprop_fixed run. It doesn't leak, but it reads **in-sample** training predictions.
+    A 500-tree extra-trees model has a training RMSE near 0, so it wins the correlated-pair tie-break
+    and takes ~100% of the stacking weight. On ESOL it pushed MapLight CatBoost out of the ensemble.
+    Across that run ensemble regression wins fell from 7 to 1. That was the artefact, not a finding.
+  - `oof` (the default): uses only out-of-fold predictions, taken first from what a backend already
+    saved and otherwise from refitting on K folds of the training split (same folds as `--cv-folds`).
+    Uni-Mol's saved `cv.data` holds its internal 5-fold predictions: they are on the normalised
+    target scale, so regression values are inverse-transformed with `target_scaler.ss`. Conventional
+    models reuse their CV fold fits in fresh runs. Chemprop (only with `--ensemble-oof-scope all`),
+    MapLight+GNN and ChemML are refitted per fold into `<dataset>/ensemble_oof/`. Saved model
+    weights do **not** remove the need for this: they give in-sample predictions for training
+    molecules. The OOF predictions are saved as `split="oof"` rows in
+    `predictions.csv`, so the stage resumes. Members without OOF predictions, and CFA, are excluded
+    and noted in `ensemble_member_filter_notes`. Tests: `tests/unit/test_ensemble_oof.py`.
+  Downstream code must not assume `predictions.csv` holds only `train`/`test` rows.
+  **This fix covers the runner only.** The Colab notebook builds ensembles with its own copy of the
+  code (`build_colab_qsar_tutorial.py` ~L10990). That copy still filters members and picks CFA
+  members on *test* metrics and weights on in-sample RMSE (TODO.md).
+- **Leakage-free CV selection is no longer model-starved.** TabPFN emits CV metrics. In the
+  chemprop_fixed run, the CV-selected model picked the per-dataset winner on 3 datasets (it was 0),
+  sat a median 8.7% from the best (it was 16.1%), and reached **one** estimated first place (it was
+  0). The top-10 counts 35 → 28 → 25 were unchanged. After the OOF run, re-check the "every first
+  place" and "CV never picks the winner" wording before quoting it.
 - **All `subprocess.run` calls must use `_SUBPROCESS_TEXT_KWARGS`** (`text`/`encoding="utf-8"`/`errors="replace"`),
   never bare `text=True`. Bare `text=True` decodes with the ambient locale; under the C/POSIX locale on
   Jetstream2 that was ASCII, and Chemprop v2's UTF-8 progress output (`0xe2`) made `subprocess.run` itself
