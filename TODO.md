@@ -33,6 +33,10 @@ Last updated: 2026-09-25.
       features, splits, selection and the base models, but notebook ensembles draw only on
       conventional, tuned and Uni-Mol members; ChemML, TabPFN, MapLight + GNN and Chemprop have no OOF
       predictions inside a notebook session. Qualify the sentence in both formats.
+- [ ] **Refactor: one shared ensemble implementation** in `qsar_workflow_core.py` for the runner and
+      the notebook (they are two copies today, which is how the notebook's leak outlived the
+      runner's fix). Plan, specs and acceptance tests:
+      [docs/AGENT_WORK_ORDER_shared_ensemble.md](docs/AGENT_WORK_ORDER_shared_ensemble.md).
 
 ## Raised by focused peer review (2026-09-25, second report)
 
