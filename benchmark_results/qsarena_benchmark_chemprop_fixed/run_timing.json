@@ -1,10 +1,10 @@
 {
-  "status": "running",
-  "started_at": "2026-09-25 18:43:27 UTC",
-  "started_epoch": 1790361807.8274024,
-  "updated_at": "2026-09-25 21:19:25 UTC",
-  "updated_epoch": 1790371165.873612,
-  "elapsed_seconds": 9358.046,
+  "status": "completed",
+  "started_at": "2026-09-26 06:23:49 UTC",
+  "started_epoch": 1790403829.2860978,
+  "updated_at": "2026-09-26 13:55:10 UTC",
+  "updated_epoch": 1790430910.8152258,
+  "elapsed_seconds": 27081.529,
   "dataset_count": 44,
   "resource_config": {
     "detected_cpu_count": 32,
@@ -25,10 +25,7 @@
     "unimol_batch_size": 128,
     "precision_mode": "fp32"
   },
-  "phase": "main_dataset_loop",
-  "completed_dataset_count": 14,
-  "last_dataset": "tdc_cyp3a4_substrate_carbonmangels",
-  "last_dataset_status": "completed",
-  "average_finished_dataset_seconds": 668.428,
-  "eta_seconds": 20052.852
+  "phase": "completed",
+  "completed_dataset_count": 44,
+  "tdc22_best_model_multiseed": {}
 }

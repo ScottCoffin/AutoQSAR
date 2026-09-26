@@ -1,17 +1,23 @@
 Model,Weight,Workflow
-ElasticNetCV,0.011849514412830529,conventional
-SVR,0.02228816914522445,conventional
-Random forest,0.025269970521459753,conventional
-Extra trees,0.6821027985658468,conventional
-HistGradientBoosting,0.020033928714303588,conventional
-"Voting Regressor (KNN, SVM)",0.0445050526522792,conventional
-AdaBoost,0.008627300491302071,conventional
-Tabular MLP,0.026638738673340965,conventional
-Tabular CNN,0.00876180206014554,conventional
-XGBoost,0.026401380218178234,conventional
-CatBoost,0.013913592047935632,conventional
-MapLight CatBoost (Strict Parity),0.01450881477615003,conventional
-ChemML MLP (TensorFlow),0.025430754930620213,ChemML deep learning
-Uni-Mol V1,0.019307535034919728,Uni-Mol
-"MapLight + GNN (CatBoost, Strict Parity)",0.01733736015788271,MapLight + GNN
-CFA (Combinatorial Fusion),0.03302328759758071,cfa
+ElasticNetCV,0.010933895805071725,conventional
+SVR,0.020565949846503978,conventional
+Random forest,0.02331734576226188,conventional
+Extra trees,0.6293963337258199,conventional
+HistGradientBoosting,0.018485895834790173,conventional
+"Voting Regressor (KNN, SVM)",0.04106612233597959,conventional
+AdaBoost,0.007960664155891604,conventional
+Tabular MLP,0.024580348433305067,conventional
+Tabular CNN,0.008084772713265128,conventional
+XGBoost,0.02436133079876032,conventional
+CatBoost,0.012838481006586923,conventional
+MapLight CatBoost (Strict Parity),0.01338771054160144,conventional
+ChemML MLP (TensorFlow),0.023465706270177456,ChemML deep learning
+Uni-Mol V1,0.01781563100138519,Uni-Mol
+"MapLight + GNN (CatBoost, Strict Parity)",0.0159976926392893,MapLight + GNN
+CFA (Combinatorial Fusion),0.030471559690403743,cfa
+"Chemprop v2 (D-MPNN, ensemble=3)",0.009418911499319116,Chemprop v2
+"Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",0.011752692750460028,Chemprop v2
+"Chemprop v2 (CMPNN, ensemble=3)",0.009090164423294425,Chemprop v2
+"Chemprop v2 (AttentiveFP, ensemble=3)",0.009793332361567668,Chemprop v2
+"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",0.01243927279995082,Chemprop v2
+TabPFNRegressor,0.02477618560431457,Conventional ML

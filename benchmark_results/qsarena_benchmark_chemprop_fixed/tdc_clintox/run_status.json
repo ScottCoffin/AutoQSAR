@@ -2,8 +2,8 @@
   "status": "completed",
   "dataset": "tdc_clintox",
   "source": "PyTDC Tox benchmark: clintox",
-  "completed_at": "2026-06-30 20:23:32",
-  "elapsed_seconds": 1624.954,
-  "n_metrics_rows": 41,
-  "n_stage_records": 25
+  "completed_at": "2026-09-26 07:11:17",
+  "elapsed_seconds": 626.201,
+  "n_metrics_rows": 49,
+  "n_stage_records": 10
 }

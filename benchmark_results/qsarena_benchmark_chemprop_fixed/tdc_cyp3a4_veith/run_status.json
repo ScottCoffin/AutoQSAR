@@ -2,8 +2,8 @@
   "status": "completed",
   "dataset": "tdc_cyp3a4_veith",
   "source": "PyTDC ADME benchmark group: cyp3a4_veith (official train_val/test split)",
-  "completed_at": "2026-06-30 08:02:42",
-  "elapsed_seconds": 4362.067,
-  "n_metrics_rows": 29,
-  "n_stage_records": 25
+  "completed_at": "2026-09-26 11:34:23",
+  "elapsed_seconds": 3591.422,
+  "n_metrics_rows": 35,
+  "n_stage_records": 10
 }

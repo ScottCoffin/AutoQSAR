@@ -1,0 +1,33 @@
+model,workflow,datasets_attempted,datasets_successful,top1_count,ensemble_member_count,ensemble_nonzero_weight_count,ensemble_mean_abs_weight,never_top_or_ensemble
+ChemML MLP (PyTorch),ChemML deep learning,44,44,0,0,0,0.0,True
+ChemML MLP (TensorFlow),ChemML deep learning,44,44,0,0,0,0.0,True
+Extra trees,conventional,44,44,0,0,0,0.0,True
+Tabular MLP,conventional,44,44,0,0,0,0.0,True
+XGBoost,conventional,44,44,0,0,0,0.0,True
+LogisticRegression,conventional,22,22,0,0,0,0.0,True
+SVC,conventional,22,22,0,0,0,0.0,True
+SVR,conventional,22,22,0,0,0,0.0,True
+Tabular CNN,conventional,22,22,0,0,0,0.0,True
+"Voting Regressor (KNN, SVM)",conventional,22,22,0,0,0,0.0,True
+ElasticNetCV,conventional,22,20,0,0,0,0.0,True
+TabPFNClassifier,conventional,22,14,0,0,0,0.0,True
+"Chemprop v2 (CMPNN, ensemble=3)",Chemprop v2,44,2,0,0,0,0.0,True
+"Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",Chemprop v2,44,2,0,0,0,0.0,True
+"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",Chemprop v2,44,2,0,0,0,0.0,True
+"Chemprop v2 (D-MPNN, ensemble=3)",Chemprop v2,44,2,0,0,0,0.0,True
+Uni-Mol V2 (164m),Uni-Mol,4,0,0,0,0,0.0,False
+Uni-Mol V2 (310m),Uni-Mol,8,0,0,0,0,0.0,False
+CatBoost,conventional,44,44,1,0,0,0.0,False
+HistGradientBoosting,conventional,44,44,1,0,0,0.0,False
+Random forest,conventional,44,44,1,0,0,0.0,False
+"Voting Classifier (KNN, SVM)",conventional,22,22,1,0,0,0.0,False
+TabPFNRegressor,conventional,22,17,1,0,0,0.0,False
+"Chemprop v2 (AttentiveFP, ensemble=3)",Chemprop v2,44,2,1,0,0,0.0,False
+AdaBoost,conventional,44,44,2,0,0,0.0,False
+Uni-Mol V2 (84m),Uni-Mol,44,14,2,0,0,0.0,False
+Ensemble (Weighted average (inverse train RMSE)),ensemble,44,44,3,0,0,0.0,False
+CFA (Combinatorial Fusion),cfa,44,44,4,0,0,0.0,False
+"Ensemble (OOF Stacking (RidgeCV, 5-fold))",ensemble,44,44,4,0,0,0.0,False
+Uni-Mol V1,Uni-Mol,44,43,6,0,0,0.0,False
+MapLight CatBoost (Strict Parity),conventional,22,22,6,0,0,0.0,False
+"MapLight + GNN (CatBoost, Strict Parity)",MapLight + GNN,44,43,11,0,0,0.0,False

@@ -1,0 +1,39 @@
+{
+  "started_at": "2026-09-26 06:23:49 UTC",
+  "completed_at": "2026-09-26 13:55:10",
+  "elapsed_seconds": 27081.53,
+  "dataset_count": 44,
+  "resource_config": {
+    "detected_cpu_count": 32,
+    "n_jobs": 32,
+    "gpu_available": true,
+    "gpu_inventory": [
+      {
+        "index": 0,
+        "name": "NVIDIA A100-SXM4-40GB",
+        "total_memory_gb": 39.494,
+        "multi_processor_count": 108,
+        "compute_capability": "8.0"
+      }
+    ],
+    "chemprop_num_workers": 8,
+    "unimol_num_workers": 8,
+    "chemprop_batch_size": 32,
+    "unimol_batch_size": 128,
+    "precision_mode": "fp32"
+  },
+  "ga_models_resolved": [],
+  "run_vs_run_attribution": {
+    "generated_at": "2026-09-26 13:55:10 UTC",
+    "current_run_dir": "benchmark_results/qsarena_benchmark_chemprop_fixed",
+    "reference_run_dir": "/media/volume/AutoQSARdata_300/AutoQSAR/benchmark_results/autoqsar_benchmark_20260623_153839",
+    "has_reference_run": true,
+    "split_datasets_compared": 44,
+    "split_all_match_count": 44,
+    "config_diff_count": 20,
+    "new_error_count": 43,
+    "resolved_error_count": 0,
+    "leaderboard_comparable_dataset_count": 7
+  },
+  "tdc22_best_model_multiseed": {}
+}

@@ -1,0 +1,45 @@
+dataset,current_best_model,current_best_workflow,primary_metric,current_primary_metric_value,leaderboard_metric_name,leaderboard_metric_reference,current_estimated_rank_vs_top10,current_estimated_in_top10,current_gap_to_top10_cutoff,leaderboard_top10_cutoff_value,leaderboard_url,leaderboard_comparable,reference_best_model,reference_primary_metric_value,current_minus_reference
+chemml_cep_homo,MapLight CatBoost (Strict Parity),conventional,mae,0.0824664691568732,,,,,,,,False,MapLight CatBoost (Strict Parity),0.0824664691568732,0.0
+chemml_organic_density,TabPFNRegressor,conventional,rmse,0.0048101712939232,,,,,,,,False,"Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",0.0051734474083698,-0.0003632761144465998
+esol_delaney,MapLight CatBoost (Strict Parity),conventional,mae,0.5178495206587143,Test RMSE,,,,,,https://github.com/deepchem/moleculenet,False,MapLight CatBoost (Strict Parity),0.5178495206587143,0.0
+freesolv_sampl,MapLight CatBoost (Strict Parity),conventional,mae,0.8291846185529205,,,,,,,https://github.com/deepchem/moleculenet,False,MapLight CatBoost (Strict Parity),0.8291846185529205,0.0
+lipophilicity,"MapLight + GNN (CatBoost, Strict Parity)",MapLight + GNN,mae,0.4864712837352753,Test RMSE,,,,,,https://github.com/deepchem/moleculenet,False,"MapLight + GNN (CatBoost, Strict Parity)",0.4864712837352753,0.0
+poduam_pod_nc_std,"MapLight + GNN (CatBoost, Strict Parity)",MapLight + GNN,mae,0.5417396101257584,RMSE,,,,,,https://www.nature.com/articles/s41467-025-67374-4#data-availability,False,"MapLight + GNN (CatBoost, Strict Parity)",0.5417396101257584,0.0
+poduam_pod_rd_std,MapLight CatBoost (Strict Parity),conventional,mae,0.4125965680575701,RMSE,,,,,,https://www.nature.com/articles/s41467-025-67374-4#data-availability,False,MapLight CatBoost (Strict Parity),0.4125965680575701,0.0
+polaris_adme_fang_hppb_1,Ensemble (Weighted average (inverse train RMSE)),ensemble,mse,0.2076996959431525,mean_squared_error,,4.0,True,-0.0953003040568474,0.303,https://polarishub.io/benchmarks/polaris/adme-fang-hppb-1,False,Ensemble (Weighted average (inverse train RMSE)),0.2146501025417409,-0.006950406598588421
+polaris_adme_fang_perm_1,Uni-Mol V1,Uni-Mol,mse,0.1593775760725137,mean_squared_error,,4.0,True,-0.0796224239274862,0.239,https://polarishub.io/benchmarks/polaris/adme-fang-perm-1,False,Uni-Mol V1,0.1593775760725137,0.0
+polaris_adme_fang_rclint_1,Uni-Mol V1,Uni-Mol,mse,0.2729228224752916,mean_squared_error,,6.0,True,-0.0640771775247084,0.337,https://polarishub.io/benchmarks/polaris/adme-fang-rclint-1,False,Uni-Mol V1,0.2729228224752916,0.0
+polaris_adme_fang_rppb_1,CFA (Combinatorial Fusion),cfa,mse,0.2658088094719232,mean_squared_error,0.235,4.0,True,-0.3681911905280768,0.634,https://polarishub.io/benchmarks/polaris/adme-fang-rppb-1,True,CFA (Combinatorial Fusion),0.2658088094719232,0.0
+polaris_adme_fang_solu_1,Uni-Mol V2 (84m),Uni-Mol,mse,0.3035273265509489,mean_squared_error,,7.0,True,-0.0194726734490511,0.323,https://polarishub.io/benchmarks/polaris/adme-fang-solu-1,False,Uni-Mol V2 (84m),0.3035273265509489,0.0
+tdc_ames,Ensemble (Weighted average (inverse train RMSE)),ensemble,roc_auc,0.8753568701169007,,,,,,,,False,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",0.875897315396816,-0.0005404452799153692
+tdc_bbb_martins,Random forest,conventional,roc_auc,0.9250703564727956,,,,,,,,False,Random forest,0.9250703564727956,0.0
+tdc_bioavailability_ma,CatBoost,conventional,roc_auc,0.7766877286331892,,,,,,,,False,CatBoost,0.7766877286331892,0.0
+tdc_caco2_wang,MapLight CatBoost (Strict Parity),conventional,mae,0.2724363311989904,MAE,0.256,2.0,True,-0.0535636688010096,0.326,https://tdcommons.ai/benchmark/admet_group/01caco2/,True,MapLight CatBoost (Strict Parity),0.2724363311989904,0.0
+tdc_carcinogens_lagunin,"Chemprop v2 (AttentiveFP, ensemble=3)",Chemprop v2,roc_auc,0.9286703601108032,AUROC,,1.0,True,-0.1986703601108032,0.73,,False,"Chemprop v2 (AttentiveFP, ensemble=3)",0.9286703601108032,0.0
+tdc_clearance_hepatocyte_az,"MapLight + GNN (CatBoost, Strict Parity)",MapLight + GNN,mae,32.14151274296306,Spearman,,,,,,https://tdcommons.ai/benchmark/admet_group/17clhepa/,False,"MapLight + GNN (CatBoost, Strict Parity)",32.14151274296306,0.0
+tdc_clearance_microsome_az,MapLight CatBoost (Strict Parity),conventional,mae,23.49980955373697,Spearman,,,,,,https://tdcommons.ai/benchmark/admet_group/18clmicro/,False,MapLight CatBoost (Strict Parity),23.49980955373697,0.0
+tdc_clintox,CFA (Combinatorial Fusion),cfa,roc_auc,0.9739688128772636,AUROC,0.996,2.0,True,-0.2419688128772635,0.732,,True,CFA (Combinatorial Fusion),0.9739688128772636,0.0
+tdc_cyp1a2_veith,"MapLight + GNN (CatBoost, Strict Parity)",MapLight + GNN,mae,0.0698967434471803,,,,,,,,False,"MapLight + GNN (CatBoost, Strict Parity)",0.0698967434471803,0.0
+tdc_cyp2c19_veith,"MapLight + GNN (CatBoost, Strict Parity)",MapLight + GNN,mae,0.1042620363062351,,,,,,,,False,"MapLight + GNN (CatBoost, Strict Parity)",0.1042620363062351,0.0
+tdc_cyp2c9_substrate_carbonmangels,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",ensemble,auprc,0.4653863071834505,,,,,,,,False,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",0.4663814326429536,-0.0009951254595031434
+tdc_cyp2c9_veith,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",ensemble,auprc,0.8160569635556439,,,,,,,,False,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",0.813538249556402,0.0025187139992419727
+tdc_cyp2d6_substrate_carbonmangels,Uni-Mol V1,Uni-Mol,auprc,0.6522203476485503,,,,,,,,False,Uni-Mol V1,0.6522203476485503,0.0
+tdc_cyp2d6_veith,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",ensemble,auprc,0.7344747389371645,,,,,,,,False,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",0.7336956730461076,0.0007790658910569181
+tdc_cyp3a4_substrate_carbonmangels,"Voting Classifier (KNN, SVM)",conventional,roc_auc,0.6552893309222423,,,,,,,,False,"Voting Classifier (KNN, SVM)",0.6552893309222423,0.0
+tdc_cyp3a4_veith,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",ensemble,auprc,0.8856220447983862,,,,,,,,False,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",0.8839851712909622,0.0016368735074240304
+tdc_dili,Uni-Mol V1,Uni-Mol,roc_auc,0.9217391304347826,,,,,,,,False,Uni-Mol V1,0.9217391304347826,0.0
+tdc_half_life_obach,"MapLight + GNN (CatBoost, Strict Parity)",MapLight + GNN,mae,12.198785081539436,Spearman,,,,,,https://tdcommons.ai/benchmark/admet_group/16halflife/,False,"MapLight + GNN (CatBoost, Strict Parity)",12.198785081539436,0.0
+tdc_herg,AdaBoost,conventional,roc_auc,0.8484536082474227,,,,,,,,False,AdaBoost,0.8484536082474227,0.0
+tdc_herg_karim,"MapLight + GNN (CatBoost, Strict Parity)",MapLight + GNN,mae,0.1927137546468401,,,,,,,,False,"MapLight + GNN (CatBoost, Strict Parity)",0.1927137546468401,0.0
+tdc_hia_hou,CFA (Combinatorial Fusion),cfa,roc_auc,0.987448559670782,,,,,,,,False,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",0.9880658436213992,-0.0006172839506171091
+tdc_hydrationfreeenergy_freesolv,"MapLight + GNN (CatBoost, Strict Parity)",MapLight + GNN,mae,0.9224032188057985,RMSE,,,,,,,False,"MapLight + GNN (CatBoost, Strict Parity)",0.9224032188057985,0.0
+tdc_ld50_zhu,Ensemble (Weighted average (inverse train RMSE)),ensemble,mae,0.5692574457374975,MAE,,2.0,True,-0.0607425542625025,0.63,https://tdcommons.ai/benchmark/admet_group/19ld50/,False,Ensemble (Weighted average (inverse train RMSE)),0.5754761082937659,-0.006218662556268462
+tdc_lipophilicity_astrazeneca,CFA (Combinatorial Fusion),cfa,mae,0.4696447077382253,MAE,0.456,3.0,True,-0.0693552922617747,0.539,https://tdcommons.ai/benchmark/admet_group/05lipo/,True,CFA (Combinatorial Fusion),0.4696447077382253,0.0
+tdc_pampa_ncats,"MapLight + GNN (CatBoost, Strict Parity)",MapLight + GNN,mae,0.1049019607843137,,,,,,,,False,"MapLight + GNN (CatBoost, Strict Parity)",0.1049019607843137,0.0
+tdc_pgp_broccatelli,Uni-Mol V2 (84m),Uni-Mol,roc_auc,0.9328845641162358,,,,,,,,False,Uni-Mol V2 (84m),0.9328845641162358,0.0
+tdc_ppbr_az,"MapLight + GNN (CatBoost, Strict Parity)",MapLight + GNN,mae,7.3061861151788605,MAE,7.44,1.0,True,-1.3738138848211392,8.68,https://tdcommons.ai/benchmark/admet_group/08ppbr/,True,"MapLight + GNN (CatBoost, Strict Parity)",7.3061861151788605,0.0
+tdc_skin_reaction,Uni-Mol V1,Uni-Mol,roc_auc,0.588855421686747,AUROC,,9.0,True,-0.1378554216867469,0.451,,False,Uni-Mol V2 (84m),0.6577560240963856,-0.06890060240963858
+tdc_solubility_aqsoldb,Uni-Mol V1,Uni-Mol,mae,0.7104110986585406,MAE,,1.0,True,-0.1185889013414593,0.829,https://tdcommons.ai/benchmark/admet_group/06aqsol/,False,Uni-Mol V1,0.7104110986585406,0.0
+tdc_tox21,AdaBoost,conventional,roc_auc,0.5562514497796335,AUROC,0.867,7.0,True,0.2767485502203665,0.833,,True,AdaBoost,0.5562514497796335,0.0
+tdc_toxcast,HistGradientBoosting,conventional,roc_auc,0.7156874524410268,AUROC,0.714,1.0,True,-0.0016874524410268,0.714,,True,HistGradientBoosting,0.7156874524410268,0.0
+tdc_vdss_lombardo,"MapLight + GNN (CatBoost, Strict Parity)",MapLight + GNN,mae,1.9804604191781627,Spearman,,,,,,https://tdcommons.ai/benchmark/admet_group/09vdss/,False,"MapLight + GNN (CatBoost, Strict Parity)",1.9804604191781627,0.0

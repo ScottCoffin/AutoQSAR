@@ -1,13 +1,18 @@
 Model,Weight,Workflow
-ElasticNetCV,0.038409187390410444,conventional
-SVR,0.16903348523245637,conventional
-Random forest,0.08259355510975556,conventional
-AdaBoost,0.02811438705786816,conventional
-Tabular CNN,0.029312485338764353,conventional
-XGBoost,0.21179871734099504,conventional
-CatBoost,0.05716555764360208,conventional
-MapLight CatBoost (Strict Parity),0.051189467786686524,conventional
-Uni-Mol V1,0.04213383153927529,Uni-Mol
-Uni-Mol V2 (84m),0.04457527490562009,Uni-Mol
-"MapLight + GNN (CatBoost, Strict Parity)",0.05611920000924285,MapLight + GNN
-CFA (Combinatorial Fusion),0.18955485064532326,cfa
+ElasticNetCV,0.003701199124578635,conventional
+SVR,0.01628846195592886,conventional
+Random forest,0.007958908132078495,conventional
+Extra trees,0.9007635495001665,conventional
+AdaBoost,0.0027091680880659877,conventional
+Tabular CNN,0.002824619640407845,conventional
+XGBoost,0.020409419737036295,conventional
+CatBoost,0.0055086068277345164,conventional
+MapLight CatBoost (Strict Parity),0.0049327368328295615,conventional
+Uni-Mol V1,0.004060114545595517,Uni-Mol
+Uni-Mol V2 (84m),0.004295377738184687,Uni-Mol
+"MapLight + GNN (CatBoost, Strict Parity)",0.0054077773589690965,MapLight + GNN
+"Chemprop v2 (D-MPNN, ensemble=3)",0.003331557616604176,Chemprop v2
+"Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",0.003994174942679042,Chemprop v2
+"Chemprop v2 (CMPNN, ensemble=3)",0.003304100272690589,Chemprop v2
+"Chemprop v2 (AttentiveFP, ensemble=3)",0.0032510055717599982,Chemprop v2
+"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",0.0072592221146900796,Chemprop v2

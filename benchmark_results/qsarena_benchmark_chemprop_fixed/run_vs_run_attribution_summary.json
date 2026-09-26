@@ -1,0 +1,12 @@
+{
+  "generated_at": "2026-09-26 13:55:10 UTC",
+  "current_run_dir": "benchmark_results/qsarena_benchmark_chemprop_fixed",
+  "reference_run_dir": "/media/volume/AutoQSARdata_300/AutoQSAR/benchmark_results/autoqsar_benchmark_20260623_153839",
+  "has_reference_run": true,
+  "split_datasets_compared": 44,
+  "split_all_match_count": 44,
+  "config_diff_count": 20,
+  "new_error_count": 43,
+  "resolved_error_count": 0,
+  "leaderboard_comparable_dataset_count": 7
+}

@@ -2,8 +2,8 @@
   "status": "completed",
   "dataset": "chemml_cep_homo",
   "source": "ChemML bundled dataset: cep_homo",
-  "completed_at": "2026-09-25 18:43:49",
-  "elapsed_seconds": 6.463,
-  "n_metrics_rows": 65,
-  "n_stage_records": 9
+  "completed_at": "2026-09-26 06:28:48",
+  "elapsed_seconds": 32.259,
+  "n_metrics_rows": 66,
+  "n_stage_records": 10
 }

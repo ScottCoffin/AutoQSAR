@@ -2,8 +2,8 @@
   "status": "completed",
   "dataset": "tdc_ld50_zhu",
   "source": "PyTDC Tox benchmark group: ld50_zhu (official train_val/test split)",
-  "completed_at": "2026-06-30 05:05:18",
-  "elapsed_seconds": 2735.707,
-  "n_metrics_rows": 37,
-  "n_stage_records": 27
+  "completed_at": "2026-09-26 08:47:18",
+  "elapsed_seconds": 2449.938,
+  "n_metrics_rows": 43,
+  "n_stage_records": 10
 }

@@ -1,10 +1,11 @@
 dataset,stage_index,total_stages,stage_label,step_type,model,workflow,started_at,started_epoch,status,ended_at,ended_epoch,duration_seconds
-tdc_dili,1,9,loading PyTDC Tox benchmark group: dili (official train_val/test split),load_dataset,,,2026-09-25 18:43:37 UTC,1790361817.4068592,completed,2026-09-25 18:43:37 UTC,1790361817.5311337,0.124
-tdc_dili,2,9,building molecular features (cached),feature_generation,,,2026-09-25 18:43:37 UTC,1790361817.531177,resumed_cache,2026-09-25 18:43:37 UTC,1790361817.538886,0.008
-tdc_dili,3,9,splitting data and selecting features (cached),feature_selection,,,2026-09-25 18:43:37 UTC,1790361817.5389385,resumed_cache,2026-09-25 18:43:41 UTC,1790361821.826889,4.288
-tdc_dili,4,9,"deep model Chemprop v2 (D-MPNN, ensemble=3) (cached)",model,"Chemprop v2 (D-MPNN, ensemble=3)",Chemprop v2,2026-09-25 18:43:41 UTC,1790361821.826948,completed,2026-09-25 18:43:41 UTC,1790361821.8285508,0.002
-tdc_dili,5,9,"deep model Chemprop v2 (D-MPNN + RDKit2D, ensemble=3) (cached)",model,"Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",Chemprop v2,2026-09-25 18:43:41 UTC,1790361821.8285794,completed,2026-09-25 18:43:41 UTC,1790361821.8299177,0.001
-tdc_dili,6,9,"deep model Chemprop v2 (CMPNN, ensemble=3) (cached)",model,"Chemprop v2 (CMPNN, ensemble=3)",Chemprop v2,2026-09-25 18:43:41 UTC,1790361821.8299599,completed,2026-09-25 18:43:41 UTC,1790361821.8312633,0.001
-tdc_dili,7,9,"deep model Chemprop v2 (AttentiveFP, ensemble=3) (cached)",model,"Chemprop v2 (AttentiveFP, ensemble=3)",Chemprop v2,2026-09-25 18:43:41 UTC,1790361821.8312907,completed,2026-09-25 18:43:41 UTC,1790361821.8326046,0.001
-tdc_dili,8,9,"deep model Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3) (cached)",model,"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",Chemprop v2,2026-09-25 18:43:41 UTC,1790361821.8326325,completed,2026-09-25 18:43:41 UTC,1790361821.8340065,0.001
-tdc_dili,9,9,ensemble (2 method(s)),model,Ensemble,ensemble,2026-09-25 18:43:41 UTC,1790361821.8340344,completed,2026-09-25 18:43:43 UTC,1790361823.16375,1.33
+tdc_dili,1,10,loading PyTDC Tox benchmark group: dili (official train_val/test split),load_dataset,,,2026-09-26 06:26:48 UTC,1790404008.2482476,completed,2026-09-26 06:26:48 UTC,1790404008.3622677,0.114
+tdc_dili,2,10,building molecular features (cached),feature_generation,,,2026-09-26 06:26:48 UTC,1790404008.362306,resumed_cache,2026-09-26 06:26:48 UTC,1790404008.3663187,0.004
+tdc_dili,3,10,splitting data and selecting features (cached),feature_selection,,,2026-09-26 06:26:48 UTC,1790404008.3663528,resumed_cache,2026-09-26 06:26:52 UTC,1790404012.8767862,4.51
+tdc_dili,4,10,conventional model TabPFNClassifier,model,TabPFNClassifier,conventional,2026-09-26 06:26:52 UTC,1790404012.8768628,completed,2026-09-26 06:28:14 UTC,1790404094.396873,81.52
+tdc_dili,5,10,"deep model Chemprop v2 (D-MPNN, ensemble=3) (cached)",model,"Chemprop v2 (D-MPNN, ensemble=3)",Chemprop v2,2026-09-26 06:28:14 UTC,1790404094.3969035,completed,2026-09-26 06:28:14 UTC,1790404094.3981068,0.001
+tdc_dili,6,10,"deep model Chemprop v2 (D-MPNN + RDKit2D, ensemble=3) (cached)",model,"Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",Chemprop v2,2026-09-26 06:28:14 UTC,1790404094.3981361,completed,2026-09-26 06:28:14 UTC,1790404094.3993733,0.001
+tdc_dili,7,10,"deep model Chemprop v2 (CMPNN, ensemble=3) (cached)",model,"Chemprop v2 (CMPNN, ensemble=3)",Chemprop v2,2026-09-26 06:28:14 UTC,1790404094.3994024,completed,2026-09-26 06:28:14 UTC,1790404094.4006782,0.001
+tdc_dili,8,10,"deep model Chemprop v2 (AttentiveFP, ensemble=3) (cached)",model,"Chemprop v2 (AttentiveFP, ensemble=3)",Chemprop v2,2026-09-26 06:28:14 UTC,1790404094.400707,completed,2026-09-26 06:28:14 UTC,1790404094.4020324,0.001
+tdc_dili,9,10,"deep model Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3) (cached)",model,"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",Chemprop v2,2026-09-26 06:28:14 UTC,1790404094.4020615,completed,2026-09-26 06:28:14 UTC,1790404094.4033966,0.001
+tdc_dili,10,10,ensemble (2 method(s)),model,Ensemble,ensemble,2026-09-26 06:28:14 UTC,1790404094.4034264,completed,2026-09-26 06:28:15 UTC,1790404095.8308697,1.427

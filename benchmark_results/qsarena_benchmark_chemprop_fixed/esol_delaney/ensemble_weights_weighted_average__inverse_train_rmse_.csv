@@ -1,7 +1,11 @@
 Model,Weight,Workflow
-ElasticNetCV,0.15610399951732887,conventional
-AdaBoost,0.09776253455727915,conventional
-Tabular CNN,0.1001524731037789,conventional
-MapLight CatBoost (Strict Parity),0.2933614874207364,conventional
-Uni-Mol V1,0.2311372876221569,Uni-Mol
-Uni-Mol V2 (84m),0.12148221777871986,Uni-Mol
+ElasticNetCV,0.038072026434347615,conventional
+Extra trees,0.6717887981662335,conventional
+AdaBoost,0.023843193072964015,conventional
+Tabular CNN,0.024426072459783982,conventional
+Uni-Mol V1,0.05637180950855334,Uni-Mol
+Uni-Mol V2 (84m),0.029628159565899998,Uni-Mol
+"Chemprop v2 (D-MPNN, ensemble=3)",0.03400253340917359,Chemprop v2
+"Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",0.045062739181728644,Chemprop v2
+"Chemprop v2 (CMPNN, ensemble=3)",0.023881378185679186,Chemprop v2
+"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",0.05292329001563629,Chemprop v2

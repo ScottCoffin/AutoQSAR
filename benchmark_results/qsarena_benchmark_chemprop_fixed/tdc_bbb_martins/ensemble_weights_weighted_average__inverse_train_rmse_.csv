@@ -1,12 +1,15 @@
 Model,Weight,Workflow
-LogisticRegression,0.00664646597210077,conventional
-SVC,0.02203107985458131,conventional
-Random forest,0.23047898924795454,conventional
-Extra trees,0.24559236559222772,conventional
-AdaBoost,0.0004139063753088289,conventional
-Tabular MLP,0.05427947210548962,conventional
-XGBoost,0.12330151688159585,conventional
-CatBoost,0.023855309396679344,conventional
-Uni-Mol V1,0.016985413039813806,Uni-Mol
-"MapLight + GNN (CatBoost, Strict Parity)",0.0015322833487895512,MapLight + GNN
-CFA (Combinatorial Fusion),0.27488319818545853,cfa
+LogisticRegression,0.00691144791607587,conventional
+SVC,0.0229094170629929,conventional
+Random forest,0.23966774773595378,conventional
+Extra trees,0.2553836656204294,conventional
+AdaBoost,0.00043040803444819773,conventional
+XGBoost,0.12821731360356972,conventional
+CatBoost,0.024806375163749176,conventional
+Uni-Mol V1,0.017662589118861313,Uni-Mol
+"MapLight + GNN (CatBoost, Strict Parity)",0.0015933725685624762,MapLight + GNN
+CFA (Combinatorial Fusion),0.2858422679417809,cfa
+"Chemprop v2 (D-MPNN, ensemble=3)",0.0007543107905984904,Chemprop v2
+"Chemprop v2 (CMPNN, ensemble=3)",0.0007624698922171813,Chemprop v2
+"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",0.0034761583404742556,Chemprop v2
+TabPFNClassifier,0.011582456210286467,Conventional ML
