@@ -24,11 +24,15 @@ Last updated: 2026-09-25.
       selector scaling and dataset wall-clock from the canonical run, not the repair runs.
 - [ ] Disclose the ensemble history in the paper: held-out selection (canonical), then in-sample
       selection (rejected, memorisation), then OOF. Report how much the leak was worth.
-- [ ] **Colab notebook ensembles still leak** (`build_colab_qsar_tutorial.py` ~L10990-11360, a
-      separate copy of the ensemble code). Member exclusion and the correlated-pair tie-break read
-      *test* R² and RMSE. CFA best-per-workflow picks on *test* metrics. Weights and stacking use
-      in-sample training predictions. §2.1 says the notebook and runner share identical code paths,
-      which is false for ensembles until this is fixed or the text is qualified.
+- [x] **Colab notebook ensemble leak fixed** (block 7A in `build_colab_qsar_tutorial.py`). Members were
+      "best per workflow by test RMSE"; the filters, CFA best-per-workflow and the downstream strategy
+      used test metrics; weights and stacking used in-sample predictions. Everything now runs on OOF
+      predictions (conventional/tuned models refitted on K folds in the cell and cached in `STATE`;
+      Uni-Mol from `cv.data`).
+- [ ] **Manuscript §2.1** says the notebook and runner "share identical code paths". That holds for
+      features, splits, selection and the base models, but notebook ensembles draw only on
+      conventional, tuned and Uni-Mol members; ChemML, TabPFN, MapLight + GNN and Chemprop have no OOF
+      predictions inside a notebook session. Qualify the sentence in both formats.
 
 ## Raised by focused peer review (2026-09-25, second report)
 
