@@ -10712,14 +10712,22 @@ cells += [
 
         The workflow in this notebook now runs **three ensemble strategies by default**:
 
-        1. collect candidate base models from all successful conventional and deep workflows by default
-        2. align their train/test predictions on shared molecules
-        3. optionally prune weak or highly redundant members
-        4. evaluate:
-           - **OOF Stacking (RidgeCV)**
-           - **Weighted average (inverse train RMSE)**
-           - **CFA fusion (score+rank, diversity-aware)**
-        5. keep all ensemble rows in the results table and mark the best-performing ensemble for downstream prediction plots
+        1. collect every trained conventional and tuned model, plus Uni-Mol models that saved their internal-fold predictions
+        2. give each member **out-of-fold (OOF)** predictions for the training molecules: conventional models are refitted on
+           K folds of the training split; Uni-Mol reuses the fold predictions it saved (`cv.data`)
+        3. align their OOF and test predictions on shared molecules
+        4. optionally prune weak or highly redundant members, judged on OOF predictions
+        5. evaluate:
+           - **OOF Stacking (RidgeCV)**, a meta-model fitted on the members' OOF predictions
+           - **Weighted average (inverse OOF RMSE)**
+           - **CFA fusion (score+rank, diversity-aware)**, searched on OOF predictions
+        6. keep all ensemble rows in the results table and choose the strategy for downstream plots by **OOF RMSE**
+
+        Nothing in this block reads the test set, so the test metrics stay an honest estimate. Choosing members, weights
+        or the final strategy by test error would make the reported ensemble score optimistic. Weighting by in-sample
+        training error would hand the ensemble to whichever model memorises the training set. Deep workflows other than
+        Uni-Mol (ChemML, TabPFN, MapLight + GNN, Chemprop) have no OOF predictions inside a notebook session, so they are
+        not members here. The command-line runner builds OOF predictions for them by refitting per fold.
 
         By default, CFA now first keeps only the **best model per workflow family** before the combinatorial fusion search.
 
@@ -10761,16 +10769,13 @@ cells += [
         run_cfa_ensemble = True # @param {type:"boolean"}
         stacking_cv_folds = 5 # @param [3, 5, 10]
         stacking_random_seed = 42 # @param {type:"integer"}
-        exclude_negative_test_r2_members = True # @param {type:"boolean"}
+        ensemble_oof_folds = 5 # @param [3, 5, 10]
+        exclude_negative_oof_r2_members = True # @param {type:"boolean"}
         drop_highly_correlated_members = True # @param {type:"boolean"}
         max_train_prediction_correlation = 0.95 # @param {type:"number"}
-        include_best_conventional = True # @param {type:"boolean"}
-        include_best_tuned_conventional = True # @param {type:"boolean"}
-        include_best_chemml = True # @param {type:"boolean"}
-        include_best_tabpfn = True # @param {type:"boolean"}
-        include_best_maplight_gnn = True # @param {type:"boolean"}
-        include_best_chemprop = True # @param {type:"boolean"}
-        include_best_unimol = True # @param {type:"boolean"}
+        include_conventional = True # @param {type:"boolean"}
+        include_tuned_conventional = True # @param {type:"boolean"}
+        include_unimol = True # @param {type:"boolean"}
         cfa_best_per_workflow_only = True # @param {type:"boolean"}
         cfa_optimize_metric = "rmse" # @param ["rmse", "mae"]
         cfa_max_models = 0 # @param {type:"integer"}
@@ -10782,209 +10787,166 @@ cells += [
             if "traditional_results" not in STATE:
                 raise RuntimeError("Please train at least the conventional models first.")
 
-            selected_models = []
-            requested_categories = []
-            availability_messages = []
-            unavailable_categories = []
+            # Ensembles are built only from OUT-OF-FOLD (OOF) member predictions: for every training
+            # molecule, a prediction from a model that did not train on it. Member choice, member
+            # filtering, weights, the stacking meta-model, CFA and the choice of the downstream strategy
+            # never read test-set metrics or in-sample training predictions. Choosing members on test
+            # metrics leaks the test set; weighting on in-sample predictions hands the ensemble to
+            # whichever model memorises the training set.
+            import hashlib as _hashlib
+            import joblib as _joblib
+            from sklearn.base import clone as _clone
+            from sklearn.model_selection import KFold as _KFold
 
-            unimol_results_source = None
-            unimol_predictions_source = None
-            if "unimol_results" in STATE and "unimol_predictions" in STATE:
-                unimol_results_source = STATE["unimol_results"]
-                unimol_predictions_source = STATE["unimol_predictions"]
-            elif "deep_results" in STATE and "deep_predictions" in STATE:
-                candidate_unimol_rows = STATE["deep_results"].loc[STATE["deep_results"]["Workflow"] == "Uni-Mol"]
-                if not candidate_unimol_rows.empty:
-                    unimol_results_source = candidate_unimol_rows.reset_index(drop=True)
-                    unimol_predictions_source = STATE["deep_predictions"]
-
-            if include_best_conventional and "best_traditional_model_name" in STATE:
-                requested_categories.append("best conventional")
-                selected_models.append(("Conventional ML", STATE["best_traditional_model_name"]))
-                availability_messages.append(f"best conventional: {STATE['best_traditional_model_name']}")
-            elif include_best_conventional:
-                requested_categories.append("best conventional")
-                unavailable_categories.append("best conventional")
-                availability_messages.append("best conventional: unavailable")
-
-            if include_best_tuned_conventional and "tuned_traditional_results" in STATE:
-                requested_categories.append("best tuned conventional")
-                tuned_best = STATE["tuned_traditional_results"].iloc[0]["Model"]
-                selected_models.append(("Tuned conventional ML", tuned_best))
-                availability_messages.append(f"best tuned conventional: {tuned_best}")
-            elif include_best_tuned_conventional:
-                requested_categories.append("best tuned conventional")
-                unavailable_categories.append("best tuned conventional")
-                availability_messages.append("best tuned conventional: unavailable")
-
-            if include_best_chemml and "deep_results" in STATE:
-                requested_categories.append("best ChemML")
-                chemml_rows = STATE["deep_results"].loc[STATE["deep_results"]["Workflow"] == "ChemML deep learning"]
-                if not chemml_rows.empty:
-                    selected_models.append(("ChemML deep learning", chemml_rows.iloc[0]["Model"]))
-                    availability_messages.append(f"best ChemML: {chemml_rows.iloc[0]['Model']}")
-                else:
-                    unavailable_categories.append("best ChemML")
-                    availability_messages.append("best ChemML: unavailable")
-            elif include_best_chemml:
-                requested_categories.append("best ChemML")
-                unavailable_categories.append("best ChemML")
-                availability_messages.append("best ChemML: unavailable")
-
-            if include_best_tabpfn and "deep_results" in STATE:
-                requested_categories.append("best TabPFN")
-                tabpfn_rows = STATE["deep_results"].loc[STATE["deep_results"]["Workflow"] == "TabPFN deep learning"]
-                if not tabpfn_rows.empty:
-                    selected_models.append(("TabPFN deep learning", tabpfn_rows.iloc[0]["Model"]))
-                    availability_messages.append(f"best TabPFN: {tabpfn_rows.iloc[0]['Model']}")
-                else:
-                    unavailable_categories.append("best TabPFN")
-                    availability_messages.append("best TabPFN: unavailable")
-            elif include_best_tabpfn:
-                requested_categories.append("best TabPFN")
-                unavailable_categories.append("best TabPFN")
-                availability_messages.append("best TabPFN: unavailable")
-
-            if include_best_maplight_gnn and "deep_results" in STATE:
-                requested_categories.append("best MapLight + GNN")
-                gnn_rows = STATE["deep_results"].loc[STATE["deep_results"]["Workflow"] == "MapLight + GNN"]
-                if not gnn_rows.empty:
-                    selected_models.append(("MapLight + GNN", gnn_rows.iloc[0]["Model"]))
-                    availability_messages.append(f"best MapLight + GNN: {gnn_rows.iloc[0]['Model']}")
-                else:
-                    unavailable_categories.append("best MapLight + GNN")
-                    availability_messages.append("best MapLight + GNN: unavailable")
-            elif include_best_maplight_gnn:
-                requested_categories.append("best MapLight + GNN")
-                unavailable_categories.append("best MapLight + GNN")
-                availability_messages.append("best MapLight + GNN: unavailable")
-
-            if include_best_chemprop and "deep_results" in STATE:
-                requested_categories.append("best Chemprop")
-                chemprop_rows = STATE["deep_results"].loc[STATE["deep_results"]["Workflow"] == "Chemprop v2"]
-                if not chemprop_rows.empty:
-                    selected_models.append(("Chemprop v2", chemprop_rows.iloc[0]["Model"]))
-                    availability_messages.append(f"best Chemprop: {chemprop_rows.iloc[0]['Model']}")
-                else:
-                    unavailable_categories.append("best Chemprop")
-                    availability_messages.append("best Chemprop: unavailable")
-            elif include_best_chemprop:
-                requested_categories.append("best Chemprop")
-                unavailable_categories.append("best Chemprop")
-                availability_messages.append("best Chemprop: unavailable")
-
-            if include_best_unimol:
-                requested_categories.append("best Uni-Mol")
-                if unimol_results_source is not None and unimol_predictions_source is not None and not unimol_results_source.empty:
-                    unimol_best = unimol_results_source.iloc[0]["Model"]
-                    selected_models.append(("Uni-Mol", unimol_best))
-                    if "unimol_results" in STATE and "unimol_predictions" in STATE:
-                        availability_messages.append(f"best Uni-Mol: {unimol_best} (from 6C)")
-                    else:
-                        availability_messages.append(f"best Uni-Mol: {unimol_best} (from 5B)")
-                else:
-                    unavailable_categories.append("best Uni-Mol")
-                    availability_messages.append("best Uni-Mol: unavailable")
-
-            deduped = []
-            seen = set()
-            for workflow_label, model_name in selected_models:
-                key = (workflow_label, model_name)
-                if key not in seen:
-                    deduped.append((workflow_label, model_name))
-                    seen.add(key)
-            selected_models = deduped
-
-            print("Requested ensemble sources:")
-            for message in availability_messages:
-                print(f"  - {message}")
-            if selected_models:
-                print("Selected ensemble members:")
-                for workflow_label, model_name in selected_models:
-                    print(f"  - {workflow_label}: {model_name}")
-            else:
-                print("Selected ensemble members: none")
-
-            if len(selected_models) < 2:
-                details = []
-                if requested_categories:
-                    details.append(f"requested: {', '.join(requested_categories)}")
-                if unavailable_categories:
-                    details.append(f"unavailable: {', '.join(unavailable_categories)}")
-                details.append(
-                    "If Uni-Mol was trained only in blocks 6C or 6D, this block now checks STATE['unimol_results'] and "
-                    "STATE['unimol_predictions']; rerun the relevant Uni-Mol training block if those artifacts were not created in this session."
+            y_train_state = np.asarray(STATE["y_train"], dtype=float)
+            smiles_train_state = STATE["smiles_train"].astype(str).reset_index(drop=True)
+            smiles_test_state = STATE["smiles_test"].astype(str).reset_index(drop=True)
+            n_oof_folds = int(min(max(2, int(ensemble_oof_folds)), len(y_train_state)))
+            oof_splits = list(
+                _KFold(n_splits=n_oof_folds, shuffle=True, random_state=int(stacking_random_seed)).split(
+                    np.zeros(len(y_train_state))
                 )
-                raise ValueError(
-                    "Please select at least two trained models to build an ensemble. " + " ".join(details)
-                )
+            )
+            oof_cache_key = (
+                n_oof_folds,
+                int(stacking_random_seed),
+                _hashlib.sha256("|".join(smiles_train_state).encode("utf-8")).hexdigest(),
+            )
+            oof_cache = STATE.setdefault("ensemble_oof_cache", {})
+
+            def _feature_matrix_for(model_name):
+                columns = list(STATE.get("traditional_model_feature_columns", {}).get(model_name, []) or [])
+                for source_key in ("X_train", "X_train_unselected"):
+                    source = STATE.get(source_key)
+                    if isinstance(source, pd.DataFrame) and columns and set(columns).issubset(source.columns):
+                        return source.loc[:, columns].reset_index(drop=True)
+                return pd.DataFrame(STATE["X_train"]).reset_index(drop=True)
+
+            def _refit_oof(cache_name, fitted_model, X_frame):
+                # Refit an unfitted copy of the model on K-1 folds and predict the held-in fold.
+                key = (cache_name,) + oof_cache_key
+                if key in oof_cache:
+                    return oof_cache[key]
+                oof = np.full(len(y_train_state), np.nan, dtype=float)
+                for fit_idx, val_idx in oof_splits:
+                    fold_model = _clone(fitted_model)
+                    fold_model.fit(X_frame.iloc[fit_idx], y_train_state[fit_idx])
+                    oof[val_idx] = np.asarray(fold_model.predict(X_frame.iloc[val_idx]), dtype=float).reshape(-1)
+                if not np.isfinite(oof).all():
+                    raise ValueError("non-finite out-of-fold predictions")
+                oof_cache[key] = oof
+                return oof
+
+            def _unimol_saved_oof(model_dir, n_rows):
+                # Uni-Mol trains 5 internal folds and saves each training molecule's out-of-fold
+                # prediction to cv.data (normalised scale; target_scaler.ss maps it back).
+                if not model_dir:
+                    return None
+                cv_path = Path(str(model_dir)) / "cv.data"
+                if not cv_path.exists():
+                    return None
+                values = np.asarray(_joblib.load(cv_path), dtype=float).reshape(-1, 1)
+                scaler_path = Path(str(model_dir)) / "target_scaler.ss"
+                if scaler_path.exists():
+                    scaler = _joblib.load(scaler_path)
+                    if scaler is not None and hasattr(scaler, "inverse_transform"):
+                        values = np.asarray(scaler.inverse_transform(values), dtype=float)
+                values = values.reshape(-1)
+                if len(values) != int(n_rows) or not np.isfinite(values).all():
+                    return None
+                return values
+
+            def _base_payload(train_pred, test_pred, workflow_label):
+                return {
+                    "train": np.asarray(train_pred, dtype=float),
+                    "test": np.asarray(test_pred, dtype=float),
+                    "train_observed": y_train_state,
+                    "test_observed": np.asarray(STATE["y_test"], dtype=float),
+                    "train_smiles": smiles_train_state,
+                    "test_smiles": smiles_test_state,
+                    "workflow": workflow_label,
+                }
 
             payloads = {}
-            metrics_lookup = {}
+            skipped_members = []
+            if include_conventional and "traditional_models" in STATE:
+                for model_name, fitted_model in STATE["traditional_models"].items():
+                    prediction = STATE.get("traditional_predictions", {}).get(model_name)
+                    if prediction is None:
+                        continue
+                    try:
+                        payload = _base_payload(prediction["train"], prediction["test"], "Conventional ML")
+                        payload["oof"] = _refit_oof(("conventional", str(model_name)), fitted_model, _feature_matrix_for(model_name))
+                        payloads[str(model_name)] = payload
+                    except Exception as exc:
+                        skipped_members.append(f"{model_name}: out-of-fold refit failed ({exc})")
+            if include_tuned_conventional and "tuned_traditional_models" in STATE:
+                for model_name, fitted_model in STATE["tuned_traditional_models"].items():
+                    prediction = STATE.get("tuned_traditional_predictions", {}).get(model_name)
+                    if prediction is None:
+                        continue
+                    try:
+                        payload = _base_payload(prediction["train"], prediction["test"], "Tuned conventional ML")
+                        payload["oof"] = _refit_oof(("tuned", str(model_name)), fitted_model, pd.DataFrame(STATE["X_train"]).reset_index(drop=True))
+                        payloads[f"Tuned {model_name}"] = payload
+                    except Exception as exc:
+                        skipped_members.append(f"Tuned {model_name}: out-of-fold refit failed ({exc})")
+            if include_unimol and "unimol_predictions" in STATE:
+                unimol_dirs = dict(STATE.get("unimol_model_dirs", {}) or {})
+                for model_name, prediction in STATE["unimol_predictions"].items():
+                    if "train_df" in prediction:
+                        train_df_u = prediction["train_df"].reset_index(drop=True)
+                        test_df_u = prediction["test_df"].reset_index(drop=True)
+                        train_smiles_u = train_df_u["SMILES"].astype(str).reset_index(drop=True)
+                        test_smiles_u = test_df_u["SMILES"].astype(str).reset_index(drop=True)
+                        train_obs_u = train_df_u["TARGET"].to_numpy(dtype=float)
+                        test_obs_u = test_df_u["TARGET"].to_numpy(dtype=float)
+                    else:
+                        train_smiles_u = pd.Series(prediction["train_smiles"], dtype=str).reset_index(drop=True)
+                        test_smiles_u = pd.Series(prediction["test_smiles"], dtype=str).reset_index(drop=True)
+                        train_obs_u = np.asarray(prediction["train_observed"], dtype=float)
+                        test_obs_u = np.asarray(prediction["test_observed"], dtype=float)
+                    saved_oof = _unimol_saved_oof(prediction.get("model_dir") or unimol_dirs.get(model_name), len(train_smiles_u))
+                    if saved_oof is None:
+                        skipped_members.append(f"{model_name}: no usable saved out-of-fold predictions (cv.data)")
+                        continue
+                    payloads[str(model_name)] = {
+                        "train": np.asarray(prediction["train"], dtype=float),
+                        "test": np.asarray(prediction["test"], dtype=float),
+                        "train_observed": train_obs_u,
+                        "test_observed": test_obs_u,
+                        "train_smiles": train_smiles_u,
+                        "test_smiles": test_smiles_u,
+                        "workflow": "Uni-Mol",
+                        "oof": saved_oof,
+                    }
+            if "deep_results" in STATE:
+                other_workflows = sorted(
+                    set(pd.DataFrame(STATE["deep_results"]).get("Workflow", pd.Series(dtype=str)).dropna().astype(str))
+                    - {"Uni-Mol"}
+                )
+                if other_workflows:
+                    skipped_members.append(
+                        "Not used as members, because a notebook session has no out-of-fold predictions for them: "
+                        + ", ".join(other_workflows)
+                        + ". The command-line runner builds these by refitting per fold."
+                    )
 
-            traditional_lookup = STATE["traditional_results"].set_index("Model") if "traditional_results" in STATE else None
-            tuned_lookup = STATE["tuned_traditional_results"].set_index("Model") if "tuned_traditional_results" in STATE else None
-            deep_lookup = STATE["deep_results"].set_index("Model") if "deep_results" in STATE else None
-            unimol_lookup = STATE["unimol_results"].set_index("Model") if "unimol_results" in STATE else None
-
-            for workflow_label, model_name in selected_models:
-                payload_key = model_name
-                if workflow_label == "Conventional ML":
-                    payload = STATE["traditional_predictions"][model_name]
-                    payloads[model_name] = {
-                        "train": np.asarray(payload["train"], dtype=float),
-                        "test": np.asarray(payload["test"], dtype=float),
-                        "train_observed": np.asarray(STATE["y_train"], dtype=float),
-                        "test_observed": np.asarray(STATE["y_test"], dtype=float),
-                        "train_smiles": STATE["smiles_train"].astype(str).reset_index(drop=True),
-                        "test_smiles": STATE["smiles_test"].astype(str).reset_index(drop=True),
-                        "workflow": workflow_label,
-                    }
-                    metrics_lookup[model_name] = traditional_lookup.loc[model_name]
-                elif workflow_label == "Tuned conventional ML":
-                    payload = STATE["tuned_traditional_predictions"][model_name]
-                    payload_key = f"Tuned {model_name}"
-                    payloads[payload_key] = {
-                        "train": np.asarray(payload["train"], dtype=float),
-                        "test": np.asarray(payload["test"], dtype=float),
-                        "train_observed": np.asarray(STATE["y_train"], dtype=float),
-                        "test_observed": np.asarray(STATE["y_test"], dtype=float),
-                        "train_smiles": STATE["smiles_train"].astype(str).reset_index(drop=True),
-                        "test_smiles": STATE["smiles_test"].astype(str).reset_index(drop=True),
-                        "workflow": workflow_label,
-                    }
-                    metrics_lookup[payload_key] = tuned_lookup.loc[model_name]
-                elif workflow_label == "Uni-Mol" and "unimol_predictions" in STATE and model_name in STATE["unimol_predictions"]:
-                    payload = STATE["unimol_predictions"][model_name]
-                    train_df = payload["train_df"].copy().reset_index(drop=True)
-                    test_df = payload["test_df"].copy().reset_index(drop=True)
-                    payloads[model_name] = {
-                        "train": np.asarray(payload["train"], dtype=float),
-                        "test": np.asarray(payload["test"], dtype=float),
-                        "train_observed": train_df["TARGET"].to_numpy(dtype=float),
-                        "test_observed": test_df["TARGET"].to_numpy(dtype=float),
-                        "train_smiles": train_df["SMILES"].astype(str).reset_index(drop=True),
-                        "test_smiles": test_df["SMILES"].astype(str).reset_index(drop=True),
-                        "workflow": workflow_label,
-                    }
-                    metrics_lookup[model_name] = unimol_lookup.loc[model_name]
-                else:
-                    payload = STATE["deep_predictions"][model_name]
-                    payloads[model_name] = {
-                        "train": np.asarray(payload["train"], dtype=float),
-                        "test": np.asarray(payload["test"], dtype=float),
-                        "train_observed": np.asarray(payload["train_observed"], dtype=float),
-                        "test_observed": np.asarray(payload["test_observed"], dtype=float),
-                        "train_smiles": pd.Series(payload["train_smiles"], dtype=str).reset_index(drop=True),
-                        "test_smiles": pd.Series(payload["test_smiles"], dtype=str).reset_index(drop=True),
-                        "workflow": workflow_label,
-                    }
-                    metrics_lookup[model_name] = deep_lookup.loc[model_name]
-
+            for payload_key, payload in payloads.items():
                 ensure_global_split_signature(
-                    payloads[payload_key]["train_smiles"],
-                    payloads[payload_key]["test_smiles"],
+                    payload["train_smiles"],
+                    payload["test_smiles"],
                     source_label=f"7A ensemble member: {payload_key}",
+                )
+            print(f"Ensemble candidates (out-of-fold predictions from {n_oof_folds}-fold refits or saved Uni-Mol folds):")
+            for payload_key, payload in payloads.items():
+                print(f"  - {payload['workflow']}: {payload_key}")
+            for note in skipped_members:
+                print(f"  [not a member] {note}")
+            if len(payloads) < 2:
+                raise ValueError(
+                    "At least two members with out-of-fold predictions are needed. Train the conventional "
+                    "models first (they are refitted per fold here); Uni-Mol joins when its cv.data is available."
                 )
 
             def build_split_frame(model_payloads, split_name):
@@ -11067,32 +11029,52 @@ cells += [
             from sklearn.linear_model import RidgeCV
             from sklearn.model_selection import KFold, cross_val_predict
 
-            member_filter_notes = []
+            # Out-of-fold predictions on the same training overlap, row for row.
+            aligned_oof = aligned_train[["SMILES", "Observed"]].copy()
+            oof_keep = np.ones(len(aligned_oof), dtype=bool)
+            for model_name in prediction_columns:
+                oof_lookup = dict(
+                    zip(
+                        pd.Series(payloads[model_name]["train_smiles"], dtype=str).str.strip(),
+                        np.asarray(payloads[model_name]["oof"], dtype=float),
+                    )
+                )
+                oof_values = aligned_oof["SMILES"].map(oof_lookup)
+                oof_keep &= oof_values.notna().to_numpy()
+                aligned_oof[model_name] = oof_values.to_numpy(dtype=float)
+            if not oof_keep.all():
+                aligned_train = aligned_train.loc[oof_keep].reset_index(drop=True)
+                aligned_oof = aligned_oof.loc[oof_keep].reset_index(drop=True)
+            if aligned_oof.empty:
+                raise ValueError("No training molecules have out-of-fold predictions from every member.")
+
+            member_filter_notes = ["Member filtering, weights, stacking and CFA use out-of-fold predictions only"]
             member_metrics = {}
             for model_name in prediction_columns:
                 split_metrics = {}
                 split_metrics.update(summarize_regression(aligned_train["Observed"], aligned_train[model_name], "Train"))
+                split_metrics.update(summarize_regression(aligned_oof["Observed"], aligned_oof[model_name], "OOF"))
                 split_metrics.update(summarize_regression(aligned_test["Observed"], aligned_test[model_name], "Test"))
                 member_metrics[model_name] = split_metrics
 
             active_columns = list(prediction_columns)
 
-            if bool(exclude_negative_test_r2_members):
+            if bool(exclude_negative_oof_r2_members):
                 positive_test_columns = [
                     model_name
                     for model_name in active_columns
-                    if float(member_metrics[model_name]["Test R2"]) > 0.0
+                    if float(member_metrics[model_name]["OOF R2"]) > 0.0
                 ]
                 removed_negative = [model_name for model_name in active_columns if model_name not in positive_test_columns]
                 if removed_negative:
                     if len(positive_test_columns) >= 2:
                         active_columns = positive_test_columns
                         member_filter_notes.append(
-                            "Dropped members with non-positive overlap Test R2: " + ", ".join(removed_negative)
+                            "Dropped members with non-positive out-of-fold R2: " + ", ".join(removed_negative)
                         )
                     else:
                         member_filter_notes.append(
-                            "Skipped non-positive Test R2 filtering because it would leave fewer than two members."
+                            "Skipped non-positive out-of-fold R2 filtering because it would leave fewer than two members."
                         )
 
             if bool(drop_highly_correlated_members) and len(active_columns) > 2:
@@ -11101,7 +11083,7 @@ cells += [
                 removed_correlated = []
                 while len(active_columns) > 2:
                     corr_matrix = (
-                        aligned_train[active_columns]
+                        aligned_oof[active_columns]
                         .corr()
                         .abs()
                         .replace([np.inf, -np.inf], np.nan)
@@ -11115,10 +11097,10 @@ cells += [
                     max_idx = np.unravel_index(np.argmax(corr_values), corr_values.shape)
                     model_a = str(corr_matrix.index[max_idx[0]])
                     model_b = str(corr_matrix.columns[max_idx[1]])
-                    rmse_a = float(member_metrics[model_a]["Test RMSE"])
-                    rmse_b = float(member_metrics[model_b]["Test RMSE"])
-                    r2_a = float(member_metrics[model_a]["Test R2"])
-                    r2_b = float(member_metrics[model_b]["Test R2"])
+                    rmse_a = float(member_metrics[model_a]["OOF RMSE"])
+                    rmse_b = float(member_metrics[model_b]["OOF RMSE"])
+                    r2_a = float(member_metrics[model_a]["OOF R2"])
+                    r2_b = float(member_metrics[model_b]["OOF R2"])
                     if rmse_a > rmse_b:
                         drop_model = model_a
                     elif rmse_b > rmse_a:
@@ -11134,7 +11116,7 @@ cells += [
                         for a, b, drop, corr_value in removed_correlated
                     ]
                     member_filter_notes.append(
-                        "Dropped highly correlated members using overlap train predictions: " + "; ".join(detail_parts)
+                        "Dropped highly correlated members (out-of-fold predictions; tie-break on out-of-fold RMSE): " + "; ".join(detail_parts)
                     )
 
             if len(active_columns) < 2:
@@ -11144,16 +11126,16 @@ cells += [
                 )
 
             prediction_columns = list(active_columns)
-            X_meta_train = aligned_train[prediction_columns].to_numpy(dtype=float)
+            X_meta_train = aligned_oof[prediction_columns].to_numpy(dtype=float)
             X_meta_test = aligned_test[prediction_columns].to_numpy(dtype=float)
-            y_meta_train = aligned_train["Observed"].to_numpy(dtype=float)
+            y_meta_train = aligned_oof["Observed"].to_numpy(dtype=float)
             y_meta_test = aligned_test["Observed"].to_numpy(dtype=float)
 
             methods_to_run = []
             if bool(run_oof_stacking_ensemble):
                 methods_to_run.append("OOF Stacking (RidgeCV)")
             if bool(run_weighted_inverse_rmse_ensemble):
-                methods_to_run.append("Weighted average (inverse train RMSE)")
+                methods_to_run.append("Weighted average (inverse OOF RMSE)")
             if bool(run_cfa_ensemble):
                 methods_to_run.append("CFA Fusion (Score+Rank, diversity-aware)")
             if not methods_to_run:
@@ -11172,9 +11154,9 @@ cells += [
 
             for method_name in methods_to_run:
                 current_prediction_columns = list(prediction_columns)
-                X_meta_train_current = aligned_train[current_prediction_columns].to_numpy(dtype=float)
+                X_meta_train_current = aligned_oof[current_prediction_columns].to_numpy(dtype=float)
                 X_meta_test_current = aligned_test[current_prediction_columns].to_numpy(dtype=float)
-                y_meta_train_current = aligned_train["Observed"].to_numpy(dtype=float)
+                y_meta_train_current = aligned_oof["Observed"].to_numpy(dtype=float)
                 y_meta_test_current = aligned_test["Observed"].to_numpy(dtype=float)
 
                 meta_model = None
@@ -11188,9 +11170,9 @@ cells += [
                         for model_name in current_prediction_columns:
                             workflow_label = str(payloads[model_name].get("workflow", "")).strip() or "Unknown"
                             if str(cfa_optimize_metric).strip().lower() == "mae":
-                                score_value = float(member_metrics[model_name]["Test MAE"])
+                                score_value = float(member_metrics[model_name]["OOF MAE"])
                             else:
-                                score_value = float(member_metrics[model_name]["Test RMSE"])
+                                score_value = float(member_metrics[model_name]["OOF RMSE"])
                             current_best = workflow_best.get(workflow_label)
                             if current_best is None or score_value < current_best[1]:
                                 workflow_best[workflow_label] = (str(model_name), float(score_value))
@@ -11204,7 +11186,7 @@ cells += [
                         ]
                         if workflow_best:
                             selection_notes = []
-                            metric_name = "test_mae" if str(cfa_optimize_metric).strip().lower() == "mae" else "test_rmse"
+                            metric_name = "oof_mae" if str(cfa_optimize_metric).strip().lower() == "mae" else "oof_rmse"
                             for workflow_label in sorted(workflow_best):
                                 model_name, score_value = workflow_best[workflow_label]
                                 selection_notes.append(f"{workflow_label}: {model_name} ({metric_name}={float(score_value):.4f})")
@@ -11249,7 +11231,7 @@ cells += [
                             flush=True,
                         )
                     ensemble_cfa_result = run_cfa_regression_fusion(
-                        train_prediction_map=aligned_train[current_prediction_columns].copy(),
+                        train_prediction_map=aligned_oof[current_prediction_columns].copy(),
                         test_prediction_map=aligned_test[current_prediction_columns].copy(),
                         y_train=y_meta_train_current,
                         min_models=2,
@@ -11340,8 +11322,8 @@ cells += [
                 else:
                     raw_weights = []
                     for model_name in current_prediction_columns:
-                        train_rmse = float(member_metrics[model_name]["Train RMSE"])
-                        raw_weights.append(1.0 / max(train_rmse, 1e-8))
+                        oof_rmse = float(member_metrics[model_name]["OOF RMSE"])
+                        raw_weights.append(1.0 / max(oof_rmse, 1e-8))
                     raw_weights = np.asarray(raw_weights, dtype=float)
                     weights = raw_weights / raw_weights.sum()
                     ensemble_train_pred = np.dot(X_meta_train_current, weights)
@@ -11355,7 +11337,9 @@ cells += [
                     )
 
                 ensemble_row = {"Model": f"Ensemble ({ensemble_method_label})", "Workflow": "Ensemble"}
+                # For ensembles the training-side prediction is itself out-of-fold, so "Train" = "OOF".
                 ensemble_row.update(summarize_regression(y_meta_train_current, ensemble_train_pred, "Train"))
+                ensemble_row.update(summarize_regression(y_meta_train_current, ensemble_train_pred, "OOF"))
                 ensemble_row.update(summarize_regression(y_meta_test_current, ensemble_test_pred, "Test"))
                 ensemble_rows.append(ensemble_row)
                 ensemble_method_runs.append(
@@ -11375,11 +11359,12 @@ cells += [
             if not ensemble_method_runs:
                 raise RuntimeError("No ensemble methods produced results.")
 
+            # Choosing the downstream strategy on test RMSE would leak the test set; use OOF RMSE.
             best_run = sorted(
                 ensemble_method_runs,
                 key=lambda item: (
-                    float(item["result_row"]["Test RMSE"]),
-                    float(item["result_row"]["Test MAE"]),
+                    float(item["result_row"]["OOF RMSE"]),
+                    float(item["result_row"]["OOF MAE"]),
                 ),
             )[0]
             ensemble_method_label = str(best_run["method_label"])
@@ -11396,6 +11381,7 @@ cells += [
             STATE["ensemble_results"] = ensemble_results.copy()
             STATE["ensemble_weight_table"] = weight_df.copy()
             STATE["ensemble_train_aligned"] = aligned_train.copy()
+            STATE["ensemble_oof_aligned"] = aligned_oof.copy()
             STATE["ensemble_test_aligned"] = aligned_test.copy()
             STATE["ensemble_prediction_columns"] = prediction_columns_for_best
             STATE["ensemble_model_label"] = ensemble_model_label
@@ -11409,6 +11395,7 @@ cells += [
                 [
                     {
                         "Method": run_payload["method_label"],
+                        "OOF RMSE": float(run_payload["result_row"]["OOF RMSE"]),
                         "Train RMSE": float(run_payload["result_row"]["Train RMSE"]),
                         "Test RMSE": float(run_payload["result_row"]["Test RMSE"]),
                         "Train R2": float(run_payload["result_row"]["Train R2"]),
@@ -11417,7 +11404,7 @@ cells += [
                     }
                     for run_payload in ensemble_method_runs
                 ]
-            ).sort_values(["Test RMSE", "Train RMSE"], ascending=True).reset_index(drop=True)
+            ).sort_values(["OOF RMSE", "Test RMSE"], ascending=True).reset_index(drop=True)
             STATE["ensemble_cfa_summaries"] = dict(cfa_run_summaries)
             STATE["ensemble_cfa_candidate_tables"] = dict(cfa_candidate_tables)
             if ensemble_method_label in cfa_run_summaries:
@@ -11451,7 +11438,7 @@ cells += [
                     f"  - {run_payload['method_label']}: Test RMSE={float(run_payload['result_row']['Test RMSE']):.4f}, "
                     f"members={len(run_payload['prediction_columns'])}"
                 )
-            print(f"Selected best ensemble strategy for downstream use: {ensemble_method_label}")
+            print(f"Selected ensemble strategy for downstream use (lowest out-of-fold RMSE): {ensemble_method_label}")
             if "OOF Stacking (RidgeCV" in ensemble_method_label:
                 print(f"Meta-model intercept: {ensemble_intercept:.6f}")
             if ensemble_method_label in cfa_run_summaries:
@@ -11481,8 +11468,11 @@ cells += [
                 "That matters most when a Uni-Mol model was trained or filtered on a reduced subset."
             )
             ensemble_note += (
-                " This run evaluated OOF stacking, weighted inverse-RMSE averaging, and CFA fusion, "
-                f"then selected **{ensemble_method_label}** as the best-performing ensemble for downstream plots/predictions."
+                " Every member choice, filter, weight and meta-model here used out-of-fold predictions only, "
+                "so the test metrics are an honest estimate. This run evaluated OOF stacking, weighted "
+                "inverse-OOF-RMSE averaging and CFA fusion, then selected "
+                f"**{ensemble_method_label}** (lowest out-of-fold RMSE) for downstream plots/predictions. "
+                "For ensembles the Train columns are out-of-fold values."
             )
             if fallback_used:
                 ensemble_note += (
