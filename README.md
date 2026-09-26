@@ -440,6 +440,24 @@ This updates:
 portable_colab_qsar_bundle/colab_qsar_tutorial.ipynb
 ```
 
+## Guided Tutorial (Your Own Data)
+
+[`docs/tutorial.md`](docs/tutorial.md) (also Additional file 2 of the paper) walks through installation, a
+single-dataset quickstart, all fifteen groups of options, batch mode over any number of your own datasets,
+resume, the HTML/Markdown reports, applicability domain and troubleshooting. Every command in it is run by
+the test suite (`tests/docs/test_tutorial_runs.py`). The short version:
+
+```bash
+qsarena-examples qsarena_tutorial          # synthetic example data + a starter run.yaml
+cd qsarena_tutorial
+qsarena-benchmark --dataset solubility.csv --target-col logS --benchmark-profile quick --output-dir runs/quick
+qsarena-benchmark --batch batch_manifest.csv --benchmark-profile quick --output-dir runs/batch
+qsarena-benchmark --config run.yaml         # every option can live in a run.yaml
+```
+
+Every option is listed in [`docs/options_reference.md`](docs/options_reference.md); a commented template
+with all defaults is [`configs/run.example.yaml`](configs/run.example.yaml).
+
 ## Running Benchmarks
 
 The benchmark runner evaluates the same core workflow across a curated dataset
@@ -955,7 +973,7 @@ resource-aware settings explicitly so runs are reproducible across machines.
 **Fresh run:**
 
 ```bash
-cd ~/AutoQSAR
+cd ~/QSARena
 bash js2/run_a100_benchmark.sh
 ```
 
@@ -963,7 +981,7 @@ bash js2/run_a100_benchmark.sh
 
 ```bash
 bash js2/run_a100_benchmark.sh \
-  --output-dir benchmark_results/autoqsar_benchmark_<timestamp>
+  --output-dir benchmark_results/qsarena_benchmark_<timestamp>
 ```
 
 **Monitor progress (live, updates every 10 seconds):**
@@ -984,19 +1002,19 @@ dataset and checkpoint stage.
 # On the source machine — copy results (skip large model weight files)
 rsync -av \
   --exclude='*.pth' --exclude='*.pt' --exclude='*.joblib' \
-  benchmark_results/autoqsar_benchmark_<timestamp>/ \
-  user@new-a100:~/AutoQSAR/benchmark_results/autoqsar_benchmark_<timestamp>/
+  benchmark_results/qsarena_benchmark_<timestamp>/ \
+  user@new-a100:~/QSARena/benchmark_results/qsarena_benchmark_<timestamp>/
 
 # On the new machine:
 bash js2/run_a100_benchmark.sh \
-  --output-dir benchmark_results/autoqsar_benchmark_<timestamp>
+  --output-dir benchmark_results/qsarena_benchmark_<timestamp>
 ```
 
 **Parallelism (opt-in, serial by default):**
 
 ```bash
 # Run 2 datasets concurrently — useful on many-core nodes with enough VRAM:
-AUTOQSAR_PARALLEL_DATASETS=2 bash js2/run_a100_benchmark.sh
+QSARENA_PARALLEL_DATASETS=2 bash js2/run_a100_benchmark.sh
 ```
 
 **Runtime settings encoded in `js2/run_a100_benchmark.sh`:**
@@ -1052,6 +1070,32 @@ python portable_colab_qsar_bundle\run_qsarena_benchmarks.py `
 
 This writes run-vs-run split, config, error, and leaderboard comparability files
 when enough matching data are available.
+
+## Applicability Domain, Calibration And OECD Reports
+
+The `qsarena` package carries the regulatory-facing utilities (OECD (Q)SAR principles 3-5):
+
+| Module | Provides |
+|---|---|
+| `qsarena.applicability_domain` | Roy-Kar-Ambure (2015) descriptor standardization AD; kNN Tanimoto AD with a training-only threshold |
+| `qsarena.uncertainty` | Split-conformal intervals and prediction sets, probability-confidence flag, ECE, Brier, reliability bins |
+| `qsarena.interpretability` | Normalised native/permutation importances; "no per-feature attribution" for graph/3D models |
+| `qsarena.qmrf` | QMRF-style Markdown/JSON report under the five OECD principles; fails loudly on missing inputs |
+| `qsarena.provenance` | `environment_manifest.json` (versions, pip-freeze list, git commit, hardware) and split hashes |
+
+Reproduce the applicability-domain and calibration study on the 22 official TDC splits
+(CPU only, about 15 minutes on 12 cores; needs `data/admet_group/`):
+
+```bash
+python -m qsarena.reliability_study --out results/reliability_tdc22
+python -m qsarena.admet_ai_parity --out results/admet_ai_parity.csv
+```
+
+The study uses one fixed reference model (random forest on Morgan + RDKit 2D descriptors), not
+the benchmark's per-dataset winner, because the canonical run's per-molecule predictions are not
+in the repository.
+
+Tests: `pip install -e .[dev]` then `pytest -q -m "not gpu and not slow"`.
 
 ## Development Notes
 

@@ -1,0 +1,396 @@
+# ============================================================================================
+# QSARena run configuration (generated from qsarena/config.py; do not edit by hand)
+# Use:        qsarena-benchmark --config run.yaml
+# Precedence: command-line flags > this file > built-in defaults
+# Every value below is the built-in default. Delete the lines you do not want to change.
+# Full reference: docs/options_reference.md
+# ============================================================================================
+
+# ---------- 14. Outputs, reporting & caching, 15. Execution ----------
+run:
+  # single = one or more CSVs given by input.path; batch = batch.source; benchmark = the
+  # curated benchmark collection; auto picks batch if batch.source is set, else single if
+  # input.path is set, else benchmark. Choices: auto, single, batch, benchmark. CLI:
+  # --run-mode.
+  mode: auto
+  # Directory that receives every artifact and the report. null =
+  # benchmark_results/qsarena_benchmark_<timestamp>. CLI: --output-dir.
+  output_dir: null
+  # Reuse completed datasets and stages already in output_dir when their config signature
+  # matches. CLI: --resume / --no-resume.
+  resume: true
+  # Ignore everything in output_dir and recompute. The old directory is renamed to
+  # <name>_superseded_<timestamp>, never deleted. CLI: --fresh.
+  overwrite: false
+  # Console detail and the minimum level written to events.jsonl. run.log always keeps the
+  # full console transcript. Choices: quiet, normal, verbose, debug. CLI: --verbosity.
+  verbosity: normal
+  # Run preflight checks, print the resolved plan and a cost estimate, write
+  # dry_run_plan.{json,md}, then exit without fitting any model. CLI: --dry-run.
+  dry_run: false
+  # CPU workers for parallel-capable estimators. 0 or negative uses every detected core.
+  # CLI: --n-jobs.
+  n_jobs: 0
+  # Datasets processed concurrently (process pool). n_jobs is divided between workers.
+  # CLI: --parallel-datasets.
+  parallel_datasets: 1
+  # Benchmark mode only: restrict the curated collection to these dataset names (list them
+  # with --dry-run). CLI: --dataset-name.
+  dataset_names: []
+
+# ---------- 1. Input & columns ----------
+input:
+  # CSV file (or list of CSV files) for single mode. Each file becomes one dataset named
+  # after it. CLI: --dataset.
+  path: null
+  # Column holding the SMILES strings. null = auto-detect (QSAR_READY_SMILES,
+  # canonical_smiles, SMILES, smiles, Smiles). CLI: --smiles-col.
+  smiles_col: null
+  # Target column. A list runs one dataset per target (named <file>__<target>). null =
+  # auto-detect (TARGET, target, Target, ...). CLI: --target-col.
+  target_col: null
+  # Optional identifier column, copied into the per-dataset predictions.csv. CLI: --id-
+  # col.
+  id_col: null
+  # auto treats a target with exactly two values as classification and anything else as
+  # regression. Choices: auto, regression, classification. CLI: --task.
+  task: auto
+  # Binarize a continuous target: value >= threshold becomes 1, otherwise 0. Implies task:
+  # classification. CLI: --classification-threshold.
+  classification_threshold: null
+  # auto keeps curated benchmark datasets on their raw scale and log10-transforms a user
+  # regression target when every value is positive. Classification targets are never
+  # transformed. Choices: auto, raw, log10. CLI: --target-transform.
+  target_transform: auto
+  # Skip a dataset with fewer valid rows than this after cleanup (small-dataset
+  # guardrail). CLI: --minimum-rows.
+  minimum_rows: 20
+  # Deterministic random subsample of this many rows (0 = use every row). Meant for smoke
+  # tests. CLI: --row-limit.
+  row_limit: 0
+
+# ---------- 2. Standardization ----------
+standardize:
+  # true drops rows RDKit cannot parse and reports how many. false stops the dataset with
+  # an error listing the unparseable rows, so nothing is dropped silently. CLI: --drop-
+  # unparseable / --no-drop-unparseable.
+  drop_unparseable: true
+  # Keep only the largest organic fragment (RDKit LargestFragmentChooser). CLI: --strip-
+  # salts / --no-strip-salts.
+  strip_salts: false
+  # Neutralize charges where possible (RDKit Uncharger). CLI: --normalize-charges / --no-
+  # normalize-charges.
+  normalize_charges: false
+  # Replace each molecule with RDKit's canonical tautomer. Slower, and can change the
+  # drawn structure. CLI: --normalize-tautomers / --no-normalize-tautomers.
+  normalize_tautomers: false
+  # none keeps every row; exact drops rows repeating both the input SMILES and the target;
+  # canonical_smiles merges rows with the same canonical structure (mean target for
+  # regression, majority label for classification). Choices: none, exact,
+  # canonical_smiles. CLI: --deduplicate.
+  deduplicate: "none"
+
+# ---------- 3. Featurization ----------
+features:
+  # Molecular feature families concatenated into the model matrix. 'maplight' (the
+  # MapLight-classic composite) is normally switched by features.maplight_classic;
+  # 'avalon' and 'erg' exist only inside that composite and are accepted as aliases for
+  # it. Choices: morgan, ecfp6, fcfp6, layered, atom_pair, topological_torsion, rdk_path,
+  # maccs, rdkit, maplight. CLI: --feature-families.
+  families: [morgan, ecfp6, fcfp6, layered, atom_pair, topological_torsion, rdk_path, maccs, rdkit]
+  # Add the MapLight-classic composite (Morgan counts + Avalon counts + ErG + RDKit
+  # descriptor panel). CLI: --maplight-classic / --no-maplight-classic.
+  maplight_classic: true
+  # Bit length of the hashed fingerprint families. CLI: --fingerprint-bits.
+  fingerprint_bits: 1024
+  # Cache whole feature matrices (content-addressed by SMILES, families and bits) and
+  # reuse them across datasets and runs. CLI: --enable-shared-feature-matrix-cache /
+  # --reuse-shared-feature-matrix-cache.
+  cache: true
+  # Per-SMILES Parquet feature store so only new molecules are featurized. CLI: --enable-
+  # persistent-feature-store / --reuse-persistent-feature-store.
+  persistent_store: true
+
+# ---------- 4. Splitting ----------
+split:
+  # target_quartile stratifies the random split on target quartiles (falls back to random
+  # when that is impossible); scaffold keeps Bemis-Murcko scaffolds together; predefined
+  # reads split.predefined_split_col. Curated benchmark datasets keep their published
+  # split. Choices: target_quartile, random, scaffold, predefined. CLI: --split-strategy.
+  strategy: target_quartile
+  # Held-out test fraction. CLI: --test-fraction.
+  test_fraction: 0.2
+  # Seed for the split, CV folds and every seeded model. CLI: --random-seed.
+  seed: 13
+  # Cross-validation folds on the training split (CV metrics, OOF stacking, CV selection).
+  # CLI: --cv-folds.
+  cv_folds: 5
+  # Column whose values are train/test (or training/holdout); used when strategy is
+  # predefined. CLI: --predefined-split-col.
+  predefined_split_col: null
+
+# ---------- 5. Feature selection ----------
+feature_selection:
+  # Train-only selection. elasticnetcv falls back to random-forest importance on timeout;
+  # rf_fallback uses random-forest importance directly; none keeps every column. Choices:
+  # elasticnetcv, rf_fallback, none. CLI: --selector-method.
+  method: elasticnetcv
+  # Drop columns whose training variance is at or below this value. CLI: --variance-
+  # threshold.
+  variance_threshold: 1e-08
+  # Keep a 0/1 column only if its training prevalence lies inside [low, high]. CLI:
+  # --binary-prevalence-range.
+  binary_prevalence_range: [0.005, 0.995]
+  # Drop feature columns identical to an earlier column on the training rows. CLI: --drop-
+  # duplicate-columns / --no-drop-duplicate-columns.
+  drop_duplicate_columns: true
+  # 0 caps the selection at ceil(10% of training rows); a positive value overrides. CLI:
+  # --max-selected-features.
+  max_selected_features: 0
+  # Switch to random-forest importance up front when ElasticNetCV is predicted to exceed
+  # its time limit. null = profile default (on for cost_optimized/quick, off for full).
+  # CLI: --selector-auto-rf-by-dataset-size / --no-selector-auto-rf-by-dataset-size.
+  auto_rf_by_dataset_size: null
+  # Wall-clock limit for the ElasticNetCV selector before falling back to random forest.
+  # CLI: --selector-elasticnet-timeout-seconds.
+  elasticnet_timeout_seconds: 7200.0
+
+# ---------- 6. Model library ----------
+models:
+  # cost_optimized (default) drops historically low-value expensive variants; full
+  # restores them; quick keeps only the scikit-learn families plus fusion and ensembles
+  # (minutes on a laptop). Choices: cost_optimized, full, quick. CLI: --benchmark-profile.
+  profile: cost_optimized
+  # Master switch per model family: conventional_ml = scikit-learn models:
+  # ElasticNetCV/LogisticRegression, SVR/SVC, random forest, extra trees,
+  # HistGradientBoosting, KNN+SVM voting, AdaBoost, tabular MLP (and their GA-tuned
+  # versions); gradient_boosting = XGBoost, LightGBM, CatBoost and MapLight CatBoost
+  # (needs qsarena[boosting]); deep_tabular = ChemML MLP (PyTorch/TensorFlow), tabular CNN
+  # (TensorFlow) and TabPFN (needs qsarena[deep] / qsarena[foundation]); graph_nn =
+  # Chemprop v2 graph variants (needs qsarena[graph]); pretrained_3d = Uni-Mol V1/V2
+  # pretrained 3D models (needs qsarena[foundation]; V2 needs a GPU); maplight_gnn =
+  # MapLight + GNN (CatBoost on MapLight features plus GIN embeddings; needs dgl/dgllife);
+  # fusion = CFA combinatorial fusion; ensemble = OOF stacking / weighted / simple-average
+  # ensembles. CLI: --disable-model-families.
+  enable_families:
+    conventional_ml: true
+    gradient_boosting: true
+    deep_tabular: true
+    graph_nn: true
+    pretrained_3d: true
+    maplight_gnn: true
+    fusion: true
+    ensemble: true
+  # Model labels to skip, exactly as they appear in metrics.csv (e.g. "Tabular CNN"). CLI:
+  # --disable-model.
+  disable_models: []
+  # If non-empty, run only these model labels (plus the ensemble when 'Ensemble' is
+  # listed). CLI: --only-model-names.
+  only_models: []
+
+# ---------- 7. GA tuning ----------
+ga_tuning:
+  # off skips GA tuning; on tunes every estimator listed; auto tunes only the estimators
+  # that won or improved in the most recent comparable run. Choices: off, on, auto. CLI:
+  # --ga-models off|on|auto.
+  mode: "off"
+  # Estimators tuned when mode is on (classification tunes elastic-net logistic
+  # regression). Choices: elastic_net, catboost. CLI: --ga-estimators.
+  estimators: [elastic_net, catboost]
+  # GA generations. CLI: --ga-generations.
+  generations: 12
+  # Individuals per generation. CLI: --ga-population-size.
+  population_size: 16
+  # Stop starting new generations once this many minutes have elapsed for one estimator.
+  # null = no limit. CLI: --ga-time-budget-minutes.
+  time_budget_min: null
+  # Stop after this many distinct hyperparameter configurations have been cross-validated.
+  # null = no limit. CLI: --ga-max-configs.
+  max_configs: null
+
+# ---------- 8. Deep / pretrained backends ----------
+deep:
+  # auto detects a CUDA GPU; false hides any GPU (CPU only); true treats a GPU as present
+  # and warns if none is detected. CLI: --use-gpu.
+  use_gpu: auto
+  chemprop:
+    # Chemprop v2 variants. An empty list switches Chemprop off. Choices: dmpnn,
+    # dmpnn_rdkit2d, selected_features, cmpnn, attentivefp. null = profile default
+    # (cost_optimized: attentivefp + selected_features; full: all five). CLI: --run-
+    # chemprop-*.
+    variants: null
+    # Training epochs. null = profile default (15; full: 40). CLI: --chemprop-epochs.
+    epochs: null
+    # Independently initialised Chemprop models averaged per variant. null = profile
+    # default (1; full: 3). CLI: --chemprop-ensemble-size.
+    ensemble_size: null
+    # Mini-batch size. CLI: --chemprop-batch-size.
+    batch_size: 32
+    # Chemprop seed. CLI: --chemprop-random-seed.
+    seed: 42
+  unimol:
+    # auto runs Uni-Mol V1 only when a GPU is detected. CLI: --run-unimol-v1 / --no-run-
+    # unimol-v1.
+    v1: auto
+    # auto runs Uni-Mol V2 only when a GPU is detected (V2 always needs a GPU). CLI:
+    # --run-unimol-v2 / --no-run-unimol-v2.
+    v2: auto
+    # Uni-Mol V2 checkpoint size. Choices: 84m, 164m, 310m. CLI: --unimol-model-size.
+    v2_size: 84m
+    # Fine-tuning epochs. null = 10 on CPU, 20 when a GPU is detected. CLI: --unimol-
+    # epochs.
+    epochs: null
+    # Learning rate. CLI: --unimol-learning-rate.
+    lr: 0.0001
+    # Mini-batch size. null = 32 on CPU; 32/64/128 by detected GPU memory. CLI: --unimol-
+    # batch-size.
+    batch_size: null
+    # Epochs without improvement before stopping. CLI: --unimol-early-stopping.
+    early_stopping_patience: 5
+  chemml:
+    # ChemML-style dense MLP on the selected descriptors (PyTorch). CLI: --run-chemml-
+    # pytorch / --no-run-chemml-pytorch.
+    pytorch: true
+    # The same MLP in TensorFlow. null = profile default (off; full: on). CLI: --run-
+    # chemml-tensorflow / --no-run-chemml-tensorflow.
+    tensorflow: null
+    # Training epochs. CLI: --chemml-training-epochs.
+    epochs: 80
+  # TabPFN tabular foundation model (local package on GPU, else the Prior Labs API
+  # client). null = profile default (on; quick: off). CLI: --run-tabpfn / --no-run-tabpfn.
+  tabpfn: null
+  # 1-D CNN on the selected descriptors (needs TensorFlow). null = profile default (on;
+  # quick: off). CLI: --run-cnn / --no-run-cnn.
+  cnn: null
+
+# ---------- 9. Fusion ----------
+fusion:
+  # Run CFA combinatorial fusion (score combinations) over the best model of each
+  # workflow. CLI: --run-cfa / --no-run-cfa.
+  cfa_score: true
+  # Also try CFA rank combinations (AC/WCP/WCDS). Has no effect when cfa_score is false.
+  # CLI: --cfa-include-rank-combinations / --no-cfa-include-rank-combinations.
+  cfa_rank: true
+  # Training-side metric used to choose the CFA candidate (classification uses the primary
+  # metric when a regression metric is given). Choices: mae, rmse, roc_auc, auprc,
+  # balanced_accuracy, mcc, accuracy. CLI: --cfa-optimize-metric.
+  optimize_metric: mae
+
+# ---------- 10. Ensembles ----------
+ensemble:
+  # RidgeCV stacker fitted on out-of-fold training predictions. CLI: --ensemble-methods.
+  oof_stacking: true
+  # Average weighted by inverse training RMSE. CLI: --ensemble-methods.
+  inverse_rmse_average: true
+  # Unweighted average of the members. CLI: --ensemble-methods.
+  simple_average: false
+  # Which split may decide ensemble membership. cv (alias train) uses training-split
+  # predictions only and is leakage-free; test reproduces the originally deposited
+  # benchmark run and is optimistically biased. Choices: cv, test. CLI: --ensemble-member-
+  # selection-split.
+  member_selection_metric: cv
+  # Drop members with negative R2 on the member-selection split (train when
+  # member_selection_metric is cv, so the default is leakage-free). CLI: --ensemble-
+  # exclude-negative-test-r2-members / --no-ensemble-exclude-negative-test-r2-members.
+  exclude_negative_test_r2_members: true
+  # Drop one member of each pair whose training predictions are nearly identical. CLI:
+  # --ensemble-drop-highly-correlated-members / --no-ensemble-drop-highly-correlated-
+  # members.
+  drop_correlated_members: true
+  # Correlation above which two members count as redundant. CLI: --ensemble-max-train-
+  # correlation.
+  max_member_correlation: 0.995
+  # Folds for the out-of-fold stacking predictions. CLI: --ensemble-stacking-cv-folds.
+  stacking_cv_folds: 5
+
+# ---------- 11. Applicability domain ----------
+applicability_domain:
+  # Per-test-molecule domain flags written to applicability_domain.csv. standardization =
+  # Roy et al. (2015) descriptor-range rule on the selected features; confidence =
+  # predicted-probability confidence |2p-1| of the selected model for classification, and
+  # k-nearest-neighbour Tanimoto similarity to the training set for regression.
+  # Diagnostics only: no metric changes. Choices: standardization, confidence, both, off.
+  # CLI: --ad-method.
+  method: both
+  # Classification: a prediction is in-domain when |2p-1| >= this value (0.5 means p <=
+  # 0.25 or p >= 0.75). CLI: --ad-confidence-threshold.
+  confidence_threshold: 0.5
+  # Regression: in-domain when the mean Tanimoto distance to the 5 nearest training
+  # molecules is at most this quantile of the training set's own leave-one-out distances.
+  # CLI: --ad-knn-quantile.
+  knn_quantile: 0.95
+
+# ---------- 12. Evaluation ----------
+evaluation:
+  # Metrics shown in the report tables for regression datasets. metrics.csv always
+  # contains all of them. Choices: rmse, mae, r2, spearman. CLI: --report-regression-
+  # metrics.
+  regression_metrics: [rmse, mae, r2, spearman]
+  # Metrics shown in the report tables for classification datasets. Choices: roc_auc,
+  # auprc, balanced_accuracy, mcc. CLI: --report-classification-metrics.
+  classification_metrics: [roc_auc, auprc, balanced_accuracy, mcc]
+  # Metric used to rank models, drive GA tuning and pick the best model. auto = the
+  # benchmark's leaderboard metric, else rmse (regression) or roc_auc (classification).
+  # Choices: auto, rmse, mae, r2, spearman, pearson, roc_auc, auprc, balanced_accuracy,
+  # mcc, accuracy. CLI: --primary-metric.
+  primary_metric: auto
+
+# ---------- 13. Model-selection protocol ----------
+selection:
+  # How the report names each dataset's best model. test = best held-out score
+  # (optimistic: the test set chooses); cv = best cross-validated training score (honest;
+  # only models with CV metrics are eligible); both = report both side by side. Choices:
+  # test, cv, both. CLI: --selection-protocol.
+  protocol: both
+
+# ---------- 14. Outputs, reporting & caching ----------
+report:
+  # Locked: every run and batch writes both report.html and report.md. Choices: html, md.
+  formats: [html, md]
+  # Won-by-family, cost-vs-gap and AD-coverage plots (SVG, no plotting library needed).
+  # CLI: --report-plots / --no-report-plots.
+  include_plots: true
+  # Actionable "what to do next" section. CLI: --report-what-next / --no-report-what-next.
+  what_next: true
+  # Write report_data.json alongside the reports. CLI: --report-manifest / --no-report-
+  # manifest.
+  machine_readable_manifest: true
+
+# ---------- 15. Execution ----------
+batch:
+  # A manifest CSV (one row per dataset), a directory of CSVs, a .txt file listing CSV
+  # paths, or a list of CSV paths. CLI: --batch.
+  source: null
+  # How to read batch.source. auto: directory -> directory; .txt -> list; CSV with a
+  # 'path' column -> manifest; several paths -> list. Choices: auto, manifest, directory,
+  # list. CLI: --batch-mode.
+  mode: auto
+  # Record a failing dataset (status failed + error + remedy) and continue with the next
+  # one. CLI: --continue-on-error / --no-continue-on-error.
+  continue_on_error: true
+  # Write dataset_summary.csv with one row per dataset (status, best model, metric,
+  # error). CLI: --aggregate-summary / --no-aggregate-summary.
+  aggregate_summary: true
+
+# ---------- 15. Execution ----------
+multiseed:
+  # After the run, re-evaluate the selected model of each official TDC ADMET Benchmark
+  # Group dataset over several seeds. Datasets outside that group are skipped. CLI: --run-
+  # tdc22-multiseed-best / --no-run-tdc22-multiseed-best.
+  enabled: true
+  # Number of seeds (n means seeds 1..n) or an explicit list of seeds. CLI:
+  # --tdc22-multiseed-seeds.
+  seeds: 5
+
+# ---------- 14. Outputs, reporting & caching ----------
+caching:
+  # dataset reuses fully completed datasets; stage also reuses the split/feature-selection
+  # cache and completed model stages inside an interrupted dataset. Choices: dataset,
+  # stage. CLI: --resume-granularity.
+  granularity: [dataset, stage]
+  # Recompute any cached model stage whose recorded config signature differs from the
+  # current one. CLI: --validate-resume-signature / --no-validate-resume-signature.
+  validate_against_config_signature: true
+  # Write every artifact to a temporary file and rename it into place, so an interrupted
+  # run never leaves a half-written file. CLI: --atomic-writes / --no-atomic-writes.
+  atomic_writes: true

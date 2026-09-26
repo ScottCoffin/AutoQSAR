@@ -23,6 +23,17 @@ except ModuleNotFoundError:
         notebook_example_dataset_options,
     )
 
+try:
+    from qsarena.config import notebook_widget_names
+except ModuleNotFoundError:
+    import sys as _sys
+
+    _sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+    from qsarena.config import notebook_widget_names
+
+#: Widget variables that a run.yaml loaded in step 0B may override (RunConfig <-> notebook mapping).
+RUN_CONFIG_WIDGET_NAMES = set(notebook_widget_names())
+
 OUT_PATH = Path(r"portable_colab_qsar_bundle/colab_qsar_tutorial.ipynb")
 EXAMPLE_DATASET_OPTIONS = notebook_example_dataset_options()
 WORKFLOW_MAP_PATH = Path(__file__).with_name("colab_qsar_workflow_map.png")
@@ -32,11 +43,11 @@ def workflow_map_image_html():
     if WORKFLOW_MAP_PATH.exists():
         encoded = base64.b64encode(WORKFLOW_MAP_PATH.read_bytes()).decode("ascii")
         return (
-            '<img alt="AutoQSAR Colab workflow map" '
+            '<img alt="QSARena Colab workflow map" '
             f'src="data:image/png;base64,{encoded}" '
             'style="max-width:100%; height:auto;">'
         )
-    return "![AutoQSAR Colab workflow map](colab_qsar_workflow_map.png)"
+    return "![QSARena Colab workflow map](colab_qsar_workflow_map.png)"
 
 
 def src(text: str):
@@ -148,6 +159,19 @@ def _inject_local_widget_read(text: str, form_id: str):
         if item.get("widget_kind") == "markdown":
             continue
         override_lines.append(f"{param_indent}    {item['name']} = _local_form_values[{item['name']!r}]")
+    config_names = [item["name"] for item in schema if item.get("name") in RUN_CONFIG_WIDGET_NAMES]
+    if config_names:
+        # Step 0B: values from a loaded run.yaml replace the matching widgets (Colab and local).
+        override_lines.append(f"{param_indent}if globals().get('QSARENA_WIDGET_OVERRIDES'):")
+        for name in config_names:
+            override_lines.append(f"{param_indent}    {name} = QSARENA_WIDGET_OVERRIDES.get({name!r}, {name})")
+        override_lines.append(
+            f"{param_indent}    _replaced = [n for n in {config_names!r} if n in QSARENA_WIDGET_OVERRIDES]"
+        )
+        override_lines.append(f"{param_indent}    if _replaced:")
+        override_lines.append(
+            f"{param_indent}        print('[run.yaml] using the loaded config for: ' + ', '.join(_replaced))"
+        )
     lines[last_param_index + 1:last_param_index + 1] = override_lines
     return "\n".join(lines) + "\n"
 
@@ -214,20 +238,20 @@ cells += [
         """
         # Tutorial: Guided QSAR Workflow With Widgets
 
-        [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ScottCoffin/AutoQSAR/blob/master/portable_colab_qsar_bundle/colab_qsar_tutorial.ipynb)
+        [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ScottCoffin/QSARena/blob/main/portable_colab_qsar_bundle/colab_qsar_tutorial.ipynb)
 
         **Kernel note (local Jupyter users)**  
-        This notebook is configured to prefer the **AutoQSAR (py311)** kernel. If you do not see it in the kernel list, create it first:
+        This notebook is configured to prefer the **QSARena (py311)** kernel. If you do not see it in the kernel list, create it first:
 
         ```powershell
-        conda create -n autoqsar-py311 python=3.11 -y
-        conda activate autoqsar-py311
+        conda create -n qsarena-py311 python=3.11 -y
+        conda activate qsarena-py311
         python -m pip install --upgrade pip
         python -m pip install jupyter ipykernel
-        python -m ipykernel install --user --name autoqsar-py311 --display-name "AutoQSAR (py311)"
+        python -m ipykernel install --user --name qsarena-py311 --display-name "QSARena (py311)"
         ```
 
-        After that, switch the notebook kernel to **AutoQSAR (py311)** and rerun step 0.
+        After that, switch the notebook kernel to **QSARena (py311)** and rerun step 0.
 
         **Colab note (MapLight + GNN)**  
         The MapLight + GNN workflow depends on DGL, which the MapLight repo reports as unreliable on Colab. If you enable MapLight + GNN in Colab, the notebook will skip it with a message rather than crash. Use a local Python 3.11 kernel if you need that model.
@@ -389,7 +413,7 @@ cells += [
         """
         # @title 0. Install packages and initialize the tutorial { display-mode: "form" }
         persist_outputs_to_google_drive = False # @param {type:"boolean"}
-        google_drive_output_root = "/content/drive/MyDrive/AutoQSAR_outputs" # @param {type:"string"}
+        google_drive_output_root = "/content/drive/MyDrive/QSARena_outputs" # @param {type:"string"}
 
         import base64
         import importlib.util
@@ -418,7 +442,7 @@ cells += [
         RESTART_REQUIRED_PACKAGES = []
         PYTDC_SOURCE_URL = "https://files.pythonhosted.org/packages/db/bf/db7525f0e9c48d340a66ae11ed46bbb1966234660a6882ce47d1e1d52824/pytdc-1.1.15.tar.gz"
         CHEMML_ORGANIC_DENSITY_URL = "https://raw.githubusercontent.com/hachmannlab/chemml/master/chemml/datasets/data/moldescriptor_density_smiles.csv"
-        AUTOQSAR_QSAR_CORE_URL = "https://raw.githubusercontent.com/ScottCoffin/AutoQSAR/master/portable_colab_qsar_bundle/qsar_workflow_core.py"
+        QSARENA_QSAR_CORE_URL = "https://raw.githubusercontent.com/ScottCoffin/QSARena/main/portable_colab_qsar_bundle/qsar_workflow_core.py"
 
         def progress_message(package_label, status, extra=""):
             PACKAGE_PROGRESS["done"] += 1
@@ -646,14 +670,16 @@ cells += [
             RESTART_REQUIRED_PACKAGES.append(package_label)
             progress_message(package_label, "installed", f"{elapsed:.1f}s")
 
-        def ensure_autoqsar_bundle_source():
+        def ensure_qsarena_bundle_source():
             search_roots = [
                 Path.cwd(),
                 Path.cwd().parent,
                 Path("/content"),
-                Path("/content/AutoQSAR"),
+                Path("/content/QSARena"),
+                Path("/content/AutoQSAR"),  # clone made before the rename
                 Path("/content/drive/MyDrive"),
-                Path("/content/drive/MyDrive/AutoQSAR"),
+                Path("/content/drive/MyDrive/QSARena"),
+                Path("/content/drive/MyDrive/AutoQSAR"),  # clone made before the rename
             ]
             for root in search_roots:
                 candidate = root / "portable_colab_qsar_bundle" / "qsar_workflow_core.py"
@@ -671,8 +697,8 @@ cells += [
                 init_path.write_text("", encoding="utf-8")
             target_path = bundle_dir / "qsar_workflow_core.py"
             if not target_path.exists():
-                print(f"[downloading] AutoQSAR shared workflow core from: {AUTOQSAR_QSAR_CORE_URL}", flush=True)
-                urllib.request.urlretrieve(AUTOQSAR_QSAR_CORE_URL, target_path)
+                print(f"[downloading] QSARena shared workflow core from: {QSARENA_QSAR_CORE_URL}", flush=True)
+                urllib.request.urlretrieve(QSARENA_QSAR_CORE_URL, target_path)
             if str(target_root) not in sys.path:
                 sys.path.insert(0, str(target_root))
             importlib.invalidate_caches()
@@ -991,7 +1017,7 @@ cells += [
 
                 print("Mounting Google Drive for persistent outputs...", flush=True)
                 drive.mount("/content/drive", force_remount=False)
-                configured_output_root = str(google_drive_output_root).strip() or "/content/drive/MyDrive/AutoQSAR_outputs"
+                configured_output_root = str(google_drive_output_root).strip() or "/content/drive/MyDrive/QSARena_outputs"
                 persistent_output_root = Path(configured_output_root).expanduser().resolve()
                 persistent_output_root.mkdir(parents=True, exist_ok=True)
                 print(f"Persistent output root: {persistent_output_root}", flush=True)
@@ -1010,7 +1036,7 @@ cells += [
         def detected_cpu_count():
             return max(1, int(os.cpu_count() or 1))
 
-        def autoqsar_n_jobs(value=0):
+        def qsarena_n_jobs(value=0):
             try:
                 requested = int(value)
             except Exception:
@@ -1060,7 +1086,7 @@ cells += [
             tf_gpu = len(tf_gpus) > 0
             resource_config = {
                 "detected_cpu_count": detected_cpu_count(),
-                "n_jobs": autoqsar_n_jobs(),
+                "n_jobs": qsarena_n_jobs(),
                 "auto_data_loader_workers": auto_data_loader_workers(),
                 "torch_gpu_available": bool(torch_gpu),
                 "tensorflow_gpu_count": int(len(tf_gpus)),
@@ -1397,8 +1423,8 @@ cells += [
                 "test": test_frame,
             }
 
-        setup_start("AutoQSAR shared workflow core")
-        ensure_autoqsar_bundle_source()
+        setup_start("QSARena shared workflow core")
+        ensure_qsarena_bundle_source()
         import importlib
         import portable_colab_qsar_bundle.qsar_workflow_core as qsar_core
         importlib.reload(qsar_core)
@@ -1420,7 +1446,7 @@ cells += [
             target_quartile_labels,
         )
         FEATURE_FAMILY_LABELS = dict(QSAR_CORE_FEATURE_FAMILY_LABELS)
-        setup_done("AutoQSAR shared workflow core")
+        setup_done("QSARena shared workflow core")
 
         def plot_train_test_target_distribution(y_train, y_test, split_strategy):
             import plotly.graph_objects as go
@@ -2926,6 +2952,61 @@ cells += [
         setup_done("interactive table helper")
         print("Tutorial state initialized.")
         print(f"Setup complete: {SETUP_PROGRESS['done']}/{SETUP_PROGRESS['total']} post-package steps finished.", flush=True)
+        """
+    ),
+    md(
+        """
+        ### 0B. Optional: start from a QSARena `run.yaml`
+
+        The command-line runner (`qsarena-benchmark`) and this notebook share one set of options, defined by
+        `RunConfig` in `qsarena/config.py`. If you already have a `run.yaml` (for example the `run_config.yaml`
+        that every `qsarena-benchmark` run writes), enter its path here: every later step then uses the file's
+        values for the widgets that implement the same decision, and prints which ones it replaced. Leave the
+        path empty to use the widgets as they are. `docs/options_reference.md` lists which option maps to which
+        widget; options without a widget apply to the command-line runner only.
+        """
+    ),
+    code(
+        """
+        # @title 0B. Optional: apply a QSARena run.yaml to the widgets { display-mode: "form" }
+        run_config_yaml_path = "" # @param {type:"string"}
+
+        QSARENA_CONFIG_URL = "https://raw.githubusercontent.com/ScottCoffin/QSARena/main/qsarena/config.py"
+
+        def load_qsarena_config_module():
+            try:
+                from qsarena import config as qsarena_config_module
+                return qsarena_config_module
+            except ImportError:
+                pass
+            import importlib.util
+            import urllib.request
+            target = Path.cwd() / "qsarena_config_download.py"
+            if not target.exists():
+                print(f"[downloading] QSARena RunConfig schema from: {QSARENA_CONFIG_URL}", flush=True)
+                urllib.request.urlretrieve(QSARENA_CONFIG_URL, target)
+            spec = importlib.util.spec_from_file_location("qsarena_config_download", target)
+            module = importlib.util.module_from_spec(spec)
+            sys.modules["qsarena_config_download"] = module
+            spec.loader.exec_module(module)
+            return module
+
+        if not str(run_config_yaml_path).strip():
+            QSARENA_WIDGET_OVERRIDES = {}
+            print("No run.yaml given: every step uses its own widget values.")
+        else:
+            _qsarena_config = load_qsarena_config_module()
+            _run_config = _qsarena_config.load_run_config(run_config_yaml_path)
+            QSARENA_WIDGET_OVERRIDES = _qsarena_config.notebook_widget_values(_run_config)
+            _cli_only_keys = sorted(key for key in _run_config.explicit_keys if key not in _qsarena_config.NOTEBOOK_WIDGETS)
+            print(
+                f"Loaded {run_config_yaml_path}: {len(QSARENA_WIDGET_OVERRIDES)} widget value(s) will replace the "
+                "widget defaults in the following steps."
+            )
+            for _name, _value in sorted(QSARENA_WIDGET_OVERRIDES.items()):
+                print(f"  {_name} = {_value!r}")
+            if _cli_only_keys:
+                print("No notebook widget (these apply to qsarena-benchmark only): " + ", ".join(_cli_only_keys))
         """
     ),
     md(
@@ -5050,7 +5131,7 @@ cells += [
         selector_cache_dir = Path(STATE["feature_selector_cache_dir"]) if STATE.get("feature_selector_cache_dir") else None
         selector_cache_paths = dict(STATE.get("feature_selector_cache_paths", {}))
         train_selector_summary = dict(STATE.get("traditional_train_only_feature_selector", {}))
-        resource_n_jobs = autoqsar_n_jobs()
+        resource_n_jobs = qsarena_n_jobs()
         _gpu_available_5a = bool(STATE.get("gpu_available", False))
         if _gpu_available_5a:
             _new_cnn_batch = 128 if cnn_batch_size < 128 else cnn_batch_size
@@ -5944,7 +6025,7 @@ cells += [
         y_train = np.asarray(STATE["y_train"], dtype=float)
         y_test = np.asarray(STATE["y_test"], dtype=float)
         feature_metadata = dict(STATE["traditional_feature_metadata"])
-        resource_n_jobs = autoqsar_n_jobs()
+        resource_n_jobs = qsarena_n_jobs()
         tuning_split_strategy = str(STATE.get("model_split_strategy", "target_quartiles"))
         tuning_test_fraction = float(STATE.get("model_test_fraction", 0.2))
         tuning_random_seed = int(STATE.get("model_split_random_seed", 42))
@@ -7154,7 +7235,7 @@ cells += [
         )
         feature_metadata = current_feature_metadata()
 
-        resource_n_jobs = autoqsar_n_jobs()
+        resource_n_jobs = qsarena_n_jobs()
         gpu_available = bool(STATE.get("gpu_available", False))
         STATE["deep_learning_execution_mode"] = "gpu" if gpu_available else "cpu"
         if gpu_available:
@@ -13081,7 +13162,7 @@ cells += [
         mastml_cluster_settings = [2, 3]
         if mastml_use_custom_bandwidth:
             mastml_params["bandwidth"] = float(mastml_bandwidth)
-        resource_n_jobs = autoqsar_n_jobs()
+        resource_n_jobs = qsarena_n_jobs()
         print(f"Applicability-domain resource plan: n_jobs={resource_n_jobs}", flush=True)
 
         class _MastmlPreprocessorShim:
@@ -13891,6 +13972,40 @@ cells += [
     ),
     md(
         """
+        ### 9E. Export these choices as a `run.yaml`
+
+        Writes the decisions made with the widgets above to a `run.yaml` that `qsarena-benchmark --config`
+        accepts, so the same choices can be rerun from the command line or in batch mode. Only decisions that
+        have a command-line equivalent are exported (see `docs/options_reference.md`). Run step 0B once first;
+        it defines the loader even with an empty path.
+        """
+    ),
+    code(
+        """
+        # @title 9E. Export the widget choices as run.yaml { display-mode: "form" }
+        export_run_yaml_path = "qsarena_notebook_run.yaml" # @param {type:"string"}
+
+        if "load_qsarena_config_module" not in globals():
+            raise RuntimeError("Run step 0B first (leave its path empty); it defines the config loader.")
+        _qsarena_config = load_qsarena_config_module()
+        _widget_values = {
+            name: globals()[name]
+            for name in _qsarena_config.notebook_widget_names()
+            if name in globals()
+        }
+        _exported = _qsarena_config.run_config_from_notebook_values(_widget_values)
+        Path(export_run_yaml_path).write_text(
+            "# Exported from colab_qsar_tutorial.ipynb. Use: qsarena-benchmark --config " + str(export_run_yaml_path) + "\\n"
+            + "# Add input.path (your CSV) and any other keys from docs/options_reference.md.\\n"
+            + _exported.to_explicit_yaml(),
+            encoding="utf-8",
+        )
+        print(f"Wrote {export_run_yaml_path} with {len(_exported.explicit_keys)} setting(s):")
+        print(Path(export_run_yaml_path).read_text(encoding="utf-8"))
+        """
+    ),
+    md(
+        """
         ## 10. What To Look For Next
 
         After running the notebook, useful follow-up questions are:
@@ -13921,7 +14036,7 @@ for cell in cells:
 notebook = {
     "cells": flat_cells,
     "metadata": {
-        "kernelspec": {"display_name": "AutoQSAR (py311)", "language": "python", "name": "autoqsar-py311"},
+        "kernelspec": {"display_name": "QSARena (py311)", "language": "python", "name": "qsarena-py311"},
         "language_info": {"name": "python", "version": "3.11"},
         "colab": {"name": "colab_qsar_tutorial.ipynb", "provenance": [], "toc_visible": True},
     },

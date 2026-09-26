@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    name: Tests + lint (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+      - name: Install
+        run: python -m pip install -e ".[dev]"
+      - name: Lint
+        run: ruff check qsarena tests
+      - name: Test (no GPU, no slow)
+        # Includes the QSARena rename guard (tests/unit/test_rename_residue.py).
+        run: pytest -q -m "not gpu and not slow"
+
+  latex:
+    name: Manuscript proof build (zero undefined references)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # sn-jnl.cls is licensed by Springer Nature and not redistributed here (see
+      # submission/manuscript.tex), so CI builds proof.tex: the standard-article shim that
+      # \inputs the SAME abstract, body, declarations and bibliography.
+      - name: Build proof.tex
+        uses: xu-cheng/latex-action@v3
+        with:
+          root_file: proof.tex
+          working_directory: submission
+          latexmk_use_lualatex: false
+          args: -pdf -interaction=nonstopmode -file-line-error
+      - name: Fail on undefined references or citations
+        working-directory: submission
+        run: |
+          if grep -E "(Reference|Citation).*undefined|There were undefined references" proof.log; then
+            echo "::error::undefined references or citations in proof.log"
+            exit 1
+          fi
+          echo "No undefined references or citations."

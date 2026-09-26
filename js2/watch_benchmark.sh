@@ -4,7 +4,7 @@
 # Usage:
 #   bash js2/watch_benchmark.sh [output_dir]
 #
-# If output_dir is omitted, uses the most recent autoqsar_benchmark_* directory.
+# If output_dir is omitted, uses the most recent qsarena_benchmark_* directory.
 #
 # Run as a one-shot check, or wrap in watch:
 #   watch -n 10 bash js2/watch_benchmark.sh
@@ -15,7 +15,7 @@ RESULTS_ROOT="$REPO_ROOT/benchmark_results"
 if [[ -n "$1" ]]; then
     RUNDIR="$1"
 else
-    RUNDIR="$(ls -dt "$RESULTS_ROOT"/autoqsar_benchmark_* 2>/dev/null | head -1)"
+    RUNDIR="$(ls -dt "$RESULTS_ROOT"/qsarena_benchmark_* 2>/dev/null | head -1)"
 fi
 
 if [[ -z "$RUNDIR" || ! -d "$RUNDIR" ]]; then

@@ -7,6 +7,7 @@ This script supports:
 1. Lightweight feature-space AD diagnostics:
    - kNN mean distance
    - Ledoit-Wolf Mahalanobis distance
+   - Roy-Kar-Ambure (2015) descriptor standardization approach (descriptors only)
 
 2. Optional MAST-ML/MADML applicability-domain workflow:
    - mastml.domain.Domain("madml")
@@ -43,6 +44,12 @@ from sklearn.ensemble import RandomForestRegressor
 from rdkit import Chem
 from rdkit.Chem import Descriptors
 from rdkit.Chem.rdFingerprintGenerator import GetMorganGenerator
+
+try:
+    from qsarena.applicability_domain import standardization_ad
+except ImportError:  # script-style run from a source checkout
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+    from qsarena.applicability_domain import standardization_ad
 
 
 # -----------------------------------------------------------------------------
@@ -222,6 +229,9 @@ def fit_feature_space_ad_reference(
     cov_model = LedoitWolf()
     cov_model.fit(train_scaled)
 
+    # Roy standardization is a descriptor-range rule; binary fingerprint bits have no range.
+    descriptor_columns = [c for c in X_train_numeric.columns if not str(c).startswith("morgan_")]
+
     train_mahalanobis = cov_model.mahalanobis(train_scaled)
     mahalanobis_threshold = float(np.quantile(train_mahalanobis, float(mahalanobis_quantile)))
 
@@ -236,6 +246,8 @@ def fit_feature_space_ad_reference(
         "cov_model": cov_model,
         "mahalanobis_threshold": mahalanobis_threshold,
         "mahalanobis_quantile": float(mahalanobis_quantile),
+        "descriptor_columns": descriptor_columns,
+        "descriptor_train": X_train_numeric[descriptor_columns].to_numpy(dtype=float) if descriptor_columns else None,
     }
 
 
@@ -266,7 +278,20 @@ def assess_feature_space_ad(
         mahalanobis_distance <= ad_reference["mahalanobis_threshold"]
     )
 
+    standardization = {}
+    if ad_reference.get("descriptor_train") is not None:
+        std = standardization_ad(
+            ad_reference["descriptor_train"],
+            X_query_aligned[ad_reference["descriptor_columns"]].to_numpy(dtype=float),
+        )
+        standardization = {
+            "ad_standardization_in_domain": bool(std.in_domain[0]),
+            "ad_standardization_s_max": float(std.s_max[0]),
+            "ad_standardization_s_new": float(std.s_new[0]),
+        }
+
     return {
+        **standardization,
         "ad_knn_in_domain": knn_in_domain,
         "ad_knn_mean_distance": knn_mean_distance,
         "ad_knn_train_threshold": ad_reference["knn_threshold"],
@@ -590,6 +615,10 @@ def add_consensus_label(
         out["ad_mahalanobis_in_domain"] = out["ad_mahalanobis_in_domain"].fillna(False).astype(bool)
         method_flag_columns.append("ad_mahalanobis_in_domain")
 
+    if "ad_standardization_in_domain" in out.columns:
+        out["ad_standardization_in_domain"] = out["ad_standardization_in_domain"].fillna(False).astype(bool)
+        method_flag_columns.append("ad_standardization_in_domain")
+
     if not method_flag_columns:
         out["ad_method_support_count"] = 0
         out["ad_method_available_count"] = 0
@@ -649,7 +678,7 @@ def add_consensus_label(
 # Main CLI
 # -----------------------------------------------------------------------------
 
-def main():
+def main(argv: list[str] | None = None):
     parser = argparse.ArgumentParser(
         description="Applicability domain assessment for a query SMILES."
     )
@@ -809,7 +838,7 @@ def main():
         help="Optional path to save AD threshold metadata as JSON.",
     )
 
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     include_descriptors = not args.no_descriptors
     include_fingerprint = not args.no_fingerprint

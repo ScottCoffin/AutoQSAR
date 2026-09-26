@@ -21,7 +21,7 @@ GIT_TAG       := $(shell git describe --tags --exact-match 2>/dev/null || echo u
 BUILD_DATE    := $(shell date -u +%Y-%m-%dT%H:%M:%SZ)
 TREE_DIRTY    := $(shell git status --porcelain 2>/dev/null | wc -l | tr -d ' ')
 
-CONDA_ENV     ?= autoqsar-py311
+CONDA_ENV     ?= qsarena-py311
 BENCHMARK_OUTPUT_DIR ?=
 
 .PHONY: env image sif smoke manifests clean help benchmark-a100
@@ -116,15 +116,15 @@ manifests:
 
 # ── benchmark-a100: run or resume full A100 benchmark ────────────────────────
 # Fresh run:   make benchmark-a100
-# Resume run:  make benchmark-a100 BENCHMARK_OUTPUT_DIR=benchmark_results/autoqsar_benchmark_<timestamp>
+# Resume run:  make benchmark-a100 BENCHMARK_OUTPUT_DIR=benchmark_results/qsarena_benchmark_<timestamp>
 benchmark-a100:
 	@if [ -n "$(BENCHMARK_OUTPUT_DIR)" ]; then \
 		echo "Resuming benchmark run at: $(BENCHMARK_OUTPUT_DIR)"; \
-		AUTOQSAR_CONDA_ENV=$(CONDA_ENV) bash js2/run_a100_benchmark.sh \
+		QSARENA_CONDA_ENV=$(CONDA_ENV) bash js2/run_a100_benchmark.sh \
 			--output-dir "$(BENCHMARK_OUTPUT_DIR)"; \
 	else \
 		echo "Starting fresh A100 benchmark run..."; \
-		AUTOQSAR_CONDA_ENV=$(CONDA_ENV) bash js2/run_a100_benchmark.sh; \
+		QSARENA_CONDA_ENV=$(CONDA_ENV) bash js2/run_a100_benchmark.sh; \
 	fi
 
 # ── clean ─────────────────────────────────────────────────────────────────────

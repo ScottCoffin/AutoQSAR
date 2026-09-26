@@ -44,6 +44,8 @@ dependencies = [
     "scikit-learn>=1.3",
     "joblib>=1.3",
     "rdkit>=2023.3.1",
+    # run.yaml configuration files (qsarena/config.py); tiny, pure-Python fallback, wheels everywhere.
+    "pyyaml>=6.0",
 ]
 
 [project.optional-dependencies]
@@ -114,6 +116,14 @@ notebook = [
     "tqdm>=4.65",
 ]
 
+# Test and lint tooling used by CI (`pip install -e .[dev]`). matplotlib is here because the
+# reliability study draws its reliability diagrams in the integration tests.
+dev = [
+    "pytest>=7.4",
+    "ruff>=0.5",
+    "matplotlib>=3.7",
+]
+
 # Everything that resolves cleanly on CPU from PyPI. `tdc` is excluded because
 # its pins are incompatible with a modern resolver (see above); `chemml` is
 # excluded because it drags in TensorFlow. Add either explicitly if you need it.
@@ -134,12 +144,33 @@ Issues = "https://github.com/ScottCoffin/QSARena/issues"
 [project.scripts]
 qsarena-benchmark = "portable_colab_qsar_bundle.run_qsarena_benchmarks:main"
 qsarena-applicability-domain = "portable_colab_qsar_bundle.simple_applicability_domain:main"
+qsarena-examples = "qsarena.examples:main"
 
 [tool.setuptools]
 # Explicit list: auto-discovery would otherwise try to package data/, hpc/,
 # js2/, tests/, benchmark_results/ and the manuscript directories.
-packages = ["qsarena", "portable_colab_qsar_bundle"]
+packages = ["qsarena", "qsarena.examples", "portable_colab_qsar_bundle"]
 include-package-data = false
 
 [tool.setuptools.package-data]
 portable_colab_qsar_bundle = ["example_prediction_smiles.csv"]
+# Tutorial example data (synthetic targets), copied out by `qsarena-examples DIR`.
+"qsarena.examples" = ["data/*.csv", "data/*.yaml", "data/batch_dir/*.csv"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "docs: executable-docs tests that run the tutorial commands (tests/docs)",
+    "gpu: needs a CUDA GPU; excluded from default CI (-m \"not gpu and not slow\")",
+    "slow: long-running or needs large downloads; excluded from default CI",
+]
+
+[tool.ruff]
+line-length = 120
+target-version = "py310"
+# The legacy bundle modules predate linting; CI lints the qsarena package and the tests.
+extend-exclude = ["portable_colab_qsar_bundle", "node_modules", "benchmark_results", "tmp"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I"]
+ignore = ["E501"]

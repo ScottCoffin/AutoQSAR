@@ -1158,6 +1158,22 @@ def align_feature_matrix_to_training_columns(feature_df, expected_columns):
     return finalize_feature_matrix(aligned)
 
 
+def _normalized_numeric_column(series):
+    """Column values ready for byte hashing, or None for non-numeric dtypes."""
+    values = series.to_numpy()
+    if values.dtype.kind in "biu":
+        return np.ascontiguousarray(values)
+    if values.dtype.kind == "f":
+        # -0.0 and 0.0 keep different bytes on purpose: the original scan never matched them either,
+        # because hash_pandas_object hashes them differently.
+        nan_mask = np.isnan(values)
+        if nan_mask.any():
+            values = values.copy()
+            values[nan_mask] = np.nan  # one canonical NaN bit pattern, as hash_pandas_object does
+        return np.ascontiguousarray(values)
+    return None
+
+
 def drop_exact_and_near_duplicate_features(
     X_train,
     X_other=None,
@@ -1169,6 +1185,7 @@ def drop_exact_and_near_duplicate_features(
     binary_prevalence_max=0.995,
     binary_value_tolerance=1e-6,
     report_limit=20,
+    drop_exact_duplicates=True,
 ):
     """Apply cheap pre-filters and exact-duplicate pruning.
 
@@ -1198,6 +1215,8 @@ def drop_exact_and_near_duplicate_features(
         Tolerance used to detect binary columns near {0, 1}.
     report_limit : int
         Maximum number of representative duplicate pairs to keep in metadata.
+    drop_exact_duplicates : bool
+        When False, skip step 3 (``feature_selection.drop_duplicate_columns: false``).
     """
 
     train_df = pd.DataFrame(X_train).copy()
@@ -1283,14 +1302,26 @@ def drop_exact_and_near_duplicate_features(
     dropped_exact_columns = []
     dropped_exact_pairs = []
     hash_buckets = {}
-    current_columns = list(train_df.columns)
+    current_columns = list(train_df.columns) if drop_exact_duplicates else []
     for column in current_columns:
         series = train_df[column]
-        series_hash = int(pd.util.hash_pandas_object(series, index=False).sum())
+        # Same result as the original hash_pandas_object + Series.equals scan (equal dtype, equal
+        # values, NaN equal to NaN in the same row) but much faster on wide
+        # fingerprint matrices: numeric columns are keyed by a digest of their normalized bytes.
+        numeric_values = _normalized_numeric_column(series)
+        if numeric_values is not None:
+            series_hash = (str(series.dtype), hashlib.blake2b(numeric_values.tobytes(), digest_size=16).digest())
+        else:
+            series_hash = int(pd.util.hash_pandas_object(series, index=False).sum())
         bucket = hash_buckets.setdefault(series_hash, [])
         duplicate_of = None
         for prior_column in bucket:
-            if series.equals(train_df[prior_column]):
+            if numeric_values is not None:
+                prior_values = _normalized_numeric_column(train_df[prior_column])
+                is_equal = prior_values is not None and np.array_equal(numeric_values, prior_values, equal_nan=numeric_values.dtype.kind == "f")
+            else:
+                is_equal = series.equals(train_df[prior_column])
+            if is_equal:
                 duplicate_of = prior_column
                 break
         if duplicate_of is not None:

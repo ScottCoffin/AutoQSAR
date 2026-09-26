@@ -1,0 +1,16 @@
+\begin{table}[htbp]
+\centering
+\footnotesize
+\caption{Rank among curated published reference values, by comparison class. Only the 27 datasets with official predefined splits --- 22 TDC ADMET Benchmark Group and 5 Polaris ADME --- are directly comparable to a public leaderboard; the remaining 10 are scored against published values under a comparable but not identical protocol and are reported separately rather than pooled. Columns: ``n'' is the number of datasets in the class; ``test'' selects the best model per dataset on held-out data; ``CV'' selects by cross-validation only. Per-dataset detail is in Additional file~1, Table~S7. Single split and single seed, so individual placements are provisional.}
+\label{tab:leaderboardsummary}
+\begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}Xrrrrr@{}}
+\toprule
+\textbf{Comparison class} & \textbf{n} & \textbf{Top-10 test} & \textbf{Median rank test} & \textbf{Top-10 CV} & \textbf{Median rank CV} \\
+\midrule
+TDC ADMET Group (official) & 22 & 22 & 3.0 & 15 & 8.0 \\
+Polaris ADME (official) & 5 & 5 & 3.0 & 4 & 8.0 \\
+Local splits (not leaderboard-\allowbreak{}equivalent) & 10 & 8 & 4.5 & 6 & 7.0 \\
+All comparable datasets & 37 & 35 & 3.0 & 25 & 8.0 \\
+\bottomrule
+\end{tabularx}
+\end{table}

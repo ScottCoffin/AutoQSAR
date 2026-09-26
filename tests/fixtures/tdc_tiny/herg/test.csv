@@ -1,0 +1,13 @@
+Drug_ID,Drug,Y
+SERTINDOLE16,CCCc1cn(-c2ccc(F)cc2)c2ccc(Cl)cc12,0.0
+AMOXAPINE,Clc1ccc2c(c1)C(N1CCNCC1)=Nc1ccccc1O2,1.0
+DISOPYRAMIDE,CC(C)[NH+](CC[C@](C(N)=O)(c1ccccc1)c1ccccn1)C(C)C,0.0
+JMC20066569-53,CC(=O)c1ccc(CN2CCC(NC(=O)c3cc(=O)c4ccc(F)cc4o3)CC2)cc1,1.0
+NILOTINIB,Cc1cn(-c2cc(NC(=O)c3ccc(C)c(Nc4nccc(-c5cccnc5)n4)c3)cc(C(F)(F)F)c2)cn1,1.0
+BMCL-16-2006-17782-15,CC(C)[C@H](N)C(=O)N1CC(c2cc(F)ccc2F)=C[C@@H]1c1cccc(O)c1,1.0
+SITAGLIPTIN,N[C@@H](CC(=O)N1CCn2c(nnc2C(F)(F)F)C1)Cc1cc(F)c(F)cc1F,0.0
+"1,4-DIHYDROINDENO[1,2-C]PYRAZOL_50",COCCOCC#Cc1cc(-c2n[nH]c3c2C(=O)c2cc(CN4CCN(C)CC4)ccc2-3)cs1,1.0
+BMCL-16-2006-17782-19,CN(C)C(=O)N1CC(c2cc(F)ccc2F)=C[C@@H]1c1cccc(O)c1,1.0
+BMCL-16-2007-1777-21,CC(C)(C)[C@@H](NC(=O)OCCO)C(=O)N1CC(c2cc(F)ccc2F)=C[C@@H]1c1ccccc1,1.0
+SERTINDOLE17,CCC(CC)c1cn(-c2ccc(F)cc2)c2ccc(Cl)cc12,0.0
+BMCL-16-2006-17782-20,CN(CCO)C(=O)N1CC(c2cc(F)ccc2F)=C[C@H]1c1cccc(O)c1,1.0

@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" role="img" viewBox="0 0 760 400" width="760" height="400" font-family="Helvetica, Arial, sans-serif" font-size="13">
+<title>Which QSARena entry point to use</title>
+<defs>
+  <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+    <path d="M 0 0 L 10 5 L 0 10 z" fill="#444"/>
+  </marker>
+</defs>
+<rect x="0" y="0" width="760" height="400" fill="#ffffff"/>
+<!-- start -->
+<rect x="230" y="14" width="300" height="46" rx="23" fill="#e8f1f8" stroke="#0072B2" stroke-width="1.5"/>
+<text x="380" y="33" text-anchor="middle" fill="#1d1d1d" font-weight="bold">You have a CSV of SMILES</text>
+<text x="380" y="50" text-anchor="middle" fill="#1d1d1d">and a numeric (or 0/1) target</text>
+<line x1="380" y1="60" x2="380" y2="88" stroke="#444" stroke-width="1.5" marker-end="url(#arrow)"/>
+<!-- question -->
+<polygon points="380,90 575,140 380,190 185,140" fill="#fff7e6" stroke="#E69F00" stroke-width="1.5"/>
+<text x="380" y="130" text-anchor="middle" fill="#1d1d1d">Exploring one dataset, step by step,</text>
+<text x="380" y="147" text-anchor="middle" fill="#1d1d1d">with no installation?</text>
+<!-- yes branch -->
+<line x1="185" y1="140" x2="120" y2="140" stroke="#444" stroke-width="1.5"/>
+<line x1="120" y1="140" x2="120" y2="228" stroke="#444" stroke-width="1.5" marker-end="url(#arrow)"/>
+<text x="150" y="132" text-anchor="middle" fill="#009E73" font-weight="bold">yes</text>
+<rect x="14" y="230" width="220" height="104" rx="8" fill="#e9f6f1" stroke="#009E73" stroke-width="1.5"/>
+<text x="124" y="254" text-anchor="middle" font-weight="bold" fill="#1d1d1d">Colab notebook</text>
+<text x="124" y="273" text-anchor="middle" fill="#1d1d1d">colab_qsar_tutorial.ipynb</text>
+<text x="124" y="292" text-anchor="middle" fill="#1d1d1d">form widgets, plots after</text>
+<text x="124" y="309" text-anchor="middle" fill="#1d1d1d">each step, no code</text>
+<!-- no branch -->
+<line x1="575" y1="140" x2="640" y2="140" stroke="#444" stroke-width="1.5"/>
+<line x1="640" y1="140" x2="640" y2="228" stroke="#444" stroke-width="1.5" marker-end="url(#arrow)"/>
+<text x="610" y="132" text-anchor="middle" fill="#D55E00" font-weight="bold">no</text>
+<rect x="526" y="230" width="220" height="104" rx="8" fill="#fbeee6" stroke="#D55E00" stroke-width="1.5"/>
+<text x="636" y="254" text-anchor="middle" font-weight="bold" fill="#1d1d1d">qsarena-benchmark (CLI)</text>
+<text x="636" y="273" text-anchor="middle" fill="#1d1d1d">--dataset one.csv  |  --batch</text>
+<text x="636" y="292" text-anchor="middle" fill="#1d1d1d">many datasets, resume, reports,</text>
+<text x="636" y="309" text-anchor="middle" fill="#1d1d1d">servers and HPC</text>
+<!-- shared config -->
+<rect x="284" y="252" width="192" height="60" rx="8" fill="#f3f0f7" stroke="#CC79A7" stroke-width="1.5"/>
+<text x="380" y="276" text-anchor="middle" font-weight="bold" fill="#1d1d1d">run.yaml (RunConfig)</text>
+<text x="380" y="294" text-anchor="middle" fill="#1d1d1d">same options in both</text>
+<line x1="238" y1="282" x2="282" y2="282" stroke="#CC79A7" stroke-width="1.5" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+<line x1="478" y1="282" x2="522" y2="282" stroke="#CC79A7" stroke-width="1.5" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+<text x="380" y="358" text-anchor="middle" fill="#555">Notebook step 0B loads a run.yaml into the widgets; step 9E exports the widgets to run.yaml.</text>
+<text x="380" y="378" text-anchor="middle" fill="#555">Every qsarena-benchmark run writes run_config.yaml, which reruns the same configuration.</text>
+</svg>

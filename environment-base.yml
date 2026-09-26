@@ -1,4 +1,4 @@
-name: autoqsar-py311
+name: qsarena-py311
 channels:
   - dglteam
   - conda-forge

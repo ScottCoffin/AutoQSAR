@@ -24,7 +24,6 @@ import logging
 import pickle
 import sqlite3
 from pathlib import Path
-from typing import Iterator, Sequence
 
 logger = logging.getLogger(__name__)
 
