@@ -166,7 +166,9 @@ training set). OOF predictions come from, in order:
    with the same fold geometry as `--cv-folds`.
 
 `--ensemble-oof-scope all` also refits Chemprop per fold on the GPU. `cpu` does
-not, and Chemprop is then left out of the ensemble. Fold results are cached
+not, and Chemprop is then left out of the ensemble. Members that call a metered API
+(TabPFN via the Prior Labs client) are refitted only with
+`--ensemble-oof-allow-api-refits`. Fold results are cached
 under `<dataset>/ensemble_oof/` and saved as `split="oof"` rows in
 `predictions.csv`, so the stage resumes after an interruption. To rebuild
 ensembles for an existing run without retraining any full model, see

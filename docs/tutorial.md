@@ -553,6 +553,7 @@ biased; use it only for exact reproduction.
 | `ensemble.member_selection_metric` | `oof` | `oof`, `cv`, `test` | `--ensemble-member-selection-split` | CLI / run.yaml only |
 | `ensemble.oof_folds` | `5` | int (>= 2) | `--ensemble-oof-folds` | CLI / run.yaml only |
 | `ensemble.oof_scope` | `all` | `all`, `cpu` | `--ensemble-oof-scope` | CLI / run.yaml only |
+| `ensemble.oof_allow_api_refits` | `false` | true / false | `--ensemble-oof-allow-api-refits / --no-ensemble-oof-allow-api-refits` | CLI / run.yaml only |
 | `ensemble.oof_source_run` | `null` (look only in this run) | text | `--ensemble-oof-source-run` | CLI / run.yaml only |
 | `ensemble.exclude_negative_test_r2_members` | `true` | true / false | `--ensemble-exclude-negative-test-r2-members / --no-ensemble-exclude-negative-test-r2-members` | CLI / run.yaml only |
 | `ensemble.drop_correlated_members` | `true` | true / false | `--ensemble-drop-highly-correlated-members / --no-ensemble-drop-highly-correlated-members` | CLI / run.yaml only |
@@ -980,6 +981,11 @@ ensemble:
   # Chemprop per fold on the GPU; cpu refits only CPU models, and Chemprop is then left
   # out of the ensemble. Choices: all, cpu. CLI: --ensemble-oof-scope.
   oof_scope: all
+  # Allow out-of-fold refits of members that call a metered remote API (TabPFN via the
+  # Prior Labs client; K extra fits per dataset, billed as credits). Off: such members are
+  # left out of the ensemble unless they already have out-of-fold predictions. CLI:
+  # --ensemble-oof-allow-api-refits / --no-ensemble-oof-allow-api-refits.
+  oof_allow_api_refits: false
   # Earlier run directory searched for saved Uni-Mol model folders (cv.data) when building
   # out-of-fold predictions. null = look only in this run. CLI: --ensemble-oof-source-run.
   oof_source_run: null

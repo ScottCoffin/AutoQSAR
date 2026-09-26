@@ -17,7 +17,8 @@ Last updated: 2026-09-25.
       is retrained: Uni-Mol reads its saved `cv.data` OOF predictions, and CPU members refit on 5 folds
       (~10 h in total). **Decide on Chemprop**: `--ensemble-oof-scope all` refits it per fold (~65 h,
       or ~40 h with `--ensemble-oof-folds 3`); `cpu` leaves it out of the ensembles, and the paper
-      must say so.
+      must say so. TabPFN (metered API, credits capped until 2026-10-01) is left out of the
+      ensembles unless `--ensemble-oof-allow-api-refits` is passed or local `tabpfn` is installed.
 - [ ] Then regenerate every asset from that run, move `verify_manuscript_numbers.py` to it, and
       update the prose (both formats), abstract, graphical abstract and AGENTS.md framing. Take
       selector scaling and dataset wall-clock from the canonical run, not the repair runs.

@@ -641,6 +641,14 @@ class EnsembleSection:
         "internal-fold predictions (cv.data) and is not refitted. all also refits Chemprop per fold on the GPU; "
         "cpu refits only CPU models, and Chemprop is then left out of the ensemble.",
     )
+    oof_allow_api_refits: bool = _opt(
+        False, group=10, kind="bool",
+        cli="--ensemble-oof-allow-api-refits / --no-ensemble-oof-allow-api-refits",
+        dest="ensemble_oof_allow_api_refits", per_dataset=True,
+        help="Allow out-of-fold refits of members that call a metered remote API (TabPFN via the Prior Labs "
+        "client; K extra fits per dataset, billed as credits). Off: such members are left out of the "
+        "ensemble unless they already have out-of-fold predictions.",
+    )
     oof_source_run: str | None = _opt(
         None, group=10, kind="str", nullable=True, cli="--ensemble-oof-source-run",
         dest="ensemble_oof_source_run", signature=False, null_means="look only in this run",

@@ -7804,7 +7804,8 @@ _FAMILY_SIGNATURE_ARGS: dict[str, tuple[str, ...]] = {
                "cfa_rank_metric_discount"),
     "ensemble": ("ensemble_methods", "ensemble_stacking_cv_folds", "ensemble_drop_highly_correlated_members",
                  "ensemble_max_train_correlation", "ensemble_exclude_negative_test_r2_members",
-                 "ensemble_member_selection_split", "ensemble_oof_folds", "ensemble_oof_scope"),
+                 "ensemble_member_selection_split", "ensemble_oof_folds", "ensemble_oof_scope",
+                 "ensemble_oof_allow_api_refits"),
 }
 _GA_SIGNATURE_ARGS = ("ga_generations", "ga_population_size", "ga_elites", "ga_cv_folds", "ga_mutation_probability",
                       "ga_time_budget_minutes", "ga_max_configs", "elasticnet_l1_ratio_grid", "elasticnet_max_iter")
@@ -9896,9 +9897,15 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
             return frame.iloc[np.asarray(idx, dtype=int)].reset_index(drop=True)
 
         # Conventional estimators (including TabPFN and the MapLight CatBoost models).
+        # TabPFN through the Prior Labs API client spends metered credits (the key in use is a
+        # period cap, and the budget estimator under-reports), so K fold refits are opt-in.
+        tabpfn_via_api = str(TABPFN_REGRESSOR_SOURCE).strip().lower() == "tabpfn_client"
+        allow_api_refits = bool(getattr(args, "ensemble_oof_allow_api_refits", False))
         for bundle_name, bundle_estimator in model_bundle.items():
             bundle_name = str(bundle_name)
             if bundle_name.startswith("_"):
+                continue
+            if bundle_name in {"TabPFNRegressor", "TabPFNClassifier"} and tabpfn_via_api and not allow_api_refits:
                 continue
             if bundle_name == maplight_catboost_label and maplight_parity_mode:
                 if maplight_direct_X_train.empty:
@@ -11782,6 +11789,16 @@ def build_arg_parser() -> argparse.ArgumentParser:
             "never refitted when its saved cv.data exists (its own internal-fold predictions). 'all' "
             "also refits Chemprop per fold on the GPU. 'cpu' refits only CPU models; Chemprop (and "
             "Uni-Mol without cv.data) is then left out of the ensemble."
+        ),
+    )
+    parser.add_argument(
+        "--ensemble-oof-allow-api-refits",
+        action=argparse.BooleanOptionalAction,
+        default=False,
+        help=(
+            "Allow out-of-fold refits of members that call a metered remote API (TabPFN via the "
+            "Prior Labs client): K extra fits per dataset, billed as credits. Off by default; the "
+            "member is then left out of the ensemble unless it already has OOF predictions."
         ),
     )
     parser.add_argument(

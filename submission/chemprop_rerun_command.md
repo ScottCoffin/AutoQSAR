@@ -223,7 +223,8 @@ the ensemble from saved files alone can only reproduce the memorisation bias (`t
 | Members | OOF source | Cost |
 |---|---|---|
 | Uni-Mol V1 / V2 | **Already saved.** `unimol_tools` trains 5 internal folds and writes each training molecule's out-of-fold prediction to `cv.data` in the model folder. These are the reported model's own fold models. | none (read from disk) |
-| Conventional ML, MapLight CatBoost, TabPFN | Their CV fold models were not kept, so they are refitted on 5 folds | CPU; TabPFN uses API tokens |
+| Conventional ML, MapLight CatBoost | Their CV fold models were not kept, so they are refitted on 5 folds | CPU, minutes |
+| TabPFN (Prior Labs API) | Would need 5 metered fold refits per dataset | **Skipped by default** (see below) |
 | ChemML MLPs, MapLight + GNN | Refitted on 5 folds | CPU, minutes per dataset |
 | Chemprop (5 variants) | Only a random 10% was held out, for early stopping; there is no full OOF vector | **GPU fold refits: the only expensive part** |
 
@@ -279,10 +280,14 @@ nohup python portable_colab_qsar_bundle/run_qsarena_benchmarks.py \
 # flags only list the Chemprop variants whose OOF predictions to build.
 ```
 
-**TabPFN** runs through the API client, and the repair run already hit its daily token limit. Its
-fold refits may hit it again. That is not fatal: that member is left out of that dataset's
-ensembles, with the reason in `ensemble_member_filter_notes`. Running TabPFN locally on the GPU
-avoids the limit.
+**TabPFN** runs through the Prior Labs API on a credit cap of 20M until 2026-10-01 (a period cap,
+not a daily reset). The runner's estimate also under-reports: the 31 datasets that ran were
+estimated at 41M tokens yet exhausted a 100M/day cap. Five fold refits per dataset would exhaust
+the credits, so API-backed members are **not** refitted for OOF by default, and TabPFN is left out
+of the ensembles, with the reason logged. Two ways to include it:
+`--ensemble-oof-allow-api-refits` (budget ~5x the original TabPFN spend), or installing the local
+`tabpfn` package on the A100. The runner prefers the local package when present, and it costs no
+credits. Either way, say in the paper whether the ensembles include TabPFN.
 
 **Checks after the run.**
 
