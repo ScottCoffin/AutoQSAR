@@ -1,0 +1,1022 @@
+dataset,model,kind,n_train,source,fold_trainings,detail
+chemml_cep_homo,ElasticNetCV,conventional,400,cpu_refit,5,conventional fold refits
+chemml_cep_homo,SVR,conventional,400,cpu_refit,5,conventional fold refits
+chemml_cep_homo,Random forest,conventional,400,cpu_refit,5,conventional fold refits
+chemml_cep_homo,Extra trees,conventional,400,cpu_refit,5,conventional fold refits
+chemml_cep_homo,HistGradientBoosting,conventional,400,cpu_refit,5,conventional fold refits
+chemml_cep_homo,"Voting Regressor (KNN, SVM)",conventional,400,cpu_refit,5,conventional fold refits
+chemml_cep_homo,AdaBoost,conventional,400,cpu_refit,5,conventional fold refits
+chemml_cep_homo,Tabular MLP,conventional,400,cpu_refit,5,conventional fold refits
+chemml_cep_homo,Tabular CNN,conventional,400,cpu_refit,5,conventional fold refits
+chemml_cep_homo,XGBoost,conventional,400,cpu_refit,5,conventional fold refits
+chemml_cep_homo,CatBoost,conventional,400,cpu_refit,5,conventional fold refits
+chemml_cep_homo,MapLight CatBoost (Strict Parity),conventional,400,cpu_refit,5,conventional fold refits
+chemml_cep_homo,ChemML MLP (PyTorch),chemml,400,cpu_refit,5,chemml fold refits
+chemml_cep_homo,ChemML MLP (TensorFlow),chemml,400,cpu_refit,5,chemml fold refits
+chemml_cep_homo,Uni-Mol V1,unimol,400,unimol_cvdata,0,/home/exouser/AutoQSAR/benchmark_results/autoqsar_benchmark_20260623_153839/chemml_cep_homo/unimol_v1/seed_13
+chemml_cep_homo,"MapLight + GNN (CatBoost, Strict Parity)",maplight_gnn,400,cpu_refit,5,maplight_gnn fold refits
+chemml_cep_homo,CFA (Combinatorial Fusion),fusion,400,excluded,0,fusion output (CFA/ensemble) is never a member
+chemml_cep_homo,"Chemprop v2 (D-MPNN, ensemble=3)",chemprop,400,excluded,0,--scope cpu: Chemprop left out of the ensemble
+chemml_cep_homo,"Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",chemprop,400,excluded,0,--scope cpu: Chemprop left out of the ensemble
+chemml_cep_homo,"Chemprop v2 (CMPNN, ensemble=3)",chemprop,400,excluded,0,--scope cpu: Chemprop left out of the ensemble
+chemml_cep_homo,Uni-Mol V2 (84m),unimol,400,unimol_cvdata,0,benchmark_results/autoqsar_benchmark_20260623_153839/chemml_cep_homo/unimol_v2/84m_seed_13
+chemml_cep_homo,"Chemprop v2 (AttentiveFP, ensemble=3)",chemprop,400,excluded,0,--scope cpu: Chemprop left out of the ensemble
+chemml_cep_homo,"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",chemprop,400,excluded,0,--scope cpu: Chemprop left out of the ensemble
+chemml_cep_homo,TabPFNRegressor,tabpfn,400,excluded,0,metered API; pass --ensemble-oof-allow-api-refits to include
+chemml_cep_homo,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",fusion,400,excluded,0,fusion output (CFA/ensemble) is never a member
+chemml_cep_homo,Ensemble (Weighted average (inverse train RMSE)),fusion,400,excluded,0,fusion output (CFA/ensemble) is never a member
+chemml_organic_density,ElasticNetCV,conventional,400,cpu_refit,5,conventional fold refits
+chemml_organic_density,SVR,conventional,400,cpu_refit,5,conventional fold refits
+chemml_organic_density,Random forest,conventional,400,cpu_refit,5,conventional fold refits
+chemml_organic_density,Extra trees,conventional,400,cpu_refit,5,conventional fold refits
+chemml_organic_density,HistGradientBoosting,conventional,400,cpu_refit,5,conventional fold refits
+chemml_organic_density,"Voting Regressor (KNN, SVM)",conventional,400,cpu_refit,5,conventional fold refits
+chemml_organic_density,AdaBoost,conventional,400,cpu_refit,5,conventional fold refits
+chemml_organic_density,Tabular MLP,conventional,400,cpu_refit,5,conventional fold refits
+chemml_organic_density,Tabular CNN,conventional,400,cpu_refit,5,conventional fold refits
+chemml_organic_density,XGBoost,conventional,400,cpu_refit,5,conventional fold refits
+chemml_organic_density,CatBoost,conventional,400,cpu_refit,5,conventional fold refits
+chemml_organic_density,MapLight CatBoost (Strict Parity),conventional,400,cpu_refit,5,conventional fold refits
+chemml_organic_density,ChemML MLP (PyTorch),chemml,400,cpu_refit,5,chemml fold refits
+chemml_organic_density,ChemML MLP (TensorFlow),chemml,400,cpu_refit,5,chemml fold refits
+chemml_organic_density,Uni-Mol V1,unimol,400,unimol_cvdata,0,/home/exouser/AutoQSAR/benchmark_results/autoqsar_benchmark_20260623_153839/chemml_organic_density/unimol_v1/seed_13
+chemml_organic_density,"MapLight + GNN (CatBoost, Strict Parity)",maplight_gnn,400,cpu_refit,5,maplight_gnn fold refits
+chemml_organic_density,CFA (Combinatorial Fusion),fusion,400,excluded,0,fusion output (CFA/ensemble) is never a member
+chemml_organic_density,Uni-Mol V2 (84m),unimol,400,unimol_cvdata,0,benchmark_results/autoqsar_benchmark_20260623_153839/chemml_organic_density/unimol_v2/seed_13
+chemml_organic_density,"Chemprop v2 (D-MPNN, ensemble=3)",chemprop,400,excluded,0,--scope cpu: Chemprop left out of the ensemble
+chemml_organic_density,"Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",chemprop,400,excluded,0,--scope cpu: Chemprop left out of the ensemble
+chemml_organic_density,"Chemprop v2 (CMPNN, ensemble=3)",chemprop,400,excluded,0,--scope cpu: Chemprop left out of the ensemble
+chemml_organic_density,"Chemprop v2 (AttentiveFP, ensemble=3)",chemprop,400,excluded,0,--scope cpu: Chemprop left out of the ensemble
+chemml_organic_density,"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",chemprop,400,excluded,0,--scope cpu: Chemprop left out of the ensemble
+chemml_organic_density,TabPFNRegressor,tabpfn,400,excluded,0,metered API; pass --ensemble-oof-allow-api-refits to include
+chemml_organic_density,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",fusion,400,excluded,0,fusion output (CFA/ensemble) is never a member
+chemml_organic_density,Ensemble (Weighted average (inverse train RMSE)),fusion,400,excluded,0,fusion output (CFA/ensemble) is never a member
+esol_delaney,ElasticNetCV,conventional,874,cpu_refit,5,conventional fold refits
+esol_delaney,SVR,conventional,874,cpu_refit,5,conventional fold refits
+esol_delaney,Random forest,conventional,874,cpu_refit,5,conventional fold refits
+esol_delaney,Extra trees,conventional,874,cpu_refit,5,conventional fold refits
+esol_delaney,HistGradientBoosting,conventional,874,cpu_refit,5,conventional fold refits
+esol_delaney,"Voting Regressor (KNN, SVM)",conventional,874,cpu_refit,5,conventional fold refits
+esol_delaney,AdaBoost,conventional,874,cpu_refit,5,conventional fold refits
+esol_delaney,Tabular MLP,conventional,874,cpu_refit,5,conventional fold refits
+esol_delaney,Tabular CNN,conventional,874,cpu_refit,5,conventional fold refits
+esol_delaney,XGBoost,conventional,874,cpu_refit,5,conventional fold refits
+esol_delaney,CatBoost,conventional,874,cpu_refit,5,conventional fold refits
+esol_delaney,MapLight CatBoost (Strict Parity),conventional,874,cpu_refit,5,conventional fold refits
+esol_delaney,ChemML MLP (PyTorch),chemml,874,cpu_refit,5,chemml fold refits
+esol_delaney,ChemML MLP (TensorFlow),chemml,874,cpu_refit,5,chemml fold refits
+esol_delaney,Uni-Mol V1,unimol,874,unimol_cvdata,0,benchmark_results/autoqsar_benchmark_20260623_153839/esol_delaney/unimol_v1/seed_13
+esol_delaney,Uni-Mol V2 (84m),unimol,874,unimol_cvdata,0,benchmark_results/autoqsar_benchmark_20260623_153839/esol_delaney/unimol_v2/84m_seed_13
+esol_delaney,"MapLight + GNN (CatBoost, Strict Parity)",maplight_gnn,874,cpu_refit,5,maplight_gnn fold refits
+esol_delaney,CFA (Combinatorial Fusion),fusion,874,excluded,0,fusion output (CFA/ensemble) is never a member
+esol_delaney,"Chemprop v2 (D-MPNN, ensemble=3)",chemprop,874,excluded,0,--scope cpu: Chemprop left out of the ensemble
+esol_delaney,"Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",chemprop,874,excluded,0,--scope cpu: Chemprop left out of the ensemble
+esol_delaney,"Chemprop v2 (CMPNN, ensemble=3)",chemprop,874,excluded,0,--scope cpu: Chemprop left out of the ensemble
+esol_delaney,"Chemprop v2 (AttentiveFP, ensemble=3)",chemprop,874,excluded,0,--scope cpu: Chemprop left out of the ensemble
+esol_delaney,"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",chemprop,874,excluded,0,--scope cpu: Chemprop left out of the ensemble
+esol_delaney,TabPFNRegressor,tabpfn,874,excluded,0,metered API; pass --ensemble-oof-allow-api-refits to include
+esol_delaney,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",fusion,874,excluded,0,fusion output (CFA/ensemble) is never a member
+esol_delaney,Ensemble (Weighted average (inverse train RMSE)),fusion,874,excluded,0,fusion output (CFA/ensemble) is never a member
+freesolv_sampl,ElasticNetCV,conventional,513,cpu_refit,5,conventional fold refits
+freesolv_sampl,SVR,conventional,513,cpu_refit,5,conventional fold refits
+freesolv_sampl,Random forest,conventional,513,cpu_refit,5,conventional fold refits
+freesolv_sampl,Extra trees,conventional,513,cpu_refit,5,conventional fold refits
+freesolv_sampl,HistGradientBoosting,conventional,513,cpu_refit,5,conventional fold refits
+freesolv_sampl,"Voting Regressor (KNN, SVM)",conventional,513,cpu_refit,5,conventional fold refits
+freesolv_sampl,AdaBoost,conventional,513,cpu_refit,5,conventional fold refits
+freesolv_sampl,Tabular MLP,conventional,513,cpu_refit,5,conventional fold refits
+freesolv_sampl,Tabular CNN,conventional,513,cpu_refit,5,conventional fold refits
+freesolv_sampl,XGBoost,conventional,513,cpu_refit,5,conventional fold refits
+freesolv_sampl,CatBoost,conventional,513,cpu_refit,5,conventional fold refits
+freesolv_sampl,MapLight CatBoost (Strict Parity),conventional,513,cpu_refit,5,conventional fold refits
+freesolv_sampl,ChemML MLP (PyTorch),chemml,513,cpu_refit,5,chemml fold refits
+freesolv_sampl,ChemML MLP (TensorFlow),chemml,513,cpu_refit,5,chemml fold refits
+freesolv_sampl,Uni-Mol V1,unimol,513,unimol_cvdata,0,benchmark_results/autoqsar_benchmark_20260623_153839/freesolv_sampl/unimol_v1/seed_13
+freesolv_sampl,"MapLight + GNN (CatBoost, Strict Parity)",maplight_gnn,513,cpu_refit,5,maplight_gnn fold refits
+freesolv_sampl,CFA (Combinatorial Fusion),fusion,513,excluded,0,fusion output (CFA/ensemble) is never a member
+freesolv_sampl,Uni-Mol V2 (84m),unimol,513,unimol_cvdata,0,benchmark_results/autoqsar_benchmark_20260623_153839/freesolv_sampl/unimol_v2/84m_seed_13
+freesolv_sampl,"Chemprop v2 (D-MPNN, ensemble=3)",chemprop,513,excluded,0,--scope cpu: Chemprop left out of the ensemble
+freesolv_sampl,"Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",chemprop,513,excluded,0,--scope cpu: Chemprop left out of the ensemble
+freesolv_sampl,"Chemprop v2 (CMPNN, ensemble=3)",chemprop,513,excluded,0,--scope cpu: Chemprop left out of the ensemble
+freesolv_sampl,"Chemprop v2 (AttentiveFP, ensemble=3)",chemprop,513,excluded,0,--scope cpu: Chemprop left out of the ensemble
+freesolv_sampl,"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",chemprop,513,excluded,0,--scope cpu: Chemprop left out of the ensemble
+freesolv_sampl,TabPFNRegressor,tabpfn,513,excluded,0,metered API; pass --ensemble-oof-allow-api-refits to include
+freesolv_sampl,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",fusion,513,excluded,0,fusion output (CFA/ensemble) is never a member
+freesolv_sampl,Ensemble (Weighted average (inverse train RMSE)),fusion,513,excluded,0,fusion output (CFA/ensemble) is never a member
+lipophilicity,ElasticNetCV,conventional,3357,cpu_refit,5,conventional fold refits
+lipophilicity,SVR,conventional,3357,cpu_refit,5,conventional fold refits
+lipophilicity,Random forest,conventional,3357,cpu_refit,5,conventional fold refits
+lipophilicity,Extra trees,conventional,3357,cpu_refit,5,conventional fold refits
+lipophilicity,HistGradientBoosting,conventional,3357,cpu_refit,5,conventional fold refits
+lipophilicity,"Voting Regressor (KNN, SVM)",conventional,3357,cpu_refit,5,conventional fold refits
+lipophilicity,AdaBoost,conventional,3357,cpu_refit,5,conventional fold refits
+lipophilicity,Tabular MLP,conventional,3357,cpu_refit,5,conventional fold refits
+lipophilicity,Tabular CNN,conventional,3357,cpu_refit,5,conventional fold refits
+lipophilicity,XGBoost,conventional,3357,cpu_refit,5,conventional fold refits
+lipophilicity,CatBoost,conventional,3357,cpu_refit,5,conventional fold refits
+lipophilicity,MapLight CatBoost (Strict Parity),conventional,3357,cpu_refit,5,conventional fold refits
+lipophilicity,ChemML MLP (PyTorch),chemml,3357,cpu_refit,5,chemml fold refits
+lipophilicity,ChemML MLP (TensorFlow),chemml,3357,cpu_refit,5,chemml fold refits
+lipophilicity,Uni-Mol V1,unimol,3357,unimol_cvdata,0,benchmark_results/autoqsar_benchmark_20260623_153839/lipophilicity/unimol_v1/seed_13
+lipophilicity,"MapLight + GNN (CatBoost, Strict Parity)",maplight_gnn,3357,cpu_refit,5,maplight_gnn fold refits
+lipophilicity,CFA (Combinatorial Fusion),fusion,3357,excluded,0,fusion output (CFA/ensemble) is never a member
+lipophilicity,"Chemprop v2 (D-MPNN, ensemble=3)",chemprop,3357,excluded,0,--scope cpu: Chemprop left out of the ensemble
+lipophilicity,"Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",chemprop,3357,excluded,0,--scope cpu: Chemprop left out of the ensemble
+lipophilicity,"Chemprop v2 (CMPNN, ensemble=3)",chemprop,3357,excluded,0,--scope cpu: Chemprop left out of the ensemble
+lipophilicity,"Chemprop v2 (AttentiveFP, ensemble=3)",chemprop,3357,excluded,0,--scope cpu: Chemprop left out of the ensemble
+lipophilicity,"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",chemprop,3357,excluded,0,--scope cpu: Chemprop left out of the ensemble
+lipophilicity,TabPFNRegressor,tabpfn,3357,excluded,0,metered API; pass --ensemble-oof-allow-api-refits to include
+lipophilicity,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",fusion,3357,excluded,0,fusion output (CFA/ensemble) is never a member
+lipophilicity,Ensemble (Weighted average (inverse train RMSE)),fusion,3357,excluded,0,fusion output (CFA/ensemble) is never a member
+poduam_pod_nc_std,ElasticNetCV,conventional,1473,cpu_refit,5,conventional fold refits
+poduam_pod_nc_std,SVR,conventional,1473,cpu_refit,5,conventional fold refits
+poduam_pod_nc_std,Random forest,conventional,1473,cpu_refit,5,conventional fold refits
+poduam_pod_nc_std,Extra trees,conventional,1473,cpu_refit,5,conventional fold refits
+poduam_pod_nc_std,HistGradientBoosting,conventional,1473,cpu_refit,5,conventional fold refits
+poduam_pod_nc_std,"Voting Regressor (KNN, SVM)",conventional,1473,cpu_refit,5,conventional fold refits
+poduam_pod_nc_std,AdaBoost,conventional,1473,cpu_refit,5,conventional fold refits
+poduam_pod_nc_std,Tabular MLP,conventional,1473,cpu_refit,5,conventional fold refits
+poduam_pod_nc_std,Tabular CNN,conventional,1473,cpu_refit,5,conventional fold refits
+poduam_pod_nc_std,XGBoost,conventional,1473,cpu_refit,5,conventional fold refits
+poduam_pod_nc_std,CatBoost,conventional,1473,cpu_refit,5,conventional fold refits
+poduam_pod_nc_std,MapLight CatBoost (Strict Parity),conventional,1473,cpu_refit,5,conventional fold refits
+poduam_pod_nc_std,ChemML MLP (PyTorch),chemml,1473,cpu_refit,5,chemml fold refits
+poduam_pod_nc_std,ChemML MLP (TensorFlow),chemml,1473,cpu_refit,5,chemml fold refits
+poduam_pod_nc_std,Uni-Mol V1,unimol,1473,unimol_cvdata,0,benchmark_results/autoqsar_benchmark_20260623_153839/poduam_pod_nc_std/unimol_v1/seed_13
+poduam_pod_nc_std,"MapLight + GNN (CatBoost, Strict Parity)",maplight_gnn,1473,cpu_refit,5,maplight_gnn fold refits
+poduam_pod_nc_std,CFA (Combinatorial Fusion),fusion,1473,excluded,0,fusion output (CFA/ensemble) is never a member
+poduam_pod_nc_std,"Chemprop v2 (D-MPNN, ensemble=3)",chemprop,1473,excluded,0,--scope cpu: Chemprop left out of the ensemble
+poduam_pod_nc_std,"Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",chemprop,1473,excluded,0,--scope cpu: Chemprop left out of the ensemble
+poduam_pod_nc_std,"Chemprop v2 (CMPNN, ensemble=3)",chemprop,1473,excluded,0,--scope cpu: Chemprop left out of the ensemble
+poduam_pod_nc_std,"Chemprop v2 (AttentiveFP, ensemble=3)",chemprop,1473,excluded,0,--scope cpu: Chemprop left out of the ensemble
+poduam_pod_nc_std,"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",chemprop,1473,excluded,0,--scope cpu: Chemprop left out of the ensemble
+poduam_pod_nc_std,TabPFNRegressor,tabpfn,1473,excluded,0,metered API; pass --ensemble-oof-allow-api-refits to include
+poduam_pod_nc_std,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",fusion,1473,excluded,0,fusion output (CFA/ensemble) is never a member
+poduam_pod_nc_std,Ensemble (Weighted average (inverse train RMSE)),fusion,1473,excluded,0,fusion output (CFA/ensemble) is never a member
+poduam_pod_rd_std,ElasticNetCV,conventional,1884,cpu_refit,5,conventional fold refits
+poduam_pod_rd_std,SVR,conventional,1884,cpu_refit,5,conventional fold refits
+poduam_pod_rd_std,Random forest,conventional,1884,cpu_refit,5,conventional fold refits
+poduam_pod_rd_std,Extra trees,conventional,1884,cpu_refit,5,conventional fold refits
+poduam_pod_rd_std,HistGradientBoosting,conventional,1884,cpu_refit,5,conventional fold refits
+poduam_pod_rd_std,"Voting Regressor (KNN, SVM)",conventional,1884,cpu_refit,5,conventional fold refits
+poduam_pod_rd_std,AdaBoost,conventional,1884,cpu_refit,5,conventional fold refits
+poduam_pod_rd_std,Tabular MLP,conventional,1884,cpu_refit,5,conventional fold refits
+poduam_pod_rd_std,Tabular CNN,conventional,1884,cpu_refit,5,conventional fold refits
+poduam_pod_rd_std,XGBoost,conventional,1884,cpu_refit,5,conventional fold refits
+poduam_pod_rd_std,CatBoost,conventional,1884,cpu_refit,5,conventional fold refits
+poduam_pod_rd_std,MapLight CatBoost (Strict Parity),conventional,1884,cpu_refit,5,conventional fold refits
+poduam_pod_rd_std,ChemML MLP (PyTorch),chemml,1884,cpu_refit,5,chemml fold refits
+poduam_pod_rd_std,ChemML MLP (TensorFlow),chemml,1884,cpu_refit,5,chemml fold refits
+poduam_pod_rd_std,Uni-Mol V1,unimol,1884,unimol_cvdata,0,benchmark_results/autoqsar_benchmark_20260623_153839/poduam_pod_rd_std/unimol_v1/seed_13
+poduam_pod_rd_std,"MapLight + GNN (CatBoost, Strict Parity)",maplight_gnn,1884,cpu_refit,5,maplight_gnn fold refits
+poduam_pod_rd_std,CFA (Combinatorial Fusion),fusion,1884,excluded,0,fusion output (CFA/ensemble) is never a member
+poduam_pod_rd_std,"Chemprop v2 (D-MPNN, ensemble=3)",chemprop,1884,excluded,0,--scope cpu: Chemprop left out of the ensemble
+poduam_pod_rd_std,"Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",chemprop,1884,excluded,0,--scope cpu: Chemprop left out of the ensemble
+poduam_pod_rd_std,"Chemprop v2 (CMPNN, ensemble=3)",chemprop,1884,excluded,0,--scope cpu: Chemprop left out of the ensemble
+poduam_pod_rd_std,"Chemprop v2 (AttentiveFP, ensemble=3)",chemprop,1884,excluded,0,--scope cpu: Chemprop left out of the ensemble
+poduam_pod_rd_std,"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",chemprop,1884,excluded,0,--scope cpu: Chemprop left out of the ensemble
+poduam_pod_rd_std,TabPFNRegressor,tabpfn,1884,excluded,0,metered API; pass --ensemble-oof-allow-api-refits to include
+poduam_pod_rd_std,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",fusion,1884,excluded,0,fusion output (CFA/ensemble) is never a member
+poduam_pod_rd_std,Ensemble (Weighted average (inverse train RMSE)),fusion,1884,excluded,0,fusion output (CFA/ensemble) is never a member
+polaris_adme_fang_hppb_1,ElasticNetCV,conventional,1446,cpu_refit,5,conventional fold refits
+polaris_adme_fang_hppb_1,SVR,conventional,1446,cpu_refit,5,conventional fold refits
+polaris_adme_fang_hppb_1,Random forest,conventional,1446,cpu_refit,5,conventional fold refits
+polaris_adme_fang_hppb_1,Extra trees,conventional,1446,cpu_refit,5,conventional fold refits
+polaris_adme_fang_hppb_1,HistGradientBoosting,conventional,1446,cpu_refit,5,conventional fold refits
+polaris_adme_fang_hppb_1,"Voting Regressor (KNN, SVM)",conventional,1446,cpu_refit,5,conventional fold refits
+polaris_adme_fang_hppb_1,AdaBoost,conventional,1446,cpu_refit,5,conventional fold refits
+polaris_adme_fang_hppb_1,Tabular MLP,conventional,1446,cpu_refit,5,conventional fold refits
+polaris_adme_fang_hppb_1,Tabular CNN,conventional,1446,cpu_refit,5,conventional fold refits
+polaris_adme_fang_hppb_1,XGBoost,conventional,1446,cpu_refit,5,conventional fold refits
+polaris_adme_fang_hppb_1,CatBoost,conventional,1446,cpu_refit,5,conventional fold refits
+polaris_adme_fang_hppb_1,MapLight CatBoost (Strict Parity),conventional,1446,cpu_refit,5,conventional fold refits
+polaris_adme_fang_hppb_1,ChemML MLP (PyTorch),chemml,1446,cpu_refit,5,chemml fold refits
+polaris_adme_fang_hppb_1,ChemML MLP (TensorFlow),chemml,1446,cpu_refit,5,chemml fold refits
+polaris_adme_fang_hppb_1,Uni-Mol V1,unimol,1446,unimol_cvdata,0,benchmark_results/autoqsar_benchmark_20260623_153839/polaris_adme_fang_hppb_1/unimol_v1/seed_13
+polaris_adme_fang_hppb_1,"MapLight + GNN (CatBoost, Strict Parity)",maplight_gnn,1446,cpu_refit,5,maplight_gnn fold refits
+polaris_adme_fang_hppb_1,CFA (Combinatorial Fusion),fusion,1446,excluded,0,fusion output (CFA/ensemble) is never a member
+polaris_adme_fang_hppb_1,"Chemprop v2 (D-MPNN, ensemble=3)",chemprop,1446,excluded,0,--scope cpu: Chemprop left out of the ensemble
+polaris_adme_fang_hppb_1,"Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",chemprop,1446,excluded,0,--scope cpu: Chemprop left out of the ensemble
+polaris_adme_fang_hppb_1,"Chemprop v2 (CMPNN, ensemble=3)",chemprop,1446,excluded,0,--scope cpu: Chemprop left out of the ensemble
+polaris_adme_fang_hppb_1,"Chemprop v2 (AttentiveFP, ensemble=3)",chemprop,1446,excluded,0,--scope cpu: Chemprop left out of the ensemble
+polaris_adme_fang_hppb_1,"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",chemprop,1446,excluded,0,--scope cpu: Chemprop left out of the ensemble
+polaris_adme_fang_hppb_1,TabPFNRegressor,tabpfn,1446,excluded,0,metered API; pass --ensemble-oof-allow-api-refits to include
+polaris_adme_fang_hppb_1,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",fusion,1446,excluded,0,fusion output (CFA/ensemble) is never a member
+polaris_adme_fang_hppb_1,Ensemble (Weighted average (inverse train RMSE)),fusion,1446,excluded,0,fusion output (CFA/ensemble) is never a member
+polaris_adme_fang_perm_1,ElasticNetCV,conventional,2113,cpu_refit,5,conventional fold refits
+polaris_adme_fang_perm_1,SVR,conventional,2113,cpu_refit,5,conventional fold refits
+polaris_adme_fang_perm_1,Random forest,conventional,2113,cpu_refit,5,conventional fold refits
+polaris_adme_fang_perm_1,Extra trees,conventional,2113,cpu_refit,5,conventional fold refits
+polaris_adme_fang_perm_1,HistGradientBoosting,conventional,2113,cpu_refit,5,conventional fold refits
+polaris_adme_fang_perm_1,"Voting Regressor (KNN, SVM)",conventional,2113,cpu_refit,5,conventional fold refits
+polaris_adme_fang_perm_1,AdaBoost,conventional,2113,cpu_refit,5,conventional fold refits
+polaris_adme_fang_perm_1,Tabular MLP,conventional,2113,cpu_refit,5,conventional fold refits
+polaris_adme_fang_perm_1,Tabular CNN,conventional,2113,cpu_refit,5,conventional fold refits
+polaris_adme_fang_perm_1,XGBoost,conventional,2113,cpu_refit,5,conventional fold refits
+polaris_adme_fang_perm_1,CatBoost,conventional,2113,cpu_refit,5,conventional fold refits
+polaris_adme_fang_perm_1,MapLight CatBoost (Strict Parity),conventional,2113,cpu_refit,5,conventional fold refits
+polaris_adme_fang_perm_1,ChemML MLP (PyTorch),chemml,2113,cpu_refit,5,chemml fold refits
+polaris_adme_fang_perm_1,ChemML MLP (TensorFlow),chemml,2113,cpu_refit,5,chemml fold refits
+polaris_adme_fang_perm_1,Uni-Mol V1,unimol,2113,unimol_cvdata,0,benchmark_results/autoqsar_benchmark_20260623_153839/polaris_adme_fang_perm_1/unimol_v1/seed_13
+polaris_adme_fang_perm_1,Uni-Mol V2 (84m),unimol,2113,unimol_cvdata,0,benchmark_results/autoqsar_benchmark_20260623_153839/polaris_adme_fang_perm_1/unimol_v2/84m_seed_13
+polaris_adme_fang_perm_1,"MapLight + GNN (CatBoost, Strict Parity)",maplight_gnn,2113,cpu_refit,5,maplight_gnn fold refits
+polaris_adme_fang_perm_1,CFA (Combinatorial Fusion),fusion,2113,excluded,0,fusion output (CFA/ensemble) is never a member
+polaris_adme_fang_perm_1,"Chemprop v2 (D-MPNN, ensemble=3)",chemprop,2113,excluded,0,--scope cpu: Chemprop left out of the ensemble
+polaris_adme_fang_perm_1,"Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",chemprop,2113,excluded,0,--scope cpu: Chemprop left out of the ensemble
+polaris_adme_fang_perm_1,"Chemprop v2 (CMPNN, ensemble=3)",chemprop,2113,excluded,0,--scope cpu: Chemprop left out of the ensemble
+polaris_adme_fang_perm_1,"Chemprop v2 (AttentiveFP, ensemble=3)",chemprop,2113,excluded,0,--scope cpu: Chemprop left out of the ensemble
+polaris_adme_fang_perm_1,"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",chemprop,2113,excluded,0,--scope cpu: Chemprop left out of the ensemble
+polaris_adme_fang_perm_1,TabPFNRegressor,tabpfn,2113,excluded,0,metered API; pass --ensemble-oof-allow-api-refits to include
+polaris_adme_fang_perm_1,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",fusion,2113,excluded,0,fusion output (CFA/ensemble) is never a member
+polaris_adme_fang_perm_1,Ensemble (Weighted average (inverse train RMSE)),fusion,2113,excluded,0,fusion output (CFA/ensemble) is never a member
+polaris_adme_fang_rclint_1,ElasticNetCV,conventional,2443,cpu_refit,5,conventional fold refits
+polaris_adme_fang_rclint_1,SVR,conventional,2443,cpu_refit,5,conventional fold refits
+polaris_adme_fang_rclint_1,Random forest,conventional,2443,cpu_refit,5,conventional fold refits
+polaris_adme_fang_rclint_1,Extra trees,conventional,2443,cpu_refit,5,conventional fold refits
+polaris_adme_fang_rclint_1,HistGradientBoosting,conventional,2443,cpu_refit,5,conventional fold refits
+polaris_adme_fang_rclint_1,"Voting Regressor (KNN, SVM)",conventional,2443,cpu_refit,5,conventional fold refits
+polaris_adme_fang_rclint_1,AdaBoost,conventional,2443,cpu_refit,5,conventional fold refits
+polaris_adme_fang_rclint_1,Tabular MLP,conventional,2443,cpu_refit,5,conventional fold refits
+polaris_adme_fang_rclint_1,Tabular CNN,conventional,2443,cpu_refit,5,conventional fold refits
+polaris_adme_fang_rclint_1,XGBoost,conventional,2443,cpu_refit,5,conventional fold refits
+polaris_adme_fang_rclint_1,CatBoost,conventional,2443,cpu_refit,5,conventional fold refits
+polaris_adme_fang_rclint_1,MapLight CatBoost (Strict Parity),conventional,2443,cpu_refit,5,conventional fold refits
+polaris_adme_fang_rclint_1,ChemML MLP (PyTorch),chemml,2443,cpu_refit,5,chemml fold refits
+polaris_adme_fang_rclint_1,ChemML MLP (TensorFlow),chemml,2443,cpu_refit,5,chemml fold refits
+polaris_adme_fang_rclint_1,Uni-Mol V1,unimol,2443,unimol_cvdata,0,benchmark_results/autoqsar_benchmark_20260623_153839/polaris_adme_fang_rclint_1/unimol_v1/seed_13
+polaris_adme_fang_rclint_1,"MapLight + GNN (CatBoost, Strict Parity)",maplight_gnn,2443,cpu_refit,5,maplight_gnn fold refits
+polaris_adme_fang_rclint_1,CFA (Combinatorial Fusion),fusion,2443,excluded,0,fusion output (CFA/ensemble) is never a member
+polaris_adme_fang_rclint_1,"Chemprop v2 (D-MPNN, ensemble=3)",chemprop,2443,excluded,0,--scope cpu: Chemprop left out of the ensemble
+polaris_adme_fang_rclint_1,"Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",chemprop,2443,excluded,0,--scope cpu: Chemprop left out of the ensemble
+polaris_adme_fang_rclint_1,"Chemprop v2 (CMPNN, ensemble=3)",chemprop,2443,excluded,0,--scope cpu: Chemprop left out of the ensemble
+polaris_adme_fang_rclint_1,"Chemprop v2 (AttentiveFP, ensemble=3)",chemprop,2443,excluded,0,--scope cpu: Chemprop left out of the ensemble
+polaris_adme_fang_rclint_1,"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",chemprop,2443,excluded,0,--scope cpu: Chemprop left out of the ensemble
+polaris_adme_fang_rclint_1,TabPFNRegressor,tabpfn,2443,excluded,0,metered API; pass --ensemble-oof-allow-api-refits to include
+polaris_adme_fang_rclint_1,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",fusion,2443,excluded,0,fusion output (CFA/ensemble) is never a member
+polaris_adme_fang_rclint_1,Ensemble (Weighted average (inverse train RMSE)),fusion,2443,excluded,0,fusion output (CFA/ensemble) is never a member
+polaris_adme_fang_rppb_1,ElasticNetCV,conventional,708,cpu_refit,5,conventional fold refits
+polaris_adme_fang_rppb_1,SVR,conventional,708,cpu_refit,5,conventional fold refits
+polaris_adme_fang_rppb_1,Random forest,conventional,708,cpu_refit,5,conventional fold refits
+polaris_adme_fang_rppb_1,Extra trees,conventional,708,cpu_refit,5,conventional fold refits
+polaris_adme_fang_rppb_1,HistGradientBoosting,conventional,708,cpu_refit,5,conventional fold refits
+polaris_adme_fang_rppb_1,"Voting Regressor (KNN, SVM)",conventional,708,cpu_refit,5,conventional fold refits
+polaris_adme_fang_rppb_1,AdaBoost,conventional,708,cpu_refit,5,conventional fold refits
+polaris_adme_fang_rppb_1,Tabular MLP,conventional,708,cpu_refit,5,conventional fold refits
+polaris_adme_fang_rppb_1,Tabular CNN,conventional,708,cpu_refit,5,conventional fold refits
+polaris_adme_fang_rppb_1,XGBoost,conventional,708,cpu_refit,5,conventional fold refits
+polaris_adme_fang_rppb_1,CatBoost,conventional,708,cpu_refit,5,conventional fold refits
+polaris_adme_fang_rppb_1,MapLight CatBoost (Strict Parity),conventional,708,cpu_refit,5,conventional fold refits
+polaris_adme_fang_rppb_1,ChemML MLP (PyTorch),chemml,708,cpu_refit,5,chemml fold refits
+polaris_adme_fang_rppb_1,ChemML MLP (TensorFlow),chemml,708,cpu_refit,5,chemml fold refits
+polaris_adme_fang_rppb_1,Uni-Mol V1,unimol,708,unimol_cvdata,0,benchmark_results/autoqsar_benchmark_20260623_153839/polaris_adme_fang_rppb_1/unimol_v1/seed_13
+polaris_adme_fang_rppb_1,Uni-Mol V2 (84m),unimol,708,unimol_cvdata,0,benchmark_results/autoqsar_benchmark_20260623_153839/polaris_adme_fang_rppb_1/unimol_v2/84m_seed_13
+polaris_adme_fang_rppb_1,"MapLight + GNN (CatBoost, Strict Parity)",maplight_gnn,708,cpu_refit,5,maplight_gnn fold refits
+polaris_adme_fang_rppb_1,CFA (Combinatorial Fusion),fusion,708,excluded,0,fusion output (CFA/ensemble) is never a member
+polaris_adme_fang_rppb_1,"Chemprop v2 (D-MPNN, ensemble=3)",chemprop,708,excluded,0,--scope cpu: Chemprop left out of the ensemble
+polaris_adme_fang_rppb_1,"Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",chemprop,708,excluded,0,--scope cpu: Chemprop left out of the ensemble
+polaris_adme_fang_rppb_1,"Chemprop v2 (CMPNN, ensemble=3)",chemprop,708,excluded,0,--scope cpu: Chemprop left out of the ensemble
+polaris_adme_fang_rppb_1,"Chemprop v2 (AttentiveFP, ensemble=3)",chemprop,708,excluded,0,--scope cpu: Chemprop left out of the ensemble
+polaris_adme_fang_rppb_1,"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",chemprop,708,excluded,0,--scope cpu: Chemprop left out of the ensemble
+polaris_adme_fang_rppb_1,TabPFNRegressor,tabpfn,708,excluded,0,metered API; pass --ensemble-oof-allow-api-refits to include
+polaris_adme_fang_rppb_1,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",fusion,708,excluded,0,fusion output (CFA/ensemble) is never a member
+polaris_adme_fang_rppb_1,Ensemble (Weighted average (inverse train RMSE)),fusion,708,excluded,0,fusion output (CFA/ensemble) is never a member
+polaris_adme_fang_solu_1,ElasticNetCV,conventional,1738,cpu_refit,5,conventional fold refits
+polaris_adme_fang_solu_1,SVR,conventional,1738,cpu_refit,5,conventional fold refits
+polaris_adme_fang_solu_1,Random forest,conventional,1738,cpu_refit,5,conventional fold refits
+polaris_adme_fang_solu_1,Extra trees,conventional,1738,cpu_refit,5,conventional fold refits
+polaris_adme_fang_solu_1,HistGradientBoosting,conventional,1738,cpu_refit,5,conventional fold refits
+polaris_adme_fang_solu_1,"Voting Regressor (KNN, SVM)",conventional,1738,cpu_refit,5,conventional fold refits
+polaris_adme_fang_solu_1,AdaBoost,conventional,1738,cpu_refit,5,conventional fold refits
+polaris_adme_fang_solu_1,Tabular MLP,conventional,1738,cpu_refit,5,conventional fold refits
+polaris_adme_fang_solu_1,Tabular CNN,conventional,1738,cpu_refit,5,conventional fold refits
+polaris_adme_fang_solu_1,XGBoost,conventional,1738,cpu_refit,5,conventional fold refits
+polaris_adme_fang_solu_1,CatBoost,conventional,1738,cpu_refit,5,conventional fold refits
+polaris_adme_fang_solu_1,MapLight CatBoost (Strict Parity),conventional,1738,cpu_refit,5,conventional fold refits
+polaris_adme_fang_solu_1,ChemML MLP (PyTorch),chemml,1738,cpu_refit,5,chemml fold refits
+polaris_adme_fang_solu_1,ChemML MLP (TensorFlow),chemml,1738,cpu_refit,5,chemml fold refits
+polaris_adme_fang_solu_1,Uni-Mol V1,unimol,1738,unimol_cvdata,0,benchmark_results/autoqsar_benchmark_20260623_153839/polaris_adme_fang_solu_1/unimol_v1/seed_13
+polaris_adme_fang_solu_1,Uni-Mol V2 (84m),unimol,1738,unimol_cvdata,0,benchmark_results/autoqsar_benchmark_20260623_153839/polaris_adme_fang_solu_1/unimol_v2/84m_seed_13
+polaris_adme_fang_solu_1,"MapLight + GNN (CatBoost, Strict Parity)",maplight_gnn,1738,cpu_refit,5,maplight_gnn fold refits
+polaris_adme_fang_solu_1,CFA (Combinatorial Fusion),fusion,1738,excluded,0,fusion output (CFA/ensemble) is never a member
+polaris_adme_fang_solu_1,"Chemprop v2 (D-MPNN, ensemble=3)",chemprop,1738,excluded,0,--scope cpu: Chemprop left out of the ensemble
+polaris_adme_fang_solu_1,"Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",chemprop,1738,excluded,0,--scope cpu: Chemprop left out of the ensemble
+polaris_adme_fang_solu_1,"Chemprop v2 (CMPNN, ensemble=3)",chemprop,1738,excluded,0,--scope cpu: Chemprop left out of the ensemble
+polaris_adme_fang_solu_1,"Chemprop v2 (AttentiveFP, ensemble=3)",chemprop,1738,excluded,0,--scope cpu: Chemprop left out of the ensemble
+polaris_adme_fang_solu_1,"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",chemprop,1738,excluded,0,--scope cpu: Chemprop left out of the ensemble
+polaris_adme_fang_solu_1,TabPFNRegressor,tabpfn,1738,excluded,0,metered API; pass --ensemble-oof-allow-api-refits to include
+polaris_adme_fang_solu_1,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",fusion,1738,excluded,0,fusion output (CFA/ensemble) is never a member
+polaris_adme_fang_solu_1,Ensemble (Weighted average (inverse train RMSE)),fusion,1738,excluded,0,fusion output (CFA/ensemble) is never a member
+tdc_ames,LogisticRegression,conventional,5821,cpu_refit,5,conventional fold refits
+tdc_ames,SVC,conventional,5821,cpu_refit,5,conventional fold refits
+tdc_ames,Random forest,conventional,5821,cpu_refit,5,conventional fold refits
+tdc_ames,Extra trees,conventional,5821,cpu_refit,5,conventional fold refits
+tdc_ames,HistGradientBoosting,conventional,5821,cpu_refit,5,conventional fold refits
+tdc_ames,"Voting Classifier (KNN, SVM)",conventional,5821,cpu_refit,5,conventional fold refits
+tdc_ames,AdaBoost,conventional,5821,cpu_refit,5,conventional fold refits
+tdc_ames,Tabular MLP,conventional,5821,cpu_refit,5,conventional fold refits
+tdc_ames,XGBoost,conventional,5821,cpu_refit,5,conventional fold refits
+tdc_ames,CatBoost,conventional,5821,cpu_refit,5,conventional fold refits
+tdc_ames,ChemML MLP (PyTorch),chemml,5821,cpu_refit,5,chemml fold refits
+tdc_ames,ChemML MLP (TensorFlow),chemml,5821,cpu_refit,5,chemml fold refits
+tdc_ames,Uni-Mol V1,unimol,5821,unimol_cvdata,0,benchmark_results/autoqsar_benchmark_20260623_153839/tdc_ames/unimol_v1/seed_13
+tdc_ames,Uni-Mol V2 (84m),unimol,5821,unimol_cvdata,0,benchmark_results/autoqsar_benchmark_20260623_153839/tdc_ames/unimol_v2/84m_seed_13
+tdc_ames,"MapLight + GNN (CatBoost, Strict Parity)",maplight_gnn,5821,cpu_refit,5,maplight_gnn fold refits
+tdc_ames,CFA (Combinatorial Fusion),fusion,5821,excluded,0,fusion output (CFA/ensemble) is never a member
+tdc_ames,"Chemprop v2 (D-MPNN, ensemble=3)",chemprop,5821,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_ames,"Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",chemprop,5821,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_ames,"Chemprop v2 (CMPNN, ensemble=3)",chemprop,5821,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_ames,"Chemprop v2 (AttentiveFP, ensemble=3)",chemprop,5821,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_ames,"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",chemprop,5821,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_ames,TabPFNClassifier,tabpfn,5821,excluded,0,metered API; pass --ensemble-oof-allow-api-refits to include
+tdc_ames,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",fusion,5821,excluded,0,fusion output (CFA/ensemble) is never a member
+tdc_ames,Ensemble (Weighted average (inverse train RMSE)),fusion,5821,excluded,0,fusion output (CFA/ensemble) is never a member
+tdc_bbb_martins,LogisticRegression,conventional,1624,cpu_refit,5,conventional fold refits
+tdc_bbb_martins,SVC,conventional,1624,cpu_refit,5,conventional fold refits
+tdc_bbb_martins,Random forest,conventional,1624,cpu_refit,5,conventional fold refits
+tdc_bbb_martins,Extra trees,conventional,1624,cpu_refit,5,conventional fold refits
+tdc_bbb_martins,HistGradientBoosting,conventional,1624,cpu_refit,5,conventional fold refits
+tdc_bbb_martins,"Voting Classifier (KNN, SVM)",conventional,1624,cpu_refit,5,conventional fold refits
+tdc_bbb_martins,AdaBoost,conventional,1624,cpu_refit,5,conventional fold refits
+tdc_bbb_martins,Tabular MLP,conventional,1624,cpu_refit,5,conventional fold refits
+tdc_bbb_martins,XGBoost,conventional,1624,cpu_refit,5,conventional fold refits
+tdc_bbb_martins,CatBoost,conventional,1624,cpu_refit,5,conventional fold refits
+tdc_bbb_martins,ChemML MLP (PyTorch),chemml,1624,cpu_refit,5,chemml fold refits
+tdc_bbb_martins,ChemML MLP (TensorFlow),chemml,1624,cpu_refit,5,chemml fold refits
+tdc_bbb_martins,Uni-Mol V1,unimol,1624,unimol_cvdata,0,benchmark_results/autoqsar_benchmark_20260623_153839/tdc_bbb_martins/unimol_v1/seed_13
+tdc_bbb_martins,"MapLight + GNN (CatBoost, Strict Parity)",maplight_gnn,1624,cpu_refit,5,maplight_gnn fold refits
+tdc_bbb_martins,CFA (Combinatorial Fusion),fusion,1624,excluded,0,fusion output (CFA/ensemble) is never a member
+tdc_bbb_martins,"Chemprop v2 (D-MPNN, ensemble=3)",chemprop,1624,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_bbb_martins,"Chemprop v2 (CMPNN, ensemble=3)",chemprop,1624,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_bbb_martins,"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",chemprop,1624,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_bbb_martins,TabPFNClassifier,tabpfn,1624,excluded,0,metered API; pass --ensemble-oof-allow-api-refits to include
+tdc_bbb_martins,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",fusion,1624,excluded,0,fusion output (CFA/ensemble) is never a member
+tdc_bbb_martins,Ensemble (Weighted average (inverse train RMSE)),fusion,1624,excluded,0,fusion output (CFA/ensemble) is never a member
+tdc_bioavailability_ma,Uni-Mol V1,unimol,512,unimol_cvdata,0,benchmark_results/autoqsar_benchmark_20260623_153839/tdc_bioavailability_ma/unimol_v1/seed_13
+tdc_bioavailability_ma,Uni-Mol V2 (84m),unimol,512,unimol_cvdata,0,benchmark_results/autoqsar_benchmark_20260623_153839/tdc_bioavailability_ma/unimol_v2/84m_seed_13
+tdc_bioavailability_ma,"Chemprop v2 (D-MPNN, ensemble=3)",chemprop,512,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_bioavailability_ma,"Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",chemprop,512,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_bioavailability_ma,"Chemprop v2 (CMPNN, ensemble=3)",chemprop,512,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_bioavailability_ma,"Chemprop v2 (AttentiveFP, ensemble=3)",chemprop,512,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_bioavailability_ma,"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",chemprop,512,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_bioavailability_ma,TabPFNClassifier,tabpfn,512,excluded,0,metered API; pass --ensemble-oof-allow-api-refits to include
+tdc_bioavailability_ma,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",fusion,512,excluded,0,fusion output (CFA/ensemble) is never a member
+tdc_bioavailability_ma,Ensemble (Weighted average (inverse train RMSE)),fusion,512,excluded,0,fusion output (CFA/ensemble) is never a member
+tdc_caco2_wang,ElasticNetCV,conventional,728,cpu_refit,5,conventional fold refits
+tdc_caco2_wang,SVR,conventional,728,cpu_refit,5,conventional fold refits
+tdc_caco2_wang,Random forest,conventional,728,cpu_refit,5,conventional fold refits
+tdc_caco2_wang,Extra trees,conventional,728,cpu_refit,5,conventional fold refits
+tdc_caco2_wang,HistGradientBoosting,conventional,728,cpu_refit,5,conventional fold refits
+tdc_caco2_wang,"Voting Regressor (KNN, SVM)",conventional,728,cpu_refit,5,conventional fold refits
+tdc_caco2_wang,AdaBoost,conventional,728,cpu_refit,5,conventional fold refits
+tdc_caco2_wang,Tabular MLP,conventional,728,cpu_refit,5,conventional fold refits
+tdc_caco2_wang,Tabular CNN,conventional,728,cpu_refit,5,conventional fold refits
+tdc_caco2_wang,XGBoost,conventional,728,cpu_refit,5,conventional fold refits
+tdc_caco2_wang,CatBoost,conventional,728,cpu_refit,5,conventional fold refits
+tdc_caco2_wang,MapLight CatBoost (Strict Parity),conventional,728,cpu_refit,5,conventional fold refits
+tdc_caco2_wang,ChemML MLP (PyTorch),chemml,728,cpu_refit,5,chemml fold refits
+tdc_caco2_wang,ChemML MLP (TensorFlow),chemml,728,cpu_refit,5,chemml fold refits
+tdc_caco2_wang,Uni-Mol V1,unimol,728,unimol_cvdata,0,benchmark_results/autoqsar_benchmark_20260623_153839/tdc_caco2_wang/unimol_v1/seed_13
+tdc_caco2_wang,Uni-Mol V2 (84m),unimol,728,unimol_cvdata,0,benchmark_results/autoqsar_benchmark_20260623_153839/tdc_caco2_wang/unimol_v2/84m_seed_13
+tdc_caco2_wang,"MapLight + GNN (CatBoost, Strict Parity)",maplight_gnn,728,cpu_refit,5,maplight_gnn fold refits
+tdc_caco2_wang,CFA (Combinatorial Fusion),fusion,728,excluded,0,fusion output (CFA/ensemble) is never a member
+tdc_caco2_wang,"Chemprop v2 (D-MPNN, ensemble=3)",chemprop,728,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_caco2_wang,"Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",chemprop,728,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_caco2_wang,"Chemprop v2 (CMPNN, ensemble=3)",chemprop,728,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_caco2_wang,"Chemprop v2 (AttentiveFP, ensemble=3)",chemprop,728,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_caco2_wang,"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",chemprop,728,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_caco2_wang,TabPFNRegressor,tabpfn,728,excluded,0,metered API; pass --ensemble-oof-allow-api-refits to include
+tdc_caco2_wang,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",fusion,728,excluded,0,fusion output (CFA/ensemble) is never a member
+tdc_caco2_wang,Ensemble (Weighted average (inverse train RMSE)),fusion,728,excluded,0,fusion output (CFA/ensemble) is never a member
+tdc_carcinogens_lagunin,LogisticRegression,conventional,223,cpu_refit,5,conventional fold refits
+tdc_carcinogens_lagunin,SVC,conventional,223,cpu_refit,5,conventional fold refits
+tdc_carcinogens_lagunin,Random forest,conventional,223,cpu_refit,5,conventional fold refits
+tdc_carcinogens_lagunin,Extra trees,conventional,223,cpu_refit,5,conventional fold refits
+tdc_carcinogens_lagunin,HistGradientBoosting,conventional,223,cpu_refit,5,conventional fold refits
+tdc_carcinogens_lagunin,"Voting Classifier (KNN, SVM)",conventional,223,cpu_refit,5,conventional fold refits
+tdc_carcinogens_lagunin,AdaBoost,conventional,223,cpu_refit,5,conventional fold refits
+tdc_carcinogens_lagunin,Tabular MLP,conventional,223,cpu_refit,5,conventional fold refits
+tdc_carcinogens_lagunin,XGBoost,conventional,223,cpu_refit,5,conventional fold refits
+tdc_carcinogens_lagunin,CatBoost,conventional,223,cpu_refit,5,conventional fold refits
+tdc_carcinogens_lagunin,ChemML MLP (PyTorch),chemml,223,cpu_refit,5,chemml fold refits
+tdc_carcinogens_lagunin,ChemML MLP (TensorFlow),chemml,223,cpu_refit,5,chemml fold refits
+tdc_carcinogens_lagunin,"Chemprop v2 (D-MPNN, ensemble=3)",chemprop,223,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_carcinogens_lagunin,"Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",chemprop,223,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_carcinogens_lagunin,"Chemprop v2 (CMPNN, ensemble=3)",chemprop,223,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_carcinogens_lagunin,"Chemprop v2 (AttentiveFP, ensemble=3)",chemprop,223,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_carcinogens_lagunin,"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",chemprop,223,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_carcinogens_lagunin,Uni-Mol V1,unimol,223,unimol_cvdata,0,/home/exouser/AutoQSAR/benchmark_results/autoqsar_benchmark_20260623_153839/tdc_carcinogens_lagunin/unimol_v1/seed_13
+tdc_carcinogens_lagunin,"MapLight + GNN (CatBoost, Strict Parity)",maplight_gnn,223,cpu_refit,5,maplight_gnn fold refits
+tdc_carcinogens_lagunin,CFA (Combinatorial Fusion),fusion,223,excluded,0,fusion output (CFA/ensemble) is never a member
+tdc_carcinogens_lagunin,TabPFNClassifier,tabpfn,223,excluded,0,metered API; pass --ensemble-oof-allow-api-refits to include
+tdc_carcinogens_lagunin,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",fusion,223,excluded,0,fusion output (CFA/ensemble) is never a member
+tdc_carcinogens_lagunin,Ensemble (Weighted average (inverse train RMSE)),fusion,223,excluded,0,fusion output (CFA/ensemble) is never a member
+tdc_clearance_hepatocyte_az,ElasticNetCV,conventional,970,cpu_refit,5,conventional fold refits
+tdc_clearance_hepatocyte_az,SVR,conventional,970,cpu_refit,5,conventional fold refits
+tdc_clearance_hepatocyte_az,Random forest,conventional,970,cpu_refit,5,conventional fold refits
+tdc_clearance_hepatocyte_az,Extra trees,conventional,970,cpu_refit,5,conventional fold refits
+tdc_clearance_hepatocyte_az,HistGradientBoosting,conventional,970,cpu_refit,5,conventional fold refits
+tdc_clearance_hepatocyte_az,"Voting Regressor (KNN, SVM)",conventional,970,cpu_refit,5,conventional fold refits
+tdc_clearance_hepatocyte_az,AdaBoost,conventional,970,cpu_refit,5,conventional fold refits
+tdc_clearance_hepatocyte_az,Tabular MLP,conventional,970,cpu_refit,5,conventional fold refits
+tdc_clearance_hepatocyte_az,Tabular CNN,conventional,970,cpu_refit,5,conventional fold refits
+tdc_clearance_hepatocyte_az,XGBoost,conventional,970,cpu_refit,5,conventional fold refits
+tdc_clearance_hepatocyte_az,CatBoost,conventional,970,cpu_refit,5,conventional fold refits
+tdc_clearance_hepatocyte_az,MapLight CatBoost (Strict Parity),conventional,970,cpu_refit,5,conventional fold refits
+tdc_clearance_hepatocyte_az,ChemML MLP (PyTorch),chemml,970,cpu_refit,5,chemml fold refits
+tdc_clearance_hepatocyte_az,ChemML MLP (TensorFlow),chemml,970,cpu_refit,5,chemml fold refits
+tdc_clearance_hepatocyte_az,Uni-Mol V1,unimol,970,unimol_cvdata,0,benchmark_results/autoqsar_benchmark_20260623_153839/tdc_clearance_hepatocyte_az/unimol_v1/seed_13
+tdc_clearance_hepatocyte_az,"MapLight + GNN (CatBoost, Strict Parity)",maplight_gnn,970,cpu_refit,5,maplight_gnn fold refits
+tdc_clearance_hepatocyte_az,CFA (Combinatorial Fusion),fusion,970,excluded,0,fusion output (CFA/ensemble) is never a member
+tdc_clearance_hepatocyte_az,"Chemprop v2 (D-MPNN, ensemble=3)",chemprop,970,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_clearance_hepatocyte_az,"Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",chemprop,970,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_clearance_hepatocyte_az,"Chemprop v2 (CMPNN, ensemble=3)",chemprop,970,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_clearance_hepatocyte_az,"Chemprop v2 (AttentiveFP, ensemble=3)",chemprop,970,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_clearance_hepatocyte_az,"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",chemprop,970,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_clearance_hepatocyte_az,TabPFNRegressor,tabpfn,970,excluded,0,metered API; pass --ensemble-oof-allow-api-refits to include
+tdc_clearance_hepatocyte_az,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",fusion,970,excluded,0,fusion output (CFA/ensemble) is never a member
+tdc_clearance_hepatocyte_az,Ensemble (Weighted average (inverse train RMSE)),fusion,970,excluded,0,fusion output (CFA/ensemble) is never a member
+tdc_clearance_microsome_az,ElasticNetCV,conventional,881,cpu_refit,5,conventional fold refits
+tdc_clearance_microsome_az,SVR,conventional,881,cpu_refit,5,conventional fold refits
+tdc_clearance_microsome_az,Random forest,conventional,881,cpu_refit,5,conventional fold refits
+tdc_clearance_microsome_az,Extra trees,conventional,881,cpu_refit,5,conventional fold refits
+tdc_clearance_microsome_az,HistGradientBoosting,conventional,881,cpu_refit,5,conventional fold refits
+tdc_clearance_microsome_az,"Voting Regressor (KNN, SVM)",conventional,881,cpu_refit,5,conventional fold refits
+tdc_clearance_microsome_az,AdaBoost,conventional,881,cpu_refit,5,conventional fold refits
+tdc_clearance_microsome_az,Tabular MLP,conventional,881,cpu_refit,5,conventional fold refits
+tdc_clearance_microsome_az,Tabular CNN,conventional,881,cpu_refit,5,conventional fold refits
+tdc_clearance_microsome_az,XGBoost,conventional,881,cpu_refit,5,conventional fold refits
+tdc_clearance_microsome_az,CatBoost,conventional,881,cpu_refit,5,conventional fold refits
+tdc_clearance_microsome_az,MapLight CatBoost (Strict Parity),conventional,881,cpu_refit,5,conventional fold refits
+tdc_clearance_microsome_az,ChemML MLP (PyTorch),chemml,881,cpu_refit,5,chemml fold refits
+tdc_clearance_microsome_az,ChemML MLP (TensorFlow),chemml,881,cpu_refit,5,chemml fold refits
+tdc_clearance_microsome_az,Uni-Mol V1,unimol,881,unimol_cvdata,0,benchmark_results/autoqsar_benchmark_20260623_153839/tdc_clearance_microsome_az/unimol_v1/seed_13
+tdc_clearance_microsome_az,Uni-Mol V2 (84m),unimol,881,unimol_cvdata,0,benchmark_results/autoqsar_benchmark_20260623_153839/tdc_clearance_microsome_az/unimol_v2/84m_seed_13
+tdc_clearance_microsome_az,"MapLight + GNN (CatBoost, Strict Parity)",maplight_gnn,881,cpu_refit,5,maplight_gnn fold refits
+tdc_clearance_microsome_az,CFA (Combinatorial Fusion),fusion,881,excluded,0,fusion output (CFA/ensemble) is never a member
+tdc_clearance_microsome_az,"Chemprop v2 (D-MPNN, ensemble=3)",chemprop,881,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_clearance_microsome_az,"Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",chemprop,881,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_clearance_microsome_az,"Chemprop v2 (CMPNN, ensemble=3)",chemprop,881,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_clearance_microsome_az,"Chemprop v2 (AttentiveFP, ensemble=3)",chemprop,881,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_clearance_microsome_az,"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",chemprop,881,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_clearance_microsome_az,TabPFNRegressor,tabpfn,881,excluded,0,metered API; pass --ensemble-oof-allow-api-refits to include
+tdc_clearance_microsome_az,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",fusion,881,excluded,0,fusion output (CFA/ensemble) is never a member
+tdc_clearance_microsome_az,Ensemble (Weighted average (inverse train RMSE)),fusion,881,excluded,0,fusion output (CFA/ensemble) is never a member
+tdc_clintox,LogisticRegression,conventional,1180,cpu_refit,5,conventional fold refits
+tdc_clintox,SVC,conventional,1180,cpu_refit,5,conventional fold refits
+tdc_clintox,Random forest,conventional,1180,cpu_refit,5,conventional fold refits
+tdc_clintox,Extra trees,conventional,1180,cpu_refit,5,conventional fold refits
+tdc_clintox,HistGradientBoosting,conventional,1180,cpu_refit,5,conventional fold refits
+tdc_clintox,"Voting Classifier (KNN, SVM)",conventional,1180,cpu_refit,5,conventional fold refits
+tdc_clintox,AdaBoost,conventional,1180,cpu_refit,5,conventional fold refits
+tdc_clintox,Tabular MLP,conventional,1180,cpu_refit,5,conventional fold refits
+tdc_clintox,XGBoost,conventional,1180,cpu_refit,5,conventional fold refits
+tdc_clintox,CatBoost,conventional,1180,cpu_refit,5,conventional fold refits
+tdc_clintox,ChemML MLP (PyTorch),chemml,1180,cpu_refit,5,chemml fold refits
+tdc_clintox,ChemML MLP (TensorFlow),chemml,1180,cpu_refit,5,chemml fold refits
+tdc_clintox,Uni-Mol V1,unimol,1180,unimol_cvdata,0,benchmark_results/autoqsar_benchmark_20260623_153839/tdc_clintox/unimol_v1/seed_13
+tdc_clintox,"MapLight + GNN (CatBoost, Strict Parity)",maplight_gnn,1180,cpu_refit,5,maplight_gnn fold refits
+tdc_clintox,CFA (Combinatorial Fusion),fusion,1180,excluded,0,fusion output (CFA/ensemble) is never a member
+tdc_clintox,"Chemprop v2 (D-MPNN, ensemble=3)",chemprop,1180,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_clintox,"Chemprop v2 (CMPNN, ensemble=3)",chemprop,1180,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_clintox,"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",chemprop,1180,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_clintox,TabPFNClassifier,tabpfn,1180,excluded,0,metered API; pass --ensemble-oof-allow-api-refits to include
+tdc_clintox,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",fusion,1180,excluded,0,fusion output (CFA/ensemble) is never a member
+tdc_clintox,Ensemble (Weighted average (inverse train RMSE)),fusion,1180,excluded,0,fusion output (CFA/ensemble) is never a member
+tdc_cyp1a2_veith,LogisticRegression,conventional,10061,cpu_refit,5,conventional fold refits
+tdc_cyp1a2_veith,SVC,conventional,10061,cpu_refit,5,conventional fold refits
+tdc_cyp1a2_veith,Random forest,conventional,10061,cpu_refit,5,conventional fold refits
+tdc_cyp1a2_veith,Extra trees,conventional,10061,cpu_refit,5,conventional fold refits
+tdc_cyp1a2_veith,HistGradientBoosting,conventional,10061,cpu_refit,5,conventional fold refits
+tdc_cyp1a2_veith,"Voting Classifier (KNN, SVM)",conventional,10061,cpu_refit,5,conventional fold refits
+tdc_cyp1a2_veith,AdaBoost,conventional,10061,cpu_refit,5,conventional fold refits
+tdc_cyp1a2_veith,Tabular MLP,conventional,10061,cpu_refit,5,conventional fold refits
+tdc_cyp1a2_veith,XGBoost,conventional,10061,cpu_refit,5,conventional fold refits
+tdc_cyp1a2_veith,CatBoost,conventional,10061,cpu_refit,5,conventional fold refits
+tdc_cyp1a2_veith,ChemML MLP (PyTorch),chemml,10061,cpu_refit,5,chemml fold refits
+tdc_cyp1a2_veith,ChemML MLP (TensorFlow),chemml,10061,cpu_refit,5,chemml fold refits
+tdc_cyp1a2_veith,Uni-Mol V1,unimol,10061,unimol_cvdata,0,benchmark_results/autoqsar_benchmark_20260623_153839/tdc_cyp1a2_veith/unimol_v1/seed_13
+tdc_cyp1a2_veith,"MapLight + GNN (CatBoost, Strict Parity)",maplight_gnn,10061,cpu_refit,5,maplight_gnn fold refits
+tdc_cyp1a2_veith,CFA (Combinatorial Fusion),fusion,10061,excluded,0,fusion output (CFA/ensemble) is never a member
+tdc_cyp1a2_veith,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",fusion,10061,excluded,0,fusion output (CFA/ensemble) is never a member
+tdc_cyp1a2_veith,Ensemble (Weighted average (inverse train RMSE)),fusion,10061,excluded,0,fusion output (CFA/ensemble) is never a member
+tdc_cyp2c19_veith,LogisticRegression,conventional,10131,cpu_refit,5,conventional fold refits
+tdc_cyp2c19_veith,SVC,conventional,10131,cpu_refit,5,conventional fold refits
+tdc_cyp2c19_veith,Random forest,conventional,10131,cpu_refit,5,conventional fold refits
+tdc_cyp2c19_veith,Extra trees,conventional,10131,cpu_refit,5,conventional fold refits
+tdc_cyp2c19_veith,HistGradientBoosting,conventional,10131,cpu_refit,5,conventional fold refits
+tdc_cyp2c19_veith,"Voting Classifier (KNN, SVM)",conventional,10131,cpu_refit,5,conventional fold refits
+tdc_cyp2c19_veith,AdaBoost,conventional,10131,cpu_refit,5,conventional fold refits
+tdc_cyp2c19_veith,Tabular MLP,conventional,10131,cpu_refit,5,conventional fold refits
+tdc_cyp2c19_veith,XGBoost,conventional,10131,cpu_refit,5,conventional fold refits
+tdc_cyp2c19_veith,CatBoost,conventional,10131,cpu_refit,5,conventional fold refits
+tdc_cyp2c19_veith,ChemML MLP (PyTorch),chemml,10131,cpu_refit,5,chemml fold refits
+tdc_cyp2c19_veith,ChemML MLP (TensorFlow),chemml,10131,cpu_refit,5,chemml fold refits
+tdc_cyp2c19_veith,Uni-Mol V1,unimol,10131,unimol_cvdata,0,benchmark_results/autoqsar_benchmark_20260623_153839/tdc_cyp2c19_veith/unimol_v1/seed_13
+tdc_cyp2c19_veith,"MapLight + GNN (CatBoost, Strict Parity)",maplight_gnn,10131,cpu_refit,5,maplight_gnn fold refits
+tdc_cyp2c19_veith,CFA (Combinatorial Fusion),fusion,10131,excluded,0,fusion output (CFA/ensemble) is never a member
+tdc_cyp2c19_veith,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",fusion,10131,excluded,0,fusion output (CFA/ensemble) is never a member
+tdc_cyp2c19_veith,Ensemble (Weighted average (inverse train RMSE)),fusion,10131,excluded,0,fusion output (CFA/ensemble) is never a member
+tdc_cyp2c9_substrate_carbonmangels,LogisticRegression,conventional,534,cpu_refit,5,conventional fold refits
+tdc_cyp2c9_substrate_carbonmangels,SVC,conventional,534,cpu_refit,5,conventional fold refits
+tdc_cyp2c9_substrate_carbonmangels,Random forest,conventional,534,cpu_refit,5,conventional fold refits
+tdc_cyp2c9_substrate_carbonmangels,Extra trees,conventional,534,cpu_refit,5,conventional fold refits
+tdc_cyp2c9_substrate_carbonmangels,HistGradientBoosting,conventional,534,cpu_refit,5,conventional fold refits
+tdc_cyp2c9_substrate_carbonmangels,"Voting Classifier (KNN, SVM)",conventional,534,cpu_refit,5,conventional fold refits
+tdc_cyp2c9_substrate_carbonmangels,AdaBoost,conventional,534,cpu_refit,5,conventional fold refits
+tdc_cyp2c9_substrate_carbonmangels,Tabular MLP,conventional,534,cpu_refit,5,conventional fold refits
+tdc_cyp2c9_substrate_carbonmangels,XGBoost,conventional,534,cpu_refit,5,conventional fold refits
+tdc_cyp2c9_substrate_carbonmangels,CatBoost,conventional,534,cpu_refit,5,conventional fold refits
+tdc_cyp2c9_substrate_carbonmangels,ChemML MLP (PyTorch),chemml,534,cpu_refit,5,chemml fold refits
+tdc_cyp2c9_substrate_carbonmangels,ChemML MLP (TensorFlow),chemml,534,cpu_refit,5,chemml fold refits
+tdc_cyp2c9_substrate_carbonmangels,Uni-Mol V1,unimol,534,unimol_cvdata,0,benchmark_results/autoqsar_benchmark_20260623_153839/tdc_cyp2c9_substrate_carbonmangels/unimol_v1/seed_13
+tdc_cyp2c9_substrate_carbonmangels,"MapLight + GNN (CatBoost, Strict Parity)",maplight_gnn,534,cpu_refit,5,maplight_gnn fold refits
+tdc_cyp2c9_substrate_carbonmangels,CFA (Combinatorial Fusion),fusion,534,excluded,0,fusion output (CFA/ensemble) is never a member
+tdc_cyp2c9_substrate_carbonmangels,"Chemprop v2 (D-MPNN, ensemble=3)",chemprop,534,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_cyp2c9_substrate_carbonmangels,"Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",chemprop,534,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_cyp2c9_substrate_carbonmangels,"Chemprop v2 (CMPNN, ensemble=3)",chemprop,534,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_cyp2c9_substrate_carbonmangels,"Chemprop v2 (AttentiveFP, ensemble=3)",chemprop,534,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_cyp2c9_substrate_carbonmangels,"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",chemprop,534,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_cyp2c9_substrate_carbonmangels,TabPFNClassifier,tabpfn,534,excluded,0,metered API; pass --ensemble-oof-allow-api-refits to include
+tdc_cyp2c9_substrate_carbonmangels,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",fusion,534,excluded,0,fusion output (CFA/ensemble) is never a member
+tdc_cyp2c9_substrate_carbonmangels,Ensemble (Weighted average (inverse train RMSE)),fusion,534,excluded,0,fusion output (CFA/ensemble) is never a member
+tdc_cyp2c9_veith,LogisticRegression,conventional,9673,cpu_refit,5,conventional fold refits
+tdc_cyp2c9_veith,SVC,conventional,9673,cpu_refit,5,conventional fold refits
+tdc_cyp2c9_veith,Random forest,conventional,9673,cpu_refit,5,conventional fold refits
+tdc_cyp2c9_veith,Extra trees,conventional,9673,cpu_refit,5,conventional fold refits
+tdc_cyp2c9_veith,HistGradientBoosting,conventional,9673,cpu_refit,5,conventional fold refits
+tdc_cyp2c9_veith,"Voting Classifier (KNN, SVM)",conventional,9673,cpu_refit,5,conventional fold refits
+tdc_cyp2c9_veith,AdaBoost,conventional,9673,cpu_refit,5,conventional fold refits
+tdc_cyp2c9_veith,Tabular MLP,conventional,9673,cpu_refit,5,conventional fold refits
+tdc_cyp2c9_veith,XGBoost,conventional,9673,cpu_refit,5,conventional fold refits
+tdc_cyp2c9_veith,CatBoost,conventional,9673,cpu_refit,5,conventional fold refits
+tdc_cyp2c9_veith,ChemML MLP (PyTorch),chemml,9673,cpu_refit,5,chemml fold refits
+tdc_cyp2c9_veith,ChemML MLP (TensorFlow),chemml,9673,cpu_refit,5,chemml fold refits
+tdc_cyp2c9_veith,Uni-Mol V1,unimol,9673,unimol_cvdata,0,benchmark_results/autoqsar_benchmark_20260623_153839/tdc_cyp2c9_veith/unimol_v1/seed_13
+tdc_cyp2c9_veith,"MapLight + GNN (CatBoost, Strict Parity)",maplight_gnn,9673,cpu_refit,5,maplight_gnn fold refits
+tdc_cyp2c9_veith,CFA (Combinatorial Fusion),fusion,9673,excluded,0,fusion output (CFA/ensemble) is never a member
+tdc_cyp2c9_veith,"Chemprop v2 (D-MPNN, ensemble=3)",chemprop,9673,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_cyp2c9_veith,"Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",chemprop,9673,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_cyp2c9_veith,"Chemprop v2 (CMPNN, ensemble=3)",chemprop,9673,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_cyp2c9_veith,"Chemprop v2 (AttentiveFP, ensemble=3)",chemprop,9673,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_cyp2c9_veith,"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",chemprop,9673,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_cyp2c9_veith,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",fusion,9673,excluded,0,fusion output (CFA/ensemble) is never a member
+tdc_cyp2c9_veith,Ensemble (Weighted average (inverse train RMSE)),fusion,9673,excluded,0,fusion output (CFA/ensemble) is never a member
+tdc_cyp2d6_substrate_carbonmangels,LogisticRegression,conventional,532,cpu_refit,5,conventional fold refits
+tdc_cyp2d6_substrate_carbonmangels,SVC,conventional,532,cpu_refit,5,conventional fold refits
+tdc_cyp2d6_substrate_carbonmangels,Random forest,conventional,532,cpu_refit,5,conventional fold refits
+tdc_cyp2d6_substrate_carbonmangels,Extra trees,conventional,532,cpu_refit,5,conventional fold refits
+tdc_cyp2d6_substrate_carbonmangels,HistGradientBoosting,conventional,532,cpu_refit,5,conventional fold refits
+tdc_cyp2d6_substrate_carbonmangels,"Voting Classifier (KNN, SVM)",conventional,532,cpu_refit,5,conventional fold refits
+tdc_cyp2d6_substrate_carbonmangels,AdaBoost,conventional,532,cpu_refit,5,conventional fold refits
+tdc_cyp2d6_substrate_carbonmangels,Tabular MLP,conventional,532,cpu_refit,5,conventional fold refits
+tdc_cyp2d6_substrate_carbonmangels,XGBoost,conventional,532,cpu_refit,5,conventional fold refits
+tdc_cyp2d6_substrate_carbonmangels,CatBoost,conventional,532,cpu_refit,5,conventional fold refits
+tdc_cyp2d6_substrate_carbonmangels,ChemML MLP (PyTorch),chemml,532,cpu_refit,5,chemml fold refits
+tdc_cyp2d6_substrate_carbonmangels,ChemML MLP (TensorFlow),chemml,532,cpu_refit,5,chemml fold refits
+tdc_cyp2d6_substrate_carbonmangels,Uni-Mol V1,unimol,532,unimol_cvdata,0,benchmark_results/autoqsar_benchmark_20260623_153839/tdc_cyp2d6_substrate_carbonmangels/unimol_v1/seed_13
+tdc_cyp2d6_substrate_carbonmangels,"MapLight + GNN (CatBoost, Strict Parity)",maplight_gnn,532,cpu_refit,5,maplight_gnn fold refits
+tdc_cyp2d6_substrate_carbonmangels,CFA (Combinatorial Fusion),fusion,532,excluded,0,fusion output (CFA/ensemble) is never a member
+tdc_cyp2d6_substrate_carbonmangels,"Chemprop v2 (D-MPNN, ensemble=3)",chemprop,532,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_cyp2d6_substrate_carbonmangels,"Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",chemprop,532,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_cyp2d6_substrate_carbonmangels,"Chemprop v2 (CMPNN, ensemble=3)",chemprop,532,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_cyp2d6_substrate_carbonmangels,"Chemprop v2 (AttentiveFP, ensemble=3)",chemprop,532,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_cyp2d6_substrate_carbonmangels,"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",chemprop,532,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_cyp2d6_substrate_carbonmangels,TabPFNClassifier,tabpfn,532,excluded,0,metered API; pass --ensemble-oof-allow-api-refits to include
+tdc_cyp2d6_substrate_carbonmangels,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",fusion,532,excluded,0,fusion output (CFA/ensemble) is never a member
+tdc_cyp2d6_substrate_carbonmangels,Ensemble (Weighted average (inverse train RMSE)),fusion,532,excluded,0,fusion output (CFA/ensemble) is never a member
+tdc_cyp2d6_veith,LogisticRegression,conventional,10504,cpu_refit,5,conventional fold refits
+tdc_cyp2d6_veith,SVC,conventional,10504,cpu_refit,5,conventional fold refits
+tdc_cyp2d6_veith,Random forest,conventional,10504,cpu_refit,5,conventional fold refits
+tdc_cyp2d6_veith,Extra trees,conventional,10504,cpu_refit,5,conventional fold refits
+tdc_cyp2d6_veith,HistGradientBoosting,conventional,10504,cpu_refit,5,conventional fold refits
+tdc_cyp2d6_veith,"Voting Classifier (KNN, SVM)",conventional,10504,cpu_refit,5,conventional fold refits
+tdc_cyp2d6_veith,AdaBoost,conventional,10504,cpu_refit,5,conventional fold refits
+tdc_cyp2d6_veith,Tabular MLP,conventional,10504,cpu_refit,5,conventional fold refits
+tdc_cyp2d6_veith,XGBoost,conventional,10504,cpu_refit,5,conventional fold refits
+tdc_cyp2d6_veith,CatBoost,conventional,10504,cpu_refit,5,conventional fold refits
+tdc_cyp2d6_veith,ChemML MLP (PyTorch),chemml,10504,cpu_refit,5,chemml fold refits
+tdc_cyp2d6_veith,ChemML MLP (TensorFlow),chemml,10504,cpu_refit,5,chemml fold refits
+tdc_cyp2d6_veith,Uni-Mol V1,unimol,10504,unimol_cvdata,0,benchmark_results/autoqsar_benchmark_20260623_153839/tdc_cyp2d6_veith/unimol_v1/seed_13
+tdc_cyp2d6_veith,"MapLight + GNN (CatBoost, Strict Parity)",maplight_gnn,10504,cpu_refit,5,maplight_gnn fold refits
+tdc_cyp2d6_veith,CFA (Combinatorial Fusion),fusion,10504,excluded,0,fusion output (CFA/ensemble) is never a member
+tdc_cyp2d6_veith,"Chemprop v2 (D-MPNN, ensemble=3)",chemprop,10504,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_cyp2d6_veith,"Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",chemprop,10504,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_cyp2d6_veith,"Chemprop v2 (CMPNN, ensemble=3)",chemprop,10504,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_cyp2d6_veith,"Chemprop v2 (AttentiveFP, ensemble=3)",chemprop,10504,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_cyp2d6_veith,"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",chemprop,10504,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_cyp2d6_veith,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",fusion,10504,excluded,0,fusion output (CFA/ensemble) is never a member
+tdc_cyp2d6_veith,Ensemble (Weighted average (inverse train RMSE)),fusion,10504,excluded,0,fusion output (CFA/ensemble) is never a member
+tdc_cyp3a4_substrate_carbonmangels,LogisticRegression,conventional,535,cpu_refit,5,conventional fold refits
+tdc_cyp3a4_substrate_carbonmangels,SVC,conventional,535,cpu_refit,5,conventional fold refits
+tdc_cyp3a4_substrate_carbonmangels,Random forest,conventional,535,cpu_refit,5,conventional fold refits
+tdc_cyp3a4_substrate_carbonmangels,Extra trees,conventional,535,cpu_refit,5,conventional fold refits
+tdc_cyp3a4_substrate_carbonmangels,HistGradientBoosting,conventional,535,cpu_refit,5,conventional fold refits
+tdc_cyp3a4_substrate_carbonmangels,"Voting Classifier (KNN, SVM)",conventional,535,cpu_refit,5,conventional fold refits
+tdc_cyp3a4_substrate_carbonmangels,AdaBoost,conventional,535,cpu_refit,5,conventional fold refits
+tdc_cyp3a4_substrate_carbonmangels,Tabular MLP,conventional,535,cpu_refit,5,conventional fold refits
+tdc_cyp3a4_substrate_carbonmangels,XGBoost,conventional,535,cpu_refit,5,conventional fold refits
+tdc_cyp3a4_substrate_carbonmangels,CatBoost,conventional,535,cpu_refit,5,conventional fold refits
+tdc_cyp3a4_substrate_carbonmangels,ChemML MLP (PyTorch),chemml,535,cpu_refit,5,chemml fold refits
+tdc_cyp3a4_substrate_carbonmangels,ChemML MLP (TensorFlow),chemml,535,cpu_refit,5,chemml fold refits
+tdc_cyp3a4_substrate_carbonmangels,Uni-Mol V1,unimol,535,unimol_cvdata,0,benchmark_results/autoqsar_benchmark_20260623_153839/tdc_cyp3a4_substrate_carbonmangels/unimol_v1/seed_13
+tdc_cyp3a4_substrate_carbonmangels,"MapLight + GNN (CatBoost, Strict Parity)",maplight_gnn,535,cpu_refit,5,maplight_gnn fold refits
+tdc_cyp3a4_substrate_carbonmangels,CFA (Combinatorial Fusion),fusion,535,excluded,0,fusion output (CFA/ensemble) is never a member
+tdc_cyp3a4_substrate_carbonmangels,"Chemprop v2 (D-MPNN, ensemble=3)",chemprop,535,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_cyp3a4_substrate_carbonmangels,"Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",chemprop,535,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_cyp3a4_substrate_carbonmangels,"Chemprop v2 (CMPNN, ensemble=3)",chemprop,535,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_cyp3a4_substrate_carbonmangels,"Chemprop v2 (AttentiveFP, ensemble=3)",chemprop,535,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_cyp3a4_substrate_carbonmangels,"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",chemprop,535,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_cyp3a4_substrate_carbonmangels,TabPFNClassifier,tabpfn,535,excluded,0,metered API; pass --ensemble-oof-allow-api-refits to include
+tdc_cyp3a4_substrate_carbonmangels,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",fusion,535,excluded,0,fusion output (CFA/ensemble) is never a member
+tdc_cyp3a4_substrate_carbonmangels,Ensemble (Weighted average (inverse train RMSE)),fusion,535,excluded,0,fusion output (CFA/ensemble) is never a member
+tdc_cyp3a4_veith,LogisticRegression,conventional,9861,cpu_refit,5,conventional fold refits
+tdc_cyp3a4_veith,SVC,conventional,9861,cpu_refit,5,conventional fold refits
+tdc_cyp3a4_veith,Random forest,conventional,9861,cpu_refit,5,conventional fold refits
+tdc_cyp3a4_veith,Extra trees,conventional,9861,cpu_refit,5,conventional fold refits
+tdc_cyp3a4_veith,HistGradientBoosting,conventional,9861,cpu_refit,5,conventional fold refits
+tdc_cyp3a4_veith,"Voting Classifier (KNN, SVM)",conventional,9861,cpu_refit,5,conventional fold refits
+tdc_cyp3a4_veith,AdaBoost,conventional,9861,cpu_refit,5,conventional fold refits
+tdc_cyp3a4_veith,Tabular MLP,conventional,9861,cpu_refit,5,conventional fold refits
+tdc_cyp3a4_veith,XGBoost,conventional,9861,cpu_refit,5,conventional fold refits
+tdc_cyp3a4_veith,CatBoost,conventional,9861,cpu_refit,5,conventional fold refits
+tdc_cyp3a4_veith,ChemML MLP (PyTorch),chemml,9861,cpu_refit,5,chemml fold refits
+tdc_cyp3a4_veith,ChemML MLP (TensorFlow),chemml,9861,cpu_refit,5,chemml fold refits
+tdc_cyp3a4_veith,Uni-Mol V1,unimol,9861,unimol_cvdata,0,benchmark_results/autoqsar_benchmark_20260623_153839/tdc_cyp3a4_veith/unimol_v1/seed_13
+tdc_cyp3a4_veith,"MapLight + GNN (CatBoost, Strict Parity)",maplight_gnn,9861,cpu_refit,5,maplight_gnn fold refits
+tdc_cyp3a4_veith,CFA (Combinatorial Fusion),fusion,9861,excluded,0,fusion output (CFA/ensemble) is never a member
+tdc_cyp3a4_veith,"Chemprop v2 (D-MPNN, ensemble=3)",chemprop,9861,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_cyp3a4_veith,"Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",chemprop,9861,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_cyp3a4_veith,"Chemprop v2 (CMPNN, ensemble=3)",chemprop,9861,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_cyp3a4_veith,"Chemprop v2 (AttentiveFP, ensemble=3)",chemprop,9861,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_cyp3a4_veith,"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",chemprop,9861,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_cyp3a4_veith,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",fusion,9861,excluded,0,fusion output (CFA/ensemble) is never a member
+tdc_cyp3a4_veith,Ensemble (Weighted average (inverse train RMSE)),fusion,9861,excluded,0,fusion output (CFA/ensemble) is never a member
+tdc_dili,LogisticRegression,conventional,379,cpu_refit,5,conventional fold refits
+tdc_dili,SVC,conventional,379,cpu_refit,5,conventional fold refits
+tdc_dili,Random forest,conventional,379,cpu_refit,5,conventional fold refits
+tdc_dili,Extra trees,conventional,379,cpu_refit,5,conventional fold refits
+tdc_dili,HistGradientBoosting,conventional,379,cpu_refit,5,conventional fold refits
+tdc_dili,"Voting Classifier (KNN, SVM)",conventional,379,cpu_refit,5,conventional fold refits
+tdc_dili,AdaBoost,conventional,379,cpu_refit,5,conventional fold refits
+tdc_dili,Tabular MLP,conventional,379,cpu_refit,5,conventional fold refits
+tdc_dili,XGBoost,conventional,379,cpu_refit,5,conventional fold refits
+tdc_dili,CatBoost,conventional,379,cpu_refit,5,conventional fold refits
+tdc_dili,ChemML MLP (PyTorch),chemml,379,cpu_refit,5,chemml fold refits
+tdc_dili,ChemML MLP (TensorFlow),chemml,379,cpu_refit,5,chemml fold refits
+tdc_dili,Uni-Mol V1,unimol,379,unimol_cvdata,0,/home/exouser/AutoQSAR/benchmark_results/autoqsar_benchmark_20260623_153839/tdc_dili/unimol_v1/seed_13
+tdc_dili,"MapLight + GNN (CatBoost, Strict Parity)",maplight_gnn,379,cpu_refit,5,maplight_gnn fold refits
+tdc_dili,CFA (Combinatorial Fusion),fusion,379,excluded,0,fusion output (CFA/ensemble) is never a member
+tdc_dili,"Chemprop v2 (D-MPNN, ensemble=3)",chemprop,379,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_dili,"Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",chemprop,379,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_dili,"Chemprop v2 (CMPNN, ensemble=3)",chemprop,379,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_dili,"Chemprop v2 (AttentiveFP, ensemble=3)",chemprop,379,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_dili,"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",chemprop,379,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_dili,TabPFNClassifier,tabpfn,379,excluded,0,metered API; pass --ensemble-oof-allow-api-refits to include
+tdc_dili,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",fusion,379,excluded,0,fusion output (CFA/ensemble) is never a member
+tdc_dili,Ensemble (Weighted average (inverse train RMSE)),fusion,379,excluded,0,fusion output (CFA/ensemble) is never a member
+tdc_half_life_obach,ElasticNetCV,conventional,532,cpu_refit,5,conventional fold refits
+tdc_half_life_obach,SVR,conventional,532,cpu_refit,5,conventional fold refits
+tdc_half_life_obach,Random forest,conventional,532,cpu_refit,5,conventional fold refits
+tdc_half_life_obach,Extra trees,conventional,532,cpu_refit,5,conventional fold refits
+tdc_half_life_obach,HistGradientBoosting,conventional,532,cpu_refit,5,conventional fold refits
+tdc_half_life_obach,"Voting Regressor (KNN, SVM)",conventional,532,cpu_refit,5,conventional fold refits
+tdc_half_life_obach,AdaBoost,conventional,532,cpu_refit,5,conventional fold refits
+tdc_half_life_obach,Tabular MLP,conventional,532,cpu_refit,5,conventional fold refits
+tdc_half_life_obach,Tabular CNN,conventional,532,cpu_refit,5,conventional fold refits
+tdc_half_life_obach,XGBoost,conventional,532,cpu_refit,5,conventional fold refits
+tdc_half_life_obach,CatBoost,conventional,532,cpu_refit,5,conventional fold refits
+tdc_half_life_obach,MapLight CatBoost (Strict Parity),conventional,532,cpu_refit,5,conventional fold refits
+tdc_half_life_obach,ChemML MLP (PyTorch),chemml,532,cpu_refit,5,chemml fold refits
+tdc_half_life_obach,ChemML MLP (TensorFlow),chemml,532,cpu_refit,5,chemml fold refits
+tdc_half_life_obach,Uni-Mol V1,unimol,532,unimol_cvdata,0,benchmark_results/autoqsar_benchmark_20260623_153839/tdc_half_life_obach/unimol_v1/seed_13
+tdc_half_life_obach,"MapLight + GNN (CatBoost, Strict Parity)",maplight_gnn,532,cpu_refit,5,maplight_gnn fold refits
+tdc_half_life_obach,CFA (Combinatorial Fusion),fusion,532,excluded,0,fusion output (CFA/ensemble) is never a member
+tdc_half_life_obach,"Chemprop v2 (D-MPNN, ensemble=3)",chemprop,532,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_half_life_obach,"Chemprop v2 (CMPNN, ensemble=3)",chemprop,532,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_half_life_obach,"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",chemprop,532,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_half_life_obach,TabPFNRegressor,tabpfn,532,excluded,0,metered API; pass --ensemble-oof-allow-api-refits to include
+tdc_half_life_obach,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",fusion,532,excluded,0,fusion output (CFA/ensemble) is never a member
+tdc_half_life_obach,Ensemble (Weighted average (inverse train RMSE)),fusion,532,excluded,0,fusion output (CFA/ensemble) is never a member
+tdc_herg,Uni-Mol V1,unimol,523,unimol_cvdata,0,benchmark_results/autoqsar_benchmark_20260623_153839/tdc_herg/unimol_v1/seed_13
+tdc_herg,Uni-Mol V2 (84m),unimol,523,unimol_cvdata,0,benchmark_results/autoqsar_benchmark_20260623_153839/tdc_herg/unimol_v2/84m_seed_13
+tdc_herg,"MapLight + GNN (CatBoost, Strict Parity)",maplight_gnn,523,cpu_refit,5,maplight_gnn fold refits
+tdc_herg,CFA (Combinatorial Fusion),fusion,523,excluded,0,fusion output (CFA/ensemble) is never a member
+tdc_herg,"Chemprop v2 (D-MPNN, ensemble=3)",chemprop,523,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_herg,"Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",chemprop,523,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_herg,"Chemprop v2 (CMPNN, ensemble=3)",chemprop,523,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_herg,"Chemprop v2 (AttentiveFP, ensemble=3)",chemprop,523,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_herg,"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",chemprop,523,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_herg,TabPFNClassifier,tabpfn,523,excluded,0,metered API; pass --ensemble-oof-allow-api-refits to include
+tdc_herg,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",fusion,523,excluded,0,fusion output (CFA/ensemble) is never a member
+tdc_herg,Ensemble (Weighted average (inverse train RMSE)),fusion,523,excluded,0,fusion output (CFA/ensemble) is never a member
+tdc_herg_karim,LogisticRegression,conventional,10755,cpu_refit,5,conventional fold refits
+tdc_herg_karim,SVC,conventional,10755,cpu_refit,5,conventional fold refits
+tdc_herg_karim,Random forest,conventional,10755,cpu_refit,5,conventional fold refits
+tdc_herg_karim,Extra trees,conventional,10755,cpu_refit,5,conventional fold refits
+tdc_herg_karim,HistGradientBoosting,conventional,10755,cpu_refit,5,conventional fold refits
+tdc_herg_karim,"Voting Classifier (KNN, SVM)",conventional,10755,cpu_refit,5,conventional fold refits
+tdc_herg_karim,AdaBoost,conventional,10755,cpu_refit,5,conventional fold refits
+tdc_herg_karim,Tabular MLP,conventional,10755,cpu_refit,5,conventional fold refits
+tdc_herg_karim,XGBoost,conventional,10755,cpu_refit,5,conventional fold refits
+tdc_herg_karim,CatBoost,conventional,10755,cpu_refit,5,conventional fold refits
+tdc_herg_karim,ChemML MLP (PyTorch),chemml,10755,cpu_refit,5,chemml fold refits
+tdc_herg_karim,ChemML MLP (TensorFlow),chemml,10755,cpu_refit,5,chemml fold refits
+tdc_herg_karim,Uni-Mol V1,unimol,10755,unimol_cvdata,0,benchmark_results/autoqsar_benchmark_20260623_153839/tdc_herg_karim/unimol_v1/seed_13
+tdc_herg_karim,Uni-Mol V2 (84m),unimol,10755,unimol_cvdata,0,benchmark_results/autoqsar_benchmark_20260623_153839/tdc_herg_karim/unimol_v2/84m_seed_13
+tdc_herg_karim,"MapLight + GNN (CatBoost, Strict Parity)",maplight_gnn,10755,cpu_refit,5,maplight_gnn fold refits
+tdc_herg_karim,CFA (Combinatorial Fusion),fusion,10755,excluded,0,fusion output (CFA/ensemble) is never a member
+tdc_herg_karim,"Chemprop v2 (D-MPNN, ensemble=3)",chemprop,10755,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_herg_karim,"Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",chemprop,10755,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_herg_karim,"Chemprop v2 (CMPNN, ensemble=3)",chemprop,10755,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_herg_karim,"Chemprop v2 (AttentiveFP, ensemble=3)",chemprop,10755,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_herg_karim,"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",chemprop,10755,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_herg_karim,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",fusion,10755,excluded,0,fusion output (CFA/ensemble) is never a member
+tdc_herg_karim,Ensemble (Weighted average (inverse train RMSE)),fusion,10755,excluded,0,fusion output (CFA/ensemble) is never a member
+tdc_hia_hou,LogisticRegression,conventional,461,cpu_refit,5,conventional fold refits
+tdc_hia_hou,SVC,conventional,461,cpu_refit,5,conventional fold refits
+tdc_hia_hou,Random forest,conventional,461,cpu_refit,5,conventional fold refits
+tdc_hia_hou,Extra trees,conventional,461,cpu_refit,5,conventional fold refits
+tdc_hia_hou,HistGradientBoosting,conventional,461,cpu_refit,5,conventional fold refits
+tdc_hia_hou,"Voting Classifier (KNN, SVM)",conventional,461,cpu_refit,5,conventional fold refits
+tdc_hia_hou,AdaBoost,conventional,461,cpu_refit,5,conventional fold refits
+tdc_hia_hou,Tabular MLP,conventional,461,cpu_refit,5,conventional fold refits
+tdc_hia_hou,XGBoost,conventional,461,cpu_refit,5,conventional fold refits
+tdc_hia_hou,CatBoost,conventional,461,cpu_refit,5,conventional fold refits
+tdc_hia_hou,ChemML MLP (PyTorch),chemml,461,cpu_refit,5,chemml fold refits
+tdc_hia_hou,ChemML MLP (TensorFlow),chemml,461,cpu_refit,5,chemml fold refits
+tdc_hia_hou,"Chemprop v2 (D-MPNN, ensemble=3)",chemprop,461,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_hia_hou,"Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",chemprop,461,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_hia_hou,"Chemprop v2 (CMPNN, ensemble=3)",chemprop,461,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_hia_hou,"Chemprop v2 (AttentiveFP, ensemble=3)",chemprop,461,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_hia_hou,"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",chemprop,461,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_hia_hou,Uni-Mol V1,unimol,461,unimol_cvdata,0,benchmark_results/autoqsar_benchmark_20260623_153839/tdc_hia_hou/unimol_v1/seed_13
+tdc_hia_hou,"MapLight + GNN (CatBoost, Strict Parity)",maplight_gnn,461,cpu_refit,5,maplight_gnn fold refits
+tdc_hia_hou,CFA (Combinatorial Fusion),fusion,461,excluded,0,fusion output (CFA/ensemble) is never a member
+tdc_hia_hou,TabPFNClassifier,tabpfn,461,excluded,0,metered API; pass --ensemble-oof-allow-api-refits to include
+tdc_hia_hou,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",fusion,461,excluded,0,fusion output (CFA/ensemble) is never a member
+tdc_hia_hou,Ensemble (Weighted average (inverse train RMSE)),fusion,461,excluded,0,fusion output (CFA/ensemble) is never a member
+tdc_hydrationfreeenergy_freesolv,ElasticNetCV,conventional,490,cpu_refit,5,conventional fold refits
+tdc_hydrationfreeenergy_freesolv,SVR,conventional,490,cpu_refit,5,conventional fold refits
+tdc_hydrationfreeenergy_freesolv,Random forest,conventional,490,cpu_refit,5,conventional fold refits
+tdc_hydrationfreeenergy_freesolv,Extra trees,conventional,490,cpu_refit,5,conventional fold refits
+tdc_hydrationfreeenergy_freesolv,HistGradientBoosting,conventional,490,cpu_refit,5,conventional fold refits
+tdc_hydrationfreeenergy_freesolv,"Voting Regressor (KNN, SVM)",conventional,490,cpu_refit,5,conventional fold refits
+tdc_hydrationfreeenergy_freesolv,AdaBoost,conventional,490,cpu_refit,5,conventional fold refits
+tdc_hydrationfreeenergy_freesolv,Tabular MLP,conventional,490,cpu_refit,5,conventional fold refits
+tdc_hydrationfreeenergy_freesolv,Tabular CNN,conventional,490,cpu_refit,5,conventional fold refits
+tdc_hydrationfreeenergy_freesolv,XGBoost,conventional,490,cpu_refit,5,conventional fold refits
+tdc_hydrationfreeenergy_freesolv,CatBoost,conventional,490,cpu_refit,5,conventional fold refits
+tdc_hydrationfreeenergy_freesolv,MapLight CatBoost (Strict Parity),conventional,490,cpu_refit,5,conventional fold refits
+tdc_hydrationfreeenergy_freesolv,ChemML MLP (PyTorch),chemml,490,cpu_refit,5,chemml fold refits
+tdc_hydrationfreeenergy_freesolv,ChemML MLP (TensorFlow),chemml,490,cpu_refit,5,chemml fold refits
+tdc_hydrationfreeenergy_freesolv,Uni-Mol V1,unimol,490,unimol_cvdata,0,benchmark_results/autoqsar_benchmark_20260623_153839/tdc_hydrationfreeenergy_freesolv/unimol_v1/seed_13
+tdc_hydrationfreeenergy_freesolv,"MapLight + GNN (CatBoost, Strict Parity)",maplight_gnn,490,cpu_refit,5,maplight_gnn fold refits
+tdc_hydrationfreeenergy_freesolv,CFA (Combinatorial Fusion),fusion,490,excluded,0,fusion output (CFA/ensemble) is never a member
+tdc_hydrationfreeenergy_freesolv,Uni-Mol V2 (84m),unimol,490,unimol_cvdata,0,benchmark_results/autoqsar_benchmark_20260623_153839/tdc_hydrationfreeenergy_freesolv/unimol_v2/84m_seed_13
+tdc_hydrationfreeenergy_freesolv,"Chemprop v2 (D-MPNN, ensemble=3)",chemprop,490,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_hydrationfreeenergy_freesolv,"Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",chemprop,490,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_hydrationfreeenergy_freesolv,"Chemprop v2 (CMPNN, ensemble=3)",chemprop,490,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_hydrationfreeenergy_freesolv,"Chemprop v2 (AttentiveFP, ensemble=3)",chemprop,490,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_hydrationfreeenergy_freesolv,"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",chemprop,490,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_hydrationfreeenergy_freesolv,TabPFNRegressor,tabpfn,490,excluded,0,metered API; pass --ensemble-oof-allow-api-refits to include
+tdc_hydrationfreeenergy_freesolv,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",fusion,490,excluded,0,fusion output (CFA/ensemble) is never a member
+tdc_hydrationfreeenergy_freesolv,Ensemble (Weighted average (inverse train RMSE)),fusion,490,excluded,0,fusion output (CFA/ensemble) is never a member
+tdc_ld50_zhu,SVR,conventional,5907,cpu_refit,5,conventional fold refits
+tdc_ld50_zhu,Random forest,conventional,5907,cpu_refit,5,conventional fold refits
+tdc_ld50_zhu,Extra trees,conventional,5907,cpu_refit,5,conventional fold refits
+tdc_ld50_zhu,HistGradientBoosting,conventional,5907,cpu_refit,5,conventional fold refits
+tdc_ld50_zhu,"Voting Regressor (KNN, SVM)",conventional,5907,cpu_refit,5,conventional fold refits
+tdc_ld50_zhu,AdaBoost,conventional,5907,cpu_refit,5,conventional fold refits
+tdc_ld50_zhu,Tabular MLP,conventional,5907,cpu_refit,5,conventional fold refits
+tdc_ld50_zhu,Tabular CNN,conventional,5907,cpu_refit,5,conventional fold refits
+tdc_ld50_zhu,XGBoost,conventional,5907,cpu_refit,5,conventional fold refits
+tdc_ld50_zhu,CatBoost,conventional,5907,cpu_refit,5,conventional fold refits
+tdc_ld50_zhu,MapLight CatBoost (Strict Parity),conventional,5907,cpu_refit,5,conventional fold refits
+tdc_ld50_zhu,ChemML MLP (PyTorch),chemml,5907,cpu_refit,5,chemml fold refits
+tdc_ld50_zhu,ChemML MLP (TensorFlow),chemml,5907,cpu_refit,5,chemml fold refits
+tdc_ld50_zhu,Uni-Mol V1,unimol,5907,unimol_cvdata,0,benchmark_results/autoqsar_benchmark_20260623_153839/tdc_ld50_zhu/unimol_v1/seed_13
+tdc_ld50_zhu,"MapLight + GNN (CatBoost, Strict Parity)",maplight_gnn,5907,cpu_refit,5,maplight_gnn fold refits
+tdc_ld50_zhu,CFA (Combinatorial Fusion),fusion,5907,excluded,0,fusion output (CFA/ensemble) is never a member
+tdc_ld50_zhu,"Chemprop v2 (D-MPNN, ensemble=3)",chemprop,5907,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_ld50_zhu,"Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",chemprop,5907,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_ld50_zhu,"Chemprop v2 (CMPNN, ensemble=3)",chemprop,5907,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_ld50_zhu,"Chemprop v2 (AttentiveFP, ensemble=3)",chemprop,5907,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_ld50_zhu,"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",chemprop,5907,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_ld50_zhu,TabPFNRegressor,tabpfn,5907,excluded,0,metered API; pass --ensemble-oof-allow-api-refits to include
+tdc_ld50_zhu,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",fusion,5907,excluded,0,fusion output (CFA/ensemble) is never a member
+tdc_ld50_zhu,Ensemble (Weighted average (inverse train RMSE)),fusion,5907,excluded,0,fusion output (CFA/ensemble) is never a member
+tdc_lipophilicity_astrazeneca,ElasticNetCV,conventional,3360,cpu_refit,5,conventional fold refits
+tdc_lipophilicity_astrazeneca,SVR,conventional,3360,cpu_refit,5,conventional fold refits
+tdc_lipophilicity_astrazeneca,Random forest,conventional,3360,cpu_refit,5,conventional fold refits
+tdc_lipophilicity_astrazeneca,Extra trees,conventional,3360,cpu_refit,5,conventional fold refits
+tdc_lipophilicity_astrazeneca,HistGradientBoosting,conventional,3360,cpu_refit,5,conventional fold refits
+tdc_lipophilicity_astrazeneca,"Voting Regressor (KNN, SVM)",conventional,3360,cpu_refit,5,conventional fold refits
+tdc_lipophilicity_astrazeneca,AdaBoost,conventional,3360,cpu_refit,5,conventional fold refits
+tdc_lipophilicity_astrazeneca,Tabular MLP,conventional,3360,cpu_refit,5,conventional fold refits
+tdc_lipophilicity_astrazeneca,Tabular CNN,conventional,3360,cpu_refit,5,conventional fold refits
+tdc_lipophilicity_astrazeneca,XGBoost,conventional,3360,cpu_refit,5,conventional fold refits
+tdc_lipophilicity_astrazeneca,CatBoost,conventional,3360,cpu_refit,5,conventional fold refits
+tdc_lipophilicity_astrazeneca,MapLight CatBoost (Strict Parity),conventional,3360,cpu_refit,5,conventional fold refits
+tdc_lipophilicity_astrazeneca,ChemML MLP (PyTorch),chemml,3360,cpu_refit,5,chemml fold refits
+tdc_lipophilicity_astrazeneca,ChemML MLP (TensorFlow),chemml,3360,cpu_refit,5,chemml fold refits
+tdc_lipophilicity_astrazeneca,Uni-Mol V1,unimol,3360,unimol_cvdata,0,benchmark_results/autoqsar_benchmark_20260623_153839/tdc_lipophilicity_astrazeneca/unimol_v1/seed_13
+tdc_lipophilicity_astrazeneca,"MapLight + GNN (CatBoost, Strict Parity)",maplight_gnn,3360,cpu_refit,5,maplight_gnn fold refits
+tdc_lipophilicity_astrazeneca,CFA (Combinatorial Fusion),fusion,3360,excluded,0,fusion output (CFA/ensemble) is never a member
+tdc_lipophilicity_astrazeneca,"Chemprop v2 (D-MPNN, ensemble=3)",chemprop,3360,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_lipophilicity_astrazeneca,"Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",chemprop,3360,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_lipophilicity_astrazeneca,"Chemprop v2 (CMPNN, ensemble=3)",chemprop,3360,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_lipophilicity_astrazeneca,"Chemprop v2 (AttentiveFP, ensemble=3)",chemprop,3360,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_lipophilicity_astrazeneca,"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",chemprop,3360,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_lipophilicity_astrazeneca,TabPFNRegressor,tabpfn,3360,excluded,0,metered API; pass --ensemble-oof-allow-api-refits to include
+tdc_lipophilicity_astrazeneca,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",fusion,3360,excluded,0,fusion output (CFA/ensemble) is never a member
+tdc_lipophilicity_astrazeneca,Ensemble (Weighted average (inverse train RMSE)),fusion,3360,excluded,0,fusion output (CFA/ensemble) is never a member
+tdc_pampa_ncats,LogisticRegression,conventional,1626,cpu_refit,5,conventional fold refits
+tdc_pampa_ncats,SVC,conventional,1626,cpu_refit,5,conventional fold refits
+tdc_pampa_ncats,Random forest,conventional,1626,cpu_refit,5,conventional fold refits
+tdc_pampa_ncats,Extra trees,conventional,1626,cpu_refit,5,conventional fold refits
+tdc_pampa_ncats,HistGradientBoosting,conventional,1626,cpu_refit,5,conventional fold refits
+tdc_pampa_ncats,"Voting Classifier (KNN, SVM)",conventional,1626,cpu_refit,5,conventional fold refits
+tdc_pampa_ncats,AdaBoost,conventional,1626,cpu_refit,5,conventional fold refits
+tdc_pampa_ncats,Tabular MLP,conventional,1626,cpu_refit,5,conventional fold refits
+tdc_pampa_ncats,XGBoost,conventional,1626,cpu_refit,5,conventional fold refits
+tdc_pampa_ncats,CatBoost,conventional,1626,cpu_refit,5,conventional fold refits
+tdc_pampa_ncats,ChemML MLP (PyTorch),chemml,1626,cpu_refit,5,chemml fold refits
+tdc_pampa_ncats,ChemML MLP (TensorFlow),chemml,1626,cpu_refit,5,chemml fold refits
+tdc_pampa_ncats,Uni-Mol V1,unimol,1626,unimol_cvdata,0,benchmark_results/autoqsar_benchmark_20260623_153839/tdc_pampa_ncats/unimol_v1/seed_13
+tdc_pampa_ncats,Uni-Mol V2 (84m),unimol,1626,unimol_cvdata,0,benchmark_results/autoqsar_benchmark_20260623_153839/tdc_pampa_ncats/unimol_v2/84m_seed_13
+tdc_pampa_ncats,"MapLight + GNN (CatBoost, Strict Parity)",maplight_gnn,1626,cpu_refit,5,maplight_gnn fold refits
+tdc_pampa_ncats,CFA (Combinatorial Fusion),fusion,1626,excluded,0,fusion output (CFA/ensemble) is never a member
+tdc_pampa_ncats,"Chemprop v2 (D-MPNN, ensemble=3)",chemprop,1626,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_pampa_ncats,"Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",chemprop,1626,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_pampa_ncats,"Chemprop v2 (CMPNN, ensemble=3)",chemprop,1626,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_pampa_ncats,"Chemprop v2 (AttentiveFP, ensemble=3)",chemprop,1626,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_pampa_ncats,"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",chemprop,1626,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_pampa_ncats,TabPFNClassifier,tabpfn,1626,excluded,0,metered API; pass --ensemble-oof-allow-api-refits to include
+tdc_pampa_ncats,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",fusion,1626,excluded,0,fusion output (CFA/ensemble) is never a member
+tdc_pampa_ncats,Ensemble (Weighted average (inverse train RMSE)),fusion,1626,excluded,0,fusion output (CFA/ensemble) is never a member
+tdc_pgp_broccatelli,LogisticRegression,conventional,973,cpu_refit,5,conventional fold refits
+tdc_pgp_broccatelli,SVC,conventional,973,cpu_refit,5,conventional fold refits
+tdc_pgp_broccatelli,Random forest,conventional,973,cpu_refit,5,conventional fold refits
+tdc_pgp_broccatelli,Extra trees,conventional,973,cpu_refit,5,conventional fold refits
+tdc_pgp_broccatelli,HistGradientBoosting,conventional,973,cpu_refit,5,conventional fold refits
+tdc_pgp_broccatelli,"Voting Classifier (KNN, SVM)",conventional,973,cpu_refit,5,conventional fold refits
+tdc_pgp_broccatelli,AdaBoost,conventional,973,cpu_refit,5,conventional fold refits
+tdc_pgp_broccatelli,Tabular MLP,conventional,973,cpu_refit,5,conventional fold refits
+tdc_pgp_broccatelli,XGBoost,conventional,973,cpu_refit,5,conventional fold refits
+tdc_pgp_broccatelli,CatBoost,conventional,973,cpu_refit,5,conventional fold refits
+tdc_pgp_broccatelli,ChemML MLP (PyTorch),chemml,973,cpu_refit,5,chemml fold refits
+tdc_pgp_broccatelli,ChemML MLP (TensorFlow),chemml,973,cpu_refit,5,chemml fold refits
+tdc_pgp_broccatelli,Uni-Mol V1,unimol,973,unimol_cvdata,0,benchmark_results/autoqsar_benchmark_20260623_153839/tdc_pgp_broccatelli/unimol_v1/seed_13
+tdc_pgp_broccatelli,Uni-Mol V2 (84m),unimol,973,unimol_cvdata,0,benchmark_results/autoqsar_benchmark_20260623_153839/tdc_pgp_broccatelli/unimol_v2/84m_seed_13
+tdc_pgp_broccatelli,"MapLight + GNN (CatBoost, Strict Parity)",maplight_gnn,973,cpu_refit,5,maplight_gnn fold refits
+tdc_pgp_broccatelli,CFA (Combinatorial Fusion),fusion,973,excluded,0,fusion output (CFA/ensemble) is never a member
+tdc_pgp_broccatelli,"Chemprop v2 (D-MPNN, ensemble=3)",chemprop,973,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_pgp_broccatelli,"Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",chemprop,973,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_pgp_broccatelli,"Chemprop v2 (CMPNN, ensemble=3)",chemprop,973,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_pgp_broccatelli,"Chemprop v2 (AttentiveFP, ensemble=3)",chemprop,973,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_pgp_broccatelli,"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",chemprop,973,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_pgp_broccatelli,TabPFNClassifier,tabpfn,973,excluded,0,metered API; pass --ensemble-oof-allow-api-refits to include
+tdc_pgp_broccatelli,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",fusion,973,excluded,0,fusion output (CFA/ensemble) is never a member
+tdc_pgp_broccatelli,Ensemble (Weighted average (inverse train RMSE)),fusion,973,excluded,0,fusion output (CFA/ensemble) is never a member
+tdc_ppbr_az,ElasticNetCV,conventional,2231,cpu_refit,5,conventional fold refits
+tdc_ppbr_az,SVR,conventional,2231,cpu_refit,5,conventional fold refits
+tdc_ppbr_az,Random forest,conventional,2231,cpu_refit,5,conventional fold refits
+tdc_ppbr_az,Extra trees,conventional,2231,cpu_refit,5,conventional fold refits
+tdc_ppbr_az,HistGradientBoosting,conventional,2231,cpu_refit,5,conventional fold refits
+tdc_ppbr_az,"Voting Regressor (KNN, SVM)",conventional,2231,cpu_refit,5,conventional fold refits
+tdc_ppbr_az,AdaBoost,conventional,2231,cpu_refit,5,conventional fold refits
+tdc_ppbr_az,Tabular MLP,conventional,2231,cpu_refit,5,conventional fold refits
+tdc_ppbr_az,Tabular CNN,conventional,2231,cpu_refit,5,conventional fold refits
+tdc_ppbr_az,XGBoost,conventional,2231,cpu_refit,5,conventional fold refits
+tdc_ppbr_az,CatBoost,conventional,2231,cpu_refit,5,conventional fold refits
+tdc_ppbr_az,MapLight CatBoost (Strict Parity),conventional,2231,cpu_refit,5,conventional fold refits
+tdc_ppbr_az,ChemML MLP (PyTorch),chemml,2231,cpu_refit,5,chemml fold refits
+tdc_ppbr_az,ChemML MLP (TensorFlow),chemml,2231,cpu_refit,5,chemml fold refits
+tdc_ppbr_az,Uni-Mol V1,unimol,2231,unimol_cvdata,0,benchmark_results/autoqsar_benchmark_20260623_153839/tdc_ppbr_az/unimol_v1/seed_13
+tdc_ppbr_az,"MapLight + GNN (CatBoost, Strict Parity)",maplight_gnn,2231,cpu_refit,5,maplight_gnn fold refits
+tdc_ppbr_az,CFA (Combinatorial Fusion),fusion,2231,excluded,0,fusion output (CFA/ensemble) is never a member
+tdc_ppbr_az,"Chemprop v2 (D-MPNN, ensemble=3)",chemprop,2231,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_ppbr_az,"Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",chemprop,2231,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_ppbr_az,"Chemprop v2 (CMPNN, ensemble=3)",chemprop,2231,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_ppbr_az,"Chemprop v2 (AttentiveFP, ensemble=3)",chemprop,2231,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_ppbr_az,"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",chemprop,2231,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_ppbr_az,TabPFNRegressor,tabpfn,2231,excluded,0,metered API; pass --ensemble-oof-allow-api-refits to include
+tdc_ppbr_az,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",fusion,2231,excluded,0,fusion output (CFA/ensemble) is never a member
+tdc_ppbr_az,Ensemble (Weighted average (inverse train RMSE)),fusion,2231,excluded,0,fusion output (CFA/ensemble) is never a member
+tdc_skin_reaction,LogisticRegression,conventional,289,cpu_refit,5,conventional fold refits
+tdc_skin_reaction,SVC,conventional,289,cpu_refit,5,conventional fold refits
+tdc_skin_reaction,Random forest,conventional,289,cpu_refit,5,conventional fold refits
+tdc_skin_reaction,Extra trees,conventional,289,cpu_refit,5,conventional fold refits
+tdc_skin_reaction,HistGradientBoosting,conventional,289,cpu_refit,5,conventional fold refits
+tdc_skin_reaction,"Voting Classifier (KNN, SVM)",conventional,289,cpu_refit,5,conventional fold refits
+tdc_skin_reaction,AdaBoost,conventional,289,cpu_refit,5,conventional fold refits
+tdc_skin_reaction,Tabular MLP,conventional,289,cpu_refit,5,conventional fold refits
+tdc_skin_reaction,XGBoost,conventional,289,cpu_refit,5,conventional fold refits
+tdc_skin_reaction,CatBoost,conventional,289,cpu_refit,5,conventional fold refits
+tdc_skin_reaction,ChemML MLP (PyTorch),chemml,289,cpu_refit,5,chemml fold refits
+tdc_skin_reaction,ChemML MLP (TensorFlow),chemml,289,cpu_refit,5,chemml fold refits
+tdc_skin_reaction,Uni-Mol V1,unimol,289,unimol_cvdata,0,/home/exouser/AutoQSAR/benchmark_results/autoqsar_benchmark_20260623_153839/tdc_skin_reaction/unimol_v1/seed_13
+tdc_skin_reaction,"MapLight + GNN (CatBoost, Strict Parity)",maplight_gnn,289,cpu_refit,5,maplight_gnn fold refits
+tdc_skin_reaction,CFA (Combinatorial Fusion),fusion,289,excluded,0,fusion output (CFA/ensemble) is never a member
+tdc_skin_reaction,"Chemprop v2 (D-MPNN, ensemble=3)",chemprop,289,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_skin_reaction,"Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",chemprop,289,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_skin_reaction,"Chemprop v2 (CMPNN, ensemble=3)",chemprop,289,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_skin_reaction,"Chemprop v2 (AttentiveFP, ensemble=3)",chemprop,289,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_skin_reaction,"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",chemprop,289,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_skin_reaction,Uni-Mol V2 (84m),unimol,289,unimol_cvdata,0,benchmark_results/autoqsar_benchmark_20260623_153839/tdc_skin_reaction/unimol_v2/84m_seed_13
+tdc_skin_reaction,TabPFNClassifier,tabpfn,289,excluded,0,metered API; pass --ensemble-oof-allow-api-refits to include
+tdc_skin_reaction,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",fusion,289,excluded,0,fusion output (CFA/ensemble) is never a member
+tdc_skin_reaction,Ensemble (Weighted average (inverse train RMSE)),fusion,289,excluded,0,fusion output (CFA/ensemble) is never a member
+tdc_solubility_aqsoldb,SVR,conventional,7985,cpu_refit,5,conventional fold refits
+tdc_solubility_aqsoldb,Random forest,conventional,7985,cpu_refit,5,conventional fold refits
+tdc_solubility_aqsoldb,Extra trees,conventional,7985,cpu_refit,5,conventional fold refits
+tdc_solubility_aqsoldb,HistGradientBoosting,conventional,7985,cpu_refit,5,conventional fold refits
+tdc_solubility_aqsoldb,"Voting Regressor (KNN, SVM)",conventional,7985,cpu_refit,5,conventional fold refits
+tdc_solubility_aqsoldb,AdaBoost,conventional,7985,cpu_refit,5,conventional fold refits
+tdc_solubility_aqsoldb,Tabular MLP,conventional,7985,cpu_refit,5,conventional fold refits
+tdc_solubility_aqsoldb,Tabular CNN,conventional,7985,cpu_refit,5,conventional fold refits
+tdc_solubility_aqsoldb,XGBoost,conventional,7985,cpu_refit,5,conventional fold refits
+tdc_solubility_aqsoldb,CatBoost,conventional,7985,cpu_refit,5,conventional fold refits
+tdc_solubility_aqsoldb,MapLight CatBoost (Strict Parity),conventional,7985,cpu_refit,5,conventional fold refits
+tdc_solubility_aqsoldb,ChemML MLP (PyTorch),chemml,7985,cpu_refit,5,chemml fold refits
+tdc_solubility_aqsoldb,ChemML MLP (TensorFlow),chemml,7985,cpu_refit,5,chemml fold refits
+tdc_solubility_aqsoldb,Uni-Mol V1,unimol,7985,unimol_cvdata,0,benchmark_results/autoqsar_benchmark_20260623_153839/tdc_solubility_aqsoldb/unimol_v1/seed_13
+tdc_solubility_aqsoldb,"MapLight + GNN (CatBoost, Strict Parity)",maplight_gnn,7985,cpu_refit,5,maplight_gnn fold refits
+tdc_solubility_aqsoldb,CFA (Combinatorial Fusion),fusion,7985,excluded,0,fusion output (CFA/ensemble) is never a member
+tdc_solubility_aqsoldb,"Chemprop v2 (D-MPNN, ensemble=3)",chemprop,7985,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_solubility_aqsoldb,"Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",chemprop,7985,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_solubility_aqsoldb,"Chemprop v2 (CMPNN, ensemble=3)",chemprop,7985,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_solubility_aqsoldb,"Chemprop v2 (AttentiveFP, ensemble=3)",chemprop,7985,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_solubility_aqsoldb,"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",chemprop,7985,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_solubility_aqsoldb,TabPFNRegressor,tabpfn,7985,excluded,0,metered API; pass --ensemble-oof-allow-api-refits to include
+tdc_solubility_aqsoldb,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",fusion,7985,excluded,0,fusion output (CFA/ensemble) is never a member
+tdc_solubility_aqsoldb,Ensemble (Weighted average (inverse train RMSE)),fusion,7985,excluded,0,fusion output (CFA/ensemble) is never a member
+tdc_tox21,LogisticRegression,conventional,5797,cpu_refit,5,conventional fold refits
+tdc_tox21,SVC,conventional,5797,cpu_refit,5,conventional fold refits
+tdc_tox21,Random forest,conventional,5797,cpu_refit,5,conventional fold refits
+tdc_tox21,Extra trees,conventional,5797,cpu_refit,5,conventional fold refits
+tdc_tox21,HistGradientBoosting,conventional,5797,cpu_refit,5,conventional fold refits
+tdc_tox21,"Voting Classifier (KNN, SVM)",conventional,5797,cpu_refit,5,conventional fold refits
+tdc_tox21,AdaBoost,conventional,5797,cpu_refit,5,conventional fold refits
+tdc_tox21,Tabular MLP,conventional,5797,cpu_refit,5,conventional fold refits
+tdc_tox21,XGBoost,conventional,5797,cpu_refit,5,conventional fold refits
+tdc_tox21,CatBoost,conventional,5797,cpu_refit,5,conventional fold refits
+tdc_tox21,ChemML MLP (PyTorch),chemml,5797,cpu_refit,5,chemml fold refits
+tdc_tox21,ChemML MLP (TensorFlow),chemml,5797,cpu_refit,5,chemml fold refits
+tdc_tox21,Uni-Mol V1,unimol,5797,unimol_cvdata,0,benchmark_results/autoqsar_benchmark_20260623_153839/tdc_tox21/unimol_v1/seed_13
+tdc_tox21,"MapLight + GNN (CatBoost, Strict Parity)",maplight_gnn,5797,cpu_refit,5,maplight_gnn fold refits
+tdc_tox21,CFA (Combinatorial Fusion),fusion,5797,excluded,0,fusion output (CFA/ensemble) is never a member
+tdc_tox21,"Chemprop v2 (D-MPNN, ensemble=3)",chemprop,5797,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_tox21,"Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",chemprop,5797,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_tox21,"Chemprop v2 (CMPNN, ensemble=3)",chemprop,5797,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_tox21,"Chemprop v2 (AttentiveFP, ensemble=3)",chemprop,5797,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_tox21,"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",chemprop,5797,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_tox21,TabPFNClassifier,tabpfn,5797,excluded,0,metered API; pass --ensemble-oof-allow-api-refits to include
+tdc_tox21,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",fusion,5797,excluded,0,fusion output (CFA/ensemble) is never a member
+tdc_tox21,Ensemble (Weighted average (inverse train RMSE)),fusion,5797,excluded,0,fusion output (CFA/ensemble) is never a member
+tdc_toxcast,LogisticRegression,conventional,1357,cpu_refit,5,conventional fold refits
+tdc_toxcast,SVC,conventional,1357,cpu_refit,5,conventional fold refits
+tdc_toxcast,Random forest,conventional,1357,cpu_refit,5,conventional fold refits
+tdc_toxcast,Extra trees,conventional,1357,cpu_refit,5,conventional fold refits
+tdc_toxcast,HistGradientBoosting,conventional,1357,cpu_refit,5,conventional fold refits
+tdc_toxcast,"Voting Classifier (KNN, SVM)",conventional,1357,cpu_refit,5,conventional fold refits
+tdc_toxcast,AdaBoost,conventional,1357,cpu_refit,5,conventional fold refits
+tdc_toxcast,Tabular MLP,conventional,1357,cpu_refit,5,conventional fold refits
+tdc_toxcast,XGBoost,conventional,1357,cpu_refit,5,conventional fold refits
+tdc_toxcast,CatBoost,conventional,1357,cpu_refit,5,conventional fold refits
+tdc_toxcast,ChemML MLP (PyTorch),chemml,1357,cpu_refit,5,chemml fold refits
+tdc_toxcast,ChemML MLP (TensorFlow),chemml,1357,cpu_refit,5,chemml fold refits
+tdc_toxcast,Uni-Mol V1,unimol,1357,unimol_cvdata,0,benchmark_results/autoqsar_benchmark_20260623_153839/tdc_toxcast/unimol_v1/seed_13
+tdc_toxcast,"MapLight + GNN (CatBoost, Strict Parity)",maplight_gnn,1357,cpu_refit,5,maplight_gnn fold refits
+tdc_toxcast,CFA (Combinatorial Fusion),fusion,1357,excluded,0,fusion output (CFA/ensemble) is never a member
+tdc_toxcast,"Chemprop v2 (D-MPNN, ensemble=3)",chemprop,1357,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_toxcast,"Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",chemprop,1357,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_toxcast,"Chemprop v2 (CMPNN, ensemble=3)",chemprop,1357,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_toxcast,"Chemprop v2 (AttentiveFP, ensemble=3)",chemprop,1357,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_toxcast,"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",chemprop,1357,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_toxcast,TabPFNClassifier,tabpfn,1357,excluded,0,metered API; pass --ensemble-oof-allow-api-refits to include
+tdc_toxcast,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",fusion,1357,excluded,0,fusion output (CFA/ensemble) is never a member
+tdc_toxcast,Ensemble (Weighted average (inverse train RMSE)),fusion,1357,excluded,0,fusion output (CFA/ensemble) is never a member
+tdc_vdss_lombardo,ElasticNetCV,conventional,904,cpu_refit,5,conventional fold refits
+tdc_vdss_lombardo,SVR,conventional,904,cpu_refit,5,conventional fold refits
+tdc_vdss_lombardo,Random forest,conventional,904,cpu_refit,5,conventional fold refits
+tdc_vdss_lombardo,Extra trees,conventional,904,cpu_refit,5,conventional fold refits
+tdc_vdss_lombardo,HistGradientBoosting,conventional,904,cpu_refit,5,conventional fold refits
+tdc_vdss_lombardo,"Voting Regressor (KNN, SVM)",conventional,904,cpu_refit,5,conventional fold refits
+tdc_vdss_lombardo,AdaBoost,conventional,904,cpu_refit,5,conventional fold refits
+tdc_vdss_lombardo,Tabular MLP,conventional,904,cpu_refit,5,conventional fold refits
+tdc_vdss_lombardo,Tabular CNN,conventional,904,cpu_refit,5,conventional fold refits
+tdc_vdss_lombardo,XGBoost,conventional,904,cpu_refit,5,conventional fold refits
+tdc_vdss_lombardo,CatBoost,conventional,904,cpu_refit,5,conventional fold refits
+tdc_vdss_lombardo,MapLight CatBoost (Strict Parity),conventional,904,cpu_refit,5,conventional fold refits
+tdc_vdss_lombardo,ChemML MLP (PyTorch),chemml,904,cpu_refit,5,chemml fold refits
+tdc_vdss_lombardo,ChemML MLP (TensorFlow),chemml,904,cpu_refit,5,chemml fold refits
+tdc_vdss_lombardo,Uni-Mol V1,unimol,904,unimol_cvdata,0,benchmark_results/autoqsar_benchmark_20260623_153839/tdc_vdss_lombardo/unimol_v1/seed_13
+tdc_vdss_lombardo,"MapLight + GNN (CatBoost, Strict Parity)",maplight_gnn,904,cpu_refit,5,maplight_gnn fold refits
+tdc_vdss_lombardo,CFA (Combinatorial Fusion),fusion,904,excluded,0,fusion output (CFA/ensemble) is never a member
+tdc_vdss_lombardo,"Chemprop v2 (D-MPNN, ensemble=3)",chemprop,904,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_vdss_lombardo,"Chemprop v2 (CMPNN, ensemble=3)",chemprop,904,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_vdss_lombardo,"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",chemprop,904,excluded,0,--scope cpu: Chemprop left out of the ensemble
+tdc_vdss_lombardo,TabPFNRegressor,tabpfn,904,excluded,0,metered API; pass --ensemble-oof-allow-api-refits to include
+tdc_vdss_lombardo,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",fusion,904,excluded,0,fusion output (CFA/ensemble) is never a member
+tdc_vdss_lombardo,Ensemble (Weighted average (inverse train RMSE)),fusion,904,excluded,0,fusion output (CFA/ensemble) is never a member

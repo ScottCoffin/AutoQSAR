@@ -131,6 +131,54 @@ summary in the commit message, and push to `main`. Don't regenerate the manuscri
 that runs on the workstation (`render_manuscript_assets.py --run-dir
 benchmark_results/qsarena_benchmark_oof_ensemble`), and it costs no allocation.
 
+
+### Status as of 2026-09-26 (A100 session ended here)
+
+**Steps 0-3 are done; steps 4-6 were never run.** The instance was shelved before the pilot, so
+`qsarena_benchmark_oof_ensemble` contains seeded inputs and `ensemble_oof_plan.csv` only -- no
+rebuilt ensembles. Resume at **step 4**.
+
+Planner output, committed as `benchmark_results/qsarena_benchmark_oof_ensemble/ensemble_oof_plan.csv`
+(1021 member rows, 44 datasets, folds=5). All `--scope cpu` pass criteria passed: exit 0, zero
+`missing_inputs`, zero `gpu_refit`, all 61 Uni-Mol members resolve to `unimol_cvdata` (none
+excluded), and `cpu_refit` is only conventional/ChemML/MapLight.
+
+| source | kind | members | fold trainings |
+|---|---|---|---|
+| `cpu_refit` | conventional 462, chemml 84, maplight_gnn 43 | 589 | 2945 |
+| `unimol_cvdata` | unimol 61 | 61 | 0 (read from `cv.data`) |
+| `excluded` | chemprop 202, fusion 131, tabpfn 38 | 371 | 0 |
+
+Under `--scope all`, chemprop moves to `gpu_refit`: 1010 GPU fold trainings, **~63 h**.
+
+**Chemprop cannot be shortcut -- it is refit-or-exclude.** Its only saved artifacts are full-fit
+`train_predictions.csv` / `test_predictions.csv`. `splits.json` is a list of length **1**, so all
+three ensemble members share one 90/10 split: ~10% of training rows have a held-out prediction and
+the other 90% of `train_predictions.csv` is in-sample -- the exact leakage the OOF rebuild removes.
+10% coverage cannot fit stacking weights, so there is no cheap Chemprop OOF path.
+
+**What excluding Chemprop costs.** In the old (leaky) ensembles Chemprop was 334 member selections
+across 42/44 datasets and 10.7% of total |weight| (vs other 77.4%, Uni-Mol 8.4%, TabPFN 3.5%).
+Treat 10.7% as an **upper bound**: the weighted-average method weights by inverse *train* RMSE, and
+Chemprop's train predictions are 90% in-sample, so its train RMSE is artificially low and its
+weight inflated. Its honest OOF weight is lower.
+
+**Continuing on another machine needs ~0.6 GB of gitignored files** that the repo does not carry:
+`benchmark_results/qsarena_benchmark_chemprop_fixed/*/predictions.csv` (45 files, 0.57 GB) and
+`benchmark_results/autoqsar_benchmark_20260623_153839/**/cv.data` (61 files, <10 MB). Without
+`predictions.csv` the ensembles cannot be rebuilt at all and `prepare_chemprop_repair_run.py`
+cannot reseed. The seeded run's 6.11 GB of `stage23_resume_cache.pkl` is regenerable and need not
+be copied (omitting it only means features are rebuilt on CPU).
+
+**GPU driver mismatch on this host (not a results problem).** Unattended-upgrades replaced the
+NVIDIA driver at 06:59 UTC *during* the 06:23-13:55 benchmark run: kernel module 595.71.05 stayed
+resident while userspace moved to 595.84, so `nvidia-smi` fails with
+`Driver/library version mismatch`. Already-running processes were unaffected, so that run's results
+are sound. Fix is a module reload, **not** a reboot:
+`sudo rmmod nvidia_drm nvidia_modeset nvidia_uvm nvidia && sudo modprobe nvidia`
+(no process held `/dev/nvidia*`; `nvidia_drm` had a refcount of 1, which may need the display
+stack stopped first). Only matters for step 6.
+
 ## Where to edit (source of truth)
 
 | Want to change | Edit | Notes |
