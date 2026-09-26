@@ -91,6 +91,13 @@ always quote). Bash (Git Bash) and PowerShell are both available.
 
 The paper makes three load-bearing claims. Keep them straight when editing:
 1. **Leaderboard placement**: top-10 on 35/37 (22/22 on official TDC splits), median rank 3.
+   **Since the focused review of 2026-09-25 this is a provisional, secondary result**: the
+   reference set contains leaked and self-reported entries (see traps below). The abstract,
+   conclusions and graphical abstract lead with claim 2 and with the internal CV-vs-test gap
+   (CV selection never picks the winner; median relative gap 16.1%). Don't move the ranks back
+   into the headline. The novelty claim is the uniform cross-suite benchmark plus the
+   decomposition; code-free access is described as a usability feature (OCHEM/ChemSAR already
+   offer it).
 2. **The 35/37 → 25/37 drop is real but has TWO causes, and the paper now decomposes them.** A
    matched-candidate-set control (test-selected, restricted to the CV-eligible pool) gives 28/37,
    3 firsts, median rank 6. So **7 of the 10 lost placements are the value of the broad model

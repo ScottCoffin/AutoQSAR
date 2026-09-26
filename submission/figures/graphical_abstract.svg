@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="920" height="300" viewBox="0 0 920 300">
 <rect x="0.0" y="0.0" width="920.0" height="300.0" rx="0" fill="#FFFFFF" stroke="none" stroke-width="1"/>
-<text x="24.0" y="26.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="19" font-weight="700" fill="#1B2A38" text-anchor="start">QSARena: top-10 on 35 of 37 ADMET benchmarks</text>
+<text x="24.0" y="26.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="19" font-weight="700" fill="#1B2A38" text-anchor="start">QSARena: model-library breadth drives most leaderboard standing</text>
 <text x="24.0" y="45.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="11.5" font-weight="400" fill="#5A6B7B" text-anchor="start">One leakage-controlled pipeline, 44 datasets, 28 models - and no model family dominates.</text>
 <line x1="24.0" y1="56.0" x2="896.0" y2="56.0" stroke="#D6DEE6" stroke-width="1" stroke-linecap="round"/>
 <text x="24.0" y="78.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="9.5" font-weight="700" fill="#5A6B7B" text-anchor="start" letter-spacing="0.8">BENCHMARK</text>
@@ -18,7 +18,7 @@
 <text x="24.0" y="232.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="9.5" font-weight="400" fill="#5A6B7B" text-anchor="start">TDC | MoleculeNet | Polaris</text>
 <text x="24.0" y="245.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="9.5" font-weight="400" fill="#5A6B7B" text-anchor="start">PODUAM | ChemML</text>
 <line x1="180.0" y1="72.0" x2="180.0" y2="256.0" stroke="#D6DEE6" stroke-width="1" stroke-linecap="round"/>
-<text x="204.0" y="78.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="9.5" font-weight="700" fill="#5A6B7B" text-anchor="start" letter-spacing="0.8">PUBLISHED-REFERENCE TOP-10 PLACEMENT</text>
+<text x="204.0" y="78.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="9.5" font-weight="700" fill="#5A6B7B" text-anchor="start" letter-spacing="0.8">ESTIMATED TOP-10 VS PUBLISHED VALUES (PROVISIONAL)</text>
 <text x="204.0" y="91.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="9.8" font-weight="600" fill="#1B2A38" text-anchor="start">Best of 28 models, chosen on the test set</text>
 <rect x="204.0" y="96.0" width="286.0" height="16.0" rx="8" fill="#EEF2F6" stroke="none" stroke-width="1"/>
 <rect x="204.0" y="96.0" width="270.5" height="16.0" rx="8" fill="#009E73" stroke="none" stroke-width="1"/>

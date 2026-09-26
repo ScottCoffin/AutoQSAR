@@ -134,8 +134,13 @@ def draw() -> str:
     svg.rect(0, 0, WIDTH, HEIGHT, fill="#FFFFFF")
 
     # ---- Message title -------------------------------------------------------------------
-    svg.text(24, 26, f"QSARena: top-10 on {lb['top10_test_selected']} of {total} ADMET benchmarks",
-             size=19, weight="700")
+    # The title leads with the breadth-vs-selection decomposition, not the estimated rank: the rank
+    # is scored against a reference set with known leakage, so it is a secondary result (peer review
+    # 2026-09-25).
+    from_library = lb["top10_test_selected"] - lb["top10_matched_pool"]
+    from_selection = lb["top10_matched_pool"] - lb["top10_cv_selected"]
+    driver = "model-library breadth" if from_library >= from_selection else "test-set selection"
+    svg.text(24, 26, f"QSARena: {driver} drives most leaderboard standing", size=19, weight="700")
     svg.text(24, 45,
              f"One leakage-controlled pipeline, {n_ds} datasets, {n['models_with_valid_results']} models "
              "- and no model family dominates.",
@@ -168,7 +173,7 @@ def draw() -> str:
 
     # ---- Panel 2: the hero result --------------------------------------------------------
     hx, track_w = 204, 286
-    svg.text(hx, 78, "PUBLISHED-REFERENCE TOP-10 PLACEMENT", size=9.5, weight="700",
+    svg.text(hx, 78, "ESTIMATED TOP-10 VS PUBLISHED VALUES (PROVISIONAL)", size=9.5, weight="700",
              color=MUTED, spacing="0.8")
 
     def bar(y, label, value, color, note):

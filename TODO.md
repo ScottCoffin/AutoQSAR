@@ -8,6 +8,24 @@ Last updated: 2026-09-25.
 
 ---
 
+## Raised by focused peer review (2026-09-25, second report)
+
+Source: `Peer_Review_Report_QSARena_No_Single_Model_Family_Dominates.docx`; itemised response in
+[submission/response_to_focused_review_2026-09-25.md](submission/response_to_focused_review_2026-09-25.md).
+
+- [x] Novelty re-centred on the uniform cross-suite benchmark + the breadth-vs-selection
+      decomposition; explicit differentiation vs DeepChem, QSPRpred, OCHEM, ChemSAR, ADMET-AI.
+- [x] Estimated ranks demoted to a provisional, bias-flagged secondary analysis in the abstract,
+      conclusions, graphical abstract, Limitations and cover letter.
+- [x] 45/43/44 dataset reconciliation; data-availability wording with per-dataset identifiers;
+      duplicated-sentence artifact; style pass.
+- [ ] **Decide the article type**: Research (benchmarking) article, recommended by the reviewer, or
+      Software article, which then needs a real head-to-head vs QSPRpred/DeepChem/ADMET-AI on the
+      TDC-22 splits. Switching changes the section structure. The cover letter has an [AUTHOR] flag.
+- [ ] **Confirm the generative-AI statement** (tools and scope) in `declarations.tex` / `manuscript.md`.
+- [ ] Zenodo deposit must include the per-molecule `predictions.csv` files (reviewer 5.3).
+- [ ] Rebuild `submission/cover_letter.pdf` from the updated `cover_letter.md` (it is stale).
+
 ## Raised by peer review (2026-09-25)
 
 - [x] **Rename the tool** — `AutoQSAR` collided with Schrödinger's trademarked product in the same
