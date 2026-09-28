@@ -1,14 +1,14 @@
 {
-  "started_at": "2026-09-27 16:41:21 Pacific Daylight Time",
-  "completed_at": "2026-09-27 20:29:16",
-  "elapsed_seconds": 13675.076,
-  "dataset_count": 44,
+  "started_at": "2026-09-28 08:14:11 Pacific Daylight Time",
+  "completed_at": "2026-09-28 08:39:09",
+  "elapsed_seconds": 1498.389,
+  "dataset_count": 37,
   "dataset_status_counts": {
-    "completed": 44
+    "completed": 37
   },
   "resource_config": {
     "detected_cpu_count": 12,
-    "n_jobs": 10,
+    "n_jobs": 12,
     "gpu_available": false,
     "gpu_inventory": [],
     "chemprop_num_workers": 3,
@@ -19,16 +19,16 @@
   },
   "ga_models_resolved": [],
   "run_vs_run_attribution": {
-    "generated_at": "2026-09-27 20:29:13 Pacific Daylight Time",
+    "generated_at": "2026-09-28 08:39:06 Pacific Daylight Time",
     "current_run_dir": "benchmark_results\\qsarena_benchmark_oof_ensemble",
     "reference_run_dir": "C:\\Users\\Scott.Coffin\\OneDrive - California OEHHA\\R_new\\AutoQSAR\\benchmark_results\\qsarena_benchmark_chemprop_fixed",
     "has_reference_run": true,
     "split_datasets_compared": 44,
     "split_all_match_count": 44,
-    "config_diff_count": 78,
+    "config_diff_count": 81,
     "new_error_count": 0,
     "resolved_error_count": 6,
-    "leaderboard_comparable_dataset_count": 7
+    "leaderboard_comparable_dataset_count": 8
   },
   "tdc22_best_model_multiseed": {}
 }

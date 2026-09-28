@@ -1,5 +1,4 @@
 dataset,estimated_train_rows,estimated_columns,estimated_estimators,estimated_tabpfn_tokens,tabpfn_configured_api_keys,fits_single_key_day_budget,fits_configured_key_pool_day_budget
-tdc_carcinogens_lagunin,224,32,11,78848,3,True,True
 tdc_skin_reaction,323,32,11,113696,3,True,True
 tdc_dili,380,38,11,158840,3,True,True
 chemml_cep_homo,400,40,11,176000,3,True,True
@@ -37,9 +36,3 @@ tdc_tox21,5812,40,11,2557280,3,True,True
 tdc_ames,5822,40,11,2561680,3,True,True
 tdc_ld50_zhu,5908,40,11,2599520,3,True,True
 tdc_solubility_aqsoldb,7986,40,11,3513840,3,True,True
-tdc_cyp2c9_veith,9674,40,11,4256560,3,True,True
-tdc_cyp3a4_veith,9862,40,11,4339280,3,True,True
-tdc_cyp1a2_veith,10063,40,11,4427720,3,True,True
-tdc_cyp2c19_veith,10132,40,11,4458080,3,True,True
-tdc_cyp2d6_veith,10504,40,11,4621760,3,True,True
-tdc_herg_karim,10756,40,11,4732640,3,True,True

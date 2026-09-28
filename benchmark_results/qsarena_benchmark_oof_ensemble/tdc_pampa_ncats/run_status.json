@@ -2,9 +2,9 @@
   "status": "completed",
   "dataset": "tdc_pampa_ncats",
   "source": "PyTDC ADME benchmark: pampa_ncats",
-  "completed_at": "2026-09-27 18:36:53",
-  "elapsed_seconds": 4.769,
-  "n_metrics_rows": 44,
+  "completed_at": "2026-09-28 08:30:05",
+  "elapsed_seconds": 31.129,
+  "n_metrics_rows": 42,
   "n_stage_records": 4,
   "n_rows": 2034,
   "task_type": "classification",
@@ -58,5 +58,5 @@
     "notes": []
   },
   "stage23_signature": "77078dc142259af831b0af3787b0d93109ab9a8e45309ee909622b224effdfc5",
-  "resume_fingerprint": "f17da95906c9218a02c9229b"
+  "resume_fingerprint": "f3cb1e2acb2e79fc0787b993"
 }

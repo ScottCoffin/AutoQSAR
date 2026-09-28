@@ -1,7 +1,7 @@
 dataset,best_model,best_workflow,primary_metric,primary_metric_value,leaderboard_metric_name,leaderboard_metric_reference,leaderboard_delta_primary,leaderboard_estimated_rank_vs_top10,leaderboard_estimated_in_top10,leaderboard_gap_to_top10_cutoff,leaderboard_url
-chemml_cep_homo,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",ensemble,rmse,0.0988562966894023,None,,,,,,
+chemml_cep_homo,CFA (Combinatorial Fusion),cfa,rmse,0.1005839498206981,None,,,,,,
 chemml_organic_density,TabPFNRegressor,conventional,rmse,0.0048101712939232,None,,,,,,
-esol_delaney,Ensemble (Weighted average (inverse OOF error)),ensemble,rmse,0.6499931656836034,Test RMSE,0.8851,,1.0,True,-1.0906068343163966,https://github.com/deepchem/moleculenet
+esol_delaney,Uni-Mol V2 (84m),Uni-Mol,rmse,0.6720718233896475,Test RMSE,0.8851,,1.0,True,-1.0685281766103525,https://github.com/deepchem/moleculenet
 freesolv_sampl,TabPFNRegressor,conventional,rmse,0.933412912990602,None,,,,,,https://github.com/deepchem/moleculenet
 lipophilicity,"Chemprop v2 (D-MPNN, ensemble=3)",Chemprop v2,rmse,0.5506893871153222,Test RMSE,0.7806,,1.0,True,-0.4114106128846777,https://github.com/deepchem/moleculenet
 poduam_pod_nc_std,Random forest,conventional,rmse,0.7200851779122264,RMSE,0.73,-0.0099148220877736,1.0,True,-0.0099148220877736,https://www.nature.com/articles/s41467-025-67374-4#data-availability
@@ -11,7 +11,7 @@ polaris_adme_fang_perm_1,Uni-Mol V1,Uni-Mol,mse,0.1593775760725137,mean_squared_
 polaris_adme_fang_rclint_1,"Chemprop v2 (D-MPNN, ensemble=3)",Chemprop v2,mse,0.2675523311182626,mean_squared_error,0.216,,6.0,True,-0.0694476688817374,https://polarishub.io/benchmarks/polaris/adme-fang-rclint-1
 polaris_adme_fang_rppb_1,"Chemprop v2 (AttentiveFP, ensemble=3)",Chemprop v2,mse,0.2483155697022983,mean_squared_error,0.235,,3.0,True,-0.3856844302977017,https://polarishub.io/benchmarks/polaris/adme-fang-rppb-1
 polaris_adme_fang_solu_1,Uni-Mol V2 (84m),Uni-Mol,mse,0.3035273265509489,mean_squared_error,0.222,,7.0,True,-0.0194726734490511,https://polarishub.io/benchmarks/polaris/adme-fang-solu-1
-tdc_ames,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",ensemble,roc_auc,0.8791458614815251,None,,,,,,
+tdc_ames,TabPFNClassifier,conventional,roc_auc,0.876108793984609,None,,,,,,
 tdc_bbb_martins,Random forest,conventional,roc_auc,0.9250703564727956,None,,,,,,
 tdc_bioavailability_ma,CatBoost,conventional,roc_auc,0.7766877286331892,None,,,,,,
 tdc_caco2_wang,MapLight CatBoost (Strict Parity),conventional,mae,0.2724363311989904,MAE,0.256,0.0164363311989904,2.0,True,-0.0535636688010096,https://tdcommons.ai/benchmark/admet_group/01caco2/

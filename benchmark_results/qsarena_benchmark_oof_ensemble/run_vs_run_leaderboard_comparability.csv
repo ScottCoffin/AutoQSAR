@@ -11,7 +11,7 @@ polaris_adme_fang_perm_1,Uni-Mol V1,Uni-Mol,mse,0.1593775760725137,mean_squared_
 polaris_adme_fang_rclint_1,Uni-Mol V1,Uni-Mol,mse,0.2729228224752916,mean_squared_error,,6.0,True,-0.0640771775247084,0.337,https://polarishub.io/benchmarks/polaris/adme-fang-rclint-1,False,Uni-Mol V1,0.2729228224752916,0.0
 polaris_adme_fang_rppb_1,CFA (Combinatorial Fusion),cfa,mse,0.2658088094719232,mean_squared_error,0.235,4.0,True,-0.3681911905280768,0.634,https://polarishub.io/benchmarks/polaris/adme-fang-rppb-1,True,CFA (Combinatorial Fusion),0.2658088094719232,0.0
 polaris_adme_fang_solu_1,Uni-Mol V2 (84m),Uni-Mol,mse,0.3035273265509489,mean_squared_error,,7.0,True,-0.0194726734490511,0.323,https://polarishub.io/benchmarks/polaris/adme-fang-solu-1,False,Uni-Mol V2 (84m),0.3035273265509489,0.0
-tdc_ames,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",ensemble,roc_auc,0.8791458614815251,,,,,,,,False,Ensemble (Weighted average (inverse train RMSE)),0.8753784096026944,0.003767451878830652
+tdc_ames,CFA (Combinatorial Fusion),cfa,roc_auc,0.8719183849301924,,,,,,,,False,Ensemble (Weighted average (inverse train RMSE)),0.8753784096026944,-0.00346002467250206
 tdc_bbb_martins,Random forest,conventional,roc_auc,0.9250703564727956,,,,,,,,False,Random forest,0.9250703564727956,0.0
 tdc_bioavailability_ma,CatBoost,conventional,roc_auc,0.7766877286331892,,,,,,,,False,CatBoost,0.7766877286331892,0.0
 tdc_caco2_wang,MapLight CatBoost (Strict Parity),conventional,mae,0.2724363311989904,MAE,0.256,2.0,True,-0.0535636688010096,0.326,https://tdcommons.ai/benchmark/admet_group/01caco2/,True,MapLight CatBoost (Strict Parity),0.2724363311989904,0.0
@@ -29,11 +29,11 @@ tdc_cyp3a4_substrate_carbonmangels,"Voting Classifier (KNN, SVM)",conventional,r
 tdc_cyp3a4_veith,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",ensemble,auprc,0.9008826840184312,,,,,,,,False,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",0.8856220447983862,0.015260639220044947
 tdc_dili,Uni-Mol V1,Uni-Mol,roc_auc,0.9217391304347826,,,,,,,,False,Uni-Mol V1,0.9217391304347826,0.0
 tdc_half_life_obach,"MapLight + GNN (CatBoost, Strict Parity)",MapLight + GNN,mae,12.198785081539436,Spearman,,,,,,https://tdcommons.ai/benchmark/admet_group/16halflife/,False,"MapLight + GNN (CatBoost, Strict Parity)",12.198785081539436,0.0
-tdc_herg,Ensemble (Weighted average (inverse OOF error)),ensemble,roc_auc,0.8516936671575847,,,,,,,,False,AdaBoost,0.8484536082474227,0.0032400589101619914
+tdc_herg,AdaBoost,conventional,roc_auc,0.8484536082474227,,,,,,,,False,AdaBoost,0.8484536082474227,0.0
 tdc_herg_karim,"MapLight + GNN (CatBoost, Strict Parity)",MapLight + GNN,mae,0.1927137546468401,,,,,,,,False,"MapLight + GNN (CatBoost, Strict Parity)",0.1927137546468401,0.0
 tdc_hia_hou,CFA (Combinatorial Fusion),cfa,roc_auc,0.987448559670782,,,,,,,,False,CFA (Combinatorial Fusion),0.987448559670782,0.0
 tdc_hydrationfreeenergy_freesolv,"MapLight + GNN (CatBoost, Strict Parity)",MapLight + GNN,mae,0.9224032188057985,RMSE,,,,,,,False,"MapLight + GNN (CatBoost, Strict Parity)",0.9224032188057985,0.0
-tdc_ld50_zhu,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",ensemble,mae,0.5782487913139306,MAE,,3.0,True,-0.0517512086860694,0.63,https://tdcommons.ai/benchmark/admet_group/19ld50/,False,Ensemble (Weighted average (inverse train RMSE)),0.5673412295432787,0.010907561770651886
+tdc_ld50_zhu,HistGradientBoosting,conventional,mae,0.5844462673234926,MAE,0.552,3.0,True,-0.0455537326765074,0.63,https://tdcommons.ai/benchmark/admet_group/19ld50/,True,Ensemble (Weighted average (inverse train RMSE)),0.5673412295432787,0.017105037780213883
 tdc_lipophilicity_astrazeneca,CFA (Combinatorial Fusion),cfa,mae,0.4696447077382253,MAE,0.456,3.0,True,-0.0693552922617747,0.539,https://tdcommons.ai/benchmark/admet_group/05lipo/,True,CFA (Combinatorial Fusion),0.4696447077382253,0.0
 tdc_pampa_ncats,"MapLight + GNN (CatBoost, Strict Parity)",MapLight + GNN,mae,0.1049019607843137,,,,,,,,False,"MapLight + GNN (CatBoost, Strict Parity)",0.1049019607843137,0.0
 tdc_pgp_broccatelli,Uni-Mol V2 (84m),Uni-Mol,roc_auc,0.9328845641162358,,,,,,,,False,Uni-Mol V2 (84m),0.9328845641162358,0.0

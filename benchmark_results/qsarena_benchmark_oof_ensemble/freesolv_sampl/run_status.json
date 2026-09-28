@@ -2,9 +2,9 @@
   "status": "completed",
   "dataset": "freesolv_sampl",
   "source": "MoleculeNet PhysChem benchmark: FreeSolv (SAMPL)",
-  "completed_at": "2026-09-27 17:00:21",
-  "elapsed_seconds": 327.456,
-  "n_metrics_rows": 52,
+  "completed_at": "2026-09-28 08:18:29",
+  "elapsed_seconds": 33.593,
+  "n_metrics_rows": 50,
   "n_stage_records": 4,
   "n_rows": 642,
   "task_type": "regression",
@@ -66,5 +66,5 @@
     "mae_out_of_domain": 1.396733079751332
   },
   "stage23_signature": "bd48a2e993c83a13f74ac84b1a5a0e699787869e83fa3b726eb25ad63cc6b71a",
-  "resume_fingerprint": "23b7cd31d6bb51fa8f347bf8"
+  "resume_fingerprint": "568ae09d7130ecbe5ca61638"
 }

@@ -1,5 +1,5 @@
 dataset,stage_index,total_stages,stage_label,step_type,model,workflow,started_at,started_epoch,status,ended_at,ended_epoch,duration_seconds
-esol_delaney,1,4,loading MoleculeNet PhysChem benchmark: ESOL (Delaney),load_dataset,,,2026-09-27 17:46:27 Pacific Daylight Time,1790556387.2946978,completed,2026-09-27 17:46:27 Pacific Daylight Time,1790556387.5116928,0.217
-esol_delaney,2,4,building molecular features (cached),feature_generation,,,2026-09-27 17:46:27 Pacific Daylight Time,1790556387.5116928,resumed_cache,2026-09-27 17:46:27 Pacific Daylight Time,1790556387.5257218,0.014
-esol_delaney,3,4,splitting data and selecting features (cached),feature_selection,,,2026-09-27 17:46:27 Pacific Daylight Time,1790556387.5257218,resumed_cache,2026-09-27 17:46:27 Pacific Daylight Time,1790556387.5497477,0.024
-esol_delaney,4,4,ensemble (2 method(s)),model,Ensemble,ensemble,2026-09-27 17:46:27 Pacific Daylight Time,1790556387.5497477,completed,2026-09-27 17:54:32 Pacific Daylight Time,1790556872.9845161,485.435
+esol_delaney,1,4,loading MoleculeNet PhysChem benchmark: ESOL (Delaney),load_dataset,,,2026-09-28 08:23:19 Pacific Daylight Time,1790608999.4628065,completed,2026-09-28 08:23:19 Pacific Daylight Time,1790608999.604465,0.142
+esol_delaney,2,4,building molecular features (cached),feature_generation,,,2026-09-28 08:23:19 Pacific Daylight Time,1790608999.604465,resumed_cache,2026-09-28 08:23:19 Pacific Daylight Time,1790608999.6164427,0.012
+esol_delaney,3,4,splitting data and selecting features (cached),feature_selection,,,2026-09-28 08:23:19 Pacific Daylight Time,1790608999.6164427,resumed_cache,2026-09-28 08:23:19 Pacific Daylight Time,1790608999.6392634,0.023
+esol_delaney,4,4,conventional model TabPFNRegressor (repairing missing OOF),model,TabPFNRegressor,conventional,2026-09-28 08:23:19 Pacific Daylight Time,1790608999.6392634,completed,2026-09-28 08:23:51 Pacific Daylight Time,1790609031.080538,31.441

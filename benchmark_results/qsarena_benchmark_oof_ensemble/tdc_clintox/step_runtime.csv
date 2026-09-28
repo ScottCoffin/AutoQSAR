@@ -1,5 +1,5 @@
 dataset,stage_index,total_stages,stage_label,step_type,model,workflow,started_at,started_epoch,status,ended_at,ended_epoch,duration_seconds
-tdc_clintox,1,4,loading PyTDC Tox benchmark: clintox,load_dataset,,,2026-09-27 18:15:32 Pacific Daylight Time,1790558132.7007468,completed,2026-09-27 18:15:33 Pacific Daylight Time,1790558133.1343856,0.434
-tdc_clintox,2,4,building molecular features (cached),feature_generation,,,2026-09-27 18:15:33 Pacific Daylight Time,1790558133.1343856,resumed_cache,2026-09-27 18:15:33 Pacific Daylight Time,1790558133.1502671,0.016
-tdc_clintox,3,4,splitting data and selecting features (cached),feature_selection,,,2026-09-27 18:15:33 Pacific Daylight Time,1790558133.1502671,resumed_cache,2026-09-27 18:15:33 Pacific Daylight Time,1790558133.1778245,0.028
-tdc_clintox,4,4,ensemble (2 method(s)),model,Ensemble,ensemble,2026-09-27 18:15:33 Pacific Daylight Time,1790558133.1778245,completed,2026-09-27 18:15:35 Pacific Daylight Time,1790558135.5248694,2.347
+tdc_clintox,1,4,loading PyTDC Tox benchmark: clintox,load_dataset,,,2026-09-28 08:26:51 Pacific Daylight Time,1790609211.04146,completed,2026-09-28 08:26:51 Pacific Daylight Time,1790609211.609639,0.568
+tdc_clintox,2,4,building molecular features (cached),feature_generation,,,2026-09-28 08:26:51 Pacific Daylight Time,1790609211.609639,resumed_cache,2026-09-28 08:26:51 Pacific Daylight Time,1790609211.6275122,0.018
+tdc_clintox,3,4,splitting data and selecting features (cached),feature_selection,,,2026-09-28 08:26:51 Pacific Daylight Time,1790609211.6275122,resumed_cache,2026-09-28 08:26:51 Pacific Daylight Time,1790609211.6611483,0.034
+tdc_clintox,4,4,conventional model TabPFNClassifier (repairing missing OOF),model,TabPFNClassifier,conventional,2026-09-28 08:26:51 Pacific Daylight Time,1790609211.6611483,completed,2026-09-28 08:27:25 Pacific Daylight Time,1790609245.137663,33.477

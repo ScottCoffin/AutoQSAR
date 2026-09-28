@@ -7,12 +7,12 @@
     "step_type": "load_dataset",
     "model": "",
     "workflow": "",
-    "started_at": "2026-09-27 16:48:12 Pacific Daylight Time",
-    "started_epoch": 1790552892.9407678,
+    "started_at": "2026-09-28 08:15:52 Pacific Daylight Time",
+    "started_epoch": 1790608552.9868026,
     "status": "completed",
-    "ended_at": "2026-09-27 16:48:13 Pacific Daylight Time",
-    "ended_epoch": 1790552893.0811093,
-    "duration_seconds": 0.14
+    "ended_at": "2026-09-28 08:15:53 Pacific Daylight Time",
+    "ended_epoch": 1790608553.1198652,
+    "duration_seconds": 0.133
   },
   {
     "dataset": "chemml_organic_density",
@@ -22,12 +22,12 @@
     "step_type": "feature_generation",
     "model": "",
     "workflow": "",
-    "started_at": "2026-09-27 16:48:13 Pacific Daylight Time",
-    "started_epoch": 1790552893.0811093,
+    "started_at": "2026-09-28 08:15:53 Pacific Daylight Time",
+    "started_epoch": 1790608553.1198652,
     "status": "resumed_cache",
-    "ended_at": "2026-09-27 16:48:13 Pacific Daylight Time",
-    "ended_epoch": 1790552893.0911028,
-    "duration_seconds": 0.01
+    "ended_at": "2026-09-28 08:15:53 Pacific Daylight Time",
+    "ended_epoch": 1790608553.1303885,
+    "duration_seconds": 0.011
   },
   {
     "dataset": "chemml_organic_density",
@@ -37,26 +37,26 @@
     "step_type": "feature_selection",
     "model": "",
     "workflow": "",
-    "started_at": "2026-09-27 16:48:13 Pacific Daylight Time",
-    "started_epoch": 1790552893.0911028,
+    "started_at": "2026-09-28 08:15:53 Pacific Daylight Time",
+    "started_epoch": 1790608553.1303885,
     "status": "resumed_cache",
-    "ended_at": "2026-09-27 16:48:13 Pacific Daylight Time",
-    "ended_epoch": 1790552893.1210203,
-    "duration_seconds": 0.03
+    "ended_at": "2026-09-28 08:15:53 Pacific Daylight Time",
+    "ended_epoch": 1790608553.1577702,
+    "duration_seconds": 0.027
   },
   {
     "dataset": "chemml_organic_density",
     "stage_index": 4,
     "total_stages": 4,
-    "stage_label": "ensemble (2 method(s))",
+    "stage_label": "conventional model TabPFNRegressor (repairing missing OOF)",
     "step_type": "model",
-    "model": "Ensemble",
-    "workflow": "ensemble",
-    "started_at": "2026-09-27 16:48:13 Pacific Daylight Time",
-    "started_epoch": 1790552893.1210203,
+    "model": "TabPFNRegressor",
+    "workflow": "conventional",
+    "started_at": "2026-09-28 08:15:53 Pacific Daylight Time",
+    "started_epoch": 1790608553.1577702,
     "status": "completed",
-    "ended_at": "2026-09-27 16:54:51 Pacific Daylight Time",
-    "ended_epoch": 1790553291.0397792,
-    "duration_seconds": 397.919
+    "ended_at": "2026-09-28 08:16:49 Pacific Daylight Time",
+    "ended_epoch": 1790608609.7273884,
+    "duration_seconds": 56.57
   }
 ]

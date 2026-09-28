@@ -2,9 +2,9 @@
   "status": "completed",
   "dataset": "tdc_ames",
   "source": "PyTDC Tox benchmark group: ames (official train_val/test split)",
-  "completed_at": "2026-09-27 19:57:23",
-  "elapsed_seconds": 7.805,
-  "n_metrics_rows": 40,
+  "completed_at": "2026-09-28 08:37:11",
+  "elapsed_seconds": 39.994,
+  "n_metrics_rows": 38,
   "n_stage_records": 4,
   "n_rows": 7278,
   "task_type": "classification",
@@ -54,5 +54,5 @@
     "notes": []
   },
   "stage23_signature": "4a771e6a9756abaebeb54c2180bd12d99f896e2e8afb249d4d1a641a6709f5d8",
-  "resume_fingerprint": "9c1ced19e77e91e1e51a35da"
+  "resume_fingerprint": "935f1ca4b292ad7e89bc5da8"
 }

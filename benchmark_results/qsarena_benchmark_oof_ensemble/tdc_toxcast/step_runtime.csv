@@ -1,5 +1,5 @@
 dataset,stage_index,total_stages,stage_label,step_type,model,workflow,started_at,started_epoch,status,ended_at,ended_epoch,duration_seconds
-tdc_toxcast,1,4,loading PyTDC Tox benchmark: toxcast [label=ACEA_T47D_80hr_Negative],load_dataset,,,2026-09-27 18:15:36 Pacific Daylight Time,1790558136.311083,completed,2026-09-27 18:15:36 Pacific Daylight Time,1790558136.7343752,0.423
-tdc_toxcast,2,4,building molecular features (cached),feature_generation,,,2026-09-27 18:15:36 Pacific Daylight Time,1790558136.7343752,resumed_cache,2026-09-27 18:15:36 Pacific Daylight Time,1790558136.7553797,0.021
-tdc_toxcast,3,4,splitting data and selecting features (cached),feature_selection,,,2026-09-27 18:15:36 Pacific Daylight Time,1790558136.7553797,resumed_cache,2026-09-27 18:15:36 Pacific Daylight Time,1790558136.7953916,0.04
-tdc_toxcast,4,4,ensemble (2 method(s)),model,Ensemble,ensemble,2026-09-27 18:15:36 Pacific Daylight Time,1790558136.7953916,completed,2026-09-27 18:15:38 Pacific Daylight Time,1790558138.9329464,2.138
+tdc_toxcast,1,4,loading PyTDC Tox benchmark: toxcast [label=ACEA_T47D_80hr_Negative],load_dataset,,,2026-09-28 08:27:25 Pacific Daylight Time,1790609245.5437183,completed,2026-09-28 08:27:25 Pacific Daylight Time,1790609245.917973,0.374
+tdc_toxcast,2,4,building molecular features (cached),feature_generation,,,2026-09-28 08:27:25 Pacific Daylight Time,1790609245.917973,resumed_cache,2026-09-28 08:27:25 Pacific Daylight Time,1790609245.9431968,0.025
+tdc_toxcast,3,4,splitting data and selecting features (cached),feature_selection,,,2026-09-28 08:27:25 Pacific Daylight Time,1790609245.9431968,resumed_cache,2026-09-28 08:27:25 Pacific Daylight Time,1790609245.9806056,0.037
+tdc_toxcast,4,4,conventional model TabPFNClassifier (repairing missing OOF),model,TabPFNClassifier,conventional,2026-09-28 08:27:25 Pacific Daylight Time,1790609245.9806056,completed,2026-09-28 08:27:57 Pacific Daylight Time,1790609277.59127,31.611

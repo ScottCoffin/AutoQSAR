@@ -1,0 +1,11 @@
+dataset,dataset_source,benchmark_suite,benchmark_id,leaderboard_url,leaderboard_dataset_split,leaderboard_metric_name,rank,rank_numeric,model,metric_value,metric_value_numeric,is_top10_entry,reference_source,captured_at
+tdc_carcinogens_lagunin,PyTDC Tox benchmark: carcinogens_lagunin,tdc,carcinogens_lagunin,,scaffold (80/10/10),AUROC,1,1,FATE-Tox (MTL),0.848 +/- 0.003,0.848,True,literature_static,2026-09-26 11:28:50
+tdc_carcinogens_lagunin,PyTDC Tox benchmark: carcinogens_lagunin,tdc,carcinogens_lagunin,,scaffold (80/10/10),AUROC,2,2,FATE-Tox (STL),0.842 +/- 0.021,0.842,True,literature_static,2026-09-26 11:28:50
+tdc_carcinogens_lagunin,PyTDC Tox benchmark: carcinogens_lagunin,tdc,carcinogens_lagunin,,scaffold (80/10/10),AUROC,3,3,MAT,0.830 +/- 0.035,0.83,True,literature_static,2026-09-26 11:28:50
+tdc_carcinogens_lagunin,PyTDC Tox benchmark: carcinogens_lagunin,tdc,carcinogens_lagunin,,scaffold (80/10/10),AUROC,4,4,Uni-Mol,0.822 +/- 0.035,0.822,True,literature_static,2026-09-26 11:28:50
+tdc_carcinogens_lagunin,PyTDC Tox benchmark: carcinogens_lagunin,tdc,carcinogens_lagunin,,scaffold (80/10/10),AUROC,5,5,GraphMVP,0.795 +/- 0.047,0.795,True,literature_static,2026-09-26 11:28:50
+tdc_carcinogens_lagunin,PyTDC Tox benchmark: carcinogens_lagunin,tdc,carcinogens_lagunin,,scaffold (80/10/10),AUROC,6,6,SVM,0.783 +/- 0.001,0.783,True,literature_static,2026-09-26 11:28:50
+tdc_carcinogens_lagunin,PyTDC Tox benchmark: carcinogens_lagunin,tdc,carcinogens_lagunin,,scaffold (80/10/10),AUROC,7,7,MLP,0.783 +/- 0.002,0.783,True,literature_static,2026-09-26 11:28:50
+tdc_carcinogens_lagunin,PyTDC Tox benchmark: carcinogens_lagunin,tdc,carcinogens_lagunin,,scaffold (80/10/10),AUROC,8,8,RF,0.751 +/- 0.032,0.751,True,literature_static,2026-09-26 11:28:50
+tdc_carcinogens_lagunin,PyTDC Tox benchmark: carcinogens_lagunin,tdc,carcinogens_lagunin,,scaffold (80/10/10),AUROC,9,9,MolCLR,0.740 +/- 0.038,0.74,True,literature_static,2026-09-26 11:28:50
+tdc_carcinogens_lagunin,PyTDC Tox benchmark: carcinogens_lagunin,tdc,carcinogens_lagunin,,scaffold (80/10/10),AUROC,10,10,Molformer,0.730 +/- 0.002,0.73,True,literature_static,2026-09-26 11:28:50

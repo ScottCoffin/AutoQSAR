@@ -2,9 +2,9 @@
   "status": "completed",
   "dataset": "tdc_half_life_obach",
   "source": "PyTDC ADME benchmark group: half_life_obach (official train_val/test split)",
-  "completed_at": "2026-09-27 17:16:08",
-  "elapsed_seconds": 604.396,
-  "n_metrics_rows": 52,
+  "completed_at": "2026-09-28 08:20:33",
+  "elapsed_seconds": 31.072,
+  "n_metrics_rows": 50,
   "n_stage_records": 4,
   "n_rows": 667,
   "task_type": "regression",
@@ -69,5 +69,5 @@
     "mae_out_of_domain": 15.90752648440274
   },
   "stage23_signature": "9c7f4981f418f88a21fba357cf71cf8669d1b376f72beee5395d80c0a09f3afa",
-  "resume_fingerprint": "319e42d90063d654e21d0136"
+  "resume_fingerprint": "38b2021f725e2f1a0f16c0ea"
 }

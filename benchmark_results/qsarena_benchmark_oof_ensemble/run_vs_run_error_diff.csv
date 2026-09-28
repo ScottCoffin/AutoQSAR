@@ -5,8 +5,7 @@ chemml_cep_homo,CatBoost,conventional,,conventional,,ok_both
 chemml_cep_homo,ChemML MLP (PyTorch),ChemML deep learning,,ChemML deep learning,,ok_both
 chemml_cep_homo,ChemML MLP (TensorFlow),ChemML deep learning,,ChemML deep learning,,ok_both
 chemml_cep_homo,ElasticNetCV,conventional,,conventional,,ok_both
-chemml_cep_homo,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",ensemble,,ensemble,,ok_both
-chemml_cep_homo,Ensemble (Weighted average (inverse OOF error)),ensemble,,,,ok_both
+chemml_cep_homo,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",,,ensemble,,ok_both
 chemml_cep_homo,Ensemble (Weighted average (inverse train RMSE)),,,ensemble,,ok_both
 chemml_cep_homo,Extra trees,conventional,,conventional,,ok_both
 chemml_cep_homo,HistGradientBoosting,conventional,,conventional,,ok_both
@@ -26,8 +25,7 @@ chemml_organic_density,CatBoost,conventional,,conventional,,ok_both
 chemml_organic_density,ChemML MLP (PyTorch),ChemML deep learning,,ChemML deep learning,,ok_both
 chemml_organic_density,ChemML MLP (TensorFlow),ChemML deep learning,,ChemML deep learning,,ok_both
 chemml_organic_density,ElasticNetCV,conventional,,conventional,,ok_both
-chemml_organic_density,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",ensemble,,ensemble,,ok_both
-chemml_organic_density,Ensemble (Weighted average (inverse OOF error)),ensemble,,,,ok_both
+chemml_organic_density,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",,,ensemble,,ok_both
 chemml_organic_density,Ensemble (Weighted average (inverse train RMSE)),,,ensemble,,ok_both
 chemml_organic_density,Extra trees,conventional,,conventional,,ok_both
 chemml_organic_density,HistGradientBoosting,conventional,,conventional,,ok_both
@@ -48,8 +46,7 @@ esol_delaney,CatBoost,conventional,,conventional,,ok_both
 esol_delaney,ChemML MLP (PyTorch),ChemML deep learning,,ChemML deep learning,,ok_both
 esol_delaney,ChemML MLP (TensorFlow),ChemML deep learning,,ChemML deep learning,,ok_both
 esol_delaney,ElasticNetCV,conventional,,conventional,,ok_both
-esol_delaney,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",ensemble,,ensemble,,ok_both
-esol_delaney,Ensemble (Weighted average (inverse OOF error)),ensemble,,,,ok_both
+esol_delaney,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",,,ensemble,,ok_both
 esol_delaney,Ensemble (Weighted average (inverse train RMSE)),,,ensemble,,ok_both
 esol_delaney,Extra trees,conventional,,conventional,,ok_both
 esol_delaney,HistGradientBoosting,conventional,,conventional,,ok_both
@@ -70,8 +67,7 @@ freesolv_sampl,CatBoost,conventional,,conventional,,ok_both
 freesolv_sampl,ChemML MLP (PyTorch),ChemML deep learning,,ChemML deep learning,,ok_both
 freesolv_sampl,ChemML MLP (TensorFlow),ChemML deep learning,,ChemML deep learning,,ok_both
 freesolv_sampl,ElasticNetCV,conventional,,conventional,,ok_both
-freesolv_sampl,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",ensemble,,ensemble,,ok_both
-freesolv_sampl,Ensemble (Weighted average (inverse OOF error)),ensemble,,,,ok_both
+freesolv_sampl,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",,,ensemble,,ok_both
 freesolv_sampl,Ensemble (Weighted average (inverse train RMSE)),,,ensemble,,ok_both
 freesolv_sampl,Extra trees,conventional,,conventional,,ok_both
 freesolv_sampl,HistGradientBoosting,conventional,,conventional,,ok_both
@@ -92,8 +88,7 @@ lipophilicity,CatBoost,conventional,,conventional,,ok_both
 lipophilicity,ChemML MLP (PyTorch),ChemML deep learning,,ChemML deep learning,,ok_both
 lipophilicity,ChemML MLP (TensorFlow),ChemML deep learning,,ChemML deep learning,,ok_both
 lipophilicity,ElasticNetCV,conventional,,conventional,,ok_both
-lipophilicity,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",ensemble,,ensemble,,ok_both
-lipophilicity,Ensemble (Weighted average (inverse OOF error)),ensemble,,,,ok_both
+lipophilicity,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",,,ensemble,,ok_both
 lipophilicity,Ensemble (Weighted average (inverse train RMSE)),,,ensemble,,ok_both
 lipophilicity,Extra trees,conventional,,conventional,,ok_both
 lipophilicity,HistGradientBoosting,conventional,,conventional,,ok_both
@@ -112,8 +107,7 @@ poduam_pod_nc_std,CatBoost,conventional,,conventional,,ok_both
 poduam_pod_nc_std,ChemML MLP (PyTorch),ChemML deep learning,,ChemML deep learning,,ok_both
 poduam_pod_nc_std,ChemML MLP (TensorFlow),ChemML deep learning,,ChemML deep learning,,ok_both
 poduam_pod_nc_std,ElasticNetCV,conventional,,conventional,,ok_both
-poduam_pod_nc_std,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",ensemble,,ensemble,,ok_both
-poduam_pod_nc_std,Ensemble (Weighted average (inverse OOF error)),ensemble,,,,ok_both
+poduam_pod_nc_std,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",,,ensemble,,ok_both
 poduam_pod_nc_std,Ensemble (Weighted average (inverse train RMSE)),,,ensemble,,ok_both
 poduam_pod_nc_std,Extra trees,conventional,,conventional,,ok_both
 poduam_pod_nc_std,HistGradientBoosting,conventional,,conventional,,ok_both
@@ -133,8 +127,7 @@ poduam_pod_rd_std,CatBoost,conventional,,conventional,,ok_both
 poduam_pod_rd_std,ChemML MLP (PyTorch),ChemML deep learning,,ChemML deep learning,,ok_both
 poduam_pod_rd_std,ChemML MLP (TensorFlow),ChemML deep learning,,ChemML deep learning,,ok_both
 poduam_pod_rd_std,ElasticNetCV,conventional,,conventional,,ok_both
-poduam_pod_rd_std,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",ensemble,,ensemble,,ok_both
-poduam_pod_rd_std,Ensemble (Weighted average (inverse OOF error)),ensemble,,,,ok_both
+poduam_pod_rd_std,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",,,ensemble,,ok_both
 poduam_pod_rd_std,Ensemble (Weighted average (inverse train RMSE)),,,ensemble,,ok_both
 poduam_pod_rd_std,Extra trees,conventional,,conventional,,ok_both
 poduam_pod_rd_std,HistGradientBoosting,conventional,,conventional,,ok_both
@@ -154,8 +147,7 @@ polaris_adme_fang_hppb_1,CatBoost,conventional,,conventional,,ok_both
 polaris_adme_fang_hppb_1,ChemML MLP (PyTorch),ChemML deep learning,,ChemML deep learning,,ok_both
 polaris_adme_fang_hppb_1,ChemML MLP (TensorFlow),ChemML deep learning,,ChemML deep learning,,ok_both
 polaris_adme_fang_hppb_1,ElasticNetCV,conventional,,conventional,,ok_both
-polaris_adme_fang_hppb_1,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",ensemble,,ensemble,,ok_both
-polaris_adme_fang_hppb_1,Ensemble (Weighted average (inverse OOF error)),ensemble,,,,ok_both
+polaris_adme_fang_hppb_1,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",,,ensemble,,ok_both
 polaris_adme_fang_hppb_1,Ensemble (Weighted average (inverse train RMSE)),,,ensemble,,ok_both
 polaris_adme_fang_hppb_1,Extra trees,conventional,,conventional,,ok_both
 polaris_adme_fang_hppb_1,HistGradientBoosting,conventional,,conventional,,ok_both
@@ -175,8 +167,7 @@ polaris_adme_fang_perm_1,CatBoost,conventional,,conventional,,ok_both
 polaris_adme_fang_perm_1,ChemML MLP (PyTorch),ChemML deep learning,,ChemML deep learning,,ok_both
 polaris_adme_fang_perm_1,ChemML MLP (TensorFlow),ChemML deep learning,,ChemML deep learning,,ok_both
 polaris_adme_fang_perm_1,ElasticNetCV,conventional,,conventional,,ok_both
-polaris_adme_fang_perm_1,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",ensemble,,ensemble,,ok_both
-polaris_adme_fang_perm_1,Ensemble (Weighted average (inverse OOF error)),ensemble,,,,ok_both
+polaris_adme_fang_perm_1,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",,,ensemble,,ok_both
 polaris_adme_fang_perm_1,Ensemble (Weighted average (inverse train RMSE)),,,ensemble,,ok_both
 polaris_adme_fang_perm_1,Extra trees,conventional,,conventional,,ok_both
 polaris_adme_fang_perm_1,HistGradientBoosting,conventional,,conventional,,ok_both
@@ -197,8 +188,7 @@ polaris_adme_fang_rclint_1,CatBoost,conventional,,conventional,,ok_both
 polaris_adme_fang_rclint_1,ChemML MLP (PyTorch),ChemML deep learning,,ChemML deep learning,,ok_both
 polaris_adme_fang_rclint_1,ChemML MLP (TensorFlow),ChemML deep learning,,ChemML deep learning,,ok_both
 polaris_adme_fang_rclint_1,ElasticNetCV,conventional,,conventional,,ok_both
-polaris_adme_fang_rclint_1,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",ensemble,,ensemble,,ok_both
-polaris_adme_fang_rclint_1,Ensemble (Weighted average (inverse OOF error)),ensemble,,,,ok_both
+polaris_adme_fang_rclint_1,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",,,ensemble,,ok_both
 polaris_adme_fang_rclint_1,Ensemble (Weighted average (inverse train RMSE)),,,ensemble,,ok_both
 polaris_adme_fang_rclint_1,Extra trees,conventional,,conventional,,ok_both
 polaris_adme_fang_rclint_1,HistGradientBoosting,conventional,,conventional,,ok_both
@@ -217,8 +207,7 @@ polaris_adme_fang_rppb_1,CatBoost,conventional,,conventional,,ok_both
 polaris_adme_fang_rppb_1,ChemML MLP (PyTorch),ChemML deep learning,,ChemML deep learning,,ok_both
 polaris_adme_fang_rppb_1,ChemML MLP (TensorFlow),ChemML deep learning,,ChemML deep learning,,ok_both
 polaris_adme_fang_rppb_1,ElasticNetCV,conventional,,conventional,,ok_both
-polaris_adme_fang_rppb_1,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",ensemble,,ensemble,,ok_both
-polaris_adme_fang_rppb_1,Ensemble (Weighted average (inverse OOF error)),ensemble,,,,ok_both
+polaris_adme_fang_rppb_1,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",,,ensemble,,ok_both
 polaris_adme_fang_rppb_1,Ensemble (Weighted average (inverse train RMSE)),,,ensemble,,ok_both
 polaris_adme_fang_rppb_1,Extra trees,conventional,,conventional,,ok_both
 polaris_adme_fang_rppb_1,HistGradientBoosting,conventional,,conventional,,ok_both
@@ -239,8 +228,7 @@ polaris_adme_fang_solu_1,CatBoost,conventional,,conventional,,ok_both
 polaris_adme_fang_solu_1,ChemML MLP (PyTorch),ChemML deep learning,,ChemML deep learning,,ok_both
 polaris_adme_fang_solu_1,ChemML MLP (TensorFlow),ChemML deep learning,,ChemML deep learning,,ok_both
 polaris_adme_fang_solu_1,ElasticNetCV,conventional,,conventional,,ok_both
-polaris_adme_fang_solu_1,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",ensemble,,ensemble,,ok_both
-polaris_adme_fang_solu_1,Ensemble (Weighted average (inverse OOF error)),ensemble,,,,ok_both
+polaris_adme_fang_solu_1,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",,,ensemble,,ok_both
 polaris_adme_fang_solu_1,Ensemble (Weighted average (inverse train RMSE)),,,ensemble,,ok_both
 polaris_adme_fang_solu_1,Extra trees,conventional,,conventional,,ok_both
 polaris_adme_fang_solu_1,HistGradientBoosting,conventional,,conventional,,ok_both
@@ -260,8 +248,7 @@ tdc_ames,CFA (Combinatorial Fusion),cfa,,cfa,,ok_both
 tdc_ames,CatBoost,conventional,,conventional,,ok_both
 tdc_ames,ChemML MLP (PyTorch),ChemML deep learning,,ChemML deep learning,,ok_both
 tdc_ames,ChemML MLP (TensorFlow),ChemML deep learning,,ChemML deep learning,,ok_both
-tdc_ames,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",ensemble,,ensemble,,ok_both
-tdc_ames,Ensemble (Weighted average (inverse OOF error)),ensemble,,,,ok_both
+tdc_ames,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",,,ensemble,,ok_both
 tdc_ames,Ensemble (Weighted average (inverse train RMSE)),,,ensemble,,ok_both
 tdc_ames,Extra trees,conventional,,conventional,,ok_both
 tdc_ames,HistGradientBoosting,conventional,,conventional,,ok_both
@@ -279,8 +266,7 @@ tdc_bbb_martins,CFA (Combinatorial Fusion),cfa,,cfa,,ok_both
 tdc_bbb_martins,CatBoost,conventional,,conventional,,ok_both
 tdc_bbb_martins,ChemML MLP (PyTorch),ChemML deep learning,,ChemML deep learning,,ok_both
 tdc_bbb_martins,ChemML MLP (TensorFlow),ChemML deep learning,,ChemML deep learning,,ok_both
-tdc_bbb_martins,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",ensemble,,ensemble,,ok_both
-tdc_bbb_martins,Ensemble (Weighted average (inverse OOF error)),ensemble,,,,ok_both
+tdc_bbb_martins,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",,,ensemble,,ok_both
 tdc_bbb_martins,Ensemble (Weighted average (inverse train RMSE)),,,ensemble,,ok_both
 tdc_bbb_martins,Extra trees,conventional,,conventional,,ok_both
 tdc_bbb_martins,HistGradientBoosting,conventional,,conventional,,ok_both
@@ -298,8 +284,7 @@ tdc_bioavailability_ma,CFA (Combinatorial Fusion),cfa,,cfa,,ok_both
 tdc_bioavailability_ma,CatBoost,conventional,,conventional,,ok_both
 tdc_bioavailability_ma,ChemML MLP (PyTorch),ChemML deep learning,,ChemML deep learning,,ok_both
 tdc_bioavailability_ma,ChemML MLP (TensorFlow),ChemML deep learning,,ChemML deep learning,,ok_both
-tdc_bioavailability_ma,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",ensemble,,ensemble,,ok_both
-tdc_bioavailability_ma,Ensemble (Weighted average (inverse OOF error)),ensemble,,,,ok_both
+tdc_bioavailability_ma,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",,,ensemble,,ok_both
 tdc_bioavailability_ma,Ensemble (Weighted average (inverse train RMSE)),,,ensemble,,ok_both
 tdc_bioavailability_ma,Extra trees,conventional,,conventional,,ok_both
 tdc_bioavailability_ma,HistGradientBoosting,conventional,,conventional,,ok_both
@@ -316,8 +301,7 @@ tdc_caco2_wang,CatBoost,conventional,,conventional,,ok_both
 tdc_caco2_wang,ChemML MLP (PyTorch),ChemML deep learning,,ChemML deep learning,,ok_both
 tdc_caco2_wang,ChemML MLP (TensorFlow),ChemML deep learning,,ChemML deep learning,,ok_both
 tdc_caco2_wang,ElasticNetCV,conventional,,conventional,,ok_both
-tdc_caco2_wang,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",ensemble,,ensemble,,ok_both
-tdc_caco2_wang,Ensemble (Weighted average (inverse OOF error)),ensemble,,,,ok_both
+tdc_caco2_wang,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",,,ensemble,,ok_both
 tdc_caco2_wang,Ensemble (Weighted average (inverse train RMSE)),,,ensemble,,ok_both
 tdc_caco2_wang,Extra trees,conventional,,conventional,,ok_both
 tdc_caco2_wang,HistGradientBoosting,conventional,,conventional,,ok_both
@@ -342,8 +326,7 @@ tdc_carcinogens_lagunin,"Chemprop v2 (CMPNN, ensemble=3)",Chemprop v2,,Chemprop 
 tdc_carcinogens_lagunin,"Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",Chemprop v2,,Chemprop v2,,ok_both
 tdc_carcinogens_lagunin,"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",Chemprop v2,,Chemprop v2,,ok_both
 tdc_carcinogens_lagunin,"Chemprop v2 (D-MPNN, ensemble=3)",Chemprop v2,,Chemprop v2,,ok_both
-tdc_carcinogens_lagunin,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",ensemble,,ensemble,,ok_both
-tdc_carcinogens_lagunin,Ensemble (Weighted average (inverse OOF error)),ensemble,,,,ok_both
+tdc_carcinogens_lagunin,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",,,ensemble,,ok_both
 tdc_carcinogens_lagunin,Ensemble (Weighted average (inverse train RMSE)),,,ensemble,,ok_both
 tdc_carcinogens_lagunin,Extra trees,conventional,,conventional,,ok_both
 tdc_carcinogens_lagunin,HistGradientBoosting,conventional,,conventional,,ok_both
@@ -362,8 +345,7 @@ tdc_clearance_hepatocyte_az,CatBoost,conventional,,conventional,,ok_both
 tdc_clearance_hepatocyte_az,ChemML MLP (PyTorch),ChemML deep learning,,ChemML deep learning,,ok_both
 tdc_clearance_hepatocyte_az,ChemML MLP (TensorFlow),ChemML deep learning,,ChemML deep learning,,ok_both
 tdc_clearance_hepatocyte_az,ElasticNetCV,conventional,,conventional,,ok_both
-tdc_clearance_hepatocyte_az,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",ensemble,,ensemble,,ok_both
-tdc_clearance_hepatocyte_az,Ensemble (Weighted average (inverse OOF error)),ensemble,,,,ok_both
+tdc_clearance_hepatocyte_az,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",,,ensemble,,ok_both
 tdc_clearance_hepatocyte_az,Ensemble (Weighted average (inverse train RMSE)),,,ensemble,,ok_both
 tdc_clearance_hepatocyte_az,Extra trees,conventional,,conventional,,ok_both
 tdc_clearance_hepatocyte_az,HistGradientBoosting,conventional,,conventional,,ok_both
@@ -383,8 +365,7 @@ tdc_clearance_microsome_az,CatBoost,conventional,,conventional,,ok_both
 tdc_clearance_microsome_az,ChemML MLP (PyTorch),ChemML deep learning,,ChemML deep learning,,ok_both
 tdc_clearance_microsome_az,ChemML MLP (TensorFlow),ChemML deep learning,,ChemML deep learning,,ok_both
 tdc_clearance_microsome_az,ElasticNetCV,conventional,,conventional,,ok_both
-tdc_clearance_microsome_az,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",ensemble,,ensemble,,ok_both
-tdc_clearance_microsome_az,Ensemble (Weighted average (inverse OOF error)),ensemble,,,,ok_both
+tdc_clearance_microsome_az,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",,,ensemble,,ok_both
 tdc_clearance_microsome_az,Ensemble (Weighted average (inverse train RMSE)),,,ensemble,,ok_both
 tdc_clearance_microsome_az,Extra trees,conventional,,conventional,,ok_both
 tdc_clearance_microsome_az,HistGradientBoosting,conventional,,conventional,,ok_both
@@ -404,8 +385,7 @@ tdc_clintox,CFA (Combinatorial Fusion),cfa,,cfa,,ok_both
 tdc_clintox,CatBoost,conventional,,conventional,,ok_both
 tdc_clintox,ChemML MLP (PyTorch),ChemML deep learning,,ChemML deep learning,,ok_both
 tdc_clintox,ChemML MLP (TensorFlow),ChemML deep learning,,ChemML deep learning,,ok_both
-tdc_clintox,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",ensemble,,ensemble,,ok_both
-tdc_clintox,Ensemble (Weighted average (inverse OOF error)),ensemble,,,,ok_both
+tdc_clintox,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",,,ensemble,,ok_both
 tdc_clintox,Ensemble (Weighted average (inverse train RMSE)),,,ensemble,,ok_both
 tdc_clintox,Extra trees,conventional,,conventional,,ok_both
 tdc_clintox,HistGradientBoosting,conventional,,conventional,,ok_both
@@ -459,8 +439,7 @@ tdc_cyp2c9_substrate_carbonmangels,CFA (Combinatorial Fusion),cfa,,cfa,,ok_both
 tdc_cyp2c9_substrate_carbonmangels,CatBoost,conventional,,conventional,,ok_both
 tdc_cyp2c9_substrate_carbonmangels,ChemML MLP (PyTorch),ChemML deep learning,,ChemML deep learning,,ok_both
 tdc_cyp2c9_substrate_carbonmangels,ChemML MLP (TensorFlow),ChemML deep learning,,ChemML deep learning,,ok_both
-tdc_cyp2c9_substrate_carbonmangels,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",ensemble,,ensemble,,ok_both
-tdc_cyp2c9_substrate_carbonmangels,Ensemble (Weighted average (inverse OOF error)),ensemble,,,,ok_both
+tdc_cyp2c9_substrate_carbonmangels,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",,,ensemble,,ok_both
 tdc_cyp2c9_substrate_carbonmangels,Ensemble (Weighted average (inverse train RMSE)),,,ensemble,,ok_both
 tdc_cyp2c9_substrate_carbonmangels,Extra trees,conventional,,conventional,,ok_both
 tdc_cyp2c9_substrate_carbonmangels,HistGradientBoosting,conventional,,conventional,,ok_both
@@ -496,8 +475,7 @@ tdc_cyp2d6_substrate_carbonmangels,CFA (Combinatorial Fusion),cfa,,cfa,,ok_both
 tdc_cyp2d6_substrate_carbonmangels,CatBoost,conventional,,conventional,,ok_both
 tdc_cyp2d6_substrate_carbonmangels,ChemML MLP (PyTorch),ChemML deep learning,,ChemML deep learning,,ok_both
 tdc_cyp2d6_substrate_carbonmangels,ChemML MLP (TensorFlow),ChemML deep learning,,ChemML deep learning,,ok_both
-tdc_cyp2d6_substrate_carbonmangels,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",ensemble,,ensemble,,ok_both
-tdc_cyp2d6_substrate_carbonmangels,Ensemble (Weighted average (inverse OOF error)),ensemble,,,,ok_both
+tdc_cyp2d6_substrate_carbonmangels,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",,,ensemble,,ok_both
 tdc_cyp2d6_substrate_carbonmangels,Ensemble (Weighted average (inverse train RMSE)),,,ensemble,,ok_both
 tdc_cyp2d6_substrate_carbonmangels,Extra trees,conventional,,conventional,,ok_both
 tdc_cyp2d6_substrate_carbonmangels,HistGradientBoosting,conventional,,conventional,,ok_both
@@ -533,8 +511,7 @@ tdc_cyp3a4_substrate_carbonmangels,CFA (Combinatorial Fusion),cfa,,cfa,,ok_both
 tdc_cyp3a4_substrate_carbonmangels,CatBoost,conventional,,conventional,,ok_both
 tdc_cyp3a4_substrate_carbonmangels,ChemML MLP (PyTorch),ChemML deep learning,,ChemML deep learning,,ok_both
 tdc_cyp3a4_substrate_carbonmangels,ChemML MLP (TensorFlow),ChemML deep learning,,ChemML deep learning,,ok_both
-tdc_cyp3a4_substrate_carbonmangels,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",ensemble,,ensemble,,ok_both
-tdc_cyp3a4_substrate_carbonmangels,Ensemble (Weighted average (inverse OOF error)),ensemble,,,,ok_both
+tdc_cyp3a4_substrate_carbonmangels,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",,,ensemble,,ok_both
 tdc_cyp3a4_substrate_carbonmangels,Ensemble (Weighted average (inverse train RMSE)),,,ensemble,,ok_both
 tdc_cyp3a4_substrate_carbonmangels,Extra trees,conventional,,conventional,,ok_both
 tdc_cyp3a4_substrate_carbonmangels,HistGradientBoosting,conventional,,conventional,,ok_both
@@ -570,8 +547,7 @@ tdc_dili,CFA (Combinatorial Fusion),cfa,,cfa,,ok_both
 tdc_dili,CatBoost,conventional,,conventional,,ok_both
 tdc_dili,ChemML MLP (PyTorch),ChemML deep learning,,ChemML deep learning,,ok_both
 tdc_dili,ChemML MLP (TensorFlow),ChemML deep learning,,ChemML deep learning,,ok_both
-tdc_dili,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",ensemble,,ensemble,,ok_both
-tdc_dili,Ensemble (Weighted average (inverse OOF error)),ensemble,,,,ok_both
+tdc_dili,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",,,ensemble,,ok_both
 tdc_dili,Ensemble (Weighted average (inverse train RMSE)),,,ensemble,,ok_both
 tdc_dili,Extra trees,conventional,,conventional,,ok_both
 tdc_dili,HistGradientBoosting,conventional,,conventional,,ok_both
@@ -590,8 +566,7 @@ tdc_half_life_obach,CatBoost,conventional,,conventional,,ok_both
 tdc_half_life_obach,ChemML MLP (PyTorch),ChemML deep learning,,ChemML deep learning,,ok_both
 tdc_half_life_obach,ChemML MLP (TensorFlow),ChemML deep learning,,ChemML deep learning,,ok_both
 tdc_half_life_obach,ElasticNetCV,conventional,,conventional,,ok_both
-tdc_half_life_obach,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",ensemble,,ensemble,,ok_both
-tdc_half_life_obach,Ensemble (Weighted average (inverse OOF error)),ensemble,,,,ok_both
+tdc_half_life_obach,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",,,ensemble,,ok_both
 tdc_half_life_obach,Ensemble (Weighted average (inverse train RMSE)),,,ensemble,,ok_both
 tdc_half_life_obach,Extra trees,conventional,,conventional,,ok_both
 tdc_half_life_obach,HistGradientBoosting,conventional,,conventional,,ok_both
@@ -610,8 +585,7 @@ tdc_herg,CFA (Combinatorial Fusion),cfa,,cfa,,ok_both
 tdc_herg,CatBoost,conventional,,conventional,,ok_both
 tdc_herg,ChemML MLP (PyTorch),ChemML deep learning,,ChemML deep learning,,ok_both
 tdc_herg,ChemML MLP (TensorFlow),ChemML deep learning,,ChemML deep learning,,ok_both
-tdc_herg,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",ensemble,,ensemble,,ok_both
-tdc_herg,Ensemble (Weighted average (inverse OOF error)),ensemble,,,,ok_both
+tdc_herg,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",,,ensemble,,ok_both
 tdc_herg,Ensemble (Weighted average (inverse train RMSE)),,,ensemble,,ok_both
 tdc_herg,Extra trees,conventional,,conventional,,ok_both
 tdc_herg,HistGradientBoosting,conventional,,conventional,,ok_both
@@ -654,8 +628,7 @@ tdc_hia_hou,"Chemprop v2 (CMPNN, ensemble=3)",Chemprop v2,,Chemprop v2,,ok_both
 tdc_hia_hou,"Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",Chemprop v2,,Chemprop v2,,ok_both
 tdc_hia_hou,"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",Chemprop v2,,Chemprop v2,,ok_both
 tdc_hia_hou,"Chemprop v2 (D-MPNN, ensemble=3)",Chemprop v2,,Chemprop v2,,ok_both
-tdc_hia_hou,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",ensemble,,ensemble,,ok_both
-tdc_hia_hou,Ensemble (Weighted average (inverse OOF error)),ensemble,,,,ok_both
+tdc_hia_hou,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",,,ensemble,,ok_both
 tdc_hia_hou,Ensemble (Weighted average (inverse train RMSE)),,,ensemble,,ok_both
 tdc_hia_hou,Extra trees,conventional,,conventional,,ok_both
 tdc_hia_hou,HistGradientBoosting,conventional,,conventional,,ok_both
@@ -674,8 +647,7 @@ tdc_hydrationfreeenergy_freesolv,CatBoost,conventional,,conventional,,ok_both
 tdc_hydrationfreeenergy_freesolv,ChemML MLP (PyTorch),ChemML deep learning,,ChemML deep learning,,ok_both
 tdc_hydrationfreeenergy_freesolv,ChemML MLP (TensorFlow),ChemML deep learning,,ChemML deep learning,,ok_both
 tdc_hydrationfreeenergy_freesolv,ElasticNetCV,conventional,,conventional,,ok_both
-tdc_hydrationfreeenergy_freesolv,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",ensemble,,ensemble,,ok_both
-tdc_hydrationfreeenergy_freesolv,Ensemble (Weighted average (inverse OOF error)),ensemble,,,,ok_both
+tdc_hydrationfreeenergy_freesolv,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",,,ensemble,,ok_both
 tdc_hydrationfreeenergy_freesolv,Ensemble (Weighted average (inverse train RMSE)),,,ensemble,,ok_both
 tdc_hydrationfreeenergy_freesolv,Extra trees,conventional,,conventional,,ok_both
 tdc_hydrationfreeenergy_freesolv,HistGradientBoosting,conventional,,conventional,,ok_both
@@ -695,8 +667,7 @@ tdc_ld50_zhu,CFA (Combinatorial Fusion),cfa,,cfa,,ok_both
 tdc_ld50_zhu,CatBoost,conventional,,conventional,,ok_both
 tdc_ld50_zhu,ChemML MLP (PyTorch),ChemML deep learning,,ChemML deep learning,,ok_both
 tdc_ld50_zhu,ChemML MLP (TensorFlow),ChemML deep learning,,ChemML deep learning,,ok_both
-tdc_ld50_zhu,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",ensemble,,ensemble,,ok_both
-tdc_ld50_zhu,Ensemble (Weighted average (inverse OOF error)),ensemble,,,,ok_both
+tdc_ld50_zhu,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",,,ensemble,,ok_both
 tdc_ld50_zhu,Ensemble (Weighted average (inverse train RMSE)),,,ensemble,,ok_both
 tdc_ld50_zhu,Extra trees,conventional,,conventional,,ok_both
 tdc_ld50_zhu,HistGradientBoosting,conventional,,conventional,,ok_both
@@ -715,8 +686,7 @@ tdc_lipophilicity_astrazeneca,CatBoost,conventional,,conventional,,ok_both
 tdc_lipophilicity_astrazeneca,ChemML MLP (PyTorch),ChemML deep learning,,ChemML deep learning,,ok_both
 tdc_lipophilicity_astrazeneca,ChemML MLP (TensorFlow),ChemML deep learning,,ChemML deep learning,,ok_both
 tdc_lipophilicity_astrazeneca,ElasticNetCV,conventional,,conventional,,ok_both
-tdc_lipophilicity_astrazeneca,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",ensemble,,ensemble,,ok_both
-tdc_lipophilicity_astrazeneca,Ensemble (Weighted average (inverse OOF error)),ensemble,,,,ok_both
+tdc_lipophilicity_astrazeneca,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",,,ensemble,,ok_both
 tdc_lipophilicity_astrazeneca,Ensemble (Weighted average (inverse train RMSE)),,,ensemble,,ok_both
 tdc_lipophilicity_astrazeneca,Extra trees,conventional,,conventional,,ok_both
 tdc_lipophilicity_astrazeneca,HistGradientBoosting,conventional,,conventional,,ok_both
@@ -734,8 +704,7 @@ tdc_pampa_ncats,CFA (Combinatorial Fusion),cfa,,cfa,,ok_both
 tdc_pampa_ncats,CatBoost,conventional,,conventional,,ok_both
 tdc_pampa_ncats,ChemML MLP (PyTorch),ChemML deep learning,,ChemML deep learning,,ok_both
 tdc_pampa_ncats,ChemML MLP (TensorFlow),ChemML deep learning,,ChemML deep learning,,ok_both
-tdc_pampa_ncats,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",ensemble,,ensemble,,ok_both
-tdc_pampa_ncats,Ensemble (Weighted average (inverse OOF error)),ensemble,,,,ok_both
+tdc_pampa_ncats,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",,,ensemble,,ok_both
 tdc_pampa_ncats,Ensemble (Weighted average (inverse train RMSE)),,,ensemble,,ok_both
 tdc_pampa_ncats,Extra trees,conventional,,conventional,,ok_both
 tdc_pampa_ncats,HistGradientBoosting,conventional,,conventional,,ok_both
@@ -754,8 +723,7 @@ tdc_pgp_broccatelli,CFA (Combinatorial Fusion),cfa,,cfa,,ok_both
 tdc_pgp_broccatelli,CatBoost,conventional,,conventional,,ok_both
 tdc_pgp_broccatelli,ChemML MLP (PyTorch),ChemML deep learning,,ChemML deep learning,,ok_both
 tdc_pgp_broccatelli,ChemML MLP (TensorFlow),ChemML deep learning,,ChemML deep learning,,ok_both
-tdc_pgp_broccatelli,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",ensemble,,ensemble,,ok_both
-tdc_pgp_broccatelli,Ensemble (Weighted average (inverse OOF error)),ensemble,,,,ok_both
+tdc_pgp_broccatelli,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",,,ensemble,,ok_both
 tdc_pgp_broccatelli,Ensemble (Weighted average (inverse train RMSE)),,,ensemble,,ok_both
 tdc_pgp_broccatelli,Extra trees,conventional,,conventional,,ok_both
 tdc_pgp_broccatelli,HistGradientBoosting,conventional,,conventional,,ok_both
@@ -775,8 +743,7 @@ tdc_ppbr_az,CatBoost,conventional,,conventional,,ok_both
 tdc_ppbr_az,ChemML MLP (PyTorch),ChemML deep learning,,ChemML deep learning,,ok_both
 tdc_ppbr_az,ChemML MLP (TensorFlow),ChemML deep learning,,ChemML deep learning,,ok_both
 tdc_ppbr_az,ElasticNetCV,conventional,,conventional,,ok_both
-tdc_ppbr_az,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",ensemble,,ensemble,,ok_both
-tdc_ppbr_az,Ensemble (Weighted average (inverse OOF error)),ensemble,,,,ok_both
+tdc_ppbr_az,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",,,ensemble,,ok_both
 tdc_ppbr_az,Ensemble (Weighted average (inverse train RMSE)),,,ensemble,,ok_both
 tdc_ppbr_az,Extra trees,conventional,,conventional,,ok_both
 tdc_ppbr_az,HistGradientBoosting,conventional,,conventional,,ok_both
@@ -795,8 +762,7 @@ tdc_skin_reaction,CFA (Combinatorial Fusion),cfa,,cfa,,ok_both
 tdc_skin_reaction,CatBoost,conventional,,conventional,,ok_both
 tdc_skin_reaction,ChemML MLP (PyTorch),ChemML deep learning,,ChemML deep learning,,ok_both
 tdc_skin_reaction,ChemML MLP (TensorFlow),ChemML deep learning,,ChemML deep learning,,ok_both
-tdc_skin_reaction,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",ensemble,,ensemble,,ok_both
-tdc_skin_reaction,Ensemble (Weighted average (inverse OOF error)),ensemble,,,,ok_both
+tdc_skin_reaction,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",,,ensemble,,ok_both
 tdc_skin_reaction,Ensemble (Weighted average (inverse train RMSE)),,,ensemble,,ok_both
 tdc_skin_reaction,Extra trees,conventional,,conventional,,ok_both
 tdc_skin_reaction,HistGradientBoosting,conventional,,conventional,,ok_both
@@ -814,8 +780,7 @@ tdc_solubility_aqsoldb,CFA (Combinatorial Fusion),cfa,,cfa,,ok_both
 tdc_solubility_aqsoldb,CatBoost,conventional,,conventional,,ok_both
 tdc_solubility_aqsoldb,ChemML MLP (PyTorch),ChemML deep learning,,ChemML deep learning,,ok_both
 tdc_solubility_aqsoldb,ChemML MLP (TensorFlow),ChemML deep learning,,ChemML deep learning,,ok_both
-tdc_solubility_aqsoldb,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",ensemble,,ensemble,,ok_both
-tdc_solubility_aqsoldb,Ensemble (Weighted average (inverse OOF error)),ensemble,,,,ok_both
+tdc_solubility_aqsoldb,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",,,ensemble,,ok_both
 tdc_solubility_aqsoldb,Ensemble (Weighted average (inverse train RMSE)),,,ensemble,,ok_both
 tdc_solubility_aqsoldb,Extra trees,conventional,,conventional,,ok_both
 tdc_solubility_aqsoldb,HistGradientBoosting,conventional,,conventional,,ok_both
@@ -833,8 +798,7 @@ tdc_tox21,CFA (Combinatorial Fusion),cfa,,cfa,,ok_both
 tdc_tox21,CatBoost,conventional,,conventional,,ok_both
 tdc_tox21,ChemML MLP (PyTorch),ChemML deep learning,,ChemML deep learning,,ok_both
 tdc_tox21,ChemML MLP (TensorFlow),ChemML deep learning,,ChemML deep learning,,ok_both
-tdc_tox21,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",ensemble,,ensemble,,ok_both
-tdc_tox21,Ensemble (Weighted average (inverse OOF error)),ensemble,,,,ok_both
+tdc_tox21,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",,,ensemble,,ok_both
 tdc_tox21,Ensemble (Weighted average (inverse train RMSE)),,,ensemble,,ok_both
 tdc_tox21,Extra trees,conventional,,conventional,,ok_both
 tdc_tox21,HistGradientBoosting,conventional,,conventional,,ok_both
@@ -851,8 +815,7 @@ tdc_toxcast,CFA (Combinatorial Fusion),cfa,,cfa,,ok_both
 tdc_toxcast,CatBoost,conventional,,conventional,,ok_both
 tdc_toxcast,ChemML MLP (PyTorch),ChemML deep learning,,ChemML deep learning,,ok_both
 tdc_toxcast,ChemML MLP (TensorFlow),ChemML deep learning,,ChemML deep learning,,ok_both
-tdc_toxcast,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",ensemble,,ensemble,,ok_both
-tdc_toxcast,Ensemble (Weighted average (inverse OOF error)),ensemble,,,,ok_both
+tdc_toxcast,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",,,ensemble,,ok_both
 tdc_toxcast,Ensemble (Weighted average (inverse train RMSE)),,,ensemble,,ok_both
 tdc_toxcast,Extra trees,conventional,,conventional,,ok_both
 tdc_toxcast,HistGradientBoosting,conventional,,conventional,,ok_both
@@ -871,8 +834,7 @@ tdc_vdss_lombardo,CatBoost,conventional,,conventional,,ok_both
 tdc_vdss_lombardo,ChemML MLP (PyTorch),ChemML deep learning,,ChemML deep learning,,ok_both
 tdc_vdss_lombardo,ChemML MLP (TensorFlow),ChemML deep learning,,ChemML deep learning,,ok_both
 tdc_vdss_lombardo,ElasticNetCV,conventional,,conventional,,ok_both
-tdc_vdss_lombardo,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",ensemble,,ensemble,,ok_both
-tdc_vdss_lombardo,Ensemble (Weighted average (inverse OOF error)),ensemble,,,,ok_both
+tdc_vdss_lombardo,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",,,ensemble,,ok_both
 tdc_vdss_lombardo,Ensemble (Weighted average (inverse train RMSE)),,,ensemble,,ok_both
 tdc_vdss_lombardo,Extra trees,conventional,,conventional,,ok_both
 tdc_vdss_lombardo,HistGradientBoosting,conventional,,conventional,,ok_both

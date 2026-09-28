@@ -1,13 +1,13 @@
 {
   "title": "QSARena run report",
-  "generated_at": "2026-09-27 20:29:16",
+  "generated_at": "2026-09-28 08:39:09",
   "output_dir": "benchmark_results\\qsarena_benchmark_oof_ensemble",
   "run": {
     "mode": "benchmark",
     "profile": "full",
     "gpu_available": false,
     "qsarena_version": "0.1.0",
-    "config_signature": "6db8a4f5236a63036e8969c8e58d309e074c179b91f05061902b0471390e46a4",
+    "config_signature": "43e2192d39f42ccdc4e03be93f6686d9561ae491cd600e177dfcbf97a82e2e1a",
     "tdc22_datasets": [
       "tdc_dili",
       "tdc_hia_hou",
@@ -27,38 +27,18 @@
       "tdc_lipophilicity_astrazeneca",
       "tdc_ames",
       "tdc_ld50_zhu",
-      "tdc_solubility_aqsoldb",
-      "tdc_cyp2c9_veith",
-      "tdc_cyp3a4_veith",
-      "tdc_cyp2d6_veith"
+      "tdc_solubility_aqsoldb"
     ],
     "tdc22_multiseed_done": false,
     "deep_skipped_without_gpu": true,
-    "elapsed_seconds": 13673.1,
+    "elapsed_seconds": 1496.7,
     "single_seed": true
   },
   "protocol": "both",
   "counts": {
-    "completed": 44
+    "completed": 37
   },
   "datasets": [
-    {
-      "dataset": "tdc_carcinogens_lagunin",
-      "status": "completed",
-      "task": "classification",
-      "n_rows": 280,
-      "primary_metric": "roc_auc",
-      "error": "",
-      "remedy": "",
-      "cleanup": {
-        "input_rows": 280,
-        "missing_smiles_or_target": 0,
-        "unparseable_smiles": 0,
-        "changed_by_standardization": 0,
-        "duplicates_removed": 0,
-        "final_rows": 280
-      }
-    },
     {
       "dataset": "tdc_skin_reaction",
       "status": "completed",
@@ -687,139 +667,9 @@
         "duplicates_removed": 0,
         "final_rows": 9980
       }
-    },
-    {
-      "dataset": "tdc_cyp2c9_veith",
-      "status": "completed",
-      "task": "classification",
-      "n_rows": 12092,
-      "primary_metric": "auprc",
-      "error": "",
-      "remedy": "",
-      "cleanup": {
-        "input_rows": 12092,
-        "missing_smiles_or_target": 0,
-        "unparseable_smiles": 0,
-        "changed_by_standardization": 0,
-        "duplicates_removed": 0,
-        "final_rows": 12092
-      }
-    },
-    {
-      "dataset": "tdc_cyp3a4_veith",
-      "status": "completed",
-      "task": "classification",
-      "n_rows": 12328,
-      "primary_metric": "auprc",
-      "error": "",
-      "remedy": "",
-      "cleanup": {
-        "input_rows": 12328,
-        "missing_smiles_or_target": 0,
-        "unparseable_smiles": 0,
-        "changed_by_standardization": 0,
-        "duplicates_removed": 0,
-        "final_rows": 12328
-      }
-    },
-    {
-      "dataset": "tdc_cyp1a2_veith",
-      "status": "completed",
-      "task": "classification",
-      "n_rows": 12579,
-      "primary_metric": "roc_auc",
-      "error": "",
-      "remedy": "",
-      "cleanup": {
-        "input_rows": 12579,
-        "missing_smiles_or_target": 0,
-        "unparseable_smiles": 0,
-        "changed_by_standardization": 0,
-        "duplicates_removed": 0,
-        "final_rows": 12579
-      }
-    },
-    {
-      "dataset": "tdc_cyp2c19_veith",
-      "status": "completed",
-      "task": "classification",
-      "n_rows": 12665,
-      "primary_metric": "roc_auc",
-      "error": "",
-      "remedy": "",
-      "cleanup": {
-        "input_rows": 12665,
-        "missing_smiles_or_target": 0,
-        "unparseable_smiles": 0,
-        "changed_by_standardization": 0,
-        "duplicates_removed": 0,
-        "final_rows": 12665
-      }
-    },
-    {
-      "dataset": "tdc_cyp2d6_veith",
-      "status": "completed",
-      "task": "classification",
-      "n_rows": 13130,
-      "primary_metric": "auprc",
-      "error": "",
-      "remedy": "",
-      "cleanup": {
-        "input_rows": 13130,
-        "missing_smiles_or_target": 0,
-        "unparseable_smiles": 0,
-        "changed_by_standardization": 0,
-        "duplicates_removed": 0,
-        "final_rows": 13130
-      }
-    },
-    {
-      "dataset": "tdc_herg_karim",
-      "status": "completed",
-      "task": "classification",
-      "n_rows": 13445,
-      "primary_metric": "roc_auc",
-      "error": "",
-      "remedy": "",
-      "cleanup": {
-        "input_rows": 13445,
-        "missing_smiles_or_target": 0,
-        "unparseable_smiles": 0,
-        "changed_by_standardization": 0,
-        "duplicates_removed": 0,
-        "final_rows": 13445
-      }
     }
   ],
   "best_models": [
-    {
-      "dataset": "tdc_carcinogens_lagunin",
-      "task": "classification",
-      "protocol": "test",
-      "model": "Chemprop v2 (AttentiveFP, ensemble=3)",
-      "family": "graph_nn",
-      "metric": "roc_auc",
-      "test_value": 0.9286703601108032,
-      "cv_value": null,
-      "test_roc_auc": 0.9286703601108032,
-      "test_auprc": 0.835251985716382,
-      "test_balanced_accuracy": 0.894736842105263,
-      "test_mcc": 0.8006407690254357
-    },
-    {
-      "dataset": "tdc_carcinogens_lagunin",
-      "task": "classification",
-      "protocol": "cv",
-      "model": "TabPFNClassifier",
-      "family": "deep_tabular",
-      "metric": "roc_auc",
-      "test_value": 0.8698060941828255,
-      "cv_value": 0.9859984408436422,
-      "test_roc_auc": 0.8698060941828255,
-      "test_auprc": 0.7786219044113782,
-      "test_balanced_accuracy": 0.8026315789473684,
-      "test_mcc": 0.5860942701532694
-    },
     {
       "dataset": "tdc_skin_reaction",
       "task": "classification",
@@ -880,15 +730,15 @@
       "dataset": "chemml_cep_homo",
       "task": "regression",
       "protocol": "test",
-      "model": "Ensemble (OOF Stacking (RidgeCV, 5-fold))",
-      "family": "ensemble",
+      "model": "CFA (Combinatorial Fusion)",
+      "family": "fusion",
       "metric": "rmse",
-      "test_value": 0.0988562966894023,
+      "test_value": 0.1005839498206981,
       "cv_value": null,
-      "test_rmse": 0.0988562966894023,
-      "test_mae": 0.0733534085713335,
-      "test_r2": 0.9803141888282152,
-      "test_spearman": 0.9889431337441796
+      "test_rmse": 0.1005839498206981,
+      "test_mae": 0.0756304070764619,
+      "test_r2": 0.9796201016932428,
+      "test_spearman": 0.9885110607228104
     },
     {
       "dataset": "chemml_cep_homo",
@@ -1776,15 +1626,15 @@
       "dataset": "tdc_ames",
       "task": "classification",
       "protocol": "test",
-      "model": "Ensemble (OOF Stacking (RidgeCV, 5-fold))",
-      "family": "ensemble",
+      "model": "TabPFNClassifier",
+      "family": "deep_tabular",
       "metric": "roc_auc",
-      "test_value": 0.8791458614815251,
-      "cv_value": null,
-      "test_roc_auc": 0.8791458614815251,
-      "test_auprc": 0.9105388659720964,
-      "test_balanced_accuracy": 0.8059341283361727,
-      "test_mcc": 0.6094741590631535
+      "test_value": 0.876108793984609,
+      "cv_value": 0.9286630324372788,
+      "test_roc_auc": 0.876108793984609,
+      "test_auprc": 0.9127442613782396,
+      "test_balanced_accuracy": 0.7936292075427362,
+      "test_mcc": 0.5837167274610516
     },
     {
       "dataset": "tdc_ames",
@@ -1855,187 +1705,9 @@
       "test_mae": 0.6860771429534456,
       "test_r2": 0.8243631717584886,
       "test_spearman": 0.8935174170589117
-    },
-    {
-      "dataset": "tdc_cyp2c9_veith",
-      "task": "classification",
-      "protocol": "test",
-      "model": "Ensemble (OOF Stacking (RidgeCV, 5-fold))",
-      "family": "ensemble",
-      "metric": "auprc",
-      "test_value": 0.8287940641388594,
-      "cv_value": null,
-      "test_roc_auc": 0.9133524450079938,
-      "test_auprc": 0.8287940641388594,
-      "test_balanced_accuracy": 0.8370283446086964,
-      "test_mcc": 0.6809004628255699
-    },
-    {
-      "dataset": "tdc_cyp2c9_veith",
-      "task": "classification",
-      "protocol": "cv",
-      "model": "XGBoost",
-      "family": "gradient_boosting",
-      "metric": "auprc",
-      "test_value": 0.7963909520816602,
-      "cv_value": 0.8384726190615673,
-      "test_roc_auc": 0.897976735211423,
-      "test_auprc": 0.7963909520816602,
-      "test_balanced_accuracy": 0.8063316610618005,
-      "test_mcc": 0.6224581922836914
-    },
-    {
-      "dataset": "tdc_cyp3a4_veith",
-      "task": "classification",
-      "protocol": "test",
-      "model": "Ensemble (OOF Stacking (RidgeCV, 5-fold))",
-      "family": "ensemble",
-      "metric": "auprc",
-      "test_value": 0.9008826840184312,
-      "cv_value": null,
-      "test_roc_auc": 0.9196894372635244,
-      "test_auprc": 0.9008826840184312,
-      "test_balanced_accuracy": 0.8423657219882955,
-      "test_mcc": 0.6841929105582399
-    },
-    {
-      "dataset": "tdc_cyp3a4_veith",
-      "task": "classification",
-      "protocol": "cv",
-      "model": "XGBoost",
-      "family": "gradient_boosting",
-      "metric": "auprc",
-      "test_value": 0.8818942511651074,
-      "cv_value": 0.8871002932762518,
-      "test_roc_auc": 0.9014820795825352,
-      "test_auprc": 0.8818942511651074,
-      "test_balanced_accuracy": 0.8074484341739124,
-      "test_mcc": 0.6123178951773619
-    },
-    {
-      "dataset": "tdc_cyp1a2_veith",
-      "task": "classification",
-      "protocol": "test",
-      "model": "Ensemble (OOF Stacking (RidgeCV, 5-fold))",
-      "family": "ensemble",
-      "metric": "roc_auc",
-      "test_value": 0.973706456673724,
-      "cv_value": null,
-      "test_roc_auc": 0.973706456673724,
-      "test_auprc": 0.9784074847828907,
-      "test_balanced_accuracy": 0.9325151427454444,
-      "test_mcc": 0.863344333899696
-    },
-    {
-      "dataset": "tdc_cyp1a2_veith",
-      "task": "classification",
-      "protocol": "cv",
-      "model": "XGBoost",
-      "family": "gradient_boosting",
-      "metric": "roc_auc",
-      "test_value": 0.914445392188222,
-      "cv_value": 0.9275629863809888,
-      "test_roc_auc": 0.914445392188222,
-      "test_auprc": 0.8964342108172803,
-      "test_balanced_accuracy": 0.914445392188222,
-      "test_mcc": 0.8270034505322083
-    },
-    {
-      "dataset": "tdc_cyp2c19_veith",
-      "task": "classification",
-      "protocol": "test",
-      "model": "Ensemble (OOF Stacking (RidgeCV, 5-fold))",
-      "family": "ensemble",
-      "metric": "roc_auc",
-      "test_value": 0.9346753981728514,
-      "cv_value": null,
-      "test_roc_auc": 0.9346753981728514,
-      "test_auprc": 0.8868809437945107,
-      "test_balanced_accuracy": 0.8677641684857305,
-      "test_mcc": 0.7543901660271589
-    },
-    {
-      "dataset": "tdc_cyp2c19_veith",
-      "task": "classification",
-      "protocol": "cv",
-      "model": "XGBoost",
-      "family": "gradient_boosting",
-      "metric": "roc_auc",
-      "test_value": 0.8398870159269141,
-      "cv_value": 0.8937623615706073,
-      "test_roc_auc": 0.8398870159269141,
-      "test_auprc": 0.7012817066617816,
-      "test_balanced_accuracy": 0.8398870159269141,
-      "test_mcc": 0.6995087971971568
-    },
-    {
-      "dataset": "tdc_cyp2d6_veith",
-      "task": "classification",
-      "protocol": "test",
-      "model": "Ensemble (OOF Stacking (RidgeCV, 5-fold))",
-      "family": "ensemble",
-      "metric": "auprc",
-      "test_value": 0.7620072184140178,
-      "cv_value": null,
-      "test_roc_auc": 0.9055589621836704,
-      "test_auprc": 0.7620072184140178,
-      "test_balanced_accuracy": 0.7869412627227219,
-      "test_mcc": 0.6534713731233383
-    },
-    {
-      "dataset": "tdc_cyp2d6_veith",
-      "task": "classification",
-      "protocol": "cv",
-      "model": "XGBoost",
-      "family": "gradient_boosting",
-      "metric": "auprc",
-      "test_value": 0.7289237853584564,
-      "cv_value": 0.7512965305975569,
-      "test_roc_auc": 0.8935308649124313,
-      "test_auprc": 0.7289237853584564,
-      "test_balanced_accuracy": 0.7397496972811661,
-      "test_mcc": 0.5755204165945002
-    },
-    {
-      "dataset": "tdc_herg_karim",
-      "task": "classification",
-      "protocol": "test",
-      "model": "Ensemble (OOF Stacking (RidgeCV, 5-fold))",
-      "family": "ensemble",
-      "metric": "roc_auc",
-      "test_value": 0.903704003625188,
-      "cv_value": null,
-      "test_roc_auc": 0.903704003625188,
-      "test_auprc": 0.9141004352912026,
-      "test_balanced_accuracy": 0.8187802595869749,
-      "test_mcc": 0.6393440443120227
-    },
-    {
-      "dataset": "tdc_herg_karim",
-      "task": "classification",
-      "protocol": "cv",
-      "model": "XGBoost",
-      "family": "gradient_boosting",
-      "metric": "roc_auc",
-      "test_value": 0.8147157893685929,
-      "cv_value": 0.8836922234998109,
-      "test_roc_auc": 0.8147157893685929,
-      "test_auprc": 0.776192932784681,
-      "test_balanced_accuracy": 0.8147157893685928,
-      "test_mcc": 0.6286365843084804
     }
   ],
   "leaderboard": [
-    {
-      "dataset": "tdc_carcinogens_lagunin",
-      "leaderboard_metric": "roc_auc",
-      "reference_best": null,
-      "model": "Chemprop v2 (AttentiveFP, ensemble=3)",
-      "value": 0.9286703601108032,
-      "estimated_rank_vs_top10": 1,
-      "reference_entries": 10,
-      "caution": "test-selected"
-    },
     {
       "dataset": "tdc_skin_reaction",
       "leaderboard_metric": "roc_auc",
@@ -2100,8 +1772,8 @@
       "dataset": "esol_delaney",
       "leaderboard_metric": "rmse",
       "reference_best": null,
-      "model": "Ensemble (Weighted average (inverse OOF error))",
-      "value": 0.6499931656836034,
+      "model": "Uni-Mol V2 (84m)",
+      "value": 0.6720718233896475,
       "estimated_rank_vs_top10": 1,
       "reference_entries": 2,
       "caution": "sparse reference (2 published entries); test-selected"
@@ -2269,84 +1941,64 @@
   ],
   "families_won": {
     "test": {
-      "graph_nn": 10,
       "pretrained_3d": 8,
-      "ensemble": 8,
-      "deep_tabular": 5,
-      "fusion": 2,
+      "fusion": 3,
+      "deep_tabular": 6,
       "gradient_boosting": 3,
+      "graph_nn": 9,
       "conventional_ml": 5,
       "maplight_gnn": 3
     },
     "cv": {
-      "deep_tabular": 32,
-      "conventional_ml": 6,
-      "gradient_boosting": 6
+      "deep_tabular": 31,
+      "conventional_ml": 6
     }
   },
   "cost_vs_gap": [
     {
       "family": "conventional_ml",
-      "median_seconds": 4.8445,
-      "median_relative_gap": 0.18677474336568273,
-      "n_fits": 350
+      "median_seconds": 4.1905,
+      "median_relative_gap": 0.21368582911681278,
+      "n_fits": 294
     },
     {
       "family": "deep_tabular",
-      "median_seconds": 46.1605,
-      "median_relative_gap": 0.20903871234121627,
-      "n_fits": 154
-    },
-    {
-      "family": "ensemble",
-      "median_seconds": 166.2685,
-      "median_relative_gap": 0.08443319391324464,
-      "n_fits": 88
+      "median_seconds": 37.091,
+      "median_relative_gap": 0.22590273733255672,
+      "n_fits": 133
     },
     {
       "family": "fusion",
-      "median_seconds": 0.052,
-      "median_relative_gap": 0.06790794040004217,
-      "n_fits": 38
+      "median_seconds": 0.051,
+      "median_relative_gap": 0.07044761547009432,
+      "n_fits": 37
     },
     {
       "family": "gradient_boosting",
-      "median_seconds": 8.385,
-      "median_relative_gap": 0.11556603773584899,
-      "n_fits": 105
+      "median_seconds": 7.528,
+      "median_relative_gap": 0.12646788567987088,
+      "n_fits": 91
     },
     {
       "family": "graph_nn",
-      "median_seconds": 276.942,
-      "median_relative_gap": 0.10646853756886254,
-      "n_fits": 202
+      "median_seconds": 270.6,
+      "median_relative_gap": 0.11854321685035944,
+      "n_fits": 177
     },
     {
       "family": "maplight_gnn",
-      "median_seconds": 136.843,
-      "median_relative_gap": 0.13007926031537329,
-      "n_fits": 39
+      "median_seconds": 130.407,
+      "median_relative_gap": 0.13774109395603804,
+      "n_fits": 32
     },
     {
       "family": "pretrained_3d",
-      "median_seconds": 373.312,
-      "median_relative_gap": 0.056794531983313835,
-      "n_fits": 61
+      "median_seconds": 338.789,
+      "median_relative_gap": 0.08448563099241747,
+      "n_fits": 53
     }
   ],
   "ad_coverage": [
-    {
-      "dataset": "tdc_carcinogens_lagunin",
-      "method": "both",
-      "n_test": 57,
-      "in_domain_fraction": 0.8070175438596491,
-      "methods": {
-        "standardization": 0.8421052631578947,
-        "confidence": 0.9649122807017544
-      },
-      "selected_model": "TabPFNClassifier",
-      "notes": []
-    },
     {
       "dataset": "tdc_skin_reaction",
       "method": "both",
@@ -2834,219 +2486,9 @@
       "notes": [],
       "mae_in_domain": 0.660753099590199,
       "mae_out_of_domain": 0.8030670897583027
-    },
-    {
-      "dataset": "tdc_cyp2c9_veith",
-      "method": "both",
-      "n_test": 2419,
-      "in_domain_fraction": 0.7755270773046713,
-      "methods": {
-        "standardization": 0.9880115750310046,
-        "confidence": 0.7858619264158744
-      },
-      "selected_model": "XGBoost",
-      "notes": []
-    },
-    {
-      "dataset": "tdc_cyp3a4_veith",
-      "method": "both",
-      "n_test": 2467,
-      "in_domain_fraction": 0.6919335224969598,
-      "methods": {
-        "standardization": 0.9874341305229023,
-        "confidence": 0.7024726388325901
-      },
-      "selected_model": "XGBoost",
-      "notes": []
-    },
-    {
-      "dataset": "tdc_cyp1a2_veith",
-      "method": "both",
-      "n_test": 2518,
-      "in_domain_fraction": 0.9972200158856235,
-      "methods": {
-        "standardization": 0.9972200158856235,
-        "confidence": 1.0
-      },
-      "selected_model": "XGBoost",
-      "notes": []
-    },
-    {
-      "dataset": "tdc_cyp2c19_veith",
-      "method": "both",
-      "n_test": 2534,
-      "in_domain_fraction": 0.9968429360694554,
-      "methods": {
-        "standardization": 0.9968429360694554,
-        "confidence": 1.0
-      },
-      "selected_model": "XGBoost",
-      "notes": []
-    },
-    {
-      "dataset": "tdc_cyp2d6_veith",
-      "method": "both",
-      "n_test": 2626,
-      "in_domain_fraction": 0.8846153846153846,
-      "methods": {
-        "standardization": 0.9893373952779894,
-        "confidence": 0.8948971820258949
-      },
-      "selected_model": "XGBoost",
-      "notes": []
-    },
-    {
-      "dataset": "tdc_herg_karim",
-      "method": "both",
-      "n_test": 2690,
-      "in_domain_fraction": 0.9996282527881041,
-      "methods": {
-        "standardization": 0.9996282527881041,
-        "confidence": 1.0
-      },
-      "selected_model": "XGBoost",
-      "notes": []
     }
   ],
   "model_failures": [
-    {
-      "dataset": "tdc_carcinogens_lagunin",
-      "model": "Uni-Mol V2 (84m)",
-      "error": "CUDA out of memory. Tried to allocate 25.83 GiB. GPU 0 has a total capacity of 39.39 GiB of which 12.82 GiB is free. Process 29510 has 8.51 GiB memory in use. Including non-PyTorch memory, this process has 18.05 GiB memory in use. Of the allocated memory 17.50 GiB is allocated by PyTorch, and 62.74 ",
-      "remedy": "GPU memory exhausted: lower the batch size (--unimol-batch-size, --chemprop-batch-size) or use a larger GPU."
-    },
-    {
-      "dataset": "tdc_carcinogens_lagunin",
-      "model": "Uni-Mol V2 (310m)",
-      "error": "CUDA out of memory. Tried to allocate 842.00 MiB. GPU 0 has a total capacity of 39.39 GiB of which 420.81 MiB is free. Process 29510 has 8.51 GiB memory in use. Including non-PyTorch memory, this process has 30.46 GiB memory in use. Of the allocated memory 29.95 GiB is allocated by PyTorch, and 15.2",
-      "remedy": "GPU memory exhausted: lower the batch size (--unimol-batch-size, --chemprop-batch-size) or use a larger GPU."
-    },
-    {
-      "dataset": "tdc_carcinogens_lagunin",
-      "model": "Uni-Mol V2 (310m)",
-      "error": "CUDA out of memory. Tried to allocate 842.00 MiB. GPU 0 has a total capacity of 39.39 GiB of which 420.81 MiB is free. Process 29510 has 8.51 GiB memory in use. Including non-PyTorch memory, this process has 30.46 GiB memory in use. Of the allocated memory 29.95 GiB is allocated by PyTorch, and 15.2",
-      "remedy": "GPU memory exhausted: lower the batch size (--unimol-batch-size, --chemprop-batch-size) or use a larger GPU."
-    },
-    {
-      "dataset": "tdc_carcinogens_lagunin",
-      "model": "Uni-Mol V2 (310m)",
-      "error": "CUDA out of memory. Tried to allocate 842.00 MiB. GPU 0 has a total capacity of 39.39 GiB of which 420.81 MiB is free. Process 29510 has 8.51 GiB memory in use. Including non-PyTorch memory, this process has 30.46 GiB memory in use. Of the allocated memory 29.95 GiB is allocated by PyTorch, and 15.2",
-      "remedy": "GPU memory exhausted: lower the batch size (--unimol-batch-size, --chemprop-batch-size) or use a larger GPU."
-    },
-    {
-      "dataset": "tdc_carcinogens_lagunin",
-      "model": "Uni-Mol V2 (310m)",
-      "error": "CUDA out of memory. Tried to allocate 20.00 MiB. GPU 0 has a total capacity of 39.39 GiB of which 5.69 MiB is free. Process 29510 has 8.51 GiB memory in use. Process 564311 has 1.71 GiB memory in use. Process 564392 has 28.65 GiB memory in use. Including non-PyTorch memory, this process has 504.00 M",
-      "remedy": "GPU memory exhausted: lower the batch size (--unimol-batch-size, --chemprop-batch-size) or use a larger GPU."
-    },
-    {
-      "dataset": "tdc_carcinogens_lagunin",
-      "model": "Uni-Mol V2 (310m)",
-      "error": "CUDA out of memory. Tried to allocate 20.00 MiB. GPU 0 has a total capacity of 39.39 GiB of which 19.44 MiB is free. Process 29510 has 8.51 GiB memory in use. Process 564392 has 13.84 GiB memory in use. Process 564395 has 504.00 MiB memory in use. Process 672932 has 698.00 MiB memory in use. Process",
-      "remedy": "GPU memory exhausted: lower the batch size (--unimol-batch-size, --chemprop-batch-size) or use a larger GPU."
-    },
-    {
-      "dataset": "tdc_carcinogens_lagunin",
-      "model": "Uni-Mol V2 (310m)",
-      "error": "[Errno 32] Broken pipe",
-      "remedy": "See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail."
-    },
-    {
-      "dataset": "tdc_carcinogens_lagunin",
-      "model": "Uni-Mol V2 (310m)",
-      "error": "CUDA out of memory. Tried to allocate 2.96 GiB. GPU 0 has a total capacity of 39.39 GiB of which 1.90 GiB is free. Process 29510 has 8.51 GiB memory in use. Including non-PyTorch memory, this process has 28.97 GiB memory in use. Of the allocated memory 28.14 GiB is allocated by PyTorch, and 342.44 M",
-      "remedy": "GPU memory exhausted: lower the batch size (--unimol-batch-size, --chemprop-batch-size) or use a larger GPU."
-    },
-    {
-      "dataset": "tdc_carcinogens_lagunin",
-      "model": "Uni-Mol V2 (164m)",
-      "error": "CUDA out of memory. Tried to allocate 6.57 GiB. GPU 0 has a total capacity of 39.39 GiB of which 4.65 GiB is free. Process 29510 has 8.51 GiB memory in use. Including non-PyTorch memory, this process has 25.81 GiB memory in use. Process 831929 has 416.00 MiB memory in use. Of the allocated memory 25",
-      "remedy": "GPU memory exhausted: lower the batch size (--unimol-batch-size, --chemprop-batch-size) or use a larger GPU."
-    },
-    {
-      "dataset": "tdc_carcinogens_lagunin",
-      "model": "Uni-Mol V2 (164m)",
-      "error": "CUDA out of memory. Tried to allocate 842.00 MiB. GPU 0 has a total capacity of 39.39 GiB of which 163.69 MiB is free. Process 29510 has 8.51 GiB memory in use. Process 831501 has 27.76 GiB memory in use. Process 831929 has 1.66 GiB memory in use. Including non-PyTorch memory, this process has 1.28 ",
-      "remedy": "GPU memory exhausted: lower the batch size (--unimol-batch-size, --chemprop-batch-size) or use a larger GPU."
-    },
-    {
-      "dataset": "tdc_carcinogens_lagunin",
-      "model": "Uni-Mol V2 (164m)",
-      "error": "CUDA out of memory. Tried to allocate 822.00 MiB. GPU 0 has a total capacity of 39.39 GiB of which 563.25 MiB is free. Process 29510 has 8.51 GiB memory in use. Process 833304 has 25.81 GiB memory in use. Including non-PyTorch memory, this process has 4.50 GiB memory in use. Of the allocated memory ",
-      "remedy": "GPU memory exhausted: lower the batch size (--unimol-batch-size, --chemprop-batch-size) or use a larger GPU."
-    },
-    {
-      "dataset": "tdc_carcinogens_lagunin",
-      "model": "Uni-Mol V2 (164m)",
-      "error": "CUDA out of memory. Tried to allocate 6.57 GiB. GPU 0 has a total capacity of 39.39 GiB of which 5.06 GiB is free. Process 29510 has 8.51 GiB memory in use. Including non-PyTorch memory, this process has 25.81 GiB memory in use. Of the allocated memory 25.18 GiB is allocated by PyTorch, and 140.45 M",
-      "remedy": "GPU memory exhausted: lower the batch size (--unimol-batch-size, --chemprop-batch-size) or use a larger GPU."
-    },
-    {
-      "dataset": "tdc_carcinogens_lagunin",
-      "model": "Uni-Mol V2 (84m)",
-      "error": "CUDA out of memory. Tried to allocate 12.92 GiB. GPU 0 has a total capacity of 39.39 GiB of which 8.29 GiB is free. Process 29510 has 8.51 GiB memory in use. Including non-PyTorch memory, this process has 22.58 GiB memory in use. Of the allocated memory 22.03 GiB is allocated by PyTorch, and 52.79 M",
-      "remedy": "GPU memory exhausted: lower the batch size (--unimol-batch-size, --chemprop-batch-size) or use a larger GPU."
-    },
-    {
-      "dataset": "tdc_carcinogens_lagunin",
-      "model": "Uni-Mol V2 (84m)",
-      "error": "CUDA out of memory. Tried to allocate 6.46 GiB. GPU 0 has a total capacity of 39.39 GiB of which 6.00 GiB is free. Process 29510 has 8.51 GiB memory in use. Including non-PyTorch memory, this process has 24.87 GiB memory in use. Of the allocated memory 24.33 GiB is allocated by PyTorch, and 41.48 Mi",
-      "remedy": "GPU memory exhausted: lower the batch size (--unimol-batch-size, --chemprop-batch-size) or use a larger GPU."
-    },
-    {
-      "dataset": "tdc_carcinogens_lagunin",
-      "model": "Uni-Mol V2 (84m)",
-      "error": "CUDA out of memory. Tried to allocate 6.46 GiB. GPU 0 has a total capacity of 39.39 GiB of which 6.00 GiB is free. Process 29510 has 8.51 GiB memory in use. Including non-PyTorch memory, this process has 24.87 GiB memory in use. Of the allocated memory 24.33 GiB is allocated by PyTorch, and 41.48 Mi",
-      "remedy": "GPU memory exhausted: lower the batch size (--unimol-batch-size, --chemprop-batch-size) or use a larger GPU."
-    },
-    {
-      "dataset": "tdc_carcinogens_lagunin",
-      "model": "Uni-Mol V2 (84m)",
-      "error": "CUDA out of memory. Tried to allocate 6.46 GiB. GPU 0 has a total capacity of 39.39 GiB of which 6.00 GiB is free. Process 29510 has 8.51 GiB memory in use. Including non-PyTorch memory, this process has 24.87 GiB memory in use. Of the allocated memory 24.33 GiB is allocated by PyTorch, and 41.48 Mi",
-      "remedy": "GPU memory exhausted: lower the batch size (--unimol-batch-size, --chemprop-batch-size) or use a larger GPU."
-    },
-    {
-      "dataset": "tdc_carcinogens_lagunin",
-      "model": "Uni-Mol V2 (84m)",
-      "error": "CUDA out of memory. Tried to allocate 6.46 GiB. GPU 0 has a total capacity of 39.39 GiB of which 6.00 GiB is free. Process 29510 has 8.51 GiB memory in use. Including non-PyTorch memory, this process has 24.87 GiB memory in use. Of the allocated memory 24.33 GiB is allocated by PyTorch, and 41.48 Mi",
-      "remedy": "GPU memory exhausted: lower the batch size (--unimol-batch-size, --chemprop-batch-size) or use a larger GPU."
-    },
-    {
-      "dataset": "tdc_carcinogens_lagunin",
-      "model": "Uni-Mol V2 (84m)",
-      "error": "CUDA out of memory. Tried to allocate 6.46 GiB. GPU 0 has a total capacity of 39.39 GiB of which 6.00 GiB is free. Process 29510 has 8.51 GiB memory in use. Including non-PyTorch memory, this process has 24.87 GiB memory in use. Of the allocated memory 24.33 GiB is allocated by PyTorch, and 41.48 Mi",
-      "remedy": "GPU memory exhausted: lower the batch size (--unimol-batch-size, --chemprop-batch-size) or use a larger GPU."
-    },
-    {
-      "dataset": "tdc_carcinogens_lagunin",
-      "model": "Uni-Mol V2 (84m)",
-      "error": "CUDA out of memory. Tried to allocate 828.00 MiB. GPU 0 has a total capacity of 39.39 GiB of which 568.81 MiB is free. Process 3158928 has 37.90 GiB memory in use. Including non-PyTorch memory, this process has 942.00 MiB memory in use. Of the allocated memory 439.37 MiB is allocated by PyTorch, and",
-      "remedy": "GPU memory exhausted: lower the batch size (--unimol-batch-size, --chemprop-batch-size) or use a larger GPU."
-    },
-    {
-      "dataset": "tdc_carcinogens_lagunin",
-      "model": "Uni-Mol V2 (84m)",
-      "error": "CUDA out of memory. Tried to allocate 3.23 GiB. GPU 0 has a total capacity of 39.39 GiB of which 1.48 GiB is free. Including non-PyTorch memory, this process has 37.90 GiB memory in use. Of the allocated memory 37.36 GiB is allocated by PyTorch, and 48.59 MiB is reserved by PyTorch but unallocated. ",
-      "remedy": "GPU memory exhausted: lower the batch size (--unimol-batch-size, --chemprop-batch-size) or use a larger GPU."
-    },
-    {
-      "dataset": "tdc_carcinogens_lagunin",
-      "model": "Uni-Mol V2 (84m)",
-      "error": "CUDA out of memory. Tried to allocate 3.23 GiB. GPU 0 has a total capacity of 39.49 GiB of which 1.58 GiB is free. Including non-PyTorch memory, this process has 37.90 GiB memory in use. Of the allocated memory 37.36 GiB is allocated by PyTorch, and 48.59 MiB is reserved by PyTorch but unallocated. ",
-      "remedy": "GPU memory exhausted: lower the batch size (--unimol-batch-size, --chemprop-batch-size) or use a larger GPU."
-    },
-    {
-      "dataset": "tdc_carcinogens_lagunin",
-      "model": "Uni-Mol V2 (84m)",
-      "error": "CUDA out of memory. Tried to allocate 3.23 GiB. GPU 0 has a total capacity of 39.49 GiB of which 1.58 GiB is free. Including non-PyTorch memory, this process has 37.90 GiB memory in use. Of the allocated memory 37.36 GiB is allocated by PyTorch, and 48.59 MiB is reserved by PyTorch but unallocated. ",
-      "remedy": "GPU memory exhausted: lower the batch size (--unimol-batch-size, --chemprop-batch-size) or use a larger GPU."
-    },
-    {
-      "dataset": "tdc_carcinogens_lagunin",
-      "model": "Uni-Mol V2 (84m)",
-      "error": "CUDA out of memory. Tried to allocate 3.23 GiB. GPU 0 has a total capacity of 39.49 GiB of which 1.58 GiB is free. Including non-PyTorch memory, this process has 37.90 GiB memory in use. Of the allocated memory 37.36 GiB is allocated by PyTorch, and 48.59 MiB is reserved by PyTorch but unallocated. ",
-      "remedy": "GPU memory exhausted: lower the batch size (--unimol-batch-size, --chemprop-batch-size) or use a larger GPU."
-    },
     {
       "dataset": "tdc_skin_reaction",
       "model": "Chemprop v2 (D-MPNN, ensemble=3)",
@@ -8104,516 +7546,6 @@
       "model": "TabPFNRegressor",
       "error": "Fail to call predict: [HTTP 429] Daily usage limit reached. Your daily limit is 5000000 tokens. Resets at 2026-09-27 00:00:00 UTC. To learn more or request an increase: https://platform.priorlabs.ai/account/usage. Report trace ID: 515ec9adde9a409d8d571450ac19a3cb. Prior Labs TabPFN API budget: 100,0",
       "remedy": "TabPFN API budget or authentication problem; set PRIORLABS_API_KEY, install local tabpfn on a GPU, or --no-run-tabpfn."
-    },
-    {
-      "dataset": "tdc_cyp2c9_veith",
-      "model": "Chemprop v2 (D-MPNN, ensemble=3)",
-      "error": "'ascii' codec can't decode byte 0xe2 in position 146: ordinal not in range(128)",
-      "remedy": "See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail."
-    },
-    {
-      "dataset": "tdc_cyp2c9_veith",
-      "model": "Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",
-      "error": "'ascii' codec can't decode byte 0xe2 in position 154: ordinal not in range(128)",
-      "remedy": "See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail."
-    },
-    {
-      "dataset": "tdc_cyp2c9_veith",
-      "model": "Chemprop v2 (CMPNN, ensemble=3)",
-      "error": "'ascii' codec can't decode byte 0xe2 in position 146: ordinal not in range(128)",
-      "remedy": "See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail."
-    },
-    {
-      "dataset": "tdc_cyp2c9_veith",
-      "model": "Chemprop v2 (AttentiveFP, ensemble=3)",
-      "error": "'ascii' codec can't decode byte 0xe2 in position 158: ordinal not in range(128)",
-      "remedy": "See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail."
-    },
-    {
-      "dataset": "tdc_cyp2c9_veith",
-      "model": "Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",
-      "error": "'ascii' codec can't decode byte 0xe2 in position 164: ordinal not in range(128)",
-      "remedy": "See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail."
-    },
-    {
-      "dataset": "tdc_cyp2c9_veith",
-      "model": "Chemprop v2 (D-MPNN, ensemble=3)",
-      "error": "'ascii' codec can't decode byte 0xe2 in position 146: ordinal not in range(128)",
-      "remedy": "See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail."
-    },
-    {
-      "dataset": "tdc_cyp2c9_veith",
-      "model": "Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",
-      "error": "'ascii' codec can't decode byte 0xe2 in position 154: ordinal not in range(128)",
-      "remedy": "See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail."
-    },
-    {
-      "dataset": "tdc_cyp2c9_veith",
-      "model": "Chemprop v2 (CMPNN, ensemble=3)",
-      "error": "'ascii' codec can't decode byte 0xe2 in position 146: ordinal not in range(128)",
-      "remedy": "See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail."
-    },
-    {
-      "dataset": "tdc_cyp2c9_veith",
-      "model": "Chemprop v2 (AttentiveFP, ensemble=3)",
-      "error": "'ascii' codec can't decode byte 0xe2 in position 158: ordinal not in range(128)",
-      "remedy": "See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail."
-    },
-    {
-      "dataset": "tdc_cyp2c9_veith",
-      "model": "Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",
-      "error": "'ascii' codec can't decode byte 0xe2 in position 164: ordinal not in range(128)",
-      "remedy": "See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail."
-    },
-    {
-      "dataset": "tdc_cyp2c9_veith",
-      "model": "Uni-Mol V2 (84m)",
-      "error": "CUDA out of memory. Tried to allocate 3.96 GiB. GPU 0 has a total capacity of 39.39 GiB of which 2.63 GiB is free. Including non-PyTorch memory, this process has 36.76 GiB memory in use. Of the allocated memory 35.35 GiB is allocated by PyTorch, and 917.03 MiB is reserved by PyTorch but unallocated.",
-      "remedy": "GPU memory exhausted: lower the batch size (--unimol-batch-size, --chemprop-batch-size) or use a larger GPU."
-    },
-    {
-      "dataset": "tdc_cyp2c9_veith",
-      "model": "Chemprop v2 (D-MPNN, ensemble=3)",
-      "error": "'ascii' codec can't decode byte 0xe2 in position 146: ordinal not in range(128)",
-      "remedy": "See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail."
-    },
-    {
-      "dataset": "tdc_cyp2c9_veith",
-      "model": "Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",
-      "error": "'ascii' codec can't decode byte 0xe2 in position 154: ordinal not in range(128)",
-      "remedy": "See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail."
-    },
-    {
-      "dataset": "tdc_cyp2c9_veith",
-      "model": "Chemprop v2 (CMPNN, ensemble=3)",
-      "error": "'ascii' codec can't decode byte 0xe2 in position 146: ordinal not in range(128)",
-      "remedy": "See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail."
-    },
-    {
-      "dataset": "tdc_cyp2c9_veith",
-      "model": "Chemprop v2 (AttentiveFP, ensemble=3)",
-      "error": "'ascii' codec can't decode byte 0xe2 in position 158: ordinal not in range(128)",
-      "remedy": "See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail."
-    },
-    {
-      "dataset": "tdc_cyp2c9_veith",
-      "model": "Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",
-      "error": "'ascii' codec can't decode byte 0xe2 in position 164: ordinal not in range(128)",
-      "remedy": "See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail."
-    },
-    {
-      "dataset": "tdc_cyp2c9_veith",
-      "model": "Uni-Mol V2 (84m)",
-      "error": "CUDA out of memory. Tried to allocate 3.96 GiB. GPU 0 has a total capacity of 39.49 GiB of which 2.72 GiB is free. Including non-PyTorch memory, this process has 36.76 GiB memory in use. Of the allocated memory 35.36 GiB is allocated by PyTorch, and 919.24 MiB is reserved by PyTorch but unallocated.",
-      "remedy": "GPU memory exhausted: lower the batch size (--unimol-batch-size, --chemprop-batch-size) or use a larger GPU."
-    },
-    {
-      "dataset": "tdc_cyp3a4_veith",
-      "model": "Chemprop v2 (D-MPNN, ensemble=3)",
-      "error": "'ascii' codec can't decode byte 0xe2 in position 146: ordinal not in range(128)",
-      "remedy": "See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail."
-    },
-    {
-      "dataset": "tdc_cyp3a4_veith",
-      "model": "Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",
-      "error": "'ascii' codec can't decode byte 0xe2 in position 154: ordinal not in range(128)",
-      "remedy": "See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail."
-    },
-    {
-      "dataset": "tdc_cyp3a4_veith",
-      "model": "Chemprop v2 (CMPNN, ensemble=3)",
-      "error": "'ascii' codec can't decode byte 0xe2 in position 146: ordinal not in range(128)",
-      "remedy": "See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail."
-    },
-    {
-      "dataset": "tdc_cyp3a4_veith",
-      "model": "Chemprop v2 (AttentiveFP, ensemble=3)",
-      "error": "'ascii' codec can't decode byte 0xe2 in position 158: ordinal not in range(128)",
-      "remedy": "See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail."
-    },
-    {
-      "dataset": "tdc_cyp3a4_veith",
-      "model": "Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",
-      "error": "'ascii' codec can't decode byte 0xe2 in position 164: ordinal not in range(128)",
-      "remedy": "See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail."
-    },
-    {
-      "dataset": "tdc_cyp3a4_veith",
-      "model": "Uni-Mol V2 (84m)",
-      "error": "CUDA out of memory. Tried to allocate 4.31 GiB. GPU 0 has a total capacity of 39.39 GiB of which 4.08 GiB is free. Including non-PyTorch memory, this process has 35.30 GiB memory in use. Of the allocated memory 34.68 GiB is allocated by PyTorch, and 118.73 MiB is reserved by PyTorch but unallocated.",
-      "remedy": "GPU memory exhausted: lower the batch size (--unimol-batch-size, --chemprop-batch-size) or use a larger GPU."
-    },
-    {
-      "dataset": "tdc_cyp3a4_veith",
-      "model": "Chemprop v2 (D-MPNN, ensemble=3)",
-      "error": "'ascii' codec can't decode byte 0xe2 in position 146: ordinal not in range(128)",
-      "remedy": "See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail."
-    },
-    {
-      "dataset": "tdc_cyp3a4_veith",
-      "model": "Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",
-      "error": "'ascii' codec can't decode byte 0xe2 in position 154: ordinal not in range(128)",
-      "remedy": "See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail."
-    },
-    {
-      "dataset": "tdc_cyp3a4_veith",
-      "model": "Chemprop v2 (CMPNN, ensemble=3)",
-      "error": "'ascii' codec can't decode byte 0xe2 in position 146: ordinal not in range(128)",
-      "remedy": "See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail."
-    },
-    {
-      "dataset": "tdc_cyp3a4_veith",
-      "model": "Chemprop v2 (AttentiveFP, ensemble=3)",
-      "error": "'ascii' codec can't decode byte 0xe2 in position 158: ordinal not in range(128)",
-      "remedy": "See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail."
-    },
-    {
-      "dataset": "tdc_cyp3a4_veith",
-      "model": "Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",
-      "error": "'ascii' codec can't decode byte 0xe2 in position 164: ordinal not in range(128)",
-      "remedy": "See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail."
-    },
-    {
-      "dataset": "tdc_cyp3a4_veith",
-      "model": "Uni-Mol V2 (84m)",
-      "error": "CUDA out of memory. Tried to allocate 4.31 GiB. GPU 0 has a total capacity of 39.49 GiB of which 4.11 GiB is free. Including non-PyTorch memory, this process has 35.38 GiB memory in use. Of the allocated memory 34.68 GiB is allocated by PyTorch, and 197.71 MiB is reserved by PyTorch but unallocated.",
-      "remedy": "GPU memory exhausted: lower the batch size (--unimol-batch-size, --chemprop-batch-size) or use a larger GPU."
-    },
-    {
-      "dataset": "tdc_cyp1a2_veith",
-      "model": "Chemprop v2 (D-MPNN, ensemble=3)",
-      "error": "Chemprop command failed during training (exit=1).\r\nCommand: /home/exouser/miniconda3/envs/autoqsar-py311/bin/chemprop train --data-path benchmark_results/autoqsar_benchmark_20260623_153839/tdc_cyp1a2_veith/chemprop_v2/dmpnn_dmpnn_ensemble_3_seed_42/train.csv --smiles-columns SMILES --target-columns ",
-      "remedy": "Install PyTorch: pip install 'qsarena[deep]', or --disable-model-families deep_tabular."
-    },
-    {
-      "dataset": "tdc_cyp1a2_veith",
-      "model": "Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",
-      "error": "Chemprop command failed during training (exit=1).\r\nCommand: /home/exouser/miniconda3/envs/autoqsar-py311/bin/chemprop train --data-path benchmark_results/autoqsar_benchmark_20260623_153839/tdc_cyp1a2_veith/chemprop_v2/dmpnn_dmpnn_rdkit2d_ensemble_3_seed_42/train.csv --smiles-columns SMILES --target-",
-      "remedy": "Install PyTorch: pip install 'qsarena[deep]', or --disable-model-families deep_tabular."
-    },
-    {
-      "dataset": "tdc_cyp1a2_veith",
-      "model": "Chemprop v2 (CMPNN, ensemble=3)",
-      "error": "Chemprop command failed during training (exit=1).\r\nCommand: /home/exouser/miniconda3/envs/autoqsar-py311/bin/chemprop train --data-path benchmark_results/autoqsar_benchmark_20260623_153839/tdc_cyp1a2_veith/chemprop_v2/cmpnn_cmpnn_ensemble_3_seed_42/train.csv --smiles-columns SMILES --target-columns ",
-      "remedy": "Install PyTorch: pip install 'qsarena[deep]', or --disable-model-families deep_tabular."
-    },
-    {
-      "dataset": "tdc_cyp1a2_veith",
-      "model": "Chemprop v2 (AttentiveFP, ensemble=3)",
-      "error": "Chemprop command failed during training (exit=1).\r\nCommand: /home/exouser/miniconda3/envs/autoqsar-py311/bin/chemprop train --data-path benchmark_results/autoqsar_benchmark_20260623_153839/tdc_cyp1a2_veith/chemprop_v2/attentivefp_attentivefp_ensemble_3_seed_42/train.csv --smiles-columns SMILES --tar",
-      "remedy": "Install PyTorch: pip install 'qsarena[deep]', or --disable-model-families deep_tabular."
-    },
-    {
-      "dataset": "tdc_cyp1a2_veith",
-      "model": "Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",
-      "error": "Chemprop command failed during training (exit=1).\r\nCommand: /home/exouser/miniconda3/envs/autoqsar-py311/bin/chemprop train --data-path benchmark_results/autoqsar_benchmark_20260623_153839/tdc_cyp1a2_veith/chemprop_v2/dmpnn_dmpnn_selected_features_ensemble_3_seed_42/train.csv --smiles-columns SMILES",
-      "remedy": "Install PyTorch: pip install 'qsarena[deep]', or --disable-model-families deep_tabular."
-    },
-    {
-      "dataset": "tdc_cyp1a2_veith",
-      "model": "Uni-Mol V2 (84m)",
-      "error": "CUDA out of memory. Tried to allocate 326.00 MiB. GPU 0 has a total capacity of 39.39 GiB of which 316.38 MiB is free. Including non-PyTorch memory, this process has 39.08 GiB memory in use. Of the allocated memory 37.84 GiB is allocated by PyTorch, and 747.57 MiB is reserved by PyTorch but unalloca",
-      "remedy": "GPU memory exhausted: lower the batch size (--unimol-batch-size, --chemprop-batch-size) or use a larger GPU."
-    },
-    {
-      "dataset": "tdc_cyp1a2_veith",
-      "model": "Chemprop v2 (D-MPNN, ensemble=3)",
-      "error": "Chemprop command failed during training (exit=1).\r\nCommand: /home/exouser/miniconda3/envs/autoqsar-py311/bin/chemprop train --data-path benchmark_results/autoqsar_benchmark_20260623_153839/tdc_cyp1a2_veith/chemprop_v2/dmpnn_dmpnn_ensemble_3_seed_42/train.csv --smiles-columns SMILES --target-columns ",
-      "remedy": "Install PyTorch: pip install 'qsarena[deep]', or --disable-model-families deep_tabular."
-    },
-    {
-      "dataset": "tdc_cyp1a2_veith",
-      "model": "Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",
-      "error": "Chemprop command failed during training (exit=1).\r\nCommand: /home/exouser/miniconda3/envs/autoqsar-py311/bin/chemprop train --data-path benchmark_results/autoqsar_benchmark_20260623_153839/tdc_cyp1a2_veith/chemprop_v2/dmpnn_dmpnn_rdkit2d_ensemble_3_seed_42/train.csv --smiles-columns SMILES --target-",
-      "remedy": "Install PyTorch: pip install 'qsarena[deep]', or --disable-model-families deep_tabular."
-    },
-    {
-      "dataset": "tdc_cyp1a2_veith",
-      "model": "Chemprop v2 (CMPNN, ensemble=3)",
-      "error": "Chemprop command failed during training (exit=1).\r\nCommand: /home/exouser/miniconda3/envs/autoqsar-py311/bin/chemprop train --data-path benchmark_results/autoqsar_benchmark_20260623_153839/tdc_cyp1a2_veith/chemprop_v2/cmpnn_cmpnn_ensemble_3_seed_42/train.csv --smiles-columns SMILES --target-columns ",
-      "remedy": "Install PyTorch: pip install 'qsarena[deep]', or --disable-model-families deep_tabular."
-    },
-    {
-      "dataset": "tdc_cyp1a2_veith",
-      "model": "Chemprop v2 (AttentiveFP, ensemble=3)",
-      "error": "Chemprop command failed during training (exit=1).\r\nCommand: /home/exouser/miniconda3/envs/autoqsar-py311/bin/chemprop train --data-path benchmark_results/autoqsar_benchmark_20260623_153839/tdc_cyp1a2_veith/chemprop_v2/attentivefp_attentivefp_ensemble_3_seed_42/train.csv --smiles-columns SMILES --tar",
-      "remedy": "Install PyTorch: pip install 'qsarena[deep]', or --disable-model-families deep_tabular."
-    },
-    {
-      "dataset": "tdc_cyp1a2_veith",
-      "model": "Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",
-      "error": "Chemprop command failed during training (exit=1).\r\nCommand: /home/exouser/miniconda3/envs/autoqsar-py311/bin/chemprop train --data-path benchmark_results/autoqsar_benchmark_20260623_153839/tdc_cyp1a2_veith/chemprop_v2/dmpnn_dmpnn_selected_features_ensemble_3_seed_42/train.csv --smiles-columns SMILES",
-      "remedy": "Install PyTorch: pip install 'qsarena[deep]', or --disable-model-families deep_tabular."
-    },
-    {
-      "dataset": "tdc_cyp1a2_veith",
-      "model": "Uni-Mol V2 (84m)",
-      "error": "CUDA out of memory. Tried to allocate 5.08 GiB. GPU 0 has a total capacity of 39.49 GiB of which 3.50 GiB is free. Including non-PyTorch memory, this process has 35.99 GiB memory in use. Of the allocated memory 35.41 GiB is allocated by PyTorch, and 70.65 MiB is reserved by PyTorch but unallocated. ",
-      "remedy": "GPU memory exhausted: lower the batch size (--unimol-batch-size, --chemprop-batch-size) or use a larger GPU."
-    },
-    {
-      "dataset": "tdc_cyp1a2_veith",
-      "model": "Chemprop v2 (D-MPNN, ensemble=3)",
-      "error": "Chemprop training failed during training (exit=1).\r\nCommand: /home/exouser/miniconda3/envs/autoqsar-py311/bin/chemprop train --data-path benchmark_results/qsarena_benchmark_chemprop_fixed/tdc_cyp1a2_veith/chemprop_v2/dmpnn_dmpnn_ensemble_3_seed_42/train.csv --smiles-columns SMILES --target-columns T",
-      "remedy": "Chemprop itself failed on this dataset; see run.log. Small datasets often need --chemprop-batch-size 16."
-    },
-    {
-      "dataset": "tdc_cyp1a2_veith",
-      "model": "Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",
-      "error": "Chemprop training failed during training (exit=1).\r\nCommand: /home/exouser/miniconda3/envs/autoqsar-py311/bin/chemprop train --data-path benchmark_results/qsarena_benchmark_chemprop_fixed/tdc_cyp1a2_veith/chemprop_v2/dmpnn_dmpnn_rdkit2d_ensemble_3_seed_42/train.csv --smiles-columns SMILES --target-c",
-      "remedy": "Chemprop itself failed on this dataset; see run.log. Small datasets often need --chemprop-batch-size 16."
-    },
-    {
-      "dataset": "tdc_cyp1a2_veith",
-      "model": "Chemprop v2 (CMPNN, ensemble=3)",
-      "error": "Chemprop training failed during training (exit=1).\r\nCommand: /home/exouser/miniconda3/envs/autoqsar-py311/bin/chemprop train --data-path benchmark_results/qsarena_benchmark_chemprop_fixed/tdc_cyp1a2_veith/chemprop_v2/cmpnn_cmpnn_ensemble_3_seed_42/train.csv --smiles-columns SMILES --target-columns T",
-      "remedy": "Chemprop itself failed on this dataset; see run.log. Small datasets often need --chemprop-batch-size 16."
-    },
-    {
-      "dataset": "tdc_cyp1a2_veith",
-      "model": "Chemprop v2 (AttentiveFP, ensemble=3)",
-      "error": "Chemprop training failed during training (exit=1).\r\nCommand: /home/exouser/miniconda3/envs/autoqsar-py311/bin/chemprop train --data-path benchmark_results/qsarena_benchmark_chemprop_fixed/tdc_cyp1a2_veith/chemprop_v2/attentivefp_attentivefp_ensemble_3_seed_42/train.csv --smiles-columns SMILES --targ",
-      "remedy": "Chemprop itself failed on this dataset; see run.log. Small datasets often need --chemprop-batch-size 16."
-    },
-    {
-      "dataset": "tdc_cyp1a2_veith",
-      "model": "Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",
-      "error": "Chemprop training failed during training (exit=1).\r\nCommand: /home/exouser/miniconda3/envs/autoqsar-py311/bin/chemprop train --data-path benchmark_results/qsarena_benchmark_chemprop_fixed/tdc_cyp1a2_veith/chemprop_v2/dmpnn_dmpnn_selected_features_ensemble_3_seed_42/train.csv --smiles-columns SMILES ",
-      "remedy": "Chemprop itself failed on this dataset; see run.log. Small datasets often need --chemprop-batch-size 16."
-    },
-    {
-      "dataset": "tdc_cyp2c19_veith",
-      "model": "Chemprop v2 (D-MPNN, ensemble=3)",
-      "error": "Chemprop command failed during training (exit=1).\r\nCommand: /home/exouser/miniconda3/envs/autoqsar-py311/bin/chemprop train --data-path benchmark_results/autoqsar_benchmark_20260623_153839/tdc_cyp2c19_veith/chemprop_v2/dmpnn_dmpnn_ensemble_3_seed_42/train.csv --smiles-columns SMILES --target-columns",
-      "remedy": "Install PyTorch: pip install 'qsarena[deep]', or --disable-model-families deep_tabular."
-    },
-    {
-      "dataset": "tdc_cyp2c19_veith",
-      "model": "Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",
-      "error": "Chemprop command failed during training (exit=1).\r\nCommand: /home/exouser/miniconda3/envs/autoqsar-py311/bin/chemprop train --data-path benchmark_results/autoqsar_benchmark_20260623_153839/tdc_cyp2c19_veith/chemprop_v2/dmpnn_dmpnn_rdkit2d_ensemble_3_seed_42/train.csv --smiles-columns SMILES --target",
-      "remedy": "Install PyTorch: pip install 'qsarena[deep]', or --disable-model-families deep_tabular."
-    },
-    {
-      "dataset": "tdc_cyp2c19_veith",
-      "model": "Chemprop v2 (CMPNN, ensemble=3)",
-      "error": "Chemprop command failed during training (exit=1).\r\nCommand: /home/exouser/miniconda3/envs/autoqsar-py311/bin/chemprop train --data-path benchmark_results/autoqsar_benchmark_20260623_153839/tdc_cyp2c19_veith/chemprop_v2/cmpnn_cmpnn_ensemble_3_seed_42/train.csv --smiles-columns SMILES --target-columns",
-      "remedy": "Install PyTorch: pip install 'qsarena[deep]', or --disable-model-families deep_tabular."
-    },
-    {
-      "dataset": "tdc_cyp2c19_veith",
-      "model": "Chemprop v2 (AttentiveFP, ensemble=3)",
-      "error": "Chemprop command failed during training (exit=1).\r\nCommand: /home/exouser/miniconda3/envs/autoqsar-py311/bin/chemprop train --data-path benchmark_results/autoqsar_benchmark_20260623_153839/tdc_cyp2c19_veith/chemprop_v2/attentivefp_attentivefp_ensemble_3_seed_42/train.csv --smiles-columns SMILES --ta",
-      "remedy": "Install PyTorch: pip install 'qsarena[deep]', or --disable-model-families deep_tabular."
-    },
-    {
-      "dataset": "tdc_cyp2c19_veith",
-      "model": "Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",
-      "error": "Chemprop command failed during training (exit=1).\r\nCommand: /home/exouser/miniconda3/envs/autoqsar-py311/bin/chemprop train --data-path benchmark_results/autoqsar_benchmark_20260623_153839/tdc_cyp2c19_veith/chemprop_v2/dmpnn_dmpnn_selected_features_ensemble_3_seed_42/train.csv --smiles-columns SMILE",
-      "remedy": "Install PyTorch: pip install 'qsarena[deep]', or --disable-model-families deep_tabular."
-    },
-    {
-      "dataset": "tdc_cyp2c19_veith",
-      "model": "Uni-Mol V2 (84m)",
-      "error": "CUDA out of memory. Tried to allocate 3.28 GiB. GPU 0 has a total capacity of 39.39 GiB of which 2.19 GiB is free. Including non-PyTorch memory, this process has 37.20 GiB memory in use. Of the allocated memory 36.16 GiB is allocated by PyTorch, and 538.24 MiB is reserved by PyTorch but unallocated.",
-      "remedy": "GPU memory exhausted: lower the batch size (--unimol-batch-size, --chemprop-batch-size) or use a larger GPU."
-    },
-    {
-      "dataset": "tdc_cyp2c19_veith",
-      "model": "Chemprop v2 (D-MPNN, ensemble=3)",
-      "error": "Chemprop command failed during training (exit=1).\r\nCommand: /home/exouser/miniconda3/envs/autoqsar-py311/bin/chemprop train --data-path benchmark_results/autoqsar_benchmark_20260623_153839/tdc_cyp2c19_veith/chemprop_v2/dmpnn_dmpnn_ensemble_3_seed_42/train.csv --smiles-columns SMILES --target-columns",
-      "remedy": "Install PyTorch: pip install 'qsarena[deep]', or --disable-model-families deep_tabular."
-    },
-    {
-      "dataset": "tdc_cyp2c19_veith",
-      "model": "Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",
-      "error": "Chemprop command failed during training (exit=1).\r\nCommand: /home/exouser/miniconda3/envs/autoqsar-py311/bin/chemprop train --data-path benchmark_results/autoqsar_benchmark_20260623_153839/tdc_cyp2c19_veith/chemprop_v2/dmpnn_dmpnn_rdkit2d_ensemble_3_seed_42/train.csv --smiles-columns SMILES --target",
-      "remedy": "Install PyTorch: pip install 'qsarena[deep]', or --disable-model-families deep_tabular."
-    },
-    {
-      "dataset": "tdc_cyp2c19_veith",
-      "model": "Chemprop v2 (CMPNN, ensemble=3)",
-      "error": "Chemprop command failed during training (exit=1).\r\nCommand: /home/exouser/miniconda3/envs/autoqsar-py311/bin/chemprop train --data-path benchmark_results/autoqsar_benchmark_20260623_153839/tdc_cyp2c19_veith/chemprop_v2/cmpnn_cmpnn_ensemble_3_seed_42/train.csv --smiles-columns SMILES --target-columns",
-      "remedy": "Install PyTorch: pip install 'qsarena[deep]', or --disable-model-families deep_tabular."
-    },
-    {
-      "dataset": "tdc_cyp2c19_veith",
-      "model": "Chemprop v2 (AttentiveFP, ensemble=3)",
-      "error": "Chemprop command failed during training (exit=1).\r\nCommand: /home/exouser/miniconda3/envs/autoqsar-py311/bin/chemprop train --data-path benchmark_results/autoqsar_benchmark_20260623_153839/tdc_cyp2c19_veith/chemprop_v2/attentivefp_attentivefp_ensemble_3_seed_42/train.csv --smiles-columns SMILES --ta",
-      "remedy": "Install PyTorch: pip install 'qsarena[deep]', or --disable-model-families deep_tabular."
-    },
-    {
-      "dataset": "tdc_cyp2c19_veith",
-      "model": "Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",
-      "error": "Chemprop command failed during training (exit=1).\r\nCommand: /home/exouser/miniconda3/envs/autoqsar-py311/bin/chemprop train --data-path benchmark_results/autoqsar_benchmark_20260623_153839/tdc_cyp2c19_veith/chemprop_v2/dmpnn_dmpnn_selected_features_ensemble_3_seed_42/train.csv --smiles-columns SMILE",
-      "remedy": "Install PyTorch: pip install 'qsarena[deep]', or --disable-model-families deep_tabular."
-    },
-    {
-      "dataset": "tdc_cyp2c19_veith",
-      "model": "Uni-Mol V2 (84m)",
-      "error": "CUDA out of memory. Tried to allocate 3.28 GiB. GPU 0 has a total capacity of 39.49 GiB of which 2.29 GiB is free. Including non-PyTorch memory, this process has 37.19 GiB memory in use. Of the allocated memory 36.16 GiB is allocated by PyTorch, and 538.03 MiB is reserved by PyTorch but unallocated.",
-      "remedy": "GPU memory exhausted: lower the batch size (--unimol-batch-size, --chemprop-batch-size) or use a larger GPU."
-    },
-    {
-      "dataset": "tdc_cyp2c19_veith",
-      "model": "Chemprop v2 (D-MPNN, ensemble=3)",
-      "error": "Chemprop training failed during training (exit=1).\r\nCommand: /home/exouser/miniconda3/envs/autoqsar-py311/bin/chemprop train --data-path benchmark_results/qsarena_benchmark_chemprop_fixed/tdc_cyp2c19_veith/chemprop_v2/dmpnn_dmpnn_ensemble_3_seed_42/train.csv --smiles-columns SMILES --target-columns ",
-      "remedy": "Chemprop itself failed on this dataset; see run.log. Small datasets often need --chemprop-batch-size 16."
-    },
-    {
-      "dataset": "tdc_cyp2c19_veith",
-      "model": "Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",
-      "error": "Chemprop training failed during training (exit=1).\r\nCommand: /home/exouser/miniconda3/envs/autoqsar-py311/bin/chemprop train --data-path benchmark_results/qsarena_benchmark_chemprop_fixed/tdc_cyp2c19_veith/chemprop_v2/dmpnn_dmpnn_rdkit2d_ensemble_3_seed_42/train.csv --smiles-columns SMILES --target-",
-      "remedy": "Chemprop itself failed on this dataset; see run.log. Small datasets often need --chemprop-batch-size 16."
-    },
-    {
-      "dataset": "tdc_cyp2c19_veith",
-      "model": "Chemprop v2 (CMPNN, ensemble=3)",
-      "error": "Chemprop training failed during training (exit=1).\r\nCommand: /home/exouser/miniconda3/envs/autoqsar-py311/bin/chemprop train --data-path benchmark_results/qsarena_benchmark_chemprop_fixed/tdc_cyp2c19_veith/chemprop_v2/cmpnn_cmpnn_ensemble_3_seed_42/train.csv --smiles-columns SMILES --target-columns ",
-      "remedy": "Chemprop itself failed on this dataset; see run.log. Small datasets often need --chemprop-batch-size 16."
-    },
-    {
-      "dataset": "tdc_cyp2c19_veith",
-      "model": "Chemprop v2 (AttentiveFP, ensemble=3)",
-      "error": "Chemprop training failed during training (exit=1).\r\nCommand: /home/exouser/miniconda3/envs/autoqsar-py311/bin/chemprop train --data-path benchmark_results/qsarena_benchmark_chemprop_fixed/tdc_cyp2c19_veith/chemprop_v2/attentivefp_attentivefp_ensemble_3_seed_42/train.csv --smiles-columns SMILES --tar",
-      "remedy": "Chemprop itself failed on this dataset; see run.log. Small datasets often need --chemprop-batch-size 16."
-    },
-    {
-      "dataset": "tdc_cyp2c19_veith",
-      "model": "Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",
-      "error": "Chemprop training failed during training (exit=1).\r\nCommand: /home/exouser/miniconda3/envs/autoqsar-py311/bin/chemprop train --data-path benchmark_results/qsarena_benchmark_chemprop_fixed/tdc_cyp2c19_veith/chemprop_v2/dmpnn_dmpnn_selected_features_ensemble_3_seed_42/train.csv --smiles-columns SMILES",
-      "remedy": "Chemprop itself failed on this dataset; see run.log. Small datasets often need --chemprop-batch-size 16."
-    },
-    {
-      "dataset": "tdc_cyp2d6_veith",
-      "model": "Chemprop v2 (D-MPNN, ensemble=3)",
-      "error": "'ascii' codec can't decode byte 0xe2 in position 146: ordinal not in range(128)",
-      "remedy": "See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail."
-    },
-    {
-      "dataset": "tdc_cyp2d6_veith",
-      "model": "Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",
-      "error": "'ascii' codec can't decode byte 0xe2 in position 154: ordinal not in range(128)",
-      "remedy": "See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail."
-    },
-    {
-      "dataset": "tdc_cyp2d6_veith",
-      "model": "Chemprop v2 (CMPNN, ensemble=3)",
-      "error": "'ascii' codec can't decode byte 0xe2 in position 146: ordinal not in range(128)",
-      "remedy": "See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail."
-    },
-    {
-      "dataset": "tdc_cyp2d6_veith",
-      "model": "Chemprop v2 (AttentiveFP, ensemble=3)",
-      "error": "'ascii' codec can't decode byte 0xe2 in position 158: ordinal not in range(128)",
-      "remedy": "See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail."
-    },
-    {
-      "dataset": "tdc_cyp2d6_veith",
-      "model": "Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",
-      "error": "'ascii' codec can't decode byte 0xe2 in position 164: ordinal not in range(128)",
-      "remedy": "See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail."
-    },
-    {
-      "dataset": "tdc_cyp2d6_veith",
-      "model": "Uni-Mol V2 (84m)",
-      "error": "CUDA out of memory. Tried to allocate 4.31 GiB. GPU 0 has a total capacity of 39.39 GiB of which 3.99 GiB is free. Including non-PyTorch memory, this process has 35.39 GiB memory in use. Of the allocated memory 34.68 GiB is allocated by PyTorch, and 206.08 MiB is reserved by PyTorch but unallocated.",
-      "remedy": "GPU memory exhausted: lower the batch size (--unimol-batch-size, --chemprop-batch-size) or use a larger GPU."
-    },
-    {
-      "dataset": "tdc_cyp2d6_veith",
-      "model": "Chemprop v2 (D-MPNN, ensemble=3)",
-      "error": "'ascii' codec can't decode byte 0xe2 in position 146: ordinal not in range(128)",
-      "remedy": "See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail."
-    },
-    {
-      "dataset": "tdc_cyp2d6_veith",
-      "model": "Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",
-      "error": "'ascii' codec can't decode byte 0xe2 in position 154: ordinal not in range(128)",
-      "remedy": "See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail."
-    },
-    {
-      "dataset": "tdc_cyp2d6_veith",
-      "model": "Chemprop v2 (CMPNN, ensemble=3)",
-      "error": "'ascii' codec can't decode byte 0xe2 in position 146: ordinal not in range(128)",
-      "remedy": "See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail."
-    },
-    {
-      "dataset": "tdc_cyp2d6_veith",
-      "model": "Chemprop v2 (AttentiveFP, ensemble=3)",
-      "error": "'ascii' codec can't decode byte 0xe2 in position 158: ordinal not in range(128)",
-      "remedy": "See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail."
-    },
-    {
-      "dataset": "tdc_cyp2d6_veith",
-      "model": "Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",
-      "error": "'ascii' codec can't decode byte 0xe2 in position 164: ordinal not in range(128)",
-      "remedy": "See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail."
-    },
-    {
-      "dataset": "tdc_cyp2d6_veith",
-      "model": "Uni-Mol V2 (84m)",
-      "error": "CUDA out of memory. Tried to allocate 4.31 GiB. GPU 0 has a total capacity of 39.49 GiB of which 4.19 GiB is free. Including non-PyTorch memory, this process has 35.29 GiB memory in use. Of the allocated memory 34.69 GiB is allocated by PyTorch, and 95.53 MiB is reserved by PyTorch but unallocated. ",
-      "remedy": "GPU memory exhausted: lower the batch size (--unimol-batch-size, --chemprop-batch-size) or use a larger GPU."
-    },
-    {
-      "dataset": "tdc_herg_karim",
-      "model": "Chemprop v2 (D-MPNN, ensemble=3)",
-      "error": "'ascii' codec can't decode byte 0xe2 in position 144: ordinal not in range(128)",
-      "remedy": "See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail."
-    },
-    {
-      "dataset": "tdc_herg_karim",
-      "model": "Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",
-      "error": "'ascii' codec can't decode byte 0xe2 in position 152: ordinal not in range(128)",
-      "remedy": "See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail."
-    },
-    {
-      "dataset": "tdc_herg_karim",
-      "model": "Chemprop v2 (CMPNN, ensemble=3)",
-      "error": "'ascii' codec can't decode byte 0xe2 in position 144: ordinal not in range(128)",
-      "remedy": "See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail."
-    },
-    {
-      "dataset": "tdc_herg_karim",
-      "model": "Chemprop v2 (AttentiveFP, ensemble=3)",
-      "error": "'ascii' codec can't decode byte 0xe2 in position 156: ordinal not in range(128)",
-      "remedy": "See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail."
-    },
-    {
-      "dataset": "tdc_herg_karim",
-      "model": "Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",
-      "error": "'ascii' codec can't decode byte 0xe2 in position 162: ordinal not in range(128)",
-      "remedy": "See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail."
-    },
-    {
-      "dataset": "tdc_herg_karim",
-      "model": "Chemprop v2 (D-MPNN, ensemble=3)",
-      "error": "'ascii' codec can't decode byte 0xe2 in position 144: ordinal not in range(128)",
-      "remedy": "See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail."
-    },
-    {
-      "dataset": "tdc_herg_karim",
-      "model": "Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",
-      "error": "'ascii' codec can't decode byte 0xe2 in position 152: ordinal not in range(128)",
-      "remedy": "See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail."
-    },
-    {
-      "dataset": "tdc_herg_karim",
-      "model": "Chemprop v2 (CMPNN, ensemble=3)",
-      "error": "'ascii' codec can't decode byte 0xe2 in position 144: ordinal not in range(128)",
-      "remedy": "See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail."
-    },
-    {
-      "dataset": "tdc_herg_karim",
-      "model": "Chemprop v2 (AttentiveFP, ensemble=3)",
-      "error": "'ascii' codec can't decode byte 0xe2 in position 156: ordinal not in range(128)",
-      "remedy": "See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail."
-    },
-    {
-      "dataset": "tdc_herg_karim",
-      "model": "Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",
-      "error": "'ascii' codec can't decode byte 0xe2 in position 162: ordinal not in range(128)",
-      "remedy": "See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail."
     }
   ],
   "skipped_stages": [
@@ -8676,12 +7608,6 @@
       "message": "2 SMILES (0.0%) cannot be parsed by RDKit and will be dropped.",
       "remedy": "Fix them in the CSV, or pass --no-drop-unparseable to stop instead of dropping.",
       "dataset": "tdc_solubility_aqsoldb"
-    },
-    {
-      "code": "backend_failure",
-      "message": "Uni-Mol V2 (84m) failed: CUDA out of memory. Tried to allocate 25.83 GiB. GPU 0 has a total capacity of 39.39 GiB of which 12.82 GiB is free. Process 29510 has 8.51 GiB memory in use. I",
-      "remedy": "GPU memory exhausted: lower the batch size (--unimol-batch-size, --chemprop-batch-size) or use a larger GPU.",
-      "dataset": "tdc_carcinogens_lagunin"
     },
     {
       "code": "ad_out_of_domain",
@@ -9018,84 +7944,10 @@
       "message": "Chemprop v2 (D-MPNN, ensemble=3) failed: 'ascii' codec can't decode byte 0xe2 in position 152: ordinal not in range(128)",
       "remedy": "See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail.",
       "dataset": "tdc_solubility_aqsoldb"
-    },
-    {
-      "code": "ad_out_of_domain",
-      "message": "22% of test molecules are outside the applicability domain.",
-      "remedy": "Treat their predictions as extrapolations (applicability_domain.csv lists them).",
-      "dataset": "tdc_cyp2c9_veith"
-    },
-    {
-      "code": "backend_failure",
-      "message": "Chemprop v2 (D-MPNN, ensemble=3) failed: 'ascii' codec can't decode byte 0xe2 in position 146: ordinal not in range(128)",
-      "remedy": "See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail.",
-      "dataset": "tdc_cyp2c9_veith"
-    },
-    {
-      "code": "ad_out_of_domain",
-      "message": "31% of test molecules are outside the applicability domain.",
-      "remedy": "Treat their predictions as extrapolations (applicability_domain.csv lists them).",
-      "dataset": "tdc_cyp3a4_veith"
-    },
-    {
-      "code": "backend_failure",
-      "message": "Chemprop v2 (D-MPNN, ensemble=3) failed: 'ascii' codec can't decode byte 0xe2 in position 146: ordinal not in range(128)",
-      "remedy": "See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail.",
-      "dataset": "tdc_cyp3a4_veith"
-    },
-    {
-      "code": "backend_failure",
-      "message": "Chemprop v2 (D-MPNN, ensemble=3) failed: Chemprop command failed during training (exit=1).\r\nCommand: /home/exouser/miniconda3/envs/autoqsar-py311/bin/chemprop train --data-path benchmark_results/autoqs",
-      "remedy": "Install PyTorch: pip install 'qsarena[deep]', or --disable-model-families deep_tabular.",
-      "dataset": "tdc_cyp1a2_veith"
-    },
-    {
-      "code": "backend_failure",
-      "message": "Chemprop v2 (D-MPNN, ensemble=3) failed: Chemprop command failed during training (exit=1).\r\nCommand: /home/exouser/miniconda3/envs/autoqsar-py311/bin/chemprop train --data-path benchmark_results/autoqs",
-      "remedy": "Install PyTorch: pip install 'qsarena[deep]', or --disable-model-families deep_tabular.",
-      "dataset": "tdc_cyp2c19_veith"
-    },
-    {
-      "code": "backend_failure",
-      "message": "Chemprop v2 (D-MPNN, ensemble=3) failed: 'ascii' codec can't decode byte 0xe2 in position 146: ordinal not in range(128)",
-      "remedy": "See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail.",
-      "dataset": "tdc_cyp2d6_veith"
-    },
-    {
-      "code": "backend_failure",
-      "message": "Chemprop v2 (D-MPNN, ensemble=3) failed: 'ascii' codec can't decode byte 0xe2 in position 144: ordinal not in range(128)",
-      "remedy": "See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail.",
-      "dataset": "tdc_herg_karim"
     }
   ],
   "preflight": {
     "datasets": [
-      {
-        "dataset": "tdc_carcinogens_lagunin",
-        "n_rows": 280,
-        "n_missing": 0,
-        "n_parsed": 280,
-        "n_unparseable": 0,
-        "parse_rate": 1.0,
-        "n_valid": 280,
-        "duplicate_fraction": 0.0071428571428571175,
-        "task": "classification",
-        "task_source": "auto: target has exactly two values",
-        "class_balance": {
-          "0": 220,
-          "1": 60
-        },
-        "sampled": false,
-        "messages": [
-          {
-            "level": "info",
-            "code": "task",
-            "message": "task = classification (auto: target has exactly two values).",
-            "remedy": "",
-            "dataset": "tdc_carcinogens_lagunin"
-          }
-        ]
-      },
       {
         "dataset": "tdc_skin_reaction",
         "n_rows": 404,
@@ -10047,162 +8899,6 @@
             "dataset": "tdc_solubility_aqsoldb"
           }
         ]
-      },
-      {
-        "dataset": "tdc_cyp2c9_veith",
-        "n_rows": 12092,
-        "n_missing": 0,
-        "n_parsed": 12092,
-        "n_unparseable": 0,
-        "parse_rate": 1.0,
-        "n_valid": 12092,
-        "duplicate_fraction": 0.0,
-        "task": "classification",
-        "task_source": "auto: target has exactly two values",
-        "class_balance": {
-          "0": 8047,
-          "1": 4045
-        },
-        "sampled": false,
-        "messages": [
-          {
-            "level": "info",
-            "code": "task",
-            "message": "task = classification (auto: target has exactly two values).",
-            "remedy": "",
-            "dataset": "tdc_cyp2c9_veith"
-          }
-        ]
-      },
-      {
-        "dataset": "tdc_cyp3a4_veith",
-        "n_rows": 12328,
-        "n_missing": 0,
-        "n_parsed": 12328,
-        "n_unparseable": 0,
-        "parse_rate": 1.0,
-        "n_valid": 12328,
-        "duplicate_fraction": 0.0,
-        "task": "classification",
-        "task_source": "auto: target has exactly two values",
-        "class_balance": {
-          "0": 7218,
-          "1": 5110
-        },
-        "sampled": false,
-        "messages": [
-          {
-            "level": "info",
-            "code": "task",
-            "message": "task = classification (auto: target has exactly two values).",
-            "remedy": "",
-            "dataset": "tdc_cyp3a4_veith"
-          }
-        ]
-      },
-      {
-        "dataset": "tdc_cyp1a2_veith",
-        "n_rows": 12579,
-        "n_missing": 0,
-        "n_parsed": 12579,
-        "n_unparseable": 0,
-        "parse_rate": 1.0,
-        "n_valid": 12579,
-        "duplicate_fraction": 0.0,
-        "task": "classification",
-        "task_source": "auto: target has exactly two values",
-        "class_balance": {
-          "0": 6750,
-          "1": 5829
-        },
-        "sampled": false,
-        "messages": [
-          {
-            "level": "info",
-            "code": "task",
-            "message": "task = classification (auto: target has exactly two values).",
-            "remedy": "",
-            "dataset": "tdc_cyp1a2_veith"
-          }
-        ]
-      },
-      {
-        "dataset": "tdc_cyp2c19_veith",
-        "n_rows": 12665,
-        "n_missing": 0,
-        "n_parsed": 12665,
-        "n_unparseable": 0,
-        "parse_rate": 1.0,
-        "n_valid": 12665,
-        "duplicate_fraction": 0.0,
-        "task": "classification",
-        "task_source": "auto: target has exactly two values",
-        "class_balance": {
-          "0": 6846,
-          "1": 5819
-        },
-        "sampled": false,
-        "messages": [
-          {
-            "level": "info",
-            "code": "task",
-            "message": "task = classification (auto: target has exactly two values).",
-            "remedy": "",
-            "dataset": "tdc_cyp2c19_veith"
-          }
-        ]
-      },
-      {
-        "dataset": "tdc_cyp2d6_veith",
-        "n_rows": 13130,
-        "n_missing": 0,
-        "n_parsed": 13130,
-        "n_unparseable": 0,
-        "parse_rate": 1.0,
-        "n_valid": 13130,
-        "duplicate_fraction": 0.0,
-        "task": "classification",
-        "task_source": "auto: target has exactly two values",
-        "class_balance": {
-          "0": 10616,
-          "1": 2514
-        },
-        "sampled": false,
-        "messages": [
-          {
-            "level": "info",
-            "code": "task",
-            "message": "task = classification (auto: target has exactly two values).",
-            "remedy": "",
-            "dataset": "tdc_cyp2d6_veith"
-          }
-        ]
-      },
-      {
-        "dataset": "tdc_herg_karim",
-        "n_rows": 13445,
-        "n_missing": 0,
-        "n_parsed": 13445,
-        "n_unparseable": 0,
-        "parse_rate": 1.0,
-        "n_valid": 13445,
-        "duplicate_fraction": 0.0,
-        "task": "classification",
-        "task_source": "auto: target has exactly two values",
-        "class_balance": {
-          "0": 6727,
-          "1": 6718
-        },
-        "sampled": false,
-        "messages": [
-          {
-            "level": "info",
-            "code": "task",
-            "message": "task = classification (auto: target has exactly two values).",
-            "remedy": "",
-            "dataset": "tdc_herg_karim"
-          }
-        ]
       }
     ],
     "backends": {
@@ -10257,174 +8953,6 @@
       }
     ],
     "plans": [
-      {
-        "dataset": "tdc_carcinogens_lagunin",
-        "n_rows": 280,
-        "task": "classification",
-        "models": [
-          {
-            "model": "LogisticRegression",
-            "family": "conventional_ml",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "SVC",
-            "family": "conventional_ml",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Random forest",
-            "family": "conventional_ml",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Extra trees",
-            "family": "conventional_ml",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "HistGradientBoosting",
-            "family": "conventional_ml",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Voting Classifier (KNN, SVM)",
-            "family": "conventional_ml",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "AdaBoost",
-            "family": "conventional_ml",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Tabular MLP",
-            "family": "conventional_ml",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "XGBoost",
-            "family": "gradient_boosting",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "LightGBM",
-            "family": "gradient_boosting",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "CatBoost",
-            "family": "gradient_boosting",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "MapLight CatBoost (Strict Parity)",
-            "family": "gradient_boosting",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "TabPFNClassifier",
-            "family": "deep_tabular",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "ChemML MLP (PyTorch)",
-            "family": "deep_tabular",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "ChemML MLP (TensorFlow)",
-            "family": "deep_tabular",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Chemprop v2 (D-MPNN, ensemble=3)",
-            "family": "graph_nn",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",
-            "family": "graph_nn",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Chemprop v2 (CMPNN, ensemble=3)",
-            "family": "graph_nn",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Chemprop v2 (AttentiveFP, ensemble=3)",
-            "family": "graph_nn",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",
-            "family": "graph_nn",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Uni-Mol V1",
-            "family": "pretrained_3d",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Uni-Mol V2 (84m)",
-            "family": "pretrained_3d",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "MapLight + GNN (CatBoost, Strict Parity)",
-            "family": "maplight_gnn",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "CFA (Combinatorial Fusion)",
-            "family": "fusion",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Ensemble (OOF Stacking (RidgeCV))",
-            "family": "ensemble",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Ensemble (Weighted average (inverse train RMSE))",
-            "family": "ensemble",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          }
-        ],
-        "estimated_seconds": {
-          "features": 10.600000000000001,
-          "feature_selection": 166.36188111928678
-        },
-        "estimated_total_seconds": 176.96188111928677
-      },
       {
         "dataset": "tdc_skin_reaction",
         "n_rows": 404,
@@ -10505,8 +9033,8 @@
           {
             "model": "TabPFNClassifier",
             "family": "deep_tabular",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
+            "status": "planned",
+            "reason": ""
           },
           {
             "model": "ChemML MLP (PyTorch)",
@@ -10575,13 +9103,7 @@
             "reason": "not listed in models.only_models"
           },
           {
-            "model": "Ensemble (OOF Stacking (RidgeCV))",
-            "family": "ensemble",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Ensemble (Weighted average (inverse train RMSE))",
+            "model": "Ensemble",
             "family": "ensemble",
             "status": "skipped",
             "reason": "not listed in models.only_models"
@@ -10589,9 +9111,10 @@
         ],
         "estimated_seconds": {
           "features": 13.08,
-          "feature_selection": 260.4792242769973
+          "feature_selection": 260.4792242769973,
+          "deep_tabular": 30.05457943925233
         },
-        "estimated_total_seconds": 273.55922427699727
+        "estimated_total_seconds": 303.6138037162496
       },
       {
         "dataset": "tdc_dili",
@@ -10673,8 +9196,8 @@
           {
             "model": "TabPFNClassifier",
             "family": "deep_tabular",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
+            "status": "planned",
+            "reason": ""
           },
           {
             "model": "ChemML MLP (PyTorch)",
@@ -10743,13 +9266,7 @@
             "reason": "not listed in models.only_models"
           },
           {
-            "model": "Ensemble (OOF Stacking (RidgeCV))",
-            "family": "ensemble",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Ensemble (Weighted average (inverse train RMSE))",
+            "model": "Ensemble",
             "family": "ensemble",
             "status": "skipped",
             "reason": "not listed in models.only_models"
@@ -10757,9 +9274,10 @@
         ],
         "estimated_seconds": {
           "features": 14.5,
-          "feature_selection": 317.85928771588084
+          "feature_selection": 317.85928771588084,
+          "deep_tabular": 35.336448598130836
         },
-        "estimated_total_seconds": 332.35928771588084
+        "estimated_total_seconds": 367.6957363140117
       },
       {
         "dataset": "chemml_cep_homo",
@@ -10847,8 +9365,8 @@
           {
             "model": "TabPFNRegressor",
             "family": "deep_tabular",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
+            "status": "planned",
+            "reason": ""
           },
           {
             "model": "ChemML MLP (PyTorch)",
@@ -10917,13 +9435,7 @@
             "reason": "not listed in models.only_models"
           },
           {
-            "model": "Ensemble (OOF Stacking (RidgeCV))",
-            "family": "ensemble",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Ensemble (Weighted average (inverse train RMSE))",
+            "model": "Ensemble",
             "family": "ensemble",
             "status": "skipped",
             "reason": "not listed in models.only_models"
@@ -10931,9 +9443,10 @@
         ],
         "estimated_seconds": {
           "features": 15.0,
-          "feature_selection": 338.4725780968425
+          "feature_selection": 338.4725780968425,
+          "deep_tabular": 37.196261682242984
         },
-        "estimated_total_seconds": 353.4725780968425
+        "estimated_total_seconds": 390.6688397790855
       },
       {
         "dataset": "chemml_organic_density",
@@ -11021,8 +9534,8 @@
           {
             "model": "TabPFNRegressor",
             "family": "deep_tabular",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
+            "status": "planned",
+            "reason": ""
           },
           {
             "model": "ChemML MLP (PyTorch)",
@@ -11091,13 +9604,7 @@
             "reason": "not listed in models.only_models"
           },
           {
-            "model": "Ensemble (OOF Stacking (RidgeCV))",
-            "family": "ensemble",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Ensemble (Weighted average (inverse train RMSE))",
+            "model": "Ensemble",
             "family": "ensemble",
             "status": "skipped",
             "reason": "not listed in models.only_models"
@@ -11105,9 +9612,10 @@
         ],
         "estimated_seconds": {
           "features": 15.0,
-          "feature_selection": 338.4725780968425
+          "feature_selection": 338.4725780968425,
+          "deep_tabular": 37.196261682242984
         },
-        "estimated_total_seconds": 353.4725780968425
+        "estimated_total_seconds": 390.6688397790855
       },
       {
         "dataset": "tdc_hia_hou",
@@ -11189,8 +9697,8 @@
           {
             "model": "TabPFNClassifier",
             "family": "deep_tabular",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
+            "status": "planned",
+            "reason": ""
           },
           {
             "model": "ChemML MLP (PyTorch)",
@@ -11259,13 +9767,7 @@
             "reason": "not listed in models.only_models"
           },
           {
-            "model": "Ensemble (OOF Stacking (RidgeCV))",
-            "family": "ensemble",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Ensemble (Weighted average (inverse train RMSE))",
+            "model": "Ensemble",
             "family": "ensemble",
             "status": "skipped",
             "reason": "not listed in models.only_models"
@@ -11273,9 +9775,10 @@
         ],
         "estimated_seconds": {
           "features": 16.560000000000002,
-          "feature_selection": 403.81869415436387
+          "feature_selection": 403.81869415436387,
+          "deep_tabular": 42.998878504672895
         },
-        "estimated_total_seconds": 420.37869415436387
+        "estimated_total_seconds": 463.3775726590368
       },
       {
         "dataset": "tdc_bioavailability_ma",
@@ -11357,8 +9860,8 @@
           {
             "model": "TabPFNClassifier",
             "family": "deep_tabular",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
+            "status": "planned",
+            "reason": ""
           },
           {
             "model": "ChemML MLP (PyTorch)",
@@ -11427,13 +9930,7 @@
             "reason": "not listed in models.only_models"
           },
           {
-            "model": "Ensemble (OOF Stacking (RidgeCV))",
-            "family": "ensemble",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Ensemble (Weighted average (inverse train RMSE))",
+            "model": "Ensemble",
             "family": "ensemble",
             "status": "skipped",
             "reason": "not listed in models.only_models"
@@ -11441,9 +9938,10 @@
         ],
         "estimated_seconds": {
           "features": 17.8,
-          "feature_selection": 457.9896907050917
+          "feature_selection": 457.9896907050917,
+          "deep_tabular": 47.61121495327102
         },
-        "estimated_total_seconds": 475.7896907050917
+        "estimated_total_seconds": 523.4009056583627
       },
       {
         "dataset": "freesolv_sampl",
@@ -11531,8 +10029,8 @@
           {
             "model": "TabPFNRegressor",
             "family": "deep_tabular",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
+            "status": "planned",
+            "reason": ""
           },
           {
             "model": "ChemML MLP (PyTorch)",
@@ -11601,13 +10099,7 @@
             "reason": "not listed in models.only_models"
           },
           {
-            "model": "Ensemble (OOF Stacking (RidgeCV))",
-            "family": "ensemble",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Ensemble (Weighted average (inverse train RMSE))",
+            "model": "Ensemble",
             "family": "ensemble",
             "status": "skipped",
             "reason": "not listed in models.only_models"
@@ -11615,9 +10107,10 @@
         ],
         "estimated_seconds": {
           "features": 17.84,
-          "feature_selection": 460.1822050502995
+          "feature_selection": 460.1822050502995,
+          "deep_tabular": 47.76
         },
-        "estimated_total_seconds": 478.0222050502995
+        "estimated_total_seconds": 525.7822050502995
       },
       {
         "dataset": "tdc_hydrationfreeenergy_freesolv",
@@ -11705,8 +10198,8 @@
           {
             "model": "TabPFNRegressor",
             "family": "deep_tabular",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
+            "status": "planned",
+            "reason": ""
           },
           {
             "model": "ChemML MLP (PyTorch)",
@@ -11775,13 +10268,7 @@
             "reason": "not listed in models.only_models"
           },
           {
-            "model": "Ensemble (OOF Stacking (RidgeCV))",
-            "family": "ensemble",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Ensemble (Weighted average (inverse train RMSE))",
+            "model": "Ensemble",
             "family": "ensemble",
             "status": "skipped",
             "reason": "not listed in models.only_models"
@@ -11789,9 +10276,10 @@
         ],
         "estimated_seconds": {
           "features": 17.84,
-          "feature_selection": 460.1822050502995
+          "feature_selection": 460.1822050502995,
+          "deep_tabular": 47.76
         },
-        "estimated_total_seconds": 478.0222050502995
+        "estimated_total_seconds": 525.7822050502995
       },
       {
         "dataset": "tdc_herg",
@@ -11873,8 +10361,8 @@
           {
             "model": "TabPFNClassifier",
             "family": "deep_tabular",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
+            "status": "planned",
+            "reason": ""
           },
           {
             "model": "ChemML MLP (PyTorch)",
@@ -11943,13 +10431,7 @@
             "reason": "not listed in models.only_models"
           },
           {
-            "model": "Ensemble (OOF Stacking (RidgeCV))",
-            "family": "ensemble",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Ensemble (Weighted average (inverse train RMSE))",
+            "model": "Ensemble",
             "family": "ensemble",
             "status": "skipped",
             "reason": "not listed in models.only_models"
@@ -11957,9 +10439,10 @@
         ],
         "estimated_seconds": {
           "features": 18.1,
-          "feature_selection": 471.17346736468977
+          "feature_selection": 471.17346736468977,
+          "deep_tabular": 48.72710280373832
         },
-        "estimated_total_seconds": 489.2734673646898
+        "estimated_total_seconds": 538.0005701684281
       },
       {
         "dataset": "tdc_cyp2d6_substrate_carbonmangels",
@@ -12041,8 +10524,8 @@
           {
             "model": "TabPFNClassifier",
             "family": "deep_tabular",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
+            "status": "planned",
+            "reason": ""
           },
           {
             "model": "ChemML MLP (PyTorch)",
@@ -12111,13 +10594,7 @@
             "reason": "not listed in models.only_models"
           },
           {
-            "model": "Ensemble (OOF Stacking (RidgeCV))",
-            "family": "ensemble",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Ensemble (Weighted average (inverse train RMSE))",
+            "model": "Ensemble",
             "family": "ensemble",
             "status": "skipped",
             "reason": "not listed in models.only_models"
@@ -12125,9 +10602,10 @@
         ],
         "estimated_seconds": {
           "features": 18.34,
-          "feature_selection": 482.21202900953335
+          "feature_selection": 482.21202900953335,
+          "deep_tabular": 49.61981308411215
         },
-        "estimated_total_seconds": 500.5520290095333
+        "estimated_total_seconds": 550.1718420936455
       },
       {
         "dataset": "tdc_half_life_obach",
@@ -12215,8 +10693,8 @@
           {
             "model": "TabPFNRegressor",
             "family": "deep_tabular",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
+            "status": "planned",
+            "reason": ""
           },
           {
             "model": "ChemML MLP (PyTorch)",
@@ -12285,13 +10763,7 @@
             "reason": "not listed in models.only_models"
           },
           {
-            "model": "Ensemble (OOF Stacking (RidgeCV))",
-            "family": "ensemble",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Ensemble (Weighted average (inverse train RMSE))",
+            "model": "Ensemble",
             "family": "ensemble",
             "status": "skipped",
             "reason": "not listed in models.only_models"
@@ -12299,9 +10771,10 @@
         ],
         "estimated_seconds": {
           "features": 18.34,
-          "feature_selection": 482.21202900953335
+          "feature_selection": 482.21202900953335,
+          "deep_tabular": 49.61981308411215
         },
-        "estimated_total_seconds": 500.5520290095333
+        "estimated_total_seconds": 550.1718420936455
       },
       {
         "dataset": "tdc_cyp2c9_substrate_carbonmangels",
@@ -12383,8 +10856,8 @@
           {
             "model": "TabPFNClassifier",
             "family": "deep_tabular",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
+            "status": "planned",
+            "reason": ""
           },
           {
             "model": "ChemML MLP (PyTorch)",
@@ -12453,13 +10926,7 @@
             "reason": "not listed in models.only_models"
           },
           {
-            "model": "Ensemble (OOF Stacking (RidgeCV))",
-            "family": "ensemble",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Ensemble (Weighted average (inverse train RMSE))",
+            "model": "Ensemble",
             "family": "ensemble",
             "status": "skipped",
             "reason": "not listed in models.only_models"
@@ -12467,9 +10934,10 @@
         ],
         "estimated_seconds": {
           "features": 18.380000000000003,
-          "feature_selection": 483.31845995084143
+          "feature_selection": 483.31845995084143,
+          "deep_tabular": 49.76859813084112
         },
-        "estimated_total_seconds": 501.6984599508414
+        "estimated_total_seconds": 551.4670580816826
       },
       {
         "dataset": "tdc_cyp3a4_substrate_carbonmangels",
@@ -12551,8 +11019,8 @@
           {
             "model": "TabPFNClassifier",
             "family": "deep_tabular",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
+            "status": "planned",
+            "reason": ""
           },
           {
             "model": "ChemML MLP (PyTorch)",
@@ -12621,13 +11089,7 @@
             "reason": "not listed in models.only_models"
           },
           {
-            "model": "Ensemble (OOF Stacking (RidgeCV))",
-            "family": "ensemble",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Ensemble (Weighted average (inverse train RMSE))",
+            "model": "Ensemble",
             "family": "ensemble",
             "status": "skipped",
             "reason": "not listed in models.only_models"
@@ -12635,9 +11097,10 @@
         ],
         "estimated_seconds": {
           "features": 18.4,
-          "feature_selection": 484.42535631167596
+          "feature_selection": 484.42535631167596,
+          "deep_tabular": 49.84299065420561
         },
-        "estimated_total_seconds": 502.82535631167593
+        "estimated_total_seconds": 552.6683469658815
       },
       {
         "dataset": "polaris_adme_fang_rppb_1",
@@ -12725,8 +11188,8 @@
           {
             "model": "TabPFNRegressor",
             "family": "deep_tabular",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
+            "status": "planned",
+            "reason": ""
           },
           {
             "model": "ChemML MLP (PyTorch)",
@@ -12795,13 +11258,7 @@
             "reason": "not listed in models.only_models"
           },
           {
-            "model": "Ensemble (OOF Stacking (RidgeCV))",
-            "family": "ensemble",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Ensemble (Weighted average (inverse train RMSE))",
+            "model": "Ensemble",
             "family": "ensemble",
             "status": "skipped",
             "reason": "not listed in models.only_models"
@@ -12809,9 +11266,10 @@
         ],
         "estimated_seconds": {
           "features": 22.7,
-          "feature_selection": 681.2252558193405
+          "feature_selection": 681.2252558193405,
+          "deep_tabular": 65.83738317757008
         },
-        "estimated_total_seconds": 703.9252558193406
+        "estimated_total_seconds": 769.7626389969107
       },
       {
         "dataset": "tdc_caco2_wang",
@@ -12899,8 +11357,8 @@
           {
             "model": "TabPFNRegressor",
             "family": "deep_tabular",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
+            "status": "planned",
+            "reason": ""
           },
           {
             "model": "ChemML MLP (PyTorch)",
@@ -12969,13 +11427,7 @@
             "reason": "not listed in models.only_models"
           },
           {
-            "model": "Ensemble (OOF Stacking (RidgeCV))",
-            "family": "ensemble",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Ensemble (Weighted average (inverse train RMSE))",
+            "model": "Ensemble",
             "family": "ensemble",
             "status": "skipped",
             "reason": "not listed in models.only_models"
@@ -12983,9 +11435,10 @@
         ],
         "estimated_seconds": {
           "features": 23.2,
-          "feature_selection": 704.8731043987848
+          "feature_selection": 704.8731043987848,
+          "deep_tabular": 67.69719626168222
         },
-        "estimated_total_seconds": 728.0731043987848
+        "estimated_total_seconds": 795.770300660467
       },
       {
         "dataset": "tdc_clearance_microsome_az",
@@ -13073,8 +11526,8 @@
           {
             "model": "TabPFNRegressor",
             "family": "deep_tabular",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
+            "status": "planned",
+            "reason": ""
           },
           {
             "model": "ChemML MLP (PyTorch)",
@@ -13143,13 +11596,7 @@
             "reason": "not listed in models.only_models"
           },
           {
-            "model": "Ensemble (OOF Stacking (RidgeCV))",
-            "family": "ensemble",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Ensemble (Weighted average (inverse train RMSE))",
+            "model": "Ensemble",
             "family": "ensemble",
             "status": "skipped",
             "reason": "not listed in models.only_models"
@@ -13157,9 +11604,10 @@
         ],
         "estimated_seconds": {
           "features": 27.04,
-          "feature_selection": 891.6594502201842
+          "feature_selection": 891.6594502201842,
+          "deep_tabular": 81.98056074766355
         },
-        "estimated_total_seconds": 918.6994502201842
+        "estimated_total_seconds": 1000.6800109678477
       },
       {
         "dataset": "esol_delaney",
@@ -13247,8 +11695,8 @@
           {
             "model": "TabPFNRegressor",
             "family": "deep_tabular",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
+            "status": "planned",
+            "reason": ""
           },
           {
             "model": "ChemML MLP (PyTorch)",
@@ -13317,13 +11765,7 @@
             "reason": "not listed in models.only_models"
           },
           {
-            "model": "Ensemble (OOF Stacking (RidgeCV))",
-            "family": "ensemble",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Ensemble (Weighted average (inverse train RMSE))",
+            "model": "Ensemble",
             "family": "ensemble",
             "status": "skipped",
             "reason": "not listed in models.only_models"
@@ -13331,9 +11773,10 @@
         ],
         "estimated_seconds": {
           "features": 27.56,
-          "feature_selection": 916.4905863165446
+          "feature_selection": 916.4905863165446,
+          "deep_tabular": 83.91476635514019
         },
-        "estimated_total_seconds": 944.0505863165446
+        "estimated_total_seconds": 1027.9653526716847
       },
       {
         "dataset": "tdc_vdss_lombardo",
@@ -13421,8 +11864,8 @@
           {
             "model": "TabPFNRegressor",
             "family": "deep_tabular",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
+            "status": "planned",
+            "reason": ""
           },
           {
             "model": "ChemML MLP (PyTorch)",
@@ -13491,13 +11934,7 @@
             "reason": "not listed in models.only_models"
           },
           {
-            "model": "Ensemble (OOF Stacking (RidgeCV))",
-            "family": "ensemble",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Ensemble (Weighted average (inverse train RMSE))",
+            "model": "Ensemble",
             "family": "ensemble",
             "status": "skipped",
             "reason": "not listed in models.only_models"
@@ -13505,9 +11942,10 @@
         ],
         "estimated_seconds": {
           "features": 27.6,
-          "feature_selection": 918.9805660524271
+          "feature_selection": 918.9805660524271,
+          "deep_tabular": 84.06355140186915
         },
-        "estimated_total_seconds": 946.5805660524271
+        "estimated_total_seconds": 1030.6441174542963
       },
       {
         "dataset": "tdc_clearance_hepatocyte_az",
@@ -13595,8 +12033,8 @@
           {
             "model": "TabPFNRegressor",
             "family": "deep_tabular",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
+            "status": "planned",
+            "reason": ""
           },
           {
             "model": "ChemML MLP (PyTorch)",
@@ -13665,13 +12103,7 @@
             "reason": "not listed in models.only_models"
           },
           {
-            "model": "Ensemble (OOF Stacking (RidgeCV))",
-            "family": "ensemble",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Ensemble (Weighted average (inverse train RMSE))",
+            "model": "Ensemble",
             "family": "ensemble",
             "status": "skipped",
             "reason": "not listed in models.only_models"
@@ -13679,9 +12111,10 @@
         ],
         "estimated_seconds": {
           "features": 29.26,
-          "feature_selection": 1001.8330954812587
+          "feature_selection": 1001.8330954812587,
+          "deep_tabular": 90.23813084112149
         },
-        "estimated_total_seconds": 1031.0930954812588
+        "estimated_total_seconds": 1121.3312263223804
       },
       {
         "dataset": "tdc_pgp_broccatelli",
@@ -13763,8 +12196,8 @@
           {
             "model": "TabPFNClassifier",
             "family": "deep_tabular",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
+            "status": "planned",
+            "reason": ""
           },
           {
             "model": "ChemML MLP (PyTorch)",
@@ -13833,13 +12266,7 @@
             "reason": "not listed in models.only_models"
           },
           {
-            "model": "Ensemble (OOF Stacking (RidgeCV))",
-            "family": "ensemble",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Ensemble (Weighted average (inverse train RMSE))",
+            "model": "Ensemble",
             "family": "ensemble",
             "status": "skipped",
             "reason": "not listed in models.only_models"
@@ -13847,9 +12274,10 @@
         ],
         "estimated_seconds": {
           "features": 29.36,
-          "feature_selection": 1006.8962471401176
+          "feature_selection": 1006.8962471401176,
+          "deep_tabular": 90.61009345794392
         },
-        "estimated_total_seconds": 1036.2562471401175
+        "estimated_total_seconds": 1126.8663405980615
       },
       {
         "dataset": "tdc_clintox",
@@ -13931,8 +12359,8 @@
           {
             "model": "TabPFNClassifier",
             "family": "deep_tabular",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
+            "status": "planned",
+            "reason": ""
           },
           {
             "model": "ChemML MLP (PyTorch)",
@@ -14001,13 +12429,7 @@
             "reason": "not listed in models.only_models"
           },
           {
-            "model": "Ensemble (OOF Stacking (RidgeCV))",
-            "family": "ensemble",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Ensemble (Weighted average (inverse train RMSE))",
+            "model": "Ensemble",
             "family": "ensemble",
             "status": "skipped",
             "reason": "not listed in models.only_models"
@@ -14015,9 +12437,10 @@
         ],
         "estimated_seconds": {
           "features": 34.56,
-          "feature_selection": 1276.310695859585
+          "feature_selection": 1276.310695859585,
+          "deep_tabular": 109.95214953271027
         },
-        "estimated_total_seconds": 1310.8706958595849
+        "estimated_total_seconds": 1420.8228453922952
       },
       {
         "dataset": "tdc_toxcast",
@@ -14099,8 +12522,8 @@
           {
             "model": "TabPFNClassifier",
             "family": "deep_tabular",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
+            "status": "planned",
+            "reason": ""
           },
           {
             "model": "ChemML MLP (PyTorch)",
@@ -14169,13 +12592,7 @@
             "reason": "not listed in models.only_models"
           },
           {
-            "model": "Ensemble (OOF Stacking (RidgeCV))",
-            "family": "ensemble",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Ensemble (Weighted average (inverse train RMSE))",
+            "model": "Ensemble",
             "family": "ensemble",
             "status": "skipped",
             "reason": "not listed in models.only_models"
@@ -14183,9 +12600,10 @@
         ],
         "estimated_seconds": {
           "features": 39.62,
-          "feature_selection": 1549.801127156515
+          "feature_selection": 1549.801127156515,
+          "deep_tabular": 128.77345794392522
         },
-        "estimated_total_seconds": 1589.4211271565148
+        "estimated_total_seconds": 1718.19458510044
       },
       {
         "dataset": "polaris_adme_fang_hppb_1",
@@ -14273,8 +12691,8 @@
           {
             "model": "TabPFNRegressor",
             "family": "deep_tabular",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
+            "status": "planned",
+            "reason": ""
           },
           {
             "model": "ChemML MLP (PyTorch)",
@@ -14343,13 +12761,7 @@
             "reason": "not listed in models.only_models"
           },
           {
-            "model": "Ensemble (OOF Stacking (RidgeCV))",
-            "family": "ensemble",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Ensemble (Weighted average (inverse train RMSE))",
+            "model": "Ensemble",
             "family": "ensemble",
             "status": "skipped",
             "reason": "not listed in models.only_models"
@@ -14357,9 +12769,10 @@
         ],
         "estimated_seconds": {
           "features": 41.160000000000004,
-          "feature_selection": 1633.8273389841072
+          "feature_selection": 1633.8273389841072,
+          "deep_tabular": 134.50168224299065
         },
-        "estimated_total_seconds": 1674.9873389841073
+        "estimated_total_seconds": 1809.489021227098
       },
       {
         "dataset": "poduam_pod_nc_std",
@@ -14447,8 +12860,8 @@
           {
             "model": "TabPFNRegressor",
             "family": "deep_tabular",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
+            "status": "planned",
+            "reason": ""
           },
           {
             "model": "ChemML MLP (PyTorch)",
@@ -14517,13 +12930,7 @@
             "reason": "not listed in models.only_models"
           },
           {
-            "model": "Ensemble (OOF Stacking (RidgeCV))",
-            "family": "ensemble",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Ensemble (Weighted average (inverse train RMSE))",
+            "model": "Ensemble",
             "family": "ensemble",
             "status": "skipped",
             "reason": "not listed in models.only_models"
@@ -14531,9 +12938,10 @@
         ],
         "estimated_seconds": {
           "features": 41.84,
-          "feature_selection": 1672.6667246572374
+          "feature_selection": 1672.6667246572374,
+          "deep_tabular": 137.03102803738318
         },
-        "estimated_total_seconds": 1714.5067246572373
+        "estimated_total_seconds": 1851.5377526946204
       },
       {
         "dataset": "tdc_bbb_martins",
@@ -14615,8 +13023,8 @@
           {
             "model": "TabPFNClassifier",
             "family": "deep_tabular",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
+            "status": "planned",
+            "reason": ""
           },
           {
             "model": "ChemML MLP (PyTorch)",
@@ -14685,13 +13093,7 @@
             "reason": "not listed in models.only_models"
           },
           {
-            "model": "Ensemble (OOF Stacking (RidgeCV))",
-            "family": "ensemble",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Ensemble (Weighted average (inverse train RMSE))",
+            "model": "Ensemble",
             "family": "ensemble",
             "status": "skipped",
             "reason": "not listed in models.only_models"
@@ -14699,9 +13101,10 @@
         ],
         "estimated_seconds": {
           "features": 45.6,
-          "feature_selection": 1883.5097839825821
+          "feature_selection": 1883.5097839825821,
+          "deep_tabular": 151.0168224299065
         },
-        "estimated_total_seconds": 1929.109783982582
+        "estimated_total_seconds": 2080.1266064124884
       },
       {
         "dataset": "tdc_pampa_ncats",
@@ -14783,8 +13186,8 @@
           {
             "model": "TabPFNClassifier",
             "family": "deep_tabular",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
+            "status": "planned",
+            "reason": ""
           },
           {
             "model": "ChemML MLP (PyTorch)",
@@ -14853,13 +13256,7 @@
             "reason": "not listed in models.only_models"
           },
           {
-            "model": "Ensemble (OOF Stacking (RidgeCV))",
-            "family": "ensemble",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Ensemble (Weighted average (inverse train RMSE))",
+            "model": "Ensemble",
             "family": "ensemble",
             "status": "skipped",
             "reason": "not listed in models.only_models"
@@ -14867,9 +13264,10 @@
         ],
         "estimated_seconds": {
           "features": 45.68,
-          "feature_selection": 1887.772922086351
+          "feature_selection": 1887.772922086351,
+          "deep_tabular": 151.3143925233645
         },
-        "estimated_total_seconds": 1933.452922086351
+        "estimated_total_seconds": 2084.7673146097154
       },
       {
         "dataset": "polaris_adme_fang_solu_1",
@@ -14957,8 +13355,8 @@
           {
             "model": "TabPFNRegressor",
             "family": "deep_tabular",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
+            "status": "planned",
+            "reason": ""
           },
           {
             "model": "ChemML MLP (PyTorch)",
@@ -15027,13 +13425,7 @@
             "reason": "not listed in models.only_models"
           },
           {
-            "model": "Ensemble (OOF Stacking (RidgeCV))",
-            "family": "ensemble",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Ensemble (Weighted average (inverse train RMSE))",
+            "model": "Ensemble",
             "family": "ensemble",
             "status": "skipped",
             "reason": "not listed in models.only_models"
@@ -15041,9 +13433,10 @@
         ],
         "estimated_seconds": {
           "features": 48.46,
-          "feature_selection": 2046.731958365919
+          "feature_selection": 2046.731958365919,
+          "deep_tabular": 161.65495327102803
         },
-        "estimated_total_seconds": 2095.1919583659187
+        "estimated_total_seconds": 2256.846911636947
       },
       {
         "dataset": "poduam_pod_rd_std",
@@ -15131,8 +13524,8 @@
           {
             "model": "TabPFNRegressor",
             "family": "deep_tabular",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
+            "status": "planned",
+            "reason": ""
           },
           {
             "model": "ChemML MLP (PyTorch)",
@@ -15201,13 +13594,7 @@
             "reason": "not listed in models.only_models"
           },
           {
-            "model": "Ensemble (OOF Stacking (RidgeCV))",
-            "family": "ensemble",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Ensemble (Weighted average (inverse train RMSE))",
+            "model": "Ensemble",
             "family": "ensemble",
             "status": "skipped",
             "reason": "not listed in models.only_models"
@@ -15215,9 +13602,10 @@
         ],
         "estimated_seconds": {
           "features": 52.1,
-          "feature_selection": 2259.3010315434813
+          "feature_selection": 2259.3010315434813,
+          "deep_tabular": 175.19439252336448
         },
-        "estimated_total_seconds": 2311.401031543481
+        "estimated_total_seconds": 2486.5954240668457
       },
       {
         "dataset": "polaris_adme_fang_perm_1",
@@ -15305,8 +13693,8 @@
           {
             "model": "TabPFNRegressor",
             "family": "deep_tabular",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
+            "status": "planned",
+            "reason": ""
           },
           {
             "model": "ChemML MLP (PyTorch)",
@@ -15375,13 +13763,7 @@
             "reason": "not listed in models.only_models"
           },
           {
-            "model": "Ensemble (OOF Stacking (RidgeCV))",
-            "family": "ensemble",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Ensemble (Weighted average (inverse train RMSE))",
+            "model": "Ensemble",
             "family": "ensemble",
             "status": "skipped",
             "reason": "not listed in models.only_models"
@@ -15389,9 +13771,10 @@
         ],
         "estimated_seconds": {
           "features": 57.84,
-          "feature_selection": 2601.678357036165
+          "feature_selection": 2601.678357036165,
+          "deep_tabular": 196.54504672897195
         },
-        "estimated_total_seconds": 2659.518357036165
+        "estimated_total_seconds": 2856.063403765137
       },
       {
         "dataset": "tdc_ppbr_az",
@@ -15479,8 +13862,8 @@
           {
             "model": "TabPFNRegressor",
             "family": "deep_tabular",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
+            "status": "planned",
+            "reason": ""
           },
           {
             "model": "ChemML MLP (PyTorch)",
@@ -15549,13 +13932,7 @@
             "reason": "not listed in models.only_models"
           },
           {
-            "model": "Ensemble (OOF Stacking (RidgeCV))",
-            "family": "ensemble",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Ensemble (Weighted average (inverse train RMSE))",
+            "model": "Ensemble",
             "family": "ensemble",
             "status": "skipped",
             "reason": "not listed in models.only_models"
@@ -15563,9 +13940,10 @@
         ],
         "estimated_seconds": {
           "features": 60.800000000000004,
-          "feature_selection": 2780.6759652596575
+          "feature_selection": 2780.6759652596575,
+          "deep_tabular": 207.55514018691588
         },
-        "estimated_total_seconds": 2841.4759652596576
+        "estimated_total_seconds": 3049.0311054465737
       },
       {
         "dataset": "polaris_adme_fang_rclint_1",
@@ -15653,8 +14031,8 @@
           {
             "model": "TabPFNRegressor",
             "family": "deep_tabular",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
+            "status": "planned",
+            "reason": ""
           },
           {
             "model": "ChemML MLP (PyTorch)",
@@ -15723,13 +14101,7 @@
             "reason": "not listed in models.only_models"
           },
           {
-            "model": "Ensemble (OOF Stacking (RidgeCV))",
-            "family": "ensemble",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Ensemble (Weighted average (inverse train RMSE))",
+            "model": "Ensemble",
             "family": "ensemble",
             "status": "skipped",
             "reason": "not listed in models.only_models"
@@ -15737,9 +14109,10 @@
         ],
         "estimated_seconds": {
           "features": 66.08,
-          "feature_selection": 3106.034297858973
+          "feature_selection": 3106.034297858973,
+          "deep_tabular": 227.1947663551402
         },
-        "estimated_total_seconds": 3172.114297858973
+        "estimated_total_seconds": 3399.309064214113
       },
       {
         "dataset": "lipophilicity",
@@ -15827,8 +14200,8 @@
           {
             "model": "TabPFNRegressor",
             "family": "deep_tabular",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
+            "status": "planned",
+            "reason": ""
           },
           {
             "model": "ChemML MLP (PyTorch)",
@@ -15897,13 +14270,7 @@
             "reason": "not listed in models.only_models"
           },
           {
-            "model": "Ensemble (OOF Stacking (RidgeCV))",
-            "family": "ensemble",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Ensemble (Weighted average (inverse train RMSE))",
+            "model": "Ensemble",
             "family": "ensemble",
             "status": "skipped",
             "reason": "not listed in models.only_models"
@@ -15911,9 +14278,10 @@
         ],
         "estimated_seconds": {
           "features": 89.0,
-          "feature_selection": 4589.50254269112
+          "feature_selection": 4589.50254269112,
+          "deep_tabular": 312.44859813084105
         },
-        "estimated_total_seconds": 4678.50254269112
+        "estimated_total_seconds": 4990.9511408219605
       },
       {
         "dataset": "tdc_lipophilicity_astrazeneca",
@@ -16001,8 +14369,8 @@
           {
             "model": "TabPFNRegressor",
             "family": "deep_tabular",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
+            "status": "planned",
+            "reason": ""
           },
           {
             "model": "ChemML MLP (PyTorch)",
@@ -16071,13 +14439,7 @@
             "reason": "not listed in models.only_models"
           },
           {
-            "model": "Ensemble (OOF Stacking (RidgeCV))",
-            "family": "ensemble",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Ensemble (Weighted average (inverse train RMSE))",
+            "model": "Ensemble",
             "family": "ensemble",
             "status": "skipped",
             "reason": "not listed in models.only_models"
@@ -16085,9 +14447,10 @@
         ],
         "estimated_seconds": {
           "features": 89.0,
-          "feature_selection": 4589.50254269112
+          "feature_selection": 4589.50254269112,
+          "deep_tabular": 312.44859813084105
         },
-        "estimated_total_seconds": 4678.50254269112
+        "estimated_total_seconds": 4990.9511408219605
       },
       {
         "dataset": "tdc_tox21",
@@ -16169,8 +14532,8 @@
           {
             "model": "TabPFNClassifier",
             "family": "deep_tabular",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
+            "status": "planned",
+            "reason": ""
           },
           {
             "model": "ChemML MLP (PyTorch)",
@@ -16239,13 +14602,7 @@
             "reason": "not listed in models.only_models"
           },
           {
-            "model": "Ensemble (OOF Stacking (RidgeCV))",
-            "family": "ensemble",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Ensemble (Weighted average (inverse train RMSE))",
+            "model": "Ensemble",
             "family": "ensemble",
             "status": "skipped",
             "reason": "not listed in models.only_models"
@@ -16253,9 +14610,10 @@
         ],
         "estimated_seconds": {
           "features": 150.16,
-          "feature_selection": 7200.0
+          "feature_selection": 7200.0,
+          "deep_tabular": 539.9409345794393
         },
-        "estimated_total_seconds": 7350.16
+        "estimated_total_seconds": 7890.100934579439
       },
       {
         "dataset": "tdc_ames",
@@ -16337,8 +14695,8 @@
           {
             "model": "TabPFNClassifier",
             "family": "deep_tabular",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
+            "status": "planned",
+            "reason": ""
           },
           {
             "model": "ChemML MLP (PyTorch)",
@@ -16407,13 +14765,7 @@
             "reason": "not listed in models.only_models"
           },
           {
-            "model": "Ensemble (OOF Stacking (RidgeCV))",
-            "family": "ensemble",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Ensemble (Weighted average (inverse train RMSE))",
+            "model": "Ensemble",
             "family": "ensemble",
             "status": "skipped",
             "reason": "not listed in models.only_models"
@@ -16421,9 +14773,10 @@
         ],
         "estimated_seconds": {
           "features": 150.56,
-          "feature_selection": 7200.0
+          "feature_selection": 7200.0,
+          "deep_tabular": 541.428785046729
         },
-        "estimated_total_seconds": 7350.56
+        "estimated_total_seconds": 7891.988785046729
       },
       {
         "dataset": "tdc_ld50_zhu",
@@ -16511,8 +14864,8 @@
           {
             "model": "TabPFNRegressor",
             "family": "deep_tabular",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
+            "status": "planned",
+            "reason": ""
           },
           {
             "model": "ChemML MLP (PyTorch)",
@@ -16581,13 +14934,7 @@
             "reason": "not listed in models.only_models"
           },
           {
-            "model": "Ensemble (OOF Stacking (RidgeCV))",
-            "family": "ensemble",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Ensemble (Weighted average (inverse train RMSE))",
+            "model": "Ensemble",
             "family": "ensemble",
             "status": "skipped",
             "reason": "not listed in models.only_models"
@@ -16595,9 +14942,10 @@
         ],
         "estimated_seconds": {
           "features": 152.70000000000002,
-          "feature_selection": 7200.0
+          "feature_selection": 7200.0,
+          "deep_tabular": 549.3887850467289
         },
-        "estimated_total_seconds": 7352.7
+        "estimated_total_seconds": 7902.088785046729
       },
       {
         "dataset": "tdc_solubility_aqsoldb",
@@ -16685,8 +15033,8 @@
           {
             "model": "TabPFNRegressor",
             "family": "deep_tabular",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
+            "status": "planned",
+            "reason": ""
           },
           {
             "model": "ChemML MLP (PyTorch)",
@@ -16755,13 +15103,7 @@
             "reason": "not listed in models.only_models"
           },
           {
-            "model": "Ensemble (OOF Stacking (RidgeCV))",
-            "family": "ensemble",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Ensemble (Weighted average (inverse train RMSE))",
+            "model": "Ensemble",
             "family": "ensemble",
             "status": "skipped",
             "reason": "not listed in models.only_models"
@@ -16769,1020 +15111,13 @@
         ],
         "estimated_seconds": {
           "features": 204.6,
-          "feature_selection": 7200.0
+          "feature_selection": 7200.0,
+          "deep_tabular": 742.4373831775702
         },
-        "estimated_total_seconds": 7404.6
-      },
-      {
-        "dataset": "tdc_cyp2c9_veith",
-        "n_rows": 12092,
-        "task": "classification",
-        "models": [
-          {
-            "model": "LogisticRegression",
-            "family": "conventional_ml",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "SVC",
-            "family": "conventional_ml",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Random forest",
-            "family": "conventional_ml",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Extra trees",
-            "family": "conventional_ml",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "HistGradientBoosting",
-            "family": "conventional_ml",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Voting Classifier (KNN, SVM)",
-            "family": "conventional_ml",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "AdaBoost",
-            "family": "conventional_ml",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Tabular MLP",
-            "family": "conventional_ml",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "XGBoost",
-            "family": "gradient_boosting",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "LightGBM",
-            "family": "gradient_boosting",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "CatBoost",
-            "family": "gradient_boosting",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "MapLight CatBoost (Strict Parity)",
-            "family": "gradient_boosting",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "TabPFNClassifier",
-            "family": "deep_tabular",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "ChemML MLP (PyTorch)",
-            "family": "deep_tabular",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "ChemML MLP (TensorFlow)",
-            "family": "deep_tabular",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Chemprop v2 (D-MPNN, ensemble=3)",
-            "family": "graph_nn",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",
-            "family": "graph_nn",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Chemprop v2 (CMPNN, ensemble=3)",
-            "family": "graph_nn",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Chemprop v2 (AttentiveFP, ensemble=3)",
-            "family": "graph_nn",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",
-            "family": "graph_nn",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Uni-Mol V1",
-            "family": "pretrained_3d",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Uni-Mol V2 (84m)",
-            "family": "pretrained_3d",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "MapLight + GNN (CatBoost, Strict Parity)",
-            "family": "maplight_gnn",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "CFA (Combinatorial Fusion)",
-            "family": "fusion",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Ensemble (OOF Stacking (RidgeCV))",
-            "family": "ensemble",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Ensemble (Weighted average (inverse train RMSE))",
-            "family": "ensemble",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          }
-        ],
-        "estimated_seconds": {
-          "features": 246.84,
-          "feature_selection": 7200.0
-        },
-        "estimated_total_seconds": 7446.84
-      },
-      {
-        "dataset": "tdc_cyp3a4_veith",
-        "n_rows": 12328,
-        "task": "classification",
-        "models": [
-          {
-            "model": "LogisticRegression",
-            "family": "conventional_ml",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "SVC",
-            "family": "conventional_ml",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Random forest",
-            "family": "conventional_ml",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Extra trees",
-            "family": "conventional_ml",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "HistGradientBoosting",
-            "family": "conventional_ml",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Voting Classifier (KNN, SVM)",
-            "family": "conventional_ml",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "AdaBoost",
-            "family": "conventional_ml",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Tabular MLP",
-            "family": "conventional_ml",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "XGBoost",
-            "family": "gradient_boosting",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "LightGBM",
-            "family": "gradient_boosting",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "CatBoost",
-            "family": "gradient_boosting",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "MapLight CatBoost (Strict Parity)",
-            "family": "gradient_boosting",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "TabPFNClassifier",
-            "family": "deep_tabular",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "ChemML MLP (PyTorch)",
-            "family": "deep_tabular",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "ChemML MLP (TensorFlow)",
-            "family": "deep_tabular",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Chemprop v2 (D-MPNN, ensemble=3)",
-            "family": "graph_nn",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",
-            "family": "graph_nn",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Chemprop v2 (CMPNN, ensemble=3)",
-            "family": "graph_nn",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Chemprop v2 (AttentiveFP, ensemble=3)",
-            "family": "graph_nn",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",
-            "family": "graph_nn",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Uni-Mol V1",
-            "family": "pretrained_3d",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Uni-Mol V2 (84m)",
-            "family": "pretrained_3d",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "MapLight + GNN (CatBoost, Strict Parity)",
-            "family": "maplight_gnn",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "CFA (Combinatorial Fusion)",
-            "family": "fusion",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Ensemble (OOF Stacking (RidgeCV))",
-            "family": "ensemble",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Ensemble (Weighted average (inverse train RMSE))",
-            "family": "ensemble",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          }
-        ],
-        "estimated_seconds": {
-          "features": 251.56,
-          "feature_selection": 7200.0
-        },
-        "estimated_total_seconds": 7451.56
-      },
-      {
-        "dataset": "tdc_cyp1a2_veith",
-        "n_rows": 12579,
-        "task": "classification",
-        "models": [
-          {
-            "model": "LogisticRegression",
-            "family": "conventional_ml",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "SVC",
-            "family": "conventional_ml",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Random forest",
-            "family": "conventional_ml",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Extra trees",
-            "family": "conventional_ml",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "HistGradientBoosting",
-            "family": "conventional_ml",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Voting Classifier (KNN, SVM)",
-            "family": "conventional_ml",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "AdaBoost",
-            "family": "conventional_ml",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Tabular MLP",
-            "family": "conventional_ml",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "XGBoost",
-            "family": "gradient_boosting",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "LightGBM",
-            "family": "gradient_boosting",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "CatBoost",
-            "family": "gradient_boosting",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "MapLight CatBoost (Strict Parity)",
-            "family": "gradient_boosting",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "TabPFNClassifier",
-            "family": "deep_tabular",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "ChemML MLP (PyTorch)",
-            "family": "deep_tabular",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "ChemML MLP (TensorFlow)",
-            "family": "deep_tabular",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Chemprop v2 (D-MPNN, ensemble=3)",
-            "family": "graph_nn",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",
-            "family": "graph_nn",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Chemprop v2 (CMPNN, ensemble=3)",
-            "family": "graph_nn",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Chemprop v2 (AttentiveFP, ensemble=3)",
-            "family": "graph_nn",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",
-            "family": "graph_nn",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Uni-Mol V1",
-            "family": "pretrained_3d",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Uni-Mol V2 (84m)",
-            "family": "pretrained_3d",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "MapLight + GNN (CatBoost, Strict Parity)",
-            "family": "maplight_gnn",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "CFA (Combinatorial Fusion)",
-            "family": "fusion",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Ensemble (OOF Stacking (RidgeCV))",
-            "family": "ensemble",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Ensemble (Weighted average (inverse train RMSE))",
-            "family": "ensemble",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          }
-        ],
-        "estimated_seconds": {
-          "features": 256.58000000000004,
-          "feature_selection": 7200.0
-        },
-        "estimated_total_seconds": 7456.58
-      },
-      {
-        "dataset": "tdc_cyp2c19_veith",
-        "n_rows": 12665,
-        "task": "classification",
-        "models": [
-          {
-            "model": "LogisticRegression",
-            "family": "conventional_ml",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "SVC",
-            "family": "conventional_ml",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Random forest",
-            "family": "conventional_ml",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Extra trees",
-            "family": "conventional_ml",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "HistGradientBoosting",
-            "family": "conventional_ml",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Voting Classifier (KNN, SVM)",
-            "family": "conventional_ml",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "AdaBoost",
-            "family": "conventional_ml",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Tabular MLP",
-            "family": "conventional_ml",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "XGBoost",
-            "family": "gradient_boosting",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "LightGBM",
-            "family": "gradient_boosting",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "CatBoost",
-            "family": "gradient_boosting",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "MapLight CatBoost (Strict Parity)",
-            "family": "gradient_boosting",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "TabPFNClassifier",
-            "family": "deep_tabular",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "ChemML MLP (PyTorch)",
-            "family": "deep_tabular",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "ChemML MLP (TensorFlow)",
-            "family": "deep_tabular",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Chemprop v2 (D-MPNN, ensemble=3)",
-            "family": "graph_nn",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",
-            "family": "graph_nn",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Chemprop v2 (CMPNN, ensemble=3)",
-            "family": "graph_nn",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Chemprop v2 (AttentiveFP, ensemble=3)",
-            "family": "graph_nn",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",
-            "family": "graph_nn",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Uni-Mol V1",
-            "family": "pretrained_3d",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Uni-Mol V2 (84m)",
-            "family": "pretrained_3d",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "MapLight + GNN (CatBoost, Strict Parity)",
-            "family": "maplight_gnn",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "CFA (Combinatorial Fusion)",
-            "family": "fusion",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Ensemble (OOF Stacking (RidgeCV))",
-            "family": "ensemble",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Ensemble (Weighted average (inverse train RMSE))",
-            "family": "ensemble",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          }
-        ],
-        "estimated_seconds": {
-          "features": 258.3,
-          "feature_selection": 7200.0
-        },
-        "estimated_total_seconds": 7458.3
-      },
-      {
-        "dataset": "tdc_cyp2d6_veith",
-        "n_rows": 13130,
-        "task": "classification",
-        "models": [
-          {
-            "model": "LogisticRegression",
-            "family": "conventional_ml",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "SVC",
-            "family": "conventional_ml",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Random forest",
-            "family": "conventional_ml",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Extra trees",
-            "family": "conventional_ml",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "HistGradientBoosting",
-            "family": "conventional_ml",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Voting Classifier (KNN, SVM)",
-            "family": "conventional_ml",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "AdaBoost",
-            "family": "conventional_ml",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Tabular MLP",
-            "family": "conventional_ml",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "XGBoost",
-            "family": "gradient_boosting",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "LightGBM",
-            "family": "gradient_boosting",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "CatBoost",
-            "family": "gradient_boosting",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "MapLight CatBoost (Strict Parity)",
-            "family": "gradient_boosting",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "TabPFNClassifier",
-            "family": "deep_tabular",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "ChemML MLP (PyTorch)",
-            "family": "deep_tabular",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "ChemML MLP (TensorFlow)",
-            "family": "deep_tabular",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Chemprop v2 (D-MPNN, ensemble=3)",
-            "family": "graph_nn",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",
-            "family": "graph_nn",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Chemprop v2 (CMPNN, ensemble=3)",
-            "family": "graph_nn",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Chemprop v2 (AttentiveFP, ensemble=3)",
-            "family": "graph_nn",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",
-            "family": "graph_nn",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Uni-Mol V1",
-            "family": "pretrained_3d",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Uni-Mol V2 (84m)",
-            "family": "pretrained_3d",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "MapLight + GNN (CatBoost, Strict Parity)",
-            "family": "maplight_gnn",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "CFA (Combinatorial Fusion)",
-            "family": "fusion",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Ensemble (OOF Stacking (RidgeCV))",
-            "family": "ensemble",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Ensemble (Weighted average (inverse train RMSE))",
-            "family": "ensemble",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          }
-        ],
-        "estimated_seconds": {
-          "features": 267.6,
-          "feature_selection": 7200.0
-        },
-        "estimated_total_seconds": 7467.6
-      },
-      {
-        "dataset": "tdc_herg_karim",
-        "n_rows": 13445,
-        "task": "classification",
-        "models": [
-          {
-            "model": "LogisticRegression",
-            "family": "conventional_ml",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "SVC",
-            "family": "conventional_ml",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Random forest",
-            "family": "conventional_ml",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Extra trees",
-            "family": "conventional_ml",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "HistGradientBoosting",
-            "family": "conventional_ml",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Voting Classifier (KNN, SVM)",
-            "family": "conventional_ml",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "AdaBoost",
-            "family": "conventional_ml",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Tabular MLP",
-            "family": "conventional_ml",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "XGBoost",
-            "family": "gradient_boosting",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "LightGBM",
-            "family": "gradient_boosting",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "CatBoost",
-            "family": "gradient_boosting",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "MapLight CatBoost (Strict Parity)",
-            "family": "gradient_boosting",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "TabPFNClassifier",
-            "family": "deep_tabular",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "ChemML MLP (PyTorch)",
-            "family": "deep_tabular",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "ChemML MLP (TensorFlow)",
-            "family": "deep_tabular",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Chemprop v2 (D-MPNN, ensemble=3)",
-            "family": "graph_nn",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",
-            "family": "graph_nn",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Chemprop v2 (CMPNN, ensemble=3)",
-            "family": "graph_nn",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Chemprop v2 (AttentiveFP, ensemble=3)",
-            "family": "graph_nn",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",
-            "family": "graph_nn",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Uni-Mol V1",
-            "family": "pretrained_3d",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Uni-Mol V2 (84m)",
-            "family": "pretrained_3d",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "MapLight + GNN (CatBoost, Strict Parity)",
-            "family": "maplight_gnn",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "CFA (Combinatorial Fusion)",
-            "family": "fusion",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Ensemble (OOF Stacking (RidgeCV))",
-            "family": "ensemble",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          },
-          {
-            "model": "Ensemble (Weighted average (inverse train RMSE))",
-            "family": "ensemble",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
-          }
-        ],
-        "estimated_seconds": {
-          "features": 273.9,
-          "feature_selection": 7200.0
-        },
-        "estimated_total_seconds": 7473.9
+        "estimated_total_seconds": 8147.0373831775705
       }
     ],
-    "estimated_total_seconds": 118947.47327951365,
+    "estimated_total_seconds": 79932.39195914201,
     "estimate_note": "Order-of-magnitude estimate: median per-fit wall-clock by model family from the paper's A100 run (Table 6) scaled linearly with dataset size; GPU-accelerated families are assumed 2-8x slower without a GPU."
   },
   "shown_metrics": {
@@ -17807,53 +15142,46 @@
       "overwrite": false,
       "verbosity": "normal",
       "dry_run": false,
-      "n_jobs": 10,
+      "n_jobs": 12,
       "parallel_datasets": 1,
       "dataset_names": [
+        "tdc_skin_reaction",
+        "tdc_dili",
         "chemml_cep_homo",
         "chemml_organic_density",
-        "esol_delaney",
-        "freesolv_sampl",
-        "lipophilicity",
-        "poduam_pod_nc_std",
-        "poduam_pod_rd_std",
-        "polaris_adme_fang_hppb_1",
-        "polaris_adme_fang_perm_1",
-        "polaris_adme_fang_rclint_1",
-        "polaris_adme_fang_rppb_1",
-        "polaris_adme_fang_solu_1",
-        "tdc_ames",
-        "tdc_bbb_martins",
-        "tdc_bioavailability_ma",
-        "tdc_caco2_wang",
-        "tdc_carcinogens_lagunin",
-        "tdc_clearance_hepatocyte_az",
-        "tdc_clearance_microsome_az",
-        "tdc_clintox",
-        "tdc_cyp1a2_veith",
-        "tdc_cyp2c19_veith",
-        "tdc_cyp2c9_substrate_carbonmangels",
-        "tdc_cyp2c9_veith",
-        "tdc_cyp2d6_substrate_carbonmangels",
-        "tdc_cyp2d6_veith",
-        "tdc_cyp3a4_substrate_carbonmangels",
-        "tdc_cyp3a4_veith",
-        "tdc_dili",
-        "tdc_half_life_obach",
-        "tdc_herg",
-        "tdc_herg_karim",
         "tdc_hia_hou",
         "tdc_hydrationfreeenergy_freesolv",
-        "tdc_ld50_zhu",
-        "tdc_lipophilicity_astrazeneca",
-        "tdc_pampa_ncats",
+        "tdc_bioavailability_ma",
+        "freesolv_sampl",
+        "tdc_herg",
+        "tdc_cyp2d6_substrate_carbonmangels",
+        "tdc_half_life_obach",
+        "tdc_cyp2c9_substrate_carbonmangels",
+        "tdc_cyp3a4_substrate_carbonmangels",
+        "polaris_adme_fang_rppb_1",
+        "tdc_caco2_wang",
+        "esol_delaney",
+        "tdc_clearance_microsome_az",
+        "tdc_vdss_lombardo",
+        "tdc_clearance_hepatocyte_az",
         "tdc_pgp_broccatelli",
-        "tdc_ppbr_az",
-        "tdc_skin_reaction",
-        "tdc_solubility_aqsoldb",
-        "tdc_tox21",
+        "tdc_clintox",
         "tdc_toxcast",
-        "tdc_vdss_lombardo"
+        "polaris_adme_fang_hppb_1",
+        "poduam_pod_nc_std",
+        "tdc_bbb_martins",
+        "tdc_pampa_ncats",
+        "polaris_adme_fang_solu_1",
+        "poduam_pod_rd_std",
+        "polaris_adme_fang_perm_1",
+        "tdc_ppbr_az",
+        "polaris_adme_fang_rclint_1",
+        "lipophilicity",
+        "tdc_lipophilicity_astrazeneca",
+        "tdc_tox21",
+        "tdc_ames",
+        "tdc_ld50_zhu",
+        "tdc_solubility_aqsoldb"
       ]
     },
     "input": {
@@ -17920,11 +15248,12 @@
         "pretrained_3d": true,
         "maplight_gnn": true,
         "fusion": true,
-        "ensemble": true
+        "ensemble": false
       },
       "disable_models": [],
       "only_models": [
-        "Ensemble"
+        "TabPFNClassifier",
+        "TabPFNRegressor"
       ]
     },
     "ga_tuning": {
@@ -17982,9 +15311,9 @@
       "simple_average": false,
       "member_selection_metric": "oof",
       "oof_folds": 5,
-      "oof_scope": "cpu",
+      "oof_scope": "all",
       "oof_allow_api_refits": false,
-      "oof_source_run": "benchmark_results\\autoqsar_benchmark_20260623_153839",
+      "oof_source_run": null,
       "exclude_negative_test_r2_members": true,
       "drop_correlated_members": true,
       "max_member_correlation": 0.995,
@@ -18041,7 +15370,7 @@
       "atomic_writes": true
     }
   },
-  "config_yaml": "run:\n  mode: auto\n  output_dir: \"C:\\\\Users\\\\Scott.Coffin\\\\OneDrive - California OEHHA\\\\R_new\\\\AutoQSAR\\\\benchmark_results\\\\qsarena_benchmark_oof_ensemble\"\n  resume: true\n  overwrite: false\n  verbosity: normal\n  dry_run: false\n  n_jobs: 10\n  parallel_datasets: 1\n  dataset_names: [chemml_cep_homo, chemml_organic_density, esol_delaney, freesolv_sampl, lipophilicity, poduam_pod_nc_std, poduam_pod_rd_std, polaris_adme_fang_hppb_1, polaris_adme_fang_perm_1, polaris_adme_fang_rclint_1, polaris_adme_fang_rppb_1, polaris_adme_fang_solu_1, tdc_ames, tdc_bbb_martins, tdc_bioavailability_ma, tdc_caco2_wang, tdc_carcinogens_lagunin, tdc_clearance_hepatocyte_az, tdc_clearance_microsome_az, tdc_clintox, tdc_cyp1a2_veith, tdc_cyp2c19_veith, tdc_cyp2c9_substrate_carbonmangels, tdc_cyp2c9_veith, tdc_cyp2d6_substrate_carbonmangels, tdc_cyp2d6_veith, tdc_cyp3a4_substrate_carbonmangels, tdc_cyp3a4_veith, tdc_dili, tdc_half_life_obach, tdc_herg, tdc_herg_karim, tdc_hia_hou, tdc_hydrationfreeenergy_freesolv, tdc_ld50_zhu, tdc_lipophilicity_astrazeneca, tdc_pampa_ncats, tdc_pgp_broccatelli, tdc_ppbr_az, tdc_skin_reaction, tdc_solubility_aqsoldb, tdc_tox21, tdc_toxcast, tdc_vdss_lombardo]\ninput:\n  path: null\n  smiles_col: null\n  target_col: null\n  id_col: null\n  task: auto\n  classification_threshold: null\n  target_transform: auto\n  minimum_rows: 20\n  row_limit: 0\nstandardize:\n  drop_unparseable: true\n  strip_salts: false\n  normalize_charges: false\n  normalize_tautomers: false\n  deduplicate: \"none\"\nfeatures:\n  families: [morgan, ecfp6, fcfp6, layered, atom_pair, topological_torsion, rdk_path, maccs, rdkit]\n  maplight_classic: true\n  fingerprint_bits: 1024\n  cache: true\n  persistent_store: true\nsplit:\n  strategy: target_quartile\n  test_fraction: 0.2\n  seed: 13\n  cv_folds: 5\n  predefined_split_col: null\nfeature_selection:\n  method: elasticnetcv\n  variance_threshold: 1e-08\n  binary_prevalence_range: [0.005, 0.995]\n  drop_duplicate_columns: true\n  max_selected_features: 0\n  auto_rf_by_dataset_size: false\n  elasticnet_timeout_seconds: 7200.0\nmodels:\n  profile: full\n  enable_families:\n    conventional_ml: true\n    gradient_boosting: true\n    deep_tabular: true\n    graph_nn: true\n    pretrained_3d: true\n    maplight_gnn: true\n    fusion: true\n    ensemble: true\n  disable_models: []\n  only_models: [Ensemble]\nga_tuning:\n  mode: \"off\"\n  estimators: [elastic_net, catboost]\n  generations: 12\n  population_size: 16\n  time_budget_min: null\n  max_configs: null\ndeep:\n  use_gpu: auto\n  chemprop:\n    variants: [dmpnn, dmpnn_rdkit2d, selected_features, cmpnn, attentivefp]\n    epochs: 40\n    ensemble_size: 3\n    batch_size: 32\n    seed: 42\n  unimol:\n    v1: \"false\"\n    v2: \"false\"\n    v2_size: 84m\n    epochs: 10\n    lr: 0.0001\n    batch_size: 32\n    early_stopping_patience: 5\n  chemml:\n    pytorch: true\n    tensorflow: true\n    epochs: 80\n  tabpfn: true\n  tabpfn_max_features: 40\n  cnn: true\nfusion:\n  cfa_score: true\n  cfa_rank: true\n  optimize_metric: mae\nensemble:\n  oof_stacking: true\n  inverse_rmse_average: true\n  simple_average: false\n  member_selection_metric: oof\n  oof_folds: 5\n  oof_scope: cpu\n  oof_allow_api_refits: false\n  oof_source_run: benchmark_results\\autoqsar_benchmark_20260623_153839\n  exclude_negative_test_r2_members: true\n  drop_correlated_members: true\n  max_member_correlation: 0.995\n  stacking_cv_folds: 5\napplicability_domain:\n  method: both\n  confidence_threshold: 0.5\n  knn_quantile: 0.95\nevaluation:\n  regression_metrics: [rmse, mae, r2, spearman]\n  classification_metrics: [roc_auc, auprc, balanced_accuracy, mcc]\n  primary_metric: auto\nselection:\n  protocol: both\nreport:\n  formats: [html, md]\n  include_plots: true\n  what_next: true\n  machine_readable_manifest: true\nbatch:\n  source: null\n  mode: auto\n  continue_on_error: true\n  aggregate_summary: true\nmultiseed:\n  enabled: false\n  seeds: 5\ncaching:\n  granularity: [dataset, stage]\n  validate_against_config_signature: true\n  atomic_writes: true\n",
+  "config_yaml": "run:\n  mode: auto\n  output_dir: \"C:\\\\Users\\\\Scott.Coffin\\\\OneDrive - California OEHHA\\\\R_new\\\\AutoQSAR\\\\benchmark_results\\\\qsarena_benchmark_oof_ensemble\"\n  resume: true\n  overwrite: false\n  verbosity: normal\n  dry_run: false\n  n_jobs: 12\n  parallel_datasets: 1\n  dataset_names: [tdc_skin_reaction, tdc_dili, chemml_cep_homo, chemml_organic_density, tdc_hia_hou, tdc_hydrationfreeenergy_freesolv, tdc_bioavailability_ma, freesolv_sampl, tdc_herg, tdc_cyp2d6_substrate_carbonmangels, tdc_half_life_obach, tdc_cyp2c9_substrate_carbonmangels, tdc_cyp3a4_substrate_carbonmangels, polaris_adme_fang_rppb_1, tdc_caco2_wang, esol_delaney, tdc_clearance_microsome_az, tdc_vdss_lombardo, tdc_clearance_hepatocyte_az, tdc_pgp_broccatelli, tdc_clintox, tdc_toxcast, polaris_adme_fang_hppb_1, poduam_pod_nc_std, tdc_bbb_martins, tdc_pampa_ncats, polaris_adme_fang_solu_1, poduam_pod_rd_std, polaris_adme_fang_perm_1, tdc_ppbr_az, polaris_adme_fang_rclint_1, lipophilicity, tdc_lipophilicity_astrazeneca, tdc_tox21, tdc_ames, tdc_ld50_zhu, tdc_solubility_aqsoldb]\ninput:\n  path: null\n  smiles_col: null\n  target_col: null\n  id_col: null\n  task: auto\n  classification_threshold: null\n  target_transform: auto\n  minimum_rows: 20\n  row_limit: 0\nstandardize:\n  drop_unparseable: true\n  strip_salts: false\n  normalize_charges: false\n  normalize_tautomers: false\n  deduplicate: \"none\"\nfeatures:\n  families: [morgan, ecfp6, fcfp6, layered, atom_pair, topological_torsion, rdk_path, maccs, rdkit]\n  maplight_classic: true\n  fingerprint_bits: 1024\n  cache: true\n  persistent_store: true\nsplit:\n  strategy: target_quartile\n  test_fraction: 0.2\n  seed: 13\n  cv_folds: 5\n  predefined_split_col: null\nfeature_selection:\n  method: elasticnetcv\n  variance_threshold: 1e-08\n  binary_prevalence_range: [0.005, 0.995]\n  drop_duplicate_columns: true\n  max_selected_features: 0\n  auto_rf_by_dataset_size: false\n  elasticnet_timeout_seconds: 7200.0\nmodels:\n  profile: full\n  enable_families:\n    conventional_ml: true\n    gradient_boosting: true\n    deep_tabular: true\n    graph_nn: true\n    pretrained_3d: true\n    maplight_gnn: true\n    fusion: true\n    ensemble: false\n  disable_models: []\n  only_models: [TabPFNClassifier, TabPFNRegressor]\nga_tuning:\n  mode: \"off\"\n  estimators: [elastic_net, catboost]\n  generations: 12\n  population_size: 16\n  time_budget_min: null\n  max_configs: null\ndeep:\n  use_gpu: auto\n  chemprop:\n    variants: [dmpnn, dmpnn_rdkit2d, selected_features, cmpnn, attentivefp]\n    epochs: 40\n    ensemble_size: 3\n    batch_size: 32\n    seed: 42\n  unimol:\n    v1: \"false\"\n    v2: \"false\"\n    v2_size: 84m\n    epochs: 10\n    lr: 0.0001\n    batch_size: 32\n    early_stopping_patience: 5\n  chemml:\n    pytorch: true\n    tensorflow: true\n    epochs: 80\n  tabpfn: true\n  tabpfn_max_features: 40\n  cnn: true\nfusion:\n  cfa_score: true\n  cfa_rank: true\n  optimize_metric: mae\nensemble:\n  oof_stacking: true\n  inverse_rmse_average: true\n  simple_average: false\n  member_selection_metric: oof\n  oof_folds: 5\n  oof_scope: all\n  oof_allow_api_refits: false\n  oof_source_run: null\n  exclude_negative_test_r2_members: true\n  drop_correlated_members: true\n  max_member_correlation: 0.995\n  stacking_cv_folds: 5\napplicability_domain:\n  method: both\n  confidence_threshold: 0.5\n  knn_quantile: 0.95\nevaluation:\n  regression_metrics: [rmse, mae, r2, spearman]\n  classification_metrics: [roc_auc, auprc, balanced_accuracy, mcc]\n  primary_metric: auto\nselection:\n  protocol: both\nreport:\n  formats: [html, md]\n  include_plots: true\n  what_next: true\n  machine_readable_manifest: true\nbatch:\n  source: null\n  mode: auto\n  continue_on_error: true\n  aggregate_summary: true\nmultiseed:\n  enabled: false\n  seeds: 5\ncaching:\n  granularity: [dataset, stage]\n  validate_against_config_signature: true\n  atomic_writes: true\n",
   "files": {
     "run_config.json": "run_config.json",
     "run_config.yaml": "run_config.yaml",
@@ -18055,11 +15384,11 @@
   },
   "what_next": [
     {
-      "text": "151 model fit(s) failed (Uni-Mol V1, Uni-Mol V2 (164m), Uni-Mol V2 (310m), Uni-Mol V2 (84m)). GPU memory exhausted: lower the batch size (--unimol-batch-size, --chemprop-batch-size) or use a larger GPU.",
+      "text": "717 model fit(s) failed (Chemprop v2 (AttentiveFP, ensemble=3), Chemprop v2 (CMPNN, ensemble=3), Chemprop v2 (D-MPNN + RDKit2D, ensemble=3), Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3) ...). See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail.",
       "command": ""
     },
     {
-      "text": "763 model fit(s) failed (Chemprop v2 (AttentiveFP, ensemble=3), Chemprop v2 (CMPNN, ensemble=3), Chemprop v2 (D-MPNN + RDKit2D, ensemble=3), Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3) ...). See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail.",
+      "text": "119 model fit(s) failed (Uni-Mol V1, Uni-Mol V2 (164m), Uni-Mol V2 (310m), Uni-Mol V2 (84m)). GPU memory exhausted: lower the batch size (--unimol-batch-size, --chemprop-batch-size) or use a larger GPU.",
       "command": ""
     },
     {
@@ -18067,15 +15396,7 @@
       "command": ""
     },
     {
-      "text": "20 model fit(s) failed (Chemprop v2 (AttentiveFP, ensemble=3), Chemprop v2 (CMPNN, ensemble=3), Chemprop v2 (D-MPNN + RDKit2D, ensemble=3), Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3) ...). Install PyTorch: pip install 'qsarena[deep]', or --disable-model-families deep_tabular.",
-      "command": ""
-    },
-    {
-      "text": "10 model fit(s) failed (Chemprop v2 (AttentiveFP, ensemble=3), Chemprop v2 (CMPNN, ensemble=3), Chemprop v2 (D-MPNN + RDKit2D, ensemble=3), Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3) ...). Chemprop itself failed on this dataset; see run.log. Small datasets often need --chemprop-batch-size 16.",
-      "command": ""
-    },
-    {
-      "text": "On 39 dataset(s) the test-selected winner differs from the CV-selected one (tdc_carcinogens_lagunin, tdc_skin_reaction, tdc_dili, chemml_cep_homo, tdc_hia_hou). Choosing on the test set is optimistic; report the CV-selected model and its test score as the honest estimate.",
+      "text": "On 31 dataset(s) the test-selected winner differs from the CV-selected one (tdc_skin_reaction, tdc_dili, chemml_cep_homo, tdc_hia_hou, tdc_bioavailability_ma). Choosing on the test set is optimistic; report the CV-selected model and its test score as the honest estimate.",
       "command": ""
     },
     {
@@ -18128,14 +15449,6 @@
     },
     {
       "text": "23% of the test molecules of tdc_ld50_zhu fall outside the applicability domain; read their predictions with caution (see applicability_domain.csv in that dataset's folder).",
-      "command": ""
-    },
-    {
-      "text": "22% of the test molecules of tdc_cyp2c9_veith fall outside the applicability domain; read their predictions with caution (see applicability_domain.csv in that dataset's folder).",
-      "command": ""
-    },
-    {
-      "text": "31% of the test molecules of tdc_cyp3a4_veith fall outside the applicability domain; read their predictions with caution (see applicability_domain.csv in that dataset's folder).",
       "command": ""
     },
     {

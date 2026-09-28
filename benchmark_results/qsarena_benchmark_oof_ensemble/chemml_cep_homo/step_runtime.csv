@@ -1,5 +1,5 @@
 dataset,stage_index,total_stages,stage_label,step_type,model,workflow,started_at,started_epoch,status,ended_at,ended_epoch,duration_seconds
-chemml_cep_homo,1,4,loading ChemML bundled dataset: cep_homo,load_dataset,,,2026-09-27 16:41:37 Pacific Daylight Time,1790552497.7469678,completed,2026-09-27 16:41:37 Pacific Daylight Time,1790552497.9171867,0.17
-chemml_cep_homo,2,4,building molecular features (cached),feature_generation,,,2026-09-27 16:41:37 Pacific Daylight Time,1790552497.9171867,resumed_cache,2026-09-27 16:41:37 Pacific Daylight Time,1790552497.926822,0.01
-chemml_cep_homo,3,4,splitting data and selecting features (cached),feature_selection,,,2026-09-27 16:41:37 Pacific Daylight Time,1790552497.926822,resumed_cache,2026-09-27 16:41:37 Pacific Daylight Time,1790552497.9501228,0.023
-chemml_cep_homo,4,4,ensemble (2 method(s)),model,Ensemble,ensemble,2026-09-27 16:41:37 Pacific Daylight Time,1790552497.9501228,completed,2026-09-27 16:48:12 Pacific Daylight Time,1790552892.5016344,394.552
+chemml_cep_homo,1,4,loading ChemML bundled dataset: cep_homo,load_dataset,,,2026-09-28 08:15:18 Pacific Daylight Time,1790608518.7254732,completed,2026-09-28 08:15:18 Pacific Daylight Time,1790608518.8839884,0.159
+chemml_cep_homo,2,4,building molecular features (cached),feature_generation,,,2026-09-28 08:15:18 Pacific Daylight Time,1790608518.8839884,resumed_cache,2026-09-28 08:15:18 Pacific Daylight Time,1790608518.8932664,0.009
+chemml_cep_homo,3,4,splitting data and selecting features (cached),feature_selection,,,2026-09-28 08:15:18 Pacific Daylight Time,1790608518.8932664,resumed_cache,2026-09-28 08:15:18 Pacific Daylight Time,1790608518.9198399,0.027
+chemml_cep_homo,4,4,conventional model TabPFNRegressor (repairing missing OOF),model,TabPFNRegressor,conventional,2026-09-28 08:15:18 Pacific Daylight Time,1790608518.9198399,completed,2026-09-28 08:15:52 Pacific Daylight Time,1790608552.7330265,33.813

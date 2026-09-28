@@ -1,5 +1,5 @@
 dataset,stage_index,total_stages,stage_label,step_type,model,workflow,started_at,started_epoch,status,ended_at,ended_epoch,duration_seconds
-tdc_skin_reaction,1,4,loading PyTDC Tox benchmark: skin_reaction,load_dataset,,,2026-09-27 16:41:34 Pacific Daylight Time,1790552494.1127558,completed,2026-09-27 16:41:34 Pacific Daylight Time,1790552494.2057996,0.093
-tdc_skin_reaction,2,4,building molecular features (cached),feature_generation,,,2026-09-27 16:41:34 Pacific Daylight Time,1790552494.2057996,resumed_cache,2026-09-27 16:41:34 Pacific Daylight Time,1790552494.2172916,0.011
-tdc_skin_reaction,3,4,splitting data and selecting features (cached),feature_selection,,,2026-09-27 16:41:34 Pacific Daylight Time,1790552494.2172916,resumed_cache,2026-09-27 16:41:34 Pacific Daylight Time,1790552494.243484,0.026
-tdc_skin_reaction,4,4,ensemble (2 method(s)),model,Ensemble,ensemble,2026-09-27 16:41:34 Pacific Daylight Time,1790552494.243484,completed,2026-09-27 16:41:35 Pacific Daylight Time,1790552495.6066313,1.363
+tdc_skin_reaction,1,4,loading PyTDC Tox benchmark: skin_reaction,load_dataset,,,2026-09-28 08:14:12 Pacific Daylight Time,1790608452.1298137,completed,2026-09-28 08:14:12 Pacific Daylight Time,1790608452.2117946,0.082
+tdc_skin_reaction,2,4,building molecular features (cached),feature_generation,,,2026-09-28 08:14:12 Pacific Daylight Time,1790608452.2117946,resumed_cache,2026-09-28 08:14:12 Pacific Daylight Time,1790608452.2237356,0.012
+tdc_skin_reaction,3,4,splitting data and selecting features (cached),feature_selection,,,2026-09-28 08:14:12 Pacific Daylight Time,1790608452.2237356,resumed_cache,2026-09-28 08:14:12 Pacific Daylight Time,1790608452.2557366,0.032
+tdc_skin_reaction,4,4,conventional model TabPFNClassifier (repairing missing OOF),model,TabPFNClassifier,conventional,2026-09-28 08:14:12 Pacific Daylight Time,1790608452.2557366,completed,2026-09-28 08:14:45 Pacific Daylight Time,1790608485.1702006,32.914

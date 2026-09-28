@@ -1,32 +1,6 @@
 {
   "datasets": [
     {
-      "dataset": "tdc_carcinogens_lagunin",
-      "n_rows": 280,
-      "n_missing": 0,
-      "n_parsed": 280,
-      "n_unparseable": 0,
-      "parse_rate": 1.0,
-      "n_valid": 280,
-      "duplicate_fraction": 0.0071428571428571175,
-      "task": "classification",
-      "task_source": "auto: target has exactly two values",
-      "class_balance": {
-        "0": 220,
-        "1": 60
-      },
-      "sampled": false,
-      "messages": [
-        {
-          "level": "info",
-          "code": "task",
-          "message": "task = classification (auto: target has exactly two values).",
-          "remedy": "",
-          "dataset": "tdc_carcinogens_lagunin"
-        }
-      ]
-    },
-    {
       "dataset": "tdc_skin_reaction",
       "n_rows": 404,
       "n_missing": 0,
@@ -977,162 +951,6 @@
           "dataset": "tdc_solubility_aqsoldb"
         }
       ]
-    },
-    {
-      "dataset": "tdc_cyp2c9_veith",
-      "n_rows": 12092,
-      "n_missing": 0,
-      "n_parsed": 12092,
-      "n_unparseable": 0,
-      "parse_rate": 1.0,
-      "n_valid": 12092,
-      "duplicate_fraction": 0.0,
-      "task": "classification",
-      "task_source": "auto: target has exactly two values",
-      "class_balance": {
-        "0": 8047,
-        "1": 4045
-      },
-      "sampled": false,
-      "messages": [
-        {
-          "level": "info",
-          "code": "task",
-          "message": "task = classification (auto: target has exactly two values).",
-          "remedy": "",
-          "dataset": "tdc_cyp2c9_veith"
-        }
-      ]
-    },
-    {
-      "dataset": "tdc_cyp3a4_veith",
-      "n_rows": 12328,
-      "n_missing": 0,
-      "n_parsed": 12328,
-      "n_unparseable": 0,
-      "parse_rate": 1.0,
-      "n_valid": 12328,
-      "duplicate_fraction": 0.0,
-      "task": "classification",
-      "task_source": "auto: target has exactly two values",
-      "class_balance": {
-        "0": 7218,
-        "1": 5110
-      },
-      "sampled": false,
-      "messages": [
-        {
-          "level": "info",
-          "code": "task",
-          "message": "task = classification (auto: target has exactly two values).",
-          "remedy": "",
-          "dataset": "tdc_cyp3a4_veith"
-        }
-      ]
-    },
-    {
-      "dataset": "tdc_cyp1a2_veith",
-      "n_rows": 12579,
-      "n_missing": 0,
-      "n_parsed": 12579,
-      "n_unparseable": 0,
-      "parse_rate": 1.0,
-      "n_valid": 12579,
-      "duplicate_fraction": 0.0,
-      "task": "classification",
-      "task_source": "auto: target has exactly two values",
-      "class_balance": {
-        "0": 6750,
-        "1": 5829
-      },
-      "sampled": false,
-      "messages": [
-        {
-          "level": "info",
-          "code": "task",
-          "message": "task = classification (auto: target has exactly two values).",
-          "remedy": "",
-          "dataset": "tdc_cyp1a2_veith"
-        }
-      ]
-    },
-    {
-      "dataset": "tdc_cyp2c19_veith",
-      "n_rows": 12665,
-      "n_missing": 0,
-      "n_parsed": 12665,
-      "n_unparseable": 0,
-      "parse_rate": 1.0,
-      "n_valid": 12665,
-      "duplicate_fraction": 0.0,
-      "task": "classification",
-      "task_source": "auto: target has exactly two values",
-      "class_balance": {
-        "0": 6846,
-        "1": 5819
-      },
-      "sampled": false,
-      "messages": [
-        {
-          "level": "info",
-          "code": "task",
-          "message": "task = classification (auto: target has exactly two values).",
-          "remedy": "",
-          "dataset": "tdc_cyp2c19_veith"
-        }
-      ]
-    },
-    {
-      "dataset": "tdc_cyp2d6_veith",
-      "n_rows": 13130,
-      "n_missing": 0,
-      "n_parsed": 13130,
-      "n_unparseable": 0,
-      "parse_rate": 1.0,
-      "n_valid": 13130,
-      "duplicate_fraction": 0.0,
-      "task": "classification",
-      "task_source": "auto: target has exactly two values",
-      "class_balance": {
-        "0": 10616,
-        "1": 2514
-      },
-      "sampled": false,
-      "messages": [
-        {
-          "level": "info",
-          "code": "task",
-          "message": "task = classification (auto: target has exactly two values).",
-          "remedy": "",
-          "dataset": "tdc_cyp2d6_veith"
-        }
-      ]
-    },
-    {
-      "dataset": "tdc_herg_karim",
-      "n_rows": 13445,
-      "n_missing": 0,
-      "n_parsed": 13445,
-      "n_unparseable": 0,
-      "parse_rate": 1.0,
-      "n_valid": 13445,
-      "duplicate_fraction": 0.0,
-      "task": "classification",
-      "task_source": "auto: target has exactly two values",
-      "class_balance": {
-        "0": 6727,
-        "1": 6718
-      },
-      "sampled": false,
-      "messages": [
-        {
-          "level": "info",
-          "code": "task",
-          "message": "task = classification (auto: target has exactly two values).",
-          "remedy": "",
-          "dataset": "tdc_herg_karim"
-        }
-      ]
     }
   ],
   "backends": {
@@ -1187,174 +1005,6 @@
     }
   ],
   "plans": [
-    {
-      "dataset": "tdc_carcinogens_lagunin",
-      "n_rows": 280,
-      "task": "classification",
-      "models": [
-        {
-          "model": "LogisticRegression",
-          "family": "conventional_ml",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "SVC",
-          "family": "conventional_ml",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Random forest",
-          "family": "conventional_ml",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Extra trees",
-          "family": "conventional_ml",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "HistGradientBoosting",
-          "family": "conventional_ml",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Voting Classifier (KNN, SVM)",
-          "family": "conventional_ml",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "AdaBoost",
-          "family": "conventional_ml",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Tabular MLP",
-          "family": "conventional_ml",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "XGBoost",
-          "family": "gradient_boosting",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "LightGBM",
-          "family": "gradient_boosting",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "CatBoost",
-          "family": "gradient_boosting",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "MapLight CatBoost (Strict Parity)",
-          "family": "gradient_boosting",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "TabPFNClassifier",
-          "family": "deep_tabular",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "ChemML MLP (PyTorch)",
-          "family": "deep_tabular",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "ChemML MLP (TensorFlow)",
-          "family": "deep_tabular",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Chemprop v2 (D-MPNN, ensemble=3)",
-          "family": "graph_nn",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",
-          "family": "graph_nn",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Chemprop v2 (CMPNN, ensemble=3)",
-          "family": "graph_nn",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Chemprop v2 (AttentiveFP, ensemble=3)",
-          "family": "graph_nn",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",
-          "family": "graph_nn",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Uni-Mol V1",
-          "family": "pretrained_3d",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Uni-Mol V2 (84m)",
-          "family": "pretrained_3d",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "MapLight + GNN (CatBoost, Strict Parity)",
-          "family": "maplight_gnn",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "CFA (Combinatorial Fusion)",
-          "family": "fusion",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Ensemble (OOF Stacking (RidgeCV))",
-          "family": "ensemble",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Ensemble (Weighted average (inverse train RMSE))",
-          "family": "ensemble",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        }
-      ],
-      "estimated_seconds": {
-        "features": 10.600000000000001,
-        "feature_selection": 166.36188111928678
-      },
-      "estimated_total_seconds": 176.96188111928677
-    },
     {
       "dataset": "tdc_skin_reaction",
       "n_rows": 404,
@@ -1435,8 +1085,8 @@
         {
           "model": "TabPFNClassifier",
           "family": "deep_tabular",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
+          "status": "planned",
+          "reason": ""
         },
         {
           "model": "ChemML MLP (PyTorch)",
@@ -1505,13 +1155,7 @@
           "reason": "not listed in models.only_models"
         },
         {
-          "model": "Ensemble (OOF Stacking (RidgeCV))",
-          "family": "ensemble",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Ensemble (Weighted average (inverse train RMSE))",
+          "model": "Ensemble",
           "family": "ensemble",
           "status": "skipped",
           "reason": "not listed in models.only_models"
@@ -1519,9 +1163,10 @@
       ],
       "estimated_seconds": {
         "features": 13.08,
-        "feature_selection": 260.4792242769973
+        "feature_selection": 260.4792242769973,
+        "deep_tabular": 30.05457943925233
       },
-      "estimated_total_seconds": 273.55922427699727
+      "estimated_total_seconds": 303.6138037162496
     },
     {
       "dataset": "tdc_dili",
@@ -1603,8 +1248,8 @@
         {
           "model": "TabPFNClassifier",
           "family": "deep_tabular",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
+          "status": "planned",
+          "reason": ""
         },
         {
           "model": "ChemML MLP (PyTorch)",
@@ -1673,13 +1318,7 @@
           "reason": "not listed in models.only_models"
         },
         {
-          "model": "Ensemble (OOF Stacking (RidgeCV))",
-          "family": "ensemble",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Ensemble (Weighted average (inverse train RMSE))",
+          "model": "Ensemble",
           "family": "ensemble",
           "status": "skipped",
           "reason": "not listed in models.only_models"
@@ -1687,9 +1326,10 @@
       ],
       "estimated_seconds": {
         "features": 14.5,
-        "feature_selection": 317.85928771588084
+        "feature_selection": 317.85928771588084,
+        "deep_tabular": 35.336448598130836
       },
-      "estimated_total_seconds": 332.35928771588084
+      "estimated_total_seconds": 367.6957363140117
     },
     {
       "dataset": "chemml_cep_homo",
@@ -1777,8 +1417,8 @@
         {
           "model": "TabPFNRegressor",
           "family": "deep_tabular",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
+          "status": "planned",
+          "reason": ""
         },
         {
           "model": "ChemML MLP (PyTorch)",
@@ -1847,13 +1487,7 @@
           "reason": "not listed in models.only_models"
         },
         {
-          "model": "Ensemble (OOF Stacking (RidgeCV))",
-          "family": "ensemble",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Ensemble (Weighted average (inverse train RMSE))",
+          "model": "Ensemble",
           "family": "ensemble",
           "status": "skipped",
           "reason": "not listed in models.only_models"
@@ -1861,9 +1495,10 @@
       ],
       "estimated_seconds": {
         "features": 15.0,
-        "feature_selection": 338.4725780968425
+        "feature_selection": 338.4725780968425,
+        "deep_tabular": 37.196261682242984
       },
-      "estimated_total_seconds": 353.4725780968425
+      "estimated_total_seconds": 390.6688397790855
     },
     {
       "dataset": "chemml_organic_density",
@@ -1951,8 +1586,8 @@
         {
           "model": "TabPFNRegressor",
           "family": "deep_tabular",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
+          "status": "planned",
+          "reason": ""
         },
         {
           "model": "ChemML MLP (PyTorch)",
@@ -2021,13 +1656,7 @@
           "reason": "not listed in models.only_models"
         },
         {
-          "model": "Ensemble (OOF Stacking (RidgeCV))",
-          "family": "ensemble",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Ensemble (Weighted average (inverse train RMSE))",
+          "model": "Ensemble",
           "family": "ensemble",
           "status": "skipped",
           "reason": "not listed in models.only_models"
@@ -2035,9 +1664,10 @@
       ],
       "estimated_seconds": {
         "features": 15.0,
-        "feature_selection": 338.4725780968425
+        "feature_selection": 338.4725780968425,
+        "deep_tabular": 37.196261682242984
       },
-      "estimated_total_seconds": 353.4725780968425
+      "estimated_total_seconds": 390.6688397790855
     },
     {
       "dataset": "tdc_hia_hou",
@@ -2119,8 +1749,8 @@
         {
           "model": "TabPFNClassifier",
           "family": "deep_tabular",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
+          "status": "planned",
+          "reason": ""
         },
         {
           "model": "ChemML MLP (PyTorch)",
@@ -2189,13 +1819,7 @@
           "reason": "not listed in models.only_models"
         },
         {
-          "model": "Ensemble (OOF Stacking (RidgeCV))",
-          "family": "ensemble",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Ensemble (Weighted average (inverse train RMSE))",
+          "model": "Ensemble",
           "family": "ensemble",
           "status": "skipped",
           "reason": "not listed in models.only_models"
@@ -2203,9 +1827,10 @@
       ],
       "estimated_seconds": {
         "features": 16.560000000000002,
-        "feature_selection": 403.81869415436387
+        "feature_selection": 403.81869415436387,
+        "deep_tabular": 42.998878504672895
       },
-      "estimated_total_seconds": 420.37869415436387
+      "estimated_total_seconds": 463.3775726590368
     },
     {
       "dataset": "tdc_bioavailability_ma",
@@ -2287,8 +1912,8 @@
         {
           "model": "TabPFNClassifier",
           "family": "deep_tabular",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
+          "status": "planned",
+          "reason": ""
         },
         {
           "model": "ChemML MLP (PyTorch)",
@@ -2357,13 +1982,7 @@
           "reason": "not listed in models.only_models"
         },
         {
-          "model": "Ensemble (OOF Stacking (RidgeCV))",
-          "family": "ensemble",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Ensemble (Weighted average (inverse train RMSE))",
+          "model": "Ensemble",
           "family": "ensemble",
           "status": "skipped",
           "reason": "not listed in models.only_models"
@@ -2371,9 +1990,10 @@
       ],
       "estimated_seconds": {
         "features": 17.8,
-        "feature_selection": 457.9896907050917
+        "feature_selection": 457.9896907050917,
+        "deep_tabular": 47.61121495327102
       },
-      "estimated_total_seconds": 475.7896907050917
+      "estimated_total_seconds": 523.4009056583627
     },
     {
       "dataset": "freesolv_sampl",
@@ -2461,8 +2081,8 @@
         {
           "model": "TabPFNRegressor",
           "family": "deep_tabular",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
+          "status": "planned",
+          "reason": ""
         },
         {
           "model": "ChemML MLP (PyTorch)",
@@ -2531,13 +2151,7 @@
           "reason": "not listed in models.only_models"
         },
         {
-          "model": "Ensemble (OOF Stacking (RidgeCV))",
-          "family": "ensemble",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Ensemble (Weighted average (inverse train RMSE))",
+          "model": "Ensemble",
           "family": "ensemble",
           "status": "skipped",
           "reason": "not listed in models.only_models"
@@ -2545,9 +2159,10 @@
       ],
       "estimated_seconds": {
         "features": 17.84,
-        "feature_selection": 460.1822050502995
+        "feature_selection": 460.1822050502995,
+        "deep_tabular": 47.76
       },
-      "estimated_total_seconds": 478.0222050502995
+      "estimated_total_seconds": 525.7822050502995
     },
     {
       "dataset": "tdc_hydrationfreeenergy_freesolv",
@@ -2635,8 +2250,8 @@
         {
           "model": "TabPFNRegressor",
           "family": "deep_tabular",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
+          "status": "planned",
+          "reason": ""
         },
         {
           "model": "ChemML MLP (PyTorch)",
@@ -2705,13 +2320,7 @@
           "reason": "not listed in models.only_models"
         },
         {
-          "model": "Ensemble (OOF Stacking (RidgeCV))",
-          "family": "ensemble",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Ensemble (Weighted average (inverse train RMSE))",
+          "model": "Ensemble",
           "family": "ensemble",
           "status": "skipped",
           "reason": "not listed in models.only_models"
@@ -2719,9 +2328,10 @@
       ],
       "estimated_seconds": {
         "features": 17.84,
-        "feature_selection": 460.1822050502995
+        "feature_selection": 460.1822050502995,
+        "deep_tabular": 47.76
       },
-      "estimated_total_seconds": 478.0222050502995
+      "estimated_total_seconds": 525.7822050502995
     },
     {
       "dataset": "tdc_herg",
@@ -2803,8 +2413,8 @@
         {
           "model": "TabPFNClassifier",
           "family": "deep_tabular",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
+          "status": "planned",
+          "reason": ""
         },
         {
           "model": "ChemML MLP (PyTorch)",
@@ -2873,13 +2483,7 @@
           "reason": "not listed in models.only_models"
         },
         {
-          "model": "Ensemble (OOF Stacking (RidgeCV))",
-          "family": "ensemble",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Ensemble (Weighted average (inverse train RMSE))",
+          "model": "Ensemble",
           "family": "ensemble",
           "status": "skipped",
           "reason": "not listed in models.only_models"
@@ -2887,9 +2491,10 @@
       ],
       "estimated_seconds": {
         "features": 18.1,
-        "feature_selection": 471.17346736468977
+        "feature_selection": 471.17346736468977,
+        "deep_tabular": 48.72710280373832
       },
-      "estimated_total_seconds": 489.2734673646898
+      "estimated_total_seconds": 538.0005701684281
     },
     {
       "dataset": "tdc_cyp2d6_substrate_carbonmangels",
@@ -2971,8 +2576,8 @@
         {
           "model": "TabPFNClassifier",
           "family": "deep_tabular",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
+          "status": "planned",
+          "reason": ""
         },
         {
           "model": "ChemML MLP (PyTorch)",
@@ -3041,13 +2646,7 @@
           "reason": "not listed in models.only_models"
         },
         {
-          "model": "Ensemble (OOF Stacking (RidgeCV))",
-          "family": "ensemble",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Ensemble (Weighted average (inverse train RMSE))",
+          "model": "Ensemble",
           "family": "ensemble",
           "status": "skipped",
           "reason": "not listed in models.only_models"
@@ -3055,9 +2654,10 @@
       ],
       "estimated_seconds": {
         "features": 18.34,
-        "feature_selection": 482.21202900953335
+        "feature_selection": 482.21202900953335,
+        "deep_tabular": 49.61981308411215
       },
-      "estimated_total_seconds": 500.5520290095333
+      "estimated_total_seconds": 550.1718420936455
     },
     {
       "dataset": "tdc_half_life_obach",
@@ -3145,8 +2745,8 @@
         {
           "model": "TabPFNRegressor",
           "family": "deep_tabular",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
+          "status": "planned",
+          "reason": ""
         },
         {
           "model": "ChemML MLP (PyTorch)",
@@ -3215,13 +2815,7 @@
           "reason": "not listed in models.only_models"
         },
         {
-          "model": "Ensemble (OOF Stacking (RidgeCV))",
-          "family": "ensemble",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Ensemble (Weighted average (inverse train RMSE))",
+          "model": "Ensemble",
           "family": "ensemble",
           "status": "skipped",
           "reason": "not listed in models.only_models"
@@ -3229,9 +2823,10 @@
       ],
       "estimated_seconds": {
         "features": 18.34,
-        "feature_selection": 482.21202900953335
+        "feature_selection": 482.21202900953335,
+        "deep_tabular": 49.61981308411215
       },
-      "estimated_total_seconds": 500.5520290095333
+      "estimated_total_seconds": 550.1718420936455
     },
     {
       "dataset": "tdc_cyp2c9_substrate_carbonmangels",
@@ -3313,8 +2908,8 @@
         {
           "model": "TabPFNClassifier",
           "family": "deep_tabular",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
+          "status": "planned",
+          "reason": ""
         },
         {
           "model": "ChemML MLP (PyTorch)",
@@ -3383,13 +2978,7 @@
           "reason": "not listed in models.only_models"
         },
         {
-          "model": "Ensemble (OOF Stacking (RidgeCV))",
-          "family": "ensemble",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Ensemble (Weighted average (inverse train RMSE))",
+          "model": "Ensemble",
           "family": "ensemble",
           "status": "skipped",
           "reason": "not listed in models.only_models"
@@ -3397,9 +2986,10 @@
       ],
       "estimated_seconds": {
         "features": 18.380000000000003,
-        "feature_selection": 483.31845995084143
+        "feature_selection": 483.31845995084143,
+        "deep_tabular": 49.76859813084112
       },
-      "estimated_total_seconds": 501.6984599508414
+      "estimated_total_seconds": 551.4670580816826
     },
     {
       "dataset": "tdc_cyp3a4_substrate_carbonmangels",
@@ -3481,8 +3071,8 @@
         {
           "model": "TabPFNClassifier",
           "family": "deep_tabular",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
+          "status": "planned",
+          "reason": ""
         },
         {
           "model": "ChemML MLP (PyTorch)",
@@ -3551,13 +3141,7 @@
           "reason": "not listed in models.only_models"
         },
         {
-          "model": "Ensemble (OOF Stacking (RidgeCV))",
-          "family": "ensemble",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Ensemble (Weighted average (inverse train RMSE))",
+          "model": "Ensemble",
           "family": "ensemble",
           "status": "skipped",
           "reason": "not listed in models.only_models"
@@ -3565,9 +3149,10 @@
       ],
       "estimated_seconds": {
         "features": 18.4,
-        "feature_selection": 484.42535631167596
+        "feature_selection": 484.42535631167596,
+        "deep_tabular": 49.84299065420561
       },
-      "estimated_total_seconds": 502.82535631167593
+      "estimated_total_seconds": 552.6683469658815
     },
     {
       "dataset": "polaris_adme_fang_rppb_1",
@@ -3655,8 +3240,8 @@
         {
           "model": "TabPFNRegressor",
           "family": "deep_tabular",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
+          "status": "planned",
+          "reason": ""
         },
         {
           "model": "ChemML MLP (PyTorch)",
@@ -3725,13 +3310,7 @@
           "reason": "not listed in models.only_models"
         },
         {
-          "model": "Ensemble (OOF Stacking (RidgeCV))",
-          "family": "ensemble",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Ensemble (Weighted average (inverse train RMSE))",
+          "model": "Ensemble",
           "family": "ensemble",
           "status": "skipped",
           "reason": "not listed in models.only_models"
@@ -3739,9 +3318,10 @@
       ],
       "estimated_seconds": {
         "features": 22.7,
-        "feature_selection": 681.2252558193405
+        "feature_selection": 681.2252558193405,
+        "deep_tabular": 65.83738317757008
       },
-      "estimated_total_seconds": 703.9252558193406
+      "estimated_total_seconds": 769.7626389969107
     },
     {
       "dataset": "tdc_caco2_wang",
@@ -3829,8 +3409,8 @@
         {
           "model": "TabPFNRegressor",
           "family": "deep_tabular",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
+          "status": "planned",
+          "reason": ""
         },
         {
           "model": "ChemML MLP (PyTorch)",
@@ -3899,13 +3479,7 @@
           "reason": "not listed in models.only_models"
         },
         {
-          "model": "Ensemble (OOF Stacking (RidgeCV))",
-          "family": "ensemble",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Ensemble (Weighted average (inverse train RMSE))",
+          "model": "Ensemble",
           "family": "ensemble",
           "status": "skipped",
           "reason": "not listed in models.only_models"
@@ -3913,9 +3487,10 @@
       ],
       "estimated_seconds": {
         "features": 23.2,
-        "feature_selection": 704.8731043987848
+        "feature_selection": 704.8731043987848,
+        "deep_tabular": 67.69719626168222
       },
-      "estimated_total_seconds": 728.0731043987848
+      "estimated_total_seconds": 795.770300660467
     },
     {
       "dataset": "tdc_clearance_microsome_az",
@@ -4003,8 +3578,8 @@
         {
           "model": "TabPFNRegressor",
           "family": "deep_tabular",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
+          "status": "planned",
+          "reason": ""
         },
         {
           "model": "ChemML MLP (PyTorch)",
@@ -4073,13 +3648,7 @@
           "reason": "not listed in models.only_models"
         },
         {
-          "model": "Ensemble (OOF Stacking (RidgeCV))",
-          "family": "ensemble",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Ensemble (Weighted average (inverse train RMSE))",
+          "model": "Ensemble",
           "family": "ensemble",
           "status": "skipped",
           "reason": "not listed in models.only_models"
@@ -4087,9 +3656,10 @@
       ],
       "estimated_seconds": {
         "features": 27.04,
-        "feature_selection": 891.6594502201842
+        "feature_selection": 891.6594502201842,
+        "deep_tabular": 81.98056074766355
       },
-      "estimated_total_seconds": 918.6994502201842
+      "estimated_total_seconds": 1000.6800109678477
     },
     {
       "dataset": "esol_delaney",
@@ -4177,8 +3747,8 @@
         {
           "model": "TabPFNRegressor",
           "family": "deep_tabular",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
+          "status": "planned",
+          "reason": ""
         },
         {
           "model": "ChemML MLP (PyTorch)",
@@ -4247,13 +3817,7 @@
           "reason": "not listed in models.only_models"
         },
         {
-          "model": "Ensemble (OOF Stacking (RidgeCV))",
-          "family": "ensemble",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Ensemble (Weighted average (inverse train RMSE))",
+          "model": "Ensemble",
           "family": "ensemble",
           "status": "skipped",
           "reason": "not listed in models.only_models"
@@ -4261,9 +3825,10 @@
       ],
       "estimated_seconds": {
         "features": 27.56,
-        "feature_selection": 916.4905863165446
+        "feature_selection": 916.4905863165446,
+        "deep_tabular": 83.91476635514019
       },
-      "estimated_total_seconds": 944.0505863165446
+      "estimated_total_seconds": 1027.9653526716847
     },
     {
       "dataset": "tdc_vdss_lombardo",
@@ -4351,8 +3916,8 @@
         {
           "model": "TabPFNRegressor",
           "family": "deep_tabular",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
+          "status": "planned",
+          "reason": ""
         },
         {
           "model": "ChemML MLP (PyTorch)",
@@ -4421,13 +3986,7 @@
           "reason": "not listed in models.only_models"
         },
         {
-          "model": "Ensemble (OOF Stacking (RidgeCV))",
-          "family": "ensemble",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Ensemble (Weighted average (inverse train RMSE))",
+          "model": "Ensemble",
           "family": "ensemble",
           "status": "skipped",
           "reason": "not listed in models.only_models"
@@ -4435,9 +3994,10 @@
       ],
       "estimated_seconds": {
         "features": 27.6,
-        "feature_selection": 918.9805660524271
+        "feature_selection": 918.9805660524271,
+        "deep_tabular": 84.06355140186915
       },
-      "estimated_total_seconds": 946.5805660524271
+      "estimated_total_seconds": 1030.6441174542963
     },
     {
       "dataset": "tdc_clearance_hepatocyte_az",
@@ -4525,8 +4085,8 @@
         {
           "model": "TabPFNRegressor",
           "family": "deep_tabular",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
+          "status": "planned",
+          "reason": ""
         },
         {
           "model": "ChemML MLP (PyTorch)",
@@ -4595,13 +4155,7 @@
           "reason": "not listed in models.only_models"
         },
         {
-          "model": "Ensemble (OOF Stacking (RidgeCV))",
-          "family": "ensemble",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Ensemble (Weighted average (inverse train RMSE))",
+          "model": "Ensemble",
           "family": "ensemble",
           "status": "skipped",
           "reason": "not listed in models.only_models"
@@ -4609,9 +4163,10 @@
       ],
       "estimated_seconds": {
         "features": 29.26,
-        "feature_selection": 1001.8330954812587
+        "feature_selection": 1001.8330954812587,
+        "deep_tabular": 90.23813084112149
       },
-      "estimated_total_seconds": 1031.0930954812588
+      "estimated_total_seconds": 1121.3312263223804
     },
     {
       "dataset": "tdc_pgp_broccatelli",
@@ -4693,8 +4248,8 @@
         {
           "model": "TabPFNClassifier",
           "family": "deep_tabular",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
+          "status": "planned",
+          "reason": ""
         },
         {
           "model": "ChemML MLP (PyTorch)",
@@ -4763,13 +4318,7 @@
           "reason": "not listed in models.only_models"
         },
         {
-          "model": "Ensemble (OOF Stacking (RidgeCV))",
-          "family": "ensemble",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Ensemble (Weighted average (inverse train RMSE))",
+          "model": "Ensemble",
           "family": "ensemble",
           "status": "skipped",
           "reason": "not listed in models.only_models"
@@ -4777,9 +4326,10 @@
       ],
       "estimated_seconds": {
         "features": 29.36,
-        "feature_selection": 1006.8962471401176
+        "feature_selection": 1006.8962471401176,
+        "deep_tabular": 90.61009345794392
       },
-      "estimated_total_seconds": 1036.2562471401175
+      "estimated_total_seconds": 1126.8663405980615
     },
     {
       "dataset": "tdc_clintox",
@@ -4861,8 +4411,8 @@
         {
           "model": "TabPFNClassifier",
           "family": "deep_tabular",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
+          "status": "planned",
+          "reason": ""
         },
         {
           "model": "ChemML MLP (PyTorch)",
@@ -4931,13 +4481,7 @@
           "reason": "not listed in models.only_models"
         },
         {
-          "model": "Ensemble (OOF Stacking (RidgeCV))",
-          "family": "ensemble",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Ensemble (Weighted average (inverse train RMSE))",
+          "model": "Ensemble",
           "family": "ensemble",
           "status": "skipped",
           "reason": "not listed in models.only_models"
@@ -4945,9 +4489,10 @@
       ],
       "estimated_seconds": {
         "features": 34.56,
-        "feature_selection": 1276.310695859585
+        "feature_selection": 1276.310695859585,
+        "deep_tabular": 109.95214953271027
       },
-      "estimated_total_seconds": 1310.8706958595849
+      "estimated_total_seconds": 1420.8228453922952
     },
     {
       "dataset": "tdc_toxcast",
@@ -5029,8 +4574,8 @@
         {
           "model": "TabPFNClassifier",
           "family": "deep_tabular",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
+          "status": "planned",
+          "reason": ""
         },
         {
           "model": "ChemML MLP (PyTorch)",
@@ -5099,13 +4644,7 @@
           "reason": "not listed in models.only_models"
         },
         {
-          "model": "Ensemble (OOF Stacking (RidgeCV))",
-          "family": "ensemble",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Ensemble (Weighted average (inverse train RMSE))",
+          "model": "Ensemble",
           "family": "ensemble",
           "status": "skipped",
           "reason": "not listed in models.only_models"
@@ -5113,9 +4652,10 @@
       ],
       "estimated_seconds": {
         "features": 39.62,
-        "feature_selection": 1549.801127156515
+        "feature_selection": 1549.801127156515,
+        "deep_tabular": 128.77345794392522
       },
-      "estimated_total_seconds": 1589.4211271565148
+      "estimated_total_seconds": 1718.19458510044
     },
     {
       "dataset": "polaris_adme_fang_hppb_1",
@@ -5203,8 +4743,8 @@
         {
           "model": "TabPFNRegressor",
           "family": "deep_tabular",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
+          "status": "planned",
+          "reason": ""
         },
         {
           "model": "ChemML MLP (PyTorch)",
@@ -5273,13 +4813,7 @@
           "reason": "not listed in models.only_models"
         },
         {
-          "model": "Ensemble (OOF Stacking (RidgeCV))",
-          "family": "ensemble",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Ensemble (Weighted average (inverse train RMSE))",
+          "model": "Ensemble",
           "family": "ensemble",
           "status": "skipped",
           "reason": "not listed in models.only_models"
@@ -5287,9 +4821,10 @@
       ],
       "estimated_seconds": {
         "features": 41.160000000000004,
-        "feature_selection": 1633.8273389841072
+        "feature_selection": 1633.8273389841072,
+        "deep_tabular": 134.50168224299065
       },
-      "estimated_total_seconds": 1674.9873389841073
+      "estimated_total_seconds": 1809.489021227098
     },
     {
       "dataset": "poduam_pod_nc_std",
@@ -5377,8 +4912,8 @@
         {
           "model": "TabPFNRegressor",
           "family": "deep_tabular",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
+          "status": "planned",
+          "reason": ""
         },
         {
           "model": "ChemML MLP (PyTorch)",
@@ -5447,13 +4982,7 @@
           "reason": "not listed in models.only_models"
         },
         {
-          "model": "Ensemble (OOF Stacking (RidgeCV))",
-          "family": "ensemble",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Ensemble (Weighted average (inverse train RMSE))",
+          "model": "Ensemble",
           "family": "ensemble",
           "status": "skipped",
           "reason": "not listed in models.only_models"
@@ -5461,9 +4990,10 @@
       ],
       "estimated_seconds": {
         "features": 41.84,
-        "feature_selection": 1672.6667246572374
+        "feature_selection": 1672.6667246572374,
+        "deep_tabular": 137.03102803738318
       },
-      "estimated_total_seconds": 1714.5067246572373
+      "estimated_total_seconds": 1851.5377526946204
     },
     {
       "dataset": "tdc_bbb_martins",
@@ -5545,8 +5075,8 @@
         {
           "model": "TabPFNClassifier",
           "family": "deep_tabular",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
+          "status": "planned",
+          "reason": ""
         },
         {
           "model": "ChemML MLP (PyTorch)",
@@ -5615,13 +5145,7 @@
           "reason": "not listed in models.only_models"
         },
         {
-          "model": "Ensemble (OOF Stacking (RidgeCV))",
-          "family": "ensemble",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Ensemble (Weighted average (inverse train RMSE))",
+          "model": "Ensemble",
           "family": "ensemble",
           "status": "skipped",
           "reason": "not listed in models.only_models"
@@ -5629,9 +5153,10 @@
       ],
       "estimated_seconds": {
         "features": 45.6,
-        "feature_selection": 1883.5097839825821
+        "feature_selection": 1883.5097839825821,
+        "deep_tabular": 151.0168224299065
       },
-      "estimated_total_seconds": 1929.109783982582
+      "estimated_total_seconds": 2080.1266064124884
     },
     {
       "dataset": "tdc_pampa_ncats",
@@ -5713,8 +5238,8 @@
         {
           "model": "TabPFNClassifier",
           "family": "deep_tabular",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
+          "status": "planned",
+          "reason": ""
         },
         {
           "model": "ChemML MLP (PyTorch)",
@@ -5783,13 +5308,7 @@
           "reason": "not listed in models.only_models"
         },
         {
-          "model": "Ensemble (OOF Stacking (RidgeCV))",
-          "family": "ensemble",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Ensemble (Weighted average (inverse train RMSE))",
+          "model": "Ensemble",
           "family": "ensemble",
           "status": "skipped",
           "reason": "not listed in models.only_models"
@@ -5797,9 +5316,10 @@
       ],
       "estimated_seconds": {
         "features": 45.68,
-        "feature_selection": 1887.772922086351
+        "feature_selection": 1887.772922086351,
+        "deep_tabular": 151.3143925233645
       },
-      "estimated_total_seconds": 1933.452922086351
+      "estimated_total_seconds": 2084.7673146097154
     },
     {
       "dataset": "polaris_adme_fang_solu_1",
@@ -5887,8 +5407,8 @@
         {
           "model": "TabPFNRegressor",
           "family": "deep_tabular",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
+          "status": "planned",
+          "reason": ""
         },
         {
           "model": "ChemML MLP (PyTorch)",
@@ -5957,13 +5477,7 @@
           "reason": "not listed in models.only_models"
         },
         {
-          "model": "Ensemble (OOF Stacking (RidgeCV))",
-          "family": "ensemble",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Ensemble (Weighted average (inverse train RMSE))",
+          "model": "Ensemble",
           "family": "ensemble",
           "status": "skipped",
           "reason": "not listed in models.only_models"
@@ -5971,9 +5485,10 @@
       ],
       "estimated_seconds": {
         "features": 48.46,
-        "feature_selection": 2046.731958365919
+        "feature_selection": 2046.731958365919,
+        "deep_tabular": 161.65495327102803
       },
-      "estimated_total_seconds": 2095.1919583659187
+      "estimated_total_seconds": 2256.846911636947
     },
     {
       "dataset": "poduam_pod_rd_std",
@@ -6061,8 +5576,8 @@
         {
           "model": "TabPFNRegressor",
           "family": "deep_tabular",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
+          "status": "planned",
+          "reason": ""
         },
         {
           "model": "ChemML MLP (PyTorch)",
@@ -6131,13 +5646,7 @@
           "reason": "not listed in models.only_models"
         },
         {
-          "model": "Ensemble (OOF Stacking (RidgeCV))",
-          "family": "ensemble",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Ensemble (Weighted average (inverse train RMSE))",
+          "model": "Ensemble",
           "family": "ensemble",
           "status": "skipped",
           "reason": "not listed in models.only_models"
@@ -6145,9 +5654,10 @@
       ],
       "estimated_seconds": {
         "features": 52.1,
-        "feature_selection": 2259.3010315434813
+        "feature_selection": 2259.3010315434813,
+        "deep_tabular": 175.19439252336448
       },
-      "estimated_total_seconds": 2311.401031543481
+      "estimated_total_seconds": 2486.5954240668457
     },
     {
       "dataset": "polaris_adme_fang_perm_1",
@@ -6235,8 +5745,8 @@
         {
           "model": "TabPFNRegressor",
           "family": "deep_tabular",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
+          "status": "planned",
+          "reason": ""
         },
         {
           "model": "ChemML MLP (PyTorch)",
@@ -6305,13 +5815,7 @@
           "reason": "not listed in models.only_models"
         },
         {
-          "model": "Ensemble (OOF Stacking (RidgeCV))",
-          "family": "ensemble",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Ensemble (Weighted average (inverse train RMSE))",
+          "model": "Ensemble",
           "family": "ensemble",
           "status": "skipped",
           "reason": "not listed in models.only_models"
@@ -6319,9 +5823,10 @@
       ],
       "estimated_seconds": {
         "features": 57.84,
-        "feature_selection": 2601.678357036165
+        "feature_selection": 2601.678357036165,
+        "deep_tabular": 196.54504672897195
       },
-      "estimated_total_seconds": 2659.518357036165
+      "estimated_total_seconds": 2856.063403765137
     },
     {
       "dataset": "tdc_ppbr_az",
@@ -6409,8 +5914,8 @@
         {
           "model": "TabPFNRegressor",
           "family": "deep_tabular",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
+          "status": "planned",
+          "reason": ""
         },
         {
           "model": "ChemML MLP (PyTorch)",
@@ -6479,13 +5984,7 @@
           "reason": "not listed in models.only_models"
         },
         {
-          "model": "Ensemble (OOF Stacking (RidgeCV))",
-          "family": "ensemble",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Ensemble (Weighted average (inverse train RMSE))",
+          "model": "Ensemble",
           "family": "ensemble",
           "status": "skipped",
           "reason": "not listed in models.only_models"
@@ -6493,9 +5992,10 @@
       ],
       "estimated_seconds": {
         "features": 60.800000000000004,
-        "feature_selection": 2780.6759652596575
+        "feature_selection": 2780.6759652596575,
+        "deep_tabular": 207.55514018691588
       },
-      "estimated_total_seconds": 2841.4759652596576
+      "estimated_total_seconds": 3049.0311054465737
     },
     {
       "dataset": "polaris_adme_fang_rclint_1",
@@ -6583,8 +6083,8 @@
         {
           "model": "TabPFNRegressor",
           "family": "deep_tabular",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
+          "status": "planned",
+          "reason": ""
         },
         {
           "model": "ChemML MLP (PyTorch)",
@@ -6653,13 +6153,7 @@
           "reason": "not listed in models.only_models"
         },
         {
-          "model": "Ensemble (OOF Stacking (RidgeCV))",
-          "family": "ensemble",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Ensemble (Weighted average (inverse train RMSE))",
+          "model": "Ensemble",
           "family": "ensemble",
           "status": "skipped",
           "reason": "not listed in models.only_models"
@@ -6667,9 +6161,10 @@
       ],
       "estimated_seconds": {
         "features": 66.08,
-        "feature_selection": 3106.034297858973
+        "feature_selection": 3106.034297858973,
+        "deep_tabular": 227.1947663551402
       },
-      "estimated_total_seconds": 3172.114297858973
+      "estimated_total_seconds": 3399.309064214113
     },
     {
       "dataset": "lipophilicity",
@@ -6757,8 +6252,8 @@
         {
           "model": "TabPFNRegressor",
           "family": "deep_tabular",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
+          "status": "planned",
+          "reason": ""
         },
         {
           "model": "ChemML MLP (PyTorch)",
@@ -6827,13 +6322,7 @@
           "reason": "not listed in models.only_models"
         },
         {
-          "model": "Ensemble (OOF Stacking (RidgeCV))",
-          "family": "ensemble",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Ensemble (Weighted average (inverse train RMSE))",
+          "model": "Ensemble",
           "family": "ensemble",
           "status": "skipped",
           "reason": "not listed in models.only_models"
@@ -6841,9 +6330,10 @@
       ],
       "estimated_seconds": {
         "features": 89.0,
-        "feature_selection": 4589.50254269112
+        "feature_selection": 4589.50254269112,
+        "deep_tabular": 312.44859813084105
       },
-      "estimated_total_seconds": 4678.50254269112
+      "estimated_total_seconds": 4990.9511408219605
     },
     {
       "dataset": "tdc_lipophilicity_astrazeneca",
@@ -6931,8 +6421,8 @@
         {
           "model": "TabPFNRegressor",
           "family": "deep_tabular",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
+          "status": "planned",
+          "reason": ""
         },
         {
           "model": "ChemML MLP (PyTorch)",
@@ -7001,13 +6491,7 @@
           "reason": "not listed in models.only_models"
         },
         {
-          "model": "Ensemble (OOF Stacking (RidgeCV))",
-          "family": "ensemble",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Ensemble (Weighted average (inverse train RMSE))",
+          "model": "Ensemble",
           "family": "ensemble",
           "status": "skipped",
           "reason": "not listed in models.only_models"
@@ -7015,9 +6499,10 @@
       ],
       "estimated_seconds": {
         "features": 89.0,
-        "feature_selection": 4589.50254269112
+        "feature_selection": 4589.50254269112,
+        "deep_tabular": 312.44859813084105
       },
-      "estimated_total_seconds": 4678.50254269112
+      "estimated_total_seconds": 4990.9511408219605
     },
     {
       "dataset": "tdc_tox21",
@@ -7099,8 +6584,8 @@
         {
           "model": "TabPFNClassifier",
           "family": "deep_tabular",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
+          "status": "planned",
+          "reason": ""
         },
         {
           "model": "ChemML MLP (PyTorch)",
@@ -7169,13 +6654,7 @@
           "reason": "not listed in models.only_models"
         },
         {
-          "model": "Ensemble (OOF Stacking (RidgeCV))",
-          "family": "ensemble",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Ensemble (Weighted average (inverse train RMSE))",
+          "model": "Ensemble",
           "family": "ensemble",
           "status": "skipped",
           "reason": "not listed in models.only_models"
@@ -7183,9 +6662,10 @@
       ],
       "estimated_seconds": {
         "features": 150.16,
-        "feature_selection": 7200.0
+        "feature_selection": 7200.0,
+        "deep_tabular": 539.9409345794393
       },
-      "estimated_total_seconds": 7350.16
+      "estimated_total_seconds": 7890.100934579439
     },
     {
       "dataset": "tdc_ames",
@@ -7267,8 +6747,8 @@
         {
           "model": "TabPFNClassifier",
           "family": "deep_tabular",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
+          "status": "planned",
+          "reason": ""
         },
         {
           "model": "ChemML MLP (PyTorch)",
@@ -7337,13 +6817,7 @@
           "reason": "not listed in models.only_models"
         },
         {
-          "model": "Ensemble (OOF Stacking (RidgeCV))",
-          "family": "ensemble",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Ensemble (Weighted average (inverse train RMSE))",
+          "model": "Ensemble",
           "family": "ensemble",
           "status": "skipped",
           "reason": "not listed in models.only_models"
@@ -7351,9 +6825,10 @@
       ],
       "estimated_seconds": {
         "features": 150.56,
-        "feature_selection": 7200.0
+        "feature_selection": 7200.0,
+        "deep_tabular": 541.428785046729
       },
-      "estimated_total_seconds": 7350.56
+      "estimated_total_seconds": 7891.988785046729
     },
     {
       "dataset": "tdc_ld50_zhu",
@@ -7441,8 +6916,8 @@
         {
           "model": "TabPFNRegressor",
           "family": "deep_tabular",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
+          "status": "planned",
+          "reason": ""
         },
         {
           "model": "ChemML MLP (PyTorch)",
@@ -7511,13 +6986,7 @@
           "reason": "not listed in models.only_models"
         },
         {
-          "model": "Ensemble (OOF Stacking (RidgeCV))",
-          "family": "ensemble",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Ensemble (Weighted average (inverse train RMSE))",
+          "model": "Ensemble",
           "family": "ensemble",
           "status": "skipped",
           "reason": "not listed in models.only_models"
@@ -7525,9 +6994,10 @@
       ],
       "estimated_seconds": {
         "features": 152.70000000000002,
-        "feature_selection": 7200.0
+        "feature_selection": 7200.0,
+        "deep_tabular": 549.3887850467289
       },
-      "estimated_total_seconds": 7352.7
+      "estimated_total_seconds": 7902.088785046729
     },
     {
       "dataset": "tdc_solubility_aqsoldb",
@@ -7615,8 +7085,8 @@
         {
           "model": "TabPFNRegressor",
           "family": "deep_tabular",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
+          "status": "planned",
+          "reason": ""
         },
         {
           "model": "ChemML MLP (PyTorch)",
@@ -7685,13 +7155,7 @@
           "reason": "not listed in models.only_models"
         },
         {
-          "model": "Ensemble (OOF Stacking (RidgeCV))",
-          "family": "ensemble",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Ensemble (Weighted average (inverse train RMSE))",
+          "model": "Ensemble",
           "family": "ensemble",
           "status": "skipped",
           "reason": "not listed in models.only_models"
@@ -7699,1019 +7163,12 @@
       ],
       "estimated_seconds": {
         "features": 204.6,
-        "feature_selection": 7200.0
+        "feature_selection": 7200.0,
+        "deep_tabular": 742.4373831775702
       },
-      "estimated_total_seconds": 7404.6
-    },
-    {
-      "dataset": "tdc_cyp2c9_veith",
-      "n_rows": 12092,
-      "task": "classification",
-      "models": [
-        {
-          "model": "LogisticRegression",
-          "family": "conventional_ml",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "SVC",
-          "family": "conventional_ml",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Random forest",
-          "family": "conventional_ml",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Extra trees",
-          "family": "conventional_ml",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "HistGradientBoosting",
-          "family": "conventional_ml",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Voting Classifier (KNN, SVM)",
-          "family": "conventional_ml",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "AdaBoost",
-          "family": "conventional_ml",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Tabular MLP",
-          "family": "conventional_ml",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "XGBoost",
-          "family": "gradient_boosting",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "LightGBM",
-          "family": "gradient_boosting",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "CatBoost",
-          "family": "gradient_boosting",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "MapLight CatBoost (Strict Parity)",
-          "family": "gradient_boosting",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "TabPFNClassifier",
-          "family": "deep_tabular",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "ChemML MLP (PyTorch)",
-          "family": "deep_tabular",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "ChemML MLP (TensorFlow)",
-          "family": "deep_tabular",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Chemprop v2 (D-MPNN, ensemble=3)",
-          "family": "graph_nn",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",
-          "family": "graph_nn",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Chemprop v2 (CMPNN, ensemble=3)",
-          "family": "graph_nn",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Chemprop v2 (AttentiveFP, ensemble=3)",
-          "family": "graph_nn",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",
-          "family": "graph_nn",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Uni-Mol V1",
-          "family": "pretrained_3d",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Uni-Mol V2 (84m)",
-          "family": "pretrained_3d",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "MapLight + GNN (CatBoost, Strict Parity)",
-          "family": "maplight_gnn",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "CFA (Combinatorial Fusion)",
-          "family": "fusion",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Ensemble (OOF Stacking (RidgeCV))",
-          "family": "ensemble",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Ensemble (Weighted average (inverse train RMSE))",
-          "family": "ensemble",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        }
-      ],
-      "estimated_seconds": {
-        "features": 246.84,
-        "feature_selection": 7200.0
-      },
-      "estimated_total_seconds": 7446.84
-    },
-    {
-      "dataset": "tdc_cyp3a4_veith",
-      "n_rows": 12328,
-      "task": "classification",
-      "models": [
-        {
-          "model": "LogisticRegression",
-          "family": "conventional_ml",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "SVC",
-          "family": "conventional_ml",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Random forest",
-          "family": "conventional_ml",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Extra trees",
-          "family": "conventional_ml",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "HistGradientBoosting",
-          "family": "conventional_ml",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Voting Classifier (KNN, SVM)",
-          "family": "conventional_ml",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "AdaBoost",
-          "family": "conventional_ml",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Tabular MLP",
-          "family": "conventional_ml",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "XGBoost",
-          "family": "gradient_boosting",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "LightGBM",
-          "family": "gradient_boosting",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "CatBoost",
-          "family": "gradient_boosting",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "MapLight CatBoost (Strict Parity)",
-          "family": "gradient_boosting",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "TabPFNClassifier",
-          "family": "deep_tabular",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "ChemML MLP (PyTorch)",
-          "family": "deep_tabular",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "ChemML MLP (TensorFlow)",
-          "family": "deep_tabular",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Chemprop v2 (D-MPNN, ensemble=3)",
-          "family": "graph_nn",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",
-          "family": "graph_nn",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Chemprop v2 (CMPNN, ensemble=3)",
-          "family": "graph_nn",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Chemprop v2 (AttentiveFP, ensemble=3)",
-          "family": "graph_nn",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",
-          "family": "graph_nn",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Uni-Mol V1",
-          "family": "pretrained_3d",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Uni-Mol V2 (84m)",
-          "family": "pretrained_3d",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "MapLight + GNN (CatBoost, Strict Parity)",
-          "family": "maplight_gnn",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "CFA (Combinatorial Fusion)",
-          "family": "fusion",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Ensemble (OOF Stacking (RidgeCV))",
-          "family": "ensemble",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Ensemble (Weighted average (inverse train RMSE))",
-          "family": "ensemble",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        }
-      ],
-      "estimated_seconds": {
-        "features": 251.56,
-        "feature_selection": 7200.0
-      },
-      "estimated_total_seconds": 7451.56
-    },
-    {
-      "dataset": "tdc_cyp1a2_veith",
-      "n_rows": 12579,
-      "task": "classification",
-      "models": [
-        {
-          "model": "LogisticRegression",
-          "family": "conventional_ml",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "SVC",
-          "family": "conventional_ml",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Random forest",
-          "family": "conventional_ml",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Extra trees",
-          "family": "conventional_ml",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "HistGradientBoosting",
-          "family": "conventional_ml",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Voting Classifier (KNN, SVM)",
-          "family": "conventional_ml",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "AdaBoost",
-          "family": "conventional_ml",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Tabular MLP",
-          "family": "conventional_ml",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "XGBoost",
-          "family": "gradient_boosting",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "LightGBM",
-          "family": "gradient_boosting",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "CatBoost",
-          "family": "gradient_boosting",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "MapLight CatBoost (Strict Parity)",
-          "family": "gradient_boosting",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "TabPFNClassifier",
-          "family": "deep_tabular",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "ChemML MLP (PyTorch)",
-          "family": "deep_tabular",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "ChemML MLP (TensorFlow)",
-          "family": "deep_tabular",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Chemprop v2 (D-MPNN, ensemble=3)",
-          "family": "graph_nn",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",
-          "family": "graph_nn",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Chemprop v2 (CMPNN, ensemble=3)",
-          "family": "graph_nn",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Chemprop v2 (AttentiveFP, ensemble=3)",
-          "family": "graph_nn",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",
-          "family": "graph_nn",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Uni-Mol V1",
-          "family": "pretrained_3d",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Uni-Mol V2 (84m)",
-          "family": "pretrained_3d",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "MapLight + GNN (CatBoost, Strict Parity)",
-          "family": "maplight_gnn",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "CFA (Combinatorial Fusion)",
-          "family": "fusion",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Ensemble (OOF Stacking (RidgeCV))",
-          "family": "ensemble",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Ensemble (Weighted average (inverse train RMSE))",
-          "family": "ensemble",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        }
-      ],
-      "estimated_seconds": {
-        "features": 256.58000000000004,
-        "feature_selection": 7200.0
-      },
-      "estimated_total_seconds": 7456.58
-    },
-    {
-      "dataset": "tdc_cyp2c19_veith",
-      "n_rows": 12665,
-      "task": "classification",
-      "models": [
-        {
-          "model": "LogisticRegression",
-          "family": "conventional_ml",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "SVC",
-          "family": "conventional_ml",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Random forest",
-          "family": "conventional_ml",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Extra trees",
-          "family": "conventional_ml",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "HistGradientBoosting",
-          "family": "conventional_ml",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Voting Classifier (KNN, SVM)",
-          "family": "conventional_ml",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "AdaBoost",
-          "family": "conventional_ml",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Tabular MLP",
-          "family": "conventional_ml",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "XGBoost",
-          "family": "gradient_boosting",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "LightGBM",
-          "family": "gradient_boosting",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "CatBoost",
-          "family": "gradient_boosting",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "MapLight CatBoost (Strict Parity)",
-          "family": "gradient_boosting",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "TabPFNClassifier",
-          "family": "deep_tabular",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "ChemML MLP (PyTorch)",
-          "family": "deep_tabular",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "ChemML MLP (TensorFlow)",
-          "family": "deep_tabular",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Chemprop v2 (D-MPNN, ensemble=3)",
-          "family": "graph_nn",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",
-          "family": "graph_nn",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Chemprop v2 (CMPNN, ensemble=3)",
-          "family": "graph_nn",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Chemprop v2 (AttentiveFP, ensemble=3)",
-          "family": "graph_nn",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",
-          "family": "graph_nn",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Uni-Mol V1",
-          "family": "pretrained_3d",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Uni-Mol V2 (84m)",
-          "family": "pretrained_3d",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "MapLight + GNN (CatBoost, Strict Parity)",
-          "family": "maplight_gnn",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "CFA (Combinatorial Fusion)",
-          "family": "fusion",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Ensemble (OOF Stacking (RidgeCV))",
-          "family": "ensemble",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Ensemble (Weighted average (inverse train RMSE))",
-          "family": "ensemble",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        }
-      ],
-      "estimated_seconds": {
-        "features": 258.3,
-        "feature_selection": 7200.0
-      },
-      "estimated_total_seconds": 7458.3
-    },
-    {
-      "dataset": "tdc_cyp2d6_veith",
-      "n_rows": 13130,
-      "task": "classification",
-      "models": [
-        {
-          "model": "LogisticRegression",
-          "family": "conventional_ml",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "SVC",
-          "family": "conventional_ml",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Random forest",
-          "family": "conventional_ml",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Extra trees",
-          "family": "conventional_ml",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "HistGradientBoosting",
-          "family": "conventional_ml",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Voting Classifier (KNN, SVM)",
-          "family": "conventional_ml",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "AdaBoost",
-          "family": "conventional_ml",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Tabular MLP",
-          "family": "conventional_ml",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "XGBoost",
-          "family": "gradient_boosting",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "LightGBM",
-          "family": "gradient_boosting",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "CatBoost",
-          "family": "gradient_boosting",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "MapLight CatBoost (Strict Parity)",
-          "family": "gradient_boosting",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "TabPFNClassifier",
-          "family": "deep_tabular",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "ChemML MLP (PyTorch)",
-          "family": "deep_tabular",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "ChemML MLP (TensorFlow)",
-          "family": "deep_tabular",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Chemprop v2 (D-MPNN, ensemble=3)",
-          "family": "graph_nn",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",
-          "family": "graph_nn",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Chemprop v2 (CMPNN, ensemble=3)",
-          "family": "graph_nn",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Chemprop v2 (AttentiveFP, ensemble=3)",
-          "family": "graph_nn",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",
-          "family": "graph_nn",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Uni-Mol V1",
-          "family": "pretrained_3d",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Uni-Mol V2 (84m)",
-          "family": "pretrained_3d",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "MapLight + GNN (CatBoost, Strict Parity)",
-          "family": "maplight_gnn",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "CFA (Combinatorial Fusion)",
-          "family": "fusion",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Ensemble (OOF Stacking (RidgeCV))",
-          "family": "ensemble",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Ensemble (Weighted average (inverse train RMSE))",
-          "family": "ensemble",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        }
-      ],
-      "estimated_seconds": {
-        "features": 267.6,
-        "feature_selection": 7200.0
-      },
-      "estimated_total_seconds": 7467.6
-    },
-    {
-      "dataset": "tdc_herg_karim",
-      "n_rows": 13445,
-      "task": "classification",
-      "models": [
-        {
-          "model": "LogisticRegression",
-          "family": "conventional_ml",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "SVC",
-          "family": "conventional_ml",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Random forest",
-          "family": "conventional_ml",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Extra trees",
-          "family": "conventional_ml",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "HistGradientBoosting",
-          "family": "conventional_ml",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Voting Classifier (KNN, SVM)",
-          "family": "conventional_ml",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "AdaBoost",
-          "family": "conventional_ml",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Tabular MLP",
-          "family": "conventional_ml",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "XGBoost",
-          "family": "gradient_boosting",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "LightGBM",
-          "family": "gradient_boosting",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "CatBoost",
-          "family": "gradient_boosting",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "MapLight CatBoost (Strict Parity)",
-          "family": "gradient_boosting",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "TabPFNClassifier",
-          "family": "deep_tabular",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "ChemML MLP (PyTorch)",
-          "family": "deep_tabular",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "ChemML MLP (TensorFlow)",
-          "family": "deep_tabular",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Chemprop v2 (D-MPNN, ensemble=3)",
-          "family": "graph_nn",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",
-          "family": "graph_nn",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Chemprop v2 (CMPNN, ensemble=3)",
-          "family": "graph_nn",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Chemprop v2 (AttentiveFP, ensemble=3)",
-          "family": "graph_nn",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",
-          "family": "graph_nn",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Uni-Mol V1",
-          "family": "pretrained_3d",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Uni-Mol V2 (84m)",
-          "family": "pretrained_3d",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "MapLight + GNN (CatBoost, Strict Parity)",
-          "family": "maplight_gnn",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "CFA (Combinatorial Fusion)",
-          "family": "fusion",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Ensemble (OOF Stacking (RidgeCV))",
-          "family": "ensemble",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        },
-        {
-          "model": "Ensemble (Weighted average (inverse train RMSE))",
-          "family": "ensemble",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
-        }
-      ],
-      "estimated_seconds": {
-        "features": 273.9,
-        "feature_selection": 7200.0
-      },
-      "estimated_total_seconds": 7473.9
+      "estimated_total_seconds": 8147.0373831775705
     }
   ],
-  "estimated_total_seconds": 118947.47327951365,
+  "estimated_total_seconds": 79932.39195914201,
   "estimate_note": "Order-of-magnitude estimate: median per-fit wall-clock by model family from the paper's A100 run (Table 6) scaled linearly with dataset size; GPU-accelerated families are assumed 2-8x slower without a GPU."
 }
