@@ -8,8 +8,9 @@ Exits non-zero if any claim drifts from the artifacts, if a referenced figure is
 <!-- TABLE:stem --> block in manuscript.md was never filled. When a benchmark is rerun, expect failures:
 fix the manuscript prose to match the new artifacts, then update the expected values here.
 
-Expected values below correspond to the canonical run: NSF ACCESS Jetstream2 A100,
-benchmark_results/autoqsar_benchmark_20260623_153839.
+Expected values below correspond to the out-of-fold ensemble rebuild,
+benchmark_results/qsarena_benchmark_oof_ensemble. Timing values remain anchored to the
+canonical full A100 run because the OOF repair run reused seeded/cached base-model artifacts.
 """
 
 import csv
@@ -37,75 +38,78 @@ def norm_text(s):
 L, W, F, C, FF = d["leaderboard"], d["wins_by_family"], d["family_consistency"], d["cost"], d["feature_families"]
 
 # ---- coverage -------------------------------------------------------------------------------
-chk("run is A100", d["run_dir"] == "autoqsar_benchmark_20260623_153839" and d["benchmark_profile"] == "full")
-chk("coverage 45/43/44", (d["datasets_with_run_status"], d["datasets_completed"], d["datasets_analyzed"]) == (45, 43, 44))
+chk("run is OOF rebuild", d["run_dir"] == "qsarena_benchmark_oof_ensemble" and d["benchmark_profile"] == "full")
+chk("coverage 44/44/44", (d["datasets_with_run_status"], d["datasets_completed"], d["datasets_analyzed"]) == (44, 44, 44))
 chk("tasks 22/22", d["datasets_by_task"] == {"regression": 22, "classification": 22})
 chk("suites", d["datasets_by_suite"] == {"TDC": 32, "Polaris": 5, "MoleculeNet": 3, "ChemML": 2, "PODUAM": 2})
-chk("models 28 rows 837", (d["models_with_valid_results"], d["valid_model_dataset_rows"]) == (28, 837))
+chk("models 30 rows 1047", (d["models_with_valid_results"], d["valid_model_dataset_rows"]) == (30, 1047))
 chk("size 280/1605/13445/156052",
     (d["dataset_size"]["min"], round(d["dataset_size"]["median"]), d["dataset_size"]["max"], d["dataset_size"]["total"]) == (280, 1604, 13445, 156052))
 chk("splits", d["split_counts"] == {"predefined": 27, "scaffold": 12, "target_quartiles": 4, "random": 1})
-chk("incomplete datasets", set(d["incomplete_datasets"]) == {"polaris_adme_fang_hppb_1", "tdc_herg_central"})
+chk("incomplete datasets", set(d["incomplete_datasets"]) == set())
 chk("no multiseed", d["multiseed_artifacts_present"] is False)
 
 # ---- wins -----------------------------------------------------------------------------------
 for fam, tot, r, c in [
-    ("Ensemble (stacking / averaging)", 16, 7, 9),
-    ("Uni-Mol (3D pretrained)", 11, 6, 5),
-    ("Conventional ML", 8, 2, 6),
+    ("Ensemble (stacking / averaging)", 9, 1, 8),
+    ("Chemprop v2 GNN", 9, 4, 5),
+    ("Uni-Mol (3D pretrained)", 8, 4, 4),
+    ("Conventional ML", 7, 4, 3),
+    ("TabPFN (tabular foundation)", 5, 5, 0),
     ("MapLight + GNN", 4, 4, 0),
-    ("Deep tabular NN (ChemML MLP)", 2, 2, 0),
-    ("Chemprop v2 GNN", 2, 1, 1),
-    ("CFA combinatorial fusion", 1, 0, 1),
+    ("CFA combinatorial fusion", 2, 0, 2),
+    ("Deep tabular NN (ChemML MLP)", 0, 0, 0),
 ]:
     chk(f"wins {fam}", (W[fam]["total"], W[fam]["regression"], W[fam]["classification"]) == (tot, r, c), str(W.get(fam)))
 chk("wins sum to 44", sum(v["total"] for v in W.values()) == 44)
-chk("largest share 36%", round(100 * max(v["total"] for v in W.values()) / 44) == 36)
-chk("3D wins 5 classification", W["Uni-Mol (3D pretrained)"]["classification"] == 5)
+chk("largest share 20%", round(100 * max(v["total"] for v in W.values()) / 44) == 20)
+chk("3D wins 4 classification", W["Uni-Mol (3D pretrained)"]["classification"] == 4)
 
 # ---- consistency ----------------------------------------------------------------------------
 for fam, pct, rank in [
-    ("Ensemble (stacking / averaging)", 75, 2.0),
-    ("Uni-Mol (3D pretrained)", 70, 4.0),
-    ("Conventional ML", 66, 3.0),
-    ("MapLight + GNN", 27, 8.5),
-    ("Deep tabular NN (ChemML MLP)", 25, 12.5),
-    ("Chemprop v2 GNN", 83, 2.0),
+    ("Uni-Mol (3D pretrained)", 61, 4.0),
+    ("Conventional ML", 59, 4.0),
+    ("Chemprop v2 GNN", 55, 5.5),
+    ("Ensemble (stacking / averaging)", 55, 5.0),
+    ("CFA combinatorial fusion", 47, 6.5),
+    ("TabPFN (tabular foundation)", 36, 10.0),
+    ("MapLight + GNN", 25, 12.5),
+    ("Deep tabular NN (ChemML MLP)", 20, 16.0),
 ]:
     v = F[fam]
     chk(f"consistency {fam}",
         round(v["Within 5% of best (% of datasets)"]) == pct and v["Median rank of family-best model"] == rank,
         f"{v['Within 5% of best (% of datasets)']:.1f} r{v['Median rank of family-best model']}")
-chk("chemprop only 6 datasets", F["Chemprop v2 GNN"]["Datasets with valid results"] == 6)
+chk("chemprop 42 datasets", F["Chemprop v2 GNN"]["Datasets with valid results"] == 42)
 
 # ---- leaderboard ----------------------------------------------------------------------------
-chk("lb 37/430/35/5/med3",
-    (L["datasets_compared"], L["reference_rows"], L["top10_test_selected"], L["rank1_test_selected"], L["median_rank_test_selected"]) == (37, 430, 35, 5, 3.0))
-chk("cv 25/0/med8", (L["top10_cv_selected"], L["rank1_cv_selected"], L["median_rank_cv_selected"]) == (25, 0, 8.0))
+chk("lb 37/430/35/4/med3",
+    (L["datasets_compared"], L["reference_rows"], L["top10_test_selected"], L["rank1_test_selected"], L["median_rank_test_selected"]) == (37, 430, 35, 4, 3.0))
+chk("cv 27/1/med7", (L["top10_cv_selected"], L["rank1_cv_selected"], L["median_rank_cv_selected"]) == (27, 1, 7.0))
 # Matched-candidate-set control: holds the pool at the CV-eligible models and selects on test.
-# It decomposes the 35->25 drop into library breadth (35->28) and honest selection (28->25).
+# It decomposes the 35->27 drop into library breadth (35->28) and honest selection (28->27).
 chk("matched pool 28/3/med6", (L["top10_matched_pool"], L["rank1_matched_pool"], L["median_rank_matched_pool"]) == (28, 3, 6.0))
-chk("gap decomposition 7+3", (L["top10_test_selected"] - L["top10_matched_pool"],
-                             L["top10_matched_pool"] - L["top10_cv_selected"]) == (7, 3))
+chk("gap decomposition 7+1", (L["top10_test_selected"] - L["top10_matched_pool"],
+                             L["top10_matched_pool"] - L["top10_cv_selected"]) == (7, 1))
 chk("below top10", set(L["below_top10_datasets"]) == {"tdc_skin_reaction", "tdc_tox21"})
 chk("rank1 names", set(L["rank1_datasets"]) == {
     "tdc_bioavailability_ma", "tdc_carcinogens_lagunin", "tdc_clearance_microsome_az",
-    "tdc_cyp2c9_substrate_carbonmangels", "tdc_toxcast"})
+    "tdc_toxcast"})
 chk("95% top-10", round(100 * L["top10_test_selected"] / L["datasets_compared"]) == 95)
 B = d["leaderboard_by_comparability"]
 o = B["tdc_admet_group_official"]
-chk("tdc official 22/22, 3 firsts, cv 15",
-    (o["datasets"], o["top10_test_selected"], o["median_rank_test_selected"], len(o["rank1_test_selected"]), o["top10_cv_selected"], o["median_rank_cv_selected"]) == (22, 22, 3.0, 3, 15, 8.0))
+chk("tdc official 22/22, 2 firsts, cv 16",
+    (o["datasets"], o["top10_test_selected"], o["median_rank_test_selected"], len(o["rank1_test_selected"]), o["top10_cv_selected"], o["median_rank_cv_selected"]) == (22, 22, 3.0, 2, 16, 7.0))
 chk("polaris 5/5", (B["polaris_official"]["datasets"], B["polaris_official"]["top10_test_selected"]) == (5, 5))
 chk("local 10, 8 top10", (B["local_split"]["datasets"], B["local_split"]["top10_test_selected"]) == (10, 8))
-chk("cv all: 0 winners, 16.1%",
-    (d["cv_selected_all_datasets"]["is_overall_winner"], round(d["cv_selected_all_datasets"]["median_relative_gap_to_test_best_pct"], 1)) == (0, 16.1))
+chk("cv all: 5 winners, 6.7%",
+    (d["cv_selected_all_datasets"]["is_overall_winner"], round(d["cv_selected_all_datasets"]["median_relative_gap_to_test_best_pct"], 1)) == (5, 6.7))
 
 # ---- fusion / ablation ----------------------------------------------------------------------
 fv = d["fusion_vs_best_single"]
-chk("fusion cls 10/22 +0.8", (fv["classification"]["datasets"], fv["classification"]["fusion_better"], round(fv["classification"]["median_rel_improvement_when_better_pct"], 1)) == (22, 10, 0.8))
-chk("fusion reg 7/22 +2.4/-1.4", (fv["regression"]["datasets"], fv["regression"]["fusion_better"], round(fv["regression"]["median_rel_improvement_when_better_pct"], 1), round(fv["regression"]["median_rel_improvement_all_pct"], 1)) == (22, 7, 2.4, -1.4))
-chk("ablation 10/26/6/16", [r["datasets_improved_vs_previous"] for r in d["component_ablation"]] == [0, 10, 26, 6, 16])
+chk("fusion cls 10/22 +1.8", (fv["classification"]["datasets"], fv["classification"]["fusion_better"], round(fv["classification"]["median_rel_improvement_when_better_pct"], 1)) == (22, 10, 1.8))
+chk("fusion reg 1/22 +3.2/-4.5", (fv["regression"]["datasets"], fv["regression"]["fusion_better"], round(fv["regression"]["median_rel_improvement_when_better_pct"], 1), round(fv["regression"]["median_rel_improvement_all_pct"], 1)) == (22, 1, 3.2, -4.5))
+chk("ablation 10/31/3/9", [r["datasets_improved_vs_previous"] for r in d["component_ablation"]] == [0, 10, 31, 3, 9])
 
 # ---- features --------------------------------------------------------------------------------
 chk("features 12137/46.2/22.9", (FF["selected_features_total"], round(FF["maplight_classic_share_selected_pct"], 1), round(FF["maplight_classic_share_available_pct"], 1)) == (12137, 46.2, 22.9))
@@ -128,8 +132,8 @@ chk("selector 0.77/0.58/295/1003", (round(S["log10_slope"], 2), round(S["pearson
 # ---- hardware comparison ---------------------------------------------------------------------
 R = d["run_comparison_vs_rtx"]
 chk("run comparison 44/37", (R["datasets_compared"], R["datasets_same_split"]) == (44, 37))
-chk("run comparison median -0.19", round(R["median_change_pct_same_split"], 2) == -0.19)
-chk("run comparison 15 vs 21", (R["a100_better_same_split"], R["rtx_better_same_split"]) == (15, 21))
+chk("run comparison median 0.17", round(R["median_change_pct_same_split"], 2) == 0.17)
+chk("run comparison 20 vs 16", (R["a100_better_same_split"], R["rtx_better_same_split"]) == (20, 16))
 chk("7 datasets re-split", len(R["datasets_respilt_to_scaffold"]) == 7)
 
 # ---- provenance --------------------------------------------------------------------------------

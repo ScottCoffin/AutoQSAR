@@ -1,6 +1,5 @@
 dataset,stage_index,total_stages,stage_label,step_type,model,workflow,started_at,started_epoch,status,ended_at,ended_epoch,duration_seconds
-tdc_ames,1,5,loading PyTDC Tox benchmark group: ames (official train_val/test split),load_dataset,,,2026-09-26 14:30:47 UTC,1790433047.6727695,completed,2026-09-26 14:30:49 UTC,1790433049.0278227,1.355
-tdc_ames,2,5,building molecular features (cached),feature_generation,,,2026-09-26 14:30:49 UTC,1790433049.027876,resumed_cache,2026-09-26 14:30:49 UTC,1790433049.0613897,0.034
-tdc_ames,3,5,splitting data and selecting features (cached),feature_selection,,,2026-09-26 14:30:49 UTC,1790433049.0614343,resumed_cache,2026-09-26 14:31:34 UTC,1790433094.367208,45.306
-tdc_ames,4,5,conventional model TabPFNClassifier,model,TabPFNClassifier,conventional,2026-09-26 14:31:34 UTC,1790433094.3672645,completed,2026-09-26 14:36:11 UTC,1790433371.6474113,277.28
-tdc_ames,5,5,ensemble (2 method(s)),model,Ensemble,ensemble,2026-09-26 14:36:11 UTC,1790433371.6474426,completed,2026-09-26 14:36:14 UTC,1790433374.8773327,3.23
+tdc_ames,1,4,loading PyTDC Tox benchmark group: ames (official train_val/test split),load_dataset,,,2026-09-27 19:57:17 Pacific Daylight Time,1790564237.5283809,completed,2026-09-27 19:57:19 Pacific Daylight Time,1790564239.0724993,1.544
+tdc_ames,2,4,building molecular features (cached),feature_generation,,,2026-09-27 19:57:19 Pacific Daylight Time,1790564239.0724993,resumed_cache,2026-09-27 19:57:19 Pacific Daylight Time,1790564239.130337,0.058
+tdc_ames,3,4,splitting data and selecting features (cached),feature_selection,,,2026-09-27 19:57:19 Pacific Daylight Time,1790564239.130337,resumed_cache,2026-09-27 19:57:19 Pacific Daylight Time,1790564239.1605275,0.03
+tdc_ames,4,4,ensemble (2 method(s)),model,Ensemble,ensemble,2026-09-27 19:57:19 Pacific Daylight Time,1790564239.1605275,completed,2026-09-27 19:57:23 Pacific Daylight Time,1790564243.316944,4.156

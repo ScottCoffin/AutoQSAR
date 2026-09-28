@@ -2,8 +2,58 @@
   "status": "completed",
   "dataset": "tdc_cyp2c19_veith",
   "source": "PyTDC ADME benchmark: cyp2c19_veith",
-  "completed_at": "2026-09-26 11:43:31",
-  "elapsed_seconds": 276.119,
-  "n_metrics_rows": 35,
-  "n_stage_records": 10
+  "completed_at": "2026-09-27 20:28:14",
+  "elapsed_seconds": 14.075,
+  "n_metrics_rows": 34,
+  "n_stage_records": 4,
+  "n_rows": 12665,
+  "task_type": "classification",
+  "primary_metric": "roc_auc",
+  "cleanup_counts": {
+    "input_rows": 12665,
+    "missing_smiles_or_target": 0,
+    "unparseable_smiles": 0,
+    "changed_by_standardization": 0,
+    "duplicates_removed": 0,
+    "final_rows": 12665
+  },
+  "standardization": {
+    "drop_unparseable": true,
+    "strip_salts": false,
+    "normalize_charges": false,
+    "normalize_tautomers": false,
+    "deduplicate": "none"
+  },
+  "failed_models": [
+    "Chemprop v2 (D-MPNN, ensemble=3)",
+    "Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",
+    "Chemprop v2 (CMPNN, ensemble=3)",
+    "Chemprop v2 (AttentiveFP, ensemble=3)",
+    "Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",
+    "Uni-Mol V2 (84m)",
+    "Chemprop v2 (D-MPNN, ensemble=3)",
+    "Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",
+    "Chemprop v2 (CMPNN, ensemble=3)",
+    "Chemprop v2 (AttentiveFP, ensemble=3)",
+    "Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",
+    "Uni-Mol V2 (84m)",
+    "Chemprop v2 (D-MPNN, ensemble=3)",
+    "Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",
+    "Chemprop v2 (CMPNN, ensemble=3)",
+    "Chemprop v2 (AttentiveFP, ensemble=3)",
+    "Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)"
+  ],
+  "applicability_domain": {
+    "method": "both",
+    "n_test": 2534,
+    "in_domain_fraction": 0.9968429360694554,
+    "methods": {
+      "standardization": 0.9968429360694554,
+      "confidence": 1.0
+    },
+    "selected_model": "XGBoost",
+    "notes": []
+  },
+  "stage23_signature": "e368e31da25d42173226cfa1e7311673c2c75cd33e0e16d0440bf3a888cfd498",
+  "resume_fingerprint": "e357d50101725865d7ee4b55"
 }

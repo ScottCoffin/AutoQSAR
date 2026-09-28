@@ -2,8 +2,63 @@
   "status": "completed",
   "dataset": "tdc_clearance_microsome_az",
   "source": "PyTDC ADME benchmark group: clearance_microsome_az (official train_val/test split)",
-  "completed_at": "2026-09-26 06:48:17",
-  "elapsed_seconds": 119.221,
+  "completed_at": "2026-09-27 17:46:26",
+  "elapsed_seconds": 595.419,
   "n_metrics_rows": 46,
-  "n_stage_records": 10
+  "n_stage_records": 4,
+  "n_rows": 1102,
+  "task_type": "regression",
+  "primary_metric": "spearman",
+  "cleanup_counts": {
+    "input_rows": 1102,
+    "missing_smiles_or_target": 0,
+    "unparseable_smiles": 0,
+    "changed_by_standardization": 0,
+    "duplicates_removed": 0,
+    "final_rows": 1102
+  },
+  "standardization": {
+    "drop_unparseable": true,
+    "strip_salts": false,
+    "normalize_charges": false,
+    "normalize_tautomers": false,
+    "deduplicate": "none"
+  },
+  "failed_models": [
+    "Chemprop v2 (D-MPNN, ensemble=3)",
+    "Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",
+    "Chemprop v2 (CMPNN, ensemble=3)",
+    "Chemprop v2 (AttentiveFP, ensemble=3)",
+    "Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",
+    "Chemprop v2 (D-MPNN, ensemble=3)",
+    "Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",
+    "Chemprop v2 (CMPNN, ensemble=3)",
+    "Chemprop v2 (AttentiveFP, ensemble=3)",
+    "Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",
+    "Chemprop v2 (D-MPNN, ensemble=3)",
+    "Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",
+    "Chemprop v2 (CMPNN, ensemble=3)",
+    "Chemprop v2 (AttentiveFP, ensemble=3)",
+    "Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",
+    "Chemprop v2 (D-MPNN, ensemble=3)",
+    "Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",
+    "Chemprop v2 (CMPNN, ensemble=3)",
+    "Chemprop v2 (AttentiveFP, ensemble=3)",
+    "Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)"
+  ],
+  "applicability_domain": {
+    "method": "both",
+    "n_test": 221,
+    "in_domain_fraction": 0.9592760180995475,
+    "methods": {
+      "standardization": 0.9819004524886877,
+      "knn_similarity": 0.9728506787330317
+    },
+    "selected_model": "TabPFNRegressor",
+    "notes": [],
+    "mae_in_domain": 27.553340412985605,
+    "mae_out_of_domain": 29.490701285468205
+  },
+  "stage23_signature": "6848ee5ce96012cfedb78d8ae1d0e9a77cd42d4886883e184a37e8ba48904bd7",
+  "resume_fingerprint": "622e691af93f0c7b6a78903b"
 }

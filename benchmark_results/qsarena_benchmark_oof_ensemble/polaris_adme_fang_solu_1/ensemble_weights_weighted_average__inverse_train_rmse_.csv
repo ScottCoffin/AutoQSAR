@@ -1,18 +1,16 @@
 Model,Weight,Workflow
-ElasticNetCV,0.003701199124578635,conventional
-SVR,0.01628846195592886,conventional
-Random forest,0.007958908132078495,conventional
-Extra trees,0.9007635495001665,conventional
-AdaBoost,0.0027091680880659877,conventional
-Tabular CNN,0.002824619640407845,conventional
-XGBoost,0.020409419737036295,conventional
-CatBoost,0.0055086068277345164,conventional
-MapLight CatBoost (Strict Parity),0.0049327368328295615,conventional
-Uni-Mol V1,0.004060114545595517,Uni-Mol
-Uni-Mol V2 (84m),0.004295377738184687,Uni-Mol
-"MapLight + GNN (CatBoost, Strict Parity)",0.0054077773589690965,MapLight + GNN
-"Chemprop v2 (D-MPNN, ensemble=3)",0.003331557616604176,Chemprop v2
-"Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",0.003994174942679042,Chemprop v2
-"Chemprop v2 (CMPNN, ensemble=3)",0.003304100272690589,Chemprop v2
-"Chemprop v2 (AttentiveFP, ensemble=3)",0.0032510055717599982,Chemprop v2
-"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",0.0072592221146900796,Chemprop v2
+ElasticNetCV,0.0734335598695537,conventional
+SVR,0.07009067174019463,conventional
+Random forest,0.06462101832231536,conventional
+Extra trees,0.06183473492573457,conventional
+HistGradientBoosting,0.06634823484710337,conventional
+"Voting Regressor (KNN, SVM)",0.06841567165036222,conventional
+AdaBoost,0.057235961844966654,conventional
+Tabular MLP,0.06914678001258492,conventional
+Tabular CNN,0.05669767886050437,conventional
+XGBoost,0.06703692526203425,conventional
+CatBoost,0.06775555478768214,conventional
+MapLight CatBoost (Strict Parity),0.06125318245196726,conventional
+ChemML MLP (PyTorch),0.07721108609558729,ChemML deep learning
+ChemML MLP (TensorFlow),0.07547734051868495,ChemML deep learning
+"MapLight + GNN (CatBoost, Strict Parity)",0.06344159881072409,MapLight + GNN

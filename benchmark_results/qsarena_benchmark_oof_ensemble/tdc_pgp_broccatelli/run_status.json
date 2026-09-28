@@ -2,8 +2,61 @@
   "status": "completed",
   "dataset": "tdc_pgp_broccatelli",
   "source": "PyTDC ADME benchmark group: pgp_broccatelli (official train_val/test split)",
-  "completed_at": "2026-09-26 07:00:50",
-  "elapsed_seconds": 75.512,
+  "completed_at": "2026-09-27 18:15:32",
+  "elapsed_seconds": 2.86,
   "n_metrics_rows": 44,
-  "n_stage_records": 10
+  "n_stage_records": 4,
+  "n_rows": 1218,
+  "task_type": "classification",
+  "primary_metric": "roc_auc",
+  "cleanup_counts": {
+    "input_rows": 1218,
+    "missing_smiles_or_target": 0,
+    "unparseable_smiles": 0,
+    "changed_by_standardization": 0,
+    "duplicates_removed": 0,
+    "final_rows": 1218
+  },
+  "standardization": {
+    "drop_unparseable": true,
+    "strip_salts": false,
+    "normalize_charges": false,
+    "normalize_tautomers": false,
+    "deduplicate": "none"
+  },
+  "failed_models": [
+    "Chemprop v2 (D-MPNN, ensemble=3)",
+    "Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",
+    "Chemprop v2 (CMPNN, ensemble=3)",
+    "Chemprop v2 (AttentiveFP, ensemble=3)",
+    "Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",
+    "Chemprop v2 (D-MPNN, ensemble=3)",
+    "Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",
+    "Chemprop v2 (CMPNN, ensemble=3)",
+    "Chemprop v2 (AttentiveFP, ensemble=3)",
+    "Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",
+    "Chemprop v2 (D-MPNN, ensemble=3)",
+    "Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",
+    "Chemprop v2 (CMPNN, ensemble=3)",
+    "Chemprop v2 (AttentiveFP, ensemble=3)",
+    "Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",
+    "Chemprop v2 (D-MPNN, ensemble=3)",
+    "Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",
+    "Chemprop v2 (CMPNN, ensemble=3)",
+    "Chemprop v2 (AttentiveFP, ensemble=3)",
+    "Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)"
+  ],
+  "applicability_domain": {
+    "method": "both",
+    "n_test": 245,
+    "in_domain_fraction": 0.9183673469387755,
+    "methods": {
+      "standardization": 0.9795918367346939,
+      "confidence": 0.9387755102040817
+    },
+    "selected_model": "LogisticRegression",
+    "notes": []
+  },
+  "stage23_signature": "30742e4ddaaf95b5b598c4067d6d06473a0b43136d36b7fa3b8c8b8feb3ee4d8",
+  "resume_fingerprint": "d73def1900ae1e6e30580418"
 }

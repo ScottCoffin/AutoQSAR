@@ -2,8 +2,61 @@
   "status": "completed",
   "dataset": "tdc_skin_reaction",
   "source": "PyTDC Tox benchmark: skin_reaction",
-  "completed_at": "2026-09-26 06:26:47",
-  "elapsed_seconds": 104.058,
+  "completed_at": "2026-09-27 16:41:35",
+  "elapsed_seconds": 1.859,
   "n_metrics_rows": 44,
-  "n_stage_records": 10
+  "n_stage_records": 4,
+  "n_rows": 404,
+  "task_type": "classification",
+  "primary_metric": "roc_auc",
+  "cleanup_counts": {
+    "input_rows": 404,
+    "missing_smiles_or_target": 0,
+    "unparseable_smiles": 0,
+    "changed_by_standardization": 0,
+    "duplicates_removed": 0,
+    "final_rows": 404
+  },
+  "standardization": {
+    "drop_unparseable": true,
+    "strip_salts": false,
+    "normalize_charges": false,
+    "normalize_tautomers": false,
+    "deduplicate": "none"
+  },
+  "failed_models": [
+    "Chemprop v2 (D-MPNN, ensemble=3)",
+    "Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",
+    "Chemprop v2 (CMPNN, ensemble=3)",
+    "Chemprop v2 (AttentiveFP, ensemble=3)",
+    "Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",
+    "Uni-Mol V2 (84m)",
+    "Uni-Mol V2 (310m)",
+    "Uni-Mol V2 (310m)",
+    "Uni-Mol V2 (310m)",
+    "Uni-Mol V2 (310m)",
+    "Uni-Mol V2 (310m)",
+    "Uni-Mol V2 (310m)",
+    "Uni-Mol V2 (310m)",
+    "Uni-Mol V2 (310m)",
+    "Uni-Mol V2 (310m)",
+    "Uni-Mol V2 (164m)",
+    "Uni-Mol V2 (164m)",
+    "Uni-Mol V2 (164m)",
+    "Uni-Mol V2 (164m)",
+    "Uni-Mol V2 (84m)"
+  ],
+  "applicability_domain": {
+    "method": "both",
+    "n_test": 115,
+    "in_domain_fraction": 0.6521739130434783,
+    "methods": {
+      "standardization": 0.991304347826087,
+      "confidence": 0.6608695652173913
+    },
+    "selected_model": "TabPFNClassifier",
+    "notes": []
+  },
+  "stage23_signature": "c1baa4be623765cf1c0a12b19945db8d06c194884d556d286a02363e5eeeda39",
+  "resume_fingerprint": "40f4c6047f21cbca044bbd18"
 }

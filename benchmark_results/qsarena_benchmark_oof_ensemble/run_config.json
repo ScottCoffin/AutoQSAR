@@ -1,0 +1,862 @@
+{
+  "dataset": null,
+  "pfas_aux_workbook": null,
+  "pfas_aux_sheet": null,
+  "refresh_leaderboards_only": false,
+  "dataset_name": [
+    "chemml_cep_homo",
+    "chemml_organic_density",
+    "esol_delaney",
+    "freesolv_sampl",
+    "lipophilicity",
+    "poduam_pod_nc_std",
+    "poduam_pod_rd_std",
+    "polaris_adme_fang_hppb_1",
+    "polaris_adme_fang_perm_1",
+    "polaris_adme_fang_rclint_1",
+    "polaris_adme_fang_rppb_1",
+    "polaris_adme_fang_solu_1",
+    "tdc_ames",
+    "tdc_bbb_martins",
+    "tdc_bioavailability_ma",
+    "tdc_caco2_wang",
+    "tdc_carcinogens_lagunin",
+    "tdc_clearance_hepatocyte_az",
+    "tdc_clearance_microsome_az",
+    "tdc_clintox",
+    "tdc_cyp1a2_veith",
+    "tdc_cyp2c19_veith",
+    "tdc_cyp2c9_substrate_carbonmangels",
+    "tdc_cyp2c9_veith",
+    "tdc_cyp2d6_substrate_carbonmangels",
+    "tdc_cyp2d6_veith",
+    "tdc_cyp3a4_substrate_carbonmangels",
+    "tdc_cyp3a4_veith",
+    "tdc_dili",
+    "tdc_half_life_obach",
+    "tdc_herg",
+    "tdc_herg_karim",
+    "tdc_hia_hou",
+    "tdc_hydrationfreeenergy_freesolv",
+    "tdc_ld50_zhu",
+    "tdc_lipophilicity_astrazeneca",
+    "tdc_pampa_ncats",
+    "tdc_pgp_broccatelli",
+    "tdc_ppbr_az",
+    "tdc_skin_reaction",
+    "tdc_solubility_aqsoldb",
+    "tdc_tox21",
+    "tdc_toxcast",
+    "tdc_vdss_lombardo"
+  ],
+  "include_local_csv": null,
+  "output_dir": "benchmark_results\\qsarena_benchmark_oof_ensemble",
+  "benchmark_profile": "full",
+  "dry_run": false,
+  "revisit_completed_datasets": false,
+  "minimum_rows": 20,
+  "row_limit": 0,
+  "n_jobs": 10,
+  "fingerprint_bits": 1024,
+  "target_transform": "auto",
+  "log10_target": true,
+  "split_strategy": "target_quartiles",
+  "test_fraction": 0.2,
+  "random_seed": 13,
+  "enable_persistent_feature_store": true,
+  "reuse_persistent_feature_store": true,
+  "persistent_feature_store_path": "C:\\Users\\Scott.Coffin\\OneDrive - California OEHHA\\R_new\\AutoQSAR\\.model_cache\\feature_store_parquet",
+  "enable_shared_feature_matrix_cache": true,
+  "reuse_shared_feature_matrix_cache": true,
+  "shared_feature_matrix_cache_path": "C:\\Users\\Scott.Coffin\\OneDrive - California OEHHA\\R_new\\AutoQSAR\\.model_cache\\benchmark_feature_matrix_cache",
+  "selector_method": "elasticnet_cv",
+  "selector_l1_ratio_grid": "0.3,0.7",
+  "selector_alpha_min_log10": -5,
+  "selector_alpha_max_log10": -1,
+  "selector_alpha_grid_size": 12,
+  "selector_cv_folds": 3,
+  "selector_max_iter": 10000,
+  "selector_coefficient_threshold": 1e-10,
+  "selector_auto_rf_by_dataset_size": false,
+  "selector_auto_rf_threshold_seconds": 7200.0,
+  "selector_auto_rf_log10_slope": 1.225,
+  "selector_auto_rf_log10_intercept": -0.658,
+  "selector_elasticnet_timeout_seconds": 7200.0,
+  "selector_rf_fallback_n_estimators": 400,
+  "skip_elasticnetcv_if_selector_timeout": true,
+  "max_selected_features": 0,
+  "cv_folds": 5,
+  "elasticnet_l1_ratio_grid": "0.4,0.8",
+  "elasticnet_alpha_min_log10": -4,
+  "elasticnet_alpha_max_log10": 0,
+  "elasticnet_alpha_grid_size": 12,
+  "elasticnet_cv_folds": 3,
+  "elasticnet_max_iter": 15000,
+  "ga_models": "",
+  "ga_auto_reference_run_dir": null,
+  "ga_auto_min_relative_improvement": 0.005,
+  "ga_auto_min_dataset_wins": 1,
+  "ga_auto_min_improving_datasets": 1,
+  "ga_auto_min_reference_datasets": 5,
+  "ga_generations": 12,
+  "ga_population_size": 16,
+  "ga_elites": 2,
+  "ga_cv_folds": 5,
+  "ga_mutation_probability": 0.35,
+  "run_chemml_pytorch": true,
+  "run_chemml_tensorflow": true,
+  "run_cnn": true,
+  "run_tabpfn": true,
+  "tabpfn_max_train_rows": 11000,
+  "tabpfn_max_features": 40,
+  "suppress_tabpfn_progress": true,
+  "run_cfa": true,
+  "cfa_min_models": 2,
+  "cfa_max_models": 0,
+  "cfa_max_candidate_subsets": 250000,
+  "cfa_optimize_metric": "mae",
+  "cfa_source_workflows": "all",
+  "cfa_include_rank_combinations": true,
+  "cfa_rank_prefer_when_diverse": true,
+  "cfa_rank_diversity_threshold": 0.15,
+  "cfa_rank_metric_discount": 0.98,
+  "run_chemprop_mpnn": true,
+  "run_chemprop_dmpnn": true,
+  "run_chemprop_cmpnn": true,
+  "run_chemprop_attentivefp": true,
+  "run_chemprop_selected_features": true,
+  "run_unimol_v1": false,
+  "unimol_internal_split": "random",
+  "unimol_epochs": 10,
+  "unimol_learning_rate": 0.0001,
+  "unimol_batch_size": 32,
+  "unimol_early_stopping": 5,
+  "unimol_num_workers": 3,
+  "unimol_reuse_model_cache": true,
+  "run_unimol_v2": false,
+  "unimol_model_size": "84m",
+  "unimol_max_atoms": 64,
+  "unimol_use_amp": true,
+  "run_maplight_gnn": true,
+  "maplight_leaderboard_parity_mode": true,
+  "maplight_parity_seeds": "1,2,3,4,5",
+  "chemml_hidden_layers": 2,
+  "chemml_hidden_width": 256,
+  "chemml_training_epochs": 80,
+  "chemml_batch_size": 64,
+  "chemml_learning_rate": 0.001,
+  "chemml_use_cross_validation": true,
+  "chemml_cv_folds": 5,
+  "chemprop_epochs": 40,
+  "chemprop_batch_size": 32,
+  "chemprop_num_workers": 3,
+  "chemprop_ensemble_size": 3,
+  "chemprop_random_seed": 42,
+  "chemprop_reuse_model_cache": true,
+  "chemprop_echo_commands": false,
+  "run_chemprop_rdkit2d": true,
+  "maplight_gnn_kind": "gin_supervised_masking",
+  "run_ensemble": true,
+  "rebuild_ensemble": true,
+  "ensemble_method": "OOF Stacking (RidgeCV)",
+  "ensemble_methods": "OOF Stacking (RidgeCV),Weighted average (inverse train RMSE)",
+  "ensemble_stacking_cv_folds": 5,
+  "ensemble_drop_highly_correlated_members": true,
+  "ensemble_max_train_correlation": 0.995,
+  "ensemble_exclude_negative_test_r2_members": true,
+  "ensemble_member_selection_split": "oof",
+  "ensemble_oof_folds": 5,
+  "ensemble_oof_scope": "cpu",
+  "ensemble_oof_allow_api_refits": false,
+  "ensemble_oof_source_run": "benchmark_results\\autoqsar_benchmark_20260623_153839",
+  "compare_run_dir": null,
+  "emit_run_vs_run_report": true,
+  "run_tdc22_multiseed_best": false,
+  "tdc22_multiseed": false,
+  "tdc22_multiseed_source_run": null,
+  "tdc22_multiseed_seeds": "1,2,3,4,5",
+  "tdc22_multiseed_summary_csv": "results\\tdc22_multiseed.csv",
+  "tdc22_multiseed_output_name": "tdc22_best_model_multiseed",
+  "only_model_names": [
+    "Ensemble"
+  ],
+  "resume": true,
+  "parallel_datasets": 1,
+  "parallel_tdc22_seeds": false,
+  "config": null,
+  "run_mode": "benchmark",
+  "fresh": false,
+  "verbosity": "normal",
+  "smiles_column": null,
+  "target_columns": null,
+  "id_column": null,
+  "task_type": "auto",
+  "classification_threshold": null,
+  "drop_unparseable_smiles": true,
+  "strip_salts": false,
+  "normalize_charges": false,
+  "normalize_tautomers": false,
+  "deduplicate": "none",
+  "feature_families": [
+    "morgan",
+    "ecfp6",
+    "fcfp6",
+    "layered",
+    "atom_pair",
+    "topological_torsion",
+    "rdk_path",
+    "maccs",
+    "rdkit"
+  ],
+  "maplight_classic": true,
+  "predefined_split_column": null,
+  "dedup_variance_threshold": 1e-08,
+  "binary_prevalence_range": [
+    0.005,
+    0.995
+  ],
+  "drop_duplicate_feature_columns": true,
+  "disabled_model_families": [],
+  "disable_models": [],
+  "ga_estimators": [
+    "elastic_net",
+    "catboost"
+  ],
+  "ga_time_budget_minutes": null,
+  "ga_max_configs": null,
+  "gpu_policy": "auto",
+  "ad_method": "both",
+  "ad_confidence_threshold": 0.5,
+  "ad_knn_quantile": 0.95,
+  "report_regression_metrics": [
+    "rmse",
+    "mae",
+    "r2",
+    "spearman"
+  ],
+  "report_classification_metrics": [
+    "roc_auc",
+    "auprc",
+    "balanced_accuracy",
+    "mcc"
+  ],
+  "primary_metric_override": "auto",
+  "selection_protocol": "both",
+  "report_include_plots": true,
+  "report_what_next": true,
+  "report_manifest": true,
+  "batch": null,
+  "batch_mode": "auto",
+  "continue_on_error": true,
+  "batch_aggregate_summary": true,
+  "resume_granularity": [
+    "dataset",
+    "stage"
+  ],
+  "resume_validate_signature": true,
+  "atomic_writes": true,
+  "report_formats": [
+    "html",
+    "md"
+  ],
+  "gpu_available": false,
+  "precision_mode": "fp32",
+  "unimol_auto_requested": true,
+  "ga_models_resolved": "",
+  "ga_resolution": {
+    "mode": "disabled",
+    "reason": "empty_ga_models"
+  },
+  "default_feature_families": [
+    "morgan",
+    "ecfp6",
+    "fcfp6",
+    "layered",
+    "atom_pair",
+    "topological_torsion",
+    "rdk_path",
+    "maccs",
+    "rdkit",
+    "maplight"
+  ],
+  "resolved_feature_families": [
+    "morgan",
+    "ecfp6",
+    "fcfp6",
+    "layered",
+    "atom_pair",
+    "topological_torsion",
+    "rdk_path",
+    "maccs",
+    "rdkit",
+    "maplight"
+  ],
+  "resource_config": {
+    "detected_cpu_count": 12,
+    "n_jobs": 10,
+    "gpu_available": false,
+    "gpu_inventory": [],
+    "chemprop_num_workers": 3,
+    "unimol_num_workers": 3,
+    "chemprop_batch_size": 32,
+    "unimol_batch_size": 32,
+    "precision_mode": "fp32"
+  },
+  "config_signature": "{\"ad_confidence_threshold\": 0.5, \"ad_knn_quantile\": 0.95, \"ad_method\": \"both\", \"atomic_writes\": true, \"batch\": null, \"batch_aggregate_summary\": true, \"batch_mode\": \"auto\", \"benchmark_profile\": \"full\", \"binary_prevalence_range\": [0.005, 0.995], \"cfa_include_rank_combinations\": true, \"cfa_max_candidate_subsets\": 250000, \"cfa_max_models\": 0, \"cfa_min_models\": 2, \"cfa_optimize_metric\": \"mae\", \"cfa_rank_diversity_threshold\": 0.15, \"cfa_rank_metric_discount\": 0.98, \"cfa_rank_prefer_when_diverse\": true, \"cfa_source_workflows\": \"all\", \"chemml_batch_size\": 64, \"chemml_cv_folds\": 5, \"chemml_hidden_layers\": 2, \"chemml_hidden_width\": 256, \"chemml_learning_rate\": 0.001, \"chemml_training_epochs\": 80, \"chemml_use_cross_validation\": true, \"chemprop_batch_size\": 32, \"chemprop_echo_commands\": false, \"chemprop_ensemble_size\": 3, \"chemprop_epochs\": 40, \"chemprop_num_workers\": 3, \"chemprop_random_seed\": 42, \"chemprop_reuse_model_cache\": true, \"classification_threshold\": null, \"compare_run_dir\": null, \"config\": null, \"continue_on_error\": true, \"cv_folds\": 5, \"dataset\": null, \"dataset_name\": [\"chemml_cep_homo\", \"chemml_organic_density\", \"esol_delaney\", \"freesolv_sampl\", \"lipophilicity\", \"poduam_pod_nc_std\", \"poduam_pod_rd_std\", \"polaris_adme_fang_hppb_1\", \"polaris_adme_fang_perm_1\", \"polaris_adme_fang_rclint_1\", \"polaris_adme_fang_rppb_1\", \"polaris_adme_fang_solu_1\", \"tdc_ames\", \"tdc_bbb_martins\", \"tdc_bioavailability_ma\", \"tdc_caco2_wang\", \"tdc_carcinogens_lagunin\", \"tdc_clearance_hepatocyte_az\", \"tdc_clearance_microsome_az\", \"tdc_clintox\", \"tdc_cyp1a2_veith\", \"tdc_cyp2c19_veith\", \"tdc_cyp2c9_substrate_carbonmangels\", \"tdc_cyp2c9_veith\", \"tdc_cyp2d6_substrate_carbonmangels\", \"tdc_cyp2d6_veith\", \"tdc_cyp3a4_substrate_carbonmangels\", \"tdc_cyp3a4_veith\", \"tdc_dili\", \"tdc_half_life_obach\", \"tdc_herg\", \"tdc_herg_karim\", \"tdc_hia_hou\", \"tdc_hydrationfreeenergy_freesolv\", \"tdc_ld50_zhu\", \"tdc_lipophilicity_astrazeneca\", \"tdc_pampa_ncats\", \"tdc_pgp_broccatelli\", \"tdc_ppbr_az\", \"tdc_skin_reaction\", \"tdc_solubility_aqsoldb\", \"tdc_tox21\", \"tdc_toxcast\", \"tdc_vdss_lombardo\"], \"dedup_variance_threshold\": 1e-08, \"deduplicate\": \"none\", \"default_feature_families\": [\"morgan\", \"ecfp6\", \"fcfp6\", \"layered\", \"atom_pair\", \"topological_torsion\", \"rdk_path\", \"maccs\", \"rdkit\", \"maplight\"], \"disable_models\": [], \"disabled_model_families\": [], \"drop_duplicate_feature_columns\": true, \"drop_unparseable_smiles\": true, \"elasticnet_alpha_grid_size\": 12, \"elasticnet_alpha_max_log10\": 0, \"elasticnet_alpha_min_log10\": -4, \"elasticnet_cv_folds\": 3, \"elasticnet_l1_ratio_grid\": \"0.4,0.8\", \"elasticnet_max_iter\": 15000, \"emit_run_vs_run_report\": true, \"enable_persistent_feature_store\": true, \"enable_shared_feature_matrix_cache\": true, \"ensemble_drop_highly_correlated_members\": true, \"ensemble_exclude_negative_test_r2_members\": true, \"ensemble_max_train_correlation\": 0.995, \"ensemble_member_selection_split\": \"oof\", \"ensemble_method\": \"OOF Stacking (RidgeCV)\", \"ensemble_methods\": \"OOF Stacking (RidgeCV),Weighted average (inverse train RMSE)\", \"ensemble_oof_allow_api_refits\": false, \"ensemble_oof_folds\": 5, \"ensemble_oof_scope\": \"cpu\", \"ensemble_oof_source_run\": \"benchmark_results\\\\autoqsar_benchmark_20260623_153839\", \"ensemble_stacking_cv_folds\": 5, \"feature_families\": [\"morgan\", \"ecfp6\", \"fcfp6\", \"layered\", \"atom_pair\", \"topological_torsion\", \"rdk_path\", \"maccs\", \"rdkit\"], \"fingerprint_bits\": 1024, \"fresh\": false, \"ga_auto_min_dataset_wins\": 1, \"ga_auto_min_improving_datasets\": 1, \"ga_auto_min_reference_datasets\": 5, \"ga_auto_min_relative_improvement\": 0.005, \"ga_auto_reference_run_dir\": null, \"ga_cv_folds\": 5, \"ga_elites\": 2, \"ga_estimators\": [\"elastic_net\", \"catboost\"], \"ga_generations\": 12, \"ga_max_configs\": null, \"ga_models\": \"\", \"ga_models_resolved\": \"\", \"ga_mutation_probability\": 0.35, \"ga_population_size\": 16, \"ga_time_budget_minutes\": null, \"gpu_available\": false, \"gpu_policy\": \"auto\", \"id_column\": null, \"include_local_csv\": null, \"log10_target\": true, \"maplight_classic\": true, \"maplight_gnn_kind\": \"gin_supervised_masking\", \"maplight_leaderboard_parity_mode\": true, \"maplight_parity_seeds\": \"1,2,3,4,5\", \"max_selected_features\": 0, \"minimum_rows\": 20, \"n_jobs\": 10, \"normalize_charges\": false, \"normalize_tautomers\": false, \"only_model_names\": [\"Ensemble\"], \"parallel_datasets\": 1, \"parallel_tdc22_seeds\": false, \"persistent_feature_store_path\": \"C:\\\\Users\\\\Scott.Coffin\\\\OneDrive - California OEHHA\\\\R_new\\\\AutoQSAR\\\\.model_cache\\\\feature_store_parquet\", \"pfas_aux_sheet\": null, \"pfas_aux_workbook\": null, \"precision_mode\": \"fp32\", \"predefined_split_column\": null, \"primary_metric_override\": \"auto\", \"random_seed\": 13, \"rebuild_ensemble\": true, \"refresh_leaderboards_only\": false, \"report_classification_metrics\": [\"roc_auc\", \"auprc\", \"balanced_accuracy\", \"mcc\"], \"report_formats\": [\"html\", \"md\"], \"report_include_plots\": true, \"report_manifest\": true, \"report_regression_metrics\": [\"rmse\", \"mae\", \"r2\", \"spearman\"], \"report_what_next\": true, \"resume\": true, \"resume_granularity\": [\"dataset\", \"stage\"], \"resume_validate_signature\": true, \"reuse_persistent_feature_store\": true, \"reuse_shared_feature_matrix_cache\": true, \"revisit_completed_datasets\": false, \"row_limit\": 0, \"run_cfa\": true, \"run_chemml_pytorch\": true, \"run_chemml_tensorflow\": true, \"run_chemprop_attentivefp\": true, \"run_chemprop_cmpnn\": true, \"run_chemprop_dmpnn\": true, \"run_chemprop_mpnn\": true, \"run_chemprop_rdkit2d\": true, \"run_chemprop_selected_features\": true, \"run_cnn\": true, \"run_ensemble\": true, \"run_maplight_gnn\": true, \"run_mode\": \"auto\", \"run_tabpfn\": true, \"run_tdc22_multiseed_best\": false, \"run_unimol_v1\": false, \"run_unimol_v2\": false, \"selection_protocol\": \"both\", \"selector_alpha_grid_size\": 12, \"selector_alpha_max_log10\": -1, \"selector_alpha_min_log10\": -5, \"selector_auto_rf_by_dataset_size\": false, \"selector_auto_rf_log10_intercept\": -0.658, \"selector_auto_rf_log10_slope\": 1.225, \"selector_auto_rf_threshold_seconds\": 7200.0, \"selector_coefficient_threshold\": 1e-10, \"selector_cv_folds\": 3, \"selector_elasticnet_timeout_seconds\": 7200.0, \"selector_l1_ratio_grid\": \"0.3,0.7\", \"selector_max_iter\": 10000, \"selector_method\": \"elasticnet_cv\", \"selector_rf_fallback_n_estimators\": 400, \"shared_feature_matrix_cache_path\": \"C:\\\\Users\\\\Scott.Coffin\\\\OneDrive - California OEHHA\\\\R_new\\\\AutoQSAR\\\\.model_cache\\\\benchmark_feature_matrix_cache\", \"skip_elasticnetcv_if_selector_timeout\": true, \"smiles_column\": null, \"split_strategy\": \"target_quartiles\", \"strip_salts\": false, \"suppress_tabpfn_progress\": true, \"tabpfn_max_features\": 40, \"tabpfn_max_train_rows\": 11000, \"target_columns\": null, \"target_transform\": \"auto\", \"task_type\": \"auto\", \"tdc22_multiseed\": false, \"tdc22_multiseed_output_name\": \"tdc22_best_model_multiseed\", \"tdc22_multiseed_seeds\": \"1,2,3,4,5\", \"tdc22_multiseed_source_run\": null, \"tdc22_multiseed_summary_csv\": \"results\\\\tdc22_multiseed.csv\", \"test_fraction\": 0.2, \"unimol_auto_requested\": true, \"unimol_batch_size\": 32, \"unimol_early_stopping\": 5, \"unimol_epochs\": 10, \"unimol_internal_split\": \"random\", \"unimol_learning_rate\": 0.0001, \"unimol_max_atoms\": 64, \"unimol_model_size\": \"84m\", \"unimol_num_workers\": 3, \"unimol_reuse_model_cache\": true, \"unimol_use_amp\": true, \"verbosity\": \"normal\"}",
+  "config_file": "",
+  "config_explicit_keys": [],
+  "run_config": {
+    "run": {
+      "mode": "auto",
+      "output_dir": "C:\\Users\\Scott.Coffin\\OneDrive - California OEHHA\\R_new\\AutoQSAR\\benchmark_results\\qsarena_benchmark_oof_ensemble",
+      "resume": true,
+      "overwrite": false,
+      "verbosity": "normal",
+      "dry_run": false,
+      "n_jobs": 10,
+      "parallel_datasets": 1,
+      "dataset_names": [
+        "chemml_cep_homo",
+        "chemml_organic_density",
+        "esol_delaney",
+        "freesolv_sampl",
+        "lipophilicity",
+        "poduam_pod_nc_std",
+        "poduam_pod_rd_std",
+        "polaris_adme_fang_hppb_1",
+        "polaris_adme_fang_perm_1",
+        "polaris_adme_fang_rclint_1",
+        "polaris_adme_fang_rppb_1",
+        "polaris_adme_fang_solu_1",
+        "tdc_ames",
+        "tdc_bbb_martins",
+        "tdc_bioavailability_ma",
+        "tdc_caco2_wang",
+        "tdc_carcinogens_lagunin",
+        "tdc_clearance_hepatocyte_az",
+        "tdc_clearance_microsome_az",
+        "tdc_clintox",
+        "tdc_cyp1a2_veith",
+        "tdc_cyp2c19_veith",
+        "tdc_cyp2c9_substrate_carbonmangels",
+        "tdc_cyp2c9_veith",
+        "tdc_cyp2d6_substrate_carbonmangels",
+        "tdc_cyp2d6_veith",
+        "tdc_cyp3a4_substrate_carbonmangels",
+        "tdc_cyp3a4_veith",
+        "tdc_dili",
+        "tdc_half_life_obach",
+        "tdc_herg",
+        "tdc_herg_karim",
+        "tdc_hia_hou",
+        "tdc_hydrationfreeenergy_freesolv",
+        "tdc_ld50_zhu",
+        "tdc_lipophilicity_astrazeneca",
+        "tdc_pampa_ncats",
+        "tdc_pgp_broccatelli",
+        "tdc_ppbr_az",
+        "tdc_skin_reaction",
+        "tdc_solubility_aqsoldb",
+        "tdc_tox21",
+        "tdc_toxcast",
+        "tdc_vdss_lombardo"
+      ]
+    },
+    "input": {
+      "path": null,
+      "smiles_col": null,
+      "target_col": null,
+      "id_col": null,
+      "task": "auto",
+      "classification_threshold": null,
+      "target_transform": "auto",
+      "minimum_rows": 20,
+      "row_limit": 0
+    },
+    "standardize": {
+      "drop_unparseable": true,
+      "strip_salts": false,
+      "normalize_charges": false,
+      "normalize_tautomers": false,
+      "deduplicate": "none"
+    },
+    "features": {
+      "families": [
+        "morgan",
+        "ecfp6",
+        "fcfp6",
+        "layered",
+        "atom_pair",
+        "topological_torsion",
+        "rdk_path",
+        "maccs",
+        "rdkit"
+      ],
+      "maplight_classic": true,
+      "fingerprint_bits": 1024,
+      "cache": true,
+      "persistent_store": true
+    },
+    "split": {
+      "strategy": "target_quartile",
+      "test_fraction": 0.2,
+      "seed": 13,
+      "cv_folds": 5,
+      "predefined_split_col": null
+    },
+    "feature_selection": {
+      "method": "elasticnetcv",
+      "variance_threshold": 1e-08,
+      "binary_prevalence_range": [
+        0.005,
+        0.995
+      ],
+      "drop_duplicate_columns": true,
+      "max_selected_features": 0,
+      "auto_rf_by_dataset_size": false,
+      "elasticnet_timeout_seconds": 7200.0
+    },
+    "models": {
+      "profile": "full",
+      "enable_families": {
+        "conventional_ml": true,
+        "gradient_boosting": true,
+        "deep_tabular": true,
+        "graph_nn": true,
+        "pretrained_3d": true,
+        "maplight_gnn": true,
+        "fusion": true,
+        "ensemble": true
+      },
+      "disable_models": [],
+      "only_models": [
+        "Ensemble"
+      ]
+    },
+    "ga_tuning": {
+      "mode": "off",
+      "estimators": [
+        "elastic_net",
+        "catboost"
+      ],
+      "generations": 12,
+      "population_size": 16,
+      "time_budget_min": null,
+      "max_configs": null
+    },
+    "deep": {
+      "use_gpu": "auto",
+      "chemprop": {
+        "variants": [
+          "dmpnn",
+          "dmpnn_rdkit2d",
+          "selected_features",
+          "cmpnn",
+          "attentivefp"
+        ],
+        "epochs": 40,
+        "ensemble_size": 3,
+        "batch_size": 32,
+        "seed": 42
+      },
+      "unimol": {
+        "v1": "false",
+        "v2": "false",
+        "v2_size": "84m",
+        "epochs": 10,
+        "lr": 0.0001,
+        "batch_size": 32,
+        "early_stopping_patience": 5
+      },
+      "chemml": {
+        "pytorch": true,
+        "tensorflow": true,
+        "epochs": 80
+      },
+      "tabpfn": true,
+      "tabpfn_max_features": 40,
+      "cnn": true
+    },
+    "fusion": {
+      "cfa_score": true,
+      "cfa_rank": true,
+      "optimize_metric": "mae"
+    },
+    "ensemble": {
+      "oof_stacking": true,
+      "inverse_rmse_average": true,
+      "simple_average": false,
+      "member_selection_metric": "oof",
+      "oof_folds": 5,
+      "oof_scope": "cpu",
+      "oof_allow_api_refits": false,
+      "oof_source_run": "benchmark_results\\autoqsar_benchmark_20260623_153839",
+      "exclude_negative_test_r2_members": true,
+      "drop_correlated_members": true,
+      "max_member_correlation": 0.995,
+      "stacking_cv_folds": 5
+    },
+    "applicability_domain": {
+      "method": "both",
+      "confidence_threshold": 0.5,
+      "knn_quantile": 0.95
+    },
+    "evaluation": {
+      "regression_metrics": [
+        "rmse",
+        "mae",
+        "r2",
+        "spearman"
+      ],
+      "classification_metrics": [
+        "roc_auc",
+        "auprc",
+        "balanced_accuracy",
+        "mcc"
+      ],
+      "primary_metric": "auto"
+    },
+    "selection": {
+      "protocol": "both"
+    },
+    "report": {
+      "formats": [
+        "html",
+        "md"
+      ],
+      "include_plots": true,
+      "what_next": true,
+      "machine_readable_manifest": true
+    },
+    "batch": {
+      "source": null,
+      "mode": "auto",
+      "continue_on_error": true,
+      "aggregate_summary": true
+    },
+    "multiseed": {
+      "enabled": false,
+      "seeds": 5
+    },
+    "caching": {
+      "granularity": [
+        "dataset",
+        "stage"
+      ],
+      "validate_against_config_signature": true,
+      "atomic_writes": true
+    }
+  },
+  "run_config_signature": "6db8a4f5236a63036e8969c8e58d309e074c179b91f05061902b0471390e46a4",
+  "datasets": [
+    {
+      "name": "tdc_carcinogens_lagunin",
+      "source": "PyTDC Tox benchmark: carcinogens_lagunin",
+      "smiles_column": "smiles",
+      "target_column": "target",
+      "overrides": {}
+    },
+    {
+      "name": "tdc_skin_reaction",
+      "source": "PyTDC Tox benchmark: skin_reaction",
+      "smiles_column": "smiles",
+      "target_column": "target",
+      "overrides": {}
+    },
+    {
+      "name": "tdc_dili",
+      "source": "PyTDC Tox benchmark group: dili (official train_val/test split)",
+      "smiles_column": "smiles",
+      "target_column": "target",
+      "overrides": {}
+    },
+    {
+      "name": "chemml_cep_homo",
+      "source": "ChemML bundled dataset: cep_homo",
+      "smiles_column": "smiles",
+      "target_column": "homo_eV",
+      "overrides": {}
+    },
+    {
+      "name": "chemml_organic_density",
+      "source": "ChemML bundled dataset: organic_density",
+      "smiles_column": "smiles",
+      "target_column": "density_Kg/m3",
+      "overrides": {}
+    },
+    {
+      "name": "tdc_hia_hou",
+      "source": "PyTDC ADME benchmark group: hia_hou (official train_val/test split)",
+      "smiles_column": "smiles",
+      "target_column": "target",
+      "overrides": {}
+    },
+    {
+      "name": "tdc_bioavailability_ma",
+      "source": "PyTDC ADME benchmark group: bioavailability_ma (official train_val/test split)",
+      "smiles_column": "smiles",
+      "target_column": "target",
+      "overrides": {}
+    },
+    {
+      "name": "freesolv_sampl",
+      "source": "MoleculeNet PhysChem benchmark: FreeSolv (SAMPL)",
+      "smiles_column": "smiles",
+      "target_column": "target",
+      "overrides": {}
+    },
+    {
+      "name": "tdc_hydrationfreeenergy_freesolv",
+      "source": "PyTDC ADME benchmark: hydrationfreeenergy_freesolv",
+      "smiles_column": "smiles",
+      "target_column": "target",
+      "overrides": {}
+    },
+    {
+      "name": "tdc_herg",
+      "source": "PyTDC Tox benchmark group: herg (official train_val/test split)",
+      "smiles_column": "smiles",
+      "target_column": "target",
+      "overrides": {}
+    },
+    {
+      "name": "tdc_cyp2d6_substrate_carbonmangels",
+      "source": "PyTDC ADME benchmark group: cyp2d6_substrate_carbonmangels (official train_val/test split)",
+      "smiles_column": "smiles",
+      "target_column": "target",
+      "overrides": {}
+    },
+    {
+      "name": "tdc_half_life_obach",
+      "source": "PyTDC ADME benchmark group: half_life_obach (official train_val/test split)",
+      "smiles_column": "smiles",
+      "target_column": "target",
+      "overrides": {}
+    },
+    {
+      "name": "tdc_cyp2c9_substrate_carbonmangels",
+      "source": "PyTDC ADME benchmark group: cyp2c9_substrate_carbonmangels (official train_val/test split)",
+      "smiles_column": "smiles",
+      "target_column": "target",
+      "overrides": {}
+    },
+    {
+      "name": "tdc_cyp3a4_substrate_carbonmangels",
+      "source": "PyTDC ADME benchmark group: cyp3a4_substrate_carbonmangels (official train_val/test split)",
+      "smiles_column": "smiles",
+      "target_column": "target",
+      "overrides": {}
+    },
+    {
+      "name": "polaris_adme_fang_rppb_1",
+      "source": "Polaris ADME benchmark mirror: adme-fang-rppb-1",
+      "smiles_column": "smiles",
+      "target_column": "target",
+      "overrides": {}
+    },
+    {
+      "name": "tdc_caco2_wang",
+      "source": "PyTDC ADME benchmark group: caco2_wang (official train_val/test split)",
+      "smiles_column": "smiles",
+      "target_column": "target",
+      "overrides": {}
+    },
+    {
+      "name": "tdc_clearance_microsome_az",
+      "source": "PyTDC ADME benchmark group: clearance_microsome_az (official train_val/test split)",
+      "smiles_column": "smiles",
+      "target_column": "target",
+      "overrides": {}
+    },
+    {
+      "name": "esol_delaney",
+      "source": "MoleculeNet PhysChem benchmark: ESOL (Delaney)",
+      "smiles_column": "smiles",
+      "target_column": "target",
+      "overrides": {}
+    },
+    {
+      "name": "tdc_vdss_lombardo",
+      "source": "PyTDC ADME benchmark group: vdss_lombardo (official train_val/test split)",
+      "smiles_column": "smiles",
+      "target_column": "target",
+      "overrides": {}
+    },
+    {
+      "name": "tdc_clearance_hepatocyte_az",
+      "source": "PyTDC ADME benchmark group: clearance_hepatocyte_az (official train_val/test split)",
+      "smiles_column": "smiles",
+      "target_column": "target",
+      "overrides": {}
+    },
+    {
+      "name": "tdc_pgp_broccatelli",
+      "source": "PyTDC ADME benchmark group: pgp_broccatelli (official train_val/test split)",
+      "smiles_column": "smiles",
+      "target_column": "target",
+      "overrides": {}
+    },
+    {
+      "name": "tdc_clintox",
+      "source": "PyTDC Tox benchmark: clintox",
+      "smiles_column": "smiles",
+      "target_column": "target",
+      "overrides": {}
+    },
+    {
+      "name": "tdc_toxcast",
+      "source": "PyTDC Tox benchmark: toxcast [label=ACEA_T47D_80hr_Negative]",
+      "smiles_column": "smiles",
+      "target_column": "target",
+      "overrides": {}
+    },
+    {
+      "name": "polaris_adme_fang_hppb_1",
+      "source": "Polaris ADME benchmark mirror: adme-fang-hppb-1",
+      "smiles_column": "smiles",
+      "target_column": "target",
+      "overrides": {}
+    },
+    {
+      "name": "poduam_pod_nc_std",
+      "source": "PODUAM benchmark: POD non-cancer standardized set (Aurisano et al., Nature Communications 2025)",
+      "smiles_column": "SMILES",
+      "target_column": "POD_logmol",
+      "overrides": {}
+    },
+    {
+      "name": "tdc_bbb_martins",
+      "source": "PyTDC ADME benchmark group: bbb_martins (official train_val/test split)",
+      "smiles_column": "smiles",
+      "target_column": "target",
+      "overrides": {}
+    },
+    {
+      "name": "tdc_pampa_ncats",
+      "source": "PyTDC ADME benchmark: pampa_ncats",
+      "smiles_column": "smiles",
+      "target_column": "target",
+      "overrides": {}
+    },
+    {
+      "name": "polaris_adme_fang_solu_1",
+      "source": "Polaris ADME benchmark mirror: adme-fang-solu-1",
+      "smiles_column": "smiles",
+      "target_column": "target",
+      "overrides": {}
+    },
+    {
+      "name": "poduam_pod_rd_std",
+      "source": "PODUAM benchmark: POD reproductive/developmental standardized set (Aurisano et al., Nature Communications 2025)",
+      "smiles_column": "SMILES",
+      "target_column": "POD_logmol",
+      "overrides": {}
+    },
+    {
+      "name": "polaris_adme_fang_perm_1",
+      "source": "Polaris ADME benchmark mirror: adme-fang-perm-1",
+      "smiles_column": "smiles",
+      "target_column": "target",
+      "overrides": {}
+    },
+    {
+      "name": "tdc_ppbr_az",
+      "source": "PyTDC ADME benchmark group: ppbr_az (official train_val/test split)",
+      "smiles_column": "smiles",
+      "target_column": "target",
+      "overrides": {}
+    },
+    {
+      "name": "polaris_adme_fang_rclint_1",
+      "source": "Polaris ADME benchmark mirror: adme-fang-rclint-1",
+      "smiles_column": "smiles",
+      "target_column": "target",
+      "overrides": {}
+    },
+    {
+      "name": "lipophilicity",
+      "source": "MoleculeNet PhysChem benchmark: Lipophilicity",
+      "smiles_column": "smiles",
+      "target_column": "target",
+      "overrides": {}
+    },
+    {
+      "name": "tdc_lipophilicity_astrazeneca",
+      "source": "PyTDC ADME benchmark group: lipophilicity_astrazeneca (official train_val/test split)",
+      "smiles_column": "smiles",
+      "target_column": "target",
+      "overrides": {}
+    },
+    {
+      "name": "tdc_tox21",
+      "source": "PyTDC Tox benchmark: tox21 [label=NR-AR]",
+      "smiles_column": "smiles",
+      "target_column": "target",
+      "overrides": {}
+    },
+    {
+      "name": "tdc_ames",
+      "source": "PyTDC Tox benchmark group: ames (official train_val/test split)",
+      "smiles_column": "smiles",
+      "target_column": "target",
+      "overrides": {}
+    },
+    {
+      "name": "tdc_ld50_zhu",
+      "source": "PyTDC Tox benchmark group: ld50_zhu (official train_val/test split)",
+      "smiles_column": "smiles",
+      "target_column": "target",
+      "overrides": {}
+    },
+    {
+      "name": "tdc_solubility_aqsoldb",
+      "source": "PyTDC ADME benchmark group: solubility_aqsoldb (official train_val/test split)",
+      "smiles_column": "smiles",
+      "target_column": "target",
+      "overrides": {}
+    },
+    {
+      "name": "tdc_cyp2c9_veith",
+      "source": "PyTDC ADME benchmark group: cyp2c9_veith (official train_val/test split)",
+      "smiles_column": "smiles",
+      "target_column": "target",
+      "overrides": {}
+    },
+    {
+      "name": "tdc_cyp3a4_veith",
+      "source": "PyTDC ADME benchmark group: cyp3a4_veith (official train_val/test split)",
+      "smiles_column": "smiles",
+      "target_column": "target",
+      "overrides": {}
+    },
+    {
+      "name": "tdc_cyp1a2_veith",
+      "source": "PyTDC ADME benchmark: cyp1a2_veith",
+      "smiles_column": "smiles",
+      "target_column": "target",
+      "overrides": {}
+    },
+    {
+      "name": "tdc_cyp2c19_veith",
+      "source": "PyTDC ADME benchmark: cyp2c19_veith",
+      "smiles_column": "smiles",
+      "target_column": "target",
+      "overrides": {}
+    },
+    {
+      "name": "tdc_cyp2d6_veith",
+      "source": "PyTDC ADME benchmark group: cyp2d6_veith (official train_val/test split)",
+      "smiles_column": "smiles",
+      "target_column": "target",
+      "overrides": {}
+    },
+    {
+      "name": "tdc_herg_karim",
+      "source": "PyTDC Tox benchmark: herg_karim",
+      "smiles_column": "smiles",
+      "target_column": "target",
+      "overrides": {}
+    }
+  ],
+  "discovery_failures": []
+}

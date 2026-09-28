@@ -2,8 +2,53 @@
   "status": "completed",
   "dataset": "tdc_cyp2d6_veith",
   "source": "PyTDC ADME benchmark group: cyp2d6_veith (official train_val/test split)",
-  "completed_at": "2026-09-26 12:46:56",
-  "elapsed_seconds": 3805.393,
-  "n_metrics_rows": 35,
-  "n_stage_records": 10
+  "completed_at": "2026-09-27 20:28:27",
+  "elapsed_seconds": 12.836,
+  "n_metrics_rows": 34,
+  "n_stage_records": 4,
+  "n_rows": 13130,
+  "task_type": "classification",
+  "primary_metric": "auprc",
+  "cleanup_counts": {
+    "input_rows": 13130,
+    "missing_smiles_or_target": 0,
+    "unparseable_smiles": 0,
+    "changed_by_standardization": 0,
+    "duplicates_removed": 0,
+    "final_rows": 13130
+  },
+  "standardization": {
+    "drop_unparseable": true,
+    "strip_salts": false,
+    "normalize_charges": false,
+    "normalize_tautomers": false,
+    "deduplicate": "none"
+  },
+  "failed_models": [
+    "Chemprop v2 (D-MPNN, ensemble=3)",
+    "Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",
+    "Chemprop v2 (CMPNN, ensemble=3)",
+    "Chemprop v2 (AttentiveFP, ensemble=3)",
+    "Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",
+    "Uni-Mol V2 (84m)",
+    "Chemprop v2 (D-MPNN, ensemble=3)",
+    "Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",
+    "Chemprop v2 (CMPNN, ensemble=3)",
+    "Chemprop v2 (AttentiveFP, ensemble=3)",
+    "Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",
+    "Uni-Mol V2 (84m)"
+  ],
+  "applicability_domain": {
+    "method": "both",
+    "n_test": 2626,
+    "in_domain_fraction": 0.8846153846153846,
+    "methods": {
+      "standardization": 0.9893373952779894,
+      "confidence": 0.8948971820258949
+    },
+    "selected_model": "XGBoost",
+    "notes": []
+  },
+  "stage23_signature": "893a44562d473749cc0491d4f78e290d3256674f7f96b5090399cbd871d78c3e",
+  "resume_fingerprint": "5a5be8eb33485b1e01d26875"
 }

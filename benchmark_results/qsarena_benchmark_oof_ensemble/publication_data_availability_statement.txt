@@ -1,0 +1,1 @@
+Benchmark artifacts include per-dataset metrics, predictions, selected features, selector coefficients, run configuration, split hashes, and checksum manifests. The generated publication_reproducibility_manifest.csv and publication_reproducibility_repo_files.csv files are intended as the Zenodo archive checklist.

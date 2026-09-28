@@ -2,8 +2,69 @@
   "status": "completed",
   "dataset": "tdc_hydrationfreeenergy_freesolv",
   "source": "PyTDC ADME benchmark: hydrationfreeenergy_freesolv",
-  "completed_at": "2026-09-26 06:32:43",
-  "elapsed_seconds": 35.129,
+  "completed_at": "2026-09-27 17:06:00",
+  "elapsed_seconds": 339.123,
   "n_metrics_rows": 52,
-  "n_stage_records": 10
+  "n_stage_records": 4,
+  "n_rows": 642,
+  "task_type": "regression",
+  "primary_metric": "rmse",
+  "cleanup_counts": {
+    "input_rows": 642,
+    "missing_smiles_or_target": 0,
+    "unparseable_smiles": 0,
+    "changed_by_standardization": 0,
+    "duplicates_removed": 0,
+    "final_rows": 642
+  },
+  "standardization": {
+    "drop_unparseable": true,
+    "strip_salts": false,
+    "normalize_charges": false,
+    "normalize_tautomers": false,
+    "deduplicate": "none"
+  },
+  "failed_models": [
+    "Chemprop v2 (D-MPNN, ensemble=3)",
+    "Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",
+    "Chemprop v2 (CMPNN, ensemble=3)",
+    "Chemprop v2 (AttentiveFP, ensemble=3)",
+    "Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",
+    "Uni-Mol V2 (310m)",
+    "Chemprop v2 (D-MPNN, ensemble=3)",
+    "Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",
+    "Chemprop v2 (CMPNN, ensemble=3)",
+    "Chemprop v2 (AttentiveFP, ensemble=3)",
+    "Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",
+    "Chemprop v2 (D-MPNN, ensemble=3)",
+    "Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",
+    "Chemprop v2 (CMPNN, ensemble=3)",
+    "Chemprop v2 (AttentiveFP, ensemble=3)",
+    "Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",
+    "Chemprop v2 (D-MPNN, ensemble=3)",
+    "Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",
+    "Chemprop v2 (CMPNN, ensemble=3)",
+    "Chemprop v2 (AttentiveFP, ensemble=3)",
+    "Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",
+    "Chemprop v2 (D-MPNN, ensemble=3)",
+    "Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",
+    "Chemprop v2 (CMPNN, ensemble=3)",
+    "Chemprop v2 (AttentiveFP, ensemble=3)",
+    "Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)"
+  ],
+  "applicability_domain": {
+    "method": "both",
+    "n_test": 152,
+    "in_domain_fraction": 0.8947368421052632,
+    "methods": {
+      "standardization": 0.9473684210526315,
+      "knn_similarity": 0.9473684210526315
+    },
+    "selected_model": "TabPFNRegressor",
+    "notes": [],
+    "mae_in_domain": 0.7762753593176602,
+    "mae_out_of_domain": 1.2437193858623505
+  },
+  "stage23_signature": "c02231a9df957de2bcce4d191783587f8839beb9706f76b44b05da4d8e473e77",
+  "resume_fingerprint": "adda4f86baea7abe79b1bd72"
 }

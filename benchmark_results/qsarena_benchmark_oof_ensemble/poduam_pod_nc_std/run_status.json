@@ -2,8 +2,67 @@
   "status": "completed",
   "dataset": "poduam_pod_nc_std",
   "source": "PODUAM benchmark: POD non-cancer standardized set (Aurisano et al., Nature Communications 2025)",
-  "completed_at": "2026-09-26 07:14:40",
-  "elapsed_seconds": 54.302,
+  "completed_at": "2026-09-27 18:36:45",
+  "elapsed_seconds": 624.336,
   "n_metrics_rows": 49,
-  "n_stage_records": 10
+  "n_stage_records": 4,
+  "n_rows": 1842,
+  "task_type": "regression",
+  "primary_metric": "rmse",
+  "cleanup_counts": {
+    "input_rows": 1845,
+    "missing_smiles_or_target": 0,
+    "unparseable_smiles": 3,
+    "changed_by_standardization": 0,
+    "duplicates_removed": 0,
+    "final_rows": 1842
+  },
+  "standardization": {
+    "drop_unparseable": true,
+    "strip_salts": false,
+    "normalize_charges": false,
+    "normalize_tautomers": false,
+    "deduplicate": "none"
+  },
+  "failed_models": [
+    "Chemprop v2 (D-MPNN, ensemble=3)",
+    "Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",
+    "Chemprop v2 (CMPNN, ensemble=3)",
+    "Chemprop v2 (AttentiveFP, ensemble=3)",
+    "Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",
+    "Uni-Mol V2 (84m)",
+    "Chemprop v2 (D-MPNN, ensemble=3)",
+    "Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",
+    "Chemprop v2 (CMPNN, ensemble=3)",
+    "Chemprop v2 (AttentiveFP, ensemble=3)",
+    "Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",
+    "Uni-Mol V2 (84m)",
+    "Chemprop v2 (D-MPNN, ensemble=3)",
+    "Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",
+    "Chemprop v2 (CMPNN, ensemble=3)",
+    "Chemprop v2 (AttentiveFP, ensemble=3)",
+    "Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",
+    "Uni-Mol V2 (84m)",
+    "Chemprop v2 (D-MPNN, ensemble=3)",
+    "Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",
+    "Chemprop v2 (CMPNN, ensemble=3)",
+    "Chemprop v2 (AttentiveFP, ensemble=3)",
+    "Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",
+    "Uni-Mol V2 (84m)"
+  ],
+  "applicability_domain": {
+    "method": "both",
+    "n_test": 369,
+    "in_domain_fraction": 0.9159891598915989,
+    "methods": {
+      "standardization": 0.967479674796748,
+      "knn_similarity": 0.940379403794038
+    },
+    "selected_model": "TabPFNRegressor",
+    "notes": [],
+    "mae_in_domain": 0.5430315699699599,
+    "mae_out_of_domain": 0.8084642980153096
+  },
+  "stage23_signature": "5d9611cc33fd73769bb042732e51f04ea383a9504df378b7f0f47c4bcfa67334",
+  "resume_fingerprint": "60a5884dbe4756eaafeef913"
 }

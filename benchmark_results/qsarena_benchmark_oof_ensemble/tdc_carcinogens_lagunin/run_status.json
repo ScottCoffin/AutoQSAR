@@ -2,8 +2,64 @@
   "status": "completed",
   "dataset": "tdc_carcinogens_lagunin",
   "source": "PyTDC Tox benchmark: carcinogens_lagunin",
-  "completed_at": "2026-09-26 06:25:03",
-  "elapsed_seconds": 74.633,
+  "completed_at": "2026-09-27 16:41:33",
+  "elapsed_seconds": 1.757,
   "n_metrics_rows": 46,
-  "n_stage_records": 10
+  "n_stage_records": 4,
+  "n_rows": 280,
+  "task_type": "classification",
+  "primary_metric": "roc_auc",
+  "cleanup_counts": {
+    "input_rows": 280,
+    "missing_smiles_or_target": 0,
+    "unparseable_smiles": 0,
+    "changed_by_standardization": 0,
+    "duplicates_removed": 0,
+    "final_rows": 280
+  },
+  "standardization": {
+    "drop_unparseable": true,
+    "strip_salts": false,
+    "normalize_charges": false,
+    "normalize_tautomers": false,
+    "deduplicate": "none"
+  },
+  "failed_models": [
+    "Uni-Mol V2 (84m)",
+    "Uni-Mol V2 (310m)",
+    "Uni-Mol V2 (310m)",
+    "Uni-Mol V2 (310m)",
+    "Uni-Mol V2 (310m)",
+    "Uni-Mol V2 (310m)",
+    "Uni-Mol V2 (310m)",
+    "Uni-Mol V2 (310m)",
+    "Uni-Mol V2 (164m)",
+    "Uni-Mol V2 (164m)",
+    "Uni-Mol V2 (164m)",
+    "Uni-Mol V2 (164m)",
+    "Uni-Mol V2 (84m)",
+    "Uni-Mol V2 (84m)",
+    "Uni-Mol V2 (84m)",
+    "Uni-Mol V2 (84m)",
+    "Uni-Mol V2 (84m)",
+    "Uni-Mol V2 (84m)",
+    "Uni-Mol V2 (84m)",
+    "Uni-Mol V2 (84m)",
+    "Uni-Mol V2 (84m)",
+    "Uni-Mol V2 (84m)",
+    "Uni-Mol V2 (84m)"
+  ],
+  "applicability_domain": {
+    "method": "both",
+    "n_test": 57,
+    "in_domain_fraction": 0.8070175438596491,
+    "methods": {
+      "standardization": 0.8421052631578947,
+      "confidence": 0.9649122807017544
+    },
+    "selected_model": "TabPFNClassifier",
+    "notes": []
+  },
+  "stage23_signature": "a2e5319927c38a7042aba758e9a4653d4abd2d743806d318213204f39b6961a3",
+  "resume_fingerprint": "3f33678e0195f118e56153fd"
 }

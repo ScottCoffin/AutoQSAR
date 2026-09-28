@@ -2,8 +2,63 @@
   "status": "completed",
   "dataset": "esol_delaney",
   "source": "MoleculeNet PhysChem benchmark: ESOL (Delaney)",
-  "completed_at": "2026-09-26 06:48:58",
-  "elapsed_seconds": 40.316,
+  "completed_at": "2026-09-27 17:54:32",
+  "elapsed_seconds": 486.218,
   "n_metrics_rows": 46,
-  "n_stage_records": 10
+  "n_stage_records": 4,
+  "n_rows": 1128,
+  "task_type": "regression",
+  "primary_metric": "rmse",
+  "cleanup_counts": {
+    "input_rows": 1128,
+    "missing_smiles_or_target": 0,
+    "unparseable_smiles": 0,
+    "changed_by_standardization": 0,
+    "duplicates_removed": 0,
+    "final_rows": 1128
+  },
+  "standardization": {
+    "drop_unparseable": true,
+    "strip_salts": false,
+    "normalize_charges": false,
+    "normalize_tautomers": false,
+    "deduplicate": "none"
+  },
+  "failed_models": [
+    "Chemprop v2 (D-MPNN, ensemble=3)",
+    "Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",
+    "Chemprop v2 (CMPNN, ensemble=3)",
+    "Chemprop v2 (AttentiveFP, ensemble=3)",
+    "Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",
+    "Chemprop v2 (D-MPNN, ensemble=3)",
+    "Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",
+    "Chemprop v2 (CMPNN, ensemble=3)",
+    "Chemprop v2 (AttentiveFP, ensemble=3)",
+    "Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",
+    "Chemprop v2 (D-MPNN, ensemble=3)",
+    "Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",
+    "Chemprop v2 (CMPNN, ensemble=3)",
+    "Chemprop v2 (AttentiveFP, ensemble=3)",
+    "Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",
+    "Chemprop v2 (D-MPNN, ensemble=3)",
+    "Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",
+    "Chemprop v2 (CMPNN, ensemble=3)",
+    "Chemprop v2 (AttentiveFP, ensemble=3)",
+    "Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)"
+  ],
+  "applicability_domain": {
+    "method": "both",
+    "n_test": 254,
+    "in_domain_fraction": 0.9763779527559056,
+    "methods": {
+      "standardization": 0.9921259842519685,
+      "knn_similarity": 0.984251968503937
+    },
+    "selected_model": "TabPFNRegressor",
+    "notes": [],
+    "mae_in_domain": 0.48839636220662824,
+    "mae_out_of_domain": 0.9670225626627603
+  },
+  "stage23_signature": "a3beda9c5dd2156f6b4e8280f91e1385bcef1e98b6d886fcb221b7af52e6a62c",
+  "resume_fingerprint": "624379dee5f88788c4c21dfc"
 }

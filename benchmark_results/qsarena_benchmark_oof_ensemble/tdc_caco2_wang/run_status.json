@@ -2,8 +2,63 @@
   "status": "completed",
   "dataset": "tdc_caco2_wang",
   "source": "PyTDC ADME benchmark group: caco2_wang (official train_val/test split)",
-  "completed_at": "2026-09-26 06:46:18",
-  "elapsed_seconds": 41.093,
+  "completed_at": "2026-09-27 17:36:31",
+  "elapsed_seconds": 618.303,
   "n_metrics_rows": 46,
-  "n_stage_records": 10
+  "n_stage_records": 4,
+  "n_rows": 910,
+  "task_type": "regression",
+  "primary_metric": "mae",
+  "cleanup_counts": {
+    "input_rows": 910,
+    "missing_smiles_or_target": 0,
+    "unparseable_smiles": 0,
+    "changed_by_standardization": 0,
+    "duplicates_removed": 0,
+    "final_rows": 910
+  },
+  "standardization": {
+    "drop_unparseable": true,
+    "strip_salts": false,
+    "normalize_charges": false,
+    "normalize_tautomers": false,
+    "deduplicate": "none"
+  },
+  "failed_models": [
+    "Chemprop v2 (D-MPNN, ensemble=3)",
+    "Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",
+    "Chemprop v2 (CMPNN, ensemble=3)",
+    "Chemprop v2 (AttentiveFP, ensemble=3)",
+    "Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",
+    "Chemprop v2 (D-MPNN, ensemble=3)",
+    "Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",
+    "Chemprop v2 (CMPNN, ensemble=3)",
+    "Chemprop v2 (AttentiveFP, ensemble=3)",
+    "Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",
+    "Chemprop v2 (D-MPNN, ensemble=3)",
+    "Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",
+    "Chemprop v2 (CMPNN, ensemble=3)",
+    "Chemprop v2 (AttentiveFP, ensemble=3)",
+    "Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",
+    "Chemprop v2 (D-MPNN, ensemble=3)",
+    "Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",
+    "Chemprop v2 (CMPNN, ensemble=3)",
+    "Chemprop v2 (AttentiveFP, ensemble=3)",
+    "Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)"
+  ],
+  "applicability_domain": {
+    "method": "both",
+    "n_test": 182,
+    "in_domain_fraction": 0.7197802197802198,
+    "methods": {
+      "standardization": 1.0,
+      "knn_similarity": 0.7197802197802198
+    },
+    "selected_model": "TabPFNRegressor",
+    "notes": [],
+    "mae_in_domain": 0.3059108261085103,
+    "mae_out_of_domain": 0.29041578209419994
+  },
+  "stage23_signature": "17fa64ce5788b7c4bafeeddf6073b0caa7904adaec583417b019160279def0dc",
+  "resume_fingerprint": "c6841275ac1c23e654ae5727"
 }

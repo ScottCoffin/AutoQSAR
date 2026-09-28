@@ -1,0 +1,23 @@
+{
+  "status": "completed",
+  "started_at": "2026-09-27 16:41:21 Pacific Daylight Time",
+  "started_epoch": 1790552481.820487,
+  "updated_at": "2026-09-27 20:29:16 Pacific Daylight Time",
+  "updated_epoch": 1790566156.8942711,
+  "elapsed_seconds": 13675.074,
+  "dataset_count": 44,
+  "resource_config": {
+    "detected_cpu_count": 12,
+    "n_jobs": 10,
+    "gpu_available": false,
+    "gpu_inventory": [],
+    "chemprop_num_workers": 3,
+    "unimol_num_workers": 3,
+    "chemprop_batch_size": 32,
+    "unimol_batch_size": 32,
+    "precision_mode": "fp32"
+  },
+  "phase": "completed",
+  "completed_dataset_count": 44,
+  "tdc22_best_model_multiseed": {}
+}

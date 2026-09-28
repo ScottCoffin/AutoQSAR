@@ -127,6 +127,7 @@ the widgets back to a `run.yaml`.
 | `deep.chemml.tensorflow` | `null` (profile default (off; full: on)) | true / false | `--run-chemml-tensorflow / --no-run-chemml-tensorflow` | `run_chemml_tensorflow` | The same MLP in TensorFlow. *Per dataset.* |
 | `deep.chemml.epochs` | `80` | int (>= 1) | `--chemml-training-epochs` | `chemml_training_epochs` | Training epochs. *Per dataset.* |
 | `deep.tabpfn` | `null` (profile default (on; quick: off)) | true / false | `--run-tabpfn / --no-run-tabpfn` | CLI / run.yaml only | TabPFN tabular foundation model (local package on GPU, else the Prior Labs API client). *Per dataset.* |
+| `deep.tabpfn_max_features` | `0` | int (>= 0) | `--tabpfn-max-features` | CLI / run.yaml only | Maximum selected descriptor columns passed to TabPFN only for API budget control; 0 uses all selected features. *Per dataset.* |
 | `deep.cnn` | `null` (profile default (on; quick: off)) | true / false | `--run-cnn / --no-run-cnn` | CLI / run.yaml only | 1-D CNN on the selected descriptors (needs TensorFlow). *Per dataset.* |
 
 ## 9. Fusion

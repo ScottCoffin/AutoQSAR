@@ -259,6 +259,9 @@ deep:
   # TabPFN tabular foundation model (local package on GPU, else the Prior Labs API
   # client). null = profile default (on; quick: off). CLI: --run-tabpfn / --no-run-tabpfn.
   tabpfn: null
+  # Maximum selected descriptor columns passed to TabPFN only for API budget control; 0
+  # uses all selected features. CLI: --tabpfn-max-features.
+  tabpfn_max_features: 0
   # 1-D CNN on the selected descriptors (needs TensorFlow). null = profile default (on;
   # quick: off). CLI: --run-cnn / --no-run-cnn.
   cnn: null

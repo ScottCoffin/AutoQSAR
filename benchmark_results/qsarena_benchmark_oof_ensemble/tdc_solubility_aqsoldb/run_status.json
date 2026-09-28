@@ -2,8 +2,62 @@
   "status": "completed",
   "dataset": "tdc_solubility_aqsoldb",
   "source": "PyTDC ADME benchmark group: solubility_aqsoldb (official train_val/test split)",
-  "completed_at": "2026-09-26 14:43:39",
-  "elapsed_seconds": 220.661,
+  "completed_at": "2026-09-27 20:27:21",
+  "elapsed_seconds": 974.403,
   "n_metrics_rows": 44,
-  "n_stage_records": 5
+  "n_stage_records": 4,
+  "n_rows": 9980,
+  "task_type": "regression",
+  "primary_metric": "mae",
+  "cleanup_counts": {
+    "input_rows": 9982,
+    "missing_smiles_or_target": 0,
+    "unparseable_smiles": 2,
+    "changed_by_standardization": 0,
+    "duplicates_removed": 0,
+    "final_rows": 9980
+  },
+  "standardization": {
+    "drop_unparseable": true,
+    "strip_salts": false,
+    "normalize_charges": false,
+    "normalize_tautomers": false,
+    "deduplicate": "none"
+  },
+  "failed_models": [
+    "Chemprop v2 (D-MPNN, ensemble=3)",
+    "Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",
+    "Chemprop v2 (CMPNN, ensemble=3)",
+    "Chemprop v2 (AttentiveFP, ensemble=3)",
+    "Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",
+    "Uni-Mol V2 (84m)",
+    "Chemprop v2 (D-MPNN, ensemble=3)",
+    "Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",
+    "Chemprop v2 (CMPNN, ensemble=3)",
+    "Chemprop v2 (AttentiveFP, ensemble=3)",
+    "Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",
+    "Uni-Mol V2 (84m)",
+    "Chemprop v2 (D-MPNN, ensemble=3)",
+    "Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",
+    "Chemprop v2 (CMPNN, ensemble=3)",
+    "Chemprop v2 (AttentiveFP, ensemble=3)",
+    "Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",
+    "Uni-Mol V2 (84m)",
+    "TabPFNRegressor"
+  ],
+  "applicability_domain": {
+    "method": "both",
+    "n_test": 1995,
+    "in_domain_fraction": 0.8220551378446115,
+    "methods": {
+      "standardization": 0.9553884711779449,
+      "knn_similarity": 0.8551378446115289
+    },
+    "selected_model": "TabPFNRegressor",
+    "notes": [],
+    "mae_in_domain": 0.660753099590199,
+    "mae_out_of_domain": 0.8030670897583027
+  },
+  "stage23_signature": "0173b790fbdf924e8ddec8f7cf39e1a943b347285585b96335de919ce333ab8e",
+  "resume_fingerprint": "6eb58fd6b9205734499fcafd"
 }

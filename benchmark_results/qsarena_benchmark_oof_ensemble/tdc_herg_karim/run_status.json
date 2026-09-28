@@ -2,8 +2,51 @@
   "status": "completed",
   "dataset": "tdc_herg_karim",
   "source": "PyTDC Tox benchmark: herg_karim",
-  "completed_at": "2026-09-26 13:54:56",
-  "elapsed_seconds": 4079.767,
-  "n_metrics_rows": 34,
-  "n_stage_records": 10
+  "completed_at": "2026-09-27 20:28:47",
+  "elapsed_seconds": 19.18,
+  "n_metrics_rows": 33,
+  "n_stage_records": 4,
+  "n_rows": 13445,
+  "task_type": "classification",
+  "primary_metric": "roc_auc",
+  "cleanup_counts": {
+    "input_rows": 13445,
+    "missing_smiles_or_target": 0,
+    "unparseable_smiles": 0,
+    "changed_by_standardization": 0,
+    "duplicates_removed": 0,
+    "final_rows": 13445
+  },
+  "standardization": {
+    "drop_unparseable": true,
+    "strip_salts": false,
+    "normalize_charges": false,
+    "normalize_tautomers": false,
+    "deduplicate": "none"
+  },
+  "failed_models": [
+    "Chemprop v2 (D-MPNN, ensemble=3)",
+    "Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",
+    "Chemprop v2 (CMPNN, ensemble=3)",
+    "Chemprop v2 (AttentiveFP, ensemble=3)",
+    "Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",
+    "Chemprop v2 (D-MPNN, ensemble=3)",
+    "Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",
+    "Chemprop v2 (CMPNN, ensemble=3)",
+    "Chemprop v2 (AttentiveFP, ensemble=3)",
+    "Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)"
+  ],
+  "applicability_domain": {
+    "method": "both",
+    "n_test": 2690,
+    "in_domain_fraction": 0.9996282527881041,
+    "methods": {
+      "standardization": 0.9996282527881041,
+      "confidence": 1.0
+    },
+    "selected_model": "XGBoost",
+    "notes": []
+  },
+  "stage23_signature": "b8edcba9c4023555cbec72dc90effc77b83c292a9d1cca0379c93d5f257bd5ef",
+  "resume_fingerprint": "44d3b7e35265335b94f94108"
 }

@@ -518,6 +518,7 @@ extra from Section 2b; preflight lists what is missing and how to install it.
 | `deep.chemml.tensorflow` | `null` (profile default (off; full: on)) | true / false | `--run-chemml-tensorflow / --no-run-chemml-tensorflow` | `run_chemml_tensorflow` |
 | `deep.chemml.epochs` | `80` | int (>= 1) | `--chemml-training-epochs` | `chemml_training_epochs` |
 | `deep.tabpfn` | `null` (profile default (on; quick: off)) | true / false | `--run-tabpfn / --no-run-tabpfn` | CLI / run.yaml only |
+| `deep.tabpfn_max_features` | `0` | int (>= 0) | `--tabpfn-max-features` | CLI / run.yaml only |
 | `deep.cnn` | `null` (profile default (on; quick: off)) | true / false | `--run-cnn / --no-run-cnn` | CLI / run.yaml only |
 <!-- END GENERATED -->
 
@@ -938,6 +939,9 @@ deep:
   # TabPFN tabular foundation model (local package on GPU, else the Prior Labs API
   # client). null = profile default (on; quick: off). CLI: --run-tabpfn / --no-run-tabpfn.
   tabpfn: null
+  # Maximum selected descriptor columns passed to TabPFN only for API budget control; 0
+  # uses all selected features. CLI: --tabpfn-max-features.
+  tabpfn_max_features: 0
   # 1-D CNN on the selected descriptors (needs TensorFlow). null = profile default (on;
   # quick: off). CLI: --run-cnn / --no-run-cnn.
   cnn: null

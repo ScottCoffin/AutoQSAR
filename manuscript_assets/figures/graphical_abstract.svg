@@ -1,7 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="920" height="300" viewBox="0 0 920 300">
 <rect x="0.0" y="0.0" width="920.0" height="300.0" rx="0" fill="#FFFFFF" stroke="none" stroke-width="1"/>
 <text x="24.0" y="26.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="19" font-weight="700" fill="#1B2A38" text-anchor="start">QSARena: model-library breadth drives most leaderboard standing</text>
-<text x="24.0" y="45.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="11.5" font-weight="400" fill="#5A6B7B" text-anchor="start">One leakage-controlled pipeline, 44 datasets, 28 models - and no model family dominates.</text>
+<text x="24.0" y="45.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="11.5" font-weight="400" fill="#5A6B7B" text-anchor="start">One leakage-controlled pipeline, 44 datasets, 30 models - and no model family dominates.</text>
 <line x1="24.0" y1="56.0" x2="896.0" y2="56.0" stroke="#D6DEE6" stroke-width="1" stroke-linecap="round"/>
 <text x="24.0" y="78.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="9.5" font-weight="700" fill="#5A6B7B" text-anchor="start" letter-spacing="0.8">BENCHMARK</text>
 <polygon points="46.5,99.5 46.5,110.5 37.0,116.0 27.5,110.5 27.5,99.5 37.0,94.0" fill="none" stroke="#0072B2" stroke-width="1.8"/>
@@ -13,7 +13,7 @@
 <text x="60.0" y="142.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="11" font-weight="400" fill="#5A6B7B" text-anchor="start">datasets</text>
 <text x="26.0" y="168.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="17" font-weight="700" fill="#1B2A38" text-anchor="start">5</text>
 <text x="60.0" y="168.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="11" font-weight="400" fill="#5A6B7B" text-anchor="start">suites</text>
-<text x="26.0" y="194.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="17" font-weight="700" fill="#1B2A38" text-anchor="start">28</text>
+<text x="26.0" y="194.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="17" font-weight="700" fill="#1B2A38" text-anchor="start">30</text>
 <text x="60.0" y="194.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="11" font-weight="400" fill="#5A6B7B" text-anchor="start">models</text>
 <text x="24.0" y="232.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="9.5" font-weight="400" fill="#5A6B7B" text-anchor="start">TDC | MoleculeNet | Polaris</text>
 <text x="24.0" y="245.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="9.5" font-weight="400" fill="#5A6B7B" text-anchor="start">PODUAM | ChemML</text>
@@ -31,36 +31,36 @@
 <text x="204.0" y="179.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="8.8" font-weight="400" fill="#5A6B7B" text-anchor="start">median rank 6</text>
 <text x="204.0" y="203.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="9.8" font-weight="600" fill="#1B2A38" text-anchor="start">Chosen by cross-validation only - the honest estimate</text>
 <rect x="204.0" y="208.0" width="286.0" height="16.0" rx="8" fill="#EEF2F6" stroke="none" stroke-width="1"/>
-<rect x="204.0" y="208.0" width="193.2" height="16.0" rx="8" fill="#E69F00" stroke="none" stroke-width="1"/>
-<text x="499.0" y="220.5" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="13.5" font-weight="700" fill="#E69F00" text-anchor="start">25/37</text>
-<text x="204.0" y="235.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="8.8" font-weight="400" fill="#5A6B7B" text-anchor="start">median rank 8 - and zero first places</text>
+<rect x="204.0" y="208.0" width="208.7" height="16.0" rx="8" fill="#E69F00" stroke="none" stroke-width="1"/>
+<text x="499.0" y="220.5" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="13.5" font-weight="700" fill="#E69F00" text-anchor="start">27/37</text>
+<text x="204.0" y="235.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="8.8" font-weight="400" fill="#5A6B7B" text-anchor="start">median rank 7 - and zero first places</text>
 <path d="M 548 100 L 554 100 L 554 156 L 548 156" fill="none" stroke="#0072B2" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
 <text x="559.0" y="122.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="14" font-weight="700" fill="#0072B2" text-anchor="start">-7</text>
 <text x="559.0" y="134.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="8.6" font-weight="400" fill="#0072B2" text-anchor="start">model-library</text>
 <text x="559.0" y="144.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="8.6" font-weight="400" fill="#0072B2" text-anchor="start">breadth</text>
 <path d="M 548 156 L 554 156 L 554 212 L 548 212" fill="none" stroke="#D55E00" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
-<text x="559.0" y="178.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="14" font-weight="700" fill="#D55E00" text-anchor="start">-3</text>
+<text x="559.0" y="178.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="14" font-weight="700" fill="#D55E00" text-anchor="start">-1</text>
 <text x="559.0" y="190.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="8.6" font-weight="400" fill="#D55E00" text-anchor="start">held-out</text>
 <text x="559.0" y="200.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="8.6" font-weight="400" fill="#D55E00" text-anchor="start">selection</text>
 <line x1="640.0" y1="72.0" x2="640.0" y2="256.0" stroke="#D6DEE6" stroke-width="1" stroke-linecap="round"/>
 <text x="660.0" y="78.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="9.5" font-weight="700" fill="#5A6B7B" text-anchor="start" letter-spacing="0.8">NO SINGLE WINNER</text>
 <text x="660.0" y="103.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="10" font-weight="400" fill="#1B2A38" text-anchor="start">Ensembles</text>
 <rect x="748.0" y="94.0" width="86.0" height="11.0" rx="5.5" fill="#EEF2F6" stroke="none" stroke-width="1"/>
-<rect x="748.0" y="94.0" width="31.3" height="11.0" rx="5.5" fill="#009E73" stroke="none" stroke-width="1"/>
-<text x="840.0" y="103.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="10.5" font-weight="700" fill="#1B2A38" text-anchor="start">16</text>
-<text x="660.0" y="124.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="10" font-weight="400" fill="#1B2A38" text-anchor="start">3D pretrained</text>
+<rect x="748.0" y="94.0" width="17.6" height="11.0" rx="5.5" fill="#009E73" stroke="none" stroke-width="1"/>
+<text x="840.0" y="103.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="10.5" font-weight="700" fill="#1B2A38" text-anchor="start">9</text>
+<text x="660.0" y="124.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="10" font-weight="400" fill="#1B2A38" text-anchor="start">Chemprop</text>
 <rect x="748.0" y="115.0" width="86.0" height="11.0" rx="5.5" fill="#EEF2F6" stroke="none" stroke-width="1"/>
-<rect x="748.0" y="115.0" width="21.5" height="11.0" rx="5.5" fill="#0072B2" stroke="none" stroke-width="1"/>
-<text x="840.0" y="124.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="10.5" font-weight="700" fill="#1B2A38" text-anchor="start">11</text>
-<text x="660.0" y="145.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="10" font-weight="400" fill="#1B2A38" text-anchor="start">Conventional ML</text>
+<rect x="748.0" y="115.0" width="17.6" height="11.0" rx="5.5" fill="#0072B2" stroke="none" stroke-width="1"/>
+<text x="840.0" y="124.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="10.5" font-weight="700" fill="#1B2A38" text-anchor="start">9</text>
+<text x="660.0" y="145.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="10" font-weight="400" fill="#1B2A38" text-anchor="start">3D pretrained</text>
 <rect x="748.0" y="136.0" width="86.0" height="11.0" rx="5.5" fill="#EEF2F6" stroke="none" stroke-width="1"/>
 <rect x="748.0" y="136.0" width="15.6" height="11.0" rx="5.5" fill="#5A6B7B" stroke="none" stroke-width="1"/>
 <text x="840.0" y="145.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="10.5" font-weight="700" fill="#1B2A38" text-anchor="start">8</text>
-<text x="660.0" y="170.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="10" font-weight="400" fill="#5A6B7B" text-anchor="start">Top family takes only 36% of datasets;</text>
+<text x="660.0" y="170.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="10" font-weight="400" fill="#5A6B7B" text-anchor="start">Top family takes only 20% of datasets;</text>
 <text x="660.0" y="183.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="10" font-weight="400" fill="#5A6B7B" text-anchor="start">the best model is dataset-dependent.</text>
 <line x1="660.0" y1="198.0" x2="896.0" y2="198.0" stroke="#D6DEE6" stroke-width="1" stroke-linecap="round"/>
 <text x="660.0" y="218.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="9.5" font-weight="700" fill="#5A6B7B" text-anchor="start" letter-spacing="0.8">RUNS ON A LAPTOP GPU</text>
-<text x="660.0" y="242.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="16" font-weight="700" fill="#0072B2" text-anchor="start">-0.2%</text>
+<text x="660.0" y="242.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="16" font-weight="700" fill="#0072B2" text-anchor="start">+0.2%</text>
 <text x="708.0" y="237.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="10" font-weight="400" fill="#5A6B7B" text-anchor="start">median change vs an A100,</text>
 <text x="708.0" y="249.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="10" font-weight="400" fill="#5A6B7B" text-anchor="start">37 identically split datasets</text>
 <line x1="24.0" y1="266.0" x2="896.0" y2="266.0" stroke="#D6DEE6" stroke-width="1" stroke-linecap="round"/>

@@ -60,8 +60,8 @@ def apply_global_precision(mode: str) -> None:
 
     try:
         import torch
-    except ImportError:
-        logger.debug("torch not available; precision hook is a no-op")
+    except Exception as exc:
+        logger.warning("torch could not be initialized for precision setup; precision hook is a no-op: %s", exc)
         return
 
     if not torch.cuda.is_available():

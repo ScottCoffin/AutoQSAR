@@ -2,8 +2,62 @@
   "status": "completed",
   "dataset": "tdc_ld50_zhu",
   "source": "PyTDC Tox benchmark group: ld50_zhu (official train_val/test split)",
-  "completed_at": "2026-09-26 14:39:59",
-  "elapsed_seconds": 224.307,
+  "completed_at": "2026-09-27 20:11:07",
+  "elapsed_seconds": 823.822,
   "n_metrics_rows": 44,
-  "n_stage_records": 5
+  "n_stage_records": 4,
+  "n_rows": 7385,
+  "task_type": "regression",
+  "primary_metric": "mae",
+  "cleanup_counts": {
+    "input_rows": 7385,
+    "missing_smiles_or_target": 0,
+    "unparseable_smiles": 0,
+    "changed_by_standardization": 0,
+    "duplicates_removed": 0,
+    "final_rows": 7385
+  },
+  "standardization": {
+    "drop_unparseable": true,
+    "strip_salts": false,
+    "normalize_charges": false,
+    "normalize_tautomers": false,
+    "deduplicate": "none"
+  },
+  "failed_models": [
+    "Chemprop v2 (D-MPNN, ensemble=3)",
+    "Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",
+    "Chemprop v2 (CMPNN, ensemble=3)",
+    "Chemprop v2 (AttentiveFP, ensemble=3)",
+    "Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",
+    "Uni-Mol V2 (84m)",
+    "Chemprop v2 (D-MPNN, ensemble=3)",
+    "Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",
+    "Chemprop v2 (CMPNN, ensemble=3)",
+    "Chemprop v2 (AttentiveFP, ensemble=3)",
+    "Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",
+    "Uni-Mol V2 (84m)",
+    "Chemprop v2 (D-MPNN, ensemble=3)",
+    "Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",
+    "Chemprop v2 (CMPNN, ensemble=3)",
+    "Chemprop v2 (AttentiveFP, ensemble=3)",
+    "Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",
+    "Uni-Mol V2 (84m)",
+    "TabPFNRegressor"
+  ],
+  "applicability_domain": {
+    "method": "both",
+    "n_test": 1478,
+    "in_domain_fraction": 0.7672530446549392,
+    "methods": {
+      "standardization": 0.9546684709066305,
+      "knn_similarity": 0.7949932341001353
+    },
+    "selected_model": "TabPFNRegressor",
+    "notes": [],
+    "mae_in_domain": 0.5136009754865468,
+    "mae_out_of_domain": 0.6782665164914242
+  },
+  "stage23_signature": "f94db5d150b0726b6b70a8e7e0ea61ef0628abde65627ab1fcc82db71f0c45b5",
+  "resume_fingerprint": "1365af1ddb1983f7a09411c0"
 }

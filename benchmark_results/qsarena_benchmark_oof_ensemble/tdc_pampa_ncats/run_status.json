@@ -2,8 +2,61 @@
   "status": "completed",
   "dataset": "tdc_pampa_ncats",
   "source": "PyTDC ADME benchmark: pampa_ncats",
-  "completed_at": "2026-09-26 07:28:29",
-  "elapsed_seconds": 124.182,
+  "completed_at": "2026-09-27 18:36:53",
+  "elapsed_seconds": 4.769,
   "n_metrics_rows": 44,
-  "n_stage_records": 10
+  "n_stage_records": 4,
+  "n_rows": 2034,
+  "task_type": "classification",
+  "primary_metric": "roc_auc",
+  "cleanup_counts": {
+    "input_rows": 2034,
+    "missing_smiles_or_target": 0,
+    "unparseable_smiles": 0,
+    "changed_by_standardization": 0,
+    "duplicates_removed": 0,
+    "final_rows": 2034
+  },
+  "standardization": {
+    "drop_unparseable": true,
+    "strip_salts": false,
+    "normalize_charges": false,
+    "normalize_tautomers": false,
+    "deduplicate": "none"
+  },
+  "failed_models": [
+    "Chemprop v2 (D-MPNN, ensemble=3)",
+    "Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",
+    "Chemprop v2 (CMPNN, ensemble=3)",
+    "Chemprop v2 (AttentiveFP, ensemble=3)",
+    "Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",
+    "Chemprop v2 (D-MPNN, ensemble=3)",
+    "Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",
+    "Chemprop v2 (CMPNN, ensemble=3)",
+    "Chemprop v2 (AttentiveFP, ensemble=3)",
+    "Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",
+    "Chemprop v2 (D-MPNN, ensemble=3)",
+    "Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",
+    "Chemprop v2 (CMPNN, ensemble=3)",
+    "Chemprop v2 (AttentiveFP, ensemble=3)",
+    "Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",
+    "Chemprop v2 (D-MPNN, ensemble=3)",
+    "Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",
+    "Chemprop v2 (CMPNN, ensemble=3)",
+    "Chemprop v2 (AttentiveFP, ensemble=3)",
+    "Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)"
+  ],
+  "applicability_domain": {
+    "method": "both",
+    "n_test": 408,
+    "in_domain_fraction": 0.9754901960784313,
+    "methods": {
+      "standardization": 0.9754901960784313,
+      "confidence": 1.0
+    },
+    "selected_model": "TabPFNClassifier",
+    "notes": []
+  },
+  "stage23_signature": "77078dc142259af831b0af3787b0d93109ab9a8e45309ee909622b224effdfc5",
+  "resume_fingerprint": "f17da95906c9218a02c9229b"
 }

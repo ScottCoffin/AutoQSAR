@@ -2,8 +2,58 @@
   "status": "completed",
   "dataset": "tdc_cyp2c9_veith",
   "source": "PyTDC ADME benchmark group: cyp2c9_veith (official train_val/test split)",
-  "completed_at": "2026-09-26 10:34:31",
-  "elapsed_seconds": 3601.71,
-  "n_metrics_rows": 40,
-  "n_stage_records": 10
+  "completed_at": "2026-09-27 20:27:34",
+  "elapsed_seconds": 12.349,
+  "n_metrics_rows": 39,
+  "n_stage_records": 4,
+  "n_rows": 12092,
+  "task_type": "classification",
+  "primary_metric": "auprc",
+  "cleanup_counts": {
+    "input_rows": 12092,
+    "missing_smiles_or_target": 0,
+    "unparseable_smiles": 0,
+    "changed_by_standardization": 0,
+    "duplicates_removed": 0,
+    "final_rows": 12092
+  },
+  "standardization": {
+    "drop_unparseable": true,
+    "strip_salts": false,
+    "normalize_charges": false,
+    "normalize_tautomers": false,
+    "deduplicate": "none"
+  },
+  "failed_models": [
+    "Chemprop v2 (D-MPNN, ensemble=3)",
+    "Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",
+    "Chemprop v2 (CMPNN, ensemble=3)",
+    "Chemprop v2 (AttentiveFP, ensemble=3)",
+    "Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",
+    "Chemprop v2 (D-MPNN, ensemble=3)",
+    "Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",
+    "Chemprop v2 (CMPNN, ensemble=3)",
+    "Chemprop v2 (AttentiveFP, ensemble=3)",
+    "Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",
+    "Uni-Mol V2 (84m)",
+    "Chemprop v2 (D-MPNN, ensemble=3)",
+    "Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",
+    "Chemprop v2 (CMPNN, ensemble=3)",
+    "Chemprop v2 (AttentiveFP, ensemble=3)",
+    "Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",
+    "Uni-Mol V2 (84m)"
+  ],
+  "applicability_domain": {
+    "method": "both",
+    "n_test": 2419,
+    "in_domain_fraction": 0.7755270773046713,
+    "methods": {
+      "standardization": 0.9880115750310046,
+      "confidence": 0.7858619264158744
+    },
+    "selected_model": "XGBoost",
+    "notes": []
+  },
+  "stage23_signature": "077018d522e9546a75745b50f85ab30802a7f58417ddcee43150e6c86718adf1",
+  "resume_fingerprint": "1b13f98b737d89b60e1c2905"
 }

@@ -577,6 +577,12 @@ class DeepSection:
         per_dataset=True, null_means="profile default (on; quick: off)",
         help="TabPFN tabular foundation model (local package on GPU, else the Prior Labs API client).",
     )
+    tabpfn_max_features: int = _opt(
+        0, group=8, kind="int", minimum=0, cli="--tabpfn-max-features", dest="tabpfn_max_features",
+        per_dataset=True,
+        help="Maximum selected descriptor columns passed to TabPFN only for API budget control; 0 uses all "
+        "selected features.",
+    )
     cnn: bool | None = _opt(
         None, group=8, kind="bool", nullable=True, cli="--run-cnn / --no-run-cnn", dest="run_cnn",
         per_dataset=True, null_means="profile default (on; quick: off)",

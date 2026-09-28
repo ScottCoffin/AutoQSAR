@@ -2,8 +2,60 @@
   "status": "completed",
   "dataset": "tdc_tox21",
   "source": "PyTDC Tox benchmark: tox21 [label=NR-AR]",
-  "completed_at": "2026-09-26 14:30:46",
-  "elapsed_seconds": 336.083,
+  "completed_at": "2026-09-27 19:57:15",
+  "elapsed_seconds": 9.0,
   "n_metrics_rows": 42,
-  "n_stage_records": 5
+  "n_stage_records": 4,
+  "n_rows": 7258,
+  "task_type": "classification",
+  "primary_metric": "roc_auc",
+  "cleanup_counts": {
+    "input_rows": 7265,
+    "missing_smiles_or_target": 0,
+    "unparseable_smiles": 7,
+    "changed_by_standardization": 0,
+    "duplicates_removed": 0,
+    "final_rows": 7258
+  },
+  "standardization": {
+    "drop_unparseable": true,
+    "strip_salts": false,
+    "normalize_charges": false,
+    "normalize_tautomers": false,
+    "deduplicate": "none"
+  },
+  "failed_models": [
+    "Chemprop v2 (D-MPNN, ensemble=3)",
+    "Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",
+    "Chemprop v2 (CMPNN, ensemble=3)",
+    "Chemprop v2 (AttentiveFP, ensemble=3)",
+    "Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",
+    "Uni-Mol V2 (84m)",
+    "Chemprop v2 (D-MPNN, ensemble=3)",
+    "Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",
+    "Chemprop v2 (CMPNN, ensemble=3)",
+    "Chemprop v2 (AttentiveFP, ensemble=3)",
+    "Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",
+    "Uni-Mol V2 (84m)",
+    "Chemprop v2 (D-MPNN, ensemble=3)",
+    "Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",
+    "Chemprop v2 (CMPNN, ensemble=3)",
+    "Chemprop v2 (AttentiveFP, ensemble=3)",
+    "Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",
+    "Uni-Mol V2 (84m)",
+    "TabPFNClassifier"
+  ],
+  "applicability_domain": {
+    "method": "both",
+    "n_test": 1461,
+    "in_domain_fraction": 0.9938398357289527,
+    "methods": {
+      "standardization": 1.0,
+      "confidence": 0.9938398357289527
+    },
+    "selected_model": "TabPFNClassifier",
+    "notes": []
+  },
+  "stage23_signature": "d8933bfb1ffff9ba24c5b36f5bf7ee6282e2491732846c6cfad385c9595fe9f3",
+  "resume_fingerprint": "0b6563a155a83914afbcff1b"
 }

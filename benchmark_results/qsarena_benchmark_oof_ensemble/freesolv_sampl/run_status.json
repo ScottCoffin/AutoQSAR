@@ -2,8 +2,69 @@
   "status": "completed",
   "dataset": "freesolv_sampl",
   "source": "MoleculeNet PhysChem benchmark: FreeSolv (SAMPL)",
-  "completed_at": "2026-09-26 06:32:08",
-  "elapsed_seconds": 38.135,
+  "completed_at": "2026-09-27 17:00:21",
+  "elapsed_seconds": 327.456,
   "n_metrics_rows": 52,
-  "n_stage_records": 10
+  "n_stage_records": 4,
+  "n_rows": 642,
+  "task_type": "regression",
+  "primary_metric": "rmse",
+  "cleanup_counts": {
+    "input_rows": 642,
+    "missing_smiles_or_target": 0,
+    "unparseable_smiles": 0,
+    "changed_by_standardization": 0,
+    "duplicates_removed": 0,
+    "final_rows": 642
+  },
+  "standardization": {
+    "drop_unparseable": true,
+    "strip_salts": false,
+    "normalize_charges": false,
+    "normalize_tautomers": false,
+    "deduplicate": "none"
+  },
+  "failed_models": [
+    "Chemprop v2 (D-MPNN, ensemble=3)",
+    "Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",
+    "Chemprop v2 (CMPNN, ensemble=3)",
+    "Chemprop v2 (AttentiveFP, ensemble=3)",
+    "Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",
+    "Uni-Mol V2 (310m)",
+    "Chemprop v2 (D-MPNN, ensemble=3)",
+    "Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",
+    "Chemprop v2 (CMPNN, ensemble=3)",
+    "Chemprop v2 (AttentiveFP, ensemble=3)",
+    "Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",
+    "Chemprop v2 (D-MPNN, ensemble=3)",
+    "Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",
+    "Chemprop v2 (CMPNN, ensemble=3)",
+    "Chemprop v2 (AttentiveFP, ensemble=3)",
+    "Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",
+    "Chemprop v2 (D-MPNN, ensemble=3)",
+    "Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",
+    "Chemprop v2 (CMPNN, ensemble=3)",
+    "Chemprop v2 (AttentiveFP, ensemble=3)",
+    "Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",
+    "Chemprop v2 (D-MPNN, ensemble=3)",
+    "Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",
+    "Chemprop v2 (CMPNN, ensemble=3)",
+    "Chemprop v2 (AttentiveFP, ensemble=3)",
+    "Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)"
+  ],
+  "applicability_domain": {
+    "method": "both",
+    "n_test": 129,
+    "in_domain_fraction": 0.9069767441860465,
+    "methods": {
+      "standardization": 0.9302325581395349,
+      "knn_similarity": 0.9612403100775194
+    },
+    "selected_model": "TabPFNRegressor",
+    "notes": [],
+    "mae_in_domain": 0.4492840030076158,
+    "mae_out_of_domain": 1.396733079751332
+  },
+  "stage23_signature": "bd48a2e993c83a13f74ac84b1a5a0e699787869e83fa3b726eb25ad63cc6b71a",
+  "resume_fingerprint": "23b7cd31d6bb51fa8f347bf8"
 }

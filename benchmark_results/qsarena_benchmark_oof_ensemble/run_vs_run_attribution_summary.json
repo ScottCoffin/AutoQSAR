@@ -1,0 +1,12 @@
+{
+  "generated_at": "2026-09-27 20:29:13 Pacific Daylight Time",
+  "current_run_dir": "benchmark_results\\qsarena_benchmark_oof_ensemble",
+  "reference_run_dir": "C:\\Users\\Scott.Coffin\\OneDrive - California OEHHA\\R_new\\AutoQSAR\\benchmark_results\\qsarena_benchmark_chemprop_fixed",
+  "has_reference_run": true,
+  "split_datasets_compared": 44,
+  "split_all_match_count": 44,
+  "config_diff_count": 78,
+  "new_error_count": 0,
+  "resolved_error_count": 6,
+  "leaderboard_comparable_dataset_count": 7
+}

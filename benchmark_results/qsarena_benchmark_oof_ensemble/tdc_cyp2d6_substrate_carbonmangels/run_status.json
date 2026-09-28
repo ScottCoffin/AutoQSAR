@@ -2,8 +2,65 @@
   "status": "completed",
   "dataset": "tdc_cyp2d6_substrate_carbonmangels",
   "source": "PyTDC ADME benchmark group: cyp2d6_substrate_carbonmangels (official train_val/test split)",
-  "completed_at": "2026-09-26 06:34:45",
-  "elapsed_seconds": 59.639,
+  "completed_at": "2026-09-27 17:06:04",
+  "elapsed_seconds": 2.138,
   "n_metrics_rows": 47,
-  "n_stage_records": 10
+  "n_stage_records": 4,
+  "n_rows": 667,
+  "task_type": "classification",
+  "primary_metric": "auprc",
+  "cleanup_counts": {
+    "input_rows": 667,
+    "missing_smiles_or_target": 0,
+    "unparseable_smiles": 0,
+    "changed_by_standardization": 0,
+    "duplicates_removed": 0,
+    "final_rows": 667
+  },
+  "standardization": {
+    "drop_unparseable": true,
+    "strip_salts": false,
+    "normalize_charges": false,
+    "normalize_tautomers": false,
+    "deduplicate": "none"
+  },
+  "failed_models": [
+    "Chemprop v2 (D-MPNN, ensemble=3)",
+    "Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",
+    "Chemprop v2 (CMPNN, ensemble=3)",
+    "Chemprop v2 (AttentiveFP, ensemble=3)",
+    "Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",
+    "Uni-Mol V2 (84m)",
+    "Chemprop v2 (D-MPNN, ensemble=3)",
+    "Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",
+    "Chemprop v2 (CMPNN, ensemble=3)",
+    "Chemprop v2 (AttentiveFP, ensemble=3)",
+    "Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",
+    "Uni-Mol V2 (84m)",
+    "Chemprop v2 (D-MPNN, ensemble=3)",
+    "Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",
+    "Chemprop v2 (CMPNN, ensemble=3)",
+    "Chemprop v2 (AttentiveFP, ensemble=3)",
+    "Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",
+    "Uni-Mol V2 (84m)",
+    "Chemprop v2 (D-MPNN, ensemble=3)",
+    "Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",
+    "Chemprop v2 (CMPNN, ensemble=3)",
+    "Chemprop v2 (AttentiveFP, ensemble=3)",
+    "Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",
+    "Uni-Mol V2 (84m)"
+  ],
+  "applicability_domain": {
+    "method": "both",
+    "n_test": 135,
+    "in_domain_fraction": 0.6444444444444445,
+    "methods": {
+      "standardization": 0.9185185185185185,
+      "confidence": 0.674074074074074
+    },
+    "selected_model": "TabPFNClassifier",
+    "notes": []
+  },
+  "stage23_signature": "897ee73cc8dae7e9917690829ba05ad22a93000b006f0d26dca201977425d095",
+  "resume_fingerprint": "97cab4a7c5915ba2e1441a5f"
 }

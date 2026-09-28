@@ -2,8 +2,62 @@
   "status": "completed",
   "dataset": "lipophilicity",
   "source": "MoleculeNet PhysChem benchmark: Lipophilicity",
-  "completed_at": "2026-09-26 14:22:00",
-  "elapsed_seconds": 114.759,
+  "completed_at": "2026-09-27 19:44:59",
+  "elapsed_seconds": 759.051,
   "n_metrics_rows": 44,
-  "n_stage_records": 5
+  "n_stage_records": 4,
+  "n_rows": 4200,
+  "task_type": "regression",
+  "primary_metric": "rmse",
+  "cleanup_counts": {
+    "input_rows": 4200,
+    "missing_smiles_or_target": 0,
+    "unparseable_smiles": 0,
+    "changed_by_standardization": 0,
+    "duplicates_removed": 0,
+    "final_rows": 4200
+  },
+  "standardization": {
+    "drop_unparseable": true,
+    "strip_salts": false,
+    "normalize_charges": false,
+    "normalize_tautomers": false,
+    "deduplicate": "none"
+  },
+  "failed_models": [
+    "Chemprop v2 (D-MPNN, ensemble=3)",
+    "Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",
+    "Chemprop v2 (CMPNN, ensemble=3)",
+    "Chemprop v2 (AttentiveFP, ensemble=3)",
+    "Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",
+    "Uni-Mol V2 (84m)",
+    "Chemprop v2 (D-MPNN, ensemble=3)",
+    "Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",
+    "Chemprop v2 (CMPNN, ensemble=3)",
+    "Chemprop v2 (AttentiveFP, ensemble=3)",
+    "Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",
+    "Uni-Mol V2 (84m)",
+    "Chemprop v2 (D-MPNN, ensemble=3)",
+    "Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",
+    "Chemprop v2 (CMPNN, ensemble=3)",
+    "Chemprop v2 (AttentiveFP, ensemble=3)",
+    "Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",
+    "Uni-Mol V2 (84m)",
+    "TabPFNRegressor"
+  ],
+  "applicability_domain": {
+    "method": "both",
+    "n_test": 843,
+    "in_domain_fraction": 0.9750889679715302,
+    "methods": {
+      "standardization": 0.9988137603795967,
+      "knn_similarity": 0.9762752075919335
+    },
+    "selected_model": "ElasticNetCV",
+    "notes": [],
+    "mae_in_domain": 0.5001224427443641,
+    "mae_out_of_domain": 0.9690247660591487
+  },
+  "stage23_signature": "fa759f2a58908011c34bf2831167437f0e5c22630ff77a7b398a5bbc64b214bd",
+  "resume_fingerprint": "4afdc819782cef8c6bd28631"
 }

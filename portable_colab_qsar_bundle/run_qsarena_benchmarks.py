@@ -43,6 +43,11 @@ import sys
 
 import numpy as np
 import pandas as pd
+
+if not hasattr(np, "product"):
+    # Compatibility for older graph/descriptor dependencies under NumPy 2.x.
+    np.product = np.prod  # type: ignore[attr-defined]
+
 from sklearn.base import clone
 from sklearn.ensemble import (
     AdaBoostClassifier,
@@ -131,8 +136,56 @@ def load_repo_dotenv() -> list[Path]:
 LOADED_DOTENV_PATHS = load_repo_dotenv()
 
 
+_TABPFN_SINGLE_KEY_ENV_VARS = ("PRIORLABS_API_KEY", "TABPFN_API_KEY")
+_TABPFN_KEY_POOL_ENV_VARS = ("PRIORLABS_API_KEYS", "TABPFN_API_KEYS")
+_ACTIVE_TABPFN_API_KEY_INDEX = 0
+_ACTIVE_TABPFN_API_KEY_VALUE = ""
+
+
+def _split_tabpfn_api_key_pool(raw_value: Any) -> list[str]:
+    return [part.strip() for part in re.split(r"[\s,;]+", str(raw_value or "")) if part.strip()]
+
+
+def tabpfn_api_keys_from_env() -> list[str]:
+    keys: list[str] = []
+    for env_name in (*_TABPFN_SINGLE_KEY_ENV_VARS, *_TABPFN_KEY_POOL_ENV_VARS):
+        raw_value = os.environ.get(env_name, "")
+        parts = [str(raw_value).strip()] if env_name in _TABPFN_SINGLE_KEY_ENV_VARS else _split_tabpfn_api_key_pool(raw_value)
+        for part in parts:
+            if part and part not in keys:
+                keys.append(part)
+    return keys
+
+
+def activate_tabpfn_api_key(index: int = 0) -> bool:
+    global _ACTIVE_TABPFN_API_KEY_INDEX
+    global _ACTIVE_TABPFN_API_KEY_VALUE
+    keys = tabpfn_api_keys_from_env()
+    if not keys:
+        _ACTIVE_TABPFN_API_KEY_VALUE = ""
+        return False
+    selected_index = max(0, min(int(index), len(keys) - 1))
+    selected_key = keys[selected_index]
+    os.environ["PRIORLABS_API_KEY"] = selected_key
+    _ACTIVE_TABPFN_API_KEY_INDEX = selected_index
+    _ACTIVE_TABPFN_API_KEY_VALUE = selected_key
+    return True
+
+
+activate_tabpfn_api_key(0)
+
+
 def priorlabs_api_key_available() -> bool:
-    return bool(str(os.environ.get("PRIORLABS_API_KEY", os.environ.get("TABPFN_API_KEY", ""))).strip())
+    return bool(tabpfn_api_keys_from_env())
+
+
+def priorlabs_api_key_status_text() -> str:
+    key_count = len(tabpfn_api_keys_from_env())
+    if key_count <= 0:
+        return "not found"
+    if key_count == 1:
+        return "available"
+    return f"available ({key_count} configured keys)"
 
 
 def dotenv_status_text() -> str:
@@ -253,6 +306,20 @@ def workspace_root() -> Path:
     return Path.cwd().resolve()
 
 
+def workspace_model_cache_root() -> Path:
+    """Return a writable model-cache root for this checkout.
+
+    Some legacy checkouts carry a tracked ``model_cache`` file that points at an
+    external volume. When that file is present, local AUTO caches must use a
+    different directory rather than trying to create children under the file.
+    """
+    root = workspace_root()
+    preferred = root / "model_cache"
+    if preferred.exists() and not preferred.is_dir():
+        return root / ".model_cache"
+    return preferred
+
+
 try:
     from portable_colab_qsar_bundle.qsar_workflow_core import (
         TabularCNNRegressor,
@@ -354,13 +421,12 @@ if priorlabs_api_key_available():
         from tabpfn_client import TabPFNClassifier, TabPFNRegressor
         TABPFN_REGRESSOR_SOURCE = "tabpfn_client"
     except Exception:
-        try:
-            from tabpfn import TabPFNClassifier, TabPFNRegressor
-            TABPFN_REGRESSOR_SOURCE = "tabpfn"
-        except Exception:
-            TabPFNClassifier = None
-            TabPFNRegressor = None
-            TABPFN_REGRESSOR_SOURCE = "unavailable"
+        # Do not fall back to the local ``tabpfn`` package when Prior Labs API
+        # keys are configured. Current local TabPFN releases require newer
+        # Torch than the Windows DGL/GraphBolt build used by MapLight+GNN.
+        TabPFNClassifier = None
+        TabPFNRegressor = None
+        TABPFN_REGRESSOR_SOURCE = "unavailable"
 else:
     try:
         from tabpfn import TabPFNClassifier, TabPFNRegressor
@@ -378,6 +444,22 @@ TF_AVAILABLE_FOR_CNN = bool(importlib.util.find_spec("tensorflow") is not None)
 
 
 def detect_gpu_available() -> bool:
+    if "CUDA_VISIBLE_DEVICES" in os.environ and str(os.environ.get("CUDA_VISIBLE_DEVICES", "")).strip() == "":
+        return False
+    try:
+        result = subprocess.run(
+            ["nvidia-smi", "-L"],
+            capture_output=True,
+            timeout=5,
+            **_SUBPROCESS_TEXT_KWARGS,
+        )
+        output = ((result.stdout or "") + "\n" + (result.stderr or "")).strip().lower()
+        if result.returncode == 0 and "gpu" in output:
+            return True
+        if result.returncode != 0 or "not recognized" in output or "not found" in output:
+            return False
+    except (FileNotFoundError, subprocess.TimeoutExpired, OSError):
+        return False
     try:
         import torch
 
@@ -584,7 +666,7 @@ def ensure_tabpfn_installed(prefer_local_backend: bool = False) -> bool:
     global TabPFNRegressor
     global TABPFN_REGRESSOR_SOURCE
     current_source = str(TABPFN_REGRESSOR_SOURCE).strip().lower()
-    prefer_api_backend = priorlabs_api_key_available()
+    prefer_api_backend = priorlabs_api_key_available() and not prefer_local_backend
     if TabPFNRegressor is not None:
         if prefer_api_backend and current_source != "tabpfn_client":
             pass
@@ -594,7 +676,7 @@ def ensure_tabpfn_installed(prefer_local_backend: bool = False) -> bool:
             return True
 
     if prefer_api_backend:
-        backend_order = ["tabpfn_client", "tabpfn"]
+        backend_order = ["tabpfn_client"]
     elif prefer_local_backend:
         backend_order = ["tabpfn", "tabpfn_client"]
     elif current_source == "tabpfn_client":
@@ -683,10 +765,15 @@ def ensure_tabpfn_client_installed() -> bool:
     return importlib.util.find_spec("tabpfn_client") is not None
 
 
-def configure_tabpfn_access_token_from_env() -> tuple[bool, str]:
-    api_key = str(os.environ.get("PRIORLABS_API_KEY", os.environ.get("TABPFN_API_KEY", ""))).strip()
-    if not api_key:
+def configure_tabpfn_access_token_from_env(key_index: int | None = None) -> tuple[bool, str]:
+    keys = tabpfn_api_keys_from_env()
+    if not keys:
         return False, "No PRIORLABS_API_KEY/TABPFN_API_KEY found in environment."
+    if key_index is None:
+        key_index = _ACTIVE_TABPFN_API_KEY_INDEX
+    if not activate_tabpfn_api_key(int(key_index)):
+        return False, "No PRIORLABS_API_KEY/TABPFN_API_KEY found in environment."
+    api_key = _ACTIVE_TABPFN_API_KEY_VALUE
     if not ensure_tabpfn_client_installed():
         return False, "tabpfn-client is unavailable; could not apply access token."
     try:
@@ -929,7 +1016,7 @@ def prepare_tabpfn_auth(args: argparse.Namespace) -> tuple[bool, str]:
         return False, f"Unknown TabPFN backend source: {TABPFN_REGRESSOR_SOURCE}. TabPFN will be disabled."
 
     # --- tabpfn_client (Prior Labs API) path ---
-    has_env_key = bool(str(os.environ.get("PRIORLABS_API_KEY", os.environ.get("TABPFN_API_KEY", ""))).strip())
+    has_env_key = bool(tabpfn_api_keys_from_env())
 
     if not has_env_key:
         if sys.stdin is not None and sys.stdin.isatty():
@@ -962,15 +1049,46 @@ def prepare_tabpfn_auth(args: argparse.Namespace) -> tuple[bool, str]:
                 "could be used. TabPFN will be disabled for this run."
             )
 
-    token_ok, token_error = configure_tabpfn_access_token_from_env()
-    if token_ok:
+    keys = tabpfn_api_keys_from_env()
+    token_errors: list[str] = []
+    for key_index, _key in enumerate(keys):
+        token_ok, token_error = configure_tabpfn_access_token_from_env(key_index=key_index)
+        if not token_ok:
+            token_errors.append(token_error)
+            if len(keys) > 1:
+                print(
+                    f"[TabPFN] API key {key_index + 1}/{len(keys)} could not be loaded; trying next key.",
+                    flush=True,
+                )
+            continue
         probe_ok, probe_error = _probe_tabpfn_runtime_ready()
         if probe_ok:
-            return True, "TabPFN authentication verified via PRIORLABS_API_KEY/TABPFN_API_KEY."
-        if is_tabpfn_token_limit_error(probe_error):
-            return False, format_tabpfn_token_limit_notice(
-                f"TabPFN access token was loaded, but runtime preflight hit a token limit. Error: {probe_error}"
+            key_note = (
+                "PRIORLABS_API_KEY/TABPFN_API_KEY"
+                if len(keys) <= 1
+                else f"configured API key {key_index + 1}/{len(keys)}"
             )
+            return True, f"TabPFN authentication verified via {key_note}."
+        if is_tabpfn_token_limit_error(probe_error):
+            token_errors.append(
+                f"API key {key_index + 1}/{len(keys)} hit a token limit during preflight: {probe_error}"
+            )
+            if key_index + 1 < len(keys):
+                print(
+                    f"[TabPFN] API key {key_index + 1}/{len(keys)} hit a token budget event; trying next key.",
+                    flush=True,
+                )
+                continue
+            return False, format_tabpfn_token_limit_notice(token_errors[-1])
+        token_errors.append(
+            f"API key {key_index + 1}/{len(keys)} runtime preflight failed: {probe_error}"
+        )
+        if key_index + 1 < len(keys):
+            print(
+                f"[TabPFN] API key {key_index + 1}/{len(keys)} failed preflight; trying next key.",
+                flush=True,
+            )
+            continue
         return False, (
             "TabPFN access token was loaded from environment, but runtime preflight failed. "
             f"Error: {probe_error}"
@@ -979,14 +1097,15 @@ def prepare_tabpfn_auth(args: argparse.Namespace) -> tuple[bool, str]:
     probe_ok, probe_error = _probe_tabpfn_runtime_ready()
     if probe_ok:
         return True, "TabPFN preflight passed using the active TabPFN client credentials."
+    token_error = "; ".join(error for error in token_errors if error)
     if is_tabpfn_token_limit_error(token_error) or is_tabpfn_token_limit_error(probe_error):
         return False, format_tabpfn_token_limit_notice(token_error or probe_error)
     return False, f"TabPFN authentication/setup failed: {token_error or probe_error}"
 
 
-TABPFN_DAILY_TOKEN_BUDGET = 100_000_000
+TABPFN_DAILY_TOKEN_BUDGET = int(os.environ.get("TABPFN_DAILY_TOKEN_BUDGET", "5000000"))
 TABPFN_DAILY_RESET_NOTE = (
-    "Prior Labs TabPFN API budget: 100,000,000 tokens per user per day "
+    f"Prior Labs TabPFN API budget: {TABPFN_DAILY_TOKEN_BUDGET:,} tokens per key per day "
     "(tokens ~ rows * columns * estimators), with a daily reset."
 )
 
@@ -1026,6 +1145,8 @@ def estimate_tabpfn_daily_dataset_capacity(
     args: argparse.Namespace,
 ) -> dict[str, Any]:
     estimators = tabpfn_estimators_per_dataset_run(args)
+    configured_key_count = max(1, len(tabpfn_api_keys_from_env()))
+    effective_token_budget = int(TABPFN_DAILY_TOKEN_BUDGET) * configured_key_count
     rows_payload = []
     sortable_tokens = []
     for spec in datasets:
@@ -1036,6 +1157,9 @@ def estimate_tabpfn_daily_dataset_capacity(
             est_columns = int(max_features_cfg)
         else:
             est_columns = max(32, int(round(0.1 * est_train_rows)))
+        tabpfn_max_features_cfg = int(getattr(args, "tabpfn_max_features", 0) or 0)
+        if tabpfn_max_features_cfg > 0:
+            est_columns = min(est_columns, tabpfn_max_features_cfg)
         est_tokens = estimate_tabpfn_tokens(est_train_rows, est_columns, estimators)
         rows_payload.append(
             {
@@ -1044,15 +1168,17 @@ def estimate_tabpfn_daily_dataset_capacity(
                 "estimated_columns": est_columns,
                 "estimated_estimators": estimators,
                 "estimated_tabpfn_tokens": est_tokens,
-                "fits_single_day_budget": bool(est_tokens <= TABPFN_DAILY_TOKEN_BUDGET),
+                "tabpfn_configured_api_keys": int(configured_key_count),
+                "fits_single_key_day_budget": bool(est_tokens <= TABPFN_DAILY_TOKEN_BUDGET),
+                "fits_configured_key_pool_day_budget": bool(est_tokens <= effective_token_budget),
             }
         )
         sortable_tokens.append(est_tokens)
-    individually_fit_count = sum(1 for value in sortable_tokens if value <= TABPFN_DAILY_TOKEN_BUDGET)
+    individually_fit_count = sum(1 for value in sortable_tokens if value <= effective_token_budget)
     cumulative = 0
     cumulative_count = 0
     for value in sorted(sortable_tokens):
-        if cumulative + value > TABPFN_DAILY_TOKEN_BUDGET:
+        if cumulative + value > effective_token_budget:
             break
         cumulative += value
         cumulative_count += 1
@@ -1061,6 +1187,8 @@ def estimate_tabpfn_daily_dataset_capacity(
         "individually_fit_count": int(individually_fit_count),
         "smallest_first_count": int(cumulative_count),
         "estimators_per_dataset": int(estimators),
+        "configured_key_count": int(configured_key_count),
+        "effective_token_budget": int(effective_token_budget),
     }
 
 
@@ -1448,6 +1576,17 @@ def stage23_resume_cache_path(dataset_dir: Path) -> Path:
 
 def load_pickle_suppressing_numpy_core_warning(handle: Any) -> Any:
     """Load legacy NumPy-containing pickle caches without noisy NumPy internals warnings."""
+    # NumPy 2 pickles may reference numpy._core.*, while the publication
+    # Python 3.11 environment can still carry NumPy 1.x. Alias the private
+    # module names so stage caches remain portable across that boundary.
+    try:
+        import numpy.core as _numpy_core
+        import numpy.core.numeric as _numpy_core_numeric
+
+        sys.modules.setdefault("numpy._core", _numpy_core)
+        sys.modules.setdefault("numpy._core.numeric", _numpy_core_numeric)
+    except Exception:
+        pass
     with warnings.catch_warnings():
         warnings.filterwarnings(
             "ignore",
@@ -1457,7 +1596,27 @@ def load_pickle_suppressing_numpy_core_warning(handle: Any) -> Any:
         return pickle.load(handle)
 
 
-def load_stage23_resume_cache(dataset_dir: Path, expected_signature: str) -> dict[str, Any] | None:
+def _stage23_payload_matches_ignoring_cache_location(
+    stored_payload: Any,
+    expected_payload: Any,
+) -> bool:
+    if not isinstance(stored_payload, dict) or not isinstance(expected_payload, dict):
+        return False
+    ignored_keys = {
+        "enable_persistent_feature_store",
+        "reuse_persistent_feature_store",
+        "persistent_feature_store_path",
+    }
+    stored_clean = {key: value for key, value in stored_payload.items() if key not in ignored_keys}
+    expected_clean = {key: value for key, value in expected_payload.items() if key not in ignored_keys}
+    return stored_clean == expected_clean
+
+
+def load_stage23_resume_cache(
+    dataset_dir: Path,
+    expected_signature: str,
+    expected_payload: dict[str, Any] | None = None,
+) -> dict[str, Any] | None:
     cache_path = stage23_resume_cache_path(dataset_dir)
     if not cache_path.exists():
         return None
@@ -1471,7 +1630,11 @@ def load_stage23_resume_cache(dataset_dir: Path, expected_signature: str) -> dic
     if int(payload.get("cache_version", -1)) != int(STAGE23_RESUME_CACHE_VERSION):
         return None
     if str(payload.get("stage23_signature", "")).strip() != str(expected_signature).strip():
-        return None
+        if not _stage23_payload_matches_ignoring_cache_location(
+            payload.get("signature_payload", {}),
+            expected_payload or {},
+        ):
+            return None
     required_keys = {
         "split",
         "X_train_selected",
@@ -1532,7 +1695,7 @@ def write_stage23_resume_cache(
 
 
 def default_shared_feature_matrix_cache_path() -> Path:
-    return workspace_root() / "model_cache" / "benchmark_feature_matrix_cache"
+    return workspace_model_cache_root() / "benchmark_feature_matrix_cache"
 
 
 def resolve_shared_feature_matrix_cache_path(cache_path: str | Path = "AUTO") -> Path:
@@ -1677,6 +1840,14 @@ def model_filter_allows(args: argparse.Namespace, model_name: Any) -> bool:
 
 def model_filter_allows_any(args: argparse.Namespace, model_names: Sequence[Any]) -> bool:
     return any(model_filter_allows(args, name) for name in model_names)
+
+
+def ensemble_only_rebuild_mode(args: argparse.Namespace) -> bool:
+    """True when an invocation is only rebuilding ensemble rows from existing base predictions."""
+    if not (bool(getattr(args, "run_ensemble", False)) and bool(getattr(args, "rebuild_ensemble", False))):
+        return False
+    filters = model_filter_values(args)
+    return bool(filters) and all(is_ensemble_result_row(name, "") for name in filters)
 
 
 def _normalize_workflow_label(workflow_name: Any) -> str:
@@ -5931,7 +6102,7 @@ def _suppress_maplight_store_probe_noise():
 
 
 def default_maplight_pretrained_cache_dir() -> Path:
-    return workspace_root() / "model_cache" / "maplight_gnn_pretrained"
+    return workspace_model_cache_root() / "maplight_gnn_pretrained"
 
 
 def _build_maplight_gnn_embedder(kind: str = "gin_supervised_masking") -> tuple[Callable[[list[str]], list[Any]], str]:
@@ -7447,7 +7618,8 @@ _FAMILY_SIGNATURE_ARGS: dict[str, tuple[str, ...]] = {
                         "elasticnet_alpha_grid_size", "elasticnet_cv_folds", "elasticnet_max_iter"),
     "gradient_boosting": ("cv_folds", "maplight_leaderboard_parity_mode", "maplight_parity_seeds"),
     "deep_tabular": ("cv_folds", "chemml_hidden_layers", "chemml_hidden_width", "chemml_training_epochs", "chemml_batch_size",
-                     "chemml_learning_rate", "chemml_use_cross_validation", "chemml_cv_folds", "tabpfn_max_train_rows"),
+                     "chemml_learning_rate", "chemml_use_cross_validation", "chemml_cv_folds", "tabpfn_max_train_rows",
+                     "tabpfn_max_features"),
     "graph_nn": ("chemprop_epochs", "chemprop_batch_size", "chemprop_ensemble_size", "chemprop_random_seed"),
     "pretrained_3d": ("unimol_internal_split", "unimol_epochs", "unimol_learning_rate", "unimol_batch_size",
                       "unimol_early_stopping", "unimol_model_size", "unimol_max_atoms", "unimol_use_amp"),
@@ -7533,6 +7705,14 @@ def split_stale_metric_rows(
     """(kept rows, stale model names, legacy rows without a signature)."""
     if not bool(getattr(args, "resume_validate_signature", True)):
         return list(metrics_rows), set(), 0
+    if ensemble_only_rebuild_mode(args):
+        legacy = sum(
+            1
+            for row in metrics_rows
+            if not str(row.get("stage_config_signature", "") or "").strip()
+            or str(row.get("stage_config_signature", "") or "").strip().lower() == "nan"
+        )
+        return list(metrics_rows), set(), legacy
     stale: set[str] = set()
     legacy = 0
     for row in metrics_rows:
@@ -8271,7 +8451,13 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
         annotated_df = annotate_metrics_with_leaderboard(pd.DataFrame(metrics_rows), spec)
         return annotated_df.to_dict(orient="records")
 
-    def persist_partial(stage_label: str) -> None:
+    def persist_partial(
+        stage_label: str,
+        *,
+        event_model_name: str | None = None,
+        event_error_text: str | None = None,
+        event_status: str | None = None,
+    ) -> None:
         annotated_rows = current_annotated_metrics_rows()
         if annotated_rows:
             qsarena_artifacts.atomic_write_csv(metrics_path, pd.DataFrame(annotated_rows))
@@ -8282,7 +8468,18 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
         if ga_history_tables:
             qsarena_artifacts.atomic_write_csv(ga_history_path, pd.concat(ga_history_tables, ignore_index=True))
         _write_stage_runtime_outputs()
-        if metrics_rows:
+        if event_model_name is not None:
+            error_text = str(event_error_text or "").strip()
+            qsarena_events.EVENTS.emit(
+                "model_finished" if not error_text else "model_failed",
+                level="info" if not error_text else "warning",
+                dataset=dataset_id,
+                model=str(event_model_name),
+                stage=stage_label,
+                status=str(event_status or ("error" if error_text else "ok")),
+                error=error_text[:300],
+            )
+        elif metrics_rows:
             last = metrics_rows[-1]
             error_text = str(last.get("error", "") or "").strip()
             qsarena_events.EVENTS.emit(
@@ -8369,7 +8566,11 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
         predefined_split=predefined_split,
     )
     stage23_cache_payload = (
-        load_stage23_resume_cache(dataset_dir, expected_signature=stage23_signature_value) if "stage" in granularity else None
+        load_stage23_resume_cache(
+            dataset_dir,
+            expected_signature=stage23_signature_value,
+            expected_payload=stage23_signature_payload,
+        ) if "stage" in granularity else None
     )
     if metrics_rows:
         kept_rows, stale_models, legacy_rows = split_stale_metric_rows(metrics_rows, args, stage23_signature_value)
@@ -8797,17 +8998,39 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
         else:
             model_X_train = X_train
             model_X_test = X_test
+        tabpfn_api_model = (
+            model_name in {"TabPFNRegressor", "TabPFNClassifier"}
+            and str(TABPFN_REGRESSOR_SOURCE).strip().lower() == "tabpfn_client"
+        )
+        if model_name in {"TabPFNRegressor", "TabPFNClassifier"}:
+            tabpfn_max_features = int(getattr(args, "tabpfn_max_features", 0) or 0)
+            if tabpfn_max_features > 0 and int(model_X_train.shape[1]) > tabpfn_max_features:
+                if hasattr(model_X_train, "columns"):
+                    tabpfn_feature_cols = list(model_X_train.columns[:tabpfn_max_features])
+                    model_X_train = model_X_train.loc[:, tabpfn_feature_cols].copy()
+                    model_X_test = model_X_test.loc[:, tabpfn_feature_cols].copy()
+                else:
+                    model_X_train = model_X_train[:, :tabpfn_max_features]
+                    model_X_test = model_X_test[:, :tabpfn_max_features]
+                print(
+                    f"[TabPFN] {dataset_id} {model_name}: using first "
+                    f"{tabpfn_max_features} selected feature(s) for API budget control.",
+                    flush=True,
+                )
         if model_name in {"TabPFNRegressor", "TabPFNClassifier"} and str(TABPFN_REGRESSOR_SOURCE).strip().lower() == "tabpfn_client":
             estimated_tokens = estimate_tabpfn_tokens(
                 rows=int(model_X_train.shape[0]),
                 columns=int(model_X_train.shape[1]),
                 estimators=tabpfn_estimators_per_dataset_run(args),
             )
-            if estimated_tokens > TABPFN_DAILY_TOKEN_BUDGET:
+            configured_key_count = max(1, len(tabpfn_api_keys_from_env()))
+            effective_token_budget = int(TABPFN_DAILY_TOKEN_BUDGET) * configured_key_count
+            if estimated_tokens > effective_token_budget:
                 skip_reason = (
                     "Preflight budget guard skipped TabPFNRegressor: estimated usage "
                     f"{estimated_tokens:,} tokens exceeds configured API budget guardrail "
-                    f"{TABPFN_DAILY_TOKEN_BUDGET:,}. This is an estimate, not an API-denied request. "
+                    f"{effective_token_budget:,} across {configured_key_count} configured key(s). "
+                    "This is an estimate, not an API-denied request. "
                     f"{TABPFN_DAILY_RESET_NOTE}"
                 )
                 print(f"[skip] {dataset_id} {model_name}: {skip_reason}", flush=True)
@@ -8817,7 +9040,8 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
                     "error": skip_reason,
                     "status": "skipped_tabpfn_token_budget_estimate",
                     "tabpfn_estimated_tokens": int(estimated_tokens),
-                    "tabpfn_daily_token_budget": int(TABPFN_DAILY_TOKEN_BUDGET),
+                    "tabpfn_daily_token_budget": int(effective_token_budget),
+                    "tabpfn_configured_api_keys": int(configured_key_count),
                     "tabpfn_estimated_estimators": int(tabpfn_estimators_per_dataset_run(args)),
                 }
                 row = add_cost_columns({**base_meta, **row}, cost_scope="model_skip")
@@ -8826,39 +9050,67 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
                 persist_partial(f"conventional:{model_name}")
                 stage_index += 1
                 continue
+        tabpfn_key_count = max(1, len(tabpfn_api_keys_from_env())) if tabpfn_api_model else 1
+        tabpfn_start_key_index = int(_ACTIVE_TABPFN_API_KEY_INDEX or 0) if tabpfn_api_model else 0
         conventional_oof_sink: dict[str, Any] = {}
         try:
-            if model_name == maplight_catboost_label and maplight_parity_mode:
-                maplight_primary_metric = (
-                    current_dataset_primary_metric("roc_auc")
-                    if current_dataset_task_type() == "classification"
-                    else "mae"
-                )
-                row, pred_train, pred_test = evaluate_maplight_seeded_catboost(
-                    model_name=model_name,
-                    workflow_name="conventional",
-                    X_train=model_X_train,
-                    X_test=model_X_test,
-                    y_train=split["y_train"],
-                    y_test=split["y_test"],
-                    seed_values=maplight_seed_values,
-                    feature_source="direct_maplight_classic_from_smiles_no_dedup",
-                    primary_metric=maplight_primary_metric,
-                    n_jobs=benchmark_n_jobs(args),
-                )
-            else:
-                row, pred_train, pred_test = evaluate_model(
-                    model_name,
-                    estimator,
-                    model_X_train,
-                    model_X_test,
-                    split["y_train"],
-                    split["y_test"],
-                    split["smiles_train"],
-                    args,
-                    split_strategy_for_cv=cv_strategy_for_workflows,
-                    oof_sink=conventional_oof_sink,
-                )
+            for tabpfn_attempt_offset in range(tabpfn_key_count):
+                conventional_oof_sink = {}
+                if tabpfn_api_model:
+                    tabpfn_attempt_key_index = (tabpfn_start_key_index + tabpfn_attempt_offset) % tabpfn_key_count
+                    configure_tabpfn_access_token_from_env(key_index=tabpfn_attempt_key_index)
+                else:
+                    tabpfn_attempt_key_index = 0
+                try:
+                    if model_name == maplight_catboost_label and maplight_parity_mode:
+                        maplight_primary_metric = (
+                            current_dataset_primary_metric("roc_auc")
+                            if current_dataset_task_type() == "classification"
+                            else "mae"
+                        )
+                        row, pred_train, pred_test = evaluate_maplight_seeded_catboost(
+                            model_name=model_name,
+                            workflow_name="conventional",
+                            X_train=model_X_train,
+                            X_test=model_X_test,
+                            y_train=split["y_train"],
+                            y_test=split["y_test"],
+                            seed_values=maplight_seed_values,
+                            feature_source="direct_maplight_classic_from_smiles_no_dedup",
+                            primary_metric=maplight_primary_metric,
+                            n_jobs=benchmark_n_jobs(args),
+                        )
+                    else:
+                        estimator_for_attempt = clone(estimator) if tabpfn_api_model else estimator
+                        row, pred_train, pred_test = evaluate_model(
+                            model_name,
+                            estimator_for_attempt,
+                            model_X_train,
+                            model_X_test,
+                            split["y_train"],
+                            split["y_test"],
+                            split["smiles_train"],
+                            args,
+                            split_strategy_for_cv=cv_strategy_for_workflows,
+                            oof_sink=conventional_oof_sink,
+                        )
+                    if tabpfn_api_model and tabpfn_key_count > 1:
+                        activate_tabpfn_api_key((tabpfn_attempt_key_index + 1) % tabpfn_key_count)
+                    break
+                except Exception as attempt_exc:
+                    if (
+                        tabpfn_api_model
+                        and is_tabpfn_token_limit_error(attempt_exc)
+                        and tabpfn_attempt_offset + 1 < tabpfn_key_count
+                    ):
+                        print(
+                            f"[TabPFN] {dataset_id} {model_name}: API key "
+                            f"{tabpfn_attempt_key_index + 1}/{tabpfn_key_count} hit a token budget event; "
+                            "trying next key.",
+                            flush=True,
+                        )
+                        continue
+                    raise
         except Exception as exc:
             error_text = str(exc)
             if model_name in {"TabPFNRegressor", "TabPFNClassifier"} and is_tabpfn_token_limit_error(error_text):
@@ -9528,6 +9780,8 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
         ensure_ensemble_oof_predictions). Each refitter repeats that model's own training call on a
         fold of the training split, so the OOF predictions come from the same configuration as the
         reported model."""
+        nonlocal maplight_direct_X_train
+        nonlocal maplight_direct_X_test
         X_tr = X_train.reset_index(drop=True)
         y_tr = split["y_train"].reset_index(drop=True)
         smi_tr = split["smiles_train"].reset_index(drop=True)
@@ -9561,6 +9815,14 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
             if bundle_name in {"TabPFNRegressor", "TabPFNClassifier"} and tabpfn_via_api and not allow_api_refits:
                 continue
             if bundle_name == maplight_catboost_label and maplight_parity_mode:
+                if maplight_direct_X_train.empty:
+                    maplight_direct_X_train = build_maplight_parity_matrix(split["smiles_train"], args)
+                    maplight_direct_X_test = build_maplight_parity_matrix(split["smiles_test"], args)
+                    if list(maplight_direct_X_test.columns) != list(maplight_direct_X_train.columns):
+                        maplight_direct_X_test = maplight_direct_X_test.reindex(
+                            columns=list(maplight_direct_X_train.columns),
+                            fill_value=np.nan,
+                        )
                 if maplight_direct_X_train.empty:
                     continue
                 parity_X = maplight_direct_X_train.reset_index(drop=True)
@@ -9713,7 +9975,17 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
         gnn_frames: dict[str, pd.DataFrame] = {}
 
         def refit_maplight_gnn(fit_idx, val_idx, fold_dir, _label=maplight_gnn_model_label(args)):
+            nonlocal maplight_direct_X_train
+            nonlocal maplight_direct_X_test
             if "train" not in gnn_frames:
+                if maplight_parity_mode and maplight_direct_X_train.empty:
+                    maplight_direct_X_train = build_maplight_parity_matrix(split["smiles_train"], args)
+                    maplight_direct_X_test = build_maplight_parity_matrix(split["smiles_test"], args)
+                    if list(maplight_direct_X_test.columns) != list(maplight_direct_X_train.columns):
+                        maplight_direct_X_test = maplight_direct_X_test.reindex(
+                            columns=list(maplight_direct_X_train.columns),
+                            fill_value=np.nan,
+                        )
                 fusion_train_all, _fusion_test_all, _backend = build_maplight_gnn_fusion_frames(
                     args=args,
                     split=split,
@@ -9777,7 +10049,7 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
             )
             frame["oof_signature"] = fold_signature
             prediction_tables.append(frame)
-            persist_partial(f"ensemble-oof:{model_name}")
+            persist_partial(f"ensemble-oof:{model_name}", event_model_name=model_name)
 
         notes = ensure_ensemble_oof_predictions(
             payloads=prediction_payloads,
@@ -11218,6 +11490,15 @@ def build_arg_parser() -> argparse.ArgumentParser:
         help="Maximum training rows allowed for TabPFNRegressor (CPU guardrail).",
     )
     parser.add_argument(
+        "--tabpfn-max-features",
+        type=int,
+        default=0,
+        help=(
+            "Maximum selected descriptor columns passed to TabPFN only. "
+            "0 uses all selected features."
+        ),
+    )
+    parser.add_argument(
         "--suppress-tabpfn-progress",
         action=argparse.BooleanOptionalAction,
         default=True,
@@ -12098,8 +12379,8 @@ def _print_run_header(args: argparse.Namespace, datasets: list[DatasetSpec], res
     print(f".env loaded: {dotenv_status_text()}")
     print(
         "Prior Labs API key: "
-        f"{'available' if priorlabs_api_key_available() else 'not found'} "
-        "(PRIORLABS_API_KEY/TABPFN_API_KEY)"
+        f"{priorlabs_api_key_status_text()} "
+        "(PRIORLABS_API_KEY/TABPFN_API_KEY or plural *_API_KEYS pool)"
     )
     print(f"Molecular feature families: {', '.join(resolved_feature_families(args))}")
     print(
@@ -12158,7 +12439,9 @@ def _print_run_header(args: argparse.Namespace, datasets: list[DatasetSpec], res
         print(
             "TabPFN daily-budget estimate: "
             f"{tabpfn_budget_estimate['individually_fit_count']}/{len(datasets)} dataset(s) are estimated to fit "
-            f"individually within {TABPFN_DAILY_TOKEN_BUDGET:,} tokens/day. "
+            f"individually within the configured key pool budget "
+            f"({int(tabpfn_budget_estimate.get('configured_key_count', 1))} key(s), "
+            f"{int(tabpfn_budget_estimate.get('effective_token_budget', TABPFN_DAILY_TOKEN_BUDGET)):,} tokens/day). "
             f"At most {tabpfn_budget_estimate['smallest_first_count']}/{len(datasets)} dataset(s) are estimated to fit "
             f"if run smallest-first in one day. "
             f"Estimator multiplier={int(tabpfn_budget_estimate['estimators_per_dataset'])}. "
@@ -12236,14 +12519,16 @@ def prepare_args(argv: Sequence[str] | None = None) -> tuple[argparse.Namespace,
         )
     gpu_available = apply_gpu_policy(args)
     # Precision hook: read QSARENA_PRECISION env var set by run_one.py.
-    # Must run after GPU detection, before any CUDA op. No-op when torch absent.
-    try:
-        from qsarena.precision import apply_global_precision
-        _precision_mode = os.environ.get("QSARENA_PRECISION", "fp32")
-        apply_global_precision(_precision_mode)
-        args.precision_mode = _precision_mode
-    except ImportError:
-        args.precision_mode = "fp32"
+    # Must run after GPU detection, before any CUDA op. CPU-only runs avoid importing torch here.
+    _precision_mode = os.environ.get("QSARENA_PRECISION", "fp32")
+    args.precision_mode = _precision_mode
+    if gpu_available:
+        try:
+            from qsarena.precision import apply_global_precision
+            apply_global_precision(_precision_mode)
+        except Exception as exc:
+            print(f"[warn] precision setup failed; continuing with fp32 defaults: {exc}", flush=True)
+            args.precision_mode = "fp32"
     args.unimol_auto_requested = getattr(args, "run_unimol_v1", None) is None or getattr(args, "run_unimol_v2", None) is None
     if getattr(args, "run_unimol_v1", None) is None:
         args.run_unimol_v1 = bool(gpu_available)
@@ -12294,10 +12579,10 @@ def main(argv: Sequence[str] | None = None) -> int:
         return 2
     root = workspace_root()
     if str(getattr(args, "persistent_feature_store_path", "AUTO")).strip().upper() == "AUTO":
-        args.persistent_feature_store_path = str((root / "model_cache" / "feature_store_parquet").resolve())
+        args.persistent_feature_store_path = str((workspace_model_cache_root() / "feature_store_parquet").resolve())
     if str(getattr(args, "shared_feature_matrix_cache_path", "AUTO")).strip().upper() == "AUTO":
         args.shared_feature_matrix_cache_path = str(
-            (root / "model_cache" / "benchmark_feature_matrix_cache").resolve()
+            (workspace_model_cache_root() / "benchmark_feature_matrix_cache").resolve()
         )
     if bool(getattr(args, "enable_persistent_feature_store", True)):
         Path(str(args.persistent_feature_store_path)).mkdir(parents=True, exist_ok=True)

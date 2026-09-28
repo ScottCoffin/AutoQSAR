@@ -2,8 +2,62 @@
   "status": "completed",
   "dataset": "tdc_lipophilicity_astrazeneca",
   "source": "PyTDC ADME benchmark group: lipophilicity_astrazeneca (official train_val/test split)",
-  "completed_at": "2026-09-26 14:25:10",
-  "elapsed_seconds": 189.915,
+  "completed_at": "2026-09-27 19:57:06",
+  "elapsed_seconds": 727.107,
   "n_metrics_rows": 44,
-  "n_stage_records": 5
+  "n_stage_records": 4,
+  "n_rows": 4200,
+  "task_type": "regression",
+  "primary_metric": "mae",
+  "cleanup_counts": {
+    "input_rows": 4200,
+    "missing_smiles_or_target": 0,
+    "unparseable_smiles": 0,
+    "changed_by_standardization": 0,
+    "duplicates_removed": 0,
+    "final_rows": 4200
+  },
+  "standardization": {
+    "drop_unparseable": true,
+    "strip_salts": false,
+    "normalize_charges": false,
+    "normalize_tautomers": false,
+    "deduplicate": "none"
+  },
+  "failed_models": [
+    "Chemprop v2 (D-MPNN, ensemble=3)",
+    "Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",
+    "Chemprop v2 (CMPNN, ensemble=3)",
+    "Chemprop v2 (AttentiveFP, ensemble=3)",
+    "Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",
+    "Uni-Mol V2 (84m)",
+    "Chemprop v2 (D-MPNN, ensemble=3)",
+    "Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",
+    "Chemprop v2 (CMPNN, ensemble=3)",
+    "Chemprop v2 (AttentiveFP, ensemble=3)",
+    "Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",
+    "Uni-Mol V2 (84m)",
+    "Chemprop v2 (D-MPNN, ensemble=3)",
+    "Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",
+    "Chemprop v2 (CMPNN, ensemble=3)",
+    "Chemprop v2 (AttentiveFP, ensemble=3)",
+    "Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",
+    "Uni-Mol V2 (84m)",
+    "TabPFNRegressor"
+  ],
+  "applicability_domain": {
+    "method": "both",
+    "n_test": 840,
+    "in_domain_fraction": 0.9369047619047619,
+    "methods": {
+      "standardization": 0.9952380952380953,
+      "knn_similarity": 0.9416666666666667
+    },
+    "selected_model": "TabPFNRegressor",
+    "notes": [],
+    "mae_in_domain": 0.416035847924981,
+    "mae_out_of_domain": 0.7861023633884935
+  },
+  "stage23_signature": "010c52b16d71551ed278d14b5a6f2fdd5343cca3ea6bb13ff8dcfb090be8e633",
+  "resume_fingerprint": "7baf7edc50aa490ede94525b"
 }

@@ -2,8 +2,65 @@
   "status": "completed",
   "dataset": "tdc_cyp2c9_substrate_carbonmangels",
   "source": "PyTDC ADME benchmark group: cyp2c9_substrate_carbonmangels (official train_val/test split)",
-  "completed_at": "2026-09-26 06:43:57",
-  "elapsed_seconds": 55.905,
+  "completed_at": "2026-09-27 17:16:10",
+  "elapsed_seconds": 2.224,
   "n_metrics_rows": 47,
-  "n_stage_records": 10
+  "n_stage_records": 4,
+  "n_rows": 669,
+  "task_type": "classification",
+  "primary_metric": "auprc",
+  "cleanup_counts": {
+    "input_rows": 669,
+    "missing_smiles_or_target": 0,
+    "unparseable_smiles": 0,
+    "changed_by_standardization": 0,
+    "duplicates_removed": 0,
+    "final_rows": 669
+  },
+  "standardization": {
+    "drop_unparseable": true,
+    "strip_salts": false,
+    "normalize_charges": false,
+    "normalize_tautomers": false,
+    "deduplicate": "none"
+  },
+  "failed_models": [
+    "Chemprop v2 (D-MPNN, ensemble=3)",
+    "Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",
+    "Chemprop v2 (CMPNN, ensemble=3)",
+    "Chemprop v2 (AttentiveFP, ensemble=3)",
+    "Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",
+    "Uni-Mol V2 (84m)",
+    "Chemprop v2 (D-MPNN, ensemble=3)",
+    "Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",
+    "Chemprop v2 (CMPNN, ensemble=3)",
+    "Chemprop v2 (AttentiveFP, ensemble=3)",
+    "Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",
+    "Uni-Mol V2 (84m)",
+    "Chemprop v2 (D-MPNN, ensemble=3)",
+    "Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",
+    "Chemprop v2 (CMPNN, ensemble=3)",
+    "Chemprop v2 (AttentiveFP, ensemble=3)",
+    "Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",
+    "Uni-Mol V2 (84m)",
+    "Chemprop v2 (D-MPNN, ensemble=3)",
+    "Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",
+    "Chemprop v2 (CMPNN, ensemble=3)",
+    "Chemprop v2 (AttentiveFP, ensemble=3)",
+    "Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",
+    "Uni-Mol V2 (84m)"
+  ],
+  "applicability_domain": {
+    "method": "both",
+    "n_test": 135,
+    "in_domain_fraction": 0.7777777777777778,
+    "methods": {
+      "standardization": 0.9259259259259259,
+      "confidence": 0.8148148148148148
+    },
+    "selected_model": "LogisticRegression",
+    "notes": []
+  },
+  "stage23_signature": "df812fcb104c2b8da52ea204a384a6891f5e4665829e089a863e08321ce8efff",
+  "resume_fingerprint": "63b18881e5275428e511f8f5"
 }

@@ -2,8 +2,65 @@
   "status": "completed",
   "dataset": "tdc_dili",
   "source": "PyTDC Tox benchmark group: dili (official train_val/test split)",
-  "completed_at": "2026-09-26 06:28:15",
-  "elapsed_seconds": 87.842,
+  "completed_at": "2026-09-27 16:41:37",
+  "elapsed_seconds": 1.756,
   "n_metrics_rows": 47,
-  "n_stage_records": 10
+  "n_stage_records": 4,
+  "n_rows": 475,
+  "task_type": "classification",
+  "primary_metric": "roc_auc",
+  "cleanup_counts": {
+    "input_rows": 475,
+    "missing_smiles_or_target": 0,
+    "unparseable_smiles": 0,
+    "changed_by_standardization": 0,
+    "duplicates_removed": 0,
+    "final_rows": 475
+  },
+  "standardization": {
+    "drop_unparseable": true,
+    "strip_salts": false,
+    "normalize_charges": false,
+    "normalize_tautomers": false,
+    "deduplicate": "none"
+  },
+  "failed_models": [
+    "Chemprop v2 (D-MPNN, ensemble=3)",
+    "Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",
+    "Chemprop v2 (CMPNN, ensemble=3)",
+    "Chemprop v2 (AttentiveFP, ensemble=3)",
+    "Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",
+    "Uni-Mol V2 (84m)",
+    "Uni-Mol V2 (310m)",
+    "Uni-Mol V2 (310m)",
+    "Uni-Mol V2 (310m)",
+    "Uni-Mol V2 (310m)",
+    "Uni-Mol V2 (310m)",
+    "Uni-Mol V2 (310m)",
+    "Uni-Mol V2 (310m)",
+    "Uni-Mol V2 (310m)",
+    "Uni-Mol V2 (164m)",
+    "Uni-Mol V2 (164m)",
+    "Uni-Mol V2 (164m)",
+    "Uni-Mol V2 (84m)",
+    "Uni-Mol V2 (84m)",
+    "Uni-Mol V2 (84m)",
+    "Uni-Mol V2 (84m)",
+    "Uni-Mol V2 (84m)",
+    "Uni-Mol V2 (84m)",
+    "Uni-Mol V2 (84m)"
+  ],
+  "applicability_domain": {
+    "method": "both",
+    "n_test": 96,
+    "in_domain_fraction": 0.7395833333333334,
+    "methods": {
+      "standardization": 0.96875,
+      "confidence": 0.7708333333333334
+    },
+    "selected_model": "LogisticRegression",
+    "notes": []
+  },
+  "stage23_signature": "c2094ecd09178e1d6a78d58c8c4b0c5960ee2503cc31892fab2ed73fc165f4d8",
+  "resume_fingerprint": "d52da3b0c4c77dd2f4099787"
 }

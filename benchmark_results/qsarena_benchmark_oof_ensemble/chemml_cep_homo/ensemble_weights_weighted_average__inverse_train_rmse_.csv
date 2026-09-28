@@ -1,9 +1,10 @@
 Model,Weight,Workflow
-Extra trees,0.9999994326429029,conventional
-AdaBoost,7.622924720754178e-08,conventional
-Tabular MLP,1.2623703413988438e-07,conventional
-Tabular CNN,2.7668014650323794e-08,conventional
-Uni-Mol V1,8.104570829571094e-08,Uni-Mol
-"Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",6.811701108087624e-08,Chemprop v2
-Uni-Mol V2 (84m),5.4362420877391835e-08,Uni-Mol
-"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",1.3369766072530568e-07,Chemprop v2
+Extra trees,0.12760883735524373,conventional
+HistGradientBoosting,0.129156050414722,conventional
+"Voting Regressor (KNN, SVM)",0.13496406141576958,conventional
+AdaBoost,0.09616097270801001,conventional
+Tabular MLP,0.04811387774558727,conventional
+Tabular CNN,0.02433759602075849,conventional
+CatBoost,0.1429236562721328,conventional
+MapLight CatBoost (Strict Parity),0.13942326164170193,conventional
+ChemML MLP (PyTorch),0.1573116864260741,ChemML deep learning

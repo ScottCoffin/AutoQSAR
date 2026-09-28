@@ -2,8 +2,67 @@
   "status": "completed",
   "dataset": "tdc_clearance_hepatocyte_az",
   "source": "PyTDC ADME benchmark group: clearance_hepatocyte_az (official train_val/test split)",
-  "completed_at": "2026-09-26 06:59:35",
-  "elapsed_seconds": 90.19,
+  "completed_at": "2026-09-27 18:15:29",
+  "elapsed_seconds": 588.41,
   "n_metrics_rows": 49,
-  "n_stage_records": 10
+  "n_stage_records": 4,
+  "n_rows": 1213,
+  "task_type": "regression",
+  "primary_metric": "spearman",
+  "cleanup_counts": {
+    "input_rows": 1213,
+    "missing_smiles_or_target": 0,
+    "unparseable_smiles": 0,
+    "changed_by_standardization": 0,
+    "duplicates_removed": 0,
+    "final_rows": 1213
+  },
+  "standardization": {
+    "drop_unparseable": true,
+    "strip_salts": false,
+    "normalize_charges": false,
+    "normalize_tautomers": false,
+    "deduplicate": "none"
+  },
+  "failed_models": [
+    "Chemprop v2 (D-MPNN, ensemble=3)",
+    "Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",
+    "Chemprop v2 (CMPNN, ensemble=3)",
+    "Chemprop v2 (AttentiveFP, ensemble=3)",
+    "Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",
+    "Uni-Mol V2 (84m)",
+    "Chemprop v2 (D-MPNN, ensemble=3)",
+    "Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",
+    "Chemprop v2 (CMPNN, ensemble=3)",
+    "Chemprop v2 (AttentiveFP, ensemble=3)",
+    "Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",
+    "Uni-Mol V2 (84m)",
+    "Chemprop v2 (D-MPNN, ensemble=3)",
+    "Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",
+    "Chemprop v2 (CMPNN, ensemble=3)",
+    "Chemprop v2 (AttentiveFP, ensemble=3)",
+    "Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",
+    "Uni-Mol V2 (84m)",
+    "Chemprop v2 (D-MPNN, ensemble=3)",
+    "Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",
+    "Chemprop v2 (CMPNN, ensemble=3)",
+    "Chemprop v2 (AttentiveFP, ensemble=3)",
+    "Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",
+    "Uni-Mol V2 (84m)"
+  ],
+  "applicability_domain": {
+    "method": "both",
+    "n_test": 243,
+    "in_domain_fraction": 0.8518518518518519,
+    "methods": {
+      "standardization": 0.9670781893004116,
+      "knn_similarity": 0.8683127572016461
+    },
+    "selected_model": "TabPFNRegressor",
+    "notes": [],
+    "mae_in_domain": 39.034754850323075,
+    "mae_out_of_domain": 47.59667394426134
+  },
+  "stage23_signature": "b0a03d425eabbf424bc415731c4620287f1651a0ba273833847db906896ad4bd",
+  "resume_fingerprint": "6eb38f82a054f8b4b0bcde90"
 }
