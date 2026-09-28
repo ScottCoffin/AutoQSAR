@@ -6499,7 +6499,13 @@ def train_chemml_model(
 
 def _resolve_chemprop_command() -> list[str]:
     exe_parent = Path(sys.executable).resolve().parent
-    candidates: list[list[str]] = [[sys.executable, "-m", "chemprop"]]
+    # The launcher wraps the same CLI but keeps seeded (deterministic) runs from aborting on ops
+    # with no deterministic CUDA kernel; see chemprop_cli_launcher.py.
+    launcher = Path(__file__).resolve().parent / "chemprop_cli_launcher.py"
+    candidates: list[list[str]] = []
+    if launcher.exists():
+        candidates.append([sys.executable, str(launcher)])
+    candidates.append([sys.executable, "-m", "chemprop"])
     for candidate_dir in [exe_parent / "Scripts", exe_parent / "bin", exe_parent]:
         candidates.append([str(candidate_dir / "chemprop.exe")])
         candidates.append([str(candidate_dir / "chemprop")])

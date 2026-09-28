@@ -384,6 +384,15 @@ Open work is tracked in [TODO.md](TODO.md); the Zenodo deposit is the last block
 - **Targeted model filters are repeatable exact labels.** Use one `--only-model-names` argument per
   model. Model labels contain commas, so comma-joining labels silently breaks selection. Internal
   TDC multi-seed code stores these filters as a list for the same reason.
+- **Chemprop on Windows (RTX box) needs three fixes, all in place since 2026-09-28**
+  (details: `docs/HANDOFF_RTX_GPU_WORK.md` status section): `--chemprop-num-workers 0` (each
+  DataLoader worker reloads torch/CUDA and exhausts the paging file, `WinError 1455`); the
+  runner calls Chemprop through `chemprop_cli_launcher.py`, which makes seeded determinism
+  warn-only (torch 2.5.1 has no deterministic CUDA `cumsum`, so every seeded *classification*
+  run died in AUROC); and the RTX wrapper redirects via `cmd /c`, because PowerShell 5.1
+  `*>` with `ErrorActionPreference=Stop` kills the run on its first stderr line. Intermittent
+  Chemprop `exit=3221226505` (0xC0000409) crashes (~2% of folds) are handled by wrapper retry
+  passes. The Chemprop env on the RTX is the `autoqsar-py311` conda env; system `python` has no torch.
 - **Chemprop probe runs need at least 3 epochs.** Chemprop v2 defaults to two warmup epochs and rejects
   `--chemprop-epochs 2` before training.
 - **Do not seed a repair run with metrics alone.** Ensemble reconstruction needs the ignored

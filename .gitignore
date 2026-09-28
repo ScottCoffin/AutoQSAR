@@ -254,6 +254,16 @@ benchmark_results/*/predictions.csv
 !**/benchmark_results/**/cv.data
 **/benchmark_results/**/*.result
 gin_supervised_masking_pre_trained.pth
+# chemprop_oof_seed (RTX Chemprop OOF handoff): track only the seed inputs and the per-fold OOF
+# vectors (fold_*.npy, a few KB each; they let the run resume without retraining). The Chemprop
+# fold model dirs under ensemble_oof/ are ~GBs and the other run outputs are regenerable.
+chemprop_oof_seed/*/*
+!chemprop_oof_seed/*/metrics.csv
+!chemprop_oof_seed/*/predictions.csv
+!chemprop_oof_seed/*/ensemble_oof/
+chemprop_oof_seed/*/ensemble_oof/**
+!chemprop_oof_seed/*/ensemble_oof/**/
+!chemprop_oof_seed/*/ensemble_oof/*/*/fold_*.npy
 **/trainer_logs/
 **/events.out.tfevents*
 data/_autoqsar_cache/
@@ -273,3 +283,5 @@ Miniconda3-latest-Linux-x86_64.sh
 # Springer Nature class/style fetched for local verification; Springer supplies these at submission
 submission/sn-jnl.cls
 submission/sn-vancouver.bst
+# Persistent feature-store shards are regenerable caches (tens of MB each).
+.model_cache/

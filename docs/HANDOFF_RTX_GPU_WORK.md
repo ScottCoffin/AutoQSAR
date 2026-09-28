@@ -17,6 +17,37 @@ analysis spec:
 The only GPU item in the spec is optional Phase 7, the learning-curve
 experiment. It is off by default and should run only after explicit approval.
 
+## Status as of 2026-09-28 (RTX 4060 Laptop, paused by the user)
+
+Chemprop OOF was started on the RTX and **paused deliberately** after 4 of 42 datasets
+(`tdc_carcinogens_lagunin`, `tdc_skin_reaction`, `tdc_dili`, `chemml_cep_homo`); 113 fold vectors
+are committed as `chemprop_oof_seed/*/ensemble_oof/*/*/fold_*.npy` and are reused on resume. No
+`chemprop_oof_patch/` has been exported yet. Two members failed with an intermittent native
+crash and have no complete OOF yet: `tdc_skin_reaction` CMPNN (fold 4) and `chemml_cep_homo`
+D-MPNN + Selected descriptors; the wrapper's retry passes refit only those folds.
+
+Resume with the same command (Python env on this machine: `autoqsar-py311` conda env):
+
+```powershell
+powershell -ExecutionPolicy Bypass -File tools/run_chemprop_oof_rtx.ps1 `
+  -Python "C:\Users\scott\.conda\envs\autoqsar-py311\python.exe" -CommitAndPush
+```
+
+Measured pace: ~55 s per fold on 280-row datasets (40 epochs, ensemble=3). Larger datasets are
+slower; take a real estimate from the first mid-sized dataset before promising a finish time.
+
+Windows fixes that made it run (all committed; see AGENTS.md traps):
+
+- Wrapper launches the runner through `cmd /c` redirection. Under Windows PowerShell 5.1 with
+  `$ErrorActionPreference = "Stop"`, `*>` turned the first stderr line into a fatal error.
+- `--chemprop-num-workers 0`: each DataLoader worker is a new process that loads torch/CUDA
+  (~720 MB); four of them exhausted the paging file (`WinError 1455`) and every fold failed.
+- `portable_colab_qsar_bundle/chemprop_cli_launcher.py`: Chemprop enables
+  `torch.use_deterministic_algorithms(True)` whenever `--pytorch-seed` is set, and torch 2.5.1 has
+  no deterministic CUDA `cumsum`, so every classification fold aborted in the AUROC metric. The
+  launcher makes that warn-only; seeds and deterministic kernel selection are unchanged.
+- Retry passes (up to 2) in the wrapper for intermittent `0xC0000409` Chemprop crashes.
+
 ## Required RTX Work: Chemprop OOF
 
 Chemprop OOF is the required GPU task before the final OOF ensembles can include

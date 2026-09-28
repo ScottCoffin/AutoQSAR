@@ -1,0 +1,134 @@
+# Resolved configuration of this run (qsarena-benchmark --config run_config.yaml reproduces it).
+run:
+  mode: auto
+  output_dir: "C:\\Users\\scott\\AutoQSAR\\chemprop_oof_seed"
+  resume: true
+  overwrite: false
+  verbosity: normal
+  dry_run: false
+  n_jobs: 16
+  parallel_datasets: 1
+  dataset_names: [chemml_cep_homo, chemml_organic_density, esol_delaney, freesolv_sampl, lipophilicity, poduam_pod_nc_std, poduam_pod_rd_std, polaris_adme_fang_hppb_1, polaris_adme_fang_perm_1, polaris_adme_fang_rclint_1, polaris_adme_fang_rppb_1, polaris_adme_fang_solu_1, tdc_ames, tdc_bbb_martins, tdc_bioavailability_ma, tdc_caco2_wang, tdc_carcinogens_lagunin, tdc_clearance_hepatocyte_az, tdc_clearance_microsome_az, tdc_clintox, tdc_cyp2c9_substrate_carbonmangels, tdc_cyp2c9_veith, tdc_cyp2d6_substrate_carbonmangels, tdc_cyp2d6_veith, tdc_cyp3a4_substrate_carbonmangels, tdc_cyp3a4_veith, tdc_dili, tdc_half_life_obach, tdc_herg, tdc_herg_karim, tdc_hia_hou, tdc_hydrationfreeenergy_freesolv, tdc_ld50_zhu, tdc_lipophilicity_astrazeneca, tdc_pampa_ncats, tdc_pgp_broccatelli, tdc_ppbr_az, tdc_skin_reaction, tdc_solubility_aqsoldb, tdc_tox21, tdc_toxcast, tdc_vdss_lombardo]
+input:
+  path: null
+  smiles_col: null
+  target_col: null
+  id_col: null
+  task: auto
+  classification_threshold: null
+  target_transform: auto
+  minimum_rows: 20
+  row_limit: 0
+standardize:
+  drop_unparseable: true
+  strip_salts: false
+  normalize_charges: false
+  normalize_tautomers: false
+  deduplicate: "none"
+features:
+  families: [morgan, ecfp6, fcfp6, layered, atom_pair, topological_torsion, rdk_path, maccs, rdkit]
+  maplight_classic: true
+  fingerprint_bits: 1024
+  cache: true
+  persistent_store: true
+split:
+  strategy: target_quartile
+  test_fraction: 0.2
+  seed: 13
+  cv_folds: 5
+  predefined_split_col: null
+feature_selection:
+  method: elasticnetcv
+  variance_threshold: 1e-08
+  binary_prevalence_range: [0.005, 0.995]
+  drop_duplicate_columns: true
+  max_selected_features: 0
+  auto_rf_by_dataset_size: false
+  elasticnet_timeout_seconds: 7200.0
+models:
+  profile: full
+  enable_families:
+    conventional_ml: true
+    gradient_boosting: true
+    deep_tabular: true
+    graph_nn: true
+    pretrained_3d: true
+    maplight_gnn: true
+    fusion: true
+    ensemble: true
+  disable_models: []
+  only_models: [Ensemble]
+ga_tuning:
+  mode: "off"
+  estimators: [elastic_net, catboost]
+  generations: 12
+  population_size: 16
+  time_budget_min: null
+  max_configs: null
+deep:
+  use_gpu: auto
+  chemprop:
+    variants: [dmpnn, dmpnn_rdkit2d, selected_features, cmpnn, attentivefp]
+    epochs: 40
+    ensemble_size: 3
+    batch_size: 32
+    seed: 42
+  unimol:
+    v1: "true"
+    v2: "true"
+    v2_size: 84m
+    epochs: 20
+    lr: 0.0001
+    batch_size: 32
+    early_stopping_patience: 5
+  chemml:
+    pytorch: true
+    tensorflow: true
+    epochs: 80
+  tabpfn: true
+  tabpfn_max_features: 0
+  cnn: true
+fusion:
+  cfa_score: true
+  cfa_rank: true
+  optimize_metric: mae
+ensemble:
+  oof_stacking: true
+  inverse_rmse_average: true
+  simple_average: false
+  member_selection_metric: oof
+  oof_folds: 5
+  oof_scope: all
+  oof_allow_api_refits: false
+  oof_source_run: null
+  exclude_negative_test_r2_members: true
+  drop_correlated_members: true
+  max_member_correlation: 0.995
+  stacking_cv_folds: 5
+applicability_domain:
+  method: both
+  confidence_threshold: 0.5
+  knn_quantile: 0.95
+evaluation:
+  regression_metrics: [rmse, mae, r2, spearman]
+  classification_metrics: [roc_auc, auprc, balanced_accuracy, mcc]
+  primary_metric: auto
+selection:
+  protocol: both
+report:
+  formats: [html, md]
+  include_plots: true
+  what_next: true
+  machine_readable_manifest: true
+batch:
+  source: null
+  mode: auto
+  continue_on_error: true
+  aggregate_summary: true
+multiseed:
+  enabled: false
+  seeds: 5
+caching:
+  granularity: [dataset, stage]
+  validate_against_config_signature: true
+  atomic_writes: true
