@@ -235,6 +235,7 @@ data/*.zip
 **/benchmark_results/**/ensemble_oof/
 benchmark_results/abandoned_*/
 benchmark_results/qsarena_benchmark_a100_probe*/
+benchmark_results/qsarena_meta_phase7_gpu/
 benchmark_results/*/predictions.csv
 **/benchmark_results/*/*/predictions.csv
 **/benchmark_results/**/*.npy

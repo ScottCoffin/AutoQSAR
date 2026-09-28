@@ -181,9 +181,11 @@ train|test` exist only to reproduce earlier runs.
 For the QSARena OOF repair, the remaining Chemprop GPU fold refits can be run
 on a separate RTX workstation from the compact `chemprop_oof_seed/` handoff
 instead of transferring the full local prediction corpus. See
-`docs/HANDOFF_RTX_CHEMPROP_OOF.md`; the return artifact is only
-`chemprop_oof_patch/`, which is merged back into the full local run before the
-final ensemble refresh.
+`docs/HANDOFF_RTX_GPU_WORK.md` and `docs/HANDOFF_RTX_CHEMPROP_OOF.md`; the
+required return artifact is only `chemprop_oof_patch/`, which is merged back
+into the full local run before the final ensemble refresh. The same combined
+handoff also describes the optional meta-analysis Phase 7 learning-curve GPU
+run and its metrics-only `meta_phase7_gpu_patch/` payload.
 
 The notebook's applicability-domain section also fits internal diagnostic
 models, including random-forest-based uncertainty/coverage helpers, but those

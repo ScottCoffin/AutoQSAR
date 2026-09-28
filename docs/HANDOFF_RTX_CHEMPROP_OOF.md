@@ -3,6 +3,9 @@
 This handoff lets an RTX workstation fill the remaining Chemprop out-of-fold
 (OOF) rows without transferring the full local prediction corpus.
 
+For the full RTX queue, including the optional meta-analysis Phase 7 GPU
+experiment, start from `docs/HANDOFF_RTX_GPU_WORK.md`.
+
 ## Goal
 
 Produce a small GitHub patch containing only:
