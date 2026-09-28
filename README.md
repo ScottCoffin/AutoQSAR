@@ -178,6 +178,13 @@ ensembles for an existing run without retraining any full model, see
 `submission/chemprop_rerun_command.md` §7. `--ensemble-member-selection-split
 train|test` exist only to reproduce earlier runs.
 
+For the QSARena OOF repair, the remaining Chemprop GPU fold refits can be run
+on a separate RTX workstation from the compact `chemprop_oof_seed/` handoff
+instead of transferring the full local prediction corpus. See
+`docs/HANDOFF_RTX_CHEMPROP_OOF.md`; the return artifact is only
+`chemprop_oof_patch/`, which is merged back into the full local run before the
+final ensemble refresh.
+
 The notebook's applicability-domain section also fits internal diagnostic
 models, including random-forest-based uncertainty/coverage helpers, but those
 are guide-rail diagnostics rather than candidate QSAR predictors.

@@ -124,6 +124,12 @@ results are cached under `<dataset>/ensemble_oof/` and completed OOF vectors are
 (the planner's `--scope all` estimate is roughly 65 h). Otherwise the ensembles exclude Chemprop,
 and the paper must say so (TODO.md).
 
+**RTX handoff path for approved Chemprop OOF.** If the user wants Chemprop fold OOF on a separate
+RTX workstation, do not push the full ignored `predictions.csv` corpus. Use
+`docs/HANDOFF_RTX_CHEMPROP_OOF.md`: this branch carries `chemprop_oof_seed/` with only Chemprop
+train/test seed rows, `tools/run_chemprop_oof_rtx.ps1` for the GPU box, and importer/exporter
+helpers for the small returned `chemprop_oof_patch/`.
+
 **Step 7 — verify and commit the run.** Run the checks in `chemprop_rerun_command.md` §7 ("Checks
 after the run"). Then commit `benchmark_results/qsarena_benchmark_oof_ensemble` (predictions,
 `ensemble_oof/` fold caches and model files are gitignored), with the scope used and the planner

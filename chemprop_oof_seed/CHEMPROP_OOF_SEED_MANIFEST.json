@@ -1,0 +1,345 @@
+{
+  "source_run": "C:\\Users\\Scott.Coffin\\OneDrive - California OEHHA\\R_new\\AutoQSAR\\benchmark_results\\qsarena_benchmark_oof_ensemble",
+  "output_dir": "C:\\Users\\Scott.Coffin\\OneDrive - California OEHHA\\R_new\\AutoQSAR\\chemprop_oof_seed",
+  "datasets": 42,
+  "chemprop_members": 202,
+  "prediction_rows": 643430,
+  "rows": [
+    {
+      "dataset": "chemml_cep_homo",
+      "metric_rows": 39,
+      "prediction_rows": 2500,
+      "chemprop_members": 5,
+      "metrics_sha256": "5866ec5c69389e09fe579e8738f97aea45d7de3de63fafbdd3a79a49e4c9c02f",
+      "predictions_sha256": "904a9405935ba5efb47bd676b956a86e13651522515902e6ef070980d56c06ed"
+    },
+    {
+      "dataset": "chemml_organic_density",
+      "metric_rows": 30,
+      "prediction_rows": 2500,
+      "chemprop_members": 5,
+      "metrics_sha256": "84396e334190718df82113522a170469f8ec8f78bacba466455a7f294c8014bb",
+      "predictions_sha256": "fd5188b524bc872332c5b34bbc7998c70a1f585d6510db1ddc3e51be301b8601"
+    },
+    {
+      "dataset": "esol_delaney",
+      "metric_rows": 25,
+      "prediction_rows": 5640,
+      "chemprop_members": 5,
+      "metrics_sha256": "6d38f79a6b9c2ee8a5249205247c3e5a2367e57542f80a79788958294b010881",
+      "predictions_sha256": "5bfd1e1243efddaea82c8778427c559189968b1912e1e9b9e6a13483b8df95ee"
+    },
+    {
+      "dataset": "freesolv_sampl",
+      "metric_rows": 30,
+      "prediction_rows": 3210,
+      "chemprop_members": 5,
+      "metrics_sha256": "d55ae4b8226a31b8bf9dc377f807194a06336874b25596bd2dafa82b2ddcad46",
+      "predictions_sha256": "dbbd8715b4cbfcc451515af7c88451861891357f82af6d66c1240626e2357e2e"
+    },
+    {
+      "dataset": "lipophilicity",
+      "metric_rows": 20,
+      "prediction_rows": 21000,
+      "chemprop_members": 5,
+      "metrics_sha256": "b0e0f9af62e551a816c465568a41986fad208b03b60f1a1a4fadf6abb1cfe130",
+      "predictions_sha256": "da7cd399a4f4a3f03dbd67646469e83c046060e40834991b340321fc83c51728"
+    },
+    {
+      "dataset": "poduam_pod_nc_std",
+      "metric_rows": 25,
+      "prediction_rows": 9210,
+      "chemprop_members": 5,
+      "metrics_sha256": "def32ee91b4aa729f15c386fb4f5415836078a3a8c1e06fe72395f2c02f0019a",
+      "predictions_sha256": "fa005b938a3e20b20a516faa48882c4af4b1d76a6bb1ed6f67a50e90ba5a210d"
+    },
+    {
+      "dataset": "poduam_pod_rd_std",
+      "metric_rows": 25,
+      "prediction_rows": 11775,
+      "chemprop_members": 5,
+      "metrics_sha256": "40adbd2df8b9073102b491773d46d11d4407b1be6c84fb0253138828ac5dc9df",
+      "predictions_sha256": "066ee252191040a4b74af877367bbc919b25b6da3eb1a1f3a6c92ba7a85efd60"
+    },
+    {
+      "dataset": "polaris_adme_fang_hppb_1",
+      "metric_rows": 25,
+      "prediction_rows": 9040,
+      "chemprop_members": 5,
+      "metrics_sha256": "1aa44741a13121e2df6f926e56e03e94cf0db169b9d56ac36ba33c1330b4ca32",
+      "predictions_sha256": "8a7f63ff21f210cc3a5cf2c2eb903d06c555cb89f5792847ea43bda0cfb00b3f"
+    },
+    {
+      "dataset": "polaris_adme_fang_perm_1",
+      "metric_rows": 21,
+      "prediction_rows": 13210,
+      "chemprop_members": 5,
+      "metrics_sha256": "ad27382860e33f5be7fb0ac8b410d6dd10d47337fef25655d1bd298da1c6275a",
+      "predictions_sha256": "027bbbb45a22067d3629470c3d61da7e46ea1d568a72af6eb5427d38236f8311"
+    },
+    {
+      "dataset": "polaris_adme_fang_rclint_1",
+      "metric_rows": 20,
+      "prediction_rows": 15270,
+      "chemprop_members": 5,
+      "metrics_sha256": "99f8df253d021af55ae013bc76ec4e5ba0a11224ab78fe4bc878a1a5f3bffccc",
+      "predictions_sha256": "55e77fa24a57d647db92aa586e4d02a70550e0f32b008f523e1212aff73cd405"
+    },
+    {
+      "dataset": "polaris_adme_fang_rppb_1",
+      "metric_rows": 25,
+      "prediction_rows": 4425,
+      "chemprop_members": 5,
+      "metrics_sha256": "c25bff497e3eb0d8bbe87a010b13cea5f9d8f6418270d32f2ab0034083b2be5e",
+      "predictions_sha256": "6f2e11e423b6b91c0882ee9aa4a9054638349f58888dfbe142af1a1ddcaed9b5"
+    },
+    {
+      "dataset": "polaris_adme_fang_solu_1",
+      "metric_rows": 25,
+      "prediction_rows": 10865,
+      "chemprop_members": 5,
+      "metrics_sha256": "ad500f3f6e44e9fbac0d719ad4b70cea91ef68a93efb259fe4a30a58d1c9dd1d",
+      "predictions_sha256": "5a160fc2a83faa1db04b61e21495a4ed36e7d24fab394dcbca54255111357eba"
+    },
+    {
+      "dataset": "tdc_ames",
+      "metric_rows": 20,
+      "prediction_rows": 36390,
+      "chemprop_members": 5,
+      "metrics_sha256": "f85462e9363d7848b9ebe20969ba7b1d7bf9bf981b810addeeafe5db30d6bc15",
+      "predictions_sha256": "4bfd1abc278a0f3dab7d5c624a6db9e12ed90cbc994bd8c818b0cd156813de7c"
+    },
+    {
+      "dataset": "tdc_bbb_martins",
+      "metric_rows": 15,
+      "prediction_rows": 6090,
+      "chemprop_members": 3,
+      "metrics_sha256": "0be742ef07563e01cce38c257af9382c261be67e94c437157f0d7a0837505e5c",
+      "predictions_sha256": "535c01141c6d59d67e4b2e20c6f64ce0819f7dfadde867ed42445203e45863c7"
+    },
+    {
+      "dataset": "tdc_bioavailability_ma",
+      "metric_rows": 39,
+      "prediction_rows": 3200,
+      "chemprop_members": 5,
+      "metrics_sha256": "74c03e85a170f56d69f09fc7cd9ccc71b007a954305921d11c3f2d3791d6f86c",
+      "predictions_sha256": "d2553ffc1e6e11d505f9eae68b8c1e946630321bc417a7a79573148b820a76c4"
+    },
+    {
+      "dataset": "tdc_caco2_wang",
+      "metric_rows": 25,
+      "prediction_rows": 4550,
+      "chemprop_members": 5,
+      "metrics_sha256": "ec723b1223661acc1e84c7eed10da854fd1debdf72ab96fee6a53de51bf611a2",
+      "predictions_sha256": "aeaaef26f5fa3168d3064bd7b7acdc7eb6b31e0cf8111b464c6af848da75377a"
+    },
+    {
+      "dataset": "tdc_carcinogens_lagunin",
+      "metric_rows": 5,
+      "prediction_rows": 1400,
+      "chemprop_members": 5,
+      "metrics_sha256": "a34576e79ab9e990f9bedf279f408d41f5389729b2ef73ffff0033dbf70377eb",
+      "predictions_sha256": "63d1be72aa17dbb182ca50b678c61fa785d8db8b4979cab0bfca7e3a141acae0"
+    },
+    {
+      "dataset": "tdc_clearance_hepatocyte_az",
+      "metric_rows": 25,
+      "prediction_rows": 6065,
+      "chemprop_members": 5,
+      "metrics_sha256": "606233408d1798ca467bfdf62b7e7e0601c22994646756751c9a1bc2d69427d6",
+      "predictions_sha256": "9646d1f6256c863942da10bbb2f0772cc2e9e85e5f6a9eb8c171b6ed19d1cc9b"
+    },
+    {
+      "dataset": "tdc_clearance_microsome_az",
+      "metric_rows": 25,
+      "prediction_rows": 5510,
+      "chemprop_members": 5,
+      "metrics_sha256": "087385811da7d7e45efc434e82b99ffa78c4974766bb68dc6a87156f65f4eb6b",
+      "predictions_sha256": "bb65e51e7feb6d26b9dd5e9178a31853bac1409a4f98119f3820ab4d9bc1f6c9"
+    },
+    {
+      "dataset": "tdc_clintox",
+      "metric_rows": 15,
+      "prediction_rows": 4434,
+      "chemprop_members": 3,
+      "metrics_sha256": "7375f99404d92a181fab622a050307a5e10627df9b874b19b6cc50846b1d841b",
+      "predictions_sha256": "8773c80c2ab36a59364a17635ea74759f3cefd24c73a59bafad7a21cca1b1ab7"
+    },
+    {
+      "dataset": "tdc_cyp2c9_substrate_carbonmangels",
+      "metric_rows": 25,
+      "prediction_rows": 3345,
+      "chemprop_members": 5,
+      "metrics_sha256": "3558ac4caa1e6d2c4d1c1eb9600a06d3af3c89f61a5550efb5f0170148b22da9",
+      "predictions_sha256": "8a8bea5133b17d4abbf9bc00478378332682020433fa268a93a4b387aa1435d3"
+    },
+    {
+      "dataset": "tdc_cyp2c9_veith",
+      "metric_rows": 20,
+      "prediction_rows": 60460,
+      "chemprop_members": 5,
+      "metrics_sha256": "f89fc0bf489bcd1ca3cc9ebab56413f7ece88d12cdaab2390a1fa8961581ca51",
+      "predictions_sha256": "03d81011744f89f3eca4c6e8c92a46742d5dbf3d71700eb8da7a63993816aef3"
+    },
+    {
+      "dataset": "tdc_cyp2d6_substrate_carbonmangels",
+      "metric_rows": 25,
+      "prediction_rows": 3335,
+      "chemprop_members": 5,
+      "metrics_sha256": "56e5e28c6a51c61ffce3f143a3c1b282db1749d3510d0c8c520b8e134359f600",
+      "predictions_sha256": "1b974c263e3445404a94f233bbf902b6910506cabfd6d6c8693106e2b9b473a9"
+    },
+    {
+      "dataset": "tdc_cyp2d6_veith",
+      "metric_rows": 15,
+      "prediction_rows": 65650,
+      "chemprop_members": 5,
+      "metrics_sha256": "a4042e20ff51d44a0f242e31c7a14044c54294f33ffedfd0258e8672b2ecc6bd",
+      "predictions_sha256": "ffe6035346dbab2b5e9c8dcf02c53beeea73b0aba58ea751b512a7921b9b39d4"
+    },
+    {
+      "dataset": "tdc_cyp3a4_substrate_carbonmangels",
+      "metric_rows": 25,
+      "prediction_rows": 3350,
+      "chemprop_members": 5,
+      "metrics_sha256": "238886622d08c9982b127c3f8aa5b9b38307efcff573493458414b6b670ed73c",
+      "predictions_sha256": "e5013bf77c7bb775cafe06dcaae69123a71dd72aed9ec270d3b7d6bd2b2fd4c6"
+    },
+    {
+      "dataset": "tdc_cyp3a4_veith",
+      "metric_rows": 15,
+      "prediction_rows": 61640,
+      "chemprop_members": 5,
+      "metrics_sha256": "c634243a4dd332551974b5d2d881cc424f71420ebd5fa8f19d4e69a2093cc42c",
+      "predictions_sha256": "7afe91c04bc62b7dc093b5f90bd300594fc7e93fd128a2a76b0dce02ac2974bb"
+    },
+    {
+      "dataset": "tdc_dili",
+      "metric_rows": 10,
+      "prediction_rows": 2375,
+      "chemprop_members": 5,
+      "metrics_sha256": "846e954f4099ae3aff84b28fe591e62322892fabc1ba1693e5a6d804c67b0f0d",
+      "predictions_sha256": "8c3f177f787418a2aef2e9b5e60643e272a6c213cd9362ad46d27c6874a1106a"
+    },
+    {
+      "dataset": "tdc_half_life_obach",
+      "metric_rows": 15,
+      "prediction_rows": 2001,
+      "chemprop_members": 3,
+      "metrics_sha256": "6c6df6a92f95730f2f29448d1065825fc4eabf4f209572123c4f14fde48708b8",
+      "predictions_sha256": "83d9d31ab5fccb8bb6f1600676578cc225e267eb372a5a051c754b690612a17d"
+    },
+    {
+      "dataset": "tdc_herg",
+      "metric_rows": 30,
+      "prediction_rows": 3275,
+      "chemprop_members": 5,
+      "metrics_sha256": "aad424b152b273e7b881a4860964adcc3d2d94ba591a1a6eb4449f2b4bc66e2f",
+      "predictions_sha256": "f3b7e1ff926dc314595ac7c554168b38847b7e6cd5fd7eeb2f0a8bec773ea031"
+    },
+    {
+      "dataset": "tdc_herg_karim",
+      "metric_rows": 15,
+      "prediction_rows": 67225,
+      "chemprop_members": 5,
+      "metrics_sha256": "e82fd5d416b0cfd064e6114296cf4e13b9223721428b9c2129538644014f91be",
+      "predictions_sha256": "6bd19f9a34507dd747250630ad32d1e4a635f04de62d969852e4274312efb5a3"
+    },
+    {
+      "dataset": "tdc_hia_hou",
+      "metric_rows": 5,
+      "prediction_rows": 2890,
+      "chemprop_members": 5,
+      "metrics_sha256": "23d97b8cbecf5077ec9ec9df9c4e8bcbb43ba4d7c951f0b29a1ba80dc6190f1d",
+      "predictions_sha256": "7cb9f121de7467b6fab6735e3fb6e30fc3557584ba12c7e2127fcc8ee67dc8c4"
+    },
+    {
+      "dataset": "tdc_hydrationfreeenergy_freesolv",
+      "metric_rows": 30,
+      "prediction_rows": 3210,
+      "chemprop_members": 5,
+      "metrics_sha256": "ee9e588a113c67fbda98acefe2cf7c252512b7f46af65634d039b3c05683b578",
+      "predictions_sha256": "bfb3fef92907e8277725c05590a91ef740f696c2d57527fcf3e98ee91a1d90cf"
+    },
+    {
+      "dataset": "tdc_ld50_zhu",
+      "metric_rows": 20,
+      "prediction_rows": 36925,
+      "chemprop_members": 5,
+      "metrics_sha256": "fb6c656ef5af96bc6d61b8dfd1a58d7eb0910123258bb1ccd5518e8904ec8a9c",
+      "predictions_sha256": "21111146bb63d7a451b24f263a983445f75d7c98ddfdc68155b5ddf3a99bbf71"
+    },
+    {
+      "dataset": "tdc_lipophilicity_astrazeneca",
+      "metric_rows": 20,
+      "prediction_rows": 21000,
+      "chemprop_members": 5,
+      "metrics_sha256": "544ddca9e2fc8e1c5ebe23fc8dcbaed27794f46401b7eabf009e4f74b04bc386",
+      "predictions_sha256": "aa9457f4e35652107db99af56671deeacbd1ac63a84c10bfcf9280501b7ca164"
+    },
+    {
+      "dataset": "tdc_pampa_ncats",
+      "metric_rows": 25,
+      "prediction_rows": 10170,
+      "chemprop_members": 5,
+      "metrics_sha256": "22f7cad6359985dd6e723d08c208c9d999b4e9247900d01d658e4712b63c77b6",
+      "predictions_sha256": "b46332a45888816872c58f3b804ef344a3c9e219475c03d7968f0119a8dbe1e4"
+    },
+    {
+      "dataset": "tdc_pgp_broccatelli",
+      "metric_rows": 25,
+      "prediction_rows": 6090,
+      "chemprop_members": 5,
+      "metrics_sha256": "9af873f7180798115cdbcb7a4bb37462c7c39cdd48ff66cd1c79d4e2fd74c5d8",
+      "predictions_sha256": "7dc4a9d089eee080b1617e92f19b19030467740e3a5ef5fd126b54dccfdb609f"
+    },
+    {
+      "dataset": "tdc_ppbr_az",
+      "metric_rows": 20,
+      "prediction_rows": 13950,
+      "chemprop_members": 5,
+      "metrics_sha256": "91c5752ed970cf2ee4f1639d75ea467bef6bdeeec5dae29ad8a5560e218187ce",
+      "predictions_sha256": "162b8dc80a77ffb2c123a6c1f930e5a9287c561665bf17107a1ee6999cb98bc1"
+    },
+    {
+      "dataset": "tdc_skin_reaction",
+      "metric_rows": 10,
+      "prediction_rows": 2020,
+      "chemprop_members": 5,
+      "metrics_sha256": "a1323b7e86ee87bb51f74cbc14c9df427eba14202ec87dab272bf8b2dfefe91f",
+      "predictions_sha256": "191db92ad7e6c326b1115fb97df501e5c49f82479c057df09ade9f5ad51df2aa"
+    },
+    {
+      "dataset": "tdc_solubility_aqsoldb",
+      "metric_rows": 20,
+      "prediction_rows": 49900,
+      "chemprop_members": 5,
+      "metrics_sha256": "7ec0526fc089740cc1fd1ee73dc3d63a363c4df3dfce5ae7d46c947575586fd6",
+      "predictions_sha256": "6f63c49ca688ef7b3264254b72506aac2bdcfb506cccc34af3cc7978e7081014"
+    },
+    {
+      "dataset": "tdc_tox21",
+      "metric_rows": 20,
+      "prediction_rows": 36290,
+      "chemprop_members": 5,
+      "metrics_sha256": "376400424a2864c4944a30270d7f15dd101fb1d4e0d149611a7139520964652d",
+      "predictions_sha256": "8fa26f94aa31566991b328b0cf451eee7a5d22901d916bf549038b9b58a979df"
+    },
+    {
+      "dataset": "tdc_toxcast",
+      "metric_rows": 25,
+      "prediction_rows": 8655,
+      "chemprop_members": 5,
+      "metrics_sha256": "6933c6836ef9b9a5a64b2a91d425cda30e6e7ec2e21035ea7242f75a59e5e421",
+      "predictions_sha256": "a923113b1adff8e1020b0061db6ab3ad4ab2399a34531a4eb90aabd34cf83410"
+    },
+    {
+      "dataset": "tdc_vdss_lombardo",
+      "metric_rows": 15,
+      "prediction_rows": 3390,
+      "chemprop_members": 3,
+      "metrics_sha256": "5bd94eedacb08b3a900fc326d827102f362080423236467c18b4a6509857646d",
+      "predictions_sha256": "5c4979c6da2e12ec53ab1c1aacbd69e0a70bb38e7ba06666cd70a0df2db0e548"
+    }
+  ]
+}

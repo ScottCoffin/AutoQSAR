@@ -5564,6 +5564,76 @@ except (TypeError, ValueError):  # pragma: no cover - signature introspection un
     _CROSS_VALIDATE_RETURNS_INDICES = False
 
 
+def capture_model_cv_oof_predictions(
+    name: str,
+    estimator: Any,
+    X_train,
+    y_train,
+    smiles_train,
+    args: argparse.Namespace,
+    primary_metric: str | None = None,
+    split_strategy_for_cv: str | None = None,
+) -> tuple[np.ndarray, str]:
+    """Run only the CV fold fits needed to assemble out-of-fold predictions."""
+    if not _CROSS_VALIDATE_RETURNS_INDICES:
+        raise RuntimeError("scikit-learn cross_validate(return_indices=True) is required to capture OOF predictions")
+    effective_split_strategy = effective_split_strategy_for_dataset(
+        str(split_strategy_for_cv or args.split_strategy),
+        allow_predefined=False,
+    )
+    if primary_metric is None:
+        primary_metric = current_dataset_primary_metric("rmse")
+    cv, cv_folds, _cv_split_strategy = make_qsar_cv_splitter(
+        X_train,
+        y_train,
+        smiles_train,
+        split_strategy=effective_split_strategy,
+        cv_folds=args.cv_folds,
+        random_seed=args.random_seed,
+    )
+    task_type = current_dataset_task_type()
+    primary_scorer = primary_metric_scorer(primary_metric)
+    if task_type == "classification":
+        scoring = {"primary": primary_scorer}
+    else:
+        scoring = {"primary": primary_scorer}
+    suppress_model_noise = bool(getattr(args, "suppress_tabpfn_progress", True)) and str(name).strip().lower() in {
+        "tabpfnregressor",
+        "tabpfnclassifier",
+    }
+    with _suppress_console_noise(suppress_model_noise):
+        scores = cross_validate(
+            clone(estimator),
+            X_train,
+            y_train,
+            cv=cv,
+            scoring=scoring,
+            n_jobs=cross_validate_n_jobs_for_estimator(
+                name=name,
+                estimator=estimator,
+                args=args,
+                cv_folds=cv_folds,
+            ),
+            return_estimator=True,
+            return_indices=True,
+        )
+        X_frame = pd.DataFrame(X_train).reset_index(drop=True)
+        oof = np.full(len(X_frame), np.nan, dtype=float)
+        fold_pairs = []
+        for fold_estimator, fit_idx, val_idx in zip(
+            scores["estimator"], scores["indices"]["train"], scores["indices"]["test"]
+        ):
+            val_idx = np.asarray(val_idx, dtype=int)
+            oof[val_idx] = np.asarray(
+                predict_values_for_metric(fold_estimator, X_frame.iloc[val_idx], str(primary_metric)),
+                dtype=float,
+            ).reshape(-1)
+            fold_pairs.append((np.asarray(fit_idx, dtype=int), val_idx))
+    if not np.isfinite(oof).all():
+        raise RuntimeError("captured OOF vector contains non-finite values")
+    return oof, ensemble_oof_fold_signature(fold_pairs)
+
+
 def evaluate_model(
     name: str,
     estimator: Any,
@@ -7680,6 +7750,7 @@ def dataset_resume_fingerprint(spec: "DatasetSpec", args: argparse.Namespace) ->
         "target_transform": str(getattr(args, "target_transform", "auto")),
         "log10_target": bool(getattr(args, "log10_target", True)),
         "row_limit": int(getattr(args, "row_limit", 0) or 0),
+        "repair_cached_tabpfn_oof": bool(getattr(args, "repair_cached_tabpfn_oof", False)),
         "families": {family: family_arg_signature(args, family) for family in [*_FAMILY_SIGNATURE_ARGS, "ga"]},
     }
     return hashlib.sha256(json.dumps(payload, sort_keys=True, default=str).encode("utf-8")).hexdigest()[:24]
@@ -8887,6 +8958,40 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
         "representation_key": feature_meta.get("representation_key", ""),
     }
 
+    expected_cv_oof_signature_cache: str | None = None
+
+    def expected_cv_oof_signature() -> str:
+        nonlocal expected_cv_oof_signature_cache
+        if expected_cv_oof_signature_cache is None:
+            expected_cv_oof_signature_cache = ensemble_oof_fold_signature(
+                ensemble_oof_folds(
+                    X_train=X_train,
+                    y_train=split["y_train"],
+                    smiles_train=split["smiles_train"],
+                    split_strategy=cv_strategy_for_workflows,
+                    cv_folds=int(getattr(args, "cv_folds", 5)),
+                    random_seed=int(getattr(args, "random_seed", 13)),
+                )
+            )
+        return expected_cv_oof_signature_cache
+
+    def cached_tabpfn_oof_needs_repair(model_name: str) -> bool:
+        if not bool(getattr(args, "repair_cached_tabpfn_oof", False)):
+            return False
+        if str(model_name).strip() not in {"TabPFNRegressor", "TabPFNClassifier"}:
+            return False
+        payload = prediction_payloads.get(str(model_name).strip())
+        if not payload:
+            return False
+        oof = payload.get("oof")
+        if oof is None:
+            return True
+        oof_arr = np.asarray(oof, dtype=float).reshape(-1)
+        if len(oof_arr) != len(split["y_train"]) or not np.isfinite(oof_arr).all():
+            return True
+        recorded_signature = str(payload.get("oof_signature", "") or "").strip()
+        return not recorded_signature or recorded_signature != expected_cv_oof_signature()
+
     stage_index = 4
     model_bundle = conventional_models(
         args,
@@ -8933,7 +9038,9 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
     model_items = [(name, estimator) for name, estimator in model_bundle.items() if model_filter_allows(args, name)]
     maplight_catboost_label = maplight_catboost_model_label(args)
     for model_name, estimator in model_items:
-        if str(model_name) in completed_model_names:
+        cached_model_completed = str(model_name) in completed_model_names
+        repair_cached_tabpfn_oof = cached_model_completed and cached_tabpfn_oof_needs_repair(str(model_name))
+        if cached_model_completed and not repair_cached_tabpfn_oof:
             stage_message(
                 stage_index,
                 f"conventional model {model_name} (cached)",
@@ -8975,7 +9082,9 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
             continue
         stage_message(
             stage_index,
-            f"conventional model {model_name}",
+            f"conventional model {model_name} (repairing missing OOF)"
+            if repair_cached_tabpfn_oof
+            else f"conventional model {model_name}",
             model_name=str(model_name),
             workflow="conventional",
             step_type="model",
@@ -9018,10 +9127,15 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
                     flush=True,
                 )
         if model_name in {"TabPFNRegressor", "TabPFNClassifier"} and str(TABPFN_REGRESSOR_SOURCE).strip().lower() == "tabpfn_client":
+            estimated_estimators = (
+                int(getattr(args, "cv_folds", 5))
+                if repair_cached_tabpfn_oof
+                else int(tabpfn_estimators_per_dataset_run(args))
+            )
             estimated_tokens = estimate_tabpfn_tokens(
                 rows=int(model_X_train.shape[0]),
                 columns=int(model_X_train.shape[1]),
-                estimators=tabpfn_estimators_per_dataset_run(args),
+                estimators=estimated_estimators,
             )
             configured_key_count = max(1, len(tabpfn_api_keys_from_env()))
             effective_token_budget = int(TABPFN_DAILY_TOKEN_BUDGET) * configured_key_count
@@ -9034,6 +9148,9 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
                     f"{TABPFN_DAILY_RESET_NOTE}"
                 )
                 print(f"[skip] {dataset_id} {model_name}: {skip_reason}", flush=True)
+                if repair_cached_tabpfn_oof:
+                    stage_index += 1
+                    continue
                 row = {
                     "model": model_name,
                     "workflow": "conventional",
@@ -9042,7 +9159,7 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
                     "tabpfn_estimated_tokens": int(estimated_tokens),
                     "tabpfn_daily_token_budget": int(effective_token_budget),
                     "tabpfn_configured_api_keys": int(configured_key_count),
-                    "tabpfn_estimated_estimators": int(tabpfn_estimators_per_dataset_run(args)),
+                    "tabpfn_estimated_estimators": int(estimated_estimators),
                 }
                 row = add_cost_columns({**base_meta, **row}, cost_scope="model_skip")
                 metrics_rows.append(row)
@@ -9052,6 +9169,82 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
                 continue
         tabpfn_key_count = max(1, len(tabpfn_api_keys_from_env())) if tabpfn_api_model else 1
         tabpfn_start_key_index = int(_ACTIVE_TABPFN_API_KEY_INDEX or 0) if tabpfn_api_model else 0
+        if repair_cached_tabpfn_oof:
+            try:
+                repaired_oof = None
+                repaired_signature = ""
+                for tabpfn_attempt_offset in range(tabpfn_key_count):
+                    if tabpfn_api_model:
+                        tabpfn_attempt_key_index = (tabpfn_start_key_index + tabpfn_attempt_offset) % tabpfn_key_count
+                        configure_tabpfn_access_token_from_env(key_index=tabpfn_attempt_key_index)
+                    else:
+                        tabpfn_attempt_key_index = 0
+                    try:
+                        repaired_oof, repaired_signature = capture_model_cv_oof_predictions(
+                            str(model_name),
+                            clone(estimator) if tabpfn_api_model else estimator,
+                            model_X_train,
+                            split["y_train"],
+                            split["smiles_train"],
+                            args,
+                            primary_metric=current_dataset_primary_metric("rmse"),
+                            split_strategy_for_cv=cv_strategy_for_workflows,
+                        )
+                        if tabpfn_api_model and tabpfn_key_count > 1:
+                            activate_tabpfn_api_key((tabpfn_attempt_key_index + 1) % tabpfn_key_count)
+                        break
+                    except Exception as attempt_exc:
+                        if (
+                            tabpfn_api_model
+                            and is_tabpfn_token_limit_error(attempt_exc)
+                            and tabpfn_attempt_offset + 1 < tabpfn_key_count
+                        ):
+                            print(
+                                f"[TabPFN] {dataset_id} {model_name}: API key "
+                                f"{tabpfn_attempt_key_index + 1}/{tabpfn_key_count} hit a token budget event; "
+                                "trying next key.",
+                                flush=True,
+                            )
+                            continue
+                        raise
+                if repaired_oof is None:
+                    raise RuntimeError("OOF repair did not return predictions")
+                prediction_payloads[str(model_name)]["oof"] = np.asarray(repaired_oof, dtype=float)
+                prediction_payloads[str(model_name)]["oof_signature"] = str(repaired_signature)
+                prediction_tables[:] = [
+                    table.loc[
+                        ~(
+                            table["model"].astype(str).eq(str(model_name))
+                            & table["split"].astype(str).str.lower().eq("oof")
+                        )
+                    ].reset_index(drop=True)
+                    if isinstance(table, pd.DataFrame) and {"model", "split"} <= set(table.columns)
+                    else table
+                    for table in prediction_tables
+                ]
+                oof_frame = prediction_frame(
+                    dataset_id,
+                    str(model_name),
+                    str(prediction_payloads[str(model_name)].get("workflow", "Conventional ML")),
+                    "oof",
+                    split["smiles_train"],
+                    split["y_train"],
+                    repaired_oof,
+                )
+                oof_frame["oof_signature"] = str(repaired_signature)
+                prediction_tables.append(oof_frame)
+                print(
+                    f"[ensemble-oof] {dataset_id} {model_name}: repaired cached TabPFN OOF predictions via CV fold fits.",
+                    flush=True,
+                )
+                persist_partial(f"conventional-oof-repair:{model_name}", event_model_name=str(model_name))
+            except Exception as exc:
+                error_text = str(exc)
+                if is_tabpfn_token_limit_error(error_text):
+                    error_text = format_tabpfn_token_limit_notice(error_text)
+                print(f"[warn] {dataset_id} {model_name}: cached OOF repair failed: {error_text}", flush=True)
+            stage_index += 1
+            continue
         conventional_oof_sink: dict[str, Any] = {}
         try:
             for tabpfn_attempt_offset in range(tabpfn_key_count):
@@ -11503,6 +11696,16 @@ def build_arg_parser() -> argparse.ArgumentParser:
         action=argparse.BooleanOptionalAction,
         default=True,
         help="Suppress noisy TabPFN progress-bar console output during CV/fit/predict.",
+    )
+    parser.add_argument(
+        "--repair-cached-tabpfn-oof",
+        action=argparse.BooleanOptionalAction,
+        default=False,
+        help=(
+            "For a completed TabPFN row that lacks saved out-of-fold predictions, run only the "
+            "CV fold fits needed to append split=oof rows. This is metered when TabPFN uses the "
+            "Prior Labs API, but it does not recompute the full-fit TabPFN train/test row."
+        ),
     )
     parser.add_argument(
         "--run-cfa",
