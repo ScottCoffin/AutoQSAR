@@ -178,6 +178,9 @@ Treat 10.7% as an **upper bound**: the weighted-average method weights by invers
 Chemprop's train predictions are 90% in-sample, so its train RMSE is artificially low and its
 weight inflated. Its honest OOF weight is lower.
 
+**Moving to the RTX (2026-09-28): follow [docs/HANDOFF_SSD_TRANSFER.md](docs/HANDOFF_SSD_TRANSFER.md)**;
+the required set is now `qsarena_benchmark_oof_ensemble/**/predictions.csv` (~1.1 GB, verified
+against `artifact_manifest.csv` by `tools/verify_transferred_predictions.py`).
 **Continuing on another machine needs ~0.57 GB of gitignored files**:
 `benchmark_results/qsarena_benchmark_chemprop_fixed/*/predictions.csv` (45 files). Without them
 the ensembles cannot be rebuilt at all and `prepare_chemprop_repair_run.py` cannot reseed.

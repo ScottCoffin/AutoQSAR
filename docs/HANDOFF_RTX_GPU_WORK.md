@@ -19,6 +19,9 @@ experiment. It is off by default and should run only after explicit approval.
 
 ## Status as of 2026-09-28 (RTX 4060 Laptop, paused by the user)
 
+**Before resuming, bring the gitignored predictions over by SSD and verify them:**
+[HANDOFF_SSD_TRANSFER.md](HANDOFF_SSD_TRANSFER.md) (only ~1.1 GB of the ~120 GB checkout is needed).
+
 Chemprop OOF was started on the RTX and **paused deliberately** after 4 of 42 datasets
 (`tdc_carcinogens_lagunin`, `tdc_skin_reaction`, `tdc_dili`, `chemml_cep_homo`); 113 fold vectors
 are committed as `chemprop_oof_seed/*/ensemble_oof/*/*/fold_*.npy` and are reused on resume. No
