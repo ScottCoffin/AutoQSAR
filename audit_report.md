@@ -1,4 +1,4 @@
-# AutoQSAR Container Audit Report
+# QSARena Container Audit Report
 
 **Branch:** feat/containerize  
 **Audit date:** 2026-06-18  
@@ -12,7 +12,7 @@
 
 | Package | Version (cuda req) | Where imported | Notes |
 |---|---|---|---|
-| `torch` | `2.5.1+cu121` | `run_autoqsar_ga_benchmarks.py` lines 319, 1157, 4854, 5299, 5386–5387, 6050, 6052 | Lazy imports inside try/if blocks; GPU detection via `torch.cuda.is_available()` |
+| `torch` | `2.5.1+cu121` | `run_qsarena_benchmarks.py` lines 319, 1157, 4854, 5299, 5386–5387, 6050, 6052 | Lazy imports inside try/if blocks; GPU detection via `torch.cuda.is_available()` |
 | `chemprop` | `2.2.3` | Spawned as subprocess via `chemprop train`/`chemprop predict` CLI | v2 line; Chemprop v2 uses PyTorch internally |
 | `dgl` | `2.2.1` | Line 5384 (`import dgl`) | MapLight+GNN graph encoder |
 | `dgllife` | `0.3.2` | Line 5385 (`import dgllife`) | GIN pretrained model loader |
@@ -52,11 +52,11 @@
 ## 1.2 Entry Points and Per-Dataset Stage Runner
 
 ### Primary entry point
-`portable_colab_qsar_bundle/run_autoqsar_ga_benchmarks.py`
+`portable_colab_qsar_bundle/run_qsarena_benchmarks.py`
 
 **CLI invocation:**
 ```
-python portable_colab_qsar_bundle/run_autoqsar_ga_benchmarks.py \
+python portable_colab_qsar_bundle/run_qsarena_benchmarks.py \
   [--dataset-name <NAME>] \
   [--output-dir <PATH>] \
   [--random-seed 13] \
@@ -77,7 +77,7 @@ Written to `<output_dir>/run_config.json` at line 9960, recording all resolved a
 ```python
 root = Path(__file__).resolve().parents[1]   # line 9713
 ```
-All relative cache and data paths are computed from this root. Inside the container the script will live at `/opt/autoqsar/portable_colab_qsar_bundle/run_autoqsar_ga_benchmarks.py`, making `root = /opt/autoqsar`.
+All relative cache and data paths are computed from this root. Inside the container the script lives at `/opt/qsarena/portable_colab_qsar_bundle/run_qsarena_benchmarks.py`, making `root = /opt/qsarena`.
 
 ---
 
@@ -85,17 +85,17 @@ All relative cache and data paths are computed from this root. Inside the contai
 
 | Location | File:Line | Current value | Required action |
 |---|---|---|---|
-| `root` resolution | `run_autoqsar_ga_benchmarks.py:9713` | `Path(__file__).resolve().parents[1]` | Correct as-is — resolves to `/opt/autoqsar` in container |
-| Feature matrix cache | `run_autoqsar_ga_benchmarks.py:1374` | `root / "model_cache" / "benchmark_feature_matrix_cache"` | Bind-mount `$SCRATCH/autoqsar_in` to `/opt/autoqsar/model_cache` **or** pass `--shared-feature-matrix-cache-path` |
-| Feature store | `run_autoqsar_ga_benchmarks.py:9714-9715` | `root / "model_cache" / "feature_store_parquet"` | Same — override via `--persistent-feature-store-path` |
-| MapLight GNN pretrained dir | `run_autoqsar_ga_benchmarks.py:5354` | `root / "model_cache" / "maplight_gnn_pretrained"` | Must be in bind-mounted input volume at container startup |
-| TDC split cache | `run_autoqsar_ga_benchmarks.py:2220` | `data_root / "_autoqsar_cache" / "tdc_single_pred"` | `data_root` is the `data/` directory; bind-mount brings it in |
-| `--random-seed` default | `run_autoqsar_ga_benchmarks.py:9281` | `13` | Parameterized via CLI; `run_one.py` will pass `--random-seed $SEED` |
-| `--chemprop-random-seed` default | `run_autoqsar_ga_benchmarks.py:9556` | `42` | Parameterized; `run_one.py` passes `--chemprop-random-seed $SEED` |
-| GPU detection | `run_autoqsar_ga_benchmarks.py:321,6052` | `torch.cuda.is_available()` | Correct — `run_one.py --device auto` reads this; no hardcoded `cuda:0` |
-| Uni-Mol auto-gate | `run_autoqsar_ga_benchmarks.py:9706-9712` | Auto-enabled when GPU detected | Correct; `--no-run-unimol-v1` disables on CPU |
-| `.env` load | `run_autoqsar_ga_benchmarks.py:94` | `Path.cwd() / ".env"` or `root / ".env"` | Do not bake `.env` into image; inject env vars at runtime |
-| `sys.path.insert(0, root)` | `run_autoqsar_ga_benchmarks.py:244` | Adds repo root to path | Correct for container where source lives at `/opt/autoqsar` |
+| `root` resolution | `run_qsarena_benchmarks.py:9713` | `Path(__file__).resolve().parents[1]` | Correct as-is — resolves to `/opt/qsarena` in container |
+| Feature matrix cache | `run_qsarena_benchmarks.py:1374` | `root / "model_cache" / "benchmark_feature_matrix_cache"` | Bind-mount `$SCRATCH/qsarena_in` to `/opt/qsarena/model_cache` **or** pass `--shared-feature-matrix-cache-path` |
+| Feature store | `run_qsarena_benchmarks.py:9714-9715` | `root / "model_cache" / "feature_store_parquet"` | Same — override via `--persistent-feature-store-path` |
+| MapLight GNN pretrained dir | `run_qsarena_benchmarks.py:5354` | `root / "model_cache" / "maplight_gnn_pretrained"` | Must be in bind-mounted input volume at container startup |
+| TDC split cache | `run_qsarena_benchmarks.py:2220` | `data_root / "_qsarena_cache" / "tdc_single_pred"` | `data_root` is the `data/` directory; bind-mount brings it in |
+| `--random-seed` default | `run_qsarena_benchmarks.py:9281` | `13` | Parameterized via CLI; `run_one.py` will pass `--random-seed $SEED` |
+| `--chemprop-random-seed` default | `run_qsarena_benchmarks.py:9556` | `42` | Parameterized; `run_one.py` passes `--chemprop-random-seed $SEED` |
+| GPU detection | `run_qsarena_benchmarks.py:321,6052` | `torch.cuda.is_available()` | Correct — `run_one.py --device auto` reads this; no hardcoded `cuda:0` |
+| Uni-Mol auto-gate | `run_qsarena_benchmarks.py:9706-9712` | Auto-enabled when GPU detected | Correct; `--no-run-unimol-v1` disables on CPU |
+| `.env` load | `run_qsarena_benchmarks.py:94` | `Path.cwd() / ".env"` or `root / ".env"` | Do not bake `.env` into image; inject env vars at runtime |
+| `sys.path.insert(0, root)` | `run_qsarena_benchmarks.py:244` | Adds repo root to path | Correct for container where source lives at `/opt/qsarena` |
 | No absolute `C:\Users\...` paths found | — | — | Confirmed: no Windows absolute paths in production code |
 
 ---

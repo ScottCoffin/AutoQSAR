@@ -400,7 +400,7 @@ Open work is tracked in [TODO.md](TODO.md); the Zenodo deposit is the last block
   run died in AUROC); and the RTX wrapper redirects via `cmd /c`, because PowerShell 5.1
   `*>` with `ErrorActionPreference=Stop` kills the run on its first stderr line. Intermittent
   Chemprop `exit=3221226505` (0xC0000409) crashes (~2% of folds) are handled by wrapper retry
-  passes. The Chemprop env on the RTX is the `autoqsar-py311` conda env; system `python` has no torch.
+  passes. The Chemprop env on the RTX is the `qsarena-py311` conda env; system `python` has no torch.
 - **Chemprop probe runs need at least 3 epochs.** Chemprop v2 defaults to two warmup epochs and rejects
   `--chemprop-epochs 2` before training.
 - **Do not seed a repair run with metrics alone.** Ensemble reconstruction needs the ignored

@@ -72,7 +72,7 @@ esol_delaney,MoleculeNet PhysChem benchmark: ESOL (Delaney),moleculenet,esol_del
 esol_delaney,MoleculeNet PhysChem benchmark: ESOL (Delaney),moleculenet,esol_delaney,https://doi.org/10.1002/advs.202517579,scaffold,RMSE,3,3,DMPNN,0.575 +/- 0.073,0.575,True,cache,2026-05-04 12:04:19
 esol_delaney,MoleculeNet PhysChem benchmark: ESOL (Delaney),moleculenet,esol_delaney,https://doi.org/10.1002/advs.202517579,scaffold,RMSE,4,4,MGPhyche,0.608 +/- 0.013,0.608,True,cache,2026-05-04 12:04:19
 esol_delaney,MoleculeNet PhysChem benchmark: ESOL (Delaney),moleculenet,esol_delaney,https://doi.org/10.1002/advs.202517579,scaffold,RMSE,5,5,DeeperGCN,0.615 +/- 0.044,0.615,True,cache,2026-05-04 12:04:19
-esol_delaney,MoleculeNet PhysChem benchmark: ESOL (Delaney),moleculenet,esol_delaney,https://doi.org/10.1002/advs.202517579,scaffold,RMSE,6,6,AutoQSAR (TabPFN),0.621,0.621,True,cache,2026-05-04 12:04:19
+esol_delaney,MoleculeNet PhysChem benchmark: ESOL (Delaney),moleculenet,esol_delaney,https://doi.org/10.1002/advs.202517579,scaffold,RMSE,6,6,QSARena (TabPFN),0.621,0.621,True,cache,2026-05-04 12:04:19
 esol_delaney,MoleculeNet PhysChem benchmark: ESOL (Delaney),moleculenet,esol_delaney,https://doi.org/10.1002/advs.202517579,scaffold,RMSE,7,7,FP-GNN,0.658 +/- 0.006,0.658,True,cache,2026-05-04 12:04:19
 esol_delaney,MoleculeNet PhysChem benchmark: ESOL (Delaney),moleculenet,esol_delaney,https://doi.org/10.1002/advs.202517579,scaffold,RMSE,8,8,MV-Mol,0.670 +/- 0.019,0.67,True,cache,2026-05-04 12:04:19
 tdc_vdss_lombardo,PyTDC ADME benchmark group: vdss_lombardo (official train_val/test split),tdc,vdss_lombardo,https://tdcommons.ai/benchmark/admet_group/09vdss/,Scaffold,Spearman,1,1,MapLight + GNN,0.713 +/- 0.007,0.713,True,tdc,2026-05-04 12:04:19
@@ -163,7 +163,7 @@ lipophilicity,MoleculeNet PhysChem benchmark: Lipophilicity,moleculenet,lipophil
 lipophilicity,MoleculeNet PhysChem benchmark: Lipophilicity,moleculenet,lipophilicity,https://doi.org/10.1002/advs.202517579,scaffold,RMSE,3,3,MV-Mol,0.566 +/- 0.007,0.566,True,cache,2026-05-04 12:04:19
 lipophilicity,MoleculeNet PhysChem benchmark: Lipophilicity,moleculenet,lipophilicity,https://doi.org/10.1002/advs.202517579,scaffold,RMSE,4,4,InstructMol,0.582 +/- 0.010,0.582,True,cache,2026-05-04 12:04:19
 lipophilicity,MoleculeNet PhysChem benchmark: Lipophilicity,moleculenet,lipophilicity,https://doi.org/10.1002/advs.202517579,scaffold,RMSE,5,5,GEM + MolRuleLoss,0.587,0.587,True,cache,2026-05-04 12:04:19
-lipophilicity,MoleculeNet PhysChem benchmark: Lipophilicity,moleculenet,lipophilicity,https://doi.org/10.1002/advs.202517579,scaffold,RMSE,6,6,AutoQSAR (Ensemble),0.595,0.595,True,cache,2026-05-04 12:04:19
+lipophilicity,MoleculeNet PhysChem benchmark: Lipophilicity,moleculenet,lipophilicity,https://doi.org/10.1002/advs.202517579,scaffold,RMSE,6,6,QSARena (Ensemble),0.595,0.595,True,cache,2026-05-04 12:04:19
 lipophilicity,MoleculeNet PhysChem benchmark: Lipophilicity,moleculenet,lipophilicity,https://doi.org/10.1002/advs.202517579,scaffold,RMSE,7,7,KPGT,0.600 +/- 0.010,0.6,True,cache,2026-05-04 12:04:19
 lipophilicity,MoleculeNet PhysChem benchmark: Lipophilicity,moleculenet,lipophilicity,https://doi.org/10.1002/advs.202517579,scaffold,RMSE,8,8,MOL-AE,0.607,0.607,True,cache,2026-05-04 12:04:19
 tdc_lipophilicity_astrazeneca,PyTDC ADME benchmark group: lipophilicity_astrazeneca (official train_val/test split),tdc,lipophilicity_astrazeneca,https://tdcommons.ai/benchmark/admet_group/05lipo/,Scaffold,MAE,1,1,MiniMol,0.456 +/- 0.008,0.456,True,tdc,2026-05-04 12:04:19

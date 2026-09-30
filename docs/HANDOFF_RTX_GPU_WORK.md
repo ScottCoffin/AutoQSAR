@@ -29,11 +29,11 @@ are committed as `chemprop_oof_seed/*/ensemble_oof/*/*/fold_*.npy` and are reuse
 crash and have no complete OOF yet: `tdc_skin_reaction` CMPNN (fold 4) and `chemml_cep_homo`
 D-MPNN + Selected descriptors; the wrapper's retry passes refit only those folds.
 
-Resume with the same command (Python env on this machine: `autoqsar-py311` conda env):
+Resume with the same command (Python env on this machine: `qsarena-py311` conda env):
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File tools/run_chemprop_oof_rtx.ps1 `
-  -Python "C:\Users\scott\.conda\envs\autoqsar-py311\python.exe" -CommitAndPush
+  -Python "C:\Users\scott\.conda\envs\qsarena-py311\python.exe" -CommitAndPush
 ```
 
 Measured pace: ~55 s per fold on 280-row datasets (40 epochs, ensemble=3). Larger datasets are

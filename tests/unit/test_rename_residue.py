@@ -27,6 +27,7 @@ REPO = Path(__file__).resolve().parents[2]
 ALLOWED_PATHS = (
     # Frozen artifacts, caches and logs.
     "benchmark_results/",
+    "chemprop_oof_seed/",
     "logs/",
     "data/",
     "model_cache",  # external volume symlink created before the rename

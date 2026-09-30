@@ -1,10 +1,10 @@
-# AutoQSAR: Publication Recommendations
+# QSARena: Publication Recommendations
 
 ## Executive Assessment
 
-AutoQSAR is publishable as a methods/tool paper. The contribution is strongest when framed around the **practical finding** that a well-engineered conventional ML pipeline with ensemble fusion and rich molecular features achieves competitive-to-SOTA performance across 37 benchmark datasets, delivered through an accessible open-source tool requiring no deep learning expertise or GPU infrastructure.
+QSARena is publishable as a methods/tool paper. The contribution is strongest when framed around the **practical finding** that a well-engineered conventional ML pipeline with ensemble fusion and rich molecular features achieves competitive-to-SOTA performance across 37 benchmark datasets, delivered through an accessible open-source tool requiring no deep learning expertise or GPU infrastructure.
 
-However, two claims require correction before submission: the ESOL and MoleculeNet Lipophilicity "beat SOTA" findings are compared against outdated 2017 MoleculeNet baselines (GCN RMSE 0.885 for ESOL; GCN RMSE 0.781 for Lipophilicity), not current state of the art. Modern models achieve ESOL RMSE ~0.56 (PrismNet, *Adv Sci* 2026) and Lipophilicity RMSE ~0.55 (PrismNet). AutoQSAR's scores of 0.621 and 0.595 are strong but rank approximately 5th–6th against current published results rather than 1st. See the companion ESOL/Lipophilicity benchmark CSV for full details.
+However, two claims require correction before submission: the ESOL and MoleculeNet Lipophilicity "beat SOTA" findings are compared against outdated 2017 MoleculeNet baselines (GCN RMSE 0.885 for ESOL; GCN RMSE 0.781 for Lipophilicity), not current state of the art. Modern models achieve ESOL RMSE ~0.56 (PrismNet, *Adv Sci* 2026) and Lipophilicity RMSE ~0.55 (PrismNet). QSARena's scores of 0.621 and 0.595 are strong but rank approximately 5th-6th against current published results rather than 1st. See the companion ESOL/Lipophilicity benchmark CSV for full details.
 
 ---
 
@@ -19,13 +19,13 @@ However, two claims require correction before submission: the ESOL and MoleculeN
 - MolGPS (Sypetkowski et al. 2024, NeurIPS 2024): 38 tasks across TDC + Polaris + MoleculeNet
 - MolE (Méndez-Lucio et al. 2024, *Nat Commun* 15:10021): 22 TDC tasks
 
-AutoQSAR's cross-suite coverage is comparable to MolGPS and exceeds most other entries.
+QSARena's cross-suite coverage is comparable to MolGPS and exceeds most other entries.
 
 ### 2. Consistent Competitive Performance
 
 Top-10 on 35/37 datasets. Confirmed new best on 5 datasets where the reference benchmarks are on comparable scaffold splits:
 
-| Dataset | AutoQSAR | Previous Best | Delta |
+| Dataset | QSARena | Previous Best | Delta |
 |---------|----------|---------------|-------|
 | tdc_skin_reaction | 0.775 AUROC | 0.741 (FATE-Tox MTL) | +0.034 |
 | tdc_bioavailability_ma | 0.777 AUROC | 0.748 (MaxQsaring) | +0.029 |
@@ -43,7 +43,7 @@ The best model per dataset is frequently a conventional model (CatBoost, Random 
 - Koleiev et al. (2026, bioRxiv, DOI: 10.64898/2026.02.26.708193) found only 3 of the top TDC models passed all reproducibility checks: CaliciBoost, MapLight, and MapLight+GNN — all tree-based methods.
 - MaxQsaring (Xu et al. 2025, *J Pharm Anal* 15:101411) achieved rank 1 on 19/22 TDC tasks using automatic feature combination with simple ML algorithms to ensure the intrinsic interpretability of the models.
 
-AutoQSAR's results substantially expand the evidence base for this finding.
+QSARena's results substantially expand the evidence base for this finding.
 
 ### 4. Practical Accessibility
 
@@ -61,8 +61,8 @@ The winning model varies across datasets (CatBoost, TabPFN, MapLight+GNN, CFA, e
 
 The ESOL and MoleculeNet Lipophilicity SOTA claims must be corrected. The MoleculeNet leaderboard only contains 2017-era baselines (GCN, Random Forest). Against current published results:
 
-- **ESOL**: AutoQSAR 0.621 ranks ~5th (current SOTA: PrismNet 0.558, HiGNN 0.570, DMPNN 0.575)
-- **Lipophilicity**: AutoQSAR 0.595 ranks ~6th (current SOTA: PrismNet 0.549, GRAPHMSL 0.562, MV-Mol 0.566)
+- **ESOL**: QSARena 0.621 ranks ~5th (current SOTA: PrismNet 0.558, HiGNN 0.570, DMPNN 0.575)
+- **Lipophilicity**: QSARena 0.595 ranks ~6th (current SOTA: PrismNet 0.549, GRAPHMSL 0.562, MV-Mol 0.566)
 
 These are still strong results — top-10 in a competitive field — but they are not SOTA. Present them honestly.
 
@@ -84,7 +84,7 @@ The more detailed notebook crosswalk below supersedes this short list and separa
 
 1. **Multi-seed evaluation** (5 seeds) for all TDC-22 datasets using official `admet_group` splits
   1. Implemented, but requires re-run!
-2. **Computational cost table** comparing wall-clock time and hardware for AutoQSAR vs. MolGPS/MolE/ADMET-AI
+2. **Computational cost table** comparing wall-clock time and hardware for QSARena vs. MolGPS/MolE/ADMET-AI
   1. Implemented, but requires re-run!
 
 ### Strongly Recommended
@@ -110,7 +110,7 @@ The targeted recommendations were cross-referenced against `portable_colab_qsar_
 
 | Recommendation                    | Notebook status                                         | Remaining publication gap                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 | -----------------------------------| ---------------------------------------------------------| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Multi-seed TDC-22 evaluation      | **Implemented in runner; requires rerun for artifacts** | `run_autoqsar_ga_benchmarks.py` now prefers official PyTDC `admet_group` train_val/test frames and, at the end of a run, evaluates the best directly trainable model for each official TDC dataset across seeds 1-5 by default. If ensemble/CFA is the main-run winner, the pass evaluates its contributing base-model members instead. Outputs are written under `tdc22_best_model_multiseed/` with mean/std aggregation. Existing benchmark artifacts must be regenerated to populate these files. |
+| Multi-seed TDC-22 evaluation      | **Implemented in runner; requires rerun for artifacts** | `run_qsarena_benchmarks.py` now prefers official PyTDC `admet_group` train_val/test frames and, at the end of a run, evaluates the best directly trainable model for each official TDC dataset across seeds 1-5 by default. If ensemble/CFA is the main-run winner, the pass evaluates its contributing base-model members instead. Outputs are written under `tdc22_best_model_multiseed/` with mean/std aggregation. Existing benchmark artifacts must be regenerated to populate these files. |
 | Computational cost comparison     | **Implemented; strengthened for new reruns**            | Runner now emits explicit per-step/per-model runtime fields in `step_runtime.csv`, `step_runtime_summary.csv`, and new model metric columns. The PFAS auxiliary summary notebook now joins runtime cost to performance, writes cost/performance Pareto artifacts, and falls back to cumulative elapsed time for older runs. Existing benchmark artifacts need rerun for full per-model stage timing fidelity.                                                                                        |
 | Updated leaderboard references    | **Implemented from local curated references**           | Notebook now combines run references, MaxQsaring-containing TDC ADMET references, and current ESOL/Lipophilicity literature references into publication comparison artifacts.                                                                                                                                                                                                                                                                                                                        |
 | Ablation/component contribution   | **Implemented from existing metrics**                   | Notebook now computes staged best-achievable performance from conventional ML through MapLight, deep backends, CFA, and ensemble/full-pipeline stages.                                                                                                                                                                                                                                                                                                                                               |
@@ -127,10 +127,10 @@ The targeted recommendations were cross-referenced against `portable_colab_qsar_
 ### Completed in `benchmark_results_summary.ipynb`
 
 - **TDC-primary classification metrics**: Implemented row-specific primary metric selection, including AUPRC for CYP2C9_Veith, CYP2D6_Veith, CYP3A4_Veith, CYP2C9_Substrate, CYP2D6_Substrate, and CYP3A4_Substrate.
-- **Benchmark artifact instrumentation**: Updated `run_autoqsar_ga_benchmarks.py` so future metrics include train/test inference-only timing, per-1000-molecule inference rates, and neural parameter-count fields where the backend exposes exact counts.
+- **Benchmark artifact instrumentation**: Updated `run_qsarena_benchmarks.py` so future metrics include train/test inference-only timing, per-1000-molecule inference rates, and neural parameter-count fields where the backend exposes exact counts.
 - **TDC-22 multi-seed robustness pass**: Added an end-of-run 5-seed evaluation for official PyTDC `admet_group` datasets. The pass selects the best directly trainable model per dataset from the main run, or the contributing base-model members when ensemble/CFA is the winning approach, preserves the normal resume/cache workflow, and writes plan, metric, summary, and runtime CSVs.
 - **Per-step/model computation cost capture**: Added explicit step/model/workflow runtime metadata and per-model stage timing columns so downstream notebooks can optimize cost versus performance without relying on cumulative dataset elapsed time.
-- **Publication-grade computational cost table**: Added a model-family cost comparison table with AutoQSAR current-run runtimes and hardware/parameter notes, plus MolGPS, MolE, and ADMET-AI comparator rows. Future reruns will populate the new inference and parameter-count fields.
+- **Publication-grade computational cost table**: Added a model-family cost comparison table with QSARena current-run runtimes and hardware/parameter notes, plus MolGPS, MolE, and ADMET-AI comparator rows. Future reruns will populate the new inference and parameter-count fields.
 - **Per-dataset best-model breakdown**: Added win counts by model family, a pie chart, rank-by-family heatmap, and winning-model table.
 - **Feature-family importance analysis**: Added feature-family importance summaries and heatmaps. The notebook consumes future per-model importance artifacts when present and otherwise uses selector coefficient/importances as a fallback for the current run.
 - **Ensemble value-add context**: Added primary-metric-aware CFA/ensemble comparisons against the best base model, including classification and regression summaries, top-3 rates, and per-dataset deltas.
@@ -183,7 +183,7 @@ These items are implemented from existing benchmark artifacts and notebook logic
    - Step 4: Prepare a Zenodo-ready file list and data-availability statement.
    - Step 5: Archive upload and DOI minting can happen later; the manifest/checklist does not require rerunning benchmarks.
 
-5. **Updated leaderboard references**: Improve comparison accuracy without rerunning AutoQSAR.
+5. **Updated leaderboard references**: Improve comparison accuracy without rerunning QSARena.
    - Status: implemented in `benchmark_results_summary.ipynb` using local curated reference tables.
    - Output artifacts: `publication_leaderboard_top10_reference.csv`, `publication_leaderboard_comparison_by_dataset.csv`, `publication_leaderboard_reference_audit.csv`.
    - Source artifacts: `data/benchmark_dataset_catalog.csv`, `leaderboard_top10_reference.json`, `leaderboard_top10_reference.csv`, and current literature/reference tables.
@@ -195,10 +195,10 @@ These items are implemented from existing benchmark artifacts and notebook logic
 
 ### Lower Priority No-Rerun or External-Curation Items
 
-6. **Head-to-head with ADMET-AI**: This does not require rerunning AutoQSAR, but it does require importing and normalizing ADMET-AI supplementary metrics.
+6. **Head-to-head with ADMET-AI**: This does not require rerunning QSARena, but it does require importing and normalizing ADMET-AI supplementary metrics.
    - Step 1: Download or manually curate ADMET-AI results for overlapping TDC ADMET benchmark datasets.
    - Step 2: Normalize dataset names, metrics, split assumptions, and metric directionality.
-   - Step 3: Join against AutoQSAR best-per-dataset results using the same primary metric.
+   - Step 3: Join against QSARena best-per-dataset results using the same primary metric.
    - Step 4: Report win/loss/tie counts and per-dataset deltas.
 
 7. **Applicability-domain calibration**: This is only no-rerun if per-molecule uncertainty or AD scores are already present in artifacts.
@@ -212,7 +212,7 @@ These items are implemented from existing benchmark artifacts and notebook logic
 
 8. **Multi-seed evaluation for TDC-22 official splits**: Workflow support is now implemented, but publication artifacts require a fresh benchmark run.
    - Required work: rerun the official TDC ADMET Benchmark Group datasets with the default seeds 1-5, then use `tdc22_best_model_multiseed_summary.csv` for mean +/- standard deviation reporting and optional paired tests against published baselines.
-   - Implementation note: this is now handled by `run_autoqsar_ga_benchmarks.py --run-tdc22-multiseed-best`; `maplight_parity_seeds` remains separate and only applies to the MapLight parity path.
+   - Implementation note: this is now handled by `run_qsarena_benchmarks.py --run-tdc22-multiseed-best`; `maplight_parity_seeds` remains separate and only applies to the MapLight parity path.
 
 9. **Temporal robustness check**: Requires new scaffold-vs-temporal split comparisons.
    - Required work: identify datasets with temporal metadata or predefined temporal splits, rerun the affected model evaluations on temporal splits, and compare performance degradation against the current split protocol.
@@ -223,7 +223,7 @@ These items are implemented from existing benchmark artifacts and notebook logic
 
 ### Title (Option A — Tool Paper)
 
-*"AutoQSAR: An Accessible AutoML Framework for Molecular Property Prediction Achieving Competitive Performance Across 37 Benchmark Datasets"*
+*"QSARena: An Accessible AutoML Framework for Molecular Property Prediction Achieving Competitive Performance Across 37 Benchmark Datasets"*
 
 ### Title (Option B — Empirical Finding)
 
@@ -231,7 +231,7 @@ These items are implemented from existing benchmark artifacts and notebook logic
 
 ### Key Claims (in order of strength)
 
-1. AutoQSAR achieves top-10 performance on 35/37 ADMET/molecular property benchmarks using a unified pipeline that requires no deep learning expertise or GPU hardware.
+1. QSARena achieves top-10 performance on 35/37 ADMET/molecular property benchmarks using a unified pipeline that requires no deep learning expertise or GPU hardware.
 2. Conventional ML with CFA fusion and MapLight-style features matches or exceeds billion-parameter foundation models (MolGPS, MolE) on the majority of benchmarks.
 3. No single model architecture dominates across all ADMET tasks — optimal architecture is highly dataset-dependent.
 4. The tool is openly available, code-free, and runnable in Google Colab, lowering the barrier for ADMET modeling.
@@ -286,6 +286,6 @@ Papers published 2022–2026 that benchmark on overlapping datasets:
 | FATE-Tox | 2025 | J Cheminform | TDC Tox (4 datasets) | 3D equivariant, #1 on skin_reaction |
 | Koleiev et al. | 2026 | bioRxiv | TDC-22 | Reproducibility: only 3/top pass |
 | PrismNet | 2026 | Adv Sci | MoleculeNet | Best on 8/11 MoleculeNet tasks |
-| **AutoQSAR (this work)** | **2026** | **—** | **37 (TDC + MolNet + Polaris + PODUAM + ChemML)** | **Broadest coverage; conventional ML + ensemble matches/beats SOTA on 35/37** |
+| **QSARena (this work)** | **2026** | **-** | **37 (TDC + MolNet + Polaris + PODUAM + ChemML)** | **Broadest coverage; conventional ML + ensemble matches/beats SOTA on 35/37** |
 
 The key differentiator is breadth + accessibility. No other paper covers all 5 benchmark suites with a single accessible tool.

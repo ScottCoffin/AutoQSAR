@@ -67,5 +67,5 @@ datasets, which the RTX already has.
    skip the export/apply step and could carry over the 113 folds already done. Decide that at
    resume time after checking it against the real data.
 
-The Python environment is not part of the transfer: on the RTX, use the `autoqsar-py311` conda
-env (`C:\Users\scott\.conda\envs\autoqsar-py311\python.exe`); system `python` has no torch.
+The Python environment is not part of the transfer: on the RTX, use the `qsarena-py311` conda
+env (`C:\Users\scott\.conda\envs\qsarena-py311\python.exe`); system `python` has no torch.

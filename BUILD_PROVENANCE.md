@@ -1,4 +1,4 @@
-# AutoQSAR Build Provenance
+# QSARena Build Provenance
 
 This file is a stub that is auto-populated by `make image` and `make sif`.
 Fields below will be filled by the build process.
@@ -31,7 +31,7 @@ Fields below will be filled by the build process.
 
 ### §A — Precision config
 
-- `precision_mode`: `tf32_bf16` or `fp32` (set via `--precision` CLI flag / `AUTOQSAR_PRECISION` env var)
+- `precision_mode`: `tf32_bf16` or `fp32` (set via `--precision` CLI flag / `QSARENA_PRECISION` env var)
 - `tf32_enabled`: true when `precision_mode == tf32_bf16` and CUDA available
 - `bf16_amp_available`: true when `precision_mode == tf32_bf16` and CUDA available
 - `host_driver_version`: captured via `nvidia-smi` at run time
@@ -41,7 +41,7 @@ Fields below will be filled by the build process.
 ### §B — Uni-Mol2 V2
 
 - `unimolv2_size`: model checkpoint size (`84m` default)
-- `unimolv2_checkpoint_sha256`: SHA-256 of `model_cache/unimolv2_checkpoints/<size>/checkpoint.pt`; operator must fill `autoqsar/unimolv2.py:UNIMOLV2_CHECKPOINT_SHA256` after first download
+- `unimolv2_checkpoint_sha256`: SHA-256 of `model_cache/unimolv2_checkpoints/<size>/checkpoint.pt`; operator must fill `qsarena/unimolv2.py:UNIMOLV2_CHECKPOINT_SHA256` after first download
 - `unimolv2_3d_input_flag`: always `true` (Uni-Mol2 consumes ETKDGv3+MMFF 3D geometry)
 - `conformer_method`: `ETKDGv3+MMFF`
 - `conformer_seed`: default `42` (separate from model seed; same geometry across all 5 model seeds)
@@ -60,8 +60,8 @@ Fields below will be filled by the build process.
 
 ## pip freeze inside image
 
-<!-- populated by `make image` — docker run --rm autoqsar:<commit> pip freeze -->
+<!-- populated by `make image` — docker run --rm qsarena:<commit> pip freeze -->
 
 ## .sif SHA-256
 
-<!-- populated by `make sif` — sha256sum autoqsar.sif -->
+<!-- populated by `make sif` — sha256sum qsarena.sif -->

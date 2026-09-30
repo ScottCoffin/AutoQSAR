@@ -1,4 +1,4 @@
-# AutoQSAR — pinned Linux/CUDA container lockfile
+# QSARena — pinned Linux/CUDA container lockfile
 #
 # Target: Python 3.11 / CUDA 12.1 / Ubuntu 22.04
 # Base image: nvidia/cuda:12.1.1-cudnn8-runtime-ubuntu22.04
@@ -54,7 +54,7 @@ unimol-tools==1.0.1
 # NOTE: catboost and xgboost run CPU-only on datasets where no GPU winner was
 # recorded; their GPU task-tree accelerators activate automatically when CUDA
 # is available. lightgbm was missing from the original requirements files but
-# IS imported in the codebase (line 284 of run_autoqsar_ga_benchmarks.py);
+# IS imported in the codebase (line 284 of run_qsarena_benchmarks.py);
 # pinned here to restore LightGBM model family.
 catboost==1.2.10
 xgboost==3.2.0
@@ -72,7 +72,7 @@ joblib==1.5.3
 threadpoolctl==3.6.0
 patsy==1.0.2
 
-# ── AutoQSAR-specific / CFA / ML utilities ───────────────────────────────────
+# ── QSARena-specific / CFA / ML utilities ───────────────────────────────────
 cfanalysis==0.1.13
 forestci==0.7
 shap==0.51.0

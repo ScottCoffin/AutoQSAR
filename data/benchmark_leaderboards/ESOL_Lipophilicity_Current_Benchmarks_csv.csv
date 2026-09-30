@@ -4,7 +4,7 @@ esol_delaney,RMSE,lower_better,HiGNN,0.570,0.061,2,scaffold,Sun et al.,2025,Comm
 esol_delaney,RMSE,lower_better,DMPNN,0.575,0.073,3,scaffold,Sun et al.,2025,Commun Chem 8:286 (MolGraph-xLSTM paper Table 2),10.1038/s42004-025-01683-z,
 esol_delaney,RMSE,lower_better,MGPhyche,0.608,0.013,4,scaffold,PrismNet Table 1,2026,Adv Sci 13:e17579,10.1002/advs.202517579,
 esol_delaney,RMSE,lower_better,DeeperGCN,0.615,0.044,5,scaffold,Sun et al.,2025,Commun Chem 8:286 (MolGraph-xLSTM paper Table 2),10.1038/s42004-025-01683-z,
-esol_delaney,RMSE,lower_better,AutoQSAR (TabPFN),0.621,,6,scaffold,This work,2026,—,—,Your score
+esol_delaney,RMSE,lower_better,QSARena (TabPFN),0.621,,6,scaffold,This work,2026,—,—,Your score
 esol_delaney,RMSE,lower_better,FP-GNN,0.658,0.006,7,scaffold,Sun et al.,2025,Commun Chem 8:286 (MolGraph-xLSTM paper Table 2),10.1038/s42004-025-01683-z,
 esol_delaney,RMSE,lower_better,MV-Mol,0.670,0.019,8,scaffold,PrismNet Table 1,2026,Adv Sci 13:e17579,10.1002/advs.202517579,
 esol_delaney,RMSE,lower_better,KCL,0.732,,9,scaffold,PrismNet Table 1,2026,Adv Sci 13:e17579,10.1002/advs.202517579,
@@ -32,7 +32,7 @@ lipophilicity,RMSE,lower_better,GRAPHMSL,0.562,0.005,2,scaffold,PrismNet Table 1
 lipophilicity,RMSE,lower_better,MV-Mol,0.566,0.007,3,scaffold,PrismNet Table 1,2026,Adv Sci 13:e17579,10.1002/advs.202517579,
 lipophilicity,RMSE,lower_better,InstructMol,0.582,0.010,4,scaffold,PrismNet Table 1,2026,Adv Sci 13:e17579,10.1002/advs.202517579,
 lipophilicity,RMSE,lower_better,GEM + MolRuleLoss,0.587,,5,scaffold,arXiv:2511.08314,2025,arXiv:2511.08314,https://arxiv.org/abs/2511.08314,GEM with physics-rule loss
-lipophilicity,RMSE,lower_better,AutoQSAR (Ensemble),0.595,,6,scaffold,This work,2026,—,—,Your score
+lipophilicity,RMSE,lower_better,QSARena (Ensemble),0.595,,6,scaffold,This work,2026,—,—,Your score
 lipophilicity,RMSE,lower_better,KPGT,0.600,0.010,7,scaffold,PrismNet Table 1,2026,Adv Sci 13:e17579,10.1002/advs.202517579,
 lipophilicity,RMSE,lower_better,MOL-AE,0.607,,8,scaffold,PrismNet Table 1,2026,Adv Sci 13:e17579,10.1002/advs.202517579,
 lipophilicity,RMSE,lower_better,FP-GNN,0.610,0.028,9,scaffold,Sun et al.,2025,Commun Chem 8:286 (MolGraph-xLSTM paper Table 2),10.1038/s42004-025-01683-z,
