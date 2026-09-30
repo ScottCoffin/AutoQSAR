@@ -20,18 +20,21 @@
 > Everything else outstanding is tracked in **[TODO.md](TODO.md)**.
 
 QSARena is a portable QSAR modeling and benchmarking workspace for molecular
-property prediction from SMILES strings. It has two main entry points:
+property prediction from SMILES strings. It has three main entry points:
 
 - `portable_colab_qsar_bundle/colab_qsar_tutorial.ipynb`: an interactive,
-  widget-driven notebook for building QSAR models on built-in or user-supplied
-  datasets.
+  Google Colab notebook for building QSAR models on built-in or user-supplied
+  datasets without editing code.
+- `portable_colab_qsar_bundle/local_qsar_tutorial.ipynb`: the matching local
+  Jupyter notebook with `ipywidgets` controls instead of Colab-only form
+  controls.
 - `portable_colab_qsar_bundle/run_qsarena_benchmarks.py`: a command-line
   benchmark runner for comparing model families across curated ChemML, TDCommons,
   MoleculeNet, Polaris, PODUAM, and literature datasets.
 
 The repository is designed to support both learning-scale use and full benchmark
-runs. The notebook focuses on a guided workflow that can run in Google Colab or a
-local Jupyter kernel. The benchmark runner focuses on repeatable model evaluation,
+runs. The notebooks focus on the same guided workflow through clean Colab and
+local Jupyter interfaces. The benchmark runner focuses on repeatable model evaluation,
 resume-safe long runs, leaderboard comparisons, and reusable output artifacts.
 
 ## What This Repository Does
@@ -199,8 +202,9 @@ run continues.
 
 | Path | Purpose |
 |---|---|
-| `portable_colab_qsar_bundle/colab_qsar_tutorial.ipynb` | Generated interactive notebook for Colab or local Jupyter. |
-| `portable_colab_qsar_bundle/build_colab_qsar_tutorial.py` | Source of truth for the generated notebook. Edit this file, then regenerate the notebook. |
+| `portable_colab_qsar_bundle/colab_qsar_tutorial.ipynb` | Generated Google Colab notebook with Colab form controls. |
+| `portable_colab_qsar_bundle/local_qsar_tutorial.ipynb` | Generated local Jupyter notebook with `ipywidgets` controls. |
+| `portable_colab_qsar_bundle/build_colab_qsar_tutorial.py` | Source of truth for both generated notebooks. Edit this file, then regenerate both notebooks. |
 | `portable_colab_qsar_bundle/run_qsarena_benchmarks.py` | CLI benchmark runner. |
 | `portable_colab_qsar_bundle/qsar_workflow_core.py` | Shared feature, split, CFA, and QSAR helper code used by notebook and benchmarks. |
 | `portable_colab_qsar_bundle/benchmark_registry.py` | Shared dataset registry for notebook examples and benchmark discovery. |
@@ -396,7 +400,40 @@ python portable_colab_qsar_bundle/run_qsarena_benchmarks.py --help
 
 ## Using The Interactive Notebook
 
-The notebook is the easiest way to run QSARena on your own data.
+The notebooks are the easiest way to run QSARena on your own data. They run the
+same workflow but expose different controls:
+
+- Use `portable_colab_qsar_bundle/colab_qsar_tutorial.ipynb` in Google Colab.
+  This notebook uses Colab form controls and includes a short Colab orientation
+  section for new users.
+- Use `portable_colab_qsar_bundle/local_qsar_tutorial.ipynb` in local Jupyter.
+  This notebook uses separate `ipywidgets` controls cells and avoids Colab-only
+  upload and Google Drive controls.
+
+### Google Colab
+
+Open:
+
+```text
+portable_colab_qsar_bundle/colab_qsar_tutorial.ipynb
+```
+
+Colab sessions are temporary cloud runtimes. The notebook file can live in
+Google Drive or GitHub, but files under `/content` and in-memory Python state are
+lost when the runtime disconnects, idles out, or is reset. To keep outputs:
+
+- turn on the Google Drive persistence option in step `0`, or
+- download important output files before closing the session.
+
+The first setup/install pass may intentionally disconnect or restart the Colab
+runtime so newly installed compiled packages can load. This is expected. After
+Colab reconnects, rerun step `0` once; the second pass should import the
+installed packages and finish cleanly. If a later session fails or disconnects,
+reconnect, rerun step `0`, reload or reupload the dataset if needed, and rerun
+the earlier cells needed to rebuild the notebook state. Cached Drive outputs can
+often be reused when Drive persistence was enabled.
+
+### Local Jupyter
 
 1. Activate the environment:
 
@@ -413,7 +450,7 @@ The notebook is the easiest way to run QSARena on your own data.
 3. Open:
 
    ```text
-   portable_colab_qsar_bundle/colab_qsar_tutorial.ipynb
+   portable_colab_qsar_bundle/local_qsar_tutorial.ipynb
    ```
 
 4. Use the `QSARena (py311)` kernel if it is available.
@@ -454,7 +491,7 @@ For your own data, provide at least:
 The notebook can also load built-in examples from ChemML, TDCommons, MoleculeNet
 PhysChem, Polaris ADME, and PODUAM.
 
-### Regenerating The Notebook
+### Regenerating The Notebooks
 
 Do not hand-edit the notebook JSON for durable workflow changes. Edit the builder:
 
@@ -473,7 +510,12 @@ This updates:
 
 ```text
 portable_colab_qsar_bundle/colab_qsar_tutorial.ipynb
+portable_colab_qsar_bundle/local_qsar_tutorial.ipynb
 ```
+
+The generated notebooks should stay interface-clean: the Colab notebook keeps
+Colab `# @param` controls and no local-widget control cells; the local notebook
+keeps `ipywidgets` controls and no `# @param` annotations.
 
 ## Guided Tutorial (Your Own Data)
 
@@ -1090,7 +1132,8 @@ sensible defaults that can be overridden from the CLI:
 | Uni-Mol V2 model size | `310m` for ≥39 GB VRAM, `164m` for ≥15 GB, `84m` otherwise | `--unimol-model-size 84m/164m/310m` |
 | Uni-Mol V2 AMP | auto-enabled when GPU available | `--unimol-use-amp` / `--no-unimol-use-amp` |
 
-The interactive notebook (`colab_qsar_tutorial.ipynb`) applies the same
+The interactive notebooks (`colab_qsar_tutorial.ipynb` and
+`local_qsar_tutorial.ipynb`) apply the same
 GPU-VRAM-aware batch-size and model-size logic at runtime in the Uni-Mol cells
 (6C and 6D).
 
@@ -1135,7 +1178,7 @@ Tests: `pip install -e .[dev]` then `pytest -q -m "not gpu and not slow"`.
 ## Development Notes
 
 - For notebook behavior, edit `build_colab_qsar_tutorial.py` and regenerate
-  `colab_qsar_tutorial.ipynb`.
+  both `colab_qsar_tutorial.ipynb` and `local_qsar_tutorial.ipynb`.
 - For shared features, split logic, persistent feature-store behavior, and CFA
   logic, edit `qsar_workflow_core.py`.
 - For built-in dataset availability, edit `benchmark_registry.py`.
@@ -1247,7 +1290,7 @@ Before opening a bug, it is worth checking:
    code issues.
 
 Pull requests are welcome. For workflow changes, edit `qsar_workflow_core.py`; for the
-interactive notebook, edit `build_colab_qsar_tutorial.py` and regenerate rather than
+interactive notebooks, edit `build_colab_qsar_tutorial.py` and regenerate rather than
 editing the notebook JSON (see [Development Notes](#development-notes)).
 
 ## Citation And Archived Release

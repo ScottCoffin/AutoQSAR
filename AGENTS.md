@@ -201,7 +201,7 @@ stack stopped first). Only matters for step 6.
 
 | Want to change | Edit | Notes |
 |---|---|---|
-| Interactive Colab notebook | `portable_colab_qsar_bundle/build_colab_qsar_tutorial.py` | Regenerates `colab_qsar_tutorial.ipynb`; never hand-edit that notebook. |
+| Interactive notebooks | `portable_colab_qsar_bundle/build_colab_qsar_tutorial.py` | Regenerates both `colab_qsar_tutorial.ipynb` (Colab `# @param` controls) and `local_qsar_tutorial.ipynb` (`ipywidgets` controls); never hand-edit generated notebooks. |
 | Benchmark runner | `portable_colab_qsar_bundle/run_qsarena_benchmarks.py` | ~10k lines. `run_qsarena_benchmarks.txt` is a **stale mirror**: do not read or grep it as source. |
 | Features, splits, CFA, shared ensemble logic | `portable_colab_qsar_bundle/qsar_workflow_core.py` | Runner orchestration stays in `run_qsarena_benchmarks.py`; notebook member collection stays in builder block 7A. (`qsar_workflow_core.txt` is a mirror.) |
 | Dataset registry / catalog | `benchmark_registry.py`, `data/benchmark_dataset_catalog.csv` | |
@@ -215,6 +215,11 @@ stack stopped first). Only matters for step 6.
 | Batch mode, preflight/dry-run, reports, run.log/events, atomic writes | `qsarena/batch.py`, `preflight.py`, `reporting.py`, `run_events.py`, `artifacts.py` | Wired into the runner's `prepare_args()` / `_run_main()`. |
 | Tutorial = Additional file 2 | `docs/tutorial.md` | Every command runs in `tests/docs` (~6 min). PDF: `python submission/build_additional_file_2.py`; never edit the generated `.tex`. Work order: `docs/AGENT_WORK_ORDER_tutorial.md`. |
 | Tutorial example data | `tests/fixtures/tutorial/make_tutorial_data.py` -> `qsarena/examples/data/` | Synthetic targets; shipped in the wheel; `qsarena-examples DIR` copies them out. |
+
+Notebook generation notes:
+- Keep the two generated notebooks interface-clean: Colab should not show local-widget control cells, and the local notebook should not expose Colab `# @param` controls, Google Drive setup widgets, or "Upload CSV/XLSX (Colab only)" choices.
+- The Colab intro should explain that Colab runtimes are temporary, Drive persistence/downloads are needed for durable outputs, and step `0` must be rerun after Colab intentionally disconnects/restarts to load newly installed compiled packages.
+- If setup helper stages are added or removed in `build_colab_qsar_tutorial.py`, update `SETUP_PROGRESS["total"]` before regenerating; the setup log should end with matching counts such as `32/32`.
 
 ## Packaging (`pip install qsarena`)
 

@@ -4,6 +4,7 @@ import json
 import re
 import textwrap
 import uuid
+from dataclasses import dataclass
 from pathlib import Path
 
 try:
@@ -33,10 +34,27 @@ except ModuleNotFoundError:
 
 #: Widget variables that a run.yaml loaded in step 0B may override (RunConfig <-> notebook mapping).
 RUN_CONFIG_WIDGET_NAMES = set(notebook_widget_names())
+LOCAL_EXCLUDED_WIDGET_NAMES = {
+    "persist_outputs_to_google_drive",
+    "google_drive_output_root",
+}
+LOCAL_WIDGET_DEFAULTS = {
+    "dataset_file_path": "./your_dataset.csv",
+}
 
 OUT_PATH = Path(r"portable_colab_qsar_bundle/colab_qsar_tutorial.ipynb")
+OUT_PATHS = {
+    "colab": OUT_PATH,
+    "local": Path(r"portable_colab_qsar_bundle/local_qsar_tutorial.ipynb"),
+}
 EXAMPLE_DATASET_OPTIONS = notebook_example_dataset_options()
 WORKFLOW_MAP_PATH = Path(__file__).with_name("colab_qsar_workflow_map.png")
+
+
+@dataclass(frozen=True)
+class NotebookCodeCell:
+    text: str
+    form: bool = True
 
 
 def workflow_map_image_html():
@@ -60,6 +78,38 @@ def md(text: str):
         "cell_type": "markdown",
         "id": uuid.uuid4().hex[:8],
         "metadata": {},
+        "source": src(text),
+    }
+
+
+def _filter_interface_blocks(text: str, interface: str):
+    """Keep interface-specific markdown blocks for the requested notebook."""
+    out = []
+    include_stack = [True]
+    for line in text.splitlines(keepends=True):
+        stripped = line.strip()
+        if stripped == "<!-- COLAB_ONLY_START -->":
+            include_stack.append(interface == "colab")
+            continue
+        if stripped == "<!-- LOCAL_ONLY_START -->":
+            include_stack.append(interface == "local")
+            continue
+        if stripped in {"<!-- COLAB_ONLY_END -->", "<!-- LOCAL_ONLY_END -->"}:
+            if len(include_stack) > 1:
+                include_stack.pop()
+            continue
+        if all(include_stack):
+            out.append(line)
+    return "".join(out)
+
+
+def _render_markdown_cell(cell, interface: str):
+    text = "".join(cell["source"])
+    text = _filter_interface_blocks(text, interface)
+    return {
+        "cell_type": "markdown",
+        "id": uuid.uuid4().hex[:8],
+        "metadata": dict(cell.get("metadata", {})),
         "source": src(text),
     }
 
@@ -138,8 +188,58 @@ def _extract_form_schema(text: str):
     return dedented, lines, title or "Local form", schema, last_param_index, param_indent
 
 
-def _inject_local_widget_read(text: str, form_id: str):
+def _run_config_override_lines(schema, param_indent):
+    config_names = [item["name"] for item in schema if item.get("name") in RUN_CONFIG_WIDGET_NAMES]
+    if not config_names:
+        return []
+    lines = [
+        f"{param_indent}if globals().get('QSARENA_WIDGET_OVERRIDES'):",
+    ]
+    for name in config_names:
+        lines.append(f"{param_indent}    {name} = QSARENA_WIDGET_OVERRIDES.get({name!r}, {name})")
+    lines.append(f"{param_indent}    _replaced = [n for n in {config_names!r} if n in QSARENA_WIDGET_OVERRIDES]")
+    lines.append(f"{param_indent}    if _replaced:")
+    lines.append(f"{param_indent}        print('[run.yaml] using the loaded config for: ' + ', '.join(_replaced))")
+    return lines
+
+
+def _schema_for_interface(schema, interface: str):
+    adjusted = []
+    for item in schema:
+        if item.get("widget_kind") == "markdown":
+            adjusted.append(dict(item))
+            continue
+        if interface == "local" and item.get("name") in LOCAL_EXCLUDED_WIDGET_NAMES:
+            continue
+        new_item = dict(item)
+        if interface == "local" and new_item.get("widget_kind") == "choice":
+            options = [
+                option for option in new_item.get("options", [])
+                if "colab only" not in str(option).lower()
+            ]
+            if options:
+                new_item["options"] = options
+                if new_item.get("default") not in options:
+                    new_item["default"] = options[0]
+        if interface == "local" and new_item.get("name") in LOCAL_WIDGET_DEFAULTS:
+            new_item["default"] = LOCAL_WIDGET_DEFAULTS[new_item["name"]]
+        adjusted.append(new_item)
+    return adjusted
+
+
+def _inject_run_config_overrides(text: str):
+    dedented, lines, _title, schema, last_param_index, param_indent = _extract_form_schema(text)
+    override_lines = _run_config_override_lines(schema, param_indent)
+    if not override_lines or last_param_index is None:
+        return dedented
+    lines[last_param_index + 1:last_param_index + 1] = ["", *override_lines]
+    return "\n".join(lines) + "\n"
+
+
+def _inject_local_widget_read(text: str, form_id: str, schema_override=None):
     dedented, lines, title, schema, last_param_index, param_indent = _extract_form_schema(text)
+    if schema_override is not None:
+        schema = schema_override
     if not schema or last_param_index is None:
         return dedented
     override_lines = [
@@ -159,19 +259,10 @@ def _inject_local_widget_read(text: str, form_id: str):
         if item.get("widget_kind") == "markdown":
             continue
         override_lines.append(f"{param_indent}    {item['name']} = _local_form_values[{item['name']!r}]")
-    config_names = [item["name"] for item in schema if item.get("name") in RUN_CONFIG_WIDGET_NAMES]
-    if config_names:
+    config_override_lines = _run_config_override_lines(schema, param_indent)
+    if config_override_lines:
         # Step 0B: values from a loaded run.yaml replace the matching widgets (Colab and local).
-        override_lines.append(f"{param_indent}if globals().get('QSARENA_WIDGET_OVERRIDES'):")
-        for name in config_names:
-            override_lines.append(f"{param_indent}    {name} = QSARENA_WIDGET_OVERRIDES.get({name!r}, {name})")
-        override_lines.append(
-            f"{param_indent}    _replaced = [n for n in {config_names!r} if n in QSARENA_WIDGET_OVERRIDES]"
-        )
-        override_lines.append(f"{param_indent}    if _replaced:")
-        override_lines.append(
-            f"{param_indent}        print('[run.yaml] using the loaded config for: ' + ', '.join(_replaced))"
-        )
+        override_lines.extend(config_override_lines)
     lines[last_param_index + 1:last_param_index + 1] = override_lines
     return "\n".join(lines) + "\n"
 
@@ -189,6 +280,30 @@ def _normalize_code_margin(text: str):
         else:
             normalized.append(line)
     return "".join(normalized)
+
+
+def _localize_code_annotations(text: str):
+    localized = []
+    for line in text.splitlines():
+        title_match = TITLE_LINE_RE.match(line)
+        if title_match:
+            indent = re.match(r"^[ \t]*", line).group(0)
+            localized.append(f"{indent}# {title_match.group('title').strip()}")
+            continue
+        param_match = PARAM_LINE_RE.match(line)
+        if param_match:
+            localized.append(
+                f"{param_match.group('indent')}{param_match.group('name')} = {param_match.group('default').strip()}"
+            )
+            continue
+        markdown_match = MARKDOWN_LINE_RE.match(line)
+        if markdown_match:
+            markdown_text = (markdown_match.group("text") or "").strip()
+            if markdown_text:
+                localized.append(f"{markdown_match.group('indent')}# {markdown_text}")
+            continue
+        localized.append(line)
+    return "\n".join(localized) + "\n"
 
 
 def _make_code_cell(text: str, *, form: bool = True):
@@ -210,10 +325,18 @@ def _make_code_cell(text: str, *, form: bool = True):
 
 
 def code(text: str, form: bool = True):
-    dedented, _lines, title, schema, last_param_index, _param_indent = _extract_form_schema(text)
-    if not form or not schema or last_param_index is None:
-        return _make_code_cell(dedented, form=form)
+    return NotebookCodeCell(text=text, form=form)
 
+
+def _render_code_cells(cell: NotebookCodeCell, interface: str):
+    dedented, _lines, title, schema, last_param_index, _param_indent = _extract_form_schema(cell.text)
+    if not cell.form or not schema or last_param_index is None:
+        return [_make_code_cell(dedented, form=cell.form)]
+    if interface == "colab":
+        return [_make_code_cell(_inject_run_config_overrides(cell.text), form=True)]
+    schema = _schema_for_interface(schema, interface)
+    if not any(item.get("widget_kind") != "markdown" for item in schema):
+        return [_make_code_cell(_localize_code_annotations(dedented), form=False)]
     form_id = uuid.uuid4().hex[:8]
     form_cell_text = f"""
     # Local widget controls for: {title}
@@ -223,11 +346,445 @@ def code(text: str, form: bool = True):
         else:
             ensure_local_form_display({title!r}, {form_id!r}, {repr(schema)})
     """
-    run_cell_text = _inject_local_widget_read(text, form_id)
+    run_cell_text = _localize_code_annotations(_inject_local_widget_read(cell.text, form_id, schema_override=schema))
     return [
         _make_code_cell(form_cell_text, form=False),
-        _make_code_cell(run_cell_text, form=True),
+        _make_code_cell(run_cell_text, form=False),
     ]
+
+
+BLOCK_GUIDANCE = {
+    "0. Install packages and initialize the tutorial": """
+        ### Before You Run: 0. Setup
+
+        **What this does.** Installs or imports the Python tools QSARena needs, checks the notebook environment, creates helper functions, and starts a fresh tutorial state.
+
+        <!-- COLAB_ONLY_START -->
+        **Main choices.** Turn on Google Drive persistence only if you want outputs to survive a disconnected runtime.
+        <!-- COLAB_ONLY_END -->
+        <!-- LOCAL_ONLY_START -->
+        **Main choices.** No setup choices are required in the local notebook. Confirm the active kernel is the QSARena environment before running.
+        <!-- LOCAL_ONLY_END -->
+
+        **Time cost.** First run: usually 2-12 minutes because packages may install. A warm runtime is often under 2 minutes. Optional graph/deep-learning sections later can trigger extra install cells.
+
+        <!-- COLAB_ONLY_START -->
+        **What to expect.** A progress log ending with "Tutorial state initialized." The first install pass may disconnect/restart the runtime so compiled packages can load. Reconnect and rerun this setup block once; the second pass should import the installed packages and finish cleanly.
+        <!-- COLAB_ONLY_END -->
+        <!-- LOCAL_ONLY_START -->
+        **What to expect.** A progress log ending with "Tutorial state initialized." If a local package install asks for a kernel restart, restart the kernel and rerun this setup block once.
+        <!-- LOCAL_ONLY_END -->
+    """,
+    "0B. Optional: apply a QSARena run.yaml to the widgets": """
+        ### Before You Run: 0B. Optional `run.yaml`
+
+        **What this does.** Loads saved QSARena choices from a `run.yaml` file and applies matching values to later widgets.
+
+        **Main choices.** Leave the path blank for a first tutorial run. Use a file path only when you want to reproduce a previous notebook or command-line run.
+
+        **Time cost.** Usually under 10 seconds.
+
+        **What to expect.** Either "No run.yaml given" or a printed list of widget values that will be replaced later.
+    """,
+    "1A. Load a dataset": """
+        ### Before You Run: 1A. Load Data
+
+        **What this does.** Reads a CSV/table from upload, file path, or a built-in QSAR example.
+
+        **Main choices.** New users should start with a built-in example. For your own data, use a table with one SMILES column and one measured endpoint column. Keep the row limit at 0 unless you are doing a quick smoke test.
+
+        **Time cost.** Local/uploaded CSVs are usually seconds. Built-in benchmark downloads may take 1-3 minutes the first time.
+
+        **What to expect.** A preview table and detected dataset metadata. Nothing is modeled yet.
+    """,
+    "1B. Choose the SMILES and target columns": """
+        ### Before You Run: 1B. Pick Columns
+
+        **What this does.** Tells the notebook which column contains molecular structures and which column is the value to predict.
+
+        **Main choices.** Choose the SMILES column exactly. Choose one numeric target. Optional auxiliary columns should be used only when they are available for future prediction molecules too.
+
+        **Time cost.** Usually instant.
+
+        **What to expect.** A confirmation of selected columns and a small preview. If the wrong column is selected, stop here and rerun this block.
+    """,
+    "1C. Assess missingness and preprocess the selected columns": """
+        ### Before You Run: 1C. Clean Rows And Choose Target Scale
+
+        **What this does.** Profiles missing values, converts the target to numeric values, optionally transforms the target, parses SMILES with RDKit, and removes invalid or duplicate structures according to your choices.
+
+        **Main choices.** Use `ignore_row` for missing targets unless there is a scientific reason to impute. Use `AUTO` target transform for most datasets; it will not log-transform zero or negative values. Collapse duplicate canonical SMILES when repeated structures should count once.
+
+        **Time cost.** Seconds for a few hundred molecules; a few minutes for tens of thousands or difficult SMILES.
+
+        **What to expect.** Missingness, target-value, and curation summaries, followed by a dataset-size runtime estimate for later modeling blocks.
+    """,
+    "2A. Preview curated molecules": """
+        ### Before You Run: 2A. Preview Molecules
+
+        **What this does.** Draws a small sample of curated molecules so you can catch obvious structure problems before modeling.
+
+        **Main choices.** Increase the preview count only if you want a broader visual check. This block does not change the data.
+
+        **Time cost.** Usually 5-30 seconds.
+
+        **What to expect.** A grid of molecule drawings or a clear message if drawing is unavailable.
+    """,
+    "2B. Generate molecular features": """
+        ### Before You Run: 2B. Build Molecular Features
+
+        **What this does.** Converts each molecule into numeric fingerprints and descriptors that machine-learning models can use.
+
+        **Main choices.** For a first run, Morgan, MACCS, and RDKit descriptors are a good balance. More fingerprint families may improve coverage but increase RAM, feature-selection time, and model training time. MapLight classic is useful for benchmark parity but can be heavier.
+
+        **Time cost.** About 30 seconds to 10 minutes for typical tutorial datasets. Large datasets and many feature families can take much longer, especially without cache reuse.
+
+        **What to expect.** Feature matrix dimensions, feature-family summaries, and stored feature metadata for later cells.
+    """,
+    "3A. Build an interactive PCA -> t-SNE map": """
+        ### Before You Run: 3A. Similarity Map
+
+        **What this does.** Projects molecular features into a 2D map so you can see clusters, outliers, and chemical diversity.
+
+        **Main choices.** Fewer points and simpler embedding settings are faster. Use this as a diagnostic, not as a measure of model accuracy.
+
+        **Time cost.** Roughly 30 seconds to 8 minutes; t-SNE gets slower as molecule count grows.
+
+        **What to expect.** An interactive plot colored by target values or classes.
+    """,
+    "4A. Split train/test data": """
+        ### Before You Run: 4A. Split The Dataset
+
+        **What this does.** Separates molecules into training rows used to fit models and test rows held back for final checking.
+
+        **Main choices.** Scaffold split is chemically stricter and often harder; random split is faster and easier but can overestimate real-world performance; target-quartile split balances a continuous target. Keep the same split when comparing model families.
+
+        **Time cost.** Usually seconds; scaffold splitting can take minutes on larger datasets.
+
+        **What to expect.** Train/test counts and target-distribution diagnostics.
+    """,
+    "4A.5. Configure train-only feature selection": """
+        ### Before You Run: 4A.5. Configure Feature Selection
+
+        **What this does.** Chooses how the notebook reduces thousands of molecular features to a smaller set using only the training split.
+
+        **Main choices.** `elasticnetcv` is more thorough but can be slow on large/high-dimensional datasets. `rf_fallback` is usually safer for quick interactive runs. `none` keeps everything and can make later models slower.
+
+        **Time cost.** This configuration block is instant; the cost happens in 4B.
+
+        **What to expect.** Settings are stored for the next block.
+    """,
+    "4B. Run train-only feature selection": """
+        ### Before You Run: 4B. Run Feature Selection
+
+        **What this does.** Applies the selected feature-reduction strategy to the training data and carries the same selected columns to the test data.
+
+        **Main choices.** Use caching for reruns. If ElasticNetCV times out, let the random-forest fallback complete rather than repeatedly trying the same slow selector.
+
+        **Time cost.** Seconds for small datasets, often 5-20 minutes for larger feature matrices. The ElasticNetCV estimate scales with training-row count and feature count.
+
+        **What to expect.** Selected feature counts, any timeout/fallback note, and prepared train/test matrices for modeling.
+    """,
+    "5A.5. Set PRIORLABS_API_KEY securely and test TabPFN auth/access": """
+        ### Before You Run: 5A.5. TabPFN Access Check
+
+        **What this does.** Optionally checks whether TabPFN can run through a local install or Prior Labs access token.
+
+        **Main choices.** Skip this unless you plan to turn on TabPFN in 5B. Do not paste shared or production credentials into a notebook you will distribute.
+
+        **Time cost.** Usually 10 seconds to 2 minutes.
+
+        **What to expect.** A pass/fail message explaining whether TabPFN is available.
+    """,
+    "4C. Train conventional ML models and show an interactive metrics table": """
+        ### Before You Run: 4C. Train Conventional Models
+
+        **What this does.** Fits baseline QSAR models such as random forest, extra trees, SVM/SVR, gradient boosting, CatBoost, and XGBoost when selected.
+
+        **Main choices.** Start with the defaults. Turning on every model increases time; tree models are usually robust for QSAR. Cross-validation folds improve selection information but multiply work.
+
+        **Time cost.** Often 2-30 minutes for normal tutorial datasets; much longer for large datasets, many models, or many CV folds.
+
+        **What to expect.** A metrics table. For regression, lower RMSE/MAE and higher R2 are better. For classification, higher AUROC/AUPRC is better.
+    """,
+    "4D. Plot observed vs predicted values for all conventional models": """
+        ### Before You Run: 4D. Plot Conventional Predictions
+
+        **What this does.** Shows how close model predictions are to observed test values.
+
+        **Main choices.** Pick a model or show all. Use this plot to look for systematic bias, not just one summary number.
+
+        **Time cost.** Usually seconds.
+
+        **What to expect.** Observed-vs-predicted plots for regression or probability-style plots for classification.
+    """,
+    "4E. Run genetic-algorithm tuning for selected conventional models": """
+        ### Before You Run: 4E. Optional GA Tuning
+
+        **What this does.** Searches for better model hyperparameters using repeated candidate fits.
+
+        **Main choices.** Optional. Keep generations, population size, and model list small in an interactive notebook. Tuning is useful after you have a working baseline, but it is not required for a defensible first QSAR model.
+
+        **Time cost.** 10 minutes to several hours. Runtime grows roughly with models x generations x population x CV folds.
+
+        **What to expect.** Tuned model rows and checkpoint files. If it is too slow, stop here and continue with 4C results.
+    """,
+    "4F. Plot observed vs predicted values for all tuned conventional models": """
+        ### Before You Run: 4F. Plot Tuned Models
+
+        **What this does.** Visualizes predictions from models tuned in 4E.
+
+        **Main choices.** Compare tuned models with the untuned baseline; tuning is not automatically better.
+
+        **Time cost.** Usually seconds.
+
+        **What to expect.** Prediction plots for tuned models that finished successfully.
+    """,
+    "4G. Plot GA convergence history for tuned conventional models": """
+        ### Before You Run: 4G. Check GA Progress
+
+        **What this does.** Shows whether genetic-algorithm tuning was still improving or had flattened out.
+
+        **Main choices.** Use this to decide whether more GA generations are worth the time.
+
+        **Time cost.** Usually seconds.
+
+        **What to expect.** Convergence plots for completed GA runs.
+    """,
+    "5A. Check whether a GPU is available": """
+        ### Before You Run: 5A. Hardware Check
+
+        **What this does.** Reports whether a GPU is available for deep-learning and pretrained-model blocks.
+
+        <!-- COLAB_ONLY_START -->
+        **Main choices.** Use Runtime > Change runtime type > T4 GPU before running heavy deep models. Conventional models do not require a GPU.
+        <!-- COLAB_ONLY_END -->
+        <!-- LOCAL_ONLY_START -->
+        **Main choices.** Conventional models do not require a GPU. For deep models, make sure your CUDA-enabled GPU is available to this Python environment.
+        <!-- LOCAL_ONLY_END -->
+
+        **Time cost.** Instant.
+
+        **What to expect.** A simple CPU/GPU report and practical guidance for the next blocks.
+    """,
+    "5B. Train selected deep-learning models": """
+        ### Before You Run: 5B. Deep-Learning Models
+
+        **What this does.** Optionally fits ChemML MLPs, TabPFN, and MapLight + GNN when available.
+
+        **Main choices.** Start with ChemML PyTorch only. Turn on TabPFN only after access passes. MapLight + GNN is mainly for local compatible environments because Colab DGL/PyTorch compatibility is fragile.
+
+        **Time cost.** About 5-60+ minutes. GPU helps; CPU-only deep learning can be slow. Larger datasets and more epochs increase time.
+
+        **What to expect.** Additional model rows or clear skip messages for unavailable backends.
+    """,
+    "5C. Compare conventional and deep-learning performance": """
+        ### Before You Run: 5C. Compare Families
+
+        **What this does.** Places conventional and deep-learning results in one table.
+
+        **Main choices.** Focus on test performance, not only training performance. A slower model should earn its extra complexity.
+
+        **Time cost.** Usually seconds.
+
+        **What to expect.** A combined comparison table and best-model highlight.
+    """,
+    "6A. Install Uni-Mol packages (optional; may restart the runtime)": """
+        ### Before You Run: 6A. Optional Uni-Mol Install
+
+        **What this does.** Installs packages needed for Uni-Mol pretrained 3D models.
+
+        **Main choices.** Skip unless you plan to run Uni-Mol. Use a GPU runtime if possible.
+
+        **Time cost.** Often 1-10 minutes and may require a runtime restart.
+
+        **What to expect.** Install messages and possibly an instruction to restart and rerun setup.
+    """,
+    "6B. Prepare Uni-Mol train and test files from the QSAR split": """
+        ### Before You Run: 6B. Prepare Uni-Mol Files
+
+        **What this does.** Writes train/test files in the format Uni-Mol expects, using the same split as the rest of the notebook.
+
+        **Main choices.** Keep default subset settings unless you need a quick test. Subsetting makes the run faster but changes the training data.
+
+        **Time cost.** Seconds to a few minutes.
+
+        **What to expect.** File paths and row counts for Uni-Mol input files.
+    """,
+    "6C. Train and evaluate Uni-Mol V1": """
+        ### Before You Run: 6C. Uni-Mol V1
+
+        **What this does.** Fine-tunes a pretrained 3D molecular model and evaluates it on the notebook split.
+
+        **Main choices.** Use a GPU. Keep epochs modest for a first run. Uni-Mol can be more accurate on some endpoints but is much heavier than conventional models.
+
+        **Time cost.** Often 10 minutes to 2+ hours depending on rows, epochs, conformer generation, and hardware.
+
+        **What to expect.** Uni-Mol metrics and saved prediction rows if training succeeds.
+    """,
+    "6D. Train and evaluate Uni-Mol V2": """
+        ### Before You Run: 6D. Uni-Mol V2
+
+        **What this does.** Runs a newer/larger Uni-Mol variant.
+
+        **Main choices.** Start with the 84m model. Larger models may exceed Colab memory and are not a beginner default.
+
+        **Time cost.** Often 20 minutes to 3+ hours on GPU; CPU is generally impractical for real datasets.
+
+        **What to expect.** Metrics or a clear resource/compatibility skip message.
+    """,
+    "6E. Install Chemprop v2 packages (optional; may restart the runtime)": """
+        ### Before You Run: 6E. Optional Chemprop Install
+
+        **What this does.** Installs Chemprop v2 for graph neural-network models.
+
+        **Main choices.** Skip unless you plan to run Chemprop in 6F. Use a GPU runtime.
+
+        **Time cost.** Often 1-10 minutes and may require restart.
+
+        **What to expect.** Install progress and a message telling you whether restart is needed.
+    """,
+    "6F. Train and evaluate Chemprop v2 graph variants": """
+        ### Before You Run: 6F. Chemprop Variants
+
+        **What this does.** Trains one or more Chemprop graph neural-network variants.
+
+        **Main choices.** Start with one variant and modest epochs. Each added variant and ensemble member adds training time. Descriptor-augmented variants need the selected descriptor matrix from earlier cells.
+
+        **Time cost.** Often 10 minutes to 2+ hours; substantially slower without GPU.
+
+        **What to expect.** Chemprop metrics for completed variants and actionable errors for variants that fail.
+    """,
+    "6G. Plot observed vs predicted values for selected Uni-Mol models": """
+        ### Before You Run: 6G. Plot Uni-Mol
+
+        **What this does.** Visualizes Uni-Mol predictions.
+
+        **Main choices.** Compare the plot against conventional models before deciding the extra runtime was worthwhile.
+
+        **Time cost.** Usually seconds.
+
+        **What to expect.** Observed-vs-predicted plots for completed Uni-Mol models.
+    """,
+    "6H. Compare conventional ML, ChemML deep learning, Uni-Mol, and Chemprop": """
+        ### Before You Run: 6H. Compare All Completed Families
+
+        **What this does.** Brings conventional, deep, Uni-Mol, and Chemprop results into one comparison table.
+
+        **Main choices.** Treat unavailable/skipped models as information about practicality, not notebook failure.
+
+        **Time cost.** Usually seconds.
+
+        **What to expect.** A sortable summary across every model family that has completed.
+    """,
+    "7A. Build an optional ensemble from trained models": """
+        ### Before You Run: 7A. Optional Ensemble
+
+        **What this does.** Combines completed model predictions using leakage-controlled out-of-fold information when available.
+
+        **Main choices.** Use OOF selection for honest member choice. Ensembles can help, but they are only as good as their member predictions and may refit conventional/tuned members on folds.
+
+        **Time cost.** Usually 30 seconds to 10 minutes for notebook-scale data; longer if many tuned models need fold predictions.
+
+        **What to expect.** Ensemble metric rows, member weights, and notes explaining any excluded members.
+    """,
+    "7B. Plot ensemble-member performance and the final ensemble": """
+        ### Before You Run: 7B. Plot Ensemble
+
+        **What this does.** Shows whether the ensemble improved on its member models.
+
+        **Main choices.** Keep the ensemble only if it improves test behavior or gives a useful robustness check.
+
+        **Time cost.** Usually seconds.
+
+        **What to expect.** Member comparison and final ensemble prediction plot.
+    """,
+    "8A. Configure explanation settings for the best conventional model": """
+        ### Before You Run: 8A. Explanation Settings
+
+        **What this does.** Chooses how to explain the best conventional model.
+
+        **Main choices.** Permutation importance is broadly useful and easier to interpret. SHAP can be informative but may be slower depending on model and feature count.
+
+        **Time cost.** This setup block is instant; explanation cost happens in 8B.
+
+        **What to expect.** Stored explanation settings for the next block.
+    """,
+    "8B. Run explanation for the best conventional model": """
+        ### Before You Run: 8B. Explain A Conventional Model
+
+        **What this does.** Estimates which molecular features most influence the selected conventional model.
+
+        **Main choices.** Use fewer repeats or fewer top features for quick runs. Explanations are model diagnostics, not proof of causation.
+
+        **Time cost.** About 30 seconds to 15 minutes; high feature counts and repeated permutation tests are slower.
+
+        **What to expect.** Feature-importance tables and plots.
+    """,
+    "8C. Explain the ChemML deep model": """
+        ### Before You Run: 8C. Explain ChemML
+
+        **What this does.** Runs optional explanation methods for a fitted ChemML neural network.
+
+        **Main choices.** Use small background/sample sizes first. Deep explanations can be slow and noisier than conventional feature importance.
+
+        **Time cost.** About 30 seconds to 20 minutes, especially on CPU.
+
+        **What to expect.** Deep-model explanation plots if ChemML was trained successfully.
+    """,
+    "9A. Predict from a trained model using a new SMILES table": """
+        ### Before You Run: 9A. Predict New Molecules
+
+        **What this does.** Applies a trained model from this notebook session to a new table of SMILES.
+
+        **Main choices.** Use the same auxiliary columns, if any, that the model saw during training. Choose a trained model that performed well on the held-out test rows.
+
+        **Time cost.** Seconds for conventional models; minutes or more for Uni-Mol/Chemprop predictions.
+
+        **What to expect.** A prediction table with invalid SMILES flagged rather than silently ignored.
+    """,
+    "9B. Build an interactive UMAP for train, test, and new molecules": """
+        ### Before You Run: 9B. Map New Chemistry
+
+        **What this does.** Places new molecules on a 2D map with the training and test molecules.
+
+        **Main choices.** Use this as a visual domain check. It is not a substitute for the applicability-domain block.
+
+        **Time cost.** Roughly 30 seconds to 8 minutes depending on total molecule count.
+
+        **What to expect.** An interactive map showing whether new molecules fall near the training chemistry.
+    """,
+    "9D. Fit and apply the MAST-ML / MADML applicability-domain workflow": """
+        ### Before You Run: 9D. Applicability Domain
+
+        **What this does.** Estimates whether each new prediction is inside the chemistry space where the model has support.
+
+        **Main choices.** Keep repeats low for a first run. KNN and Mahalanobis diagnostics are complementary; consensus labels are easier for non-specialists to review.
+
+        **Time cost.** Often 5-60+ minutes. Repeated validation and random forests dominate runtime.
+
+        **What to expect.** An in-domain/out-of-domain table and supporting diagnostic columns.
+    """,
+    "9E. Export the widget choices as run.yaml": """
+        ### Before You Run: 9E. Export Choices
+
+        **What this does.** Writes the widget choices from this notebook to a `run.yaml` that the command-line runner can reuse.
+
+        **Main choices.** Use this after a successful notebook run if you want a reproducible record or batch run.
+
+        **Time cost.** Usually instant.
+
+        **What to expect.** A printed YAML file containing the explicit choices represented by notebook widgets.
+    """,
+}
+
+
+def _guidance_cell_for_code(cell: NotebookCodeCell, interface: str):
+    _dedented, _lines, title, _schema, _last_param_index, _param_indent = _extract_form_schema(cell.text)
+    guidance = BLOCK_GUIDANCE.get(title)
+    if not guidance:
+        return None
+    return _render_markdown_cell(md(_filter_interface_blocks(guidance, interface)), interface)
 
 
 cells = []
@@ -238,9 +795,25 @@ cells += [
         """
         # Tutorial: Guided QSAR Workflow With Widgets
 
+        <!-- COLAB_ONLY_START -->
         [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ScottCoffin/QSARena/blob/main/portable_colab_qsar_bundle/colab_qsar_tutorial.ipynb)
 
-        **Kernel note (local Jupyter users)**  
+        This is the **Google Colab** version of the tutorial. It uses Colab form controls (`# @param`) and is designed so a new user can run the workflow without editing Python code.
+
+        **Colab note (persistent outputs)**
+        Step `0` includes an opt-in toggle to mount Google Drive and write cache/output artifacts under a Drive folder so results persist across runtime resets.
+
+        **Colab note (runtime restart after setup)**
+        The setup chunk installs packages that Colab cannot fully load into the already-running Python process. When that happens, Colab intentionally disconnects or restarts the runtime. That is expected, not a failed analysis. After Colab reconnects, run **step 0 again** so the newly installed packages are imported cleanly, then continue with step `0B` or step `1A`.
+
+        **Colab note (MapLight + GNN)**
+        The MapLight + GNN workflow depends on DGL, which the MapLight repo reports as unreliable on Colab. If you enable MapLight + GNN in Colab, the notebook will skip it with a message rather than crash. Use the local notebook if you need that model.
+        <!-- COLAB_ONLY_END -->
+
+        <!-- LOCAL_ONLY_START -->
+        This is the **local Jupyter** version of the tutorial. It uses `ipywidgets` controls in separate control cells so local users are not shown Colab-only forms.
+
+        **Kernel note**
         This notebook is configured to prefer the **QSARena (py311)** kernel. If you do not see it in the kernel list, create it first:
 
         ```powershell
@@ -252,17 +825,12 @@ cells += [
         ```
 
         After that, switch the notebook kernel to **QSARena (py311)** and rerun step 0.
-
-        **Colab note (MapLight + GNN)**  
-        The MapLight + GNN workflow depends on DGL, which the MapLight repo reports as unreliable on Colab. If you enable MapLight + GNN in Colab, the notebook will skip it with a message rather than crash. Use a local Python 3.11 kernel if you need that model.
-
-        **Colab note (persistent outputs)**  
-        Step `0` now includes an opt-in toggle to mount Google Drive and write cache/output artifacts under a Drive folder so results persist across runtime resets.
+        <!-- LOCAL_ONLY_END -->
         """
     ),
     md(
         """
-        This notebook is for chemists and toxicologists who want a **guided QSAR workflow** in **Google Colab or a local Jupyter environment** without needing to write Python.
+        This notebook is for chemists and toxicologists who want a **guided QSAR workflow** without needing to write Python or already know QSAR jargon.
 
         In plain language, the notebook walks through this workflow:
 
@@ -276,25 +844,38 @@ cells += [
         8. **Optionally tune models, train deep models, and build ensembles**
         9. **Explain the model behavior** and compare what worked best
 
-        You do not need to edit the Python code. Most cells are shown in **form view**, which means you mainly interact with dropdowns, checkboxes, sliders, and text boxes, then click the **Run** button on the left side of the cell.
+        You do not need to edit the Python code.
 
-        The notebook automatically detects whether it is running in **Colab** or **locally** and adjusts things like:
+        <!-- COLAB_ONLY_START -->
+        This Colab notebook uses the controls built into Google Colab. You should see each runnable block as a compact form with plain controls near the top of the block, then click the **Run** button on the left side of the cell.
 
-        - package restart behavior
-        - upload helpers
-        - file-path handling
-        - local `ipywidgets` forms for non-Colab notebooks
-        - Plotly display behavior
-        - Google Drive mounting
+        **What Google Colab is doing**
+
+        Google Colab is a temporary cloud computer attached to this notebook. The notebook file itself can be saved in Google Drive or GitHub, but the runtime memory and files under `/content` disappear when the session disconnects, idles out, or is reset. That means:
+
+        - save important outputs to Google Drive, either by turning on Drive persistence in step `0` or by downloading files before closing the session
+        - if Colab disconnects, reconnect, rerun step `0`, and rerun the earlier cells needed to rebuild the in-memory notebook state
+        - if Drive persistence was enabled, cached feature/model files can often be reused after reconnecting
+        - if Drive persistence was not enabled, upload or load the dataset again and rerun from the beginning of the workflow
+        - after the first setup install, Colab may deliberately restart to load compiled packages; rerun step `0` once after that restart
+        <!-- COLAB_ONLY_END -->
+
+        <!-- LOCAL_ONLY_START -->
+        This local notebook uses an `ipywidgets` controls cell before each runnable block. Run the controls cell, adjust the values, then run the following execution cell.
+        <!-- LOCAL_ONLY_END -->
 
         **How to use this notebook**
 
         - Run the cells **from top to bottom**
         - Start with **step 0**
+        <!-- COLAB_ONLY_START -->
         - If **step 0 installs packages**, the notebook may require a restart
-        - In **Colab**, rerun **step 0 once after reconnecting**
-        - In a **local Jupyter kernel**, restart the kernel if prompted, then rerun **step 0**
-        - In **local Jupyter**, parameterized steps are split into a **controls cell** and a **run cell**; first run the controls cell to display the widgets, then adjust the settings, then run the next cell
+        - Rerun **step 0 once after reconnecting**, then continue downward
+        <!-- COLAB_ONLY_END -->
+        <!-- LOCAL_ONLY_START -->
+        - If a package install changes the environment, restart the kernel if prompted, then rerun **step 0**
+        - For parameterized steps, run the controls cell first, adjust values, then run the following execution cell
+        <!-- LOCAL_ONLY_END -->
         - After step 0 finishes cleanly, continue to step 1 and move downward
         - If you change an earlier choice, rerun the later cells that depend on it
         - Some optional sections, especially **hyperparameter tuning**, **deep learning**, **pretrained/graph models**, applicability-domain analysis, and ensembles, can take much longer than the basic conventional-model workflow
@@ -304,7 +885,9 @@ cells += [
         - one column containing **SMILES**
         - one column containing a **numeric target**
 
-        If you are new to Colab, the most important thing to remember is this: after package installation, the runtime may refresh, and the notebook may look idle again. In that case, just run **step 0 again once**, wait for it to finish, and then continue normally. If you are running locally, the same idea applies, but you may need to restart the kernel instead of the full runtime.
+        <!-- COLAB_ONLY_START -->
+        If you are new to Colab, the most important thing to remember is this: after package installation, the runtime may refresh, and the notebook may look idle again. In that case, run **step 0 again once**, wait for it to finish, and then continue normally.
+        <!-- COLAB_ONLY_END -->
 
         It adapts ideas from:
 
@@ -316,7 +899,9 @@ cells += [
         - `references/test_MLP.py`
         - `references/test_explain.py`
 
+        <!-- COLAB_ONLY_START -->
         Most code cells are shown in **form view**, so you should mainly see controls rather than raw Python.
+        <!-- COLAB_ONLY_END -->
         """
     ),
     md(
@@ -361,14 +946,36 @@ cells += [
         9A-9D Predict new molecules, map new chemistry, and assess applicability domain
         ```
 
+        <!-- COLAB_ONLY_START -->
         **Recommended Colab route:** run the core path first with default settings. Once you have a working baseline and a reasonable `4D` plot, add one optional path at a time. Optional paths can install extra packages, use more RAM, require a GPU, or need a runtime restart.
+        <!-- COLAB_ONLY_END -->
+        <!-- LOCAL_ONLY_START -->
+        **Recommended local route:** run the core path first with default settings. Once you have a working baseline and a reasonable `4D` plot, add one optional path at a time. Optional paths can install extra packages, use more RAM, require a GPU, or need a kernel restart.
+        <!-- LOCAL_ONLY_END -->
         """
     ),
     md(
         """
         ## Estimated Runtime By Runnable Cell
 
+        <!-- COLAB_ONLY_START -->
         These are approximate **Google Colab** ranges for moderate QSAR datasets. Runtime can be much shorter when caches are reused and much longer for large datasets, many descriptors, slow package installs, or CPU-only deep-learning runs. Markdown-only cells are effectively instant.
+        <!-- COLAB_ONLY_END -->
+        <!-- LOCAL_ONLY_START -->
+        These are approximate **local Jupyter** ranges for moderate QSAR datasets. Runtime depends strongly on your CPU/GPU, caches, feature families, package installs, and optional deep-learning blocks. Markdown-only cells are effectively instant.
+        <!-- LOCAL_ONLY_END -->
+
+        The size guidance below uses the same order-of-magnitude heuristic as the command-line preflight report: median model-family wall-clock times from the manuscript's Table 6, scaled roughly linearly with molecule count from a 1,605-molecule reference dataset. It is meant to prevent surprises, not to promise an exact finish time.
+
+        | Valid molecules after cleaning | Practical interpretation | Core path (`0`-`4D`) | Expensive options to treat carefully |
+        | ---: | --- | ---: | --- |
+        | `<500` | Tiny tutorial or pilot set | usually 5-20 min after setup | GA tuning and deep models are feasible experiments, but still optional. |
+        | `500-2,000` | Typical small QSAR project | usually 10-45 min after setup | Uni-Mol/Chemprop can become the dominant runtime; use GPU and modest epochs. |
+        | `2,000-10,000` | Medium dataset | usually 30 min-2 h after setup | ElasticNetCV, GA tuning, Chemprop, Uni-Mol, and applicability-domain fitting can take hours. |
+        | `10,000-50,000` | Large interactive notebook job | several hours is plausible | Prefer random-forest feature-selection fallback, fewer model families, and command-line/batch mode for long runs. |
+        | `>50,000` | Better suited to batch/HPC | not recommended for a beginner notebook run | Use `qsarena-benchmark --dry-run` first and plan compute before training. |
+
+        Approximate per-model-family medians at the 1,605-row reference size were: conventional ML about 7 s per model, ChemML MLP about 40 s, MapLight + GNN about 137 s, Chemprop about 269 s per variant, and Uni-Mol about 374 s. A block that trains several models multiplies those per-model costs, and CPU-only deep learning may be several times slower.
 
         | Cell | Typical time | Notes |
         | --- | ---: | --- |
@@ -381,7 +988,7 @@ cells += [
         | `3A` Similarity map | 30 sec-8 min | t-SNE/embedding cost grows with molecule count and selected features. |
         | `4A` Split train/test | 5 sec-2 min | Scaffold splitting can be slower than random or target-quartile splitting. |
         | `4A.5` Configure feature selection | <10 sec | Stores selector settings. |
-        | `4B` Run feature selection | 30 sec-20 min | ElasticNetCV can be slow for high feature counts; RF fallback is safer for Colab. |
+        | `4B` Run feature selection | 30 sec-20 min | ElasticNetCV can be slow for high feature counts; RF fallback is safer for quick interactive runs. |
         | `4C` Train conventional models | 2-30 min | Depends on selected models, CV, rows, and feature count. |
         | `4D` Plot conventional predictions | 5-30 sec | Usually quick. |
         | `4E` GA tuning | 10 min-2+ hr | Optional; model count, generations, population size, and CV dominate runtime. |
@@ -394,7 +1001,7 @@ cells += [
         | `6A` Install Uni-Mol packages | 1-10 min | May require runtime restart. |
         | `6B` Prepare Uni-Mol files | 5 sec-2 min | Mostly file writing and split preparation. |
         | `6C` Uni-Mol V1 | 10 min-2+ hr | Optional; GPU helps, CPU can be slow. |
-        | `6D` Uni-Mol V2 | 20 min-3+ hr | GPU strongly recommended; larger model sizes can exceed Colab memory. |
+        | `6D` Uni-Mol V2 | 20 min-3+ hr | GPU strongly recommended; larger model sizes can exceed notebook memory. |
         | `6E` Install Chemprop v2 | 1-10 min | May require runtime restart. |
         | `6F` Chemprop v2 variants | 10 min-2+ hr | Depends on variants, epochs, descriptors, and GPU availability. |
         | `6G` Plot Uni-Mol predictions | 5-30 sec | Usually quick. |
@@ -433,7 +1040,7 @@ cells += [
         warnings.filterwarnings("ignore")
 
         PACKAGE_PROGRESS = {"done": 0, "total": 23}
-        SETUP_PROGRESS = {"done": 0, "total": 30}
+        SETUP_PROGRESS = {"done": 0, "total": 32}
         try:
             RUNNING_IN_COLAB = importlib.util.find_spec("google.colab") is not None
         except ModuleNotFoundError:
@@ -1799,6 +2406,126 @@ cells += [
             display(Markdown(text))
         setup_done("display helper")
 
+        setup_start("runtime estimate helper")
+        TABLE6_REFERENCE_ROWS = 1605.0
+        TABLE6_MEDIAN_SECONDS = {
+            "conventional_model": 6.8,
+            "chemml_mlp": 39.8,
+            "maplight_gnn": 137.4,
+            "chemprop_variant": 268.6,
+            "unimol_model": 373.5,
+        }
+
+        def format_runtime_estimate(seconds):
+            seconds = float(seconds)
+            if not math.isfinite(seconds):
+                return "unknown"
+            seconds = max(0.0, seconds)
+            if seconds < 90:
+                return f"{seconds:.0f} sec"
+            if seconds < 5400:
+                return f"{seconds / 60.0:.0f} min"
+            if seconds < 172800:
+                return f"{seconds / 3600.0:.1f} hr"
+            return f"{seconds / 86400.0:.1f} days"
+
+        def estimate_table6_seconds(kind, n_rows, *, gpu_available=False, multiplier=1.0):
+            scale = max(0.05, float(n_rows) / TABLE6_REFERENCE_ROWS)
+            seconds = TABLE6_MEDIAN_SECONDS[kind] * scale * float(multiplier)
+            if not gpu_available and kind in {"chemml_mlp", "maplight_gnn"}:
+                seconds *= 2.0
+            if not gpu_available and kind in {"chemprop_variant", "unimol_model"}:
+                seconds *= 8.0
+            return float(seconds)
+
+        def estimate_elasticnet_selector_seconds(n_rows):
+            n_train = max(2.0, 0.8 * float(n_rows))
+            predicted = 10 ** (-0.658 + 1.225 * math.log10(n_train))
+            return min(float(predicted), 7200.0)
+
+        def notebook_runtime_estimate_rows(n_rows):
+            gpu_available = bool(gpu_inventory())
+            n_rows = int(n_rows)
+            feature_seconds = 5.0 + 0.02 * float(n_rows)
+            selector_seconds = estimate_elasticnet_selector_seconds(n_rows)
+            conventional_seconds = estimate_table6_seconds(
+                "conventional_model", n_rows, gpu_available=gpu_available, multiplier=10
+            )
+            chemml_seconds = estimate_table6_seconds(
+                "chemml_mlp", n_rows, gpu_available=gpu_available, multiplier=1
+            )
+            chemprop_seconds = estimate_table6_seconds(
+                "chemprop_variant", n_rows, gpu_available=gpu_available, multiplier=1
+            )
+            unimol_seconds = estimate_table6_seconds(
+                "unimol_model", n_rows, gpu_available=gpu_available, multiplier=1
+            )
+            ga_seconds = estimate_table6_seconds(
+                "conventional_model", n_rows, gpu_available=gpu_available, multiplier=12 * 16
+            )
+            ad_seconds = 180.0 + 0.10 * float(n_rows)
+            rows = [
+                {
+                    "Later block": "2B molecular features",
+                    "Rough time": format_runtime_estimate(feature_seconds),
+                    "Why it changes": "More molecules and more feature families require more descriptor work.",
+                },
+                {
+                    "Later block": "4B ElasticNetCV feature selection",
+                    "Rough time": format_runtime_estimate(selector_seconds),
+                    "Why it changes": "Scales strongly with training rows and feature count; RF fallback is faster.",
+                },
+                {
+                    "Later block": "4C conventional model set",
+                    "Rough time": format_runtime_estimate(conventional_seconds),
+                    "Why it changes": "About ten conventional models by default; CV folds multiply work.",
+                },
+                {
+                    "Later block": "4E GA tuning",
+                    "Rough time": format_runtime_estimate(ga_seconds),
+                    "Why it changes": "Models x generations x population size x CV folds.",
+                },
+                {
+                    "Later block": "5B one ChemML MLP",
+                    "Rough time": format_runtime_estimate(chemml_seconds),
+                    "Why it changes": "Deep tabular training is slower on CPU.",
+                },
+                {
+                    "Later block": "6C/6D one Uni-Mol model",
+                    "Rough time": format_runtime_estimate(unimol_seconds),
+                    "Why it changes": "Pretrained 3D model; GPU strongly recommended.",
+                },
+                {
+                    "Later block": "6F one Chemprop variant",
+                    "Rough time": format_runtime_estimate(chemprop_seconds),
+                    "Why it changes": "Graph neural network; each selected variant adds another fit.",
+                },
+                {
+                    "Later block": "9D applicability domain",
+                    "Rough time": format_runtime_estimate(ad_seconds),
+                    "Why it changes": "Repeated validation and random forests dominate.",
+                },
+            ]
+            return pd.DataFrame(rows)
+
+        def display_notebook_runtime_estimate(n_rows):
+            estimate_df = notebook_runtime_estimate_rows(n_rows)
+            print(
+                "Order-of-magnitude runtime guide for this cleaned dataset "
+                f"({int(n_rows):,} valid molecule row(s))."
+            )
+            print(
+                "These estimates use manuscript Table 6 medians scaled by row count. "
+                "Cache reuse, Colab hardware, feature count, epochs, and selected options can move them substantially."
+            )
+            display(estimate_df)
+            if int(n_rows) >= 10_000:
+                display_note(
+                    "**Large dataset note:** consider the random-forest selector fallback, fewer optional model families, "
+                    "and command-line `qsarena-benchmark --dry-run` before launching long deep-learning or GA runs."
+                )
+        setup_done("runtime estimate helper")
+
         setup_start("column inference helper")
         def infer_column_by_case_insensitive_name(df, desired_name):
             desired_lower = str(desired_name).strip().lower()
@@ -3023,8 +3750,13 @@ cells += [
 
         This tutorial accepts:
 
+        <!-- COLAB_ONLY_START -->
         - an uploaded `.csv` or `.xlsx` file in **Colab**
         - a normal **file path** in Colab or local Jupyter
+        <!-- COLAB_ONLY_END -->
+        <!-- LOCAL_ONLY_START -->
+        - a normal local **file path**
+        <!-- LOCAL_ONLY_END -->
         - a built-in example dataset from **ChemML**, **TDC**, **MoleculeNet PhysChem**, or **Polaris ADME**
         """
     ),
@@ -3284,7 +4016,7 @@ cells += [
 
         **How to choose the target transform**
 
-        - Use **`AUTO`** for most runs; it protects Colab users from accidentally deleting all zero or negative targets.
+        - Use **`AUTO`** for most runs; it protects you from accidentally deleting all zero or negative targets.
         - Use **`none`** when the endpoint is already centered, signed, standardized, or naturally includes negative values.
         - Use **`log10_positive_only`** for strictly positive concentration, potency, solubility, or rate-like endpoints where a log scale is scientifically meaningful.
         - Use **`signed_log10`** only when preserving the sign is important and compressing large magnitudes is defensible.
@@ -3624,6 +4356,9 @@ cells += [
                 f"Shift used: `{target_transform_shift:.6g}`. Model metrics and predictions are reported on the shifted-log scale."
             )
 
+        if "display_notebook_runtime_estimate" in globals():
+            display_notebook_runtime_estimate(len(curated_df))
+
         if STATE.get("benchmark_metadata") is not None:
             benchmark_meta = STATE["benchmark_metadata"]
             display_note(
@@ -3693,7 +4428,7 @@ cells += [
 
         Select one or more molecular feature families below. Checking every box is the equivalent of an "all descriptors" representation.
 
-        **Safe Colab defaults:** for a first run, use **Morgan fingerprints**, **MACCS keys**, and **RDKit descriptors**. Leave MapLight classic and the extra fingerprint families off if Colab RAM becomes tight or feature generation is slow. You can always rerun this block with more feature families after the core workflow works.
+        **Safe beginner defaults:** for a first run, use **Morgan fingerprints**, **MACCS keys**, and **RDKit descriptors**. Leave MapLight classic and the extra fingerprint families off if memory becomes tight or feature generation is slow. You can always rerun this block with more feature families after the core workflow works.
 
         **Avalon note:** there is no separate Avalon checkbox because Avalon-count fingerprints are already included inside **MapLight classic** (`maplight` family), alongside Morgan-count, ErG, and MapLight descriptor blocks.
 
@@ -4095,7 +4830,12 @@ cells += [
 
         The selector follows the stronger pattern from the QSAR references in `refs/`: split first, fit feature selection on the training data only, then evaluate the selected representation on held-out test data.
 
-        **Local Jupyter / VS Code note:** widget controls appear in the separate `Local widget controls for...` cell immediately before each runnable block. Run that controls cell first, adjust the widgets, then run the following block. In Google Colab, the `# @param` controls appear directly in the runnable block.
+        <!-- COLAB_ONLY_START -->
+        **Control note:** adjust the form values at the top of each runnable block, then run the block.
+        <!-- COLAB_ONLY_END -->
+        <!-- LOCAL_ONLY_START -->
+        **Control note:** widget controls appear in the separate `Local widget controls for...` cell immediately before each runnable block. Run that controls cell first, adjust the widgets, then run the following block.
+        <!-- LOCAL_ONLY_END -->
         """
     ),
     code(
@@ -5873,9 +6613,9 @@ cells += [
 
         The ElasticNet GA search space follows the installed ChemML AutoML implementation: alpha is searched from `1e-4` to `1e-1` on the log scale, and `l1_ratio` is chosen from `0.4, 0.8`. This is a model-tuning step, not a separate feature selector.
 
-        The defaults below are intentionally moderate for Colab. If you need a deeper search, increase the population size or number of generations.
+        The defaults below are intentionally moderate for an interactive notebook. If you need a deeper search, increase the population size or number of generations.
 
-        **Safe Colab defaults:** keep GA enabled only for one or two model families at first, use 3-5 CV folds, and keep generations/population near the defaults. GA tuning is optional; a good `4C` model is enough for the basic workflow.
+        **Safe beginner defaults:** keep GA enabled only for one or two model families at first, use 3-5 CV folds, and keep generations/population near the defaults. GA tuning is optional; a good `4C` model is enough for the basic workflow.
         """
     ),
     code(
@@ -7192,7 +7932,7 @@ cells += [
         - **MapLight + GNN** depends on `molfeat` + `dgl` + a PyTorch backend; the MapLight repo notes that it does not run reliably on Colab
         - this section does **not** train Uni-Mol; the dedicated Uni-Mol workflow appears in section `6`
 
-        **Safe Colab defaults:** start with `run_chemml_pytorch=True`, `run_chemml_tensorflow=False`, `run_maplight_gnn=False`, and `run_tabpfn_deep=False`. Turn on TabPFN after `5A.5` passes or after choosing local TabPFN mode. Turn on MapLight + GNN only if you are running locally or you know your Colab runtime has compatible DGL/PyTorch packages.
+        **Safe beginner defaults:** start with `run_chemml_pytorch=True`, `run_chemml_tensorflow=False`, `run_maplight_gnn=False`, and `run_tabpfn_deep=False`. Turn on TabPFN after `5A.5` passes or after choosing local TabPFN mode. Turn on MapLight + GNN only if your environment has compatible DGL/PyTorch packages.
         """
     ),
 ]
@@ -9124,9 +9864,9 @@ cells += [
         - **Uni-Mol**, a pretrained 3D molecular representation workflow
         - **Chemprop v2**, a graph neural network workflow that learns directly from molecular graphs
 
-        Both paths are optional. They are useful comparisons after the conventional-model baseline is working, but they are more sensitive to Colab runtime type, package versions, memory, and restart behavior.
+        Both paths are optional. They are useful comparisons after the conventional-model baseline is working, but they are more sensitive to runtime type, package versions, memory, and restart behavior.
 
-        **Safe Colab defaults:** start with the conventional workflow first. If you continue here, try **Uni-Mol V1** or **Uni-Mol V2 `84m`** on a GPU runtime before larger models. Leave Chemprop extras off for the first run and keep epochs modest. If an install cell says to restart, restart the runtime, rerun step `0`, and rerun the setup cells needed to rebuild notebook state.
+        **Safe beginner defaults:** start with the conventional workflow first. If you continue here, try **Uni-Mol V1** or **Uni-Mol V2 `84m`** on a GPU runtime before larger models. Leave Chemprop extras off for the first run and keep epochs modest. If an install cell says to restart, restart the runtime/kernel, rerun step `0`, and rerun the setup cells needed to rebuild notebook state.
 
         ### Pretrained Models and Why They Matter
 
@@ -9153,11 +9893,11 @@ cells += [
 
         | Model size | Parameters | Approximate inference VRAM | Approximate training VRAM | Typical use |
         | --- | ---: | ---: | ---: | --- |
-        | `84m` | ~84 million | ~4 GB | ~8-12 GB | safest Colab-scale option |
+        | `84m` | ~84 million | ~4 GB | ~8-12 GB | safest interactive-notebook option |
         | `164m` | ~164 million | ~8 GB | ~16-20 GB | larger but more demanding |
         | `310m` | ~310 million | ~12-16 GB | ~24-32 GB | research-grade GPU recommended |
 
-        For most users, start with **Uni-Mol V1** or **Uni-Mol V2 (`84m`)**. Those are the safest options for Colab-scale GPUs and modest local workstations.
+        For most users, start with **Uni-Mol V1** or **Uni-Mol V2 (`84m`)**. Those are the safest options for modest GPUs and local workstations.
         """
     ),
     code(
@@ -9273,9 +10013,9 @@ cells += [
     ),
     md(
         """
-        ### Safe Colab Defaults For Uni-Mol
+        ### Safe Beginner Defaults For Uni-Mol
 
-        Start with `6C` Uni-Mol V1 or `6D` Uni-Mol V2 using the `84m` model size. Keep epochs low until the pipeline completes once. Larger Uni-Mol V2 sizes can exceed free Colab GPU memory, especially after other models have already run in the same runtime.
+        Start with `6C` Uni-Mol V1 or `6D` Uni-Mol V2 using the `84m` model size. Keep epochs low until the pipeline completes once. Larger Uni-Mol V2 sizes can exceed GPU memory, especially after other models have already run in the same runtime.
         """
     ),
     code(
@@ -9996,9 +10736,9 @@ cells += [
     ),
     md(
         """
-        ### Safe Colab Defaults For Chemprop
+        ### Safe Beginner Defaults For Chemprop
 
-        Start with one graph variant, keep `chemprop_epochs` modest, and leave RDKit2D extras off unless you need them. Chemprop can be package-sensitive in Colab, so after `6E` installs or upgrades packages, a runtime restart is often the cleanest path.
+        Start with one graph variant, keep `chemprop_epochs` modest, and leave RDKit2D extras off unless you need them. Chemprop can be package-sensitive, so after `6E` installs or upgrades packages, a runtime/kernel restart is often the cleanest path.
         """
     ),
     code(
@@ -12904,7 +13644,7 @@ cells += [
         - report whether it is using a cached fitted AD model or fitting a new one
         - report separately when it starts **fitting** and when it starts **applying** the AD model
 
-        **Safe Colab defaults:** keep `mastml_n_repeats=1`, keep the random forest size near the default, leave caching enabled, and run this only after `9A` predictions look reasonable. For a quick visual check before this heavier AD workflow, use `9B` first.
+        **Safe beginner defaults:** keep `mastml_n_repeats=1`, keep the random forest size near the default, leave caching enabled, and run this only after `9A` predictions look reasonable. For a quick visual check before this heavier AD workflow, use `9B` first.
         """
     ),
     code(
@@ -14013,24 +14753,40 @@ cells += [
 ]
 # CELLS_END
 
-flat_cells = []
-for cell in cells:
-    if isinstance(cell, list):
-        flat_cells.extend(cell)
-    else:
-        flat_cells.append(cell)
+def build_notebook(interface: str):
+    rendered_cells = []
+    for cell in cells:
+        if isinstance(cell, NotebookCodeCell):
+            guidance_cell = _guidance_cell_for_code(cell, interface)
+            if guidance_cell is not None:
+                rendered_cells.append(guidance_cell)
+            rendered_cells.extend(_render_code_cells(cell, interface))
+        elif isinstance(cell, list):
+            for subcell in cell:
+                if isinstance(subcell, NotebookCodeCell):
+                    guidance_cell = _guidance_cell_for_code(subcell, interface)
+                    if guidance_cell is not None:
+                        rendered_cells.append(guidance_cell)
+                    rendered_cells.extend(_render_code_cells(subcell, interface))
+                else:
+                    rendered_cells.append(_render_markdown_cell(subcell, interface))
+        else:
+            rendered_cells.append(_render_markdown_cell(cell, interface))
+    name = OUT_PATHS[interface].name
+    return {
+        "cells": rendered_cells,
+        "metadata": {
+            "kernelspec": {"display_name": "QSARena (py311)", "language": "python", "name": "qsarena-py311"},
+            "language_info": {"name": "python", "version": "3.11"},
+            "colab": {"name": name, "provenance": [], "toc_visible": True},
+        },
+        "nbformat": 4,
+        "nbformat_minor": 5,
+    }
 
-notebook = {
-    "cells": flat_cells,
-    "metadata": {
-        "kernelspec": {"display_name": "QSARena (py311)", "language": "python", "name": "qsarena-py311"},
-        "language_info": {"name": "python", "version": "3.11"},
-        "colab": {"name": "colab_qsar_tutorial.ipynb", "provenance": [], "toc_visible": True},
-    },
-    "nbformat": 4,
-    "nbformat_minor": 5,
-}
 
-OUT_PATH.parent.mkdir(parents=True, exist_ok=True)
-OUT_PATH.write_text(json.dumps(notebook, indent=2) + "\n", encoding="utf-8")
-print(f"Wrote {OUT_PATH}")
+for interface, out_path in OUT_PATHS.items():
+    notebook = build_notebook(interface)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    out_path.write_text(json.dumps(notebook, indent=2) + "\n", encoding="utf-8")
+    print(f"Wrote {out_path}")
