@@ -62,6 +62,7 @@ OUT_PATHS = {
     "colab": OUT_PATH,
     "local": Path(r"portable_colab_qsar_bundle/local_qsar_tutorial.ipynb"),
 }
+MOLAB_OUT_PATH = Path(r"portable_colab_qsar_bundle/molab_qsar_tutorial.py")
 EXAMPLE_DATASET_OPTIONS = notebook_example_dataset_options()
 WORKFLOW_MAP_PATH = Path(__file__).with_name("colab_qsar_workflow_map.png")
 
@@ -117,7 +118,10 @@ def _filter_interface_blocks(text: str, interface: str):
         if stripped == "<!-- LOCAL_ONLY_START -->":
             include_stack.append(interface == "local")
             continue
-        if stripped in {"<!-- COLAB_ONLY_END -->", "<!-- LOCAL_ONLY_END -->"}:
+        if stripped == "<!-- MOLAB_ONLY_START -->":
+            include_stack.append(interface == "molab")
+            continue
+        if stripped in {"<!-- COLAB_ONLY_END -->", "<!-- LOCAL_ONLY_END -->", "<!-- MOLAB_ONLY_END -->"}:
             if len(include_stack) > 1:
                 include_stack.pop()
             continue
@@ -232,10 +236,10 @@ def _schema_for_interface(schema, interface: str):
         if item.get("widget_kind") == "markdown":
             adjusted.append(dict(item))
             continue
-        if interface == "local" and item.get("name") in LOCAL_EXCLUDED_WIDGET_NAMES:
+        if interface in {"local", "molab"} and item.get("name") in LOCAL_EXCLUDED_WIDGET_NAMES:
             continue
         new_item = dict(item)
-        if interface == "local" and new_item.get("widget_kind") == "choice":
+        if interface in {"local", "molab"} and new_item.get("widget_kind") == "choice":
             options = [
                 option for option in new_item.get("options", [])
                 if "colab only" not in str(option).lower()
@@ -244,7 +248,7 @@ def _schema_for_interface(schema, interface: str):
                 new_item["options"] = options
                 if new_item.get("default") not in options:
                     new_item["default"] = options[0]
-        if interface == "local" and new_item.get("name") in LOCAL_WIDGET_DEFAULTS:
+        if interface in {"local", "molab"} and new_item.get("name") in LOCAL_WIDGET_DEFAULTS:
             new_item["default"] = LOCAL_WIDGET_DEFAULTS[new_item["name"]]
         adjusted.append(new_item)
     return adjusted
@@ -329,6 +333,15 @@ def _normalize_code_margin(text: str):
     return "".join(normalized)
 
 
+def _prepare_code_text(text: str):
+    processed_text = text
+    processed_text = textwrap.dedent(processed_text).strip("\n") + "\n"
+    processed_text = _normalize_code_margin(processed_text)
+    for token, value in REGISTRY_FALLBACK_TOKENS.items():
+        processed_text = processed_text.replace(token, value)
+    return processed_text
+
+
 def _localize_code_annotations(text: str):
     localized = []
     for line in text.splitlines():
@@ -355,11 +368,7 @@ def _localize_code_annotations(text: str):
 
 def _make_code_cell(text: str, *, form: bool = True):
     cell_id = uuid.uuid4().hex[:8]
-    processed_text = text
-    processed_text = textwrap.dedent(processed_text).strip("\n") + "\n"
-    processed_text = _normalize_code_margin(processed_text)
-    for token, value in REGISTRY_FALLBACK_TOKENS.items():
-        processed_text = processed_text.replace(token, value)
+    processed_text = _prepare_code_text(text)
     metadata = {"trusted": True}
     if form:
         metadata["cellView"] = "form"
@@ -402,6 +411,242 @@ def _render_code_cells(cell: NotebookCodeCell, interface: str):
         _make_code_cell(form_cell_text, form=False),
         _make_code_cell(run_cell_text, form=False),
     ]
+
+
+def _inject_molab_widget_read(text: str, form_var: str, schema_override=None):
+    dedented, lines, title, schema, last_param_index, param_indent = _extract_form_schema(text)
+    full_schema = schema
+    if schema_override is not None:
+        schema = schema_override
+    if not schema or last_param_index is None:
+        return dedented
+    override_lines = [
+        "",
+        f"{param_indent}_molab_form_values = read_molab_form_values({form_var}, {repr(schema)})",
+    ]
+    for item in schema:
+        if item.get("widget_kind") == "markdown":
+            continue
+        override_lines.append(f"{param_indent}{item['name']} = _molab_form_values[{item['name']!r}]")
+    config_override_lines = _run_config_override_lines(schema, param_indent)
+    if config_override_lines:
+        override_lines.extend(config_override_lines)
+    override_lines.extend(_widget_record_lines(title, full_schema, param_indent))
+    lines[last_param_index + 1:last_param_index + 1] = override_lines
+    return "\n".join(lines) + "\n"
+
+
+def _render_marimo_code_units(cell: NotebookCodeCell, index_start: int):
+    dedented, _lines, title, schema, last_param_index, _param_indent = _extract_form_schema(cell.text)
+    if not cell.form or not schema or last_param_index is None:
+        if title and title != "Local form" and last_param_index is None:
+            dedented = _insert_block_marker(dedented, title)
+        return [("code", _prepare_code_text(_localize_code_annotations(dedented)), None)], index_start
+
+    schema = _schema_for_interface(schema, "molab")
+    if not any(item.get("widget_kind") != "markdown" for item in schema):
+        text = _prepare_code_text(_localize_code_annotations(dedented))
+        return [("code", text, None)], index_start
+
+    form_var = f"qsarena_molab_form_{index_start:04d}"
+    run_cell_text = _localize_code_annotations(_inject_molab_widget_read(cell.text, form_var, schema_override=schema))
+    return [
+        ("control", title, schema, form_var),
+        ("code", _prepare_code_text(run_cell_text), form_var),
+    ], index_start + 1
+
+
+def _iter_marimo_units():
+    form_index = 1
+    for cell in cells:
+        flat_cells = cell if isinstance(cell, list) else [cell]
+        for subcell in flat_cells:
+            if isinstance(subcell, NotebookCodeCell):
+                guidance_cell = _guidance_cell_for_code(subcell, "molab")
+                if guidance_cell is not None:
+                    yield ("markdown", "".join(guidance_cell["source"]))
+                units, form_index = _render_marimo_code_units(subcell, form_index)
+                for unit in units:
+                    yield unit
+            else:
+                rendered = _render_markdown_cell(subcell, "molab")
+                yield ("markdown", "".join(rendered["source"]))
+
+
+def _marimo_args(names):
+    names = [name for name in names if name]
+    return ", ".join(dict.fromkeys(names))
+
+
+def _marimo_cell(source_lines, deps, returns):
+    args = _marimo_args(deps)
+    header = f"def __({args}):" if args else "def __():"
+    body = "\n".join(f"    {line}" if line else "" for line in source_lines)
+    return_lines = []
+    if returns:
+        if len(returns) == 1:
+            return_lines.append(f"    return {returns[0]},")
+        else:
+            return_lines.append("    return " + ", ".join(returns))
+    else:
+        return_lines.append("    return")
+    return "\n".join(["@app.cell", header, body, *return_lines])
+
+
+def _marimo_bootstrap_cell():
+    marker = "qsarena_molab_cell_0000_done"
+    source_lines = [
+        "import marimo as mo",
+        "",
+        "def _molab_widget_from_schema(item):",
+        "    name = item.get('name', '')",
+        "    label = item.get('label') or name.replace('_', ' ')",
+        "    kind = item.get('widget_kind', 'string')",
+        "    default = item.get('default')",
+        "    if kind == 'choice':",
+        "        options = list(item.get('options') or [])",
+        "        value = default if default in options else (options[0] if options else None)",
+        "        return mo.ui.dropdown(options=options, value=value, label=label)",
+        "    if kind == 'boolean':",
+        "        return mo.ui.checkbox(value=bool(default), label=label)",
+        "    if kind == 'slider':",
+        "        kwargs = {'value': default, 'label': label, 'show_value': True}",
+        "        if 'min' in item:",
+        "            kwargs['start'] = item['min']",
+        "        if 'max' in item:",
+        "            kwargs['stop'] = item['max']",
+        "        if 'step' in item:",
+        "            kwargs['step'] = item['step']",
+        "        return mo.ui.slider(**kwargs)",
+        "    if kind in {'integer', 'number'}:",
+        "        kwargs = {'value': default, 'label': label}",
+        "        if 'min' in item:",
+        "            kwargs['start'] = item['min']",
+        "        if 'max' in item:",
+        "            kwargs['stop'] = item['max']",
+        "        if 'step' in item:",
+        "            kwargs['step'] = item['step']",
+        "        elif kind == 'integer':",
+        "            kwargs['step'] = 1",
+        "        return mo.ui.number(**kwargs)",
+        "    return mo.ui.text(value='' if default is None else str(default), label=label, full_width=True)",
+        "",
+        "def make_molab_form(title, schema):",
+        "    widgets = {}",
+        "    rows = [mo.md(f'### Controls: {title}')]",
+        "    for item in schema:",
+        "        if item.get('widget_kind') == 'markdown':",
+        "            rows.append(mo.md(str(item.get('label', ''))))",
+        "            continue",
+        "        name = item.get('name')",
+        "        if not name:",
+        "            continue",
+        "        widget = _molab_widget_from_schema(item)",
+        "        widgets[name] = widget",
+        "        rows.append(widget)",
+        "    return mo.ui.dictionary(widgets) if widgets else mo.vstack(rows)",
+        "",
+        "def read_molab_form_values(form, schema):",
+        "    values = {}",
+        "    for item in schema:",
+        "        name = item.get('name')",
+        "        if not name:",
+        "            continue",
+        "        try:",
+        "            element = form[name]",
+        "            values[name] = element.value",
+        "        except Exception:",
+        "            values[name] = item.get('default')",
+        "    return values",
+        "",
+        "globals()['MOLAB_RUNTIME'] = True",
+        "globals()['make_molab_form'] = make_molab_form",
+        "globals()['read_molab_form_values'] = read_molab_form_values",
+        "globals()['mo'] = mo",
+        f"{marker} = True",
+    ]
+    return _marimo_cell(source_lines, [], ["MOLAB_RUNTIME", "make_molab_form", "mo", "read_molab_form_values", marker]), marker
+
+
+def _marimo_markdown_cell(text: str, previous_marker: str, index: int):
+    marker = f"qsarena_molab_cell_{index:04d}_done"
+    source_lines = [
+        f"mo.md({text!r})",
+        f"{marker} = True",
+    ]
+    return _marimo_cell(source_lines, ["mo", previous_marker], [marker]), marker
+
+
+def _marimo_control_cell(title: str, schema, form_var: str, previous_marker: str, index: int):
+    marker = f"qsarena_molab_cell_{index:04d}_done"
+    source_lines = [
+        f"{form_var} = make_molab_form({title!r}, {repr(schema)})",
+        f"globals()[{form_var!r}] = {form_var}",
+        form_var,
+        f"{marker} = True",
+    ]
+    return _marimo_cell(source_lines, ["make_molab_form", previous_marker], [form_var, marker]), marker
+
+
+def _marimo_exec_cell(source: str, form_var: str | None, previous_marker: str, index: int):
+    marker = f"qsarena_molab_cell_{index:04d}_done"
+    deps = [previous_marker, "read_molab_form_values"]
+    source_lines = [
+        "globals()['read_molab_form_values'] = read_molab_form_values",
+    ]
+    if form_var:
+        deps.append(form_var)
+        source_lines.append(f"globals()[{form_var!r}] = {form_var}")
+    source_lines.extend(
+        [
+            f"exec({source!r}, globals())",
+            f"{marker} = True",
+        ]
+    )
+    return _marimo_cell(source_lines, deps, [marker]), marker
+
+
+def build_marimo_notebook():
+    REGISTRY_FALLBACK_TOKENS["__NOTEBOOK_BLOCKS_FALLBACK__"] = repr(_notebook_block_catalogue())
+    REGISTRY_FALLBACK_TOKENS["__DEFAULTS_LEGEND_FALLBACK__"] = repr(DEFAULTS_LEGEND)
+    chunks = [
+        "# /// script",
+        "# dependencies = [",
+        '#   "marimo>=0.13",',
+        "# ]",
+        "# ///",
+        "import marimo",
+        "",
+        '__generated_with = "0.0.0"',
+        'app = marimo.App(width="full")',
+        "",
+    ]
+    bootstrap, previous_marker = _marimo_bootstrap_cell()
+    chunks.append(bootstrap)
+    cell_index = 1
+    for unit in _iter_marimo_units():
+        kind = unit[0]
+        if kind == "markdown":
+            chunk, previous_marker = _marimo_markdown_cell(unit[1], previous_marker, cell_index)
+        elif kind == "control":
+            _kind, title, schema, form_var = unit
+            chunk, previous_marker = _marimo_control_cell(title, schema, form_var, previous_marker, cell_index)
+        elif kind == "code":
+            _kind, source, form_var = unit
+            chunk, previous_marker = _marimo_exec_cell(source, form_var, previous_marker, cell_index)
+        else:
+            raise ValueError(f"Unknown marimo unit: {kind}")
+        chunks.append(chunk)
+        cell_index += 1
+    chunks.extend(
+        [
+            "",
+            'if __name__ == "__main__":',
+            "    app.run()",
+            "",
+        ]
+    )
+    return "\n\n".join(chunks)
 
 
 BLOCK_GUIDANCE = {
@@ -833,7 +1078,8 @@ BLOCK_GUIDANCE = {
 def _guidance_cell_for_code(cell: NotebookCodeCell, interface: str):
     _dedented, _lines, title, schema, _last_param_index, _param_indent = _extract_form_schema(cell.text)
     guidance = textwrap.dedent(BLOCK_GUIDANCE.get(title) or "").strip()
-    evidence = render_default_evidence(title, schema) if title else None
+    evidence_schema = _schema_for_interface(schema, interface)
+    evidence = render_default_evidence(title, evidence_schema) if title else None
     if evidence:
         guidance = f"{guidance}\n\n{evidence}" if guidance else evidence
     if not guidance:
@@ -863,6 +1109,18 @@ cells += [
         **Colab note (MapLight + GNN)**
         The MapLight + GNN workflow depends on DGL, which the MapLight repo reports as unreliable on Colab. If you enable MapLight + GNN in Colab, the notebook will skip it with a message rather than crash. Use the local notebook if you need that model.
         <!-- COLAB_ONLY_END -->
+
+        <!-- MOLAB_ONLY_START -->
+        [![Open in molab](https://marimo.io/molab-shield.svg)](https://molab.marimo.io/github/ScottCoffin/QSARena/blob/main/portable_colab_qsar_bundle/molab_qsar_tutorial.py)
+
+        This is the **Molab / marimo** version of the tutorial. It is stored as a Python file, opens in Molab's marimo notebook interface, and uses marimo controls before each runnable block.
+
+        **Molab note**
+        Molab runs this notebook in a cloud marimo workspace. If you open it from GitHub, the repository files are available to the notebook, so step `0` can use the bundled QSARena helper modules without a manual upload.
+
+        **Runtime note**
+        The setup chunk may install packages into the Molab environment. If a package install changes the active Python environment, restart the runtime if prompted, rerun step `0`, and then continue downward.
+        <!-- MOLAB_ONLY_END -->
 
         <!-- LOCAL_ONLY_START -->
         This is the **local Jupyter** version of the tutorial. It uses `ipywidgets` controls in separate control cells so local users are not shown Colab-only forms.
@@ -918,6 +1176,9 @@ cells += [
         <!-- LOCAL_ONLY_START -->
         This local notebook uses an `ipywidgets` controls cell before each runnable block. Run the controls cell, adjust the values, then run the following execution cell.
         <!-- LOCAL_ONLY_END -->
+        <!-- MOLAB_ONLY_START -->
+        This Molab notebook uses a marimo controls cell before each runnable block. Adjust the controls, then run the following execution cell.
+        <!-- MOLAB_ONLY_END -->
 
         **How to use this notebook**
 
@@ -931,6 +1192,10 @@ cells += [
         - If a package install changes the environment, restart the kernel if prompted, then rerun **step 0**
         - For parameterized steps, run the controls cell first, adjust values, then run the following execution cell
         <!-- LOCAL_ONLY_END -->
+        <!-- MOLAB_ONLY_START -->
+        - If a package install changes the environment, restart the runtime if prompted, then rerun **step 0**
+        - For parameterized steps, adjust the marimo controls cell first, then run the following execution cell
+        <!-- MOLAB_ONLY_END -->
         - After step 0 finishes cleanly, continue to step 1 and move downward
         - If you change an earlier choice, rerun the later cells that depend on it
         - Some optional sections, especially **hyperparameter tuning**, **deep learning**, **pretrained/graph models**, applicability-domain analysis, and ensembles, can take much longer than the basic conventional-model workflow
@@ -16037,3 +16302,7 @@ for interface, out_path in OUT_PATHS.items():
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(json.dumps(notebook, indent=2) + "\n", encoding="utf-8")
     print(f"Wrote {out_path}")
+
+MOLAB_OUT_PATH.parent.mkdir(parents=True, exist_ok=True)
+MOLAB_OUT_PATH.write_text(build_marimo_notebook(), encoding="utf-8")
+print(f"Wrote {MOLAB_OUT_PATH}")

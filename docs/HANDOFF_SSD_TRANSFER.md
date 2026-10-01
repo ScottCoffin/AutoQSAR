@@ -31,7 +31,7 @@ datasets, which the RTX already has.
    with the SSD at `E:` (adjust the drive letter):
    ```powershell
    robocopy benchmark_results\qsarena_benchmark_oof_ensemble `
-     E:\qsarena_transfer\benchmark_results\qsarena_benchmark_oof_ensemble `
+     D:\qsarena_transfer\benchmark_results\qsarena_benchmark_oof_ensemble `
      predictions.csv fold_*.npy /S
 
    # optional backup for reseeding
