@@ -24,10 +24,10 @@ property prediction from SMILES strings. It has three main entry points:
 
 - `portable_colab_qsar_bundle/colab_qsar_tutorial.ipynb`: an interactive,
   Google Colab notebook for building QSAR models on built-in or user-supplied
-  datasets without editing code.
+  datasets without editing code, then exporting a self-contained HTML report.
 - `portable_colab_qsar_bundle/local_qsar_tutorial.ipynb`: the matching local
   Jupyter notebook with `ipywidgets` controls instead of Colab-only form
-  controls.
+  controls and the same HTML report export.
 - `portable_colab_qsar_bundle/run_qsarena_benchmarks.py`: a command-line
   benchmark runner for comparing model families across curated ChemML, TDCommons,
   MoleculeNet, Polaris, PODUAM, and literature datasets.
@@ -55,8 +55,10 @@ then runs a complete modeling workflow:
    ensemble workflows when their dependencies are available.
 10. Compare train/test metrics and benchmark leaderboard references.
 11. Save metrics, predictions, selected features, runtime diagnostics, and model
-    comparison reports.
-12. Predict new molecules and optionally apply UMAP and applicability-domain
+    comparison tables.
+12. Export a self-contained HTML report for sharing, records, or a failed-session
+    restart point.
+13. Predict new molecules and optionally apply UMAP and applicability-domain
     diagnostics in the notebook.
 
 ## Models This Repo Runs
@@ -410,6 +412,12 @@ same workflow but expose different controls:
   This notebook uses separate `ipywidgets` controls cells and avoids Colab-only
   upload and Google Drive controls.
 
+Both notebooks include step `9F`, which writes a self-contained HTML report
+summarizing the dataset, run settings, model-result tables, prediction outputs,
+and applicability-domain results that have been produced so far. In Colab, save
+the report to Google Drive or enable the browser download option before the
+runtime is closed.
+
 ### Google Colab
 
 Open:
@@ -481,6 +489,7 @@ Run the notebook from top to bottom. The major sections are:
 - `8`: explain selected model behavior.
 - `9`: predict new molecules, generate UMAP views, and run applicability-domain
   checks.
+- `9F`: export the completed notebook state to a self-contained HTML report.
 - `10`: review next steps.
 
 For your own data, provide at least:

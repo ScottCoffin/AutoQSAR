@@ -219,6 +219,7 @@ stack stopped first). Only matters for step 6.
 Notebook generation notes:
 - Keep the two generated notebooks interface-clean: Colab should not show local-widget control cells, and the local notebook should not expose Colab `# @param` controls, Google Drive setup widgets, or "Upload CSV/XLSX (Colab only)" choices.
 - The Colab intro should explain that Colab runtimes are temporary, Drive persistence/downloads are needed for durable outputs, and step `0` must be rerun after Colab intentionally disconnects/restarts to load newly installed compiled packages.
+- Keep notebook block `9F` as the self-contained HTML report export. It should work in both generated notebooks, gather whatever dataset/model/prediction/applicability-domain state has already been produced, and avoid mixing Colab-only controls into the local interface or local-widget controls into Colab.
 - If setup helper stages are added or removed in `build_colab_qsar_tutorial.py`, update `SETUP_PROGRESS["total"]` before regenerating; the setup log should end with matching counts such as `32/32`.
 
 ## Packaging (`pip install qsarena`)

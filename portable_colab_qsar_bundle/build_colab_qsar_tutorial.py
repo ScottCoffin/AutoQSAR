@@ -25,6 +25,21 @@ except ModuleNotFoundError:
     )
 
 try:
+    from portable_colab_qsar_bundle.notebook_default_evidence import (
+        DEFAULTS_INTRO,
+        DEFAULTS_LEGEND,
+        default_evidence_records,
+        render_default_evidence,
+    )
+except ModuleNotFoundError:
+    from notebook_default_evidence import (  # type: ignore
+        DEFAULTS_INTRO,
+        DEFAULTS_LEGEND,
+        default_evidence_records,
+        render_default_evidence,
+    )
+
+try:
     from qsarena.config import notebook_widget_names
 except ModuleNotFoundError:
     import sys as _sys
@@ -66,6 +81,14 @@ def workflow_map_image_html():
             'style="max-width:100%; height:auto;">'
         )
     return "![QSARena Colab workflow map](colab_qsar_workflow_map.png)"
+
+
+#: Registry snapshots baked into the setup cell. Colab does not download benchmark_registry.py, so
+#: without these the setup cell's fallback had no MoleculeNet or Polaris datasets at all.
+REGISTRY_FALLBACK_TOKENS = {
+    "__MOLECULENET_PHYSCHEM_OPTIONS_FALLBACK__": repr(dict(MOLECULENET_PHYSCHEM_OPTIONS)),
+    "__POLARIS_ADME_OPTIONS_FALLBACK__": repr(dict(POLARIS_ADME_OPTIONS)),
+}
 
 
 def src(text: str):
@@ -227,17 +250,40 @@ def _schema_for_interface(schema, interface: str):
     return adjusted
 
 
+def _widget_record_lines(title, schema, param_indent):
+    """Lines that log the values a form cell actually ran with, for the 9F reproducibility record."""
+    names = [item["name"] for item in schema if item.get("name")]
+    values = "{" + ", ".join(f"{name!r}: {name}" for name in names) + "}"
+    return [
+        f"{param_indent}if 'record_widget_values' in globals():",
+        f"{param_indent}    record_widget_values({title!r}, {values})",
+    ]
+
+
+def _insert_block_marker(text: str, title: str):
+    """Mark a titled cell without options as the current block, so its figures are filed under it."""
+    lines = text.splitlines()
+    for idx, line in enumerate(lines):
+        if TITLE_LINE_RE.match(line):
+            indent = re.match(r"^[ \t]*", line).group(0)
+            lines[idx + 1:idx + 1] = _widget_record_lines(title, [], indent)
+            return "\n".join(lines) + "\n"
+    return text
+
+
 def _inject_run_config_overrides(text: str):
-    dedented, lines, _title, schema, last_param_index, param_indent = _extract_form_schema(text)
-    override_lines = _run_config_override_lines(schema, param_indent)
-    if not override_lines or last_param_index is None:
+    dedented, lines, title, schema, last_param_index, param_indent = _extract_form_schema(text)
+    if last_param_index is None:
         return dedented
-    lines[last_param_index + 1:last_param_index + 1] = ["", *override_lines]
+    override_lines = _run_config_override_lines(schema, param_indent)
+    record_lines = _widget_record_lines(title, schema, param_indent)
+    lines[last_param_index + 1:last_param_index + 1] = ["", *override_lines, *record_lines]
     return "\n".join(lines) + "\n"
 
 
 def _inject_local_widget_read(text: str, form_id: str, schema_override=None):
     dedented, lines, title, schema, last_param_index, param_indent = _extract_form_schema(text)
+    full_schema = schema
     if schema_override is not None:
         schema = schema_override
     if not schema or last_param_index is None:
@@ -263,6 +309,7 @@ def _inject_local_widget_read(text: str, form_id: str, schema_override=None):
     if config_override_lines:
         # Step 0B: values from a loaded run.yaml replace the matching widgets (Colab and local).
         override_lines.extend(config_override_lines)
+    override_lines.extend(_widget_record_lines(title, full_schema, param_indent))
     lines[last_param_index + 1:last_param_index + 1] = override_lines
     return "\n".join(lines) + "\n"
 
@@ -311,6 +358,8 @@ def _make_code_cell(text: str, *, form: bool = True):
     processed_text = text
     processed_text = textwrap.dedent(processed_text).strip("\n") + "\n"
     processed_text = _normalize_code_margin(processed_text)
+    for token, value in REGISTRY_FALLBACK_TOKENS.items():
+        processed_text = processed_text.replace(token, value)
     metadata = {"trusted": True}
     if form:
         metadata["cellView"] = "form"
@@ -331,6 +380,8 @@ def code(text: str, form: bool = True):
 def _render_code_cells(cell: NotebookCodeCell, interface: str):
     dedented, _lines, title, schema, last_param_index, _param_indent = _extract_form_schema(cell.text)
     if not cell.form or not schema or last_param_index is None:
+        if title and title != "Local form" and last_param_index is None:
+            dedented = _insert_block_marker(dedented, title)
         return [_make_code_cell(dedented, form=cell.form)]
     if interface == "colab":
         return [_make_code_cell(_inject_run_config_overrides(cell.text), form=True)]
@@ -391,7 +442,7 @@ BLOCK_GUIDANCE = {
 
         **What this does.** Reads a CSV/table from upload, file path, or a built-in QSAR example.
 
-        **Main choices.** New users should start with a built-in example. For your own data, use a table with one SMILES column and one measured endpoint column. Keep the row limit at 0 unless you are doing a quick smoke test.
+        **Main choices.** New users should start with a built-in example. The default, MoleculeNet FreeSolv (642 molecules), is the smallest built-in regression set, so the whole notebook runs fastest on it. **In Colab, skip the `ChemML | ...` examples:** ChemML's dataset loaders need Open Babel, which does not install on Colab, so those options fail to load. For your own data, use a table with one SMILES column and one measured endpoint column. Keep the row limit at 0 unless you are doing a quick smoke test.
 
         **Time cost.** Local/uploaded CSVs are usually seconds. Built-in benchmark downloads may take 1-3 minutes the first time.
 
@@ -594,7 +645,7 @@ BLOCK_GUIDANCE = {
 
         **What this does.** Installs packages needed for Uni-Mol pretrained 3D models.
 
-        **Main choices.** Skip unless you plan to run Uni-Mol. Use a GPU runtime if possible.
+        **Main choices.** Skip unless you plan to run Uni-Mol. Needs a GPU: without a CUDA GPU this step, and every Uni-Mol step after it, prints a skip message and does nothing.
 
         **Time cost.** Often 1-10 minutes and may require a runtime restart.
 
@@ -609,14 +660,14 @@ BLOCK_GUIDANCE = {
 
         **Time cost.** Seconds to a few minutes.
 
-        **What to expect.** File paths and row counts for Uni-Mol input files.
+        **What to expect.** File paths and row counts for Uni-Mol input files, or a skip message if no GPU is detected.
     """,
     "6C. Train and evaluate Uni-Mol V1": """
         ### Before You Run: 6C. Uni-Mol V1
 
         **What this does.** Fine-tunes a pretrained 3D molecular model and evaluates it on the notebook split.
 
-        **Main choices.** Use a GPU. Keep epochs modest for a first run. Uni-Mol can be more accurate on some endpoints but is much heavier than conventional models.
+        **Main choices.** Runs only when a CUDA GPU is detected. Keep epochs modest for a first run. Uni-Mol can be more accurate on some endpoints but is much heavier than conventional models.
 
         **Time cost.** Often 10 minutes to 2+ hours depending on rows, epochs, conformer generation, and hardware.
 
@@ -629,7 +680,7 @@ BLOCK_GUIDANCE = {
 
         **Main choices.** Start with the 84m model. Larger models may exceed Colab memory and are not a beginner default.
 
-        **Time cost.** Often 20 minutes to 3+ hours on GPU; CPU is generally impractical for real datasets.
+        **Time cost.** Often 20 minutes to 3+ hours on GPU. Skipped without a GPU, because CPU is impractical for real datasets.
 
         **What to expect.** Metrics or a clear resource/compatibility skip message.
     """,
@@ -638,7 +689,7 @@ BLOCK_GUIDANCE = {
 
         **What this does.** Installs Chemprop v2 for graph neural-network models.
 
-        **Main choices.** Skip unless you plan to run Chemprop in 6F. Use a GPU runtime.
+        **Main choices.** Skip unless you plan to run Chemprop in 6F. Needs a GPU: without a CUDA GPU this step and 6F print a skip message and do nothing.
 
         **Time cost.** Often 1-10 minutes and may require restart.
 
@@ -651,7 +702,7 @@ BLOCK_GUIDANCE = {
 
         **Main choices.** Start with one variant and modest epochs. Each added variant and ensemble member adds training time. Descriptor-augmented variants need the selected descriptor matrix from earlier cells.
 
-        **Time cost.** Often 10 minutes to 2+ hours; substantially slower without GPU.
+        **Time cost.** Often 10 minutes to 2+ hours on a GPU. Skipped without a GPU: on CPU each variant takes roughly 8 times longer.
 
         **What to expect.** Chemprop metrics for completed variants and actionable errors for variants that fail.
     """,
@@ -780,8 +831,11 @@ BLOCK_GUIDANCE = {
 
 
 def _guidance_cell_for_code(cell: NotebookCodeCell, interface: str):
-    _dedented, _lines, title, _schema, _last_param_index, _param_indent = _extract_form_schema(cell.text)
-    guidance = BLOCK_GUIDANCE.get(title)
+    _dedented, _lines, title, schema, _last_param_index, _param_indent = _extract_form_schema(cell.text)
+    guidance = textwrap.dedent(BLOCK_GUIDANCE.get(title) or "").strip()
+    evidence = render_default_evidence(title, schema) if title else None
+    if evidence:
+        guidance = f"{guidance}\n\n{evidence}" if guidance else evidence
     if not guidance:
         return None
     return _render_markdown_cell(md(_filter_interface_blocks(guidance, interface)), interface)
@@ -843,6 +897,7 @@ cells += [
         7. **Train conventional QSAR models**
         8. **Optionally tune models, train deep models, and build ensembles**
         9. **Explain the model behavior** and compare what worked best
+        10. **Export a self-contained HTML report** that summarizes the dataset, settings, model results, and optional predictions
 
         You do not need to edit the Python code.
 
@@ -944,6 +999,7 @@ cells += [
         7A-7B Ensembles
         8A-8C Model explanation
         9A-9D Predict new molecules, map new chemistry, and assess applicability domain
+        9E-9F Export run.yaml and an HTML report
         ```
 
         <!-- COLAB_ONLY_START -->
@@ -1000,10 +1056,10 @@ cells += [
         | `5C` Compare deep/conventional | 5-30 sec | Uses completed model results. |
         | `6A` Install Uni-Mol packages | 1-10 min | May require runtime restart. |
         | `6B` Prepare Uni-Mol files | 5 sec-2 min | Mostly file writing and split preparation. |
-        | `6C` Uni-Mol V1 | 10 min-2+ hr | Optional; GPU helps, CPU can be slow. |
+        | `6C` Uni-Mol V1 | 10 min-2+ hr | Optional; GPU only (skipped without a GPU). |
         | `6D` Uni-Mol V2 | 20 min-3+ hr | GPU strongly recommended; larger model sizes can exceed notebook memory. |
         | `6E` Install Chemprop v2 | 1-10 min | May require runtime restart. |
-        | `6F` Chemprop v2 variants | 10 min-2+ hr | Depends on variants, epochs, descriptors, and GPU availability. |
+        | `6F` Chemprop v2 variants | 10 min-2+ hr | Optional; GPU only (skipped without a GPU). |
         | `6G` Plot Uni-Mol predictions | 5-30 sec | Usually quick. |
         | `6H` Compare model families | 5-60 sec | Usually quick. |
         | `7A` Build ensemble | 30 sec-10 min | Depends on available member models and ensemble method. |
@@ -1014,6 +1070,7 @@ cells += [
         | `9A` Predict new molecules | 10 sec-10 min | Optional; Uni-Mol/Chemprop predictions can be slower than conventional models. |
         | `9B` Prediction UMAP | 30 sec-8 min | Optional; grows with train/test plus new molecules. |
         | `9D` Applicability domain | 5-60+ min | Optional; MADML fitting and repeated validation can be expensive. |
+        | `9F` Export HTML report | 5-30 sec | Collects completed notebook outputs into one shareable HTML file. |
         """
     ),
     code(
@@ -1040,7 +1097,7 @@ cells += [
         warnings.filterwarnings("ignore")
 
         PACKAGE_PROGRESS = {"done": 0, "total": 23}
-        SETUP_PROGRESS = {"done": 0, "total": 32}
+        SETUP_PROGRESS = {"done": 0, "total": 33}
         try:
             RUNNING_IN_COLAB = importlib.util.find_spec("google.colab") is not None
         except ModuleNotFoundError:
@@ -1049,7 +1106,27 @@ cells += [
         RESTART_REQUIRED_PACKAGES = []
         PYTDC_SOURCE_URL = "https://files.pythonhosted.org/packages/db/bf/db7525f0e9c48d340a66ae11ed46bbb1966234660a6882ce47d1e1d52824/pytdc-1.1.15.tar.gz"
         CHEMML_ORGANIC_DENSITY_URL = "https://raw.githubusercontent.com/hachmannlab/chemml/master/chemml/datasets/data/moldescriptor_density_smiles.csv"
-        QSARENA_QSAR_CORE_URL = "https://raw.githubusercontent.com/ScottCoffin/AutoQSAR/main/portable_colab_qsar_bundle/qsar_workflow_core.py"
+        # The GitHub repository is being renamed AutoQSAR -> QSARena. Try both names so downloads work before
+        # and after the rename (GitHub redirects the old name once renamed; the new name 404s until then).
+        QSARENA_RAW_BASES = (
+            "https://raw.githubusercontent.com/ScottCoffin/QSARena/main",
+            "https://raw.githubusercontent.com/ScottCoffin/AutoQSAR/main",
+        )
+        QSARENA_QSAR_CORE_URL = QSARENA_RAW_BASES[-1] + "/portable_colab_qsar_bundle/qsar_workflow_core.py"
+
+        def download_qsarena_repo_file(relative_path, target_path, label):
+            import urllib.error
+            import urllib.request
+            errors = []
+            for base in QSARENA_RAW_BASES:
+                url = f"{base}/{relative_path}"
+                try:
+                    urllib.request.urlretrieve(url, target_path)
+                    print(f"[downloaded] {label} from: {url}", flush=True)
+                    return url
+                except urllib.error.HTTPError as exc:
+                    errors.append(f"{url}: HTTP {exc.code}")
+            raise RuntimeError(f"Could not download {label}. Tried: " + "; ".join(errors))
 
         def progress_message(package_label, status, extra=""):
             PACKAGE_PROGRESS["done"] += 1
@@ -1304,8 +1381,9 @@ cells += [
                 init_path.write_text("", encoding="utf-8")
             target_path = bundle_dir / "qsar_workflow_core.py"
             if not target_path.exists():
-                print(f"[downloading] QSARena shared workflow core from: {QSARENA_QSAR_CORE_URL}", flush=True)
-                urllib.request.urlretrieve(QSARENA_QSAR_CORE_URL, target_path)
+                download_qsarena_repo_file(
+                    "portable_colab_qsar_bundle/qsar_workflow_core.py", target_path, "QSARena shared workflow core"
+                )
             if str(target_root) not in sys.path:
                 sys.path.insert(0, str(target_root))
             importlib.invalidate_caches()
@@ -1686,6 +1764,16 @@ cells += [
                 return rows
             except Exception:
                 return []
+
+        def torch_gpu_available():
+            # Uni-Mol and Chemprop run on PyTorch, so they need a CUDA device that PyTorch can see; a
+            # TensorFlow-only GPU does not count. Checked live, because the Colab runtime type can change.
+            try:
+                return bool(torch is not None and torch.cuda.is_available())
+            except Exception:
+                return False
+
+        unimol_gpu_available = torch_gpu_available
 
         def refresh_resource_config():
             torch_gpu = bool(torch is not None and torch.cuda.is_available())
@@ -2362,8 +2450,9 @@ cells += [
                 "clearance_microsome_az": "https://tdcommons.ai/benchmark/admet_group/18clmicro/",
                 "ld50_zhu": "https://tdcommons.ai/benchmark/admet_group/19ld50/",
             }
-            _REG_MOLECULENET_PHYSCHEM_OPTIONS = {}
-            _REG_POLARIS_ADME_OPTIONS = {}
+            # Snapshots of benchmark_registry, written in by the notebook builder.
+            _REG_MOLECULENET_PHYSCHEM_OPTIONS = __MOLECULENET_PHYSCHEM_OPTIONS_FALLBACK__
+            _REG_POLARIS_ADME_OPTIONS = __POLARIS_ADME_OPTIONS_FALLBACK__
 
         TDC_QSAR_OPTIONS = {
             f"{config['task']} | {dataset_name}": {
@@ -2464,6 +2553,8 @@ cells += [
                 "conventional_model", n_rows, gpu_available=gpu_available, multiplier=12 * 16
             )
             ad_seconds = 180.0 + 0.10 * float(n_rows)
+            torch_gpu = torch_gpu_available() if "torch_gpu_available" in globals() else gpu_available
+            gpu_only_text = "Skipped: needs a CUDA GPU"
             rows = [
                 {
                     "Later block": "2B molecular features",
@@ -2481,8 +2572,8 @@ cells += [
                     "Why it changes": "About ten conventional models by default; CV folds multiply work.",
                 },
                 {
-                    "Later block": "4E GA tuning",
-                    "Rough time": format_runtime_estimate(ga_seconds),
+                    "Later block": "4E GA tuning (off by default)",
+                    "Rough time": "Off by default; " + format_runtime_estimate(ga_seconds) + " if enabled",
                     "Why it changes": "Models x generations x population size x CV folds.",
                 },
                 {
@@ -2492,13 +2583,13 @@ cells += [
                 },
                 {
                     "Later block": "6C/6D one Uni-Mol model",
-                    "Rough time": format_runtime_estimate(unimol_seconds),
-                    "Why it changes": "Pretrained 3D model; GPU strongly recommended.",
+                    "Rough time": format_runtime_estimate(unimol_seconds) if torch_gpu else gpu_only_text,
+                    "Why it changes": "Pretrained 3D model; runs only on a GPU.",
                 },
                 {
                     "Later block": "6F one Chemprop variant",
-                    "Rough time": format_runtime_estimate(chemprop_seconds),
-                    "Why it changes": "Graph neural network; each selected variant adds another fit.",
+                    "Rough time": format_runtime_estimate(chemprop_seconds) if torch_gpu else gpu_only_text,
+                    "Why it changes": "Graph neural network; runs only on a GPU; each selected variant adds another fit.",
                 },
                 {
                     "Later block": "9D applicability domain",
@@ -2713,11 +2804,135 @@ cells += [
                 f'width="100%" height="{frame_height}" style="border:none;"></iframe>'
             )
             display(HTML(iframe_html))
+            register_report_figure(fig)
         setup_done("Plotly display helper")
+
+        setup_start("Report and reproducibility recorders")
+        # Written in by the notebook builder: every titled step, its options' defaults and the
+        # benchmark evidence for them. Step 9F renders this next to the values each step ran with.
+        QSARENA_NOTEBOOK_BLOCKS = __NOTEBOOK_BLOCKS_FALLBACK__
+        QSARENA_DEFAULTS_LEGEND = __DEFAULTS_LEGEND_FALLBACK__
+
+        def _report_jsonable(value):
+            if isinstance(value, (bool, int, str)) or value is None:
+                return value
+            if isinstance(value, float):
+                return value if np.isfinite(value) else str(value)
+            if isinstance(value, (np.integer,)):
+                return int(value)
+            if isinstance(value, (np.floating,)):
+                return float(value)
+            if isinstance(value, (list, tuple)):
+                return [_report_jsonable(item) for item in value]
+            if isinstance(value, dict):
+                return {str(key): _report_jsonable(item) for key, item in value.items()}
+            return str(value)
+
+        def quiet_noisy_loggers():
+            # Some packages switch the root logger to DEBUG on import. numba then prints every compiler
+            # pass while UMAP or pynndescent compile (thousands of lines in 9B). Keep these at WARNING.
+            import logging as _logging
+
+            for _name in [
+                "numba", "pynndescent", "umap", "matplotlib", "PIL", "h5py", "urllib3",
+                "fsspec", "asyncio", "httpx", "httpcore", "filelock", "git",
+            ]:
+                _logging.getLogger(_name).setLevel(_logging.WARNING)
+            _root = _logging.getLogger()
+            if _root.level < _logging.WARNING:
+                _root.setLevel(_logging.WARNING)
+
+        quiet_noisy_loggers()
+
+        def record_widget_values(block_title, values):
+            # Log the option values a step ran with (called automatically at the top of each step).
+            quiet_noisy_loggers()
+            if not isinstance(globals().get("STATE"), dict):
+                return
+            from datetime import datetime as _datetime
+
+            log = STATE.setdefault("widget_log", {})
+            log[str(block_title)] = {
+                "values": {str(key): _report_jsonable(item) for key, item in dict(values).items()},
+                "recorded_at": _datetime.now().isoformat(timespec="seconds"),
+                "run_number": int(STATE.get("widget_log_counter", 0)) + 1,
+            }
+            STATE["widget_log_counter"] = int(STATE.get("widget_log_counter", 0)) + 1
+            STATE["current_block"] = str(block_title)
+
+        def _report_figure_key(block, label):
+            return f"{block} :: {label}"
+
+        def register_report_figure(fig):
+            # Keep the latest version of each interactive figure for the 9F report.
+            try:
+                if not isinstance(globals().get("STATE"), dict):
+                    return
+                block = str(STATE.get("current_block", "Notebook"))
+                title_text = ""
+                try:
+                    title_text = str(fig.layout.title.text or "")
+                except Exception:
+                    title_text = ""
+                figures = STATE.setdefault("report_figures", {})
+                label = title_text or f"Figure {len([k for k in figures if k.startswith(block)]) + 1}"
+                figures[_report_figure_key(block, label)] = {"block": block, "title": label, "json": fig.to_json()}
+            except Exception:
+                pass
+
+        def _install_matplotlib_report_capture():
+            try:
+                import matplotlib.pyplot as _qsarena_plt
+            except Exception:
+                return
+            if getattr(_qsarena_plt.show, "_qsarena_wrapped", False):
+                return
+            _original_show = _qsarena_plt.show
+
+            def _qsarena_show(*args, **kwargs):
+                try:
+                    if isinstance(globals().get("STATE"), dict):
+                        block = str(STATE.get("current_block", "Notebook"))
+                        images = STATE.setdefault("report_images", {})
+                        for index, number in enumerate(_qsarena_plt.get_fignums(), start=1):
+                            figure = _qsarena_plt.figure(number)
+                            label = ""
+                            if getattr(figure, "_suptitle", None) is not None:
+                                label = figure._suptitle.get_text()
+                            if not label:
+                                label = " / ".join(ax.get_title() for ax in figure.axes[:2] if ax.get_title())
+                            label = " ".join(label.split()) or f"Static figure {index}"
+                            buffer = io.BytesIO()
+                            figure.savefig(buffer, format="png", dpi=110, bbox_inches="tight")
+                            images[_report_figure_key(block, label)] = {
+                                "block": block,
+                                "title": label,
+                                "png_base64": base64.b64encode(buffer.getvalue()).decode("ascii"),
+                            }
+                except Exception:
+                    pass
+                return _original_show(*args, **kwargs)
+
+            _qsarena_show._qsarena_wrapped = True
+            _qsarena_plt.show = _qsarena_show
+
+        _install_matplotlib_report_capture()
+        setup_done("Report and reproducibility recorders")
 
         setup_start("ChemML bundled dataset helper")
         def load_chemml_bundled_dataset(option_key):
             option_key = str(option_key).strip()
+            try:
+                return _load_chemml_bundled_dataset(option_key)
+            except ImportError as exc:
+                raise RuntimeError(
+                    f"Could not load {option_key}: ChemML's dataset loaders need Open Babel, which is not "
+                    "available in this environment (it cannot be installed on Colab). Choose a TDC, "
+                    "MoleculeNet, or Polaris example dataset instead, e.g. "
+                    "'MoleculeNet | PhysChem | FreeSolv (SAMPL)'."
+                ) from exc
+
+        def _load_chemml_bundled_dataset(option_key):
             if option_key == "ChemML | organic_density":
                 from chemml.datasets.base import load_organic_density
                 smiles_df, target_df, _ = load_organic_density()
@@ -3704,7 +3919,6 @@ cells += [
         # @title 0B. Optional: apply a QSARena run.yaml to the widgets { display-mode: "form" }
         run_config_yaml_path = "" # @param {type:"string"}
 
-        QSARENA_CONFIG_URL = "https://raw.githubusercontent.com/ScottCoffin/QSARena/main/qsarena/config.py"
 
         def load_qsarena_config_module():
             try:
@@ -3716,8 +3930,7 @@ cells += [
             import urllib.request
             target = Path.cwd() / "qsarena_config_download.py"
             if not target.exists():
-                print(f"[downloading] QSARena RunConfig schema from: {QSARENA_CONFIG_URL}", flush=True)
-                urllib.request.urlretrieve(QSARENA_CONFIG_URL, target)
+                download_qsarena_repo_file("qsarena/config.py", target, "QSARena RunConfig schema")
             spec = importlib.util.spec_from_file_location("qsarena_config_download", target)
             module = importlib.util.module_from_spec(spec)
             sys.modules["qsarena_config_download"] = module
@@ -3742,6 +3955,7 @@ cells += [
                 print("No notebook widget (these apply to qsarena-benchmark only): " + ", ".join(_cli_only_keys))
         """
     ),
+    md(DEFAULTS_INTRO),
     md(
         """
         ## 1. Data Input
@@ -3758,13 +3972,19 @@ cells += [
         - a normal local **file path**
         <!-- LOCAL_ONLY_END -->
         - a built-in example dataset from **ChemML**, **TDC**, **MoleculeNet PhysChem**, or **Polaris ADME**
+
+        The default example is **MoleculeNet FreeSolv** (642 molecules, hydration free energy), the smallest built-in regression dataset.
+        <!-- COLAB_ONLY_START -->
+
+        > **Colab note:** the `ChemML | ...` example datasets do not load in Colab. ChemML's loaders depend on Open Babel, which cannot be installed on a Colab runtime. Use a TDC, MoleculeNet, or Polaris example instead.
+        <!-- COLAB_ONLY_END -->
         """
     ),
     code(
         """
         # @title 1A. Load a dataset { display-mode: "form" }
         data_source = "Example dataset" # @param ["Upload CSV/XLSX (Colab only)", "File path", "Example dataset"]
-        example_dataset = "ChemML | organic_density" # @param ["ChemML | organic_density", "ChemML | cep_homo", "ChemML | xyz_polarizability", "ChemML | comp_energy", "ChemML | crystal_structures", "TDC | ADME | caco2_wang", "TDC | ADME | lipophilicity_astrazeneca", "TDC | ADME | solubility_aqsoldb", "TDC | ADME | ppbr_az", "TDC | ADME | vdss_lombardo", "TDC | ADME | half_life_obach", "TDC | ADME | clearance_hepatocyte_az", "TDC | ADME | clearance_microsome_az", "TDC | Tox | ld50_zhu", "MoleculeNet | PhysChem | ESOL (Delaney)", "MoleculeNet | PhysChem | FreeSolv (SAMPL)", "MoleculeNet | PhysChem | Lipophilicity", "Polaris | ADME | adme-fang-perm-1", "Polaris | ADME | adme-fang-solu-1", "Polaris | ADME | adme-fang-rclint-1", "Polaris | ADME | adme-fang-hppb-1", "Polaris | ADME | adme-fang-rppb-1"]
+        example_dataset = "MoleculeNet | PhysChem | FreeSolv (SAMPL)" # @param ["ChemML | organic_density", "ChemML | cep_homo", "ChemML | xyz_polarizability", "ChemML | comp_energy", "ChemML | crystal_structures", "TDC | ADME | caco2_wang", "TDC | ADME | lipophilicity_astrazeneca", "TDC | ADME | solubility_aqsoldb", "TDC | ADME | ppbr_az", "TDC | ADME | vdss_lombardo", "TDC | ADME | half_life_obach", "TDC | ADME | clearance_hepatocyte_az", "TDC | ADME | clearance_microsome_az", "TDC | Tox | ld50_zhu", "MoleculeNet | PhysChem | ESOL (Delaney)", "MoleculeNet | PhysChem | FreeSolv (SAMPL)", "MoleculeNet | PhysChem | Lipophilicity", "Polaris | ADME | adme-fang-perm-1", "Polaris | ADME | adme-fang-solu-1", "Polaris | ADME | adme-fang-rclint-1", "Polaris | ADME | adme-fang-hppb-1", "Polaris | ADME | adme-fang-rppb-1"]
         dataset_file_path = "/content/drive/MyDrive/your_dataset.csv" # @param {type:"string"}
         default_target_transform = "AUTO" # @param ["AUTO", "none", "log10_positive_only", "signed_log10", "shifted_log10"]
         preview_rows = 5 # @param {type:"slider", min:3, max:15, step:1}
@@ -4459,7 +4679,7 @@ cells += [
         use_maccs_keys = True # @param {type:"boolean"}
         use_rdkit_descriptors = True # @param {type:"boolean"}
         # MapLight classic includes Avalon-count fingerprints (`avalon_count_*`) plus Morgan-count, ErG, and descriptor features.
-        use_maplight_classic = False # @param {type:"boolean"}
+        use_maplight_classic = True # @param {type:"boolean"}
         morgan_radius = 2 # @param {type:"slider", min:1, max:4, step:1}
         fingerprint_bits = "1024" # @param ["256", "512", "1024", "2048"]
         enable_persistent_feature_store = True # @param {type:"boolean"}
@@ -4924,7 +5144,7 @@ cells += [
         selector_auto_rf_log10_slope = 1.225 # @param {type:"number"}
         selector_auto_rf_log10_intercept = -0.658 # @param {type:"number"}
         # @markdown ### Output size and diagnostics
-        max_selected_features = 512 # @param {type:"integer"}
+        max_selected_features = 0 # @param {type:"integer"}
         random_forest_selector_trees = 500 # @param {type:"integer"}
         show_lasso_coefficient_diagnostics = True # @param {type:"boolean"}
         top_lasso_coefficients_to_show = 30 # @param {type:"slider", min:10, max:50, step:5}
@@ -4938,8 +5158,11 @@ cells += [
         if selected_selector_method not in {"none", "fixed_lasso", "lasso_cv", "elasticnet_cv", "random_forest_importance"}:
             raise ValueError(f"Unsupported feature selector method: {feature_selector_method}")
         dataset_row_count = int(len(STATE["curated_df"])) if "curated_df" in STATE else 0
+        # 0 = the benchmark rule: cap at 10% of the training rows. 4B recomputes it from the actual
+        # training split; this estimate is only for the summary printed below.
+        estimated_train_row_count = int(round(dataset_row_count * (1.0 - float(STATE.get("model_test_fraction", 0.2)))))
         if int(max_selected_features) <= 0:
-            effective_max_selected_features = max(1, int(math.ceil(0.10 * max(1, dataset_row_count))))
+            effective_max_selected_features = max(1, int(math.ceil(0.10 * max(1, estimated_train_row_count))))
         else:
             effective_max_selected_features = int(max_selected_features)
 
@@ -4955,7 +5178,7 @@ cells += [
             "max_iter": int(lasso_max_iter),
             "selection_mode": str(lasso_coordinate_selection),
             "max_selected_features": int(effective_max_selected_features),
-            "max_selected_features_mode": "10_percent_of_total_rows" if int(max_selected_features) <= 0 else "manual",
+            "max_selected_features_mode": "10_percent_of_training_rows" if int(max_selected_features) <= 0 else "manual",
             "random_forest_selector_trees": int(random_forest_selector_trees),
             "estimate_runtime": bool(estimate_selector_runtime),
             "selector_auto_rf_by_dataset_size": bool(selector_auto_rf_by_dataset_size),
@@ -5012,7 +5235,10 @@ cells += [
         else:
             print("Feature selection disabled. 4B will train on the full feature matrix.")
         if int(max_selected_features) <= 0:
-            print(f"Maximum selected features: {effective_max_selected_features:,} (10% of {dataset_row_count:,} total curated molecule(s), rounded up).")
+            print(
+                f"Maximum selected features: about {effective_max_selected_features:,} "
+                f"(10% of the ~{estimated_train_row_count:,} training molecule(s), rounded up; the benchmark rule)."
+            )
         else:
             print(f"Maximum selected features: {int(max_selected_features):,}")
         print(f"Selector cache enabled: {'yes' if enable_feature_selector_cache else 'no'}; reuse cache: {'yes' if reuse_feature_selector_cache else 'no'}")
@@ -5078,7 +5304,8 @@ cells += [
                     "coefficient_threshold": 1e-10,
                     "max_iter": 10000,
                     "selection_mode": "cyclic coordinate updates",
-                    "max_selected_features": 512,
+                    "max_selected_features": 0,
+                    "max_selected_features_mode": "10_percent_of_training_rows",
                     "random_forest_selector_trees": 500,
                     "selector_auto_rf_by_dataset_size": True,
                     "selector_auto_rf_threshold_seconds": 7200.0,
@@ -5182,6 +5409,13 @@ cells += [
         selector_cache_dir = None
         selector_cache_paths = {}
 
+        if str(feature_selection_config.get("max_selected_features_mode", "manual")) in {
+            "10_percent_of_training_rows",
+            "10_percent_of_total_rows",
+        } or int(train_selector_max_features) <= 0:
+            train_selector_max_features = max(1, int(math.ceil(0.10 * max(1, len(X_train)))))
+            feature_selection_config["max_selected_features"] = int(train_selector_max_features)
+            print(f"Maximum selected features: {int(train_selector_max_features):,} (10% of {len(X_train):,} training molecules, rounded up).")
         if train_selector_method != "none":
             if int(train_selector_max_features) < 1:
                 raise ValueError("max_selected_features must be at least 1 when train-only selection is enabled.")
@@ -5878,15 +6112,17 @@ cells += [
         selector_cache_paths = dict(STATE.get("feature_selector_cache_paths", {}))
         train_selector_summary = dict(STATE.get("traditional_train_only_feature_selector", {}))
         resource_n_jobs = qsarena_n_jobs()
+        conventional_setting_notes = [f"n_jobs={resource_n_jobs}"]
         _gpu_available_5a = bool(STATE.get("gpu_available", False))
-        if _gpu_available_5a:
+        if _gpu_available_5a and run_tabular_cnn:
             _new_cnn_batch = 128 if cnn_batch_size < 128 else cnn_batch_size
             _new_cnn_epochs = max(cnn_training_epochs, 60)
             if _new_cnn_batch != cnn_batch_size or _new_cnn_epochs != cnn_training_epochs:
-                print(f"[GPU-aware] CNN: batch_size {cnn_batch_size}→{_new_cnn_batch}, epochs {cnn_training_epochs}→{_new_cnn_epochs}")
+                conventional_setting_notes.append(
+                    f"Tabular CNN batch {cnn_batch_size}->{_new_cnn_batch}, epochs {cnn_training_epochs}->{_new_cnn_epochs} (GPU found)"
+                )
                 cnn_batch_size = _new_cnn_batch
                 cnn_training_epochs = _new_cnn_epochs
-        print(f"Conventional ML resource plan: n_jobs={resource_n_jobs}")
         training_cv_split_strategy = current_cv_split_strategy(default_strategy="random", fallback="random")
         effective_cv_folds = None
         if use_cross_validation:
@@ -6044,6 +6280,7 @@ cells += [
                 colsample_bytree=0.9,
                 random_state=int(model_random_seed),
                 n_jobs=resource_n_jobs,
+                verbose=-1,  # silences LightGBM's per-fit [Info] and "No further splits" warnings
             )
         if CatBoostRegressor is not None:
             available_models["MapLight CatBoost"] = CatBoostRegressor(
@@ -6122,21 +6359,15 @@ cells += [
 
         if run_elasticnet_cv:
             estimated_elasticnet_fits = len(elasticnet_alpha_grid) * len(elasticnet_l1_ratio_values) * int(elasticnet_internal_cv_folds)
-            print(
-                "ElasticNetCV conventional model uses internal CV tuning: "
-                f"{len(elasticnet_alpha_grid)} alpha values x {len(elasticnet_l1_ratio_values)} l1_ratio values x "
-                f"{int(elasticnet_internal_cv_folds)} {elasticnet_internal_cv_split_strategy} CV folds = about {estimated_elasticnet_fits:,} model fits per final fit."
+            elasticnet_note = (
+                f"ElasticNetCV tunes {len(elasticnet_alpha_grid)} alphas x {len(elasticnet_l1_ratio_values)} l1 ratios x "
+                f"{int(elasticnet_internal_cv_folds)} inner folds (~{estimated_elasticnet_fits:,} fits per final fit"
             )
             if training_cv_split_strategy == "scaffold":
-                print(
-                    "Note: nested ElasticNetCV cannot receive scaffold groups inside sklearn's internal fit loop, "
-                    "so the inner tuning CV falls back to random folds while the outer evaluation CV still follows the scaffold split."
-                )
-            if use_cross_validation:
-                print(
-                    "Outer conventional-model cross-validation is also enabled, so ElasticNetCV is evaluated with "
-                    "train-fold-only internal tuning in each outer fold."
-                )
+                # sklearn's ElasticNetCV cannot take scaffold groups, so only the inner tuning folds are random.
+                elasticnet_note += "; inner folds are random, outer CV keeps the scaffold split"
+            conventional_setting_notes.append(elasticnet_note + ")")
+        print("4C settings: " + "; ".join(conventional_setting_notes) + ".")
         scoring = None
         if use_cross_validation:
             scoring = {
@@ -6635,951 +6866,960 @@ cells += [
         tuned_cache_run_name = "AUTO" # @param {type:"string"}
         previous_ga_run_source = "" # @param {type:"string"}
         upload_previous_ga_run_source = False # @param {type:"boolean"}
-        tune_elasticnet = True # @param {type:"boolean"}
+        tune_elasticnet = False # @param {type:"boolean"}
         tune_svr = False # @param {type:"boolean"}
-        tune_random_forest = True # @param {type:"boolean"}
+        tune_random_forest = False # @param {type:"boolean"}
         tune_xgboost = False # @param {type:"boolean"}
         tune_catboost = False # @param {type:"boolean"}
 
-        if "feature_matrix" not in STATE:
-            raise RuntimeError("Please build the molecular feature matrix first.")
-
-        from chemml.optimization import GeneticAlgorithm
-        import warnings
-
-        display_note(
-            "Running this block should show three progress layers: "
-            "**model progress** (which model is being tuned), "
-            "**generation progress** (which generation is running for the current model), and "
-            "**evaluation progress** (candidate evaluations within the current generation)."
+        ga_tuning_requested = any([tune_elasticnet, tune_svr, tune_random_forest, tune_xgboost, tune_catboost]) or bool(
+            str(previous_ga_run_source).strip() or upload_previous_ga_run_source
         )
-        warnings.filterwarnings(
-            "ignore",
-            message=r"`sklearn\\.utils\\.parallel\\.delayed` should be used with `sklearn\\.utils\\.parallel\\.Parallel`.*",
-            category=UserWarning,
-        )
-        warnings.filterwarnings(
-            "ignore",
-            category=UserWarning,
-            module=r"sklearn\\.utils\\.parallel",
-        )
-
-        explicit_ga_metadata_candidates = []
-        explicit_ga_metadata_bundle = None
-        previous_ga_run_source = str(previous_ga_run_source).strip()
-        if upload_previous_ga_run_source:
-            uploaded_ga_source = upload_support_file(
-                extract_zip=True,
-                destination_dir="./.cache/uploaded_ga_runs",
-            )
-            previous_ga_run_source = str(uploaded_ga_source)
-            print(f"Uploaded previous GA source to: {previous_ga_run_source}", flush=True)
-
-        if previous_ga_run_source:
-            previous_source_path = Path(previous_ga_run_source)
-            if not previous_source_path.exists():
-                raise FileNotFoundError(
-                    f"Previous GA source was provided but does not exist: {previous_source_path}"
-                )
-            if previous_source_path.is_dir():
-                explicit_ga_metadata_candidates.extend(
-                    sorted(
-                        previous_source_path.rglob("*_ga_tuned_metadata.json"),
-                        key=lambda path: len(str(path)),
-                    )
-                )
-            elif previous_source_path.suffix.lower() == ".json":
-                explicit_ga_metadata_candidates.append(previous_source_path)
-            else:
-                raise ValueError(
-                    "Previous GA source must be a directory containing GA cache artifacts or a "
-                    "`*_ga_tuned_metadata.json` file. In Colab you can also upload a `.zip` archive."
-                )
-            if not explicit_ga_metadata_candidates:
-                raise FileNotFoundError(
-                    "No `*_ga_tuned_metadata.json` files were found in the supplied previous GA source."
-                )
-            representative_metadata_path = sorted(
-                explicit_ga_metadata_candidates,
-                key=lambda path: path.name,
-                reverse=True,
-            )[0]
-            representative_metadata = read_cache_metadata(representative_metadata_path)
-            discovered_model_names = sorted(
-                {
-                    str(read_cache_metadata(path).get("model_name", "")).strip()
-                    for path in explicit_ga_metadata_candidates
-                }
-            )
-            discovered_model_names = [name for name in discovered_model_names if name]
-            metadata_override_values = {
-                "ga_cv_folds": int(representative_metadata.get("ga_cv_folds", ga_cv_folds)),
-                "ga_objective": str(representative_metadata.get("ga_objective", ga_objective)),
-                "ga_generations": int(representative_metadata.get("ga_generations_requested", representative_metadata.get("ga_generations_completed", ga_generations))),
-                "ga_population_size": int(representative_metadata.get("ga_population_size", ga_population_size)),
-                "ga_crossover_size": int(representative_metadata.get("ga_crossover_size", ga_crossover_size)),
-                "ga_mutation_size": int(representative_metadata.get("ga_mutation_size", ga_mutation_size)),
-                "ga_mutation_probability": float(representative_metadata.get("ga_mutation_probability", ga_mutation_probability)),
-                "ga_early_stopping": int(representative_metadata.get("ga_early_stopping", ga_early_stopping)),
-                "tuned_cache_run_name": str(representative_metadata.get("cache_run_name", tuned_cache_run_name)),
-                "tune_elasticnet": "ElasticNet" in discovered_model_names,
-                "tune_svr": "SVR" in discovered_model_names,
-                "tune_random_forest": "Random forest" in discovered_model_names,
-                "tune_xgboost": "XGBoost" in discovered_model_names,
-                "tune_catboost": "CatBoost" in discovered_model_names,
-            }
-            ga_cv_folds = metadata_override_values["ga_cv_folds"]
-            ga_objective = metadata_override_values["ga_objective"]
-            ga_generations = metadata_override_values["ga_generations"]
-            ga_population_size = metadata_override_values["ga_population_size"]
-            ga_crossover_size = metadata_override_values["ga_crossover_size"]
-            ga_mutation_size = metadata_override_values["ga_mutation_size"]
-            ga_mutation_probability = metadata_override_values["ga_mutation_probability"]
-            ga_early_stopping = metadata_override_values["ga_early_stopping"]
-            tuned_cache_run_name = metadata_override_values["tuned_cache_run_name"]
-            tune_elasticnet = metadata_override_values["tune_elasticnet"]
-            tune_svr = metadata_override_values["tune_svr"]
-            tune_random_forest = metadata_override_values["tune_random_forest"]
-            tune_xgboost = metadata_override_values["tune_xgboost"]
-            tune_catboost = metadata_override_values["tune_catboost"]
-            explicit_ga_metadata_bundle = {
-                "representative_metadata_path": str(representative_metadata_path),
-                "representative_metadata": representative_metadata,
-                "discovered_model_names": discovered_model_names,
-            }
-            if not IN_COLAB and "_local_form_id" in locals():
-                set_local_form_values(_local_form_id, metadata_override_values)
+        if not ga_tuning_requested:
             print(
-                f"Previous GA source supplied: {previous_source_path} "
-                f"({len(explicit_ga_metadata_candidates)} metadata file(s) found)",
+                "4E skipped: no model is ticked for genetic-algorithm tuning (the default). "
+                "GA tuning was off in the 44-dataset benchmark; tick a tune_* box to run it."
+            )
+        else:
+            if "feature_matrix" not in STATE:
+                raise RuntimeError("Please build the molecular feature matrix first.")
+
+            from chemml.optimization import GeneticAlgorithm
+            import warnings
+
+            display_note(
+                "Running this block should show three progress layers: "
+                "**model progress** (which model is being tuned), "
+                "**generation progress** (which generation is running for the current model), and "
+                "**evaluation progress** (candidate evaluations within the current generation)."
+            )
+            warnings.filterwarnings(
+                "ignore",
+                message=r"`sklearn\\.utils\\.parallel\\.delayed` should be used with `sklearn\\.utils\\.parallel\\.Parallel`.*",
+                category=UserWarning,
+            )
+            warnings.filterwarnings(
+                "ignore",
+                category=UserWarning,
+                module=r"sklearn\\.utils\\.parallel",
+            )
+
+            explicit_ga_metadata_candidates = []
+            explicit_ga_metadata_bundle = None
+            previous_ga_run_source = str(previous_ga_run_source).strip()
+            if upload_previous_ga_run_source:
+                uploaded_ga_source = upload_support_file(
+                    extract_zip=True,
+                    destination_dir="./.cache/uploaded_ga_runs",
+                )
+                previous_ga_run_source = str(uploaded_ga_source)
+                print(f"Uploaded previous GA source to: {previous_ga_run_source}", flush=True)
+
+            if previous_ga_run_source:
+                previous_source_path = Path(previous_ga_run_source)
+                if not previous_source_path.exists():
+                    raise FileNotFoundError(
+                        f"Previous GA source was provided but does not exist: {previous_source_path}"
+                    )
+                if previous_source_path.is_dir():
+                    explicit_ga_metadata_candidates.extend(
+                        sorted(
+                            previous_source_path.rglob("*_ga_tuned_metadata.json"),
+                            key=lambda path: len(str(path)),
+                        )
+                    )
+                elif previous_source_path.suffix.lower() == ".json":
+                    explicit_ga_metadata_candidates.append(previous_source_path)
+                else:
+                    raise ValueError(
+                        "Previous GA source must be a directory containing GA cache artifacts or a "
+                        "`*_ga_tuned_metadata.json` file. In Colab you can also upload a `.zip` archive."
+                    )
+                if not explicit_ga_metadata_candidates:
+                    raise FileNotFoundError(
+                        "No `*_ga_tuned_metadata.json` files were found in the supplied previous GA source."
+                    )
+                representative_metadata_path = sorted(
+                    explicit_ga_metadata_candidates,
+                    key=lambda path: path.name,
+                    reverse=True,
+                )[0]
+                representative_metadata = read_cache_metadata(representative_metadata_path)
+                discovered_model_names = sorted(
+                    {
+                        str(read_cache_metadata(path).get("model_name", "")).strip()
+                        for path in explicit_ga_metadata_candidates
+                    }
+                )
+                discovered_model_names = [name for name in discovered_model_names if name]
+                metadata_override_values = {
+                    "ga_cv_folds": int(representative_metadata.get("ga_cv_folds", ga_cv_folds)),
+                    "ga_objective": str(representative_metadata.get("ga_objective", ga_objective)),
+                    "ga_generations": int(representative_metadata.get("ga_generations_requested", representative_metadata.get("ga_generations_completed", ga_generations))),
+                    "ga_population_size": int(representative_metadata.get("ga_population_size", ga_population_size)),
+                    "ga_crossover_size": int(representative_metadata.get("ga_crossover_size", ga_crossover_size)),
+                    "ga_mutation_size": int(representative_metadata.get("ga_mutation_size", ga_mutation_size)),
+                    "ga_mutation_probability": float(representative_metadata.get("ga_mutation_probability", ga_mutation_probability)),
+                    "ga_early_stopping": int(representative_metadata.get("ga_early_stopping", ga_early_stopping)),
+                    "tuned_cache_run_name": str(representative_metadata.get("cache_run_name", tuned_cache_run_name)),
+                    "tune_elasticnet": "ElasticNet" in discovered_model_names,
+                    "tune_svr": "SVR" in discovered_model_names,
+                    "tune_random_forest": "Random forest" in discovered_model_names,
+                    "tune_xgboost": "XGBoost" in discovered_model_names,
+                    "tune_catboost": "CatBoost" in discovered_model_names,
+                }
+                ga_cv_folds = metadata_override_values["ga_cv_folds"]
+                ga_objective = metadata_override_values["ga_objective"]
+                ga_generations = metadata_override_values["ga_generations"]
+                ga_population_size = metadata_override_values["ga_population_size"]
+                ga_crossover_size = metadata_override_values["ga_crossover_size"]
+                ga_mutation_size = metadata_override_values["ga_mutation_size"]
+                ga_mutation_probability = metadata_override_values["ga_mutation_probability"]
+                ga_early_stopping = metadata_override_values["ga_early_stopping"]
+                tuned_cache_run_name = metadata_override_values["tuned_cache_run_name"]
+                tune_elasticnet = metadata_override_values["tune_elasticnet"]
+                tune_svr = metadata_override_values["tune_svr"]
+                tune_random_forest = metadata_override_values["tune_random_forest"]
+                tune_xgboost = metadata_override_values["tune_xgboost"]
+                tune_catboost = metadata_override_values["tune_catboost"]
+                explicit_ga_metadata_bundle = {
+                    "representative_metadata_path": str(representative_metadata_path),
+                    "representative_metadata": representative_metadata,
+                    "discovered_model_names": discovered_model_names,
+                }
+                if not IN_COLAB and "_local_form_id" in locals():
+                    set_local_form_values(_local_form_id, metadata_override_values)
+                print(
+                    f"Previous GA source supplied: {previous_source_path} "
+                    f"({len(explicit_ga_metadata_candidates)} metadata file(s) found)",
+                    flush=True,
+                )
+                display_note(
+                    "Previous GA metadata was supplied, so the `4E` tuning controls were updated to match "
+                    "that run before executing the block."
+                )
+
+            required_keys = {"X_train", "X_test", "y_train", "y_test", "smiles_train", "smiles_test", "traditional_feature_metadata"}
+            missing_keys = sorted(required_keys.difference(STATE.keys()))
+            if missing_keys:
+                raise RuntimeError(
+                    "Please run blocks 4A and 4B before GA tuning. "
+                    f"Missing: {', '.join(missing_keys)}"
+                )
+            X_train = STATE["X_train"].copy()
+            X_test = STATE["X_test"].copy()
+            y_train = np.asarray(STATE["y_train"], dtype=float)
+            y_test = np.asarray(STATE["y_test"], dtype=float)
+            feature_metadata = dict(STATE["traditional_feature_metadata"])
+            resource_n_jobs = qsarena_n_jobs()
+            tuning_split_strategy = str(STATE.get("model_split_strategy", "target_quartiles"))
+            tuning_test_fraction = float(STATE.get("model_test_fraction", 0.2))
+            tuning_random_seed = int(STATE.get("model_split_random_seed", 42))
+            print(
+                "GA tuning is using the prepared 4A/4B split and feature-selected matrix: "
+                f"strategy={tuning_split_strategy}, test_fraction={float(tuning_test_fraction):.2f}, "
+                f"train={len(X_train)}, test={len(X_test)}, features={X_train.shape[1]}",
                 flush=True,
             )
-            display_note(
-                "Previous GA metadata was supplied, so the `4E` tuning controls were updated to match "
-                "that run before executing the block."
-            )
+            print(f"GA tuning resource plan: n_jobs={resource_n_jobs}", flush=True)
 
-        required_keys = {"X_train", "X_test", "y_train", "y_test", "smiles_train", "smiles_test", "traditional_feature_metadata"}
-        missing_keys = sorted(required_keys.difference(STATE.keys()))
-        if missing_keys:
-            raise RuntimeError(
-                "Please run blocks 4A and 4B before GA tuning. "
-                f"Missing: {', '.join(missing_keys)}"
-            )
-        X_train = STATE["X_train"].copy()
-        X_test = STATE["X_test"].copy()
-        y_train = np.asarray(STATE["y_train"], dtype=float)
-        y_test = np.asarray(STATE["y_test"], dtype=float)
-        feature_metadata = dict(STATE["traditional_feature_metadata"])
-        resource_n_jobs = qsarena_n_jobs()
-        tuning_split_strategy = str(STATE.get("model_split_strategy", "target_quartiles"))
-        tuning_test_fraction = float(STATE.get("model_test_fraction", 0.2))
-        tuning_random_seed = int(STATE.get("model_split_random_seed", 42))
-        print(
-            "GA tuning is using the prepared 4A/4B split and feature-selected matrix: "
-            f"strategy={tuning_split_strategy}, test_fraction={float(tuning_test_fraction):.2f}, "
-            f"train={len(X_train)}, test={len(X_test)}, features={X_train.shape[1]}",
-            flush=True,
-        )
-        print(f"GA tuning resource plan: n_jobs={resource_n_jobs}", flush=True)
+            def _rounded_float(value, digits=6):
+                return float(np.round(float(value), digits))
 
-        def _rounded_float(value, digits=6):
-            return float(np.round(float(value), digits))
+            def _clean_params(params):
+                cleaned = {}
+                for key, value in params.items():
+                    if isinstance(value, (np.floating, float)):
+                        cleaned[key] = _rounded_float(value)
+                    elif isinstance(value, (np.integer, int)):
+                        cleaned[key] = int(value)
+                    else:
+                        cleaned[key] = value
+                return cleaned
 
-        def _clean_params(params):
-            cleaned = {}
-            for key, value in params.items():
-                if isinstance(value, (np.floating, float)):
-                    cleaned[key] = _rounded_float(value)
-                elif isinstance(value, (np.integer, int)):
-                    cleaned[key] = int(value)
-                else:
-                    cleaned[key] = value
-            return cleaned
+            def _score_predictions(y_true, y_pred, objective):
+                if objective == "rmse":
+                    return float(math.sqrt(mean_squared_error(y_true, y_pred)))
+                if objective == "mae":
+                    return float(mean_absolute_error(y_true, y_pred))
+                if objective == "r2":
+                    return float(r2_score(y_true, y_pred))
+                raise ValueError(f"Unsupported GA objective: {objective}")
 
-        def _score_predictions(y_true, y_pred, objective):
-            if objective == "rmse":
-                return float(math.sqrt(mean_squared_error(y_true, y_pred)))
-            if objective == "mae":
-                return float(mean_absolute_error(y_true, y_pred))
-            if objective == "r2":
-                return float(r2_score(y_true, y_pred))
-            raise ValueError(f"Unsupported GA objective: {objective}")
-
-        ga_models = {
-            "ElasticNet": (
-                lambda params: Pipeline(
-                    [
-                        ("imputer", SimpleImputer(strategy="median")),
-                        ("scaler", StandardScaler()),
-                        (
-                            "model",
-                            ElasticNet(
-                                alpha=float(np.exp(params["log_alpha"])),
-                                l1_ratio=float(params["l1_ratio"]),
-                                max_iter=15000,
-                                random_state=42,
+            ga_models = {
+                "ElasticNet": (
+                    lambda params: Pipeline(
+                        [
+                            ("imputer", SimpleImputer(strategy="median")),
+                            ("scaler", StandardScaler()),
+                            (
+                                "model",
+                                ElasticNet(
+                                    alpha=float(np.exp(params["log_alpha"])),
+                                    l1_ratio=float(params["l1_ratio"]),
+                                    max_iter=15000,
+                                    random_state=42,
+                                ),
                             ),
-                        ),
-                    ]
+                        ]
+                    ),
+                    (
+                        {"log_alpha": {"uniform": [float(np.log(0.0001)), float(np.log(0.1))], "mutation": [0.0, 1.0]}},
+                        {"l1_ratio": {"choice": [0.4, 0.8]}},
+                    ),
+                    lambda params: {
+                        "alpha": _rounded_float(np.exp(params["log_alpha"])),
+                        "l1_ratio": _rounded_float(params["l1_ratio"]),
+                    },
                 ),
-                (
-                    {"log_alpha": {"uniform": [float(np.log(0.0001)), float(np.log(0.1))], "mutation": [0.0, 1.0]}},
-                    {"l1_ratio": {"choice": [0.4, 0.8]}},
-                ),
-                lambda params: {
-                    "alpha": _rounded_float(np.exp(params["log_alpha"])),
-                    "l1_ratio": _rounded_float(params["l1_ratio"]),
-                },
-            ),
-            "SVR": (
-                lambda params: Pipeline(
-                    [
-                        ("imputer", SimpleImputer(strategy="median")),
-                        ("scaler", StandardScaler()),
-                        (
-                            "model",
-                            SVR(
-                                C=float(np.exp(params["log_c"])),
-                                epsilon=float(np.exp(params["log_epsilon"])),
-                                gamma=str(params["gamma"]),
+                "SVR": (
+                    lambda params: Pipeline(
+                        [
+                            ("imputer", SimpleImputer(strategy="median")),
+                            ("scaler", StandardScaler()),
+                            (
+                                "model",
+                                SVR(
+                                    C=float(np.exp(params["log_c"])),
+                                    epsilon=float(np.exp(params["log_epsilon"])),
+                                    gamma=str(params["gamma"]),
+                                ),
                             ),
-                        ),
-                    ]
+                        ]
+                    ),
+                    (
+                        {"log_c": {"uniform": [float(np.log(0.5)), float(np.log(50.0))], "mutation": [0.0, 0.4]}},
+                        {"log_epsilon": {"uniform": [float(np.log(0.01)), float(np.log(0.3))], "mutation": [0.0, 0.25]}},
+                        {"gamma": {"choice": ["scale", "auto"]}},
+                    ),
+                    lambda params: {
+                        "C": _rounded_float(np.exp(params["log_c"])),
+                        "epsilon": _rounded_float(np.exp(params["log_epsilon"])),
+                        "gamma": str(params["gamma"]),
+                    },
                 ),
-                (
-                    {"log_c": {"uniform": [float(np.log(0.5)), float(np.log(50.0))], "mutation": [0.0, 0.4]}},
-                    {"log_epsilon": {"uniform": [float(np.log(0.01)), float(np.log(0.3))], "mutation": [0.0, 0.25]}},
-                    {"gamma": {"choice": ["scale", "auto"]}},
+                "Random forest": (
+                    lambda params: RandomForestRegressor(
+                        n_estimators=int(params["n_estimators"]),
+                        max_depth=int(params["max_depth"]),
+                        min_samples_split=int(params["min_samples_split"]),
+                        min_samples_leaf=int(params["min_samples_leaf"]),
+                        max_features=params["max_features"],
+                        random_state=42,
+                        n_jobs=resource_n_jobs,
+                    ),
+                    (
+                        {"n_estimators": {"int": [200, 600]}},
+                        {"max_depth": {"int": [6, 24]}},
+                        {"min_samples_split": {"int": [2, 8]}},
+                        {"min_samples_leaf": {"int": [1, 4]}},
+                        {"max_features": {"choice": ["sqrt", "log2", 1.0]}},
+                    ),
+                    lambda params: _clean_params(params),
                 ),
-                lambda params: {
-                    "C": _rounded_float(np.exp(params["log_c"])),
-                    "epsilon": _rounded_float(np.exp(params["log_epsilon"])),
-                    "gamma": str(params["gamma"]),
-                },
-            ),
-            "Random forest": (
-                lambda params: RandomForestRegressor(
-                    n_estimators=int(params["n_estimators"]),
-                    max_depth=int(params["max_depth"]),
-                    min_samples_split=int(params["min_samples_split"]),
-                    min_samples_leaf=int(params["min_samples_leaf"]),
-                    max_features=params["max_features"],
-                    random_state=42,
-                    n_jobs=resource_n_jobs,
+                "XGBoost": (
+                    lambda params: XGBRegressor(
+                        objective="reg:squarederror",
+                        n_estimators=int(params["n_estimators"]),
+                        max_depth=int(params["max_depth"]),
+                        learning_rate=float(np.exp(params["log_learning_rate"])),
+                        subsample=float(params["subsample"]),
+                        colsample_bytree=float(params["colsample_bytree"]),
+                        min_child_weight=int(params["min_child_weight"]),
+                        random_state=42,
+                        n_jobs=resource_n_jobs,
+                    ),
+                    (
+                        {"n_estimators": {"int": [200, 600]}},
+                        {"max_depth": {"int": [3, 10]}},
+                        {"log_learning_rate": {"uniform": [float(np.log(0.02)), float(np.log(0.2))], "mutation": [0.0, 0.3]}},
+                        {"subsample": {"uniform": [0.6, 1.0], "mutation": [0.0, 0.1]}},
+                        {"colsample_bytree": {"uniform": [0.6, 1.0], "mutation": [0.0, 0.1]}},
+                        {"min_child_weight": {"int": [1, 8]}},
+                    ),
+                    lambda params: {
+                        "n_estimators": int(params["n_estimators"]),
+                        "max_depth": int(params["max_depth"]),
+                        "learning_rate": _rounded_float(np.exp(params["log_learning_rate"])),
+                        "subsample": _rounded_float(params["subsample"]),
+                        "colsample_bytree": _rounded_float(params["colsample_bytree"]),
+                        "min_child_weight": int(params["min_child_weight"]),
+                    },
                 ),
-                (
-                    {"n_estimators": {"int": [200, 600]}},
-                    {"max_depth": {"int": [6, 24]}},
-                    {"min_samples_split": {"int": [2, 8]}},
-                    {"min_samples_leaf": {"int": [1, 4]}},
-                    {"max_features": {"choice": ["sqrt", "log2", 1.0]}},
+                "CatBoost": (
+                    lambda params: CatBoostRegressor(
+                        loss_function="RMSE",
+                        iterations=int(params["iterations"]),
+                        depth=int(params["depth"]),
+                        learning_rate=float(np.exp(params["log_learning_rate"])),
+                        l2_leaf_reg=float(params["l2_leaf_reg"]),
+                        random_seed=42,
+                        thread_count=resource_n_jobs,
+                        verbose=False,
+                    ),
+                    (
+                        {"iterations": {"int": [200, 600]}},
+                        {"depth": {"int": [4, 10]}},
+                        {"log_learning_rate": {"uniform": [float(np.log(0.02)), float(np.log(0.2))], "mutation": [0.0, 0.3]}},
+                        {"l2_leaf_reg": {"uniform": [1.0, 10.0], "mutation": [0.0, 1.0]}},
+                    ),
+                    lambda params: {
+                        "iterations": int(params["iterations"]),
+                        "depth": int(params["depth"]),
+                        "learning_rate": _rounded_float(np.exp(params["log_learning_rate"])),
+                        "l2_leaf_reg": _rounded_float(params["l2_leaf_reg"]),
+                    },
                 ),
-                lambda params: _clean_params(params),
-            ),
-            "XGBoost": (
-                lambda params: XGBRegressor(
-                    objective="reg:squarederror",
-                    n_estimators=int(params["n_estimators"]),
-                    max_depth=int(params["max_depth"]),
-                    learning_rate=float(np.exp(params["log_learning_rate"])),
-                    subsample=float(params["subsample"]),
-                    colsample_bytree=float(params["colsample_bytree"]),
-                    min_child_weight=int(params["min_child_weight"]),
-                    random_state=42,
-                    n_jobs=resource_n_jobs,
-                ),
-                (
-                    {"n_estimators": {"int": [200, 600]}},
-                    {"max_depth": {"int": [3, 10]}},
-                    {"log_learning_rate": {"uniform": [float(np.log(0.02)), float(np.log(0.2))], "mutation": [0.0, 0.3]}},
-                    {"subsample": {"uniform": [0.6, 1.0], "mutation": [0.0, 0.1]}},
-                    {"colsample_bytree": {"uniform": [0.6, 1.0], "mutation": [0.0, 0.1]}},
-                    {"min_child_weight": {"int": [1, 8]}},
-                ),
-                lambda params: {
-                    "n_estimators": int(params["n_estimators"]),
-                    "max_depth": int(params["max_depth"]),
-                    "learning_rate": _rounded_float(np.exp(params["log_learning_rate"])),
-                    "subsample": _rounded_float(params["subsample"]),
-                    "colsample_bytree": _rounded_float(params["colsample_bytree"]),
-                    "min_child_weight": int(params["min_child_weight"]),
-                },
-            ),
-            "CatBoost": (
-                lambda params: CatBoostRegressor(
-                    loss_function="RMSE",
-                    iterations=int(params["iterations"]),
-                    depth=int(params["depth"]),
-                    learning_rate=float(np.exp(params["log_learning_rate"])),
-                    l2_leaf_reg=float(params["l2_leaf_reg"]),
-                    random_seed=42,
-                    thread_count=resource_n_jobs,
-                    verbose=False,
-                ),
-                (
-                    {"iterations": {"int": [200, 600]}},
-                    {"depth": {"int": [4, 10]}},
-                    {"log_learning_rate": {"uniform": [float(np.log(0.02)), float(np.log(0.2))], "mutation": [0.0, 0.3]}},
-                    {"l2_leaf_reg": {"uniform": [1.0, 10.0], "mutation": [0.0, 1.0]}},
-                ),
-                lambda params: {
-                    "iterations": int(params["iterations"]),
-                    "depth": int(params["depth"]),
-                    "learning_rate": _rounded_float(np.exp(params["log_learning_rate"])),
-                    "l2_leaf_reg": _rounded_float(params["l2_leaf_reg"]),
-                },
-            ),
-        }
-
-        selected_search_models = []
-        if tune_elasticnet:
-            selected_search_models.append("ElasticNet")
-        if tune_svr:
-            selected_search_models.append("SVR")
-        if tune_random_forest:
-            selected_search_models.append("Random forest")
-        if tune_xgboost:
-            selected_search_models.append("XGBoost")
-        if tune_catboost:
-            selected_search_models.append("CatBoost")
-
-        if not selected_search_models:
-            raise ValueError("Please select at least one conventional model for genetic-algorithm tuning.")
-
-        effective_search_folds = min(int(ga_cv_folds), len(X_train))
-        if effective_search_folds < 2:
-            raise ValueError("At least 2 folds are required for genetic-algorithm tuning.")
-        search_cv = KFold(n_splits=effective_search_folds, shuffle=True, random_state=42)
-
-        tuned_rows = []
-        tuned_models = {}
-        tuned_predictions = {}
-        tuned_model_feature_columns = {}
-        ga_histories = {}
-        tuned_cache_paths = {}
-        tuned_cache_dir = None
-        tuned_dataset_label = current_dataset_cache_label()
-        if enable_tuned_model_cache:
-            from joblib import dump as joblib_dump, load as joblib_load
-
-            tuned_cache_dir = resolve_model_cache_dir(
-                "tuned_conventional_ml",
-                tuned_cache_run_name,
-                prefer_existing=bool(reuse_tuned_cached_models),
-            )
-            print(f"Tuned model cache directory: {tuned_cache_dir}")
-
-        objective_map = {
-            "rmse": ("Min", "CV RMSE"),
-            "mae": ("Min", "CV MAE"),
-            "r2": ("Max", "CV R2"),
-        }
-        ga_fitness_mode, ga_score_label = objective_map[str(ga_objective)]
-
-        print(
-            f"[GA] Tuning {len(selected_search_models)} model(s) with objective='{ga_objective}', "
-            f"folds={effective_search_folds}, generations={int(ga_generations)}, "
-            f"population={int(ga_population_size)}, crossover={int(ga_crossover_size)}, "
-            f"mutation={int(ga_mutation_size)}.",
-            flush=True,
-        )
-
-        per_model_init_work = max(1, int(ga_population_size))
-        per_model_generation_work = max(1, int(ga_crossover_size) + int(ga_mutation_size))
-        per_model_expected_work = per_model_init_work + (max(0, int(ga_generations)) * per_model_generation_work)
-        total_expected_work = max(1, len(selected_search_models) * per_model_expected_work)
-        overall_completed_work = 0
-
-        tuning_progress = tqdm(total=total_expected_work, desc="Genetic algorithm tuning", leave=False, unit="eval")
-        generation_progress = tqdm(total=int(ga_generations), desc="Current model generations", leave=False)
-        evaluation_progress = tqdm(total=int(ga_population_size), desc="Current generation evaluations", leave=False)
-        for model_name in selected_search_models:
-            print(f"[GA] Starting {model_name}...", flush=True)
-            model_completed_work = 0
-            progress_state = {
-                "overall_completed_work": overall_completed_work,
-                "model_completed_work": model_completed_work,
             }
-            tuning_progress.set_postfix_str(f"{model_name} (0/{per_model_expected_work} work)")
-            generation_progress.reset(total=int(ga_generations))
-            generation_progress.set_description(f"{model_name} generations")
-            generation_progress.set_postfix_str("starting")
-            evaluation_progress.reset(total=int(ga_population_size))
-            evaluation_progress.set_description(f"{model_name} initialization")
-            evaluation_progress.set_postfix_str("waiting")
-            build_estimator, search_space, decode_params = ga_models[model_name]
-            tuned_model_feature_columns[model_name] = [str(col) for col in X_train.columns]
-            model_slug = slugify_cache_text(model_name)
-            cached_model_loaded = False
-            resume_state = None
-            resume_history_prefix = None
-            resume_generation_offset = 0
-            if explicit_ga_metadata_candidates or (enable_tuned_model_cache and reuse_tuned_cached_models):
-                metadata_candidates = []
-                metadata_candidates.extend(
-                    [
-                        path
-                        for path in explicit_ga_metadata_candidates
-                        if path.name.endswith(f"_{model_slug}_ga_tuned_metadata.json")
-                    ]
+
+            selected_search_models = []
+            if tune_elasticnet:
+                selected_search_models.append("ElasticNet")
+            if tune_svr:
+                selected_search_models.append("SVR")
+            if tune_random_forest:
+                selected_search_models.append("Random forest")
+            if tune_xgboost:
+                selected_search_models.append("XGBoost")
+            if tune_catboost:
+                selected_search_models.append("CatBoost")
+
+            if not selected_search_models:
+                raise ValueError("Please select at least one conventional model for genetic-algorithm tuning.")
+
+            effective_search_folds = min(int(ga_cv_folds), len(X_train))
+            if effective_search_folds < 2:
+                raise ValueError("At least 2 folds are required for genetic-algorithm tuning.")
+            search_cv = KFold(n_splits=effective_search_folds, shuffle=True, random_state=42)
+
+            tuned_rows = []
+            tuned_models = {}
+            tuned_predictions = {}
+            tuned_model_feature_columns = {}
+            ga_histories = {}
+            tuned_cache_paths = {}
+            tuned_cache_dir = None
+            tuned_dataset_label = current_dataset_cache_label()
+            if enable_tuned_model_cache:
+                from joblib import dump as joblib_dump, load as joblib_load
+
+                tuned_cache_dir = resolve_model_cache_dir(
+                    "tuned_conventional_ml",
+                    tuned_cache_run_name,
+                    prefer_existing=bool(reuse_tuned_cached_models),
                 )
-                if tuned_cache_dir is not None:
+                print(f"Tuned model cache directory: {tuned_cache_dir}")
+
+            objective_map = {
+                "rmse": ("Min", "CV RMSE"),
+                "mae": ("Min", "CV MAE"),
+                "r2": ("Max", "CV R2"),
+            }
+            ga_fitness_mode, ga_score_label = objective_map[str(ga_objective)]
+
+            print(
+                f"[GA] Tuning {len(selected_search_models)} model(s) with objective='{ga_objective}', "
+                f"folds={effective_search_folds}, generations={int(ga_generations)}, "
+                f"population={int(ga_population_size)}, crossover={int(ga_crossover_size)}, "
+                f"mutation={int(ga_mutation_size)}.",
+                flush=True,
+            )
+
+            per_model_init_work = max(1, int(ga_population_size))
+            per_model_generation_work = max(1, int(ga_crossover_size) + int(ga_mutation_size))
+            per_model_expected_work = per_model_init_work + (max(0, int(ga_generations)) * per_model_generation_work)
+            total_expected_work = max(1, len(selected_search_models) * per_model_expected_work)
+            overall_completed_work = 0
+
+            tuning_progress = tqdm(total=total_expected_work, desc="Genetic algorithm tuning", leave=False, unit="eval")
+            generation_progress = tqdm(total=int(ga_generations), desc="Current model generations", leave=False)
+            evaluation_progress = tqdm(total=int(ga_population_size), desc="Current generation evaluations", leave=False)
+            for model_name in selected_search_models:
+                print(f"[GA] Starting {model_name}...", flush=True)
+                model_completed_work = 0
+                progress_state = {
+                    "overall_completed_work": overall_completed_work,
+                    "model_completed_work": model_completed_work,
+                }
+                tuning_progress.set_postfix_str(f"{model_name} (0/{per_model_expected_work} work)")
+                generation_progress.reset(total=int(ga_generations))
+                generation_progress.set_description(f"{model_name} generations")
+                generation_progress.set_postfix_str("starting")
+                evaluation_progress.reset(total=int(ga_population_size))
+                evaluation_progress.set_description(f"{model_name} initialization")
+                evaluation_progress.set_postfix_str("waiting")
+                build_estimator, search_space, decode_params = ga_models[model_name]
+                tuned_model_feature_columns[model_name] = [str(col) for col in X_train.columns]
+                model_slug = slugify_cache_text(model_name)
+                cached_model_loaded = False
+                resume_state = None
+                resume_history_prefix = None
+                resume_generation_offset = 0
+                if explicit_ga_metadata_candidates or (enable_tuned_model_cache and reuse_tuned_cached_models):
+                    metadata_candidates = []
                     metadata_candidates.extend(
-                        sorted(
-                            tuned_cache_dir.glob(f"*_{tuned_dataset_label}_{model_slug}_ga_tuned_metadata.json"),
-                            key=lambda path: path.name,
-                            reverse=True,
-                        )
+                        [
+                            path
+                            for path in explicit_ga_metadata_candidates
+                            if path.name.endswith(f"_{model_slug}_ga_tuned_metadata.json")
+                        ]
                     )
-                seen_metadata_paths = set()
-                deduped_candidates = []
-                for candidate in metadata_candidates:
-                    candidate_key = str(candidate.resolve()) if candidate.exists() else str(candidate)
-                    if candidate_key in seen_metadata_paths:
-                        continue
-                    seen_metadata_paths.add(candidate_key)
-                    deduped_candidates.append(candidate)
-                metadata_candidates = deduped_candidates
-                for metadata_path in metadata_candidates:
-                    try:
-                        metadata = read_cache_metadata(metadata_path)
-                        expected_metadata = {
-                            "model_name": model_name,
-                            "workflow": "Tuned conventional ML",
-                            "dataset_label": tuned_dataset_label,
-                            "split_strategy": str(tuning_split_strategy),
-                            "test_fraction": float(tuning_test_fraction),
-                            "random_seed": int(tuning_random_seed),
-                            "ga_objective": ga_objective,
-                            "ga_cv_folds": int(effective_search_folds),
-                            "selected_feature_families": list(feature_metadata["selected_feature_families"]),
-                            "built_feature_families": list(feature_metadata["built_feature_families"]),
-                            "fingerprint_radius": int(feature_metadata["fingerprint_radius"]),
-                            "fingerprint_bits": int(feature_metadata["fingerprint_bits"]),
-                            "lasso_feature_selection_enabled": bool(feature_metadata["lasso_feature_selection_enabled"]),
-                            "lasso_selector_method": feature_metadata.get("lasso_selector_method"),
-                            "lasso_alpha": feature_metadata["lasso_alpha"],
-                            "lasso_l1_ratio": feature_metadata.get("lasso_l1_ratio"),
-                            "lasso_selected_feature_count": int(feature_metadata["lasso_selected_feature_count"]),
-                            "train_only_feature_selector_method": feature_metadata.get("train_only_feature_selector_method", "none"),
-                            "train_only_feature_selector_selected_count": int(feature_metadata.get("train_only_feature_selector_selected_count", X_train.shape[1])),
-                            "train_only_feature_selector_alpha": feature_metadata.get("train_only_feature_selector_alpha"),
-                            "train_only_feature_selector_l1_ratio": feature_metadata.get("train_only_feature_selector_l1_ratio"),
-                            "train_only_feature_selector_max_features": int(feature_metadata.get("train_only_feature_selector_max_features", X_train.shape[1])),
-                            "use_prepared_4b_split_for_tuning": bool(use_prepared_4b_split_for_tuning),
-                            "benchmark_n_jobs": int(resource_n_jobs),
-                        }
-                        if not cache_metadata_matches(metadata, expected_metadata):
-                            continue
-                        model_path = resolve_cached_artifact_path(metadata["model_path"], metadata_path)
-                        prediction_path = resolve_cached_artifact_path(metadata["prediction_path"], metadata_path)
-                        history_path = resolve_cached_artifact_path(metadata["ga_history_path"], metadata_path)
-                        state_path_text = metadata.get("ga_state_path")
-                        state_path = (
-                            resolve_cached_artifact_path(state_path_text, metadata_path)
-                            if state_path_text
-                            else None
-                        )
-                        history_exists = history_path.exists()
-                        best_history = (
-                            pd.read_csv(history_path)
-                            if history_exists
-                            else pd.DataFrame(columns=["Best_individual", "Fitness_values", "Time (hours)"])
-                        )
-                        requested_generations = int(ga_generations)
-                        completed_generations = int(metadata.get("ga_generations_completed", len(best_history)))
-                        run_status = str(metadata.get("run_status", "")).strip().lower()
-                        completed_or_finalized = (
-                            completed_generations >= requested_generations
-                            or run_status == "completed"
-                        )
-                        ga_resume_compatible = (
-                            not completed_or_finalized
-                            and completed_generations < requested_generations
-                            and state_path is not None
-                            and state_path.exists()
-                            and cache_metadata_matches(
-                                metadata,
-                                {
-                                    "ga_population_size": int(ga_population_size),
-                                    "ga_crossover_size": int(ga_crossover_size),
-                                    "ga_mutation_size": int(ga_mutation_size),
-                                    "ga_mutation_probability": float(ga_mutation_probability),
-                                    "benchmark_n_jobs": int(resource_n_jobs),
-                                },
+                    if tuned_cache_dir is not None:
+                        metadata_candidates.extend(
+                            sorted(
+                                tuned_cache_dir.glob(f"*_{tuned_dataset_label}_{model_slug}_ga_tuned_metadata.json"),
+                                key=lambda path: path.name,
+                                reverse=True,
                             )
                         )
-                        if ga_resume_compatible:
-                            ga_state = read_ga_state(state_path)
-                            if ga_state["population"] and ga_state["fitness_dict"]:
-                                resume_state = ga_state
-                                resume_history_prefix = best_history.copy()
-                                resume_generation_offset = completed_generations
-                                tuned_cache_paths[model_name] = {
-                                    "model_path": str(model_path),
-                                    "prediction_path": str(prediction_path),
-                                    "ga_history_path": str(history_path),
-                                    "ga_state_path": str(state_path),
-                                    "metadata_path": str(metadata_path),
-                                }
-                                print(
-                                    f"Resuming cached GA search for {model_name} from generation "
-                                    f"{completed_generations}/{int(ga_generations)} using {state_path.parent}",
-                                    flush=True,
+                    seen_metadata_paths = set()
+                    deduped_candidates = []
+                    for candidate in metadata_candidates:
+                        candidate_key = str(candidate.resolve()) if candidate.exists() else str(candidate)
+                        if candidate_key in seen_metadata_paths:
+                            continue
+                        seen_metadata_paths.add(candidate_key)
+                        deduped_candidates.append(candidate)
+                    metadata_candidates = deduped_candidates
+                    for metadata_path in metadata_candidates:
+                        try:
+                            metadata = read_cache_metadata(metadata_path)
+                            expected_metadata = {
+                                "model_name": model_name,
+                                "workflow": "Tuned conventional ML",
+                                "dataset_label": tuned_dataset_label,
+                                "split_strategy": str(tuning_split_strategy),
+                                "test_fraction": float(tuning_test_fraction),
+                                "random_seed": int(tuning_random_seed),
+                                "ga_objective": ga_objective,
+                                "ga_cv_folds": int(effective_search_folds),
+                                "selected_feature_families": list(feature_metadata["selected_feature_families"]),
+                                "built_feature_families": list(feature_metadata["built_feature_families"]),
+                                "fingerprint_radius": int(feature_metadata["fingerprint_radius"]),
+                                "fingerprint_bits": int(feature_metadata["fingerprint_bits"]),
+                                "lasso_feature_selection_enabled": bool(feature_metadata["lasso_feature_selection_enabled"]),
+                                "lasso_selector_method": feature_metadata.get("lasso_selector_method"),
+                                "lasso_alpha": feature_metadata["lasso_alpha"],
+                                "lasso_l1_ratio": feature_metadata.get("lasso_l1_ratio"),
+                                "lasso_selected_feature_count": int(feature_metadata["lasso_selected_feature_count"]),
+                                "train_only_feature_selector_method": feature_metadata.get("train_only_feature_selector_method", "none"),
+                                "train_only_feature_selector_selected_count": int(feature_metadata.get("train_only_feature_selector_selected_count", X_train.shape[1])),
+                                "train_only_feature_selector_alpha": feature_metadata.get("train_only_feature_selector_alpha"),
+                                "train_only_feature_selector_l1_ratio": feature_metadata.get("train_only_feature_selector_l1_ratio"),
+                                "train_only_feature_selector_max_features": int(feature_metadata.get("train_only_feature_selector_max_features", X_train.shape[1])),
+                                "use_prepared_4b_split_for_tuning": bool(use_prepared_4b_split_for_tuning),
+                                "benchmark_n_jobs": int(resource_n_jobs),
+                            }
+                            if not cache_metadata_matches(metadata, expected_metadata):
+                                continue
+                            model_path = resolve_cached_artifact_path(metadata["model_path"], metadata_path)
+                            prediction_path = resolve_cached_artifact_path(metadata["prediction_path"], metadata_path)
+                            history_path = resolve_cached_artifact_path(metadata["ga_history_path"], metadata_path)
+                            state_path_text = metadata.get("ga_state_path")
+                            state_path = (
+                                resolve_cached_artifact_path(state_path_text, metadata_path)
+                                if state_path_text
+                                else None
+                            )
+                            history_exists = history_path.exists()
+                            best_history = (
+                                pd.read_csv(history_path)
+                                if history_exists
+                                else pd.DataFrame(columns=["Best_individual", "Fitness_values", "Time (hours)"])
+                            )
+                            requested_generations = int(ga_generations)
+                            completed_generations = int(metadata.get("ga_generations_completed", len(best_history)))
+                            run_status = str(metadata.get("run_status", "")).strip().lower()
+                            completed_or_finalized = (
+                                completed_generations >= requested_generations
+                                or run_status == "completed"
+                            )
+                            ga_resume_compatible = (
+                                not completed_or_finalized
+                                and completed_generations < requested_generations
+                                and state_path is not None
+                                and state_path.exists()
+                                and cache_metadata_matches(
+                                    metadata,
+                                    {
+                                        "ga_population_size": int(ga_population_size),
+                                        "ga_crossover_size": int(ga_crossover_size),
+                                        "ga_mutation_size": int(ga_mutation_size),
+                                        "ga_mutation_probability": float(ga_mutation_probability),
+                                        "benchmark_n_jobs": int(resource_n_jobs),
+                                    },
                                 )
-                                break
-                        if not completed_or_finalized:
+                            )
+                            if ga_resume_compatible:
+                                ga_state = read_ga_state(state_path)
+                                if ga_state["population"] and ga_state["fitness_dict"]:
+                                    resume_state = ga_state
+                                    resume_history_prefix = best_history.copy()
+                                    resume_generation_offset = completed_generations
+                                    tuned_cache_paths[model_name] = {
+                                        "model_path": str(model_path),
+                                        "prediction_path": str(prediction_path),
+                                        "ga_history_path": str(history_path),
+                                        "ga_state_path": str(state_path),
+                                        "metadata_path": str(metadata_path),
+                                    }
+                                    print(
+                                        f"Resuming cached GA search for {model_name} from generation "
+                                        f"{completed_generations}/{int(ga_generations)} using {state_path.parent}",
+                                        flush=True,
+                                    )
+                                    break
+                            if not completed_or_finalized:
+                                continue
+                            if not model_path.exists() or not prediction_path.exists() or not history_exists:
+                                continue
+                            loaded_splits = load_prediction_splits(
+                                prediction_path,
+                                STATE["smiles_train"].astype(str),
+                                STATE["smiles_test"].astype(str),
+                            )
+                            best_model = joblib_load(model_path)
+                            pred_train = loaded_splits["train"]["predicted"].to_numpy(dtype=float)
+                            pred_test = loaded_splits["test"]["predicted"].to_numpy(dtype=float)
+                            best_fitness = (
+                                extract_ga_fitness_scalar(best_history.iloc[-1]["Fitness_values"])
+                                if len(best_history)
+                                else np.nan
+                            )
+                            best_params = metadata.get("best_params", "{}")
+                            row = {
+                                "Model": model_name,
+                                "Benchmark n_jobs": int(resource_n_jobs),
+                                "Best GA Fitness": best_fitness,
+                                "GA objective": str(ga_objective),
+                                "Best params": str(best_params),
+                            }
+                            row[ga_score_label] = best_fitness
+                            row.update(summarize_regression(y_train, pred_train, "Train"))
+                            row.update(summarize_regression(y_test, pred_test, "Test"))
+                            tuned_rows.append(row)
+                            tuned_models[model_name] = best_model
+                            tuned_predictions[model_name] = {"train": pred_train, "test": pred_test}
+                            ga_histories[model_name] = best_history.copy()
+                            tuned_cache_paths[model_name] = {
+                                "model_path": str(model_path),
+                                "prediction_path": str(prediction_path),
+                                "ga_history_path": str(history_path),
+                                "ga_state_path": str(state_path) if state_path is not None else "",
+                                "metadata_path": str(metadata_path),
+                            }
+                            cached_model_loaded = True
+                            remaining_model_work = max(0, per_model_expected_work - progress_state["model_completed_work"])
+                            if remaining_model_work > 0:
+                                tuning_progress.update(remaining_model_work)
+                                progress_state["overall_completed_work"] += remaining_model_work
+                                progress_state["model_completed_work"] += remaining_model_work
+                                overall_completed_work = progress_state["overall_completed_work"]
+                                model_completed_work = progress_state["model_completed_work"]
+                            generation_progress.set_postfix_str("loaded from cache")
+                            evaluation_progress.set_postfix_str("loaded from cache")
+                            tuning_progress.set_postfix_str(
+                                f"{model_name} (loaded from cache, {progress_state['model_completed_work']}/{per_model_expected_work} work)"
+                            )
+                            print(f"Loaded cached tuned model for {model_name} from {model_path.parent}", flush=True)
+                            break
+                        except Exception:
                             continue
-                        if not model_path.exists() or not prediction_path.exists() or not history_exists:
-                            continue
-                        loaded_splits = load_prediction_splits(
-                            prediction_path,
-                            STATE["smiles_train"].astype(str),
-                            STATE["smiles_test"].astype(str),
-                        )
-                        best_model = joblib_load(model_path)
-                        pred_train = loaded_splits["train"]["predicted"].to_numpy(dtype=float)
-                        pred_test = loaded_splits["test"]["predicted"].to_numpy(dtype=float)
-                        best_fitness = (
-                            extract_ga_fitness_scalar(best_history.iloc[-1]["Fitness_values"])
-                            if len(best_history)
-                            else np.nan
-                        )
-                        best_params = metadata.get("best_params", "{}")
-                        row = {
-                            "Model": model_name,
-                            "Benchmark n_jobs": int(resource_n_jobs),
-                            "Best GA Fitness": best_fitness,
-                            "GA objective": str(ga_objective),
-                            "Best params": str(best_params),
-                        }
-                        row[ga_score_label] = best_fitness
-                        row.update(summarize_regression(y_train, pred_train, "Train"))
-                        row.update(summarize_regression(y_test, pred_test, "Test"))
-                        tuned_rows.append(row)
-                        tuned_models[model_name] = best_model
-                        tuned_predictions[model_name] = {"train": pred_train, "test": pred_test}
-                        ga_histories[model_name] = best_history.copy()
-                        tuned_cache_paths[model_name] = {
-                            "model_path": str(model_path),
-                            "prediction_path": str(prediction_path),
-                            "ga_history_path": str(history_path),
-                            "ga_state_path": str(state_path) if state_path is not None else "",
-                            "metadata_path": str(metadata_path),
-                        }
-                        cached_model_loaded = True
-                        remaining_model_work = max(0, per_model_expected_work - progress_state["model_completed_work"])
-                        if remaining_model_work > 0:
-                            tuning_progress.update(remaining_model_work)
-                            progress_state["overall_completed_work"] += remaining_model_work
-                            progress_state["model_completed_work"] += remaining_model_work
-                            overall_completed_work = progress_state["overall_completed_work"]
-                            model_completed_work = progress_state["model_completed_work"]
-                        generation_progress.set_postfix_str("loaded from cache")
-                        evaluation_progress.set_postfix_str("loaded from cache")
-                        tuning_progress.set_postfix_str(
-                            f"{model_name} (loaded from cache, {progress_state['model_completed_work']}/{per_model_expected_work} work)"
-                        )
-                        print(f"Loaded cached tuned model for {model_name} from {model_path.parent}", flush=True)
-                        break
-                    except Exception:
-                        continue
 
-            if cached_model_loaded:
-                continue
+                if cached_model_loaded:
+                    continue
 
-            def evaluate(candidate_values, _space=search_space, _objective=str(ga_objective), _builder=build_estimator):
-                candidate_params = {
-                    next(iter(spec.keys())): value
-                    for spec, value in zip(_space, candidate_values)
-                }
-                estimator = _builder(candidate_params)
-                fold_scores = []
-                for fold_idx, (train_index, valid_index) in enumerate(search_cv.split(X_train, y_train), start=1):
-                    X_fold_train = X_train.iloc[train_index].copy()
-                    X_fold_valid = X_train.iloc[valid_index].copy()
-                    y_fold_train = y_train[train_index]
-                    y_fold_valid = y_train[valid_index]
-                    fitted = clone(estimator)
-                    fitted.fit(X_fold_train, y_fold_train)
-                    pred_valid = np.asarray(fitted.predict(X_fold_valid)).reshape(-1)
-                    fold_scores.append(_score_predictions(y_fold_valid, pred_valid, _objective))
-                return (float(np.mean(fold_scores)),)
+                def evaluate(candidate_values, _space=search_space, _objective=str(ga_objective), _builder=build_estimator):
+                    candidate_params = {
+                        next(iter(spec.keys())): value
+                        for spec, value in zip(_space, candidate_values)
+                    }
+                    estimator = _builder(candidate_params)
+                    fold_scores = []
+                    for fold_idx, (train_index, valid_index) in enumerate(search_cv.split(X_train, y_train), start=1):
+                        X_fold_train = X_train.iloc[train_index].copy()
+                        X_fold_valid = X_train.iloc[valid_index].copy()
+                        y_fold_train = y_train[train_index]
+                        y_fold_valid = y_train[valid_index]
+                        fitted = clone(estimator)
+                        fitted.fit(X_fold_train, y_fold_train)
+                        pred_valid = np.asarray(fitted.predict(X_fold_valid)).reshape(-1)
+                        fold_scores.append(_score_predictions(y_fold_valid, pred_valid, _objective))
+                    return (float(np.mean(fold_scores)),)
 
-            active_model_path = None
-            active_prediction_path = None
-            active_history_path = None
-            active_state_path = None
-            active_metadata_path = None
-            active_cache_run_name = None
-            if enable_tuned_model_cache:
-                if resume_state is not None and model_name in tuned_cache_paths:
-                    active_model_path = Path(tuned_cache_paths[model_name]["model_path"])
-                    active_prediction_path = Path(tuned_cache_paths[model_name]["prediction_path"])
-                    active_history_path = Path(tuned_cache_paths[model_name]["ga_history_path"])
-                    active_state_path = Path(tuned_cache_paths[model_name]["ga_state_path"])
-                    active_metadata_path = Path(tuned_cache_paths[model_name]["metadata_path"])
-                    active_cache_run_name = active_metadata_path.parent.name
-                else:
-                    artifact_base = f"{STATE['cache_session_stamp']}_{tuned_dataset_label}_{model_slug}_ga_tuned"
-                    active_model_path = tuned_cache_dir / f"{artifact_base}.joblib"
-                    active_prediction_path = tuned_cache_dir / f"{artifact_base}_predictions.csv"
-                    active_history_path = tuned_cache_dir / f"{artifact_base}_ga_history.csv"
-                    active_state_path = tuned_cache_dir / f"{artifact_base}_ga_state.json"
-                    active_metadata_path = tuned_cache_dir / f"{artifact_base}_metadata.json"
-                    active_cache_run_name = tuned_cache_dir.name
+                active_model_path = None
+                active_prediction_path = None
+                active_history_path = None
+                active_state_path = None
+                active_metadata_path = None
+                active_cache_run_name = None
+                if enable_tuned_model_cache:
+                    if resume_state is not None and model_name in tuned_cache_paths:
+                        active_model_path = Path(tuned_cache_paths[model_name]["model_path"])
+                        active_prediction_path = Path(tuned_cache_paths[model_name]["prediction_path"])
+                        active_history_path = Path(tuned_cache_paths[model_name]["ga_history_path"])
+                        active_state_path = Path(tuned_cache_paths[model_name]["ga_state_path"])
+                        active_metadata_path = Path(tuned_cache_paths[model_name]["metadata_path"])
+                        active_cache_run_name = active_metadata_path.parent.name
+                    else:
+                        artifact_base = f"{STATE['cache_session_stamp']}_{tuned_dataset_label}_{model_slug}_ga_tuned"
+                        active_model_path = tuned_cache_dir / f"{artifact_base}.joblib"
+                        active_prediction_path = tuned_cache_dir / f"{artifact_base}_predictions.csv"
+                        active_history_path = tuned_cache_dir / f"{artifact_base}_ga_history.csv"
+                        active_state_path = tuned_cache_dir / f"{artifact_base}_ga_state.json"
+                        active_metadata_path = tuned_cache_dir / f"{artifact_base}_metadata.json"
+                        active_cache_run_name = tuned_cache_dir.name
 
-            def persist_ga_checkpoint(
-                run_status,
-                completed_generations,
-                history_df=None,
-                best_params_value=None,
-                best_fitness_value=None,
-            ):
-                if not enable_tuned_model_cache or active_metadata_path is None:
-                    return
-                if history_df is not None:
-                    history_df.to_csv(active_history_path, index=False)
-                if ga.population is not None and ga.fitness_dict is not None:
-                    write_ga_state(active_state_path, ga.population, ga.fitness_dict)
-                metadata_payload = {
-                    "model_name": model_name,
-                    "selected_models": ", ".join(selected_search_models),
-                    "workflow": "Tuned conventional ML",
-                    "dataset_label": tuned_dataset_label,
-                    "representation_label": feature_metadata["representation_label"],
-                    "selected_feature_families": list(feature_metadata["selected_feature_families"]),
-                    "built_feature_families": list(feature_metadata["built_feature_families"]),
-                    "fingerprint_radius": int(feature_metadata["fingerprint_radius"]),
-                    "fingerprint_bits": int(feature_metadata["fingerprint_bits"]),
-                    "lasso_feature_selection_enabled": bool(feature_metadata["lasso_feature_selection_enabled"]),
-                    "lasso_selector_method": feature_metadata.get("lasso_selector_method"),
-                    "lasso_alpha": feature_metadata["lasso_alpha"],
-                    "lasso_l1_ratio": feature_metadata.get("lasso_l1_ratio"),
-                    "lasso_selected_feature_count": int(feature_metadata["lasso_selected_feature_count"]),
-                    "train_only_feature_selector_method": feature_metadata.get("train_only_feature_selector_method", "none"),
-                    "train_only_feature_selector_selected_count": int(feature_metadata.get("train_only_feature_selector_selected_count", X_train.shape[1])),
-                    "train_only_feature_selector_alpha": feature_metadata.get("train_only_feature_selector_alpha"),
-                    "train_only_feature_selector_l1_ratio": feature_metadata.get("train_only_feature_selector_l1_ratio"),
-                    "train_only_feature_selector_max_features": int(feature_metadata.get("train_only_feature_selector_max_features", X_train.shape[1])),
-                    "cache_run_name": active_cache_run_name,
-                    "split_strategy": str(tuning_split_strategy),
-                    "test_fraction": float(tuning_test_fraction),
-                    "random_seed": int(tuning_random_seed),
-                    "use_prepared_4b_split_for_tuning": bool(use_prepared_4b_split_for_tuning),
-                    "train_rows": int(len(X_train)),
-                    "test_rows": int(len(X_test)),
-                    "feature_count": int(X_train.shape[1]),
-                    "model_path": active_model_path,
-                    "prediction_path": active_prediction_path,
-                    "ga_history_path": active_history_path,
-                    "ga_state_path": active_state_path,
-                    "ga_objective": ga_objective,
-                    "ga_cv_folds": int(effective_search_folds),
-                    "benchmark_n_jobs": int(resource_n_jobs),
-                    "ga_generations_requested": int(ga_generations),
-                    "ga_generations_completed": int(completed_generations),
-                    "ga_population_size": int(ga_population_size),
-                    "ga_crossover_size": int(ga_crossover_size),
-                    "ga_mutation_size": int(ga_mutation_size),
-                    "ga_mutation_probability": float(ga_mutation_probability),
-                    "ga_early_stopping": int(ga_early_stopping),
-                    "tune_elasticnet": bool(tune_elasticnet),
-                    "tune_svr": bool(tune_svr),
-                    "tune_random_forest": bool(tune_random_forest),
-                    "tune_xgboost": bool(tune_xgboost),
-                    "tune_catboost": bool(tune_catboost),
-                    "run_status": str(run_status),
-                    "last_updated": time.strftime("%Y-%m-%d %H:%M:%S"),
-                    "best_params": best_params_value if best_params_value is not None else "",
-                    "best_fitness": "" if best_fitness_value is None else float(best_fitness_value),
-                }
-                write_cache_metadata(active_metadata_path, metadata_payload)
+                def persist_ga_checkpoint(
+                    run_status,
+                    completed_generations,
+                    history_df=None,
+                    best_params_value=None,
+                    best_fitness_value=None,
+                ):
+                    if not enable_tuned_model_cache or active_metadata_path is None:
+                        return
+                    if history_df is not None:
+                        history_df.to_csv(active_history_path, index=False)
+                    if ga.population is not None and ga.fitness_dict is not None:
+                        write_ga_state(active_state_path, ga.population, ga.fitness_dict)
+                    metadata_payload = {
+                        "model_name": model_name,
+                        "selected_models": ", ".join(selected_search_models),
+                        "workflow": "Tuned conventional ML",
+                        "dataset_label": tuned_dataset_label,
+                        "representation_label": feature_metadata["representation_label"],
+                        "selected_feature_families": list(feature_metadata["selected_feature_families"]),
+                        "built_feature_families": list(feature_metadata["built_feature_families"]),
+                        "fingerprint_radius": int(feature_metadata["fingerprint_radius"]),
+                        "fingerprint_bits": int(feature_metadata["fingerprint_bits"]),
+                        "lasso_feature_selection_enabled": bool(feature_metadata["lasso_feature_selection_enabled"]),
+                        "lasso_selector_method": feature_metadata.get("lasso_selector_method"),
+                        "lasso_alpha": feature_metadata["lasso_alpha"],
+                        "lasso_l1_ratio": feature_metadata.get("lasso_l1_ratio"),
+                        "lasso_selected_feature_count": int(feature_metadata["lasso_selected_feature_count"]),
+                        "train_only_feature_selector_method": feature_metadata.get("train_only_feature_selector_method", "none"),
+                        "train_only_feature_selector_selected_count": int(feature_metadata.get("train_only_feature_selector_selected_count", X_train.shape[1])),
+                        "train_only_feature_selector_alpha": feature_metadata.get("train_only_feature_selector_alpha"),
+                        "train_only_feature_selector_l1_ratio": feature_metadata.get("train_only_feature_selector_l1_ratio"),
+                        "train_only_feature_selector_max_features": int(feature_metadata.get("train_only_feature_selector_max_features", X_train.shape[1])),
+                        "cache_run_name": active_cache_run_name,
+                        "split_strategy": str(tuning_split_strategy),
+                        "test_fraction": float(tuning_test_fraction),
+                        "random_seed": int(tuning_random_seed),
+                        "use_prepared_4b_split_for_tuning": bool(use_prepared_4b_split_for_tuning),
+                        "train_rows": int(len(X_train)),
+                        "test_rows": int(len(X_test)),
+                        "feature_count": int(X_train.shape[1]),
+                        "model_path": active_model_path,
+                        "prediction_path": active_prediction_path,
+                        "ga_history_path": active_history_path,
+                        "ga_state_path": active_state_path,
+                        "ga_objective": ga_objective,
+                        "ga_cv_folds": int(effective_search_folds),
+                        "benchmark_n_jobs": int(resource_n_jobs),
+                        "ga_generations_requested": int(ga_generations),
+                        "ga_generations_completed": int(completed_generations),
+                        "ga_population_size": int(ga_population_size),
+                        "ga_crossover_size": int(ga_crossover_size),
+                        "ga_mutation_size": int(ga_mutation_size),
+                        "ga_mutation_probability": float(ga_mutation_probability),
+                        "ga_early_stopping": int(ga_early_stopping),
+                        "tune_elasticnet": bool(tune_elasticnet),
+                        "tune_svr": bool(tune_svr),
+                        "tune_random_forest": bool(tune_random_forest),
+                        "tune_xgboost": bool(tune_xgboost),
+                        "tune_catboost": bool(tune_catboost),
+                        "run_status": str(run_status),
+                        "last_updated": time.strftime("%Y-%m-%d %H:%M:%S"),
+                        "best_params": best_params_value if best_params_value is not None else "",
+                        "best_fitness": "" if best_fitness_value is None else float(best_fitness_value),
+                    }
+                    write_cache_metadata(active_metadata_path, metadata_payload)
 
-            ga = GeneticAlgorithm(
-                evaluate=evaluate,
-                space=search_space,
-                fitness=(ga_fitness_mode,),
-                pop_size=int(ga_population_size),
-                crossover_size=int(ga_crossover_size),
-                mutation_size=int(ga_mutation_size),
-                crossover_type="Blend",
-                mutation_prob=float(ga_mutation_probability),
-                algorithm=1,
-                n_jobs=1,
-            )
-            checkpoint_history_df = (
-                resume_history_prefix.copy()
-                if resume_history_prefix is not None
-                else pd.DataFrame(columns=["Best_individual", "Fitness_values", "Time (hours)"])
-            )
-            if resume_state is not None:
-                ga.population = list(resume_state["population"])
-                ga.fitness_dict = dict(resume_state["fitness_dict"])
-                resumed_model_work = min(
-                    per_model_expected_work,
-                    per_model_init_work + resume_generation_offset * per_model_generation_work,
+                ga = GeneticAlgorithm(
+                    evaluate=evaluate,
+                    space=search_space,
+                    fitness=(ga_fitness_mode,),
+                    pop_size=int(ga_population_size),
+                    crossover_size=int(ga_crossover_size),
+                    mutation_size=int(ga_mutation_size),
+                    crossover_type="Blend",
+                    mutation_prob=float(ga_mutation_probability),
+                    algorithm=1,
+                    n_jobs=1,
                 )
-                if resumed_model_work > 0:
-                    tuning_progress.update(resumed_model_work)
-                    progress_state["overall_completed_work"] += resumed_model_work
-                    progress_state["model_completed_work"] += resumed_model_work
-                    overall_completed_work = progress_state["overall_completed_work"]
-                    model_completed_work = progress_state["model_completed_work"]
-                if resume_generation_offset > 0:
-                    generation_progress.update(resume_generation_offset)
-                generation_progress.set_postfix_str(f"resuming from {resume_generation_offset}/{int(ga_generations)}")
-                evaluation_progress.set_postfix_str("resume pending")
-                tuning_progress.set_postfix_str(
-                    f"{model_name} (resuming from gen {resume_generation_offset}/{int(ga_generations)}) | "
-                    f"overall {progress_state['overall_completed_work']}/{total_expected_work} work"
+                checkpoint_history_df = (
+                    resume_history_prefix.copy()
+                    if resume_history_prefix is not None
+                    else pd.DataFrame(columns=["Best_individual", "Fitness_values", "Time (hours)"])
                 )
-                persist_ga_checkpoint(
-                    "running",
-                    resume_generation_offset,
-                    history_df=resume_history_prefix,
-                )
-            else:
-                initial_population = ga.pop_generator(n=ga.pop_size)
-                initial_fitness_dict = {}
-                persist_ga_checkpoint(
-                    "initialized",
-                    0,
-                    history_df=checkpoint_history_df,
-                )
-                for init_index, individual in enumerate(initial_population, start=1):
-                    initial_fitness_dict[tuple(individual)] = evaluate(individual)
-                    if evaluation_progress.total != int(ga_population_size):
-                        evaluation_progress.reset(total=int(ga_population_size))
-                        evaluation_progress.set_description(f"{model_name} initialization")
-                    evaluation_progress.set_postfix_str("initial population")
-                    delta = init_index - evaluation_progress.n
-                    if delta > 0:
-                        evaluation_progress.update(delta)
-                    delta_work = init_index - progress_state["model_completed_work"]
-                    if delta_work > 0:
-                        tuning_progress.update(delta_work)
-                        progress_state["overall_completed_work"] += delta_work
-                        progress_state["model_completed_work"] += delta_work
+                if resume_state is not None:
+                    ga.population = list(resume_state["population"])
+                    ga.fitness_dict = dict(resume_state["fitness_dict"])
+                    resumed_model_work = min(
+                        per_model_expected_work,
+                        per_model_init_work + resume_generation_offset * per_model_generation_work,
+                    )
+                    if resumed_model_work > 0:
+                        tuning_progress.update(resumed_model_work)
+                        progress_state["overall_completed_work"] += resumed_model_work
+                        progress_state["model_completed_work"] += resumed_model_work
                         overall_completed_work = progress_state["overall_completed_work"]
                         model_completed_work = progress_state["model_completed_work"]
+                    if resume_generation_offset > 0:
+                        generation_progress.update(resume_generation_offset)
+                    generation_progress.set_postfix_str(f"resuming from {resume_generation_offset}/{int(ga_generations)}")
+                    evaluation_progress.set_postfix_str("resume pending")
                     tuning_progress.set_postfix_str(
-                        f"{model_name} (init, eval {init_index}/{int(ga_population_size)}) | "
+                        f"{model_name} (resuming from gen {resume_generation_offset}/{int(ga_generations)}) | "
                         f"overall {progress_state['overall_completed_work']}/{total_expected_work} work"
                     )
-                ga.population = list(initial_population)
-                ga.fitness_dict = dict(initial_fitness_dict)
-                persist_ga_checkpoint(
-                    "running",
-                    0,
-                    history_df=checkpoint_history_df,
-                )
-
-            def ga_progress_callback(payload, _model_name=model_name):
-                event = payload.get("event", "generation_complete")
-                completed = resume_generation_offset + int(payload.get("generation", 0))
-                total = int(ga_generations)
-                if generation_progress.total != total:
-                    generation_progress.total = total
-
-                def sync_outer_progress(target_model_work, status_text):
-                    target_model_work = max(0, min(int(target_model_work), per_model_expected_work))
-                    delta = target_model_work - progress_state["model_completed_work"]
-                    if delta > 0:
-                        tuning_progress.update(delta)
-                        progress_state["overall_completed_work"] += delta
-                        progress_state["model_completed_work"] += delta
-                    tuning_progress.set_postfix_str(
-                        f"{status_text} | overall {progress_state['overall_completed_work']}/{total_expected_work} work"
-                    )
-
-                if event == "generation_start":
-                    expected = max(1, int(payload.get("expected_generation_evaluations", int(ga_crossover_size) + int(ga_mutation_size))))
-                    evaluation_progress.reset(total=expected)
-                    evaluation_progress.set_description(f"{_model_name} generation {completed}")
-                    evaluation_progress.set_postfix_str("starting")
-                    sync_outer_progress(
-                        per_model_init_work + max(0, completed - 1) * per_model_generation_work,
-                        f"{_model_name} (generation {completed}/{total})",
-                    )
-                    return
-                if event == "evaluation":
-                    expected = max(1, int(payload.get("expected_generation_evaluations", int(ga_crossover_size) + int(ga_mutation_size))))
-                    stage = str(payload.get("stage", "evaluation"))
-                    if completed == 0:
-                        if evaluation_progress.total != int(ga_population_size):
-                            evaluation_progress.reset(total=int(ga_population_size))
-                            evaluation_progress.set_description(f"{_model_name} initialization")
-                        evaluation_progress.set_postfix_str(stage)
-                    else:
-                        if evaluation_progress.total != expected:
-                            evaluation_progress.reset(total=expected)
-                            evaluation_progress.set_description(f"{_model_name} generation {completed}")
-                        evaluation_progress.set_postfix_str(stage)
-                    generation_eval_completed = int(payload.get("generation_evaluations_completed", 0))
-                    target_n = generation_eval_completed if completed > 0 else int(payload.get("evaluation_count", 0))
-                    delta = target_n - evaluation_progress.n
-                    if delta > 0:
-                        evaluation_progress.update(delta)
-                    target_model_work = (
-                        target_n
-                        if completed == 0
-                        else per_model_init_work + max(0, completed - 1) * per_model_generation_work + generation_eval_completed
-                    )
-                    sync_outer_progress(
-                        target_model_work,
-                        f"{_model_name} ({'init' if completed == 0 else f'gen {completed}/{total}'}, eval {evaluation_progress.n}/{evaluation_progress.total})",
-                    )
-                    return
-                delta = completed - generation_progress.n
-                if delta > 0:
-                    generation_progress.update(delta)
-                best_fitness_value = payload.get("best_fitness")
-                if isinstance(best_fitness_value, (tuple, list, np.ndarray)):
-                    best_fitness_value = best_fitness_value[0]
-                if best_fitness_value is not None:
-                    generation_progress.set_postfix_str(f"best={float(best_fitness_value):.4f}")
-                if event == "generation_complete":
-                    generation_eval_completed = int(payload.get("generation_evaluations_completed", evaluation_progress.n))
-                    if evaluation_progress.n < generation_eval_completed:
-                        evaluation_progress.update(generation_eval_completed - evaluation_progress.n)
-                    evaluation_progress.set_postfix_str("complete")
-                    sync_outer_progress(
-                        per_model_init_work + completed * per_model_generation_work,
-                        f"{_model_name} ({completed}/{total} gen)",
-                    )
-                    if best_fitness_value is not None:
-                        print(
-                            f"[GA] {_model_name} generation {completed}/{total} complete | "
-                            f"best {ga_objective}={float(best_fitness_value):.4f} | "
-                            f"evaluations {generation_eval_completed}/{evaluation_progress.total}",
-                            flush=True,
-                        )
-                    checkpoint_history_df.loc[len(checkpoint_history_df)] = {
-                        "Best_individual": payload.get("best_individual"),
-                        "Fitness_values": payload.get("best_fitness"),
-                        "Time (hours)": float(payload.get("elapsed_hours", 0.0)),
-                    }
                     persist_ga_checkpoint(
                         "running",
-                        completed,
+                        resume_generation_offset,
+                        history_df=resume_history_prefix,
+                    )
+                else:
+                    initial_population = ga.pop_generator(n=ga.pop_size)
+                    initial_fitness_dict = {}
+                    persist_ga_checkpoint(
+                        "initialized",
+                        0,
                         history_df=checkpoint_history_df,
-                        best_fitness_value=best_fitness_value,
+                    )
+                    for init_index, individual in enumerate(initial_population, start=1):
+                        initial_fitness_dict[tuple(individual)] = evaluate(individual)
+                        if evaluation_progress.total != int(ga_population_size):
+                            evaluation_progress.reset(total=int(ga_population_size))
+                            evaluation_progress.set_description(f"{model_name} initialization")
+                        evaluation_progress.set_postfix_str("initial population")
+                        delta = init_index - evaluation_progress.n
+                        if delta > 0:
+                            evaluation_progress.update(delta)
+                        delta_work = init_index - progress_state["model_completed_work"]
+                        if delta_work > 0:
+                            tuning_progress.update(delta_work)
+                            progress_state["overall_completed_work"] += delta_work
+                            progress_state["model_completed_work"] += delta_work
+                            overall_completed_work = progress_state["overall_completed_work"]
+                            model_completed_work = progress_state["model_completed_work"]
+                        tuning_progress.set_postfix_str(
+                            f"{model_name} (init, eval {init_index}/{int(ga_population_size)}) | "
+                            f"overall {progress_state['overall_completed_work']}/{total_expected_work} work"
+                        )
+                    ga.population = list(initial_population)
+                    ga.fitness_dict = dict(initial_fitness_dict)
+                    persist_ga_checkpoint(
+                        "running",
+                        0,
+                        history_df=checkpoint_history_df,
                     )
 
-            remaining_generations = max(0, int(ga_generations) - resume_generation_offset)
-            best_history, best_raw_params = ga.search(
-                n_generations=remaining_generations,
-                early_stopping=int(ga_early_stopping),
-            )
-            # chemml GeneticAlgorithm.search() has no callback support; simulate
-            # generation_complete events from the returned history so progress bars
-            # and checkpoints are updated correctly after the run.
-            for _gen_idx, _row in best_history.iterrows():
-                ga_progress_callback({
-                    "event": "generation_complete",
-                    "generation": resume_generation_offset + _gen_idx + 1,
-                    "best_individual": _row["Best_individual"],
-                    "best_fitness": _row["Fitness_values"],
-                    "elapsed_hours": _row["Time (hours)"],
-                    "generation_evaluations_completed": evaluation_progress.total,
-                })
-            if resume_history_prefix is not None:
-                best_history = pd.concat([resume_history_prefix, best_history], ignore_index=True)
-            if generation_progress.n < len(best_history):
-                generation_progress.update(len(best_history) - generation_progress.n)
-            generation_progress.set_postfix_str(f"done in {len(best_history)} gen")
-            evaluation_progress.set_postfix_str("done")
-            remaining_model_work = max(0, per_model_expected_work - progress_state["model_completed_work"])
-            if remaining_model_work > 0:
-                tuning_progress.update(remaining_model_work)
-                progress_state["overall_completed_work"] += remaining_model_work
-                progress_state["model_completed_work"] += remaining_model_work
-            overall_completed_work = progress_state["overall_completed_work"]
-            model_completed_work = progress_state["model_completed_work"]
-            tuning_progress.set_postfix_str(
-                f"{model_name} complete | overall {progress_state['overall_completed_work']}/{total_expected_work} work"
-            )
-            best_params = decode_params(best_raw_params)
-            best_model = build_estimator(best_raw_params)
-            best_model.fit(X_train, y_train)
-            pred_train = np.asarray(best_model.predict(X_train)).reshape(-1)
-            pred_test = np.asarray(best_model.predict(X_test)).reshape(-1)
+                def ga_progress_callback(payload, _model_name=model_name):
+                    event = payload.get("event", "generation_complete")
+                    completed = resume_generation_offset + int(payload.get("generation", 0))
+                    total = int(ga_generations)
+                    if generation_progress.total != total:
+                        generation_progress.total = total
 
-            best_fitness = extract_ga_fitness_scalar(best_history.iloc[-1]["Fitness_values"])
-            row = {
-                "Model": model_name,
-                "Benchmark n_jobs": int(resource_n_jobs),
-                "Best GA Fitness": best_fitness,
-                "GA objective": str(ga_objective),
-                "Best params": str(best_params),
-            }
-            row[ga_score_label] = best_fitness
-            row.update(summarize_regression(y_train, pred_train, "Train"))
-            row.update(summarize_regression(y_test, pred_test, "Test"))
-            tuned_rows.append(row)
-            tuned_models[model_name] = best_model
-            tuned_predictions[model_name] = {"train": pred_train, "test": pred_test}
-            ga_histories[model_name] = best_history.copy()
-            if enable_tuned_model_cache:
-                joblib_dump(best_model, active_model_path)
-                pd.DataFrame(
-                    {
-                        "split": ["train"] * len(pred_train) + ["test"] * len(pred_test),
-                        "smiles": list(STATE["smiles_train"].astype(str)) + list(STATE["smiles_test"].astype(str)),
-                        "observed": list(np.asarray(y_train, dtype=float)) + list(np.asarray(y_test, dtype=float)),
-                        "predicted": list(pred_train) + list(pred_test),
-                    }
-                ).to_csv(active_prediction_path, index=False)
-                persist_ga_checkpoint(
-                    "completed",
-                    len(best_history),
-                    history_df=best_history,
-                    best_params_value=best_params,
-                    best_fitness_value=best_fitness,
+                    def sync_outer_progress(target_model_work, status_text):
+                        target_model_work = max(0, min(int(target_model_work), per_model_expected_work))
+                        delta = target_model_work - progress_state["model_completed_work"]
+                        if delta > 0:
+                            tuning_progress.update(delta)
+                            progress_state["overall_completed_work"] += delta
+                            progress_state["model_completed_work"] += delta
+                        tuning_progress.set_postfix_str(
+                            f"{status_text} | overall {progress_state['overall_completed_work']}/{total_expected_work} work"
+                        )
+
+                    if event == "generation_start":
+                        expected = max(1, int(payload.get("expected_generation_evaluations", int(ga_crossover_size) + int(ga_mutation_size))))
+                        evaluation_progress.reset(total=expected)
+                        evaluation_progress.set_description(f"{_model_name} generation {completed}")
+                        evaluation_progress.set_postfix_str("starting")
+                        sync_outer_progress(
+                            per_model_init_work + max(0, completed - 1) * per_model_generation_work,
+                            f"{_model_name} (generation {completed}/{total})",
+                        )
+                        return
+                    if event == "evaluation":
+                        expected = max(1, int(payload.get("expected_generation_evaluations", int(ga_crossover_size) + int(ga_mutation_size))))
+                        stage = str(payload.get("stage", "evaluation"))
+                        if completed == 0:
+                            if evaluation_progress.total != int(ga_population_size):
+                                evaluation_progress.reset(total=int(ga_population_size))
+                                evaluation_progress.set_description(f"{_model_name} initialization")
+                            evaluation_progress.set_postfix_str(stage)
+                        else:
+                            if evaluation_progress.total != expected:
+                                evaluation_progress.reset(total=expected)
+                                evaluation_progress.set_description(f"{_model_name} generation {completed}")
+                            evaluation_progress.set_postfix_str(stage)
+                        generation_eval_completed = int(payload.get("generation_evaluations_completed", 0))
+                        target_n = generation_eval_completed if completed > 0 else int(payload.get("evaluation_count", 0))
+                        delta = target_n - evaluation_progress.n
+                        if delta > 0:
+                            evaluation_progress.update(delta)
+                        target_model_work = (
+                            target_n
+                            if completed == 0
+                            else per_model_init_work + max(0, completed - 1) * per_model_generation_work + generation_eval_completed
+                        )
+                        sync_outer_progress(
+                            target_model_work,
+                            f"{_model_name} ({'init' if completed == 0 else f'gen {completed}/{total}'}, eval {evaluation_progress.n}/{evaluation_progress.total})",
+                        )
+                        return
+                    delta = completed - generation_progress.n
+                    if delta > 0:
+                        generation_progress.update(delta)
+                    best_fitness_value = payload.get("best_fitness")
+                    if isinstance(best_fitness_value, (tuple, list, np.ndarray)):
+                        best_fitness_value = best_fitness_value[0]
+                    if best_fitness_value is not None:
+                        generation_progress.set_postfix_str(f"best={float(best_fitness_value):.4f}")
+                    if event == "generation_complete":
+                        generation_eval_completed = int(payload.get("generation_evaluations_completed", evaluation_progress.n))
+                        if evaluation_progress.n < generation_eval_completed:
+                            evaluation_progress.update(generation_eval_completed - evaluation_progress.n)
+                        evaluation_progress.set_postfix_str("complete")
+                        sync_outer_progress(
+                            per_model_init_work + completed * per_model_generation_work,
+                            f"{_model_name} ({completed}/{total} gen)",
+                        )
+                        if best_fitness_value is not None:
+                            print(
+                                f"[GA] {_model_name} generation {completed}/{total} complete | "
+                                f"best {ga_objective}={float(best_fitness_value):.4f} | "
+                                f"evaluations {generation_eval_completed}/{evaluation_progress.total}",
+                                flush=True,
+                            )
+                        checkpoint_history_df.loc[len(checkpoint_history_df)] = {
+                            "Best_individual": payload.get("best_individual"),
+                            "Fitness_values": payload.get("best_fitness"),
+                            "Time (hours)": float(payload.get("elapsed_hours", 0.0)),
+                        }
+                        persist_ga_checkpoint(
+                            "running",
+                            completed,
+                            history_df=checkpoint_history_df,
+                            best_fitness_value=best_fitness_value,
+                        )
+
+                remaining_generations = max(0, int(ga_generations) - resume_generation_offset)
+                best_history, best_raw_params = ga.search(
+                    n_generations=remaining_generations,
+                    early_stopping=int(ga_early_stopping),
                 )
-                tuned_cache_paths[model_name] = {
-                    "model_path": str(active_model_path),
-                    "prediction_path": str(active_prediction_path),
-                    "ga_history_path": str(active_history_path),
-                    "ga_state_path": str(active_state_path),
-                    "metadata_path": str(active_metadata_path),
+                # chemml GeneticAlgorithm.search() has no callback support; simulate
+                # generation_complete events from the returned history so progress bars
+                # and checkpoints are updated correctly after the run.
+                for _gen_idx, _row in best_history.iterrows():
+                    ga_progress_callback({
+                        "event": "generation_complete",
+                        "generation": resume_generation_offset + _gen_idx + 1,
+                        "best_individual": _row["Best_individual"],
+                        "best_fitness": _row["Fitness_values"],
+                        "elapsed_hours": _row["Time (hours)"],
+                        "generation_evaluations_completed": evaluation_progress.total,
+                    })
+                if resume_history_prefix is not None:
+                    best_history = pd.concat([resume_history_prefix, best_history], ignore_index=True)
+                if generation_progress.n < len(best_history):
+                    generation_progress.update(len(best_history) - generation_progress.n)
+                generation_progress.set_postfix_str(f"done in {len(best_history)} gen")
+                evaluation_progress.set_postfix_str("done")
+                remaining_model_work = max(0, per_model_expected_work - progress_state["model_completed_work"])
+                if remaining_model_work > 0:
+                    tuning_progress.update(remaining_model_work)
+                    progress_state["overall_completed_work"] += remaining_model_work
+                    progress_state["model_completed_work"] += remaining_model_work
+                overall_completed_work = progress_state["overall_completed_work"]
+                model_completed_work = progress_state["model_completed_work"]
+                tuning_progress.set_postfix_str(
+                    f"{model_name} complete | overall {progress_state['overall_completed_work']}/{total_expected_work} work"
+                )
+                best_params = decode_params(best_raw_params)
+                best_model = build_estimator(best_raw_params)
+                best_model.fit(X_train, y_train)
+                pred_train = np.asarray(best_model.predict(X_train)).reshape(-1)
+                pred_test = np.asarray(best_model.predict(X_test)).reshape(-1)
+
+                best_fitness = extract_ga_fitness_scalar(best_history.iloc[-1]["Fitness_values"])
+                row = {
+                    "Model": model_name,
+                    "Benchmark n_jobs": int(resource_n_jobs),
+                    "Best GA Fitness": best_fitness,
+                    "GA objective": str(ga_objective),
+                    "Best params": str(best_params),
                 }
-            print(
-                f"[GA] Finished {model_name}: test R2={row['Test R2']:.4f}, "
-                f"test RMSE={row['Test RMSE']:.4f}, test MAE={row['Test MAE']:.4f}",
-                flush=True,
+                row[ga_score_label] = best_fitness
+                row.update(summarize_regression(y_train, pred_train, "Train"))
+                row.update(summarize_regression(y_test, pred_test, "Test"))
+                tuned_rows.append(row)
+                tuned_models[model_name] = best_model
+                tuned_predictions[model_name] = {"train": pred_train, "test": pred_test}
+                ga_histories[model_name] = best_history.copy()
+                if enable_tuned_model_cache:
+                    joblib_dump(best_model, active_model_path)
+                    pd.DataFrame(
+                        {
+                            "split": ["train"] * len(pred_train) + ["test"] * len(pred_test),
+                            "smiles": list(STATE["smiles_train"].astype(str)) + list(STATE["smiles_test"].astype(str)),
+                            "observed": list(np.asarray(y_train, dtype=float)) + list(np.asarray(y_test, dtype=float)),
+                            "predicted": list(pred_train) + list(pred_test),
+                        }
+                    ).to_csv(active_prediction_path, index=False)
+                    persist_ga_checkpoint(
+                        "completed",
+                        len(best_history),
+                        history_df=best_history,
+                        best_params_value=best_params,
+                        best_fitness_value=best_fitness,
+                    )
+                    tuned_cache_paths[model_name] = {
+                        "model_path": str(active_model_path),
+                        "prediction_path": str(active_prediction_path),
+                        "ga_history_path": str(active_history_path),
+                        "ga_state_path": str(active_state_path),
+                        "metadata_path": str(active_metadata_path),
+                    }
+                print(
+                    f"[GA] Finished {model_name}: test R2={row['Test R2']:.4f}, "
+                    f"test RMSE={row['Test RMSE']:.4f}, test MAE={row['Test MAE']:.4f}",
+                    flush=True,
+                )
+                tuning_progress.update(1)
+            evaluation_progress.close()
+            generation_progress.close()
+            tuning_progress.close()
+
+            tuned_results = pd.DataFrame(tuned_rows).sort_values(["Test RMSE", "Test MAE"], ascending=True).reset_index(drop=True)
+            tuned_best_model_name = tuned_results.loc[0, "Model"]
+
+            STATE["tuned_traditional_models"] = tuned_models
+            STATE["tuned_traditional_predictions"] = tuned_predictions
+            STATE["tuned_traditional_results"] = tuned_results.copy()
+            STATE["best_tuned_traditional_model_name"] = tuned_best_model_name
+            STATE["tuned_traditional_ga_histories"] = ga_histories
+            STATE["tuned_traditional_model_cache_paths"] = tuned_cache_paths
+            STATE["tuned_traditional_model_feature_columns"] = dict(tuned_model_feature_columns)
+            if tuned_cache_dir is not None:
+                STATE["tuned_traditional_model_cache_dir"] = str(tuned_cache_dir)
+
+            print(f"Genetic-algorithm tuning completed for {len(selected_search_models)} model(s): {', '.join(selected_search_models)}")
+            print(f"GA objective: {ga_objective}")
+            print(f"Search CV folds: {effective_search_folds}")
+            print(f"Best tuned model on the held-out test set: {tuned_best_model_name}")
+            if enable_tuned_model_cache and tuned_cache_dir is not None:
+                print(f"Saved tuned model cache artifacts under: {tuned_cache_dir}")
+            display_interactive_table(tuned_results.round(4), rows=min(10, len(tuned_results)))
+            display_note(
+                "This section uses ChemML's **GeneticAlgorithm** implementation rather than sklearn grid search. "
+                "Use the held-out test metrics below to judge whether the tuned hyperparameters actually generalized better."
             )
-            tuning_progress.update(1)
-        evaluation_progress.close()
-        generation_progress.close()
-        tuning_progress.close()
-
-        tuned_results = pd.DataFrame(tuned_rows).sort_values(["Test RMSE", "Test MAE"], ascending=True).reset_index(drop=True)
-        tuned_best_model_name = tuned_results.loc[0, "Model"]
-
-        STATE["tuned_traditional_models"] = tuned_models
-        STATE["tuned_traditional_predictions"] = tuned_predictions
-        STATE["tuned_traditional_results"] = tuned_results.copy()
-        STATE["best_tuned_traditional_model_name"] = tuned_best_model_name
-        STATE["tuned_traditional_ga_histories"] = ga_histories
-        STATE["tuned_traditional_model_cache_paths"] = tuned_cache_paths
-        STATE["tuned_traditional_model_feature_columns"] = dict(tuned_model_feature_columns)
-        if tuned_cache_dir is not None:
-            STATE["tuned_traditional_model_cache_dir"] = str(tuned_cache_dir)
-
-        print(f"Genetic-algorithm tuning completed for {len(selected_search_models)} model(s): {', '.join(selected_search_models)}")
-        print(f"GA objective: {ga_objective}")
-        print(f"Search CV folds: {effective_search_folds}")
-        print(f"Best tuned model on the held-out test set: {tuned_best_model_name}")
-        if enable_tuned_model_cache and tuned_cache_dir is not None:
-            print(f"Saved tuned model cache artifacts under: {tuned_cache_dir}")
-        display_interactive_table(tuned_results.round(4), rows=min(10, len(tuned_results)))
-        display_note(
-            "This section uses ChemML's **GeneticAlgorithm** implementation rather than sklearn grid search. "
-            "Use the held-out test metrics below to judge whether the tuned hyperparameters actually generalized better."
-        )
         """
     ),
     code(
@@ -7588,186 +7828,187 @@ cells += [
         tuned_point_size = 10
 
         if "tuned_traditional_results" not in STATE:
-            raise RuntimeError("Please run block 4E first to fit tuned conventional models.")
-
-        import plotly.graph_objects as go
-        from plotly.subplots import make_subplots
-
-        tuned_predictions = STATE["tuned_traditional_predictions"]
-        tuned_results = STATE["tuned_traditional_results"].set_index("Model")
-        tuned_requested_models = list(tuned_predictions.keys())
-        tuned_panel_frames = []
-        tuned_plotted_models = []
-
-        for model_name in tuned_requested_models:
-            if model_name not in tuned_predictions:
-                print(f"Skipping {model_name}: it was not tuned in block 4E.")
-                continue
-
-            pred_train = tuned_predictions[model_name]["train"]
-            pred_test = tuned_predictions[model_name]["test"]
-
-            tuned_scatter_df = pd.concat(
-                [
-                    pd.DataFrame(
-                        {
-                            "Observed": STATE["y_train"],
-                            "Predicted": pred_train,
-                            "Split": "Train",
-                            "SMILES": STATE["smiles_train"],
-                            "Model": model_name,
-                        }
-                    ),
-                    pd.DataFrame(
-                        {
-                            "Observed": STATE["y_test"],
-                            "Predicted": pred_test,
-                            "Split": "Test",
-                            "SMILES": STATE["smiles_test"],
-                            "Model": model_name,
-                        }
-                    ),
-                ],
-                axis=0,
-                ignore_index=True,
-            )
-            tuned_panel_frames.append(tuned_scatter_df)
-            row = tuned_results.loc[model_name]
-            display_note(
-                f"**Tuned {model_name}:** On the held-out test set, this tuned model achieved **R2 = {row['Test R2']:.3f}**, "
-                f"**RMSE = {row['Test RMSE']:.3f}**, and **MAE = {row['Test MAE']:.3f}**."
-            )
-            tuned_plotted_models.append(model_name)
-
-        if not tuned_plotted_models:
-            raise ValueError("None of the selected tuned models were fit in block 4E.")
-
-        combined_df = pd.concat(tuned_panel_frames, axis=0, ignore_index=True)
-        low = float(combined_df["Observed"].min())
-        high = float(combined_df["Observed"].max())
-        use_log_axes = bool((combined_df["Observed"] > 0).all() and (combined_df["Predicted"] > 0).all())
-        if low == high:
-            if use_log_axes:
-                low = low / 1.1
-                high = high * 1.1
-            else:
-                low -= 1.0
-                high += 1.0
-        if use_log_axes:
-            log_low = math.log10(low)
-            log_high = math.log10(high)
-            log_span = max(log_high - log_low, 0.05)
-            plot_low = 10 ** (log_low - 0.05 * log_span)
-            plot_high = 10 ** (log_high + 0.05 * log_span)
+            print("4F skipped: no tuned models yet. Run 4E with at least one tune_* box ticked to use this plot.")
         else:
-            plot_span = high - low
-            plot_low = low - 0.05 * plot_span
-            plot_high = high + 0.05 * plot_span
 
-        n_panels = len(tuned_plotted_models)
-        n_cols = 2 if n_panels > 1 else 1
-        n_rows = int(math.ceil(n_panels / n_cols))
-        fig = make_subplots(
-            rows=n_rows,
-            cols=n_cols,
-            subplot_titles=[f"Tuned {name}" for name in tuned_plotted_models],
-            shared_xaxes=True,
-            shared_yaxes=True,
-            horizontal_spacing=0.08,
-            vertical_spacing=0.14,
-        )
+            import plotly.graph_objects as go
+            from plotly.subplots import make_subplots
 
-        split_colors = {"Train": "#1f77b4", "Test": "#d62728"}
-        split_order = ["Train", "Test"]
+            tuned_predictions = STATE["tuned_traditional_predictions"]
+            tuned_results = STATE["tuned_traditional_results"].set_index("Model")
+            tuned_requested_models = list(tuned_predictions.keys())
+            tuned_panel_frames = []
+            tuned_plotted_models = []
 
-        for panel_index, model_name in enumerate(tuned_plotted_models, start=1):
-            row_num = int(math.ceil(panel_index / n_cols))
-            col_num = ((panel_index - 1) % n_cols) + 1
-            model_df = combined_df.loc[combined_df["Model"] == model_name].copy()
-
-            for split_name in split_order:
-                split_df = model_df.loc[model_df["Split"] == split_name].copy()
-                if split_df.empty:
+            for model_name in tuned_requested_models:
+                if model_name not in tuned_predictions:
+                    print(f"Skipping {model_name}: it was not tuned in block 4E.")
                     continue
+
+                pred_train = tuned_predictions[model_name]["train"]
+                pred_test = tuned_predictions[model_name]["test"]
+
+                tuned_scatter_df = pd.concat(
+                    [
+                        pd.DataFrame(
+                            {
+                                "Observed": STATE["y_train"],
+                                "Predicted": pred_train,
+                                "Split": "Train",
+                                "SMILES": STATE["smiles_train"],
+                                "Model": model_name,
+                            }
+                        ),
+                        pd.DataFrame(
+                            {
+                                "Observed": STATE["y_test"],
+                                "Predicted": pred_test,
+                                "Split": "Test",
+                                "SMILES": STATE["smiles_test"],
+                                "Model": model_name,
+                            }
+                        ),
+                    ],
+                    axis=0,
+                    ignore_index=True,
+                )
+                tuned_panel_frames.append(tuned_scatter_df)
+                row = tuned_results.loc[model_name]
+                display_note(
+                    f"**Tuned {model_name}:** On the held-out test set, this tuned model achieved **R2 = {row['Test R2']:.3f}**, "
+                    f"**RMSE = {row['Test RMSE']:.3f}**, and **MAE = {row['Test MAE']:.3f}**."
+                )
+                tuned_plotted_models.append(model_name)
+
+            if not tuned_plotted_models:
+                raise ValueError("None of the selected tuned models were fit in block 4E.")
+
+            combined_df = pd.concat(tuned_panel_frames, axis=0, ignore_index=True)
+            low = float(combined_df["Observed"].min())
+            high = float(combined_df["Observed"].max())
+            use_log_axes = bool((combined_df["Observed"] > 0).all() and (combined_df["Predicted"] > 0).all())
+            if low == high:
+                if use_log_axes:
+                    low = low / 1.1
+                    high = high * 1.1
+                else:
+                    low -= 1.0
+                    high += 1.0
+            if use_log_axes:
+                log_low = math.log10(low)
+                log_high = math.log10(high)
+                log_span = max(log_high - log_low, 0.05)
+                plot_low = 10 ** (log_low - 0.05 * log_span)
+                plot_high = 10 ** (log_high + 0.05 * log_span)
+            else:
+                plot_span = high - low
+                plot_low = low - 0.05 * plot_span
+                plot_high = high + 0.05 * plot_span
+
+            n_panels = len(tuned_plotted_models)
+            n_cols = 2 if n_panels > 1 else 1
+            n_rows = int(math.ceil(n_panels / n_cols))
+            fig = make_subplots(
+                rows=n_rows,
+                cols=n_cols,
+                subplot_titles=[f"Tuned {name}" for name in tuned_plotted_models],
+                shared_xaxes=True,
+                shared_yaxes=True,
+                horizontal_spacing=0.08,
+                vertical_spacing=0.14,
+            )
+
+            split_colors = {"Train": "#1f77b4", "Test": "#d62728"}
+            split_order = ["Train", "Test"]
+
+            for panel_index, model_name in enumerate(tuned_plotted_models, start=1):
+                row_num = int(math.ceil(panel_index / n_cols))
+                col_num = ((panel_index - 1) % n_cols) + 1
+                model_df = combined_df.loc[combined_df["Model"] == model_name].copy()
+
+                for split_name in split_order:
+                    split_df = model_df.loc[model_df["Split"] == split_name].copy()
+                    if split_df.empty:
+                        continue
+                    fig.add_trace(
+                        go.Scatter(
+                            x=split_df["Observed"],
+                            y=split_df["Predicted"],
+                            mode="markers",
+                            name=split_name,
+                            legendgroup=split_name,
+                            showlegend=(panel_index == 1),
+                            marker={
+                                "size": int(tuned_point_size),
+                                "color": split_colors[split_name],
+                                "opacity": 0.8,
+                            },
+                            customdata=np.column_stack(
+                                [
+                                    split_df["SMILES"].astype(str).to_numpy(),
+                                    split_df["Observed"].to_numpy(dtype=float),
+                                    split_df["Predicted"].to_numpy(dtype=float),
+                                ]
+                            ),
+                            hovertemplate=(
+                                "SMILES: %{customdata[0]}<br>"
+                                "Observed: %{customdata[1]:.4f}<br>"
+                                "Predicted: %{customdata[2]:.4f}<br>"
+                                f"Split: {split_name}<extra>Tuned {model_name}</extra>"
+                            ),
+                        ),
+                        row=row_num,
+                        col=col_num,
+                    )
+
                 fig.add_trace(
                     go.Scatter(
-                        x=split_df["Observed"],
-                        y=split_df["Predicted"],
-                        mode="markers",
-                        name=split_name,
-                        legendgroup=split_name,
+                        x=[plot_low, plot_high],
+                        y=[plot_low, plot_high],
+                        mode="lines",
+                        name="1x line",
+                        legendgroup="guide-lines",
                         showlegend=(panel_index == 1),
-                        marker={
-                            "size": int(tuned_point_size),
-                            "color": split_colors[split_name],
-                            "opacity": 0.8,
-                        },
-                        customdata=np.column_stack(
-                            [
-                                split_df["SMILES"].astype(str).to_numpy(),
-                                split_df["Observed"].to_numpy(dtype=float),
-                                split_df["Predicted"].to_numpy(dtype=float),
-                            ]
-                        ),
-                        hovertemplate=(
-                            "SMILES: %{customdata[0]}<br>"
-                            "Observed: %{customdata[1]:.4f}<br>"
-                            "Predicted: %{customdata[2]:.4f}<br>"
-                            f"Split: {split_name}<extra>Tuned {model_name}</extra>"
-                        ),
+                        line={"color": "#444444", "dash": "dash"},
+                        hoverinfo="skip",
                     ),
                     row=row_num,
                     col=col_num,
                 )
+                if use_log_axes:
+                    fig.update_xaxes(
+                        title_text="Observed (log10 scale)",
+                        type="log",
+                        range=[math.log10(plot_low), math.log10(plot_high)],
+                        row=row_num,
+                        col=col_num,
+                    )
+                    fig.update_yaxes(
+                        title_text="Predicted (log10 scale)",
+                        type="log",
+                        range=[math.log10(plot_low), math.log10(plot_high)],
+                        row=row_num,
+                        col=col_num,
+                    )
+                else:
+                    fig.update_xaxes(title_text="Observed", range=[plot_low, plot_high], row=row_num, col=col_num)
+                    fig.update_yaxes(title_text="Predicted", range=[plot_low, plot_high], row=row_num, col=col_num)
 
-            fig.add_trace(
-                go.Scatter(
-                    x=[plot_low, plot_high],
-                    y=[plot_low, plot_high],
-                    mode="lines",
-                    name="1x line",
-                    legendgroup="guide-lines",
-                    showlegend=(panel_index == 1),
-                    line={"color": "#444444", "dash": "dash"},
-                    hoverinfo="skip",
-                ),
-                row=row_num,
-                col=col_num,
+            fig.update_layout(
+                title="Observed vs predicted values for all tuned conventional models that ran",
+                height=max(520, 420 * n_rows),
+                width=1100 if n_cols == 2 else 700,
             )
+            show_plotly(fig)
             if use_log_axes:
-                fig.update_xaxes(
-                    title_text="Observed (log10 scale)",
-                    type="log",
-                    range=[math.log10(plot_low), math.log10(plot_high)],
-                    row=row_num,
-                    col=col_num,
-                )
-                fig.update_yaxes(
-                    title_text="Predicted (log10 scale)",
-                    type="log",
-                    range=[math.log10(plot_low), math.log10(plot_high)],
-                    row=row_num,
-                    col=col_num,
+                display_note(
+                    "These tuned observed/predicted panels use **log10 axes**. The dashed line is the ideal **1:1** agreement line. Hover over any point to inspect the SMILES string and its observed and predicted values."
                 )
             else:
-                fig.update_xaxes(title_text="Observed", range=[plot_low, plot_high], row=row_num, col=col_num)
-                fig.update_yaxes(title_text="Predicted", range=[plot_low, plot_high], row=row_num, col=col_num)
-
-        fig.update_layout(
-            title="Observed vs predicted values for all tuned conventional models that ran",
-            height=max(520, 420 * n_rows),
-            width=1100 if n_cols == 2 else 700,
-        )
-        show_plotly(fig)
-        if use_log_axes:
-            display_note(
-                "These tuned observed/predicted panels use **log10 axes**. The dashed line is the ideal **1:1** agreement line. Hover over any point to inspect the SMILES string and its observed and predicted values."
-            )
-        else:
-            display_note(
-                "These tuned observed/predicted panels use **linear axes** because at least one observed or predicted value is non-positive. "
-                "The dashed line is the ideal **1:1** agreement line. Hover over any point to inspect the SMILES string and its observed and predicted values."
-            )
+                display_note(
+                    "These tuned observed/predicted panels use **linear axes** because at least one observed or predicted value is non-positive. "
+                    "The dashed line is the ideal **1:1** agreement line. Hover over any point to inspect the SMILES string and its observed and predicted values."
+                )
         """
     ),
     code(
@@ -7780,69 +8021,70 @@ cells += [
         show_ga_history_catboost = False # @param {type:"boolean"}
 
         if "tuned_traditional_ga_histories" not in STATE or not STATE["tuned_traditional_ga_histories"]:
-            raise RuntimeError("Please run block 4E first so GA tuning histories are available.")
+            print("4G skipped: no GA histories yet. Run 4E with at least one tune_* box ticked to use this plot.")
+        else:
 
-        import matplotlib.pyplot as plt
+            import matplotlib.pyplot as plt
 
-        requested_history_models = []
-        if show_ga_history_elasticnet:
-            requested_history_models.append("ElasticNet")
-        if show_ga_history_svr:
-            requested_history_models.append("SVR")
-        if show_ga_history_random_forest:
-            requested_history_models.append("Random forest")
-        if show_ga_history_xgboost:
-            requested_history_models.append("XGBoost")
-        if show_ga_history_catboost:
-            requested_history_models.append("CatBoost")
+            requested_history_models = []
+            if show_ga_history_elasticnet:
+                requested_history_models.append("ElasticNet")
+            if show_ga_history_svr:
+                requested_history_models.append("SVR")
+            if show_ga_history_random_forest:
+                requested_history_models.append("Random forest")
+            if show_ga_history_xgboost:
+                requested_history_models.append("XGBoost")
+            if show_ga_history_catboost:
+                requested_history_models.append("CatBoost")
 
-        if not requested_history_models:
-            raise ValueError("Please select at least one tuned model to plot the GA convergence history.")
+            if not requested_history_models:
+                raise ValueError("Please select at least one tuned model to plot the GA convergence history.")
 
-        ga_histories = STATE["tuned_traditional_ga_histories"]
-        tuned_results_lookup = STATE["tuned_traditional_results"].set_index("Model")
-        plotted_history_models = [name for name in requested_history_models if name in ga_histories]
-        if not plotted_history_models:
-            raise ValueError("None of the selected models were tuned in block 4E.")
+            ga_histories = STATE["tuned_traditional_ga_histories"]
+            tuned_results_lookup = STATE["tuned_traditional_results"].set_index("Model")
+            plotted_history_models = [name for name in requested_history_models if name in ga_histories]
+            if not plotted_history_models:
+                raise ValueError("None of the selected models were tuned in block 4E.")
 
-        objective_name = str(tuned_results_lookup.iloc[0]["GA objective"]) if "GA objective" in tuned_results_lookup.columns else "fitness"
-        n_panels = len(plotted_history_models)
-        n_cols = 2 if n_panels > 1 else 1
-        n_rows = int(math.ceil(n_panels / n_cols))
-        fig, axes = plt.subplots(n_rows, n_cols, figsize=(6 * n_cols, 3.8 * n_rows), dpi=140)
-        axes = np.atleast_1d(axes).ravel()
+            objective_name = str(tuned_results_lookup.iloc[0]["GA objective"]) if "GA objective" in tuned_results_lookup.columns else "fitness"
+            n_panels = len(plotted_history_models)
+            n_cols = 2 if n_panels > 1 else 1
+            n_rows = int(math.ceil(n_panels / n_cols))
+            fig, axes = plt.subplots(n_rows, n_cols, figsize=(6 * n_cols, 3.8 * n_rows), dpi=140)
+            axes = np.atleast_1d(axes).ravel()
 
-        for ax, model_name in zip(axes, plotted_history_models):
-            history_df = ga_histories[model_name].copy()
-            generations = np.arange(1, len(history_df) + 1)
-            best_fitness = history_df["Fitness_values"].apply(extract_ga_fitness_scalar).to_numpy(dtype=float)
-            elapsed_hours = history_df["Time (hours)"].to_numpy(dtype=float)
-            metrics_row = tuned_results_lookup.loc[model_name]
+            for ax, model_name in zip(axes, plotted_history_models):
+                history_df = ga_histories[model_name].copy()
+                generations = np.arange(1, len(history_df) + 1)
+                best_fitness = history_df["Fitness_values"].apply(extract_ga_fitness_scalar).to_numpy(dtype=float)
+                elapsed_hours = history_df["Time (hours)"].to_numpy(dtype=float)
+                metrics_row = tuned_results_lookup.loc[model_name]
 
-            ax.plot(generations, best_fitness, marker="o", linewidth=1.8, markersize=4, color="#1f77b4")
-            ax.set_title(model_name)
-            ax.set_xlabel("Generation")
-            ax.set_ylabel(f"Best CV {objective_name}")
-            ax.grid(True, linestyle=":", alpha=0.5)
-            ax.set_xticks(generations)
-            ax.text(
-                0.03,
-                0.97,
-                f"Final fitness = {best_fitness[-1]:.4f}\\nFinal test RMSE = {metrics_row['Test RMSE']:.4f}\\nElapsed = {elapsed_hours[-1]:.3f} h",
-                transform=ax.transAxes,
-                verticalalignment="top",
-                bbox=dict(boxstyle="round", facecolor="white", alpha=0.85),
+                ax.plot(generations, best_fitness, marker="o", linewidth=1.8, markersize=4, color="#1f77b4")
+                ax.set_title(model_name)
+                ax.set_xlabel("Generation")
+                ax.set_ylabel(f"Best CV {objective_name}")
+                ax.grid(True, linestyle=":", alpha=0.5)
+                ax.set_xticks(generations)
+                ax.text(
+                    0.03,
+                    0.97,
+                    f"Final fitness = {best_fitness[-1]:.4f}\\nFinal test RMSE = {metrics_row['Test RMSE']:.4f}\\nElapsed = {elapsed_hours[-1]:.3f} h",
+                    transform=ax.transAxes,
+                    verticalalignment="top",
+                    bbox=dict(boxstyle="round", facecolor="white", alpha=0.85),
+                )
+
+            for ax in axes[len(plotted_history_models):]:
+                ax.axis("off")
+
+            plt.tight_layout()
+            plt.show()
+            display_note(
+                "These convergence plots show the **best GA fitness found by each generation** for the selected tuned models. "
+                "Use them to judge whether the search was still improving or had already plateaued."
             )
-
-        for ax in axes[len(plotted_history_models):]:
-            ax.axis("off")
-
-        plt.tight_layout()
-        plt.show()
-        display_note(
-            "These convergence plots show the **best GA fitness found by each generation** for the selected tuned models. "
-            "Use them to judge whether the search was still improving or had already plateaued."
-        )
         """
     ),
     md(
@@ -7867,6 +8109,29 @@ cells += [
         - **Uni-Mol** uses a pretrained 3D molecular representation model with conformer generation and a different training stack
 
         So ChemML is usually the simpler and lighter deep-learning baseline, while Uni-Mol is the more specialized 3D model family.
+        """
+    ),
+    md(
+        """
+        ### What Each Deep-Learning Model Is
+
+        **ChemML multilayer perceptron (MLP)** (`5B`). A fully connected feed-forward neural network trained on the same selected molecular features as the conventional models. ChemML is an open-source chemistry and materials machine-learning package from the Hachmann lab; this notebook uses its MLP with either a PyTorch or a TensorFlow backend.
+        > Haghighatlari M, Vishwakarma G, Altarawy D, Subramanian R, Kota BU, Sonpal A, Setlur S, Hachmann J. ChemML: a machine learning and informatics program package for the analysis, mining, and modeling of chemical and materials data. *WIREs Comput Mol Sci.* 2020;10(4):e1458. [doi:10.1002/wcms.1458](https://doi.org/10.1002/wcms.1458) · [code](https://github.com/hachmannlab/chemml)
+
+        **TabPFN** (`5B`). A *tabular foundation model*: a transformer pretrained on millions of synthetic tabular datasets to perform prediction "in context". It is not trained on your data in the usual sense; it reads the whole training table and the molecules to predict in one forward pass, which is why it is strong on small datasets and has a row limit (`tabpfn_max_train_rows`). The notebook uses TabPFN v2, through the Prior Labs API or the local `tabpfn` package.
+        > Hollmann N, Müller S, Purucker L, Krishnakumar A, Körfer M, Hoo SB, Schirrmeister RT, Hutter F. Accurate predictions on small data with a tabular foundation model. *Nature.* 2025;637:319–326. [doi:10.1038/s41586-024-08328-6](https://doi.org/10.1038/s41586-024-08328-6) · [code](https://github.com/PriorLabs/TabPFN)
+        > Original TabPFN: Hollmann N, Müller S, Eggensperger K, Hutter F. TabPFN: a transformer that solves small tabular classification problems in a second. *ICLR* 2023. [arXiv:2207.01848](https://arxiv.org/abs/2207.01848)
+
+        **MapLight + GNN** (`5B`). Not a neural network trained here: a CatBoost gradient-boosted tree model whose inputs are the MapLight classic features *plus* a learned molecular embedding from a pretrained graph isomorphism network (GIN, the `gin_supervised_masking` checkpoint from DGL-LifeSci). The GIN was pretrained on about 2 million molecules by masking atom attributes and learning to recover them, so its embedding carries structural knowledge from far more chemistry than your dataset. This is the MapLight + GNN entry on the TDC ADMET leaderboard.
+        > Notwell JH, Wood MW. ADMET property prediction through combinations of molecular fingerprints. 2023. [arXiv:2310.00174](https://arxiv.org/abs/2310.00174)
+        > GIN pretraining: Hu W, Liu B, Gomes J, Zitnik M, Liang P, Pande V, Leskovec J. Strategies for pre-training graph neural networks. *ICLR* 2020. [arXiv:1905.12265](https://arxiv.org/abs/1905.12265)
+        > GIN architecture: Xu K, Hu W, Leskovec J, Jegelka S. How powerful are graph neural networks? *ICLR* 2019. [arXiv:1810.00826](https://arxiv.org/abs/1810.00826)
+        > Pretrained checkpoint: Li M, Zhou J, Hu J, Fan W, Zhang Y, Gu Y, Karypis G. DGL-LifeSci: an open-source toolkit for deep learning on graphs in life science. *ACS Omega.* 2021;6(41):27233–27238. [doi:10.1021/acsomega.1c04017](https://doi.org/10.1021/acsomega.1c04017)
+        > CatBoost: Prokhorenkova L, Gusev G, Vorobev A, Dorogush AV, Gulin A. CatBoost: unbiased boosting with categorical features. *NeurIPS* 2018. [arXiv:1706.09516](https://arxiv.org/abs/1706.09516)
+
+        **Tabular CNN** (trained with the conventional models in `4C`). A small one-dimensional convolutional network written for this project: it treats each molecule's feature vector as a 1D signal and applies two convolution blocks (64 filters, kernel size 5), global max pooling and a dense layer. It has no publication of its own. Feature order in a descriptor vector carries no spatial meaning, which is one reason it was the weakest regression model in the benchmark. For background on convolutional networks see LeCun Y, Bengio Y, Hinton G. Deep learning. *Nature.* 2015;521:436–444. [doi:10.1038/nature14539](https://doi.org/10.1038/nature14539)
+
+        Uni-Mol and Chemprop, the pretrained 3D and graph neural-network models, are introduced in section 6.
         """
     ),
     code(
@@ -8877,6 +9142,9 @@ cells += [
             STATE["deep_models"] = deep_models
             STATE["X_train_scaled"] = X_train_scaled
             STATE["X_test_scaled"] = X_test_scaled
+            # Column names of the matrix the ChemML models were trained on (after train-only feature
+            # selection); 8C labels its explanations with these.
+            STATE["deep_feature_names"] = [str(column) for column in getattr(X_train, "columns", [])]
             STATE["y_train_scaled"] = y_train_scaled
             STATE["y_scaler"] = y_scaler
             STATE["x_scaler"] = x_scaler
@@ -9805,12 +10073,23 @@ cells += [
                     low -= 1.0
                     high += 1.0
 
+                row = compare_df.set_index("Model").loc[model_name]
                 ax.scatter(train_obs, pred_train, alpha=0.55, label="Train", color="#1f77b4")
                 ax.scatter(test_obs, pred_test, alpha=0.70, label="Test", color="#d62728")
-                ax.plot([low, high], [low, high], linestyle="--", color="#444444", linewidth=1.0)
-                ax.plot([low, high], [3.0 * low, 3.0 * high], linestyle=":", color="#7f7f7f", linewidth=1.0)
-                ax.plot([low, high], [low / 3.0, high / 3.0], linestyle=":", color="#7f7f7f", linewidth=1.0)
-                row = compare_df.set_index("Model").loc[model_name]
+                ax.plot([low, high], [low, high], linestyle="--", color="#444444", linewidth=1.0, label="1:1")
+                # Guide lines must run parallel to 1:1. A 3-fold band (y = 3x, y = x/3) is parallel only on
+                # log axes; on linear axes (targets with zero or negative values) use y = x +/- test RMSE.
+                if use_log_axes:
+                    ax.plot([low, high], [3.0 * low, 3.0 * high], linestyle=":", color="#7f7f7f", linewidth=1.0, label="3-fold")
+                    ax.plot([low, high], [low / 3.0, high / 3.0], linestyle=":", color="#7f7f7f", linewidth=1.0)
+                else:
+                    band = float(row["Test RMSE"]) if np.isfinite(float(row["Test RMSE"])) else 0.0
+                    if band > 0:
+                        ax.plot([low, high], [low + band, high + band], linestyle=":", color="#7f7f7f", linewidth=1.0, label="±1 test RMSE")
+                        ax.plot([low, high], [low - band, high - band], linestyle=":", color="#7f7f7f", linewidth=1.0)
+                    ax.set_xlim(low, high)
+                    ax.set_ylim(low, high)
+                    ax.set_aspect("equal", adjustable="box")
                 ax.set_title(f"{model_name}\\n{row['Workflow']}")
                 if use_log_axes:
                     ax.set_xscale("log")
@@ -9864,7 +10143,7 @@ cells += [
         - **Uni-Mol**, a pretrained 3D molecular representation workflow
         - **Chemprop v2**, a graph neural network workflow that learns directly from molecular graphs
 
-        Both paths are optional. They are useful comparisons after the conventional-model baseline is working, but they are more sensitive to runtime type, package versions, memory, and restart behavior.
+        Both paths are optional and **run only when a CUDA GPU is detected**; without one, steps `6A`-`6G` print a skip message and move on. They are useful comparisons after the conventional-model baseline is working, but they are more sensitive to runtime type, package versions, memory, and restart behavior.
 
         **Safe beginner defaults:** start with the conventional workflow first. If you continue here, try **Uni-Mol V1** or **Uni-Mol V2 `84m`** on a GPU runtime before larger models. Leave Chemprop extras off for the first run and keep epochs modest. If an install cell says to restart, restart the runtime/kernel, rerun step `0`, and rerun the setup cells needed to rebuild notebook state.
 
@@ -9878,16 +10157,20 @@ cells += [
 
         Uni-Mol is a molecular representation learning framework based on **3D molecular structures**, released by DP Technology in 2022. It takes **3D molecular geometry as input** and was pretrained on **about 200 million small-molecule conformations** and **3 million protein pocket structures** using self-supervised tasks that recover **atom types** and **atom coordinates**.
 
-        > Uni-Mol paper: [https://openreview.net/forum?id=6K2RM6wVqKu](https://openreview.net/forum?id=6K2RM6wVqKu)
-        > Open-source code: [https://github.com/dptech-corp/Uni-Mol](https://github.com/dptech-corp/Uni-Mol)
+        > Zhou G, Gao Z, Ding Q, Zheng H, Xu H, Wei Z, Zhang L, Ke G. Uni-Mol: a universal 3D molecular representation learning framework. *ICLR* 2023. [OpenReview](https://openreview.net/forum?id=6K2RM6wVqKu) · [code](https://github.com/deepmodeling/Uni-Mol)
 
         Because Uni-Mol is built around 3D information, it is especially relevant when stereochemistry, conformation, and spatial arrangement matter. Compared with the 2D feature-based models above, Uni-Mol is slower and more demanding, but it can capture molecular information that 2D descriptors do not directly encode.
 
-        In this notebook, **Uni-Mol V1** can be attempted on CPU for smaller demonstrations, but **Uni-Mol V2 is treated as GPU-only** because of its substantially higher resource demands.
+        In this notebook **both Uni-Mol V1 and V2 run only when a CUDA GPU is detected**. On a CPU, generating 3D conformers and fine-tuning a 47-million-parameter model takes hours even on small datasets, so steps `6A`-`6D` and `6G` print a skip message instead. In Colab, choose **Runtime > Change runtime type > T4 GPU**, then rerun step `0`.
 
-        <img src="https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/article/110155/60ae7257eca14ef288e15ebb9fdf1565/d592ed9f-78e4-4d51-84d4-44a2f88e95f3.png" width="70%" height="70%">
+        <img src="https://bohrium.oss-cn-zhangjiakou.aliyuncs.com/article/110155/60ae7257eca14ef288e15ebb9fdf1565/d592ed9f-78e4-4d51-84d4-44a2f88e95f3.png" alt="Uni-Mol benchmark performance across property categories" width="560">
 
         In this notebook, Uni-Mol uses the **same held-out train/test split** established earlier in the workflow so its external test performance can be compared more fairly with the other QSAR workflows.
+
+        ### Uni-Mol V2
+
+        **Uni-Mol2** keeps the same idea (a transformer that reads atom types and 3D coordinates and is pretrained by recovering masked atoms and noised coordinates) but scales it up: it was pretrained on about 800 million conformations and released at several sizes, from 84 million to 1.1 billion parameters, to study how molecular pretraining scales. This notebook offers the three smaller checkpoints below.
+        > Ji X, Wang Z, Gao Z, Zheng H, Zhang L, Ke G, E W. Uni-Mol2: exploring molecular pretraining model at scale. *Advances in Neural Information Processing Systems 37* (NeurIPS 2024). [arXiv:2406.14969](https://arxiv.org/abs/2406.14969) · [code](https://github.com/deepmodeling/Uni-Mol)
 
         ### Uni-Mol V2 Model Sizes
 
@@ -9905,50 +10188,55 @@ cells += [
         # @title 6A. Install Uni-Mol packages (optional; may restart the runtime) { display-mode: "form" }
         force_reinstall_unimol = False # @param {type:"boolean"}
 
-        import importlib
-        import subprocess
-        import sys
-        import time
-
-        install_targets = [
-            ("unimol_tools", "unimol_tools"),
-            ("huggingface_hub", "huggingface_hub"),
-        ]
-
-        installed_any = False
-        for import_name, pip_name in install_targets:
-            already_available = importlib.util.find_spec(import_name) is not None
-            if already_available and not force_reinstall_unimol:
-                print(f"[ok] {pip_name} is already available")
-                continue
-            print(f"[install] {pip_name}", flush=True)
-            start = time.perf_counter()
-            subprocess.check_call([sys.executable, "-m", "pip", "install", "-q", "--upgrade", pip_name])
-            elapsed = time.perf_counter() - start
-            installed_any = True
-            print(f"[done] {pip_name} installed in {elapsed:.1f}s", flush=True)
-
-        import os
-        os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
-
-        try:
-            import unimol_tools
-            print(f"Uni-Mol tools import succeeded: {getattr(unimol_tools, '__version__', 'version not reported')}")
-        except Exception as exc:
-            raise RuntimeError(
-                "Uni-Mol packages were installed, but the import did not succeed in the current kernel. "
-                "Restart the runtime, rerun the setup cell, then return to the Uni-Mol section."
-            ) from exc
-
-        if installed_any and IN_COLAB:
-            print(
-                "Uni-Mol packages were newly installed or upgraded. Colab should be restarted before training "
-                "to avoid mixed-package issues. After reconnecting, rerun the setup cell and the notebook cells "
-                "up to this section.",
-                flush=True,
-            )
+        # Uni-Mol is GPU-only in this notebook: on CPU it takes hours even on small sets.
+        if not globals().get('unimol_gpu_available', lambda: False)():
+            print('6A skipped: no CUDA GPU detected, so Uni-Mol is not installed.')
+            print('In Colab choose Runtime > Change runtime type > T4 GPU, then rerun step 0 and section 6. Locally, use a CUDA-enabled PyTorch build.')
         else:
-            print("Uni-Mol package check complete.")
+            import importlib
+            import subprocess
+            import sys
+            import time
+
+            install_targets = [
+                ("unimol_tools", "unimol_tools"),
+                ("huggingface_hub", "huggingface_hub"),
+            ]
+
+            installed_any = False
+            for import_name, pip_name in install_targets:
+                already_available = importlib.util.find_spec(import_name) is not None
+                if already_available and not force_reinstall_unimol:
+                    print(f"[ok] {pip_name} is already available")
+                    continue
+                print(f"[install] {pip_name}", flush=True)
+                start = time.perf_counter()
+                subprocess.check_call([sys.executable, "-m", "pip", "install", "-q", "--upgrade", pip_name])
+                elapsed = time.perf_counter() - start
+                installed_any = True
+                print(f"[done] {pip_name} installed in {elapsed:.1f}s", flush=True)
+
+            import os
+            os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
+
+            try:
+                import unimol_tools
+                print(f"Uni-Mol tools import succeeded: {getattr(unimol_tools, '__version__', 'version not reported')}")
+            except Exception as exc:
+                raise RuntimeError(
+                    "Uni-Mol packages were installed, but the import did not succeed in the current kernel. "
+                    "Restart the runtime, rerun the setup cell, then return to the Uni-Mol section."
+                ) from exc
+
+            if installed_any and IN_COLAB:
+                print(
+                    "Uni-Mol packages were newly installed or upgraded. Colab should be restarted before training "
+                    "to avoid mixed-package issues. After reconnecting, rerun the setup cell and the notebook cells "
+                    "up to this section.",
+                    flush=True,
+                )
+            else:
+                print("Uni-Mol package check complete.")
         """
     ),
     code(
@@ -9960,55 +10248,60 @@ cells += [
         unimol_train_subset_size = 0 # @param {type:"integer"}
         unimol_prepare_random_seed = 42 # @param {type:"integer"}
 
-        if "feature_matrix" not in STATE:
-            raise RuntimeError("Please build the molecular feature matrix first.")
-
-        ensure_shared_qsar_split(
-            default_strategy="random",
-            default_test_fraction=0.2,
-            default_random_seed=42,
-            source_label="6B Uni-Mol file preparation",
-        )
-        unimol_data_split_strategy = str(STATE.get("model_split_strategy", "random"))
-        unimol_test_fraction = float(STATE.get("model_test_fraction", 0.2))
-        unimol_split_random_seed = int(STATE.get("model_split_random_seed", 42))
-
-        if enable_unimol_model_cache:
-            output_dir = resolve_model_cache_dir(
-                "unimol",
-                unimol_run_label,
-                prefer_existing=bool(reuse_unimol_cached_models),
-            )
+        # Uni-Mol is GPU-only in this notebook: on CPU it takes hours even on small sets.
+        if not globals().get('unimol_gpu_available', lambda: False)():
+            print('6B skipped: no CUDA GPU detected, so no Uni-Mol files are prepared.')
+            print('In Colab choose Runtime > Change runtime type > T4 GPU, then rerun step 0 and section 6. Locally, use a CUDA-enabled PyTorch build.')
         else:
-            resolved_unimol_run_label = str(unimol_run_label).strip()
-            if not resolved_unimol_run_label or resolved_unimol_run_label.upper() == "AUTO":
-                resolved_unimol_run_label = f"{STATE['cache_session_stamp']}_{current_dataset_cache_label()}_unimol"
-            output_dir = resolve_output_path("unimol_runs") / slugify_cache_text(resolved_unimol_run_label)
-        output_dir.mkdir(parents=True, exist_ok=True)
-        train_df, test_df, train_csv, test_csv = prepare_unimol_files_from_current_split(
-            output_dir,
-            train_subset_size=int(unimol_train_subset_size),
-            prepare_random_seed=int(unimol_prepare_random_seed),
-        )
+            if "feature_matrix" not in STATE:
+                raise RuntimeError("Please build the molecular feature matrix first.")
 
-        STATE["unimol_output_dir"] = str(output_dir)
-        STATE["unimol_train_csv"] = str(train_csv)
-        STATE["unimol_test_csv"] = str(test_csv)
-        STATE["unimol_train_df"] = train_df.copy()
-        STATE["unimol_test_df"] = test_df.copy()
-        STATE["unimol_model_cache_enabled"] = bool(enable_unimol_model_cache)
-        STATE["reuse_unimol_cached_models"] = bool(reuse_unimol_cached_models)
-        STATE["unimol_data_split_strategy"] = str(unimol_data_split_strategy)
-        STATE["unimol_test_fraction"] = float(unimol_test_fraction)
-        STATE["unimol_split_random_seed"] = int(unimol_split_random_seed)
+            ensure_shared_qsar_split(
+                default_strategy="random",
+                default_test_fraction=0.2,
+                default_random_seed=42,
+                source_label="6B Uni-Mol file preparation",
+            )
+            unimol_data_split_strategy = str(STATE.get("model_split_strategy", "random"))
+            unimol_test_fraction = float(STATE.get("model_test_fraction", 0.2))
+            unimol_split_random_seed = int(STATE.get("model_split_random_seed", 42))
 
-        print(f"Uni-Mol train file: {train_csv}")
-        print(f"Uni-Mol test file: {test_csv}")
-        if enable_unimol_model_cache:
-            print(f"Uni-Mol model cache directory: {output_dir}")
-        print(f"Training molecules: {len(train_df)}")
-        print(f"Test molecules: {len(test_df)}")
-        display(train_df.head(3))
+            if enable_unimol_model_cache:
+                output_dir = resolve_model_cache_dir(
+                    "unimol",
+                    unimol_run_label,
+                    prefer_existing=bool(reuse_unimol_cached_models),
+                )
+            else:
+                resolved_unimol_run_label = str(unimol_run_label).strip()
+                if not resolved_unimol_run_label or resolved_unimol_run_label.upper() == "AUTO":
+                    resolved_unimol_run_label = f"{STATE['cache_session_stamp']}_{current_dataset_cache_label()}_unimol"
+                output_dir = resolve_output_path("unimol_runs") / slugify_cache_text(resolved_unimol_run_label)
+            output_dir.mkdir(parents=True, exist_ok=True)
+            train_df, test_df, train_csv, test_csv = prepare_unimol_files_from_current_split(
+                output_dir,
+                train_subset_size=int(unimol_train_subset_size),
+                prepare_random_seed=int(unimol_prepare_random_seed),
+            )
+
+            STATE["unimol_output_dir"] = str(output_dir)
+            STATE["unimol_train_csv"] = str(train_csv)
+            STATE["unimol_test_csv"] = str(test_csv)
+            STATE["unimol_train_df"] = train_df.copy()
+            STATE["unimol_test_df"] = test_df.copy()
+            STATE["unimol_model_cache_enabled"] = bool(enable_unimol_model_cache)
+            STATE["reuse_unimol_cached_models"] = bool(reuse_unimol_cached_models)
+            STATE["unimol_data_split_strategy"] = str(unimol_data_split_strategy)
+            STATE["unimol_test_fraction"] = float(unimol_test_fraction)
+            STATE["unimol_split_random_seed"] = int(unimol_split_random_seed)
+
+            print(f"Uni-Mol train file: {train_csv}")
+            print(f"Uni-Mol test file: {test_csv}")
+            if enable_unimol_model_cache:
+                print(f"Uni-Mol model cache directory: {output_dir}")
+            print(f"Training molecules: {len(train_df)}")
+            print(f"Test molecules: {len(test_df)}")
+            display(train_df.head(3))
         """
     ),
     md(
@@ -10028,360 +10321,45 @@ cells += [
         unimol_early_stopping = 5 # @param {type:"slider", min:2, max:15, step:1}
         unimol_num_workers = 0 # @param [0, 1, 2, 4, 8]
 
-        if "unimol_train_csv" not in STATE:
-            raise RuntimeError("Please prepare the Uni-Mol train/test files first in block 6B.")
-
-        ensure_shared_qsar_split(
-            default_strategy="random",
-            default_test_fraction=0.2,
-            default_random_seed=42,
-            source_label="6C Uni-Mol V1",
-        )
-        unimol_data_split_strategy = str(STATE.get("model_split_strategy", "random"))
-        unimol_test_fraction = float(STATE.get("model_test_fraction", 0.2))
-        unimol_split_random_seed = int(STATE.get("model_split_random_seed", 42))
-        prepare_unimol_files_from_current_split(
-            STATE["unimol_output_dir"],
-            train_subset_size=int(STATE.get("unimol_train_subset_size", 0)),
-            prepare_random_seed=int(STATE.get("unimol_prepare_random_seed", 42)),
-        )
-
-        gpu_available = bool(STATE.get("gpu_available", False))
-        unimol_num_workers = resolve_auto_worker_count(unimol_num_workers)
-        if gpu_available:
-            _gpu_inv = STATE.get("resource_config", {}).get("gpu_inventory", [])
-            _max_vram_gb = max((item.get("total_memory_gb", 0) for item in _gpu_inv), default=0)
-            _gpu_batch = 128 if _max_vram_gb >= 39 else 64 if _max_vram_gb >= 15 else unimol_batch_size
-            if _gpu_batch > unimol_batch_size:
-                print(f"[GPU-aware] Uni-Mol V1 batch_size {unimol_batch_size} → {_gpu_batch} ({_max_vram_gb:.1f} GB VRAM)")
-                unimol_batch_size = _gpu_batch
-        print(f"Uni-Mol execution mode: {'GPU acceleration' if gpu_available else 'CPU fallback'}")
-        print(f"Uni-Mol data-loader workers: {unimol_num_workers}")
-        if not gpu_available:
-            display_note(
-                "No GPU detected. Uni-Mol will run in **CPU fallback** mode. "
-                "This is supported for smaller demonstrations but may be much slower than GPU execution."
-            )
-
-        try:
-            from unimol_tools import MolPredict, MolTrain
-            from unimol_tools.config import MODEL_CONFIG_V2, MODEL_CONFIG
-            from unimol_tools.weights import get_weight_dir, weight_download, weight_download_v2
-        except Exception as exc:
-            raise RuntimeError(
-                "Uni-Mol packages are not available in this environment. Run the Uni-Mol install cell first."
-            ) from exc
-
-        _unimol_use_cuda = False
-        if torch is not None and torch.cuda.is_available():
-            try:
-                import torch.nn as _nn
-                _m = _nn.Linear(4, 4).cuda()
-                del _m
-                try:
-                    torch.zeros(4).pin_memory()
-                except Exception:
-                    try:
-                        import unimol_tools.tasks.trainer as _umt_t
-                        from torch.utils.data import DataLoader as _TDL
-                        if not getattr(_umt_t, "_pin_memory_patched", False):
-                            _umt_t.TorchDataLoader = lambda *a, **kw: _TDL(*a, **{**kw, "pin_memory": False})
-                            _umt_t._pin_memory_patched = True
-                    except Exception:
-                        pass
-                _unimol_use_cuda = True
-            except Exception:
-                print("[Uni-Mol] CUDA model placement failed on this GPU; using CPU.", flush=True)
-
-        def ensure_unimol_weights(need_v1=False, need_v2=False, v2_size="84m"):
-            weight_dir = Path(get_weight_dir())
-            weight_dir.mkdir(parents=True, exist_ok=True)
-            print(f"Uni-Mol weight directory: {weight_dir}", flush=True)
-            try:
-                if need_v1:
-                    required_v1 = [
-                        MODEL_CONFIG["weight"]["molecule_all_h"],
-                        MODEL_CONFIG["dict"]["molecule_all_h"],
-                    ]
-                    for artifact in required_v1:
-                        artifact_path = weight_dir / artifact
-                        if not artifact_path.exists():
-                            print(f"[Uni-Mol] Downloading {artifact}...", flush=True)
-                            weight_download(artifact, str(weight_dir))
-                if need_v2:
-                    artifact = MODEL_CONFIG_V2["weight"][str(v2_size)]
-                    artifact_path = weight_dir / artifact
-                    if not artifact_path.exists():
-                        print(f"[Uni-Mol] Downloading {artifact}...", flush=True)
-                        weight_download_v2(artifact, str(weight_dir))
-            except Exception as exc:
-                raise RuntimeError(
-                    "Uni-Mol pretrained weights could not be downloaded automatically. "
-                    "Check internet access and `huggingface_hub`, or download the weights manually, "
-                    f"then place them in: {weight_dir}"
-                ) from exc
-
-        train_csv = Path(STATE["unimol_train_csv"])
-        test_csv = Path(STATE["unimol_test_csv"])
-        train_df = pd.read_csv(train_csv)
-        test_df = pd.read_csv(test_csv)
-        ensure_global_split_signature(
-            train_df["SMILES"].astype(str),
-            test_df["SMILES"].astype(str),
-            source_label="6C Uni-Mol V1",
-        )
-
-        selected_unimol_models = [("unimolv1", "Uni-Mol V1")]
-
-        ensure_unimol_weights(need_v1=True, need_v2=False)
-
-        unimol_rows = []
-        unimol_predictions = {}
-        unimol_model_dirs = {}
-        unimol_model_cache_paths = {}
-
-        unimol_progress = tqdm(selected_unimol_models, desc="Uni-Mol models", leave=False)
-        for model_name, label in unimol_progress:
-            unimol_progress.set_postfix_str(label)
-            save_dir = Path(STATE["unimol_output_dir"]) / label.lower().replace(" ", "_").replace("(", "").replace(")", "")
-            metadata_path = save_dir / "cache_metadata.json"
-            prediction_path = save_dir / "cached_predictions.csv"
-            cached_model_loaded = False
-            if reuse_unimol_cached_models and metadata_path.exists() and prediction_path.exists():
-                try:
-                    metadata = read_cache_metadata(metadata_path)
-                    expected_metadata = {
-                        "model_name": label,
-                        "workflow": "Uni-Mol",
-                        "dataset_label": current_dataset_cache_label(),
-                        "qsar_split_strategy": str(unimol_data_split_strategy),
-                        "qsar_test_fraction": float(unimol_test_fraction),
-                        "qsar_split_random_seed": int(unimol_split_random_seed),
-                        "split": str(unimol_internal_split),
-                        "epochs": int(unimol_epochs),
-                        "learning_rate": float(unimol_learning_rate),
-                        "batch_size": int(unimol_batch_size),
-                        "early_stopping": int(unimol_early_stopping),
-                    }
-                    if cache_metadata_matches(metadata, expected_metadata):
-                        loaded_splits = load_prediction_splits(
-                            prediction_path,
-                            train_df["SMILES"].astype(str),
-                            test_df["SMILES"].astype(str),
-                            allow_reorder=True,
-                        )
-                        pred_train = loaded_splits["train"]["predicted"].to_numpy(dtype=float)
-                        pred_test = loaded_splits["test"]["predicted"].to_numpy(dtype=float)
-                        cached_model_loaded = True
-                        print(f"Loaded cached Uni-Mol predictions for {label} from {save_dir}", flush=True)
-                except Exception:
-                    cached_model_loaded = False
-
-            trainer_kwargs = dict(
-                task="regression",
-                data_type="molecule",
-                model_name=model_name,
-                epochs=int(unimol_epochs),
-                learning_rate=float(unimol_learning_rate),
-                batch_size=int(unimol_batch_size),
-                early_stopping=int(unimol_early_stopping),
-                metrics="mse",
-                split=str(unimol_internal_split),
-                save_path=str(save_dir),
-                num_workers=int(unimol_num_workers),
-                use_cuda=_unimol_use_cuda,
-            )
-            if not cached_model_loaded:
-                trainer = MolTrain(**trainer_kwargs)
-                trainer.fit(str(train_csv))
-
-                predictor = MolPredict(load_model=str(save_dir))
-                pred_train = np.asarray(predictor.predict(str(train_csv))).reshape(-1)
-                pred_test = np.asarray(predictor.predict(str(test_csv))).reshape(-1)
-            base_pred_train = np.asarray(pred_train, dtype=float).reshape(-1)
-            base_pred_test = np.asarray(pred_test, dtype=float).reshape(-1)
-            pred_train, pred_test, unimol_aux_fusion_payload = fit_auxiliary_fusion_head(
-                base_pred_train,
-                base_pred_test,
-                train_df["TARGET"].to_numpy(dtype=float),
-                train_df["SMILES"].astype(str).reset_index(drop=True),
-                test_df["SMILES"].astype(str).reset_index(drop=True),
-                random_seed=int(unimol_split_random_seed),
-                label=label,
-            )
-            if "unimol_aux_fusion_models" not in STATE:
-                STATE["unimol_aux_fusion_models"] = {}
-            if unimol_aux_fusion_payload is not None:
-                STATE["unimol_aux_fusion_models"][label] = unimol_aux_fusion_payload
-                print(f"{label} auxiliary fusion: enabled", flush=True)
-            else:
-                STATE["unimol_aux_fusion_models"].pop(label, None)
-
-            row = {"Model": label, "Execution mode": "GPU" if gpu_available else "CPU"}
-            row.update(summarize_regression(train_df["TARGET"].to_numpy(dtype=float), pred_train, "Train"))
-            row.update(summarize_regression(test_df["TARGET"].to_numpy(dtype=float), pred_test, "Test"))
-            unimol_rows.append(row)
-            unimol_predictions[label] = {
-                "train": pred_train,
-                "test": pred_test,
-                "train_df": train_df.copy(),
-                "test_df": test_df.copy(),
-            }
-            unimol_model_dirs[label] = str(save_dir)
-            write_cache_metadata(
-                metadata_path,
-                {
-                    "model_name": label,
-                    "workflow": "Uni-Mol",
-                    "dataset_label": current_dataset_cache_label(),
-                    "cache_run_name": Path(STATE["unimol_output_dir"]).name,
-                    "qsar_split_strategy": str(unimol_data_split_strategy),
-                    "qsar_test_fraction": float(unimol_test_fraction),
-                    "qsar_split_random_seed": int(unimol_split_random_seed),
-                    "model_dir": save_dir,
-                    "train_csv": train_csv,
-                    "test_csv": test_csv,
-                    "execution_mode": "GPU" if gpu_available else "CPU",
-                    "split": str(unimol_internal_split),
-                    "epochs": int(unimol_epochs),
-                    "learning_rate": float(unimol_learning_rate),
-                    "batch_size": int(unimol_batch_size),
-                    "early_stopping": int(unimol_early_stopping),
-                    "num_workers": int(unimol_num_workers),
-                    "model_size": None,
-                    "max_atoms": None,
-                    "use_amp": None,
-                    "prediction_path": prediction_path,
-                },
-            )
-            pd.DataFrame(
-                {
-                    "split": ["train"] * len(base_pred_train) + ["test"] * len(base_pred_test),
-                    "smiles": list(train_df["SMILES"].astype(str)) + list(test_df["SMILES"].astype(str)),
-                    "observed": list(train_df["TARGET"].to_numpy(dtype=float)) + list(test_df["TARGET"].to_numpy(dtype=float)),
-                    "predicted": list(base_pred_train) + list(base_pred_test),
-                }
-            ).to_csv(prediction_path, index=False)
-            unimol_model_cache_paths[label] = {
-                "model_dir": str(save_dir),
-                "prediction_path": str(prediction_path),
-                "metadata_path": str(metadata_path),
-            }
-        unimol_progress.close()
-
-        unimol_results = pd.DataFrame(unimol_rows).sort_values(["Test RMSE", "Test MAE"], ascending=True).reset_index(drop=True)
-        best_unimol_name = unimol_results.loc[0, "Model"]
-
-        STATE["unimol_results"] = unimol_results.copy()
-        STATE["unimol_predictions"] = unimol_predictions
-        STATE["unimol_model_dirs"] = unimol_model_dirs
-        STATE["unimol_model_cache_paths"] = unimol_model_cache_paths
-        STATE["best_unimol_model_name"] = best_unimol_name
-
-        current_unimol_results_for_deep = unimol_results.copy()
-        current_unimol_results_for_deep["Workflow"] = "Uni-Mol"
-        current_unimol_model_names = list(current_unimol_results_for_deep["Model"])
-        previous_deep_results = STATE.get("deep_results")
-        if isinstance(previous_deep_results, pd.DataFrame) and not previous_deep_results.empty:
-            retained_previous_results = previous_deep_results.loc[
-                ~previous_deep_results["Model"].astype(str).isin(current_unimol_model_names)
-            ].copy()
-            merged_deep_results = pd.concat([retained_previous_results, current_unimol_results_for_deep], ignore_index=True)
+        # Uni-Mol is GPU-only in this notebook: on CPU it takes hours even on small sets.
+        if not globals().get('unimol_gpu_available', lambda: False)():
+            print('6C skipped: no CUDA GPU detected. Uni-Mol V1 runs only on a GPU in this notebook.')
+            print('In Colab choose Runtime > Change runtime type > T4 GPU, then rerun step 0 and section 6. Locally, use a CUDA-enabled PyTorch build.')
         else:
-            merged_deep_results = current_unimol_results_for_deep.copy()
-        merged_deep_results = merged_deep_results.sort_values(["Test RMSE", "Test MAE"], ascending=True).reset_index(drop=True)
+            if "unimol_train_csv" not in STATE:
+                raise RuntimeError("Please prepare the Uni-Mol train/test files first in block 6B.")
 
-        merged_deep_predictions = dict(STATE.get("deep_predictions", {}))
-        for model_name in unimol_predictions:
-            merged_deep_predictions.pop(model_name, None)
-        for model_name, payload in unimol_predictions.items():
-            merged_deep_predictions[model_name] = {
-                "train": np.asarray(payload["train"], dtype=float),
-                "test": np.asarray(payload["test"], dtype=float),
-                "train_observed": payload["train_df"]["TARGET"].to_numpy(dtype=float),
-                "test_observed": payload["test_df"]["TARGET"].to_numpy(dtype=float),
-                "train_smiles": payload["train_df"]["SMILES"].astype(str).reset_index(drop=True),
-                "test_smiles": payload["test_df"]["SMILES"].astype(str).reset_index(drop=True),
-                "workflow": "Uni-Mol",
-            }
-
-        STATE["deep_results"] = merged_deep_results
-        STATE["deep_predictions"] = merged_deep_predictions
-        if len(merged_deep_results):
-            STATE["best_deep_model_name"] = merged_deep_results.loc[0, "Model"]
-
-        print(f"Best Uni-Mol model on the held-out test set: {best_unimol_name}")
-        print(f"Uni-Mol model cache directory: {STATE['unimol_output_dir']}")
-        display_interactive_table(unimol_results.round(4), rows=min(10, len(unimol_results)))
-        display_note(
-            "Uni-Mol uses 3D-aware pretrained representations, so it often takes substantially longer than the 2D fingerprint workflows above. "
-            "Judge it by the same held-out test metrics used for the other models."
-        )
-        """
-    ),
-    code(
-        """
-        # @title 6D. Train and evaluate Uni-Mol V2 { display-mode: "form" }
-        filter_unimolv2_incompatible = False # @param {type:"boolean"}
-        unimol_internal_split = "random" # @param ["random", "scaffold"]
-        unimol_epochs = 10 # @param {type:"slider", min:1, max:50, step:1}
-        unimol_learning_rate = 0.0001 # @param {type:"number"}
-        unimol_batch_size = 32 # @param [16, 32, 64, 128]
-        unimol_early_stopping = 5 # @param {type:"slider", min:2, max:15, step:1}
-        unimol_model_size = "84m" # @param ["84m", "164m", "310m"]
-        unimol_max_atoms = 96 # @param [64, 96, 128]
-        unimol_use_amp = True # @param {type:"boolean"}
-        unimol_num_workers = 0 # @param [0, 1, 2, 4, 8]
-
-        if "unimol_train_csv" not in STATE:
-            raise RuntimeError("Please prepare the Uni-Mol train/test files first in block 6B.")
-
-        ensure_shared_qsar_split(
-            default_strategy="random",
-            default_test_fraction=0.2,
-            default_random_seed=42,
-            source_label="6D Uni-Mol V2",
-        )
-        unimol_data_split_strategy = str(STATE.get("model_split_strategy", "random"))
-        unimol_test_fraction = float(STATE.get("model_test_fraction", 0.2))
-        unimol_split_random_seed = int(STATE.get("model_split_random_seed", 42))
-        prepare_unimol_files_from_current_split(
-            STATE["unimol_output_dir"],
-            train_subset_size=int(STATE.get("unimol_train_subset_size", 0)),
-            prepare_random_seed=int(STATE.get("unimol_prepare_random_seed", 42)),
-        )
-
-        gpu_available = bool(STATE.get("gpu_available", False))
-        unimol_num_workers = resolve_auto_worker_count(unimol_num_workers)
-        if gpu_available:
-            _gpu_inv = STATE.get("resource_config", {}).get("gpu_inventory", [])
-            _max_vram_gb = max((item.get("total_memory_gb", 0) for item in _gpu_inv), default=0)
-            # batch=32 cap: Uni-Mol V2 84m has 48 attention heads; attention+pair matrices
-            # at batch=64 consume ~27 GB (batch-proportional) which OOMs a 40 GB A100 when
-            # any background CUDA context is present. batch=32 halves that to ~16 GB.
-            _gpu_batch = 32 if _max_vram_gb >= 15 else unimol_batch_size
-            if _gpu_batch > unimol_batch_size:
-                print(f"[GPU-aware] Uni-Mol V2 batch_size {unimol_batch_size} → {_gpu_batch} ({_max_vram_gb:.1f} GB VRAM)")
-                unimol_batch_size = _gpu_batch
-            # 84m is the safe default for all VRAM sizes including A100-40GB.
-            # 164m has 24 transformer layers with O(n_atoms^2 * layers) pair matrices
-            # that push VRAM to ~28 GB at batch=64 — too close to the 40 GB limit.
-            # No auto-upgrade; keep whatever the user selected.
-        print("Uni-Mol V2 execution mode: GPU required")
-        print(f"Uni-Mol V2 data-loader workers: {unimol_num_workers}")
-
-        if not gpu_available:
-            display_note(
-                "Uni-Mol V2 skipped: GPU runtime not detected in this kernel. "
-                "Enable a GPU runtime to run block 6D."
+            ensure_shared_qsar_split(
+                default_strategy="random",
+                default_test_fraction=0.2,
+                default_random_seed=42,
+                source_label="6C Uni-Mol V1",
             )
-            print("Skipping Uni-Mol V2 (no GPU runtime detected).", flush=True)
-            STATE["unimol_v2_last_status"] = "skipped_no_gpu"
-        else:
-            display_note(
-                "Uni-Mol V2 is the heavier 3D model. It is GPU-only in this notebook and may take substantially longer "
-                "than Uni-Mol V1. The optional compatibility filter removes molecules that fail Uni-Mol V2 featurization."
+            unimol_data_split_strategy = str(STATE.get("model_split_strategy", "random"))
+            unimol_test_fraction = float(STATE.get("model_test_fraction", 0.2))
+            unimol_split_random_seed = int(STATE.get("model_split_random_seed", 42))
+            prepare_unimol_files_from_current_split(
+                STATE["unimol_output_dir"],
+                train_subset_size=int(STATE.get("unimol_train_subset_size", 0)),
+                prepare_random_seed=int(STATE.get("unimol_prepare_random_seed", 42)),
             )
+
+            gpu_available = bool(STATE.get("gpu_available", False))
+            unimol_num_workers = resolve_auto_worker_count(unimol_num_workers)
+            if gpu_available:
+                _gpu_inv = STATE.get("resource_config", {}).get("gpu_inventory", [])
+                _max_vram_gb = max((item.get("total_memory_gb", 0) for item in _gpu_inv), default=0)
+                _gpu_batch = 128 if _max_vram_gb >= 39 else 64 if _max_vram_gb >= 15 else unimol_batch_size
+                if _gpu_batch > unimol_batch_size:
+                    print(f"[GPU-aware] Uni-Mol V1 batch_size {unimol_batch_size} → {_gpu_batch} ({_max_vram_gb:.1f} GB VRAM)")
+                    unimol_batch_size = _gpu_batch
+            print(f"Uni-Mol execution mode: {'GPU acceleration' if gpu_available else 'CPU fallback'}")
+            print(f"Uni-Mol data-loader workers: {unimol_num_workers}")
+            if not gpu_available:
+                display_note(
+                    "No GPU detected. Uni-Mol will run in **CPU fallback** mode. "
+                    "This is supported for smaller demonstrations but may be much slower than GPU execution."
+                )
 
             try:
                 from unimol_tools import MolPredict, MolTrain
@@ -10441,212 +10419,164 @@ cells += [
                         f"then place them in: {weight_dir}"
                     ) from exc
 
-            ensure_unimol_weights(need_v1=False, need_v2=True, v2_size=str(unimol_model_size))
-
             train_csv = Path(STATE["unimol_train_csv"])
             test_csv = Path(STATE["unimol_test_csv"])
             train_df = pd.read_csv(train_csv)
             test_df = pd.read_csv(test_csv)
-
-            if filter_unimolv2_incompatible:
-                from unimol_tools.data.conformer import UniMolV2Feature
-
-                feature_extractor = UniMolV2Feature(model_name="unimolv2")
-
-                def is_unimol_v2_compatible(smiles):
-                    try:
-                        feature_extractor.single_process(smiles)
-                        return True
-                    except Exception:
-                        return False
-
-                train_mask = train_df["SMILES"].astype(str).apply(is_unimol_v2_compatible)
-                test_mask = test_df["SMILES"].astype(str).apply(is_unimol_v2_compatible)
-                removed_train = int((~train_mask).sum())
-                removed_test = int((~test_mask).sum())
-                train_df = train_df.loc[train_mask].reset_index(drop=True)
-                test_df = test_df.loc[test_mask].reset_index(drop=True)
-                filtered_train_csv = train_csv.parent / "train_unimolv2_filtered.csv"
-                filtered_test_csv = train_csv.parent / "test_unimolv2_filtered.csv"
-                train_df.to_csv(filtered_train_csv, index=False)
-                test_df.to_csv(filtered_test_csv, index=False)
-                train_csv = filtered_train_csv
-                test_csv = filtered_test_csv
-                print(f"UniMol V2 compatibility filter removed {removed_train} training molecules and {removed_test} test molecules.")
-
             ensure_global_split_signature(
                 train_df["SMILES"].astype(str),
                 test_df["SMILES"].astype(str),
-                source_label="6D Uni-Mol V2",
+                source_label="6C Uni-Mol V1",
             )
 
-            label = f"Uni-Mol V2 ({unimol_model_size})"
-            model_name = "unimolv2"
-            effective_unimol_use_amp = bool(unimol_use_amp and gpu_available)
+            selected_unimol_models = [("unimolv1", "Uni-Mol V1")]
+
+            ensure_unimol_weights(need_v1=True, need_v2=False)
 
             unimol_rows = []
             unimol_predictions = {}
             unimol_model_dirs = {}
             unimol_model_cache_paths = {}
 
-            save_dir = Path(STATE["unimol_output_dir"]) / label.lower().replace(" ", "_").replace("(", "").replace(")", "")
-            metadata_path = save_dir / "cache_metadata.json"
-            prediction_path = save_dir / "cached_predictions.csv"
-            cached_model_loaded = False
-            if reuse_unimol_cached_models and metadata_path.exists() and prediction_path.exists():
-                try:
-                    metadata = read_cache_metadata(metadata_path)
-                    expected_metadata = {
+            unimol_progress = tqdm(selected_unimol_models, desc="Uni-Mol models", leave=False)
+            for model_name, label in unimol_progress:
+                unimol_progress.set_postfix_str(label)
+                save_dir = Path(STATE["unimol_output_dir"]) / label.lower().replace(" ", "_").replace("(", "").replace(")", "")
+                metadata_path = save_dir / "cache_metadata.json"
+                prediction_path = save_dir / "cached_predictions.csv"
+                cached_model_loaded = False
+                if reuse_unimol_cached_models and metadata_path.exists() and prediction_path.exists():
+                    try:
+                        metadata = read_cache_metadata(metadata_path)
+                        expected_metadata = {
+                            "model_name": label,
+                            "workflow": "Uni-Mol",
+                            "dataset_label": current_dataset_cache_label(),
+                            "qsar_split_strategy": str(unimol_data_split_strategy),
+                            "qsar_test_fraction": float(unimol_test_fraction),
+                            "qsar_split_random_seed": int(unimol_split_random_seed),
+                            "split": str(unimol_internal_split),
+                            "epochs": int(unimol_epochs),
+                            "learning_rate": float(unimol_learning_rate),
+                            "batch_size": int(unimol_batch_size),
+                            "early_stopping": int(unimol_early_stopping),
+                        }
+                        if cache_metadata_matches(metadata, expected_metadata):
+                            loaded_splits = load_prediction_splits(
+                                prediction_path,
+                                train_df["SMILES"].astype(str),
+                                test_df["SMILES"].astype(str),
+                                allow_reorder=True,
+                            )
+                            pred_train = loaded_splits["train"]["predicted"].to_numpy(dtype=float)
+                            pred_test = loaded_splits["test"]["predicted"].to_numpy(dtype=float)
+                            cached_model_loaded = True
+                            print(f"Loaded cached Uni-Mol predictions for {label} from {save_dir}", flush=True)
+                    except Exception:
+                        cached_model_loaded = False
+
+                trainer_kwargs = dict(
+                    task="regression",
+                    data_type="molecule",
+                    model_name=model_name,
+                    epochs=int(unimol_epochs),
+                    learning_rate=float(unimol_learning_rate),
+                    batch_size=int(unimol_batch_size),
+                    early_stopping=int(unimol_early_stopping),
+                    metrics="mse",
+                    split=str(unimol_internal_split),
+                    save_path=str(save_dir),
+                    num_workers=int(unimol_num_workers),
+                    use_cuda=_unimol_use_cuda,
+                )
+                if not cached_model_loaded:
+                    trainer = MolTrain(**trainer_kwargs)
+                    trainer.fit(str(train_csv))
+
+                    predictor = MolPredict(load_model=str(save_dir))
+                    pred_train = np.asarray(predictor.predict(str(train_csv))).reshape(-1)
+                    pred_test = np.asarray(predictor.predict(str(test_csv))).reshape(-1)
+                base_pred_train = np.asarray(pred_train, dtype=float).reshape(-1)
+                base_pred_test = np.asarray(pred_test, dtype=float).reshape(-1)
+                pred_train, pred_test, unimol_aux_fusion_payload = fit_auxiliary_fusion_head(
+                    base_pred_train,
+                    base_pred_test,
+                    train_df["TARGET"].to_numpy(dtype=float),
+                    train_df["SMILES"].astype(str).reset_index(drop=True),
+                    test_df["SMILES"].astype(str).reset_index(drop=True),
+                    random_seed=int(unimol_split_random_seed),
+                    label=label,
+                )
+                if "unimol_aux_fusion_models" not in STATE:
+                    STATE["unimol_aux_fusion_models"] = {}
+                if unimol_aux_fusion_payload is not None:
+                    STATE["unimol_aux_fusion_models"][label] = unimol_aux_fusion_payload
+                    print(f"{label} auxiliary fusion: enabled", flush=True)
+                else:
+                    STATE["unimol_aux_fusion_models"].pop(label, None)
+
+                row = {"Model": label, "Execution mode": "GPU" if gpu_available else "CPU"}
+                row.update(summarize_regression(train_df["TARGET"].to_numpy(dtype=float), pred_train, "Train"))
+                row.update(summarize_regression(test_df["TARGET"].to_numpy(dtype=float), pred_test, "Test"))
+                unimol_rows.append(row)
+                unimol_predictions[label] = {
+                    "train": pred_train,
+                    "test": pred_test,
+                    "train_df": train_df.copy(),
+                    "test_df": test_df.copy(),
+                }
+                unimol_model_dirs[label] = str(save_dir)
+                write_cache_metadata(
+                    metadata_path,
+                    {
                         "model_name": label,
                         "workflow": "Uni-Mol",
                         "dataset_label": current_dataset_cache_label(),
+                        "cache_run_name": Path(STATE["unimol_output_dir"]).name,
                         "qsar_split_strategy": str(unimol_data_split_strategy),
                         "qsar_test_fraction": float(unimol_test_fraction),
                         "qsar_split_random_seed": int(unimol_split_random_seed),
+                        "model_dir": save_dir,
+                        "train_csv": train_csv,
+                        "test_csv": test_csv,
+                        "execution_mode": "GPU" if gpu_available else "CPU",
                         "split": str(unimol_internal_split),
                         "epochs": int(unimol_epochs),
                         "learning_rate": float(unimol_learning_rate),
                         "batch_size": int(unimol_batch_size),
                         "early_stopping": int(unimol_early_stopping),
-                        "model_size": str(unimol_model_size),
-                        "max_atoms": int(unimol_max_atoms),
-                        "use_amp": bool(effective_unimol_use_amp),
+                        "num_workers": int(unimol_num_workers),
+                        "model_size": None,
+                        "max_atoms": None,
+                        "use_amp": None,
+                        "prediction_path": prediction_path,
+                    },
+                )
+                pd.DataFrame(
+                    {
+                        "split": ["train"] * len(base_pred_train) + ["test"] * len(base_pred_test),
+                        "smiles": list(train_df["SMILES"].astype(str)) + list(test_df["SMILES"].astype(str)),
+                        "observed": list(train_df["TARGET"].to_numpy(dtype=float)) + list(test_df["TARGET"].to_numpy(dtype=float)),
+                        "predicted": list(base_pred_train) + list(base_pred_test),
                     }
-                    if cache_metadata_matches(metadata, expected_metadata):
-                        loaded_splits = load_prediction_splits(
-                            prediction_path,
-                            train_df["SMILES"].astype(str),
-                            test_df["SMILES"].astype(str),
-                            allow_reorder=True,
-                        )
-                        pred_train = loaded_splits["train"]["predicted"].to_numpy(dtype=float)
-                        pred_test = loaded_splits["test"]["predicted"].to_numpy(dtype=float)
-                        cached_model_loaded = True
-                        print(f"Loaded cached Uni-Mol predictions for {label} from {save_dir}", flush=True)
-                except Exception:
-                    cached_model_loaded = False
-
-            trainer_kwargs = dict(
-                task="regression",
-                data_type="molecule",
-                model_name=model_name,
-                epochs=int(unimol_epochs),
-                learning_rate=float(unimol_learning_rate),
-                batch_size=int(unimol_batch_size),
-                early_stopping=int(unimol_early_stopping),
-                metrics="mse",
-                split=str(unimol_internal_split),
-                save_path=str(save_dir),
-                num_workers=int(unimol_num_workers),
-                use_cuda=_unimol_use_cuda,
-                model_size=str(unimol_model_size),
-                max_atoms=int(unimol_max_atoms),
-                use_amp=effective_unimol_use_amp,
-            )
-
-            if not cached_model_loaded:
-                trainer = MolTrain(**trainer_kwargs)
-                trainer.fit(str(train_csv))
-
-                predictor = MolPredict(load_model=str(save_dir))
-                pred_train = np.asarray(predictor.predict(str(train_csv))).reshape(-1)
-                pred_test = np.asarray(predictor.predict(str(test_csv))).reshape(-1)
-            base_pred_train = np.asarray(pred_train, dtype=float).reshape(-1)
-            base_pred_test = np.asarray(pred_test, dtype=float).reshape(-1)
-            pred_train, pred_test, unimol_aux_fusion_payload = fit_auxiliary_fusion_head(
-                base_pred_train,
-                base_pred_test,
-                train_df["TARGET"].to_numpy(dtype=float),
-                train_df["SMILES"].astype(str).reset_index(drop=True),
-                test_df["SMILES"].astype(str).reset_index(drop=True),
-                random_seed=int(unimol_split_random_seed),
-                label=label,
-            )
-            if "unimol_aux_fusion_models" not in STATE:
-                STATE["unimol_aux_fusion_models"] = {}
-            if unimol_aux_fusion_payload is not None:
-                STATE["unimol_aux_fusion_models"][label] = unimol_aux_fusion_payload
-                print(f"{label} auxiliary fusion: enabled", flush=True)
-            else:
-                STATE["unimol_aux_fusion_models"].pop(label, None)
-
-            row = {"Model": label, "Execution mode": "GPU"}
-            row.update(summarize_regression(train_df["TARGET"].to_numpy(dtype=float), pred_train, "Train"))
-            row.update(summarize_regression(test_df["TARGET"].to_numpy(dtype=float), pred_test, "Test"))
-            unimol_rows.append(row)
-            unimol_predictions[label] = {
-                "train": pred_train,
-                "test": pred_test,
-                "train_df": train_df.copy(),
-                "test_df": test_df.copy(),
-            }
-            unimol_model_dirs[label] = str(save_dir)
-            write_cache_metadata(
-                metadata_path,
-                {
-                    "model_name": label,
-                    "workflow": "Uni-Mol",
-                    "dataset_label": current_dataset_cache_label(),
-                    "cache_run_name": Path(STATE["unimol_output_dir"]).name,
-                    "qsar_split_strategy": str(unimol_data_split_strategy),
-                    "qsar_test_fraction": float(unimol_test_fraction),
-                    "qsar_split_random_seed": int(unimol_split_random_seed),
-                    "model_dir": save_dir,
-                    "train_csv": train_csv,
-                    "test_csv": test_csv,
-                    "execution_mode": "GPU",
-                    "split": str(unimol_internal_split),
-                    "epochs": int(unimol_epochs),
-                    "learning_rate": float(unimol_learning_rate),
-                    "batch_size": int(unimol_batch_size),
-                    "early_stopping": int(unimol_early_stopping),
-                    "num_workers": int(unimol_num_workers),
-                    "model_size": str(unimol_model_size),
-                    "max_atoms": int(unimol_max_atoms),
-                    "use_amp": bool(effective_unimol_use_amp),
-                    "prediction_path": prediction_path,
-                },
-            )
-            pd.DataFrame(
-                {
-                    "split": ["train"] * len(base_pred_train) + ["test"] * len(base_pred_test),
-                    "smiles": list(train_df["SMILES"].astype(str)) + list(test_df["SMILES"].astype(str)),
-                    "observed": list(train_df["TARGET"].to_numpy(dtype=float)) + list(test_df["TARGET"].to_numpy(dtype=float)),
-                    "predicted": list(base_pred_train) + list(base_pred_test),
+                ).to_csv(prediction_path, index=False)
+                unimol_model_cache_paths[label] = {
+                    "model_dir": str(save_dir),
+                    "prediction_path": str(prediction_path),
+                    "metadata_path": str(metadata_path),
                 }
-            ).to_csv(prediction_path, index=False)
-            unimol_model_cache_paths[label] = {
-                "model_dir": str(save_dir),
-                "prediction_path": str(prediction_path),
-                "metadata_path": str(metadata_path),
-            }
+            unimol_progress.close()
 
-            new_unimol_results = pd.DataFrame(unimol_rows).reset_index(drop=True)
-            previous_unimol_results = STATE.get("unimol_results")
-            if isinstance(previous_unimol_results, pd.DataFrame) and not previous_unimol_results.empty:
-                retained_unimol_results = previous_unimol_results.loc[
-                    ~previous_unimol_results["Model"].astype(str).isin(new_unimol_results["Model"].astype(str))
-                ].copy()
-                unimol_results = pd.concat([retained_unimol_results, new_unimol_results], ignore_index=True)
-            else:
-                unimol_results = new_unimol_results.copy()
-            unimol_results = unimol_results.sort_values(["Test RMSE", "Test MAE"], ascending=True).reset_index(drop=True)
+            unimol_results = pd.DataFrame(unimol_rows).sort_values(["Test RMSE", "Test MAE"], ascending=True).reset_index(drop=True)
             best_unimol_name = unimol_results.loc[0, "Model"]
 
-            merged_unimol_predictions = dict(STATE.get("unimol_predictions", {}))
-            merged_unimol_predictions.update(unimol_predictions)
-            merged_unimol_model_dirs = dict(STATE.get("unimol_model_dirs", {}))
-            merged_unimol_model_dirs.update(unimol_model_dirs)
-            merged_unimol_model_cache_paths = dict(STATE.get("unimol_model_cache_paths", {}))
-            merged_unimol_model_cache_paths.update(unimol_model_cache_paths)
-
             STATE["unimol_results"] = unimol_results.copy()
-            STATE["unimol_predictions"] = merged_unimol_predictions
-            STATE["unimol_model_dirs"] = merged_unimol_model_dirs
-            STATE["unimol_model_cache_paths"] = merged_unimol_model_cache_paths
+            STATE["unimol_predictions"] = unimol_predictions
+            STATE["unimol_model_dirs"] = unimol_model_dirs
+            STATE["unimol_model_cache_paths"] = unimol_model_cache_paths
             STATE["best_unimol_model_name"] = best_unimol_name
 
-            current_unimol_results_for_deep = new_unimol_results.copy()
+            current_unimol_results_for_deep = unimol_results.copy()
             current_unimol_results_for_deep["Workflow"] = "Uni-Mol"
             current_unimol_model_names = list(current_unimol_results_for_deep["Model"])
             previous_deep_results = STATE.get("deep_results")
@@ -10660,14 +10590,16 @@ cells += [
             merged_deep_results = merged_deep_results.sort_values(["Test RMSE", "Test MAE"], ascending=True).reset_index(drop=True)
 
             merged_deep_predictions = dict(STATE.get("deep_predictions", {}))
-            for deep_model_name in unimol_predictions:
-                merged_deep_predictions[deep_model_name] = {
-                    "train": np.asarray(unimol_predictions[deep_model_name]["train"], dtype=float),
-                    "test": np.asarray(unimol_predictions[deep_model_name]["test"], dtype=float),
-                    "train_observed": unimol_predictions[deep_model_name]["train_df"]["TARGET"].to_numpy(dtype=float),
-                    "test_observed": unimol_predictions[deep_model_name]["test_df"]["TARGET"].to_numpy(dtype=float),
-                    "train_smiles": unimol_predictions[deep_model_name]["train_df"]["SMILES"].astype(str).reset_index(drop=True),
-                    "test_smiles": unimol_predictions[deep_model_name]["test_df"]["SMILES"].astype(str).reset_index(drop=True),
+            for model_name in unimol_predictions:
+                merged_deep_predictions.pop(model_name, None)
+            for model_name, payload in unimol_predictions.items():
+                merged_deep_predictions[model_name] = {
+                    "train": np.asarray(payload["train"], dtype=float),
+                    "test": np.asarray(payload["test"], dtype=float),
+                    "train_observed": payload["train_df"]["TARGET"].to_numpy(dtype=float),
+                    "test_observed": payload["test_df"]["TARGET"].to_numpy(dtype=float),
+                    "train_smiles": payload["train_df"]["SMILES"].astype(str).reset_index(drop=True),
+                    "test_smiles": payload["test_df"]["SMILES"].astype(str).reset_index(drop=True),
                     "workflow": "Uni-Mol",
                 }
 
@@ -10679,6 +10611,398 @@ cells += [
             print(f"Best Uni-Mol model on the held-out test set: {best_unimol_name}")
             print(f"Uni-Mol model cache directory: {STATE['unimol_output_dir']}")
             display_interactive_table(unimol_results.round(4), rows=min(10, len(unimol_results)))
+            display_note(
+                "Uni-Mol uses 3D-aware pretrained representations, so it often takes substantially longer than the 2D fingerprint workflows above. "
+                "Judge it by the same held-out test metrics used for the other models."
+            )
+        """
+    ),
+    code(
+        """
+        # @title 6D. Train and evaluate Uni-Mol V2 { display-mode: "form" }
+        filter_unimolv2_incompatible = False # @param {type:"boolean"}
+        unimol_internal_split = "random" # @param ["random", "scaffold"]
+        unimol_epochs = 10 # @param {type:"slider", min:1, max:50, step:1}
+        unimol_learning_rate = 0.0001 # @param {type:"number"}
+        unimol_batch_size = 32 # @param [16, 32, 64, 128]
+        unimol_early_stopping = 5 # @param {type:"slider", min:2, max:15, step:1}
+        unimol_model_size = "84m" # @param ["84m", "164m", "310m"]
+        unimol_max_atoms = 96 # @param [64, 96, 128]
+        unimol_use_amp = True # @param {type:"boolean"}
+        unimol_num_workers = 0 # @param [0, 1, 2, 4, 8]
+
+        # Uni-Mol is GPU-only in this notebook: on CPU it takes hours even on small sets.
+        if not globals().get('unimol_gpu_available', lambda: False)():
+            print('6D skipped: no CUDA GPU detected. Uni-Mol V2 runs only on a GPU in this notebook.')
+            print('In Colab choose Runtime > Change runtime type > T4 GPU, then rerun step 0 and section 6. Locally, use a CUDA-enabled PyTorch build.')
+        else:
+            if "unimol_train_csv" not in STATE:
+                raise RuntimeError("Please prepare the Uni-Mol train/test files first in block 6B.")
+
+            ensure_shared_qsar_split(
+                default_strategy="random",
+                default_test_fraction=0.2,
+                default_random_seed=42,
+                source_label="6D Uni-Mol V2",
+            )
+            unimol_data_split_strategy = str(STATE.get("model_split_strategy", "random"))
+            unimol_test_fraction = float(STATE.get("model_test_fraction", 0.2))
+            unimol_split_random_seed = int(STATE.get("model_split_random_seed", 42))
+            prepare_unimol_files_from_current_split(
+                STATE["unimol_output_dir"],
+                train_subset_size=int(STATE.get("unimol_train_subset_size", 0)),
+                prepare_random_seed=int(STATE.get("unimol_prepare_random_seed", 42)),
+            )
+
+            gpu_available = bool(STATE.get("gpu_available", False))
+            unimol_num_workers = resolve_auto_worker_count(unimol_num_workers)
+            if gpu_available:
+                _gpu_inv = STATE.get("resource_config", {}).get("gpu_inventory", [])
+                _max_vram_gb = max((item.get("total_memory_gb", 0) for item in _gpu_inv), default=0)
+                # batch=32 cap: Uni-Mol V2 84m has 48 attention heads; attention+pair matrices
+                # at batch=64 consume ~27 GB (batch-proportional) which OOMs a 40 GB A100 when
+                # any background CUDA context is present. batch=32 halves that to ~16 GB.
+                _gpu_batch = 32 if _max_vram_gb >= 15 else unimol_batch_size
+                if _gpu_batch > unimol_batch_size:
+                    print(f"[GPU-aware] Uni-Mol V2 batch_size {unimol_batch_size} → {_gpu_batch} ({_max_vram_gb:.1f} GB VRAM)")
+                    unimol_batch_size = _gpu_batch
+                # 84m is the safe default for all VRAM sizes including A100-40GB.
+                # 164m has 24 transformer layers with O(n_atoms^2 * layers) pair matrices
+                # that push VRAM to ~28 GB at batch=64 — too close to the 40 GB limit.
+                # No auto-upgrade; keep whatever the user selected.
+            print("Uni-Mol V2 execution mode: GPU required")
+            print(f"Uni-Mol V2 data-loader workers: {unimol_num_workers}")
+
+            if not gpu_available:
+                display_note(
+                    "Uni-Mol V2 skipped: GPU runtime not detected in this kernel. "
+                    "Enable a GPU runtime to run block 6D."
+                )
+                print("Skipping Uni-Mol V2 (no GPU runtime detected).", flush=True)
+                STATE["unimol_v2_last_status"] = "skipped_no_gpu"
+            else:
+                display_note(
+                    "Uni-Mol V2 is the heavier 3D model. It is GPU-only in this notebook and may take substantially longer "
+                    "than Uni-Mol V1. The optional compatibility filter removes molecules that fail Uni-Mol V2 featurization."
+                )
+
+                try:
+                    from unimol_tools import MolPredict, MolTrain
+                    from unimol_tools.config import MODEL_CONFIG_V2, MODEL_CONFIG
+                    from unimol_tools.weights import get_weight_dir, weight_download, weight_download_v2
+                except Exception as exc:
+                    raise RuntimeError(
+                        "Uni-Mol packages are not available in this environment. Run the Uni-Mol install cell first."
+                    ) from exc
+
+                _unimol_use_cuda = False
+                if torch is not None and torch.cuda.is_available():
+                    try:
+                        import torch.nn as _nn
+                        _m = _nn.Linear(4, 4).cuda()
+                        del _m
+                        try:
+                            torch.zeros(4).pin_memory()
+                        except Exception:
+                            try:
+                                import unimol_tools.tasks.trainer as _umt_t
+                                from torch.utils.data import DataLoader as _TDL
+                                if not getattr(_umt_t, "_pin_memory_patched", False):
+                                    _umt_t.TorchDataLoader = lambda *a, **kw: _TDL(*a, **{**kw, "pin_memory": False})
+                                    _umt_t._pin_memory_patched = True
+                            except Exception:
+                                pass
+                        _unimol_use_cuda = True
+                    except Exception:
+                        print("[Uni-Mol] CUDA model placement failed on this GPU; using CPU.", flush=True)
+
+                def ensure_unimol_weights(need_v1=False, need_v2=False, v2_size="84m"):
+                    weight_dir = Path(get_weight_dir())
+                    weight_dir.mkdir(parents=True, exist_ok=True)
+                    print(f"Uni-Mol weight directory: {weight_dir}", flush=True)
+                    try:
+                        if need_v1:
+                            required_v1 = [
+                                MODEL_CONFIG["weight"]["molecule_all_h"],
+                                MODEL_CONFIG["dict"]["molecule_all_h"],
+                            ]
+                            for artifact in required_v1:
+                                artifact_path = weight_dir / artifact
+                                if not artifact_path.exists():
+                                    print(f"[Uni-Mol] Downloading {artifact}...", flush=True)
+                                    weight_download(artifact, str(weight_dir))
+                        if need_v2:
+                            artifact = MODEL_CONFIG_V2["weight"][str(v2_size)]
+                            artifact_path = weight_dir / artifact
+                            if not artifact_path.exists():
+                                print(f"[Uni-Mol] Downloading {artifact}...", flush=True)
+                                weight_download_v2(artifact, str(weight_dir))
+                    except Exception as exc:
+                        raise RuntimeError(
+                            "Uni-Mol pretrained weights could not be downloaded automatically. "
+                            "Check internet access and `huggingface_hub`, or download the weights manually, "
+                            f"then place them in: {weight_dir}"
+                        ) from exc
+
+                ensure_unimol_weights(need_v1=False, need_v2=True, v2_size=str(unimol_model_size))
+
+                train_csv = Path(STATE["unimol_train_csv"])
+                test_csv = Path(STATE["unimol_test_csv"])
+                train_df = pd.read_csv(train_csv)
+                test_df = pd.read_csv(test_csv)
+
+                if filter_unimolv2_incompatible:
+                    from unimol_tools.data.conformer import UniMolV2Feature
+
+                    feature_extractor = UniMolV2Feature(model_name="unimolv2")
+
+                    def is_unimol_v2_compatible(smiles):
+                        try:
+                            feature_extractor.single_process(smiles)
+                            return True
+                        except Exception:
+                            return False
+
+                    train_mask = train_df["SMILES"].astype(str).apply(is_unimol_v2_compatible)
+                    test_mask = test_df["SMILES"].astype(str).apply(is_unimol_v2_compatible)
+                    removed_train = int((~train_mask).sum())
+                    removed_test = int((~test_mask).sum())
+                    train_df = train_df.loc[train_mask].reset_index(drop=True)
+                    test_df = test_df.loc[test_mask].reset_index(drop=True)
+                    filtered_train_csv = train_csv.parent / "train_unimolv2_filtered.csv"
+                    filtered_test_csv = train_csv.parent / "test_unimolv2_filtered.csv"
+                    train_df.to_csv(filtered_train_csv, index=False)
+                    test_df.to_csv(filtered_test_csv, index=False)
+                    train_csv = filtered_train_csv
+                    test_csv = filtered_test_csv
+                    print(f"UniMol V2 compatibility filter removed {removed_train} training molecules and {removed_test} test molecules.")
+
+                ensure_global_split_signature(
+                    train_df["SMILES"].astype(str),
+                    test_df["SMILES"].astype(str),
+                    source_label="6D Uni-Mol V2",
+                )
+
+                label = f"Uni-Mol V2 ({unimol_model_size})"
+                model_name = "unimolv2"
+                effective_unimol_use_amp = bool(unimol_use_amp and gpu_available)
+
+                unimol_rows = []
+                unimol_predictions = {}
+                unimol_model_dirs = {}
+                unimol_model_cache_paths = {}
+
+                save_dir = Path(STATE["unimol_output_dir"]) / label.lower().replace(" ", "_").replace("(", "").replace(")", "")
+                metadata_path = save_dir / "cache_metadata.json"
+                prediction_path = save_dir / "cached_predictions.csv"
+                cached_model_loaded = False
+                if reuse_unimol_cached_models and metadata_path.exists() and prediction_path.exists():
+                    try:
+                        metadata = read_cache_metadata(metadata_path)
+                        expected_metadata = {
+                            "model_name": label,
+                            "workflow": "Uni-Mol",
+                            "dataset_label": current_dataset_cache_label(),
+                            "qsar_split_strategy": str(unimol_data_split_strategy),
+                            "qsar_test_fraction": float(unimol_test_fraction),
+                            "qsar_split_random_seed": int(unimol_split_random_seed),
+                            "split": str(unimol_internal_split),
+                            "epochs": int(unimol_epochs),
+                            "learning_rate": float(unimol_learning_rate),
+                            "batch_size": int(unimol_batch_size),
+                            "early_stopping": int(unimol_early_stopping),
+                            "model_size": str(unimol_model_size),
+                            "max_atoms": int(unimol_max_atoms),
+                            "use_amp": bool(effective_unimol_use_amp),
+                        }
+                        if cache_metadata_matches(metadata, expected_metadata):
+                            loaded_splits = load_prediction_splits(
+                                prediction_path,
+                                train_df["SMILES"].astype(str),
+                                test_df["SMILES"].astype(str),
+                                allow_reorder=True,
+                            )
+                            pred_train = loaded_splits["train"]["predicted"].to_numpy(dtype=float)
+                            pred_test = loaded_splits["test"]["predicted"].to_numpy(dtype=float)
+                            cached_model_loaded = True
+                            print(f"Loaded cached Uni-Mol predictions for {label} from {save_dir}", flush=True)
+                    except Exception:
+                        cached_model_loaded = False
+
+                trainer_kwargs = dict(
+                    task="regression",
+                    data_type="molecule",
+                    model_name=model_name,
+                    epochs=int(unimol_epochs),
+                    learning_rate=float(unimol_learning_rate),
+                    batch_size=int(unimol_batch_size),
+                    early_stopping=int(unimol_early_stopping),
+                    metrics="mse",
+                    split=str(unimol_internal_split),
+                    save_path=str(save_dir),
+                    num_workers=int(unimol_num_workers),
+                    use_cuda=_unimol_use_cuda,
+                    model_size=str(unimol_model_size),
+                    max_atoms=int(unimol_max_atoms),
+                    use_amp=effective_unimol_use_amp,
+                )
+
+                if not cached_model_loaded:
+                    trainer = MolTrain(**trainer_kwargs)
+                    trainer.fit(str(train_csv))
+
+                    predictor = MolPredict(load_model=str(save_dir))
+                    pred_train = np.asarray(predictor.predict(str(train_csv))).reshape(-1)
+                    pred_test = np.asarray(predictor.predict(str(test_csv))).reshape(-1)
+                base_pred_train = np.asarray(pred_train, dtype=float).reshape(-1)
+                base_pred_test = np.asarray(pred_test, dtype=float).reshape(-1)
+                pred_train, pred_test, unimol_aux_fusion_payload = fit_auxiliary_fusion_head(
+                    base_pred_train,
+                    base_pred_test,
+                    train_df["TARGET"].to_numpy(dtype=float),
+                    train_df["SMILES"].astype(str).reset_index(drop=True),
+                    test_df["SMILES"].astype(str).reset_index(drop=True),
+                    random_seed=int(unimol_split_random_seed),
+                    label=label,
+                )
+                if "unimol_aux_fusion_models" not in STATE:
+                    STATE["unimol_aux_fusion_models"] = {}
+                if unimol_aux_fusion_payload is not None:
+                    STATE["unimol_aux_fusion_models"][label] = unimol_aux_fusion_payload
+                    print(f"{label} auxiliary fusion: enabled", flush=True)
+                else:
+                    STATE["unimol_aux_fusion_models"].pop(label, None)
+
+                row = {"Model": label, "Execution mode": "GPU"}
+                row.update(summarize_regression(train_df["TARGET"].to_numpy(dtype=float), pred_train, "Train"))
+                row.update(summarize_regression(test_df["TARGET"].to_numpy(dtype=float), pred_test, "Test"))
+                unimol_rows.append(row)
+                unimol_predictions[label] = {
+                    "train": pred_train,
+                    "test": pred_test,
+                    "train_df": train_df.copy(),
+                    "test_df": test_df.copy(),
+                }
+                unimol_model_dirs[label] = str(save_dir)
+                write_cache_metadata(
+                    metadata_path,
+                    {
+                        "model_name": label,
+                        "workflow": "Uni-Mol",
+                        "dataset_label": current_dataset_cache_label(),
+                        "cache_run_name": Path(STATE["unimol_output_dir"]).name,
+                        "qsar_split_strategy": str(unimol_data_split_strategy),
+                        "qsar_test_fraction": float(unimol_test_fraction),
+                        "qsar_split_random_seed": int(unimol_split_random_seed),
+                        "model_dir": save_dir,
+                        "train_csv": train_csv,
+                        "test_csv": test_csv,
+                        "execution_mode": "GPU",
+                        "split": str(unimol_internal_split),
+                        "epochs": int(unimol_epochs),
+                        "learning_rate": float(unimol_learning_rate),
+                        "batch_size": int(unimol_batch_size),
+                        "early_stopping": int(unimol_early_stopping),
+                        "num_workers": int(unimol_num_workers),
+                        "model_size": str(unimol_model_size),
+                        "max_atoms": int(unimol_max_atoms),
+                        "use_amp": bool(effective_unimol_use_amp),
+                        "prediction_path": prediction_path,
+                    },
+                )
+                pd.DataFrame(
+                    {
+                        "split": ["train"] * len(base_pred_train) + ["test"] * len(base_pred_test),
+                        "smiles": list(train_df["SMILES"].astype(str)) + list(test_df["SMILES"].astype(str)),
+                        "observed": list(train_df["TARGET"].to_numpy(dtype=float)) + list(test_df["TARGET"].to_numpy(dtype=float)),
+                        "predicted": list(base_pred_train) + list(base_pred_test),
+                    }
+                ).to_csv(prediction_path, index=False)
+                unimol_model_cache_paths[label] = {
+                    "model_dir": str(save_dir),
+                    "prediction_path": str(prediction_path),
+                    "metadata_path": str(metadata_path),
+                }
+
+                new_unimol_results = pd.DataFrame(unimol_rows).reset_index(drop=True)
+                previous_unimol_results = STATE.get("unimol_results")
+                if isinstance(previous_unimol_results, pd.DataFrame) and not previous_unimol_results.empty:
+                    retained_unimol_results = previous_unimol_results.loc[
+                        ~previous_unimol_results["Model"].astype(str).isin(new_unimol_results["Model"].astype(str))
+                    ].copy()
+                    unimol_results = pd.concat([retained_unimol_results, new_unimol_results], ignore_index=True)
+                else:
+                    unimol_results = new_unimol_results.copy()
+                unimol_results = unimol_results.sort_values(["Test RMSE", "Test MAE"], ascending=True).reset_index(drop=True)
+                best_unimol_name = unimol_results.loc[0, "Model"]
+
+                merged_unimol_predictions = dict(STATE.get("unimol_predictions", {}))
+                merged_unimol_predictions.update(unimol_predictions)
+                merged_unimol_model_dirs = dict(STATE.get("unimol_model_dirs", {}))
+                merged_unimol_model_dirs.update(unimol_model_dirs)
+                merged_unimol_model_cache_paths = dict(STATE.get("unimol_model_cache_paths", {}))
+                merged_unimol_model_cache_paths.update(unimol_model_cache_paths)
+
+                STATE["unimol_results"] = unimol_results.copy()
+                STATE["unimol_predictions"] = merged_unimol_predictions
+                STATE["unimol_model_dirs"] = merged_unimol_model_dirs
+                STATE["unimol_model_cache_paths"] = merged_unimol_model_cache_paths
+                STATE["best_unimol_model_name"] = best_unimol_name
+
+                current_unimol_results_for_deep = new_unimol_results.copy()
+                current_unimol_results_for_deep["Workflow"] = "Uni-Mol"
+                current_unimol_model_names = list(current_unimol_results_for_deep["Model"])
+                previous_deep_results = STATE.get("deep_results")
+                if isinstance(previous_deep_results, pd.DataFrame) and not previous_deep_results.empty:
+                    retained_previous_results = previous_deep_results.loc[
+                        ~previous_deep_results["Model"].astype(str).isin(current_unimol_model_names)
+                    ].copy()
+                    merged_deep_results = pd.concat([retained_previous_results, current_unimol_results_for_deep], ignore_index=True)
+                else:
+                    merged_deep_results = current_unimol_results_for_deep.copy()
+                merged_deep_results = merged_deep_results.sort_values(["Test RMSE", "Test MAE"], ascending=True).reset_index(drop=True)
+
+                merged_deep_predictions = dict(STATE.get("deep_predictions", {}))
+                for deep_model_name in unimol_predictions:
+                    merged_deep_predictions[deep_model_name] = {
+                        "train": np.asarray(unimol_predictions[deep_model_name]["train"], dtype=float),
+                        "test": np.asarray(unimol_predictions[deep_model_name]["test"], dtype=float),
+                        "train_observed": unimol_predictions[deep_model_name]["train_df"]["TARGET"].to_numpy(dtype=float),
+                        "test_observed": unimol_predictions[deep_model_name]["test_df"]["TARGET"].to_numpy(dtype=float),
+                        "train_smiles": unimol_predictions[deep_model_name]["train_df"]["SMILES"].astype(str).reset_index(drop=True),
+                        "test_smiles": unimol_predictions[deep_model_name]["test_df"]["SMILES"].astype(str).reset_index(drop=True),
+                        "workflow": "Uni-Mol",
+                    }
+
+                STATE["deep_results"] = merged_deep_results
+                STATE["deep_predictions"] = merged_deep_predictions
+                if len(merged_deep_results):
+                    STATE["best_deep_model_name"] = merged_deep_results.loc[0, "Model"]
+
+                print(f"Best Uni-Mol model on the held-out test set: {best_unimol_name}")
+                print(f"Uni-Mol model cache directory: {STATE['unimol_output_dir']}")
+                display_interactive_table(unimol_results.round(4), rows=min(10, len(unimol_results)))
+        """
+    ),
+    md(
+        """
+        ### Introduction to Chemprop v2
+
+        **Chemprop** is a graph neural network for molecular property prediction. It reads the molecule as a graph (atoms are nodes, bonds are edges) instead of a precomputed fingerprint. Over several rounds of *message passing*, each bond (or atom) collects information from its neighbours, so after three rounds every position "knows" about its chemical surroundings three bonds away. The learned bond or atom vectors are then summed into one molecule vector, and a small feed-forward network predicts the property. Unlike the conventional models, Chemprop learns its own features from the structure.
+        > Chemprop v2: Graff DE, Morgan NK, Burns JW, Doner AC, Li B, Li S-C, Manu J, Menon A, Pang H-W, Wu H, Zalte AS, Zheng JW, Coley CW, Green WH, Greenman KP. Chemprop v2: an efficient, modular machine learning package for chemical property prediction. *J Chem Inf Model.* 2026;66(1):28–33. [doi:10.1021/acs.jcim.5c02332](https://doi.org/10.1021/acs.jcim.5c02332) · [code](https://github.com/chemprop/chemprop)
+        > Chemprop package: Heid E, Greenman KP, Chung Y, Li S-C, Graff DE, Vermeire FH, Wu H, Green WH, McGill CJ. Chemprop: a machine learning package for chemical property prediction. *J Chem Inf Model.* 2024;64(1):9–17. [doi:10.1021/acs.jcim.3c01250](https://doi.org/10.1021/acs.jcim.3c01250)
+
+        The `6F` variants are all built with Chemprop v2. Two of them are **Chemprop configurations named after** other published architectures, not reimplementations of those architectures:
+
+        | 6F option | What it runs | Based on |
+        | --- | --- | --- |
+        | `run_chemprop_dmpnn` | Chemprop's default **directed message-passing neural network (D-MPNN)**: messages travel along directed bonds, which stops a message from immediately bouncing back to the atom it came from. | Yang K, Swanson K, Jin W, Coley C, Eiden P, Gao H, et al. Analyzing learned molecular representations for property prediction. *J Chem Inf Model.* 2019;59(8):3370–3388. [doi:10.1021/acs.jcim.9b00237](https://doi.org/10.1021/acs.jcim.9b00237). Message passing in general: Gilmer J, Schoenholz SS, Riley PF, Vinyals O, Dahl GE. Neural message passing for quantum chemistry. *ICML* 2017. [arXiv:1704.01212](https://arxiv.org/abs/1704.01212) |
+        | `run_chemprop_cmpnn` | **CMPNN-style**: Chemprop with atom-centred, undirected messages (`--atom-messages --undirected`). It borrows CMPNN's idea that atoms and bonds should exchange information, but it does not include CMPNN's dedicated communicative kernel or message booster. | Song Y, Zheng S, Niu Z, Fu Z-H, Lu Y, Yang Y. Communicative representation learning on attributed molecular graphs. *IJCAI* 2020:2831–2838. [doi:10.24963/ijcai.2020/392](https://doi.org/10.24963/ijcai.2020/392) |
+        | `run_chemprop_attentivefp` | **AttentiveFP-style**: Chemprop with atom messages, normalised aggregation, dropout 0.1 and RDKit 2D descriptors added to the molecule vector. It takes its name from AttentiveFP, but it has **no graph-attention layers**; treat it as a regularised, descriptor-augmented Chemprop. | Xiong Z, Wang D, Liu X, Zhong F, Wan X, Li X, Li Z, Luo X, Chen K, Jiang H, Zheng M. Pushing the boundaries of molecular representation for drug discovery with the graph attention mechanism. *J Med Chem.* 2020;63(16):8749–8760. [doi:10.1021/acs.jmedchem.9b00959](https://doi.org/10.1021/acs.jmedchem.9b00959) |
+        | `run_chemprop_rdkit2d_extra` | D-MPNN plus about 200 RDKit 2D descriptors added to the learned molecule vector before the prediction head. | The "D-MPNN + features" model of Yang et al. 2019 (above). |
+        | `run_chemprop_selected_features` | D-MPNN (or, if D-MPNN is off, the first variant ticked) plus the descriptors this notebook's train-only feature selector kept in `4B`. A QSARena variant with no separate publication. | Yang et al. 2019 (above). |
+
+        `chemprop_ensemble_size` trains that many copies of each variant from different random starts and averages them, the ensembling approach recommended by Yang et al.
         """
     ),
     code(
@@ -10686,52 +11010,57 @@ cells += [
         # @title 6E. Install Chemprop v2 packages (optional; may restart the runtime) { display-mode: "form" }
         force_reinstall_chemprop = False # @param {type:"boolean"}
 
-        import importlib
-        import subprocess
-        import sys
-        import time
-
-        install_targets = [
-            ("chemprop", "chemprop>=2.0.0"),
-            ("lightning", "lightning"),
-        ]
-
-        installed_any = False
-        for import_name, pip_name in install_targets:
-            already_available = importlib.util.find_spec(import_name) is not None
-            if already_available and not force_reinstall_chemprop:
-                print(f"[ok] {pip_name} is already available")
-                continue
-            print(f"[install] {pip_name}", flush=True)
-            start = time.perf_counter()
-            subprocess.check_call([sys.executable, "-m", "pip", "install", "-q", "--upgrade", pip_name])
-            elapsed = time.perf_counter() - start
-            installed_any = True
-            print(f"[done] {pip_name} installed in {elapsed:.1f}s", flush=True)
-
-        try:
-            import chemprop
-            print(f"Chemprop import succeeded: {getattr(chemprop, '__version__', 'version not reported')}")
-        except Exception as exc:
-            raise RuntimeError(
-                "Chemprop packages were installed, but the import did not succeed in the current kernel. "
-                "Restart the runtime/kernel, rerun step 0, then rerun this cell."
-            ) from exc
-
-        if installed_any and IN_COLAB:
-            print(
-                "Chemprop packages were newly installed or upgraded. Colab should be restarted before training "
-                "to avoid mixed-package issues. After reconnecting, rerun the setup cell and this section.",
-                flush=True,
-            )
-        elif installed_any:
-            print(
-                "Chemprop packages were newly installed or upgraded. "
-                "If the next Chemprop block fails to import, restart the kernel and rerun from step 0.",
-                flush=True,
-            )
+        # Chemprop is GPU-only in this notebook: on CPU each variant takes about 8x longer (Table 6).
+        if not globals().get('torch_gpu_available', lambda: False)():
+            print('6E skipped: no CUDA GPU detected, so Chemprop is not installed.')
+            print('In Colab choose Runtime > Change runtime type > T4 GPU, then rerun step 0 and section 6. Locally, use a CUDA-enabled PyTorch build.')
         else:
-            print("Chemprop package check complete.")
+            import importlib
+            import subprocess
+            import sys
+            import time
+
+            install_targets = [
+                ("chemprop", "chemprop>=2.0.0"),
+                ("lightning", "lightning"),
+            ]
+
+            installed_any = False
+            for import_name, pip_name in install_targets:
+                already_available = importlib.util.find_spec(import_name) is not None
+                if already_available and not force_reinstall_chemprop:
+                    print(f"[ok] {pip_name} is already available")
+                    continue
+                print(f"[install] {pip_name}", flush=True)
+                start = time.perf_counter()
+                subprocess.check_call([sys.executable, "-m", "pip", "install", "-q", "--upgrade", pip_name])
+                elapsed = time.perf_counter() - start
+                installed_any = True
+                print(f"[done] {pip_name} installed in {elapsed:.1f}s", flush=True)
+
+            try:
+                import chemprop
+                print(f"Chemprop import succeeded: {getattr(chemprop, '__version__', 'version not reported')}")
+            except Exception as exc:
+                raise RuntimeError(
+                    "Chemprop packages were installed, but the import did not succeed in the current kernel. "
+                    "Restart the runtime/kernel, rerun step 0, then rerun this cell."
+                ) from exc
+
+            if installed_any and IN_COLAB:
+                print(
+                    "Chemprop packages were newly installed or upgraded. Colab should be restarted before training "
+                    "to avoid mixed-package issues. After reconnecting, rerun the setup cell and this section.",
+                    flush=True,
+                )
+            elif installed_any:
+                print(
+                    "Chemprop packages were newly installed or upgraded. "
+                    "If the next Chemprop block fails to import, restart the kernel and rerun from step 0.",
+                    flush=True,
+                )
+            else:
+                print("Chemprop package check complete.")
         """
     ),
     md(
@@ -10747,575 +11076,580 @@ cells += [
         enable_chemprop_model_cache = True # @param {type:"boolean"}
         reuse_chemprop_cached_models = True # @param {type:"boolean"}
         chemprop_run_label = "AUTO" # @param {type:"string"}
-        run_chemprop_dmpnn = False # @param {type:"boolean"}
+        run_chemprop_dmpnn = True # @param {type:"boolean"}
         run_chemprop_cmpnn = False # @param {type:"boolean"}
         run_chemprop_attentivefp = True # @param {type:"boolean"}
         run_chemprop_rdkit2d_extra = False # @param {type:"boolean"}
-        run_chemprop_selected_features = True # @param {type:"boolean"}
+        run_chemprop_selected_features = False # @param {type:"boolean"}
         chemprop_epochs = 15 # @param {type:"slider", min:3, max:100, step:1}
         chemprop_batch_size = 32 # @param [16, 32, 64, 128]
         chemprop_num_workers = 0 # @param [0, 1, 2, 4, 8]
         chemprop_ensemble_size = 1 # @param [1, 3, 5]
         chemprop_random_seed = 42 # @param {type:"integer"}
 
-        if "feature_matrix" not in STATE:
-            raise RuntimeError("Please build the molecular feature matrix first.")
-
-        ensure_shared_qsar_split(
-            default_strategy="random",
-            default_test_fraction=0.2,
-            default_random_seed=42,
-            source_label="6F Chemprop v2",
-        )
-        chemprop_data_split_strategy = str(STATE.get("model_split_strategy", "random"))
-        chemprop_test_fraction = float(STATE.get("model_test_fraction", 0.2))
-        chemprop_split_random_seed = int(STATE.get("model_split_random_seed", 42))
-        chemprop_split_mode = "SCAFFOLD_BALANCED" if chemprop_data_split_strategy.strip().lower() == "scaffold" else "RANDOM"
-
-        selected_architectures = []
-        if run_chemprop_dmpnn:
-            selected_architectures.append("dmpnn")
-        if run_chemprop_cmpnn:
-            selected_architectures.append("cmpnn")
-        if run_chemprop_attentivefp:
-            selected_architectures.append("attentivefp")
-        if not selected_architectures:
-            raise ValueError("Enable at least one Chemprop variant (D-MPNN, CMPNN, or AttentiveFP).")
-
-        chemprop_variant_specs = resolve_chemprop_architecture_specs(
-            selected_architectures,
-            ensemble_size=int(chemprop_ensemble_size),
-            include_rdkit2d_extra=bool(run_chemprop_rdkit2d_extra),
-            include_selected_feature_variant=bool(run_chemprop_selected_features),
-        )
-        if not chemprop_variant_specs:
-            raise RuntimeError("No Chemprop variants were resolved from the selected options.")
-
-        try:
-            import chemprop  # noqa: F401
-        except Exception as exc:
-            raise RuntimeError(
-                "Chemprop v2 is not available in this environment. "
-                "Run block 6E first, then rerun this block."
-            ) from exc
-
-        try:
-            import torch
-        except Exception:
-            torch = None
-        chemprop_num_workers = resolve_auto_worker_count(chemprop_num_workers)
-        _cp_gpu = bool(STATE.get("gpu_available", False))
-        if _cp_gpu:
-            _gpu_inv = STATE.get("resource_config", {}).get("gpu_inventory", [])
-            _max_vram_gb = max((item.get("total_memory_gb", 0) for item in _gpu_inv), default=0)
-            _cp_batch = 128 if _max_vram_gb >= 39 else 64 if _max_vram_gb >= 15 else chemprop_batch_size
-            if _cp_batch > chemprop_batch_size:
-                print(f"[GPU-aware] Chemprop batch_size {chemprop_batch_size}→{_cp_batch} ({_max_vram_gb:.1f} GB VRAM)")
-                chemprop_batch_size = _cp_batch
-        print(f"Chemprop data-loader workers: {chemprop_num_workers}")
-
-        if enable_chemprop_model_cache:
-            chemprop_output_dir = resolve_model_cache_dir(
-                "chemprop_v2",
-                chemprop_run_label,
-                prefer_existing=bool(reuse_chemprop_cached_models),
-            )
+        # Chemprop is GPU-only in this notebook: on CPU each variant takes about 8x longer (Table 6).
+        if not globals().get('torch_gpu_available', lambda: False)():
+            print('6F skipped: no CUDA GPU detected. Chemprop runs only on a GPU in this notebook.')
+            print('In Colab choose Runtime > Change runtime type > T4 GPU, then rerun step 0 and section 6. Locally, use a CUDA-enabled PyTorch build.')
         else:
-            resolved_run_label = str(chemprop_run_label).strip()
-            if not resolved_run_label or resolved_run_label.upper() == "AUTO":
-                resolved_run_label = f"{STATE['cache_session_stamp']}_{current_dataset_cache_label()}_chemprop_v2"
-            chemprop_output_dir = resolve_output_path("chemprop_v2_runs") / slugify_cache_text(resolved_run_label)
-        chemprop_output_dir.mkdir(parents=True, exist_ok=True)
+            if "feature_matrix" not in STATE:
+                raise RuntimeError("Please build the molecular feature matrix first.")
 
-        train_df = pd.DataFrame(
-            {
-                "SMILES": STATE["smiles_train"].astype(str).reset_index(drop=True),
-                "TARGET": pd.Series(STATE["y_train"], dtype=float).reset_index(drop=True),
-            }
-        )
-        test_df = pd.DataFrame(
-            {
-                "SMILES": STATE["smiles_test"].astype(str).reset_index(drop=True),
-                "TARGET": pd.Series(STATE["y_test"], dtype=float).reset_index(drop=True),
-            }
-        )
-        ensure_global_split_signature(
-            train_df["SMILES"].astype(str),
-            test_df["SMILES"].astype(str),
-            source_label="6F Chemprop v2",
-        )
-
-        def _resolve_chemprop_command():
-            exe_parent = Path(sys.executable).resolve().parent
-            candidates = [[sys.executable, "-m", "chemprop"]]
-            for candidate_dir in [exe_parent / "Scripts", exe_parent / "bin", exe_parent]:
-                candidates.append([str(candidate_dir / "chemprop.exe")])
-                candidates.append([str(candidate_dir / "chemprop")])
-            candidates.append(["chemprop"])
-            for candidate in candidates:
-                try:
-                    probe = subprocess.run(
-                        candidate + ["--help"],
-                        capture_output=True,
-                        text=True,
-                        encoding="utf-8",
-                        errors="replace",
-                    )
-                except FileNotFoundError:
-                    continue
-                if probe.returncode == 0:
-                    return candidate
-            raise RuntimeError(
-                "Could not locate a working Chemprop CLI command. "
-                "Try reinstalling Chemprop in block 6E, then restart the kernel."
+            ensure_shared_qsar_split(
+                default_strategy="random",
+                default_test_fraction=0.2,
+                default_random_seed=42,
+                source_label="6F Chemprop v2",
             )
+            chemprop_data_split_strategy = str(STATE.get("model_split_strategy", "random"))
+            chemprop_test_fraction = float(STATE.get("model_test_fraction", 0.2))
+            chemprop_split_random_seed = int(STATE.get("model_split_random_seed", 42))
+            chemprop_split_mode = "SCAFFOLD_BALANCED" if chemprop_data_split_strategy.strip().lower() == "scaffold" else "RANDOM"
 
-        def _run_chemprop(command_prefix, args, description):
-            cmd = command_prefix + args
-            print(f"[Chemprop] {description}: {' '.join(str(part) for part in cmd)}", flush=True)
-            result = subprocess.run(
-                cmd,
-                capture_output=True,
-                text=True,
-                encoding="utf-8",
-                errors="replace",
+            selected_architectures = []
+            if run_chemprop_dmpnn:
+                selected_architectures.append("dmpnn")
+            if run_chemprop_cmpnn:
+                selected_architectures.append("cmpnn")
+            if run_chemprop_attentivefp:
+                selected_architectures.append("attentivefp")
+            if not selected_architectures:
+                raise ValueError("Enable at least one Chemprop variant (D-MPNN, CMPNN, or AttentiveFP).")
+
+            chemprop_variant_specs = resolve_chemprop_architecture_specs(
+                selected_architectures,
+                ensemble_size=int(chemprop_ensemble_size),
+                include_rdkit2d_extra=bool(run_chemprop_rdkit2d_extra),
+                include_selected_feature_variant=bool(run_chemprop_selected_features),
             )
-            if result.returncode != 0:
-                stdout_tail = (result.stdout or "").strip()[-1500:]
-                stderr_tail = (result.stderr or "").strip()[-1500:]
+            if not chemprop_variant_specs:
+                raise RuntimeError("No Chemprop variants were resolved from the selected options.")
+
+            try:
+                import chemprop  # noqa: F401
+            except Exception as exc:
                 raise RuntimeError(
-                    f"Chemprop command failed during {description} (exit={result.returncode}).\\n"
-                    f"Command: {' '.join(str(part) for part in cmd)}\\n"
-                    f"stdout tail:\\n{stdout_tail}\\n\\n"
-                    f"stderr tail:\\n{stderr_tail}"
-                )
+                    "Chemprop v2 is not available in this environment. "
+                    "Run block 6E first, then rerun this block."
+                ) from exc
 
-        def _align_predictions_by_smiles_occurrence(expected_smiles, actual_smiles, pred_values):
-            expected_df = pd.DataFrame({"smiles": pd.Series(expected_smiles, dtype=str).str.strip()})
-            actual_df = pd.DataFrame(
-                {
-                    "smiles": pd.Series(actual_smiles, dtype=str).str.strip(),
-                    "predicted": pd.to_numeric(pred_values, errors="coerce"),
-                }
-            )
-            expected_df["_occurrence"] = expected_df.groupby("smiles", sort=False).cumcount()
-            expected_df["_expected_row"] = np.arange(len(expected_df), dtype=int)
-            actual_df["_occurrence"] = actual_df.groupby("smiles", sort=False).cumcount()
-            merged = expected_df.merge(
-                actual_df,
-                on=["smiles", "_occurrence"],
-                how="left",
-                sort=False,
-                validate="one_to_one",
-            )
-            if merged["predicted"].isna().any():
-                return None
-            aligned = merged.sort_values("_expected_row")["predicted"].to_numpy(dtype=float)
-            if len(aligned) != len(expected_df):
-                return None
-            return np.asarray(aligned, dtype=float)
-
-        def _extract_chemprop_predictions(preds_csv_path, expected_smiles):
-            preds_df = pd.read_csv(preds_csv_path)
-            smiles_col = None
-            for candidate in ["SMILES", "smiles", "Smiles"]:
-                if candidate in preds_df.columns:
-                    smiles_col = candidate
-                    break
-            prediction_cols = [col for col in preds_df.columns if "pred" in str(col).lower()]
-            if not prediction_cols:
-                non_smiles_cols = [col for col in preds_df.columns if str(col) not in {"SMILES", "smiles", "Smiles"}]
-                if len(non_smiles_cols) == 1:
-                    prediction_cols = non_smiles_cols
-                else:
-                    prediction_cols = [col for col in non_smiles_cols if str(col) != "split"]
-            if not prediction_cols:
-                raise ValueError(
-                    f"Could not identify a prediction column in Chemprop output: {list(preds_df.columns)}"
-                )
-            pred_values = pd.to_numeric(preds_df[prediction_cols[0]], errors="coerce")
-
-            expected_smiles = pd.Series(expected_smiles, dtype=str).astype(str).str.strip().reset_index(drop=True)
-            if smiles_col is not None:
-                actual_smiles = preds_df[smiles_col].astype(str).str.strip().reset_index(drop=True)
-                valid_mask = pred_values.notna()
-                if not bool(valid_mask.all()):
-                    pred_values = pred_values.loc[valid_mask].reset_index(drop=True)
-                    actual_smiles = actual_smiles.loc[valid_mask].reset_index(drop=True)
-                if len(actual_smiles) == len(expected_smiles) and actual_smiles.equals(expected_smiles):
-                    return pred_values.to_numpy(dtype=float)
-                aligned = _align_predictions_by_smiles_occurrence(expected_smiles, actual_smiles, pred_values)
-                if aligned is not None:
-                    return aligned
-
-            if pred_values.isna().any():
-                raise ValueError("Chemprop prediction output contains non-numeric values.")
-            if len(pred_values) != len(expected_smiles):
-                raise ValueError(
-                    f"Chemprop prediction length mismatch: got {len(pred_values)} rows, expected {len(expected_smiles)}."
-                )
-            return pred_values.to_numpy(dtype=float)
-
-        def _is_chemprop_descriptor_scale_error(exc):
-            message = str(exc).lower()
-            markers = [
-                "input x contains infinity",
-                "value too large for dtype",
-                "standardscaler",
-                "check_array",
-            ]
-            return any(marker in message for marker in markers)
-
-        command_prefix = _resolve_chemprop_command()
-        chemprop_rows = []
-        chemprop_predictions = {}
-        chemprop_model_dirs = {}
-        chemprop_model_cache_paths = {}
-        if "chemprop_aux_fusion_models" not in STATE:
-            STATE["chemprop_aux_fusion_models"] = {}
-
-        for variant in chemprop_variant_specs:
-            architecture_key = str(variant.get("architecture_key", "dmpnn"))
-            workflow_name = str(variant.get("workflow", "Chemprop v2"))
-            label = str(variant.get("label", f"Chemprop v2 ({architecture_key}, ensemble={int(chemprop_ensemble_size)})"))
-            variant_tag = str(variant.get("variant_tag", architecture_key))
-            train_extra_args = [str(item).strip() for item in list(variant.get("train_args", [])) if str(item).strip()]
-            molecule_featurizers = [str(item).strip() for item in list(variant.get("featurizers", [])) if str(item).strip()]
-            chemprop_use_selected_descriptors = bool(variant.get("use_selected_descriptors", False))
-            effective_molecule_featurizers = list(molecule_featurizers)
-            descriptor_fallback_applied = False
-
-            model_slug = slugify_cache_text(label)
-            save_dir = chemprop_output_dir / model_slug
-            save_dir.mkdir(parents=True, exist_ok=True)
-
-            train_csv = save_dir / "train.csv"
-            test_csv = save_dir / "test.csv"
-            train_df.to_csv(train_csv, index=False)
-            test_df.to_csv(test_csv, index=False)
-            descriptor_args_train = []
-            descriptor_args_train_predict = []
-            descriptor_args_test_predict = []
-            selected_descriptor_count = 0
-            selected_descriptor_columns_sha256 = ""
-            if chemprop_use_selected_descriptors:
-                if "X_train" not in STATE or "X_test" not in STATE:
-                    raise RuntimeError(
-                        f"{label} requested selected-feature descriptors, but 4B outputs are missing. "
-                        "Run blocks 4A and 4B first."
-                    )
-                descriptor_train_path = save_dir / "train_descriptors.npz"
-                descriptor_test_path = save_dir / "test_descriptors.npz"
-                selected_descriptor_columns = [str(col) for col in pd.DataFrame(STATE["X_train"]).columns]
-                selected_descriptor_count = int(len(selected_descriptor_columns))
-                selected_descriptor_columns_sha256 = hashlib.sha256(
-                    "||".join(selected_descriptor_columns).encode("utf-8")
-                ).hexdigest()
-                descriptor_train_values = np.nan_to_num(
-                    pd.DataFrame(STATE["X_train"]).to_numpy(dtype=np.float32, copy=True),
-                    nan=0.0,
-                    posinf=0.0,
-                    neginf=0.0,
-                )
-                descriptor_test_values = np.nan_to_num(
-                    pd.DataFrame(STATE["X_test"]).to_numpy(dtype=np.float32, copy=True),
-                    nan=0.0,
-                    posinf=0.0,
-                    neginf=0.0,
-                )
-                np.savez(descriptor_train_path, descriptor_train_values)
-                np.savez(descriptor_test_path, descriptor_test_values)
-                descriptor_args_train = ["--descriptors-path", str(descriptor_train_path)]
-                descriptor_args_train_predict = ["--descriptors-path", str(descriptor_train_path)]
-                descriptor_args_test_predict = ["--descriptors-path", str(descriptor_test_path)]
-
-            metadata_path = save_dir / "cache_metadata.json"
-            prediction_path = save_dir / "cached_predictions.csv"
-            train_preds_path = save_dir / "train_predictions.csv"
-            test_preds_path = save_dir / "test_predictions.csv"
-            cached_model_loaded = False
-            base_pred_train = None
-            base_pred_test = None
-
-            if reuse_chemprop_cached_models and metadata_path.exists() and prediction_path.exists():
-                try:
-                    metadata = read_cache_metadata(metadata_path)
-                    expected_metadata = {
-                        "model_name": label,
-                        "workflow": workflow_name,
-                        "dataset_label": current_dataset_cache_label(),
-                        "qsar_split_strategy": str(chemprop_data_split_strategy),
-                        "qsar_test_fraction": float(chemprop_test_fraction),
-                        "qsar_split_random_seed": int(chemprop_split_random_seed),
-                        "split_mode": str(chemprop_split_mode),
-                        "architecture_key": architecture_key,
-                        "variant_tag": variant_tag,
-                        "train_extra_args": list(train_extra_args),
-                        "molecule_featurizers": list(molecule_featurizers),
-                        "effective_molecule_featurizers": list(effective_molecule_featurizers),
-                        "rdkit2d_fallback_applied": bool(descriptor_fallback_applied),
-                        "uses_selected_descriptors": bool(chemprop_use_selected_descriptors),
-                        "selected_descriptor_count": int(selected_descriptor_count),
-                        "selected_descriptor_columns_sha256": str(selected_descriptor_columns_sha256),
-                        "epochs": int(chemprop_epochs),
-                        "batch_size": int(chemprop_batch_size),
-                        "num_workers": int(chemprop_num_workers),
-                        "ensemble_size": int(chemprop_ensemble_size),
-                        "random_seed": int(chemprop_random_seed),
-                        "auxiliary_columns": list(STATE.get("auxiliary_columns", [])),
-                    }
-                    if cache_metadata_matches(metadata, expected_metadata):
-                        loaded_splits = load_prediction_splits(
-                            prediction_path,
-                            train_df["SMILES"].astype(str),
-                            test_df["SMILES"].astype(str),
-                            allow_reorder=True,
-                        )
-                        base_pred_train = loaded_splits["train"]["predicted"].to_numpy(dtype=float)
-                        base_pred_test = loaded_splits["test"]["predicted"].to_numpy(dtype=float)
-                        cached_model_loaded = True
-                        print(f"Loaded cached Chemprop predictions for {label} from {save_dir}", flush=True)
-                except Exception:
-                    cached_model_loaded = False
-
-            feature_args = ["--molecule-featurizers", *effective_molecule_featurizers] if effective_molecule_featurizers else []
-            if not cached_model_loaded:
-                def _train_and_predict_with_feature_args(active_feature_args, retry_suffix=""):
-                    _run_chemprop(
-                        command_prefix,
-                        [
-                            "train",
-                            "--data-path", str(train_csv),
-                            "--smiles-columns", "SMILES",
-                            "--target-columns", "TARGET",
-                            "--task-type", "regression",
-                            "--epochs", str(int(chemprop_epochs)),
-                            "--batch-size", str(int(chemprop_batch_size)),
-                            "--num-workers", str(int(chemprop_num_workers)),
-                            "--ensemble-size", str(int(chemprop_ensemble_size)),
-                            "--pytorch-seed", str(int(chemprop_random_seed)),
-                            "--data-seed", str(int(chemprop_random_seed)),
-                            "--split", str(chemprop_split_mode),
-                            "--split-sizes", "0.9", "0.1", "0.0",
-                            "--output-dir", str(save_dir),
-                            *train_extra_args,
-                            *active_feature_args,
-                            *descriptor_args_train,
-                        ],
-                        description=f"training ({label}){retry_suffix}",
-                    )
-                    _run_chemprop(
-                        command_prefix,
-                        [
-                            "predict",
-                            "--test-path", str(train_csv),
-                            "--smiles-columns", "SMILES",
-                            "--model-paths", str(save_dir),
-                            "--preds-path", str(train_preds_path),
-                            *active_feature_args,
-                            *descriptor_args_train_predict,
-                        ],
-                        description=f"train-set prediction ({label}){retry_suffix}",
-                    )
-                    _run_chemprop(
-                        command_prefix,
-                        [
-                            "predict",
-                            "--test-path", str(test_csv),
-                            "--smiles-columns", "SMILES",
-                            "--model-paths", str(save_dir),
-                            "--preds-path", str(test_preds_path),
-                            *active_feature_args,
-                            *descriptor_args_test_predict,
-                        ],
-                        description=f"test-set prediction ({label}){retry_suffix}",
-                    )
-                    return (
-                        _extract_chemprop_predictions(train_preds_path, train_df["SMILES"].astype(str)),
-                        _extract_chemprop_predictions(test_preds_path, test_df["SMILES"].astype(str)),
-                    )
-
-                try:
-                    base_pred_train, base_pred_test = _train_and_predict_with_feature_args(feature_args)
-                except Exception as exc:
-                    can_retry_without_rdkit2d = (
-                        "rdkit_2d" in {str(item).strip() for item in molecule_featurizers}
-                        and bool(feature_args)
-                        and _is_chemprop_descriptor_scale_error(exc)
-                    )
-                    if not can_retry_without_rdkit2d:
-                        raise
-                    descriptor_fallback_applied = True
-                    effective_molecule_featurizers = [
-                        item for item in molecule_featurizers if str(item).strip() != "rdkit_2d"
-                    ]
-                    feature_args = (
-                        ["--molecule-featurizers", *effective_molecule_featurizers]
-                        if effective_molecule_featurizers
-                        else []
-                    )
-                    print(
-                        "[Chemprop] detected non-finite RDKit2D descriptor values; retrying without rdkit_2d features.",
-                        flush=True,
-                    )
-                    base_pred_train, base_pred_test = _train_and_predict_with_feature_args(
-                        feature_args,
-                        retry_suffix=" (retry without rdkit_2d)",
-                    )
-
-            pred_train, pred_test, chemprop_aux_fusion_payload = fit_auxiliary_fusion_head(
-                np.asarray(base_pred_train, dtype=float).reshape(-1),
-                np.asarray(base_pred_test, dtype=float).reshape(-1),
-                train_df["TARGET"].to_numpy(dtype=float),
-                train_df["SMILES"].astype(str).reset_index(drop=True),
-                test_df["SMILES"].astype(str).reset_index(drop=True),
-                random_seed=int(chemprop_random_seed),
-                label=label,
-            )
-            if chemprop_aux_fusion_payload is not None:
-                STATE["chemprop_aux_fusion_models"][label] = chemprop_aux_fusion_payload
-                print(f"{label} auxiliary fusion: enabled", flush=True)
-            else:
-                STATE["chemprop_aux_fusion_models"].pop(label, None)
-
-            execution_mode = "GPU" if (torch is not None and bool(torch.cuda.is_available())) else "CPU"
-            row = {
-                "Model": label,
-                "Workflow": workflow_name,
-                "Architecture": architecture_key,
-                "Execution mode": execution_mode,
-                "Molecule featurizers": ", ".join(effective_molecule_featurizers),
-                "RDKit2D fallback applied": bool(descriptor_fallback_applied),
-                "Uses selected descriptors": bool(chemprop_use_selected_descriptors),
-                "Selected descriptor count": int(selected_descriptor_count),
-            }
-            row.update(summarize_regression(train_df["TARGET"].to_numpy(dtype=float), pred_train, "Train"))
-            row.update(summarize_regression(test_df["TARGET"].to_numpy(dtype=float), pred_test, "Test"))
-            chemprop_rows.append(row)
-
-            chemprop_predictions[label] = {
-                "train": np.asarray(pred_train, dtype=float),
-                "test": np.asarray(pred_test, dtype=float),
-                "train_df": train_df.copy(),
-                "test_df": test_df.copy(),
-            }
-            chemprop_model_dirs[label] = str(save_dir)
-            chemprop_model_cache_paths[label] = {
-                "model_dir": str(save_dir),
-                "prediction_path": str(prediction_path),
-                "metadata_path": str(metadata_path),
-            }
+            try:
+                import torch
+            except Exception:
+                torch = None
+            chemprop_num_workers = resolve_auto_worker_count(chemprop_num_workers)
+            _cp_gpu = bool(STATE.get("gpu_available", False))
+            if _cp_gpu:
+                _gpu_inv = STATE.get("resource_config", {}).get("gpu_inventory", [])
+                _max_vram_gb = max((item.get("total_memory_gb", 0) for item in _gpu_inv), default=0)
+                _cp_batch = 128 if _max_vram_gb >= 39 else 64 if _max_vram_gb >= 15 else chemprop_batch_size
+                if _cp_batch > chemprop_batch_size:
+                    print(f"[GPU-aware] Chemprop batch_size {chemprop_batch_size}→{_cp_batch} ({_max_vram_gb:.1f} GB VRAM)")
+                    chemprop_batch_size = _cp_batch
+            print(f"Chemprop data-loader workers: {chemprop_num_workers}")
 
             if enable_chemprop_model_cache:
-                write_cache_metadata(
-                    metadata_path,
-                    {
-                        "model_name": label,
-                        "workflow": workflow_name,
-                        "dataset_label": current_dataset_cache_label(),
-                        "cache_run_name": Path(chemprop_output_dir).name,
-                        "qsar_split_strategy": str(chemprop_data_split_strategy),
-                        "qsar_test_fraction": float(chemprop_test_fraction),
-                        "qsar_split_random_seed": int(chemprop_split_random_seed),
-                        "split_mode": str(chemprop_split_mode),
-                        "architecture_key": architecture_key,
-                        "variant_tag": variant_tag,
-                        "train_extra_args": list(train_extra_args),
-                        "molecule_featurizers": list(molecule_featurizers),
-                        "effective_molecule_featurizers": list(effective_molecule_featurizers),
-                        "rdkit2d_fallback_applied": bool(descriptor_fallback_applied),
-                        "uses_selected_descriptors": bool(chemprop_use_selected_descriptors),
-                        "selected_descriptor_count": int(selected_descriptor_count),
-                        "selected_descriptor_columns_sha256": str(selected_descriptor_columns_sha256),
-                        "epochs": int(chemprop_epochs),
-                        "batch_size": int(chemprop_batch_size),
-                        "num_workers": int(chemprop_num_workers),
-                        "ensemble_size": int(chemprop_ensemble_size),
-                        "random_seed": int(chemprop_random_seed),
-                        "model_dir": save_dir,
-                        "train_csv": train_csv,
-                        "test_csv": test_csv,
-                        "prediction_path": prediction_path,
-                        "execution_mode": execution_mode,
-                        "auxiliary_columns": list(STATE.get("auxiliary_columns", [])),
-                    },
+                chemprop_output_dir = resolve_model_cache_dir(
+                    "chemprop_v2",
+                    chemprop_run_label,
+                    prefer_existing=bool(reuse_chemprop_cached_models),
                 )
-                pd.DataFrame(
-                    {
-                        "split": ["train"] * len(base_pred_train) + ["test"] * len(base_pred_test),
-                        "smiles": list(train_df["SMILES"].astype(str)) + list(test_df["SMILES"].astype(str)),
-                        "observed": list(train_df["TARGET"].to_numpy(dtype=float)) + list(test_df["TARGET"].to_numpy(dtype=float)),
-                        "predicted": list(np.asarray(base_pred_train, dtype=float)) + list(np.asarray(base_pred_test, dtype=float)),
-                    }
-                ).to_csv(prediction_path, index=False)
+            else:
+                resolved_run_label = str(chemprop_run_label).strip()
+                if not resolved_run_label or resolved_run_label.upper() == "AUTO":
+                    resolved_run_label = f"{STATE['cache_session_stamp']}_{current_dataset_cache_label()}_chemprop_v2"
+                chemprop_output_dir = resolve_output_path("chemprop_v2_runs") / slugify_cache_text(resolved_run_label)
+            chemprop_output_dir.mkdir(parents=True, exist_ok=True)
 
-        new_results = pd.DataFrame(chemprop_rows)
-        previous_chemprop_results = STATE.get("chemprop_v2_results")
-        if isinstance(previous_chemprop_results, pd.DataFrame) and not previous_chemprop_results.empty:
-            retained_results = previous_chemprop_results.loc[
-                ~previous_chemprop_results["Model"].astype(str).isin(new_results["Model"].astype(str))
-            ].copy()
-            chemprop_results = pd.concat([retained_results, new_results], ignore_index=True)
-        else:
-            chemprop_results = new_results.copy()
-        chemprop_results = chemprop_results.sort_values(["Test RMSE", "Test MAE"], ascending=True).reset_index(drop=True)
-
-        STATE["chemprop_v2_output_dir"] = str(chemprop_output_dir)
-        STATE["chemprop_v2_results"] = chemprop_results.copy()
-        merged_chemprop_predictions = dict(STATE.get("chemprop_v2_predictions", {}))
-        merged_chemprop_predictions.update(chemprop_predictions)
-        STATE["chemprop_v2_predictions"] = merged_chemprop_predictions
-        merged_chemprop_model_dirs = dict(STATE.get("chemprop_v2_model_dirs", {}))
-        merged_chemprop_model_dirs.update(chemprop_model_dirs)
-        STATE["chemprop_v2_model_dirs"] = merged_chemprop_model_dirs
-        merged_chemprop_model_cache_paths = dict(STATE.get("chemprop_v2_model_cache_paths", {}))
-        merged_chemprop_model_cache_paths.update(chemprop_model_cache_paths)
-        STATE["chemprop_v2_model_cache_paths"] = merged_chemprop_model_cache_paths
-
-        previous_deep_results = STATE.get("deep_results")
-        if isinstance(previous_deep_results, pd.DataFrame) and not previous_deep_results.empty:
-            retained_previous_results = previous_deep_results.loc[
-                ~previous_deep_results["Model"].astype(str).isin(new_results["Model"].astype(str))
-            ].copy()
-            merged_deep_results = pd.concat([retained_previous_results, new_results], ignore_index=True)
-        else:
-            merged_deep_results = new_results.copy()
-        merged_deep_results = merged_deep_results.sort_values(["Test RMSE", "Test MAE"], ascending=True).reset_index(drop=True)
-
-        merged_deep_predictions = dict(STATE.get("deep_predictions", {}))
-        for model_name, payload in chemprop_predictions.items():
-            workflow_name = str(
-                new_results.loc[new_results["Model"].astype(str) == str(model_name), "Workflow"].iloc[0]
+            train_df = pd.DataFrame(
+                {
+                    "SMILES": STATE["smiles_train"].astype(str).reset_index(drop=True),
+                    "TARGET": pd.Series(STATE["y_train"], dtype=float).reset_index(drop=True),
+                }
             )
-            merged_deep_predictions[model_name] = {
-                "train": np.asarray(payload["train"], dtype=float),
-                "test": np.asarray(payload["test"], dtype=float),
-                "train_observed": payload["train_df"]["TARGET"].to_numpy(dtype=float),
-                "test_observed": payload["test_df"]["TARGET"].to_numpy(dtype=float),
-                "train_smiles": payload["train_df"]["SMILES"].astype(str).reset_index(drop=True),
-                "test_smiles": payload["test_df"]["SMILES"].astype(str).reset_index(drop=True),
-                "workflow": workflow_name,
-            }
-        STATE["deep_results"] = merged_deep_results
-        STATE["deep_predictions"] = merged_deep_predictions
-        if len(merged_deep_results):
-            STATE["best_deep_model_name"] = merged_deep_results.loc[0, "Model"]
+            test_df = pd.DataFrame(
+                {
+                    "SMILES": STATE["smiles_test"].astype(str).reset_index(drop=True),
+                    "TARGET": pd.Series(STATE["y_test"], dtype=float).reset_index(drop=True),
+                }
+            )
+            ensure_global_split_signature(
+                train_df["SMILES"].astype(str),
+                test_df["SMILES"].astype(str),
+                source_label="6F Chemprop v2",
+            )
 
-        merged_deep_cache_paths = dict(STATE.get("deep_model_cache_paths", {}))
-        merged_deep_cache_paths.update(chemprop_model_cache_paths)
-        STATE["deep_model_cache_paths"] = merged_deep_cache_paths
+            def _resolve_chemprop_command():
+                exe_parent = Path(sys.executable).resolve().parent
+                candidates = [[sys.executable, "-m", "chemprop"]]
+                for candidate_dir in [exe_parent / "Scripts", exe_parent / "bin", exe_parent]:
+                    candidates.append([str(candidate_dir / "chemprop.exe")])
+                    candidates.append([str(candidate_dir / "chemprop")])
+                candidates.append(["chemprop"])
+                for candidate in candidates:
+                    try:
+                        probe = subprocess.run(
+                            candidate + ["--help"],
+                            capture_output=True,
+                            text=True,
+                            encoding="utf-8",
+                            errors="replace",
+                        )
+                    except FileNotFoundError:
+                        continue
+                    if probe.returncode == 0:
+                        return candidate
+                raise RuntimeError(
+                    "Could not locate a working Chemprop CLI command. "
+                    "Try reinstalling Chemprop in block 6E, then restart the kernel."
+                )
 
-        print("Chemprop variants run:")
-        for item in chemprop_variant_specs:
-            print(f"  - {item.get('label', item.get('architecture_key', 'chemprop'))}")
-        print(f"Best Chemprop model on the held-out test set: {chemprop_results.loc[0, 'Model']}")
-        if enable_chemprop_model_cache:
-            print(f"Chemprop model cache directory: {chemprop_output_dir}")
-        display_interactive_table(chemprop_results.round(4), rows=min(12, len(chemprop_results)))
-        display_note(
-            "This block now supports multiple Chemprop graph variants (D-MPNN, CMPNN-style, and AttentiveFP-style proxy settings). "
-            "All trained variants are added to the shared deep-learning tables and can participate in ensembling in section 7."
-        )
+            def _run_chemprop(command_prefix, args, description):
+                cmd = command_prefix + args
+                print(f"[Chemprop] {description}: {' '.join(str(part) for part in cmd)}", flush=True)
+                result = subprocess.run(
+                    cmd,
+                    capture_output=True,
+                    text=True,
+                    encoding="utf-8",
+                    errors="replace",
+                )
+                if result.returncode != 0:
+                    stdout_tail = (result.stdout or "").strip()[-1500:]
+                    stderr_tail = (result.stderr or "").strip()[-1500:]
+                    raise RuntimeError(
+                        f"Chemprop command failed during {description} (exit={result.returncode}).\\n"
+                        f"Command: {' '.join(str(part) for part in cmd)}\\n"
+                        f"stdout tail:\\n{stdout_tail}\\n\\n"
+                        f"stderr tail:\\n{stderr_tail}"
+                    )
+
+            def _align_predictions_by_smiles_occurrence(expected_smiles, actual_smiles, pred_values):
+                expected_df = pd.DataFrame({"smiles": pd.Series(expected_smiles, dtype=str).str.strip()})
+                actual_df = pd.DataFrame(
+                    {
+                        "smiles": pd.Series(actual_smiles, dtype=str).str.strip(),
+                        "predicted": pd.to_numeric(pred_values, errors="coerce"),
+                    }
+                )
+                expected_df["_occurrence"] = expected_df.groupby("smiles", sort=False).cumcount()
+                expected_df["_expected_row"] = np.arange(len(expected_df), dtype=int)
+                actual_df["_occurrence"] = actual_df.groupby("smiles", sort=False).cumcount()
+                merged = expected_df.merge(
+                    actual_df,
+                    on=["smiles", "_occurrence"],
+                    how="left",
+                    sort=False,
+                    validate="one_to_one",
+                )
+                if merged["predicted"].isna().any():
+                    return None
+                aligned = merged.sort_values("_expected_row")["predicted"].to_numpy(dtype=float)
+                if len(aligned) != len(expected_df):
+                    return None
+                return np.asarray(aligned, dtype=float)
+
+            def _extract_chemprop_predictions(preds_csv_path, expected_smiles):
+                preds_df = pd.read_csv(preds_csv_path)
+                smiles_col = None
+                for candidate in ["SMILES", "smiles", "Smiles"]:
+                    if candidate in preds_df.columns:
+                        smiles_col = candidate
+                        break
+                prediction_cols = [col for col in preds_df.columns if "pred" in str(col).lower()]
+                if not prediction_cols:
+                    non_smiles_cols = [col for col in preds_df.columns if str(col) not in {"SMILES", "smiles", "Smiles"}]
+                    if len(non_smiles_cols) == 1:
+                        prediction_cols = non_smiles_cols
+                    else:
+                        prediction_cols = [col for col in non_smiles_cols if str(col) != "split"]
+                if not prediction_cols:
+                    raise ValueError(
+                        f"Could not identify a prediction column in Chemprop output: {list(preds_df.columns)}"
+                    )
+                pred_values = pd.to_numeric(preds_df[prediction_cols[0]], errors="coerce")
+
+                expected_smiles = pd.Series(expected_smiles, dtype=str).astype(str).str.strip().reset_index(drop=True)
+                if smiles_col is not None:
+                    actual_smiles = preds_df[smiles_col].astype(str).str.strip().reset_index(drop=True)
+                    valid_mask = pred_values.notna()
+                    if not bool(valid_mask.all()):
+                        pred_values = pred_values.loc[valid_mask].reset_index(drop=True)
+                        actual_smiles = actual_smiles.loc[valid_mask].reset_index(drop=True)
+                    if len(actual_smiles) == len(expected_smiles) and actual_smiles.equals(expected_smiles):
+                        return pred_values.to_numpy(dtype=float)
+                    aligned = _align_predictions_by_smiles_occurrence(expected_smiles, actual_smiles, pred_values)
+                    if aligned is not None:
+                        return aligned
+
+                if pred_values.isna().any():
+                    raise ValueError("Chemprop prediction output contains non-numeric values.")
+                if len(pred_values) != len(expected_smiles):
+                    raise ValueError(
+                        f"Chemprop prediction length mismatch: got {len(pred_values)} rows, expected {len(expected_smiles)}."
+                    )
+                return pred_values.to_numpy(dtype=float)
+
+            def _is_chemprop_descriptor_scale_error(exc):
+                message = str(exc).lower()
+                markers = [
+                    "input x contains infinity",
+                    "value too large for dtype",
+                    "standardscaler",
+                    "check_array",
+                ]
+                return any(marker in message for marker in markers)
+
+            command_prefix = _resolve_chemprop_command()
+            chemprop_rows = []
+            chemprop_predictions = {}
+            chemprop_model_dirs = {}
+            chemprop_model_cache_paths = {}
+            if "chemprop_aux_fusion_models" not in STATE:
+                STATE["chemprop_aux_fusion_models"] = {}
+
+            for variant in chemprop_variant_specs:
+                architecture_key = str(variant.get("architecture_key", "dmpnn"))
+                workflow_name = str(variant.get("workflow", "Chemprop v2"))
+                label = str(variant.get("label", f"Chemprop v2 ({architecture_key}, ensemble={int(chemprop_ensemble_size)})"))
+                variant_tag = str(variant.get("variant_tag", architecture_key))
+                train_extra_args = [str(item).strip() for item in list(variant.get("train_args", [])) if str(item).strip()]
+                molecule_featurizers = [str(item).strip() for item in list(variant.get("featurizers", [])) if str(item).strip()]
+                chemprop_use_selected_descriptors = bool(variant.get("use_selected_descriptors", False))
+                effective_molecule_featurizers = list(molecule_featurizers)
+                descriptor_fallback_applied = False
+
+                model_slug = slugify_cache_text(label)
+                save_dir = chemprop_output_dir / model_slug
+                save_dir.mkdir(parents=True, exist_ok=True)
+
+                train_csv = save_dir / "train.csv"
+                test_csv = save_dir / "test.csv"
+                train_df.to_csv(train_csv, index=False)
+                test_df.to_csv(test_csv, index=False)
+                descriptor_args_train = []
+                descriptor_args_train_predict = []
+                descriptor_args_test_predict = []
+                selected_descriptor_count = 0
+                selected_descriptor_columns_sha256 = ""
+                if chemprop_use_selected_descriptors:
+                    if "X_train" not in STATE or "X_test" not in STATE:
+                        raise RuntimeError(
+                            f"{label} requested selected-feature descriptors, but 4B outputs are missing. "
+                            "Run blocks 4A and 4B first."
+                        )
+                    descriptor_train_path = save_dir / "train_descriptors.npz"
+                    descriptor_test_path = save_dir / "test_descriptors.npz"
+                    selected_descriptor_columns = [str(col) for col in pd.DataFrame(STATE["X_train"]).columns]
+                    selected_descriptor_count = int(len(selected_descriptor_columns))
+                    selected_descriptor_columns_sha256 = hashlib.sha256(
+                        "||".join(selected_descriptor_columns).encode("utf-8")
+                    ).hexdigest()
+                    descriptor_train_values = np.nan_to_num(
+                        pd.DataFrame(STATE["X_train"]).to_numpy(dtype=np.float32, copy=True),
+                        nan=0.0,
+                        posinf=0.0,
+                        neginf=0.0,
+                    )
+                    descriptor_test_values = np.nan_to_num(
+                        pd.DataFrame(STATE["X_test"]).to_numpy(dtype=np.float32, copy=True),
+                        nan=0.0,
+                        posinf=0.0,
+                        neginf=0.0,
+                    )
+                    np.savez(descriptor_train_path, descriptor_train_values)
+                    np.savez(descriptor_test_path, descriptor_test_values)
+                    descriptor_args_train = ["--descriptors-path", str(descriptor_train_path)]
+                    descriptor_args_train_predict = ["--descriptors-path", str(descriptor_train_path)]
+                    descriptor_args_test_predict = ["--descriptors-path", str(descriptor_test_path)]
+
+                metadata_path = save_dir / "cache_metadata.json"
+                prediction_path = save_dir / "cached_predictions.csv"
+                train_preds_path = save_dir / "train_predictions.csv"
+                test_preds_path = save_dir / "test_predictions.csv"
+                cached_model_loaded = False
+                base_pred_train = None
+                base_pred_test = None
+
+                if reuse_chemprop_cached_models and metadata_path.exists() and prediction_path.exists():
+                    try:
+                        metadata = read_cache_metadata(metadata_path)
+                        expected_metadata = {
+                            "model_name": label,
+                            "workflow": workflow_name,
+                            "dataset_label": current_dataset_cache_label(),
+                            "qsar_split_strategy": str(chemprop_data_split_strategy),
+                            "qsar_test_fraction": float(chemprop_test_fraction),
+                            "qsar_split_random_seed": int(chemprop_split_random_seed),
+                            "split_mode": str(chemprop_split_mode),
+                            "architecture_key": architecture_key,
+                            "variant_tag": variant_tag,
+                            "train_extra_args": list(train_extra_args),
+                            "molecule_featurizers": list(molecule_featurizers),
+                            "effective_molecule_featurizers": list(effective_molecule_featurizers),
+                            "rdkit2d_fallback_applied": bool(descriptor_fallback_applied),
+                            "uses_selected_descriptors": bool(chemprop_use_selected_descriptors),
+                            "selected_descriptor_count": int(selected_descriptor_count),
+                            "selected_descriptor_columns_sha256": str(selected_descriptor_columns_sha256),
+                            "epochs": int(chemprop_epochs),
+                            "batch_size": int(chemprop_batch_size),
+                            "num_workers": int(chemprop_num_workers),
+                            "ensemble_size": int(chemprop_ensemble_size),
+                            "random_seed": int(chemprop_random_seed),
+                            "auxiliary_columns": list(STATE.get("auxiliary_columns", [])),
+                        }
+                        if cache_metadata_matches(metadata, expected_metadata):
+                            loaded_splits = load_prediction_splits(
+                                prediction_path,
+                                train_df["SMILES"].astype(str),
+                                test_df["SMILES"].astype(str),
+                                allow_reorder=True,
+                            )
+                            base_pred_train = loaded_splits["train"]["predicted"].to_numpy(dtype=float)
+                            base_pred_test = loaded_splits["test"]["predicted"].to_numpy(dtype=float)
+                            cached_model_loaded = True
+                            print(f"Loaded cached Chemprop predictions for {label} from {save_dir}", flush=True)
+                    except Exception:
+                        cached_model_loaded = False
+
+                feature_args = ["--molecule-featurizers", *effective_molecule_featurizers] if effective_molecule_featurizers else []
+                if not cached_model_loaded:
+                    def _train_and_predict_with_feature_args(active_feature_args, retry_suffix=""):
+                        _run_chemprop(
+                            command_prefix,
+                            [
+                                "train",
+                                "--data-path", str(train_csv),
+                                "--smiles-columns", "SMILES",
+                                "--target-columns", "TARGET",
+                                "--task-type", "regression",
+                                "--epochs", str(int(chemprop_epochs)),
+                                "--batch-size", str(int(chemprop_batch_size)),
+                                "--num-workers", str(int(chemprop_num_workers)),
+                                "--ensemble-size", str(int(chemprop_ensemble_size)),
+                                "--pytorch-seed", str(int(chemprop_random_seed)),
+                                "--data-seed", str(int(chemprop_random_seed)),
+                                "--split", str(chemprop_split_mode),
+                                "--split-sizes", "0.9", "0.1", "0.0",
+                                "--output-dir", str(save_dir),
+                                *train_extra_args,
+                                *active_feature_args,
+                                *descriptor_args_train,
+                            ],
+                            description=f"training ({label}){retry_suffix}",
+                        )
+                        _run_chemprop(
+                            command_prefix,
+                            [
+                                "predict",
+                                "--test-path", str(train_csv),
+                                "--smiles-columns", "SMILES",
+                                "--model-paths", str(save_dir),
+                                "--preds-path", str(train_preds_path),
+                                *active_feature_args,
+                                *descriptor_args_train_predict,
+                            ],
+                            description=f"train-set prediction ({label}){retry_suffix}",
+                        )
+                        _run_chemprop(
+                            command_prefix,
+                            [
+                                "predict",
+                                "--test-path", str(test_csv),
+                                "--smiles-columns", "SMILES",
+                                "--model-paths", str(save_dir),
+                                "--preds-path", str(test_preds_path),
+                                *active_feature_args,
+                                *descriptor_args_test_predict,
+                            ],
+                            description=f"test-set prediction ({label}){retry_suffix}",
+                        )
+                        return (
+                            _extract_chemprop_predictions(train_preds_path, train_df["SMILES"].astype(str)),
+                            _extract_chemprop_predictions(test_preds_path, test_df["SMILES"].astype(str)),
+                        )
+
+                    try:
+                        base_pred_train, base_pred_test = _train_and_predict_with_feature_args(feature_args)
+                    except Exception as exc:
+                        can_retry_without_rdkit2d = (
+                            "rdkit_2d" in {str(item).strip() for item in molecule_featurizers}
+                            and bool(feature_args)
+                            and _is_chemprop_descriptor_scale_error(exc)
+                        )
+                        if not can_retry_without_rdkit2d:
+                            raise
+                        descriptor_fallback_applied = True
+                        effective_molecule_featurizers = [
+                            item for item in molecule_featurizers if str(item).strip() != "rdkit_2d"
+                        ]
+                        feature_args = (
+                            ["--molecule-featurizers", *effective_molecule_featurizers]
+                            if effective_molecule_featurizers
+                            else []
+                        )
+                        print(
+                            "[Chemprop] detected non-finite RDKit2D descriptor values; retrying without rdkit_2d features.",
+                            flush=True,
+                        )
+                        base_pred_train, base_pred_test = _train_and_predict_with_feature_args(
+                            feature_args,
+                            retry_suffix=" (retry without rdkit_2d)",
+                        )
+
+                pred_train, pred_test, chemprop_aux_fusion_payload = fit_auxiliary_fusion_head(
+                    np.asarray(base_pred_train, dtype=float).reshape(-1),
+                    np.asarray(base_pred_test, dtype=float).reshape(-1),
+                    train_df["TARGET"].to_numpy(dtype=float),
+                    train_df["SMILES"].astype(str).reset_index(drop=True),
+                    test_df["SMILES"].astype(str).reset_index(drop=True),
+                    random_seed=int(chemprop_random_seed),
+                    label=label,
+                )
+                if chemprop_aux_fusion_payload is not None:
+                    STATE["chemprop_aux_fusion_models"][label] = chemprop_aux_fusion_payload
+                    print(f"{label} auxiliary fusion: enabled", flush=True)
+                else:
+                    STATE["chemprop_aux_fusion_models"].pop(label, None)
+
+                execution_mode = "GPU" if (torch is not None and bool(torch.cuda.is_available())) else "CPU"
+                row = {
+                    "Model": label,
+                    "Workflow": workflow_name,
+                    "Architecture": architecture_key,
+                    "Execution mode": execution_mode,
+                    "Molecule featurizers": ", ".join(effective_molecule_featurizers),
+                    "RDKit2D fallback applied": bool(descriptor_fallback_applied),
+                    "Uses selected descriptors": bool(chemprop_use_selected_descriptors),
+                    "Selected descriptor count": int(selected_descriptor_count),
+                }
+                row.update(summarize_regression(train_df["TARGET"].to_numpy(dtype=float), pred_train, "Train"))
+                row.update(summarize_regression(test_df["TARGET"].to_numpy(dtype=float), pred_test, "Test"))
+                chemprop_rows.append(row)
+
+                chemprop_predictions[label] = {
+                    "train": np.asarray(pred_train, dtype=float),
+                    "test": np.asarray(pred_test, dtype=float),
+                    "train_df": train_df.copy(),
+                    "test_df": test_df.copy(),
+                }
+                chemprop_model_dirs[label] = str(save_dir)
+                chemprop_model_cache_paths[label] = {
+                    "model_dir": str(save_dir),
+                    "prediction_path": str(prediction_path),
+                    "metadata_path": str(metadata_path),
+                }
+
+                if enable_chemprop_model_cache:
+                    write_cache_metadata(
+                        metadata_path,
+                        {
+                            "model_name": label,
+                            "workflow": workflow_name,
+                            "dataset_label": current_dataset_cache_label(),
+                            "cache_run_name": Path(chemprop_output_dir).name,
+                            "qsar_split_strategy": str(chemprop_data_split_strategy),
+                            "qsar_test_fraction": float(chemprop_test_fraction),
+                            "qsar_split_random_seed": int(chemprop_split_random_seed),
+                            "split_mode": str(chemprop_split_mode),
+                            "architecture_key": architecture_key,
+                            "variant_tag": variant_tag,
+                            "train_extra_args": list(train_extra_args),
+                            "molecule_featurizers": list(molecule_featurizers),
+                            "effective_molecule_featurizers": list(effective_molecule_featurizers),
+                            "rdkit2d_fallback_applied": bool(descriptor_fallback_applied),
+                            "uses_selected_descriptors": bool(chemprop_use_selected_descriptors),
+                            "selected_descriptor_count": int(selected_descriptor_count),
+                            "selected_descriptor_columns_sha256": str(selected_descriptor_columns_sha256),
+                            "epochs": int(chemprop_epochs),
+                            "batch_size": int(chemprop_batch_size),
+                            "num_workers": int(chemprop_num_workers),
+                            "ensemble_size": int(chemprop_ensemble_size),
+                            "random_seed": int(chemprop_random_seed),
+                            "model_dir": save_dir,
+                            "train_csv": train_csv,
+                            "test_csv": test_csv,
+                            "prediction_path": prediction_path,
+                            "execution_mode": execution_mode,
+                            "auxiliary_columns": list(STATE.get("auxiliary_columns", [])),
+                        },
+                    )
+                    pd.DataFrame(
+                        {
+                            "split": ["train"] * len(base_pred_train) + ["test"] * len(base_pred_test),
+                            "smiles": list(train_df["SMILES"].astype(str)) + list(test_df["SMILES"].astype(str)),
+                            "observed": list(train_df["TARGET"].to_numpy(dtype=float)) + list(test_df["TARGET"].to_numpy(dtype=float)),
+                            "predicted": list(np.asarray(base_pred_train, dtype=float)) + list(np.asarray(base_pred_test, dtype=float)),
+                        }
+                    ).to_csv(prediction_path, index=False)
+
+            new_results = pd.DataFrame(chemprop_rows)
+            previous_chemprop_results = STATE.get("chemprop_v2_results")
+            if isinstance(previous_chemprop_results, pd.DataFrame) and not previous_chemprop_results.empty:
+                retained_results = previous_chemprop_results.loc[
+                    ~previous_chemprop_results["Model"].astype(str).isin(new_results["Model"].astype(str))
+                ].copy()
+                chemprop_results = pd.concat([retained_results, new_results], ignore_index=True)
+            else:
+                chemprop_results = new_results.copy()
+            chemprop_results = chemprop_results.sort_values(["Test RMSE", "Test MAE"], ascending=True).reset_index(drop=True)
+
+            STATE["chemprop_v2_output_dir"] = str(chemprop_output_dir)
+            STATE["chemprop_v2_results"] = chemprop_results.copy()
+            merged_chemprop_predictions = dict(STATE.get("chemprop_v2_predictions", {}))
+            merged_chemprop_predictions.update(chemprop_predictions)
+            STATE["chemprop_v2_predictions"] = merged_chemprop_predictions
+            merged_chemprop_model_dirs = dict(STATE.get("chemprop_v2_model_dirs", {}))
+            merged_chemprop_model_dirs.update(chemprop_model_dirs)
+            STATE["chemprop_v2_model_dirs"] = merged_chemprop_model_dirs
+            merged_chemprop_model_cache_paths = dict(STATE.get("chemprop_v2_model_cache_paths", {}))
+            merged_chemprop_model_cache_paths.update(chemprop_model_cache_paths)
+            STATE["chemprop_v2_model_cache_paths"] = merged_chemprop_model_cache_paths
+
+            previous_deep_results = STATE.get("deep_results")
+            if isinstance(previous_deep_results, pd.DataFrame) and not previous_deep_results.empty:
+                retained_previous_results = previous_deep_results.loc[
+                    ~previous_deep_results["Model"].astype(str).isin(new_results["Model"].astype(str))
+                ].copy()
+                merged_deep_results = pd.concat([retained_previous_results, new_results], ignore_index=True)
+            else:
+                merged_deep_results = new_results.copy()
+            merged_deep_results = merged_deep_results.sort_values(["Test RMSE", "Test MAE"], ascending=True).reset_index(drop=True)
+
+            merged_deep_predictions = dict(STATE.get("deep_predictions", {}))
+            for model_name, payload in chemprop_predictions.items():
+                workflow_name = str(
+                    new_results.loc[new_results["Model"].astype(str) == str(model_name), "Workflow"].iloc[0]
+                )
+                merged_deep_predictions[model_name] = {
+                    "train": np.asarray(payload["train"], dtype=float),
+                    "test": np.asarray(payload["test"], dtype=float),
+                    "train_observed": payload["train_df"]["TARGET"].to_numpy(dtype=float),
+                    "test_observed": payload["test_df"]["TARGET"].to_numpy(dtype=float),
+                    "train_smiles": payload["train_df"]["SMILES"].astype(str).reset_index(drop=True),
+                    "test_smiles": payload["test_df"]["SMILES"].astype(str).reset_index(drop=True),
+                    "workflow": workflow_name,
+                }
+            STATE["deep_results"] = merged_deep_results
+            STATE["deep_predictions"] = merged_deep_predictions
+            if len(merged_deep_results):
+                STATE["best_deep_model_name"] = merged_deep_results.loc[0, "Model"]
+
+            merged_deep_cache_paths = dict(STATE.get("deep_model_cache_paths", {}))
+            merged_deep_cache_paths.update(chemprop_model_cache_paths)
+            STATE["deep_model_cache_paths"] = merged_deep_cache_paths
+
+            print("Chemprop variants run:")
+            for item in chemprop_variant_specs:
+                print(f"  - {item.get('label', item.get('architecture_key', 'chemprop'))}")
+            print(f"Best Chemprop model on the held-out test set: {chemprop_results.loc[0, 'Model']}")
+            if enable_chemprop_model_cache:
+                print(f"Chemprop model cache directory: {chemprop_output_dir}")
+            display_interactive_table(chemprop_results.round(4), rows=min(12, len(chemprop_results)))
+            display_note(
+                "This block now supports multiple Chemprop graph variants (D-MPNN, CMPNN-style, and AttentiveFP-style proxy settings). "
+                "All trained variants are added to the shared deep-learning tables and can participate in ensembling in section 7."
+            )
         """
     ),
     code(
@@ -11324,78 +11658,83 @@ cells += [
         show_unimolv1_plot = True # @param {type:"boolean"}
         show_unimolv2_plot = False # @param {type:"boolean"}
 
-        if "unimol_results" not in STATE:
-            raise RuntimeError("Please train at least one Uni-Mol model first in blocks 6C or 6D.")
+        # Uni-Mol is GPU-only in this notebook: on CPU it takes hours even on small sets.
+        if not globals().get('unimol_gpu_available', lambda: False)():
+            print('6G skipped: no CUDA GPU detected, so no Uni-Mol models were trained.')
+            print('In Colab choose Runtime > Change runtime type > T4 GPU, then rerun step 0 and section 6. Locally, use a CUDA-enabled PyTorch build.')
+        else:
+            if "unimol_results" not in STATE:
+                raise RuntimeError("Please train at least one Uni-Mol model first in blocks 6C or 6D.")
 
-        import matplotlib.pyplot as plt
+            import matplotlib.pyplot as plt
 
-        requested_models = []
-        if show_unimolv1_plot:
-            requested_models.append("Uni-Mol V1")
-        for model_name in STATE["unimol_predictions"]:
-            if model_name.startswith("Uni-Mol V2") and show_unimolv2_plot:
-                requested_models.append(model_name)
+            requested_models = []
+            if show_unimolv1_plot:
+                requested_models.append("Uni-Mol V1")
+            for model_name in STATE["unimol_predictions"]:
+                if model_name.startswith("Uni-Mol V2") and show_unimolv2_plot:
+                    requested_models.append(model_name)
 
-        requested_models = [name for name in requested_models if name in STATE["unimol_predictions"]]
-        if not requested_models:
-            raise ValueError("None of the selected Uni-Mol models were trained in blocks 6C or 6D.")
+            requested_models = [name for name in requested_models if name in STATE["unimol_predictions"]]
+            if not requested_models:
+                raise ValueError("None of the selected Uni-Mol models were trained in blocks 6C or 6D.")
 
-        n_panels = len(requested_models)
-        fig, axes = plt.subplots(1, n_panels, figsize=(6 * n_panels, 5), dpi=140)
-        if n_panels == 1:
-            axes = [axes]
+            n_panels = len(requested_models)
+            fig, axes = plt.subplots(1, n_panels, figsize=(6 * n_panels, 5), dpi=140)
+            if n_panels == 1:
+                axes = [axes]
 
-        results_lookup = STATE["unimol_results"].set_index("Model")
+            results_lookup = STATE["unimol_results"].set_index("Model")
 
-        for ax, model_name in zip(axes, requested_models):
-            payload = STATE["unimol_predictions"][model_name]
-            train_df = payload["train_df"].copy()
-            test_df = payload["test_df"].copy()
-            pred_train = np.asarray(payload["train"], dtype=float)
-            pred_test = np.asarray(payload["test"], dtype=float)
+            for ax, model_name in zip(axes, requested_models):
+                payload = STATE["unimol_predictions"][model_name]
+                train_df = payload["train_df"].copy()
+                test_df = payload["test_df"].copy()
+                pred_train = np.asarray(payload["train"], dtype=float)
+                pred_test = np.asarray(payload["test"], dtype=float)
 
-            combined_obs = np.concatenate([train_df["TARGET"].to_numpy(dtype=float), test_df["TARGET"].to_numpy(dtype=float)])
-            combined_pred = np.concatenate([pred_train, pred_test])
-            low = float(min(combined_obs.min(), combined_pred.min()))
-            high = float(max(combined_obs.max(), combined_pred.max()))
-            use_log_axes = bool(np.all(combined_obs > 0) and np.all(combined_pred > 0))
-            if low == high:
-                low -= 1.0
-                high += 1.0
+                combined_obs = np.concatenate([train_df["TARGET"].to_numpy(dtype=float), test_df["TARGET"].to_numpy(dtype=float)])
+                combined_pred = np.concatenate([pred_train, pred_test])
+                low = float(min(combined_obs.min(), combined_pred.min()))
+                high = float(max(combined_obs.max(), combined_pred.max()))
+                use_log_axes = bool(np.all(combined_obs > 0) and np.all(combined_pred > 0))
+                if low == high:
+                    low -= 1.0
+                    high += 1.0
 
-            ax.scatter(train_df["TARGET"], pred_train, alpha=0.6, label="Train", color="#1f77b4")
-            ax.scatter(test_df["TARGET"], pred_test, alpha=0.7, label="Test", color="#d62728")
-            ax.plot([low, high], [low, high], linestyle="--", color="#444444", linewidth=1.0)
-            ax.set_title(model_name)
-            if use_log_axes:
-                ax.set_xscale("log")
-                ax.set_yscale("log")
-                ax.set_xlim(low, high)
-                ax.set_ylim(low, high)
-                ax.set_xlabel("Observed (log10 scale)")
-                ax.set_ylabel("Predicted (log10 scale)")
-            else:
-                ax.set_xlabel("Observed")
-                ax.set_ylabel("Predicted")
-            ax.grid(True, linestyle=":", alpha=0.5)
-            metrics_row = results_lookup.loc[model_name]
-            ax.text(
-                0.03,
-                0.97,
-                f"R2 = {metrics_row['Test R2']:.3f}\\nRMSE = {metrics_row['Test RMSE']:.3f}\\nMAE = {metrics_row['Test MAE']:.3f}",
-                transform=ax.transAxes,
-                verticalalignment="top",
-                bbox=dict(boxstyle="round", facecolor="white", alpha=0.85),
+                ax.scatter(train_df["TARGET"], pred_train, alpha=0.6, label="Train", color="#1f77b4")
+                ax.scatter(test_df["TARGET"], pred_test, alpha=0.7, label="Test", color="#d62728")
+                ax.plot([low, high], [low, high], linestyle="--", color="#444444", linewidth=1.0)
+                ax.set_title(model_name)
+                if use_log_axes:
+                    ax.set_xscale("log")
+                    ax.set_yscale("log")
+                    ax.set_xlim(low, high)
+                    ax.set_ylim(low, high)
+                    ax.set_xlabel("Observed (log10 scale)")
+                    ax.set_ylabel("Predicted (log10 scale)")
+                else:
+                    ax.set_xlabel("Observed")
+                    ax.set_ylabel("Predicted")
+                ax.grid(True, linestyle=":", alpha=0.5)
+                metrics_row = results_lookup.loc[model_name]
+                ax.text(
+                    0.03,
+                    0.97,
+                    f"R2 = {metrics_row['Test R2']:.3f}\\nRMSE = {metrics_row['Test RMSE']:.3f}\\nMAE = {metrics_row['Test MAE']:.3f}",
+                    transform=ax.transAxes,
+                    verticalalignment="top",
+                    bbox=dict(boxstyle="round", facecolor="white", alpha=0.85),
+                )
+                ax.legend()
+
+            plt.tight_layout()
+            plt.show()
+            display_note(
+                "The dashed diagonal is the ideal 1:1 line. "
+                "Axes are shown on a **log10 scale** when all observed and predicted values are positive; otherwise the affected panel uses linear axes. "
+                "Because this uses a static Matplotlib figure, hover inspection is not available here."
             )
-            ax.legend()
-
-        plt.tight_layout()
-        plt.show()
-        display_note(
-            "The dashed diagonal is the ideal 1:1 line. "
-            "Axes are shown on a **log10 scale** when all observed and predicted values are positive; otherwise the affected panel uses linear axes. "
-            "Because this uses a static Matplotlib figure, hover inspection is not available here."
-        )
         """
     ),
     code(
@@ -11403,8 +11742,6 @@ cells += [
         # @title 6H. Compare conventional ML, ChemML deep learning, Uni-Mol, and Chemprop { display-mode: "form" }
         if "traditional_results" not in STATE:
             raise RuntimeError("Please run the conventional-model section first.")
-        if "unimol_results" not in STATE:
-            raise RuntimeError("Please run the Uni-Mol section first.")
 
         import matplotlib.pyplot as plt
         import seaborn as sns
@@ -11421,16 +11758,35 @@ cells += [
             tuned["Workflow"] = "Tuned conventional ML"
             frames.append(tuned)
 
-        if "deep_results" in STATE:
-            deep = STATE["deep_results"].copy()
-            frames.append(deep)
-        elif "unimol_results" in STATE:
+        if "deep_results" in STATE and not STATE["deep_results"].empty:
+            frames.append(STATE["deep_results"].copy())
+        if "unimol_results" in STATE and not STATE["unimol_results"].empty:
             unimol = STATE["unimol_results"].copy()
-            unimol["Workflow"] = "Uni-Mol"
+            if "Workflow" not in unimol.columns:
+                unimol["Workflow"] = "Uni-Mol"
             frames.append(unimol)
 
         compare_df = pd.concat(frames, axis=0, ignore_index=True)
+        # deep_results can already hold the Uni-Mol and Chemprop rows; keep one row per model.
+        compare_df = compare_df.drop_duplicates(subset=["Model"], keep="first")
         compare_df = compare_df.sort_values(["Test RMSE", "Test MAE"], ascending=True).reset_index(drop=True)
+
+        present_workflows = " ".join(compare_df["Workflow"].astype(str).unique()).lower()
+        no_gpu = not globals().get("torch_gpu_available", lambda: False)()
+        missing = []
+        for label, token in [("ChemML deep learning (5B)", "chemml"), ("Uni-Mol (6C/6D)", "uni-mol"), ("Chemprop (6F)", "chemprop")]:
+            if token not in present_workflows:
+                missing.append(label)
+        if missing:
+            reason = (
+                " Uni-Mol and Chemprop need a CUDA GPU, and none was detected."
+                if no_gpu and any(("Uni-Mol" in item or "Chemprop" in item) for item in missing)
+                else ""
+            )
+            display_note(
+                "Not in this comparison because they were not run in this session: "
+                + ", ".join(missing) + "." + reason + " The comparison below covers the models that were trained."
+            )
         STATE["comparison_results_with_unimol"] = compare_df.copy()
 
         display_interactive_table(compare_df.round(4), rows=min(20, len(compare_df)))
@@ -11523,7 +11879,7 @@ cells += [
         include_tuned_conventional = True # @param {type:"boolean"}
         include_unimol = True # @param {type:"boolean"}
         cfa_best_per_workflow_only = True # @param {type:"boolean"}
-        cfa_optimize_metric = "rmse" # @param ["rmse", "mae"]
+        cfa_optimize_metric = "mae" # @param ["mae", "rmse"]
         cfa_max_models = 0 # @param {type:"integer"}
         cfa_max_candidate_subsets = 100000 # @param {type:"integer"}
 
@@ -11648,8 +12004,20 @@ cells += [
                         + ". The command-line runner builds these by refitting per fold."
                     )
 
-            oof_notes = fill_oof_predictions(
-                payloads,
+            oof_progress = tqdm(
+                total=int(len(payloads) * len(oof_splits)),
+                desc="7A out-of-fold predictions",
+                unit="fold",
+                leave=False,
+            )
+
+            def _oof_progress(model_name, units):
+                oof_progress.set_postfix_str(str(model_name)[:40])
+                oof_progress.update(int(units))
+
+            import inspect as _inspect
+
+            oof_kwargs = dict(
                 refitters=refitters,
                 providers=providers,
                 folds=oof_splits,
@@ -11658,6 +12026,20 @@ cells += [
                 memory_cache=oof_cache,
                 log=None,
             )
+            # In Colab, qsar_workflow_core.py is downloaded from GitHub and can be older than this
+            # notebook. Only pass on_progress when that copy supports it; otherwise update per member.
+            if "on_progress" in _inspect.signature(fill_oof_predictions).parameters:
+                oof_kwargs["on_progress"] = _oof_progress
+            try:
+                if "on_progress" in oof_kwargs:
+                    oof_notes = fill_oof_predictions(payloads, **oof_kwargs)
+                else:
+                    oof_notes = []
+                    for _member_name in list(payloads):
+                        oof_notes.extend(fill_oof_predictions({_member_name: payloads[_member_name]}, **oof_kwargs))
+                        _oof_progress(_member_name, len(oof_splits))
+            finally:
+                oof_progress.close()
             skipped_members.extend(note for note in oof_notes if "read saved Uni-Mol internal-fold predictions" not in note)
             payloads = {name: payload for name, payload in payloads.items() if payload.get("oof") is not None}
 
@@ -11884,7 +12266,9 @@ cells += [
             cfa_run_summaries = {}
             cfa_candidate_tables = {}
 
-            for method_name in methods_to_run:
+            method_progress = tqdm(methods_to_run, desc="7A ensemble methods", unit="method", leave=False)
+            for method_name in method_progress:
+                method_progress.set_postfix_str(str(method_name)[:40])
                 current_prediction_columns = list(prediction_columns)
                 X_meta_train_current = aligned_oof[current_prediction_columns].to_numpy(dtype=float)
                 X_meta_test_current = aligned_test[current_prediction_columns].to_numpy(dtype=float)
@@ -11927,9 +12311,15 @@ cells += [
                                 flush=True,
                             )
                         if len(current_prediction_columns) < 2:
-                            raise RuntimeError(
-                                "CFA best-per-workflow filtering left fewer than two member models."
+                            # Same as the benchmark runner: skip CFA rather than stop the cell.
+                            print(
+                                "CFA skipped: best-per-workflow keeps one model per workflow, and only "
+                                f"{len(workflow_best)} workflow(s) supplied members ({', '.join(sorted(workflow_best))}). "
+                                "CFA needs at least two. Train another workflow with out-of-fold predictions "
+                                "(for example Uni-Mol in 6C), or set cfa_best_per_workflow_only = False.",
+                                flush=True,
                             )
+                            continue
                     requested_cfa_max_models = (
                         int(len(current_prediction_columns))
                         if int(cfa_max_models) <= 0
@@ -11968,7 +12358,7 @@ cells += [
                         y_train=y_meta_train_current,
                         min_models=2,
                         max_models=int(effective_cfa_max_models),
-                        optimize_metric="mae",
+                        optimize_metric=str(cfa_optimize_metric).strip().lower(),
                         include_rank_combinations=include_rank_candidates,
                         rank_prefer_when_diverse=True,
                         rank_diversity_threshold=0.15,
@@ -12093,8 +12483,12 @@ cells += [
                 )
                 ensemble_weight_tables[ensemble_method_label] = weight_df.copy()
 
+            method_progress.close()
             if not ensemble_method_runs:
-                raise RuntimeError("No ensemble methods produced results.")
+                raise RuntimeError(
+                    "No ensemble methods produced results. If only CFA was enabled, it was skipped above; "
+                    "turn on OOF stacking or the weighted average."
+                )
 
             # Choosing the downstream strategy on test RMSE would leak the test set; use OOF RMSE.
             best_run = sorted(
@@ -12401,10 +12795,18 @@ cells += [
                 "Rerun block 4C, then rerun block 8A."
             )
         model = STATE["traditional_models"][model_name]
+        # Each model is explained on the columns it was trained on: MapLight CatBoost uses the MapLight
+        # classic columns of the unselected matrix, not the selector's output.
+        model_feature_columns = list(STATE.get("traditional_model_feature_columns", {}).get(model_name, []) or [])
         X_test = STATE["X_test"].copy()
+        for source_key in ("X_test", "X_test_unselected"):
+            source = STATE.get(source_key)
+            if isinstance(source, pd.DataFrame) and model_feature_columns and set(model_feature_columns).issubset(source.columns):
+                X_test = source.loc[:, model_feature_columns].reset_index(drop=True).copy()
+                break
         y_test = np.asarray(STATE["y_test"], dtype=float)
         y_test_series = pd.Series(y_test, index=X_test.index)
-        state_feature_names = [str(name) for name in STATE.get("feature_names", [])]
+        state_feature_names = [str(name) for name in (model_feature_columns or STATE.get("feature_names", []))]
 
         sampled_test = X_test.sample(min(int(explanation_sample_size), len(X_test)), random_state=int(explanation_random_seed))
         sampled_target = y_test_series.loc[sampled_test.index].to_numpy(dtype=float)
@@ -12423,7 +12825,7 @@ cells += [
         method_label = None
 
         try:
-            if try_shap_for_tree_models and model_name in {"Random forest", "XGBoost", "CatBoost"}:
+            if try_shap_for_tree_models and model_name in {"Random forest", "XGBoost", "CatBoost", "MapLight CatBoost"}:
                 shap_progress = tqdm(total=3, desc="Conventional explanation", leave=False)
                 import shap
                 shap_progress.set_postfix_str("Building TreeExplainer")
@@ -12521,9 +12923,22 @@ cells += [
                 "Install the deep-learning dependencies, then rerun the setup cell and deep-learning cells."
             ) from exc
 
-        feature_names = STATE["feature_names"]
         X_train_scaled = np.asarray(STATE["X_train_scaled"], dtype=np.float32)
         X_test_scaled = np.asarray(STATE["X_test_scaled"], dtype=np.float32)
+        # Name the columns the ChemML model actually saw. STATE["feature_names"] is the full matrix
+        # before train-only feature selection, so it is usually longer.
+        n_model_features = int(X_test_scaled.shape[1])
+        feature_names = None
+        for candidate in (STATE.get("deep_feature_names"), STATE.get("feature_names")):
+            if candidate is not None and len(candidate) == n_model_features:
+                feature_names = [str(name) for name in candidate]
+                break
+        if feature_names is None:
+            print(
+                f"8C notice: no saved feature names match the model's {n_model_features} inputs; "
+                "using generic labels. Rerun 5B to record them."
+            )
+            feature_names = [f"feature_{index}" for index in range(n_model_features)]
         idx = min(max(int(test_instance_index), 0), len(X_test_scaled) - 1)
         background_end = min(max(int(background_reference_size), 2), len(X_train_scaled))
         background = X_train_scaled[1:background_end]
@@ -12698,7 +13113,7 @@ cells += [
         # @title 9A. Predict from a trained model using a new SMILES table { display-mode: "form" }
         prediction_workflow = "Best available" # @param ["Best available", "Conventional ML", "Tuned conventional ML", "ChemML deep learning", "TabPFN deep learning", "MapLight + GNN", "Chemprop v2", "Uni-Mol", "Ensemble"]
         prediction_model_name = "" # @param {type:"string"}
-        prediction_input_source = "File path" # @param ["File path", "Upload CSV (Colab only)"]
+        prediction_input_source = "Built-in test SMILES" # @param ["Built-in test SMILES", "File path", "Upload CSV (Colab only)"]
         prediction_input_path = "./portable_colab_qsar_bundle/example_prediction_smiles.csv" # @param {type:"string"}
         prediction_smiles_column = "SMILES" # @param {type:"string"}
         save_prediction_output = False # @param {type:"boolean"}
@@ -12717,7 +13132,25 @@ cells += [
                 "n_bits": int(config.get("fingerprint_bits", STATE.get("fingerprint_bits", 1024))),
             }
 
+        # Five well-known molecules for a quick test only; their predictions mean nothing unless they fall
+        # inside the training set's chemical space (see the applicability-domain step 9D).
+        BUILT_IN_TEST_SMILES = pd.DataFrame(
+            {
+                "name": ["aspirin", "caffeine", "ibuprofen", "paracetamol", "naphthalene"],
+                "SMILES": [
+                    "CC(=O)Oc1ccccc1C(=O)O",
+                    "Cn1cnc2c1c(=O)n(C)c(=O)n2C",
+                    "CC(C)Cc1ccc(cc1)C(C)C(=O)O",
+                    "CC(=O)Nc1ccc(O)cc1",
+                    "c1ccc2ccccc2c1",
+                ],
+            }
+        )
+
         def _load_prediction_input_table():
+            if prediction_input_source == "Built-in test SMILES":
+                built_in = BUILT_IN_TEST_SMILES.rename(columns={"SMILES": str(prediction_smiles_column).strip() or "SMILES"})
+                return built_in, "built-in test SMILES (5 molecules)"
             if prediction_input_source == "Upload CSV (Colab only)":
                 df = read_uploaded_dataframe()
                 source_label = STATE.get("uploaded_filename", "uploaded prediction file")
@@ -12756,19 +13189,64 @@ cells += [
                 workflow_frames["Ensemble"] = STATE["ensemble_results"].copy()
 
             if requested_workflow == "Best available":
-                best_candidates = []
-                if "ensemble_results" in STATE and not STATE["ensemble_results"].empty:
-                    best_candidates.append(("Ensemble", STATE["ensemble_results"].iloc[0]["Model"], float(STATE["ensemble_results"].iloc[0]["Test RMSE"])))
-                if "tuned_traditional_results" in STATE and not STATE["tuned_traditional_results"].empty:
-                    best_candidates.append(("Tuned conventional ML", STATE["tuned_traditional_results"].iloc[0]["Model"], float(STATE["tuned_traditional_results"].iloc[0]["Test RMSE"])))
-                if "deep_results" in STATE and not STATE["deep_results"].empty:
-                    best_candidates.append((str(STATE["deep_results"].iloc[0]["Workflow"]), STATE["deep_results"].iloc[0]["Model"], float(STATE["deep_results"].iloc[0]["Test RMSE"])))
-                if "traditional_results" in STATE and not STATE["traditional_results"].empty:
-                    best_candidates.append(("Conventional ML", STATE["traditional_results"].iloc[0]["Model"], float(STATE["traditional_results"].iloc[0]["Test RMSE"])))
-                if not best_candidates:
+                # Rank on a validation score from the training split (CV RMSE, or OOF RMSE for ensembles),
+                # never on the test set when a validation score exists: choosing by test RMSE makes the
+                # chosen model's test score optimistic. Test RMSE is the fallback only when no model has one.
+                candidates = []
+                for workflow_name, frame in workflow_frames.items():
+                    if frame is None or frame.empty or "Model" not in frame.columns:
+                        continue
+                    for _, row in frame.iterrows():
+                        validation_rmse, validation_label = np.nan, ""
+                        for column in ("CV RMSE", "OOF RMSE"):
+                            value = pd.to_numeric(pd.Series([row.get(column)]), errors="coerce").iloc[0]
+                            if np.isfinite(value):
+                                validation_rmse, validation_label = float(value), column
+                                break
+                        test_rmse = pd.to_numeric(pd.Series([row.get("Test RMSE")]), errors="coerce").iloc[0]
+                        candidates.append(
+                            {
+                                "workflow": workflow_name,
+                                "model": str(row["Model"]),
+                                "validation_rmse": validation_rmse,
+                                "validation_label": validation_label,
+                                "test_rmse": float(test_rmse) if np.isfinite(test_rmse) else np.nan,
+                            }
+                        )
+                if not candidates:
                     raise RuntimeError("No trained models are available yet. Train at least one model before running prediction.")
-                selected_workflow, selected_model_name, _ = sorted(best_candidates, key=lambda item: item[2])[0]
-                return selected_workflow, str(selected_model_name)
+                candidate_df = pd.DataFrame(candidates)
+                validated = candidate_df[np.isfinite(candidate_df["validation_rmse"])]
+                if not validated.empty:
+                    best = validated.sort_values("validation_rmse").iloc[0]
+                    skipped = sorted(set(candidate_df.loc[~np.isfinite(candidate_df["validation_rmse"]), "model"]))
+                    print(
+                        f"Best available: {best['model']} ({best['workflow']}), chosen by {best['validation_label']} = "
+                        f"{best['validation_rmse']:.4f} on the training split. Its test RMSE ({best['test_rmse']:.4f}) "
+                        "was not used to choose it, so it is an honest estimate."
+                    )
+                    if skipped:
+                        print(
+                            "Not eligible (no CV/OOF score): " + ", ".join(skipped)
+                            + ". Name one in prediction_model_name to use it anyway."
+                        )
+                else:
+                    best = candidate_df.sort_values("test_rmse").iloc[0]
+                    print(
+                        f"Best available: {best['model']} ({best['workflow']}), chosen by test RMSE = {best['test_rmse']:.4f} "
+                        "because no model has a CV or OOF score. That test score is optimistic: turn on cross-validation "
+                        "in 4C for an honest choice."
+                    )
+                STATE["prediction_model_selection"] = {
+                    "workflow": str(best["workflow"]),
+                    "model": str(best["model"]),
+                    "criterion": (str(best["validation_label"]) if not validated.empty else "Test RMSE (no CV/OOF score available)"),
+                    "criterion_value": float(best["validation_rmse"] if not validated.empty else best["test_rmse"]),
+                    "test_rmse": float(best["test_rmse"]) if np.isfinite(best["test_rmse"]) else None,
+                    "candidates_considered": int(len(candidate_df)),
+                    "candidates_with_validation_score": int(len(validated)),
+                }
+                return str(best["workflow"]), str(best["model"])
 
             if requested_workflow not in workflow_frames:
                 raise RuntimeError(
@@ -13331,7 +13809,8 @@ cells += [
             "Conventional, tuned, and ChemML models reuse the notebook's saved molecular feature settings; Uni-Mol uses the saved Uni-Mol model directory; "
             "the ensemble averages the currently available member models. "
             "`prediction` is reported on the model's current target scale; `prediction_original_scale` back-transforms it when a target transform was used. "
-            "A bundled example file with 10 SMILES is provided by default at `./portable_colab_qsar_bundle/example_prediction_smiles.csv`."
+            "By default it predicts 5 built-in test molecules (aspirin, caffeine, ibuprofen, paracetamol, naphthalene) so the step runs anywhere; "
+            "choose **File path** or **Upload CSV** for your own molecules."
         )
         """
     ),
@@ -13368,6 +13847,8 @@ cells += [
             raise RuntimeError(
                 "UMAP is not available in this environment. Install `umap-learn`, rerun the setup cell, then rerun this block."
             ) from exc
+        if "quiet_noisy_loggers" in globals():
+            quiet_noisy_loggers()  # importing umap/numba must not leave compiler DEBUG logging on
         import hashlib
 
         def _umap_prediction_feature_build_kwargs():
@@ -14729,6 +15210,740 @@ cells += [
         )
         print(f"Wrote {export_run_yaml_path} with {len(_exported.explicit_keys)} setting(s):")
         print(Path(export_run_yaml_path).read_text(encoding="utf-8"))
+        if isinstance(globals().get("STATE"), dict):  # kept for the 9F reproducibility record
+            STATE["latest_run_yaml_path"] = str(Path(export_run_yaml_path).resolve())
+            STATE["latest_run_yaml_text"] = Path(export_run_yaml_path).read_text(encoding="utf-8")
+        """
+    ),
+    md(
+        """
+        ### 9F. Export a self-contained HTML report
+
+        This block writes a single `.html` file that you can open in a browser, attach to an email, or save with your project records. It summarizes the dataset, preprocessing choices, split, feature count, trained model tables, the best available model, and optional prediction/applicability-domain outputs if those blocks were run.
+
+        **What to expect.** The report is a static snapshot of the notebook state at the time you run this cell. If you rerun models or predictions later, rerun this block to refresh the report.
+
+        **Time cost.** Usually a few seconds. Very large prediction or AD tables are automatically truncated in the report so the HTML stays easy to open.
+
+        <!-- COLAB_ONLY_START -->
+        If Drive persistence was enabled in step `0`, save the report under your Drive output folder so it survives runtime resets. You can also ask the cell to start a browser download.
+        <!-- COLAB_ONLY_END -->
+        <!-- LOCAL_ONLY_START -->
+        In local Jupyter, the report is written to the path below and a clickable file link is displayed.
+        <!-- LOCAL_ONLY_END -->
+        """
+    ),
+    code(
+        """
+        # @title 9F. Export notebook results to an HTML report { display-mode: "form" }
+        html_report_path = "qsarena_notebook_report.html" # @param {type:"string"}
+        html_report_title = "QSARena Notebook Report" # @param {type:"string"}
+        include_model_result_tables = True # @param {type:"boolean"}
+        include_prediction_outputs = True # @param {type:"boolean"}
+        include_applicability_domain_outputs = True # @param {type:"boolean"}
+        max_html_report_table_rows = 200 # @param {type:"integer"}
+        download_html_report_in_colab = False # @param {type:"boolean"}
+
+        import html as _html
+        from datetime import datetime
+
+        def _report_escape(value):
+            if value is None:
+                return ""
+            if isinstance(value, float) and not np.isfinite(value):
+                return ""
+            return _html.escape(str(value))
+
+        def _report_slug(value):
+            try:
+                return slugify_cache_text(value)
+            except Exception:
+                text = re.sub(r"[^A-Za-z0-9._-]+", "_", str(value)).strip("._")
+                return text or "artifact"
+
+        def _report_metric_value(row, candidates):
+            for column in candidates:
+                if column in row and pd.notna(row[column]):
+                    try:
+                        return float(row[column])
+                    except Exception:
+                        return row[column]
+            return None
+
+        def _report_metric_name(frame):
+            columns = list(frame.columns)
+            for name in ["Test RMSE", "Test MAE", "Test R2", "Test ROC-AUC", "Test AUPRC", "Test Accuracy"]:
+                if name in columns:
+                    return name
+            for name in columns:
+                if str(name).lower().startswith("test "):
+                    return str(name)
+            return ""
+
+        def _report_table_html(frame, *, max_rows=200):
+            if frame is None or not isinstance(frame, pd.DataFrame) or frame.empty:
+                return "<p class='muted'>No rows available.</p>"
+            clean = frame.copy()
+            row_count = len(clean)
+            if max_rows and max_rows > 0 and row_count > max_rows:
+                clean = clean.head(int(max_rows)).copy()
+                truncated_note = (
+                    f"<p class='muted'>Showing first {int(max_rows):,} of {row_count:,} row(s). "
+                    "The notebook state still contains the full table.</p>"
+                )
+            else:
+                truncated_note = ""
+            display_frame = clean.copy()
+            for column in display_frame.columns:
+                if pd.api.types.is_float_dtype(display_frame[column]):
+                    display_frame[column] = display_frame[column].map(
+                        lambda value: "" if pd.isna(value) else f"{float(value):.5g}"
+                    )
+            return truncated_note + display_frame.to_html(index=False, escape=True, border=0, classes="report-table")
+
+        def _report_section(title, body_html):
+            return f"<section><h2>{_report_escape(title)}</h2>{body_html}</section>"
+
+        def _report_key_value_table(pairs):
+            rows = []
+            for key, value in pairs:
+                if value is None:
+                    continue
+                if isinstance(value, str) and not value.strip():
+                    continue
+                rows.append(
+                    "<tr><th>{}</th><td>{}</td></tr>".format(
+                        _report_escape(key),
+                        _report_escape(value),
+                    )
+                )
+            if not rows:
+                return "<p class='muted'>No summary fields available.</p>"
+            return "<table class='kv-table'>" + "".join(rows) + "</table>"
+
+        def _report_best_model_summary():
+            candidates = []
+            result_sources = [
+                ("Ensemble", STATE.get("ensemble_results")),
+                ("Tuned conventional ML", STATE.get("tuned_traditional_results")),
+                ("Deep / pretrained models", STATE.get("deep_results")),
+                ("Conventional ML", STATE.get("traditional_results")),
+            ]
+            for workflow, frame in result_sources:
+                if isinstance(frame, pd.DataFrame) and not frame.empty and "Model" in frame.columns:
+                    metric_column = _report_metric_name(frame)
+                    if metric_column:
+                        value = _report_metric_value(frame.iloc[0], [metric_column])
+                    else:
+                        value = None
+                    candidates.append(
+                        {
+                            "Workflow": workflow,
+                            "Model": str(frame.iloc[0].get("Model", "")),
+                            "Metric": metric_column,
+                            "Value": value,
+                        }
+                    )
+            if not candidates:
+                return pd.DataFrame()
+            best_df = pd.DataFrame(candidates)
+            if best_df["Value"].apply(lambda value: isinstance(value, (int, float)) and np.isfinite(value)).any():
+                # RMSE/MAE are the most common notebook metrics and lower is better; otherwise keep workflow order.
+                lower_better_mask = best_df["Metric"].astype(str).str.contains("RMSE|MAE|error", case=False, regex=True)
+                if bool(lower_better_mask.any()):
+                    sortable = best_df.loc[lower_better_mask].copy()
+                    sortable["Value"] = pd.to_numeric(sortable["Value"], errors="coerce")
+                    sortable = sortable.sort_values("Value", ascending=True)
+                    best_df = pd.concat([sortable, best_df.loc[~lower_better_mask]], ignore_index=True)
+            return best_df
+
+        report_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        cleaned_df = STATE.get("curated_df")
+        if not isinstance(cleaned_df, pd.DataFrame):
+            cleaned_df = STATE.get("clean_df")
+        raw_df = STATE.get("raw_df")
+        if not isinstance(raw_df, pd.DataFrame):
+            raw_df = STATE.get("selected_df")
+        if not isinstance(raw_df, pd.DataFrame):
+            raw_df = STATE.get("input_df")
+        dataset_rows = len(cleaned_df) if isinstance(cleaned_df, pd.DataFrame) else None
+        raw_rows = len(raw_df) if isinstance(raw_df, pd.DataFrame) else None
+        target_column_value = STATE.get("target_column") or globals().get("target_column", "")
+        smiles_column_value = STATE.get("smiles_column") or globals().get("smiles_column", "")
+        transform_label = STATE.get("target_transform_label") or STATE.get("target_transform") or globals().get("target_transform", "")
+        feature_names = STATE.get("feature_names", [])
+        feature_count = len(feature_names) if isinstance(feature_names, (list, tuple, pd.Index)) else None
+        train_count = len(STATE["X_train"]) if "X_train" in STATE else None
+        test_count = len(STATE["X_test"]) if "X_test" in STATE else None
+
+        sections = []
+        sections.append(
+            _report_section(
+                "Run Summary",
+                _report_key_value_table(
+                    [
+                        ("Report generated", report_time),
+                        ("Notebook environment", NOTEBOOK_ENV_LABEL if "NOTEBOOK_ENV_LABEL" in globals() else ""),
+                        ("Dataset/source", STATE.get("data_source_label") or STATE.get("uploaded_filename") or ""),
+                        ("Raw rows", f"{raw_rows:,}" if raw_rows is not None else ""),
+                        ("Clean valid molecule rows", f"{dataset_rows:,}" if dataset_rows is not None else ""),
+                        ("SMILES column", smiles_column_value),
+                        ("Target column", target_column_value),
+                        ("Target transform", transform_label),
+                        ("Feature count", f"{feature_count:,}" if feature_count is not None else ""),
+                        ("Train rows", f"{train_count:,}" if train_count is not None else ""),
+                        ("Test rows", f"{test_count:,}" if test_count is not None else ""),
+                        ("Split strategy", STATE.get("split_strategy") or globals().get("split_strategy", "")),
+                    ]
+                ),
+            )
+        )
+
+        import json as _json
+        import hashlib as _hashlib
+        import platform as _platform
+
+        try:
+            import plotly.graph_objects as _go
+            import plotly.io as _pio
+            from plotly.offline import get_plotlyjs as _get_plotlyjs
+
+            _report_plotly_ok = True
+        except Exception:
+            _report_plotly_ok = False
+
+        def _report_plotly_div(fig):
+            return _pio.to_html(
+                fig, include_plotlyjs=False, full_html=False, config={"responsive": True, "displaylogo": False}
+            )
+
+        def _report_details(summary_html, body_html, open_section=False):
+            open_attr = " open" if open_section else ""
+            return f"<details{open_attr}><summary>{summary_html}</summary><div class='details-body'>{body_html}</div></details>"
+
+        def _report_pre(value, limit=20000):
+            text = value if isinstance(value, str) else _json.dumps(value, indent=2, default=str, sort_keys=True)
+            if len(text) > limit:
+                text = text[:limit] + f"... [truncated, {len(text):,} characters in total]"
+            return f"<pre>{_report_escape(text)}</pre>"
+
+        def _report_result_frames():
+            frames = []
+            for workflow, key in [
+                ("Conventional ML", "traditional_results"),
+                ("Tuned conventional ML", "tuned_traditional_results"),
+                (None, "deep_results"),
+                ("Uni-Mol", "unimol_results"),
+                ("Ensemble", "ensemble_results"),
+            ]:
+                frame = STATE.get(key)
+                if isinstance(frame, pd.DataFrame) and not frame.empty and "Model" in frame.columns:
+                    frame = frame.copy()
+                    if workflow is not None or "Workflow" not in frame.columns:
+                        frame["Workflow"] = workflow or "Deep learning"
+                    frames.append(frame)
+            if not frames:
+                return pd.DataFrame()
+            combined = pd.concat(frames, ignore_index=True, sort=False).drop_duplicates(subset=["Model"], keep="first")
+            for column in ["Test RMSE", "CV RMSE", "OOF RMSE", "Test R2"]:
+                if column in combined.columns:
+                    combined[column] = pd.to_numeric(combined[column], errors="coerce")
+                else:
+                    combined[column] = np.nan
+            combined["Validation RMSE"] = combined["CV RMSE"].where(combined["CV RMSE"].notna(), combined["OOF RMSE"])
+            return combined
+
+        def _report_model_comparison_figure(results):
+            ranked = results.dropna(subset=["Test RMSE"]).copy()
+            if ranked.empty:
+                return None
+            ranked["_order"] = ranked["Validation RMSE"].fillna(np.inf)
+            ranked = ranked.sort_values(["_order", "Test RMSE"])
+            fig = _go.Figure()
+            for workflow_name, group in ranked.groupby("Workflow", sort=False):
+                fig.add_trace(
+                    _go.Bar(
+                        x=group["Model"], y=group["Test RMSE"], name=f"{workflow_name}: test RMSE",
+                        hovertemplate="%{x}<br>Test RMSE %{y:.4f}<extra>" + str(workflow_name) + "</extra>",
+                    )
+                )
+            validated = ranked.dropna(subset=["Validation RMSE"])
+            if not validated.empty:
+                fig.add_trace(
+                    _go.Scatter(
+                        x=validated["Model"], y=validated["Validation RMSE"], mode="markers", name="CV / OOF RMSE (training split)",
+                        marker=dict(symbol="diamond", size=10, color="black"),
+                        hovertemplate="%{x}<br>CV/OOF RMSE %{y:.4f}<extra></extra>",
+                    )
+                )
+            fig.update_layout(
+                title="Model comparison: held-out test RMSE (bars) and cross-validated RMSE (diamonds)",
+                xaxis_title="Model (ordered by CV/OOF RMSE, then test RMSE)", yaxis_title="RMSE (lower is better)",
+                barmode="group", height=560, legend=dict(orientation="h", y=-0.35), margin=dict(b=200),
+            )
+            fig.update_xaxes(tickangle=-35)
+            return fig
+
+        def _report_prediction_payloads():
+            payloads = {}
+            y_train = np.asarray(STATE.get("y_train", []), dtype=float)
+            y_test = np.asarray(STATE.get("y_test", []), dtype=float)
+            smiles_train = [str(item) for item in list(STATE.get("smiles_train", []))]
+            smiles_test = [str(item) for item in list(STATE.get("smiles_test", []))]
+            sources = [("", STATE.get("traditional_predictions", {})), ("Tuned ", STATE.get("tuned_traditional_predictions", {}))]
+            sources += [("", STATE.get("deep_predictions", {})), ("", STATE.get("unimol_predictions", {}))]
+            for prefix, source in sources:
+                if not isinstance(source, dict):
+                    continue
+                for model_name, payload in source.items():
+                    if not isinstance(payload, dict) or "test" not in payload:
+                        continue
+                    try:
+                        test_pred = np.asarray(payload["test"], dtype=float).reshape(-1)
+                        train_pred = np.asarray(payload.get("train", []), dtype=float).reshape(-1)
+                        test_obs = np.asarray(payload.get("test_observed", y_test), dtype=float).reshape(-1)
+                        train_obs = np.asarray(payload.get("train_observed", y_train), dtype=float).reshape(-1)
+                    except Exception:
+                        continue
+                    if len(test_pred) != len(test_obs):
+                        continue
+                    payloads[f"{prefix}{model_name}"] = {
+                        "train_pred": train_pred if len(train_pred) == len(train_obs) else np.array([]),
+                        "train_obs": train_obs if len(train_pred) == len(train_obs) else np.array([]),
+                        "test_pred": test_pred,
+                        "test_obs": test_obs,
+                        "train_smiles": smiles_train if len(smiles_train) == len(train_obs) else [""] * len(train_obs),
+                        "test_smiles": smiles_test if len(smiles_test) == len(test_obs) else [""] * len(test_obs),
+                    }
+            return payloads
+
+        def _report_observed_predicted_figure(results, payloads, max_models=12):
+            if not payloads:
+                return None
+            order = []
+            if not results.empty:
+                ranked = results.assign(_order=results["Validation RMSE"].fillna(np.inf)).sort_values(["_order", "Test RMSE"])
+                order = [name for name in ranked["Model"].astype(str) if name in payloads]
+            order += [name for name in payloads if name not in order]
+            selection = STATE.get("prediction_model_selection") or {}
+            chosen = str(selection.get("model", ""))
+            if chosen in order:
+                order.remove(chosen)
+                order.insert(0, chosen)
+            order = order[: int(max_models)]
+            all_values = np.concatenate(
+                [np.concatenate([payloads[name]["test_obs"], payloads[name]["test_pred"], payloads[name]["train_obs"], payloads[name]["train_pred"]]) for name in order]
+            )
+            all_values = all_values[np.isfinite(all_values)]
+            low, high = float(all_values.min()), float(all_values.max())
+            fig = _go.Figure()
+            fig.add_trace(_go.Scatter(x=[low, high], y=[low, high], mode="lines", name="1:1", line=dict(dash="dash", color="#444")))
+            for index, name in enumerate(order):
+                payload = payloads[name]
+                visible = index == 0
+                fig.add_trace(
+                    _go.Scatter(
+                        x=payload["train_obs"], y=payload["train_pred"], mode="markers", name="Train", visible=visible,
+                        marker=dict(color="#1f77b4", opacity=0.5), text=payload["train_smiles"],
+                        hovertemplate="%{text}<br>observed %{x:.3f}<br>predicted %{y:.3f}<extra>Train</extra>",
+                    )
+                )
+                fig.add_trace(
+                    _go.Scatter(
+                        x=payload["test_obs"], y=payload["test_pred"], mode="markers", name="Test", visible=visible,
+                        marker=dict(color="#d62728", opacity=0.75), text=payload["test_smiles"],
+                        hovertemplate="%{text}<br>observed %{x:.3f}<br>predicted %{y:.3f}<extra>Test</extra>",
+                    )
+                )
+            buttons = []
+            for index, name in enumerate(order):
+                visibility = [True] + [False] * (2 * len(order))
+                visibility[1 + 2 * index] = True
+                visibility[2 + 2 * index] = True
+                buttons.append(dict(label=name[:60], method="update", args=[{"visible": visibility}, {"title": f"Observed vs predicted: {name}"}]))
+            fig.update_layout(
+                title=f"Observed vs predicted: {order[0]}",
+                xaxis_title="Observed", yaxis_title="Predicted", height=620,
+                updatemenus=[dict(buttons=buttons, direction="down", x=1.0, xanchor="right", y=1.15, yanchor="top")],
+            )
+            fig.update_yaxes(scaleanchor="x", scaleratio=1)
+            return fig
+
+        best_summary_df = _report_best_model_summary()
+        sections.append(
+            _report_section(
+                "Best Available Model Snapshot",
+                _report_table_html(best_summary_df, max_rows=20)
+                + "<p class='muted'>This table uses the top row from each completed model-family table. "
+                "For RMSE/MAE-style metrics, lower values are better.</p>",
+            )
+        )
+        prediction_selection = STATE.get("prediction_model_selection")
+        if isinstance(prediction_selection, dict) and prediction_selection:
+            sections.append(
+                _report_section(
+                    "Model Used For New Predictions (9A)",
+                    _report_key_value_table([(key.replace("_", " ").capitalize(), value) for key, value in prediction_selection.items()])
+                    + "<p class='muted'>9A chooses by a validation score from the training split (CV RMSE, or OOF RMSE for ensembles), "
+                    "so this model's test RMSE is an honest estimate. Choosing by test RMSE would make it optimistic.</p>",
+                )
+            )
+
+        figure_parts = []
+        if _report_plotly_ok:
+            report_results = _report_result_frames()
+            generated = [
+                _report_model_comparison_figure(report_results) if not report_results.empty else None,
+                _report_observed_predicted_figure(report_results, _report_prediction_payloads()),
+            ]
+            for generated_fig in generated:
+                if generated_fig is not None:
+                    figure_parts.append(_report_plotly_div(generated_fig))
+            session_figures = list(STATE.get("report_figures", {}).values())
+            session_images = list(STATE.get("report_images", {}).values())
+            block_order = [block["title"] for block in QSARENA_NOTEBOOK_BLOCKS] if "QSARENA_NOTEBOOK_BLOCKS" in globals() else []
+
+            def _block_rank(name):
+                return block_order.index(name) if name in block_order else len(block_order)
+
+            blocks_with_figures = sorted({item["block"] for item in session_figures + session_images}, key=_block_rank)
+            for block_name in blocks_with_figures:
+                parts = []
+                for item in session_figures:
+                    if item["block"] == block_name:
+                        try:
+                            parts.append(f"<h3>{_report_escape(item['title'])}</h3>" + _report_plotly_div(_pio.from_json(item["json"])))
+                        except Exception as exc:
+                            parts.append(f"<p class='muted'>Could not render {_report_escape(item['title'])}: {_report_escape(exc)}</p>")
+                for item in session_images:
+                    if item["block"] == block_name:
+                        parts.append(
+                            f"<h3>{_report_escape(item['title'])} <span class='muted'>(static image)</span></h3>"
+                            f"<img alt='{_report_escape(item['title'])}' src='data:image/png;base64,{item['png_base64']}' style='max-width:100%;'>"
+                        )
+                figure_parts.append(_report_details(f"Figures from step {_report_escape(block_name)} ({len(parts)})", "".join(parts)))
+        else:
+            figure_parts.append("<p class='muted'>Plotly is not installed, so interactive figures could not be embedded.</p>")
+        sections.append(
+            _report_section(
+                "Interactive Figures",
+                "<p class='muted'>Hover for values and SMILES, drag to zoom, double-click to reset. Use the menu on the "
+                "observed-vs-predicted plot to switch models. Figures shown during the notebook session are grouped by step below; "
+                "matplotlib figures are included as static images.</p>"
+                + "".join(figure_parts),
+            )
+        )
+
+        if include_model_result_tables:
+            model_tables = [
+                ("Conventional ML Results", STATE.get("traditional_results")),
+                ("Tuned Conventional ML Results", STATE.get("tuned_traditional_results")),
+                ("Deep / Pretrained Model Results", STATE.get("deep_results")),
+                ("Uni-Mol Results", STATE.get("unimol_results")),
+                ("Chemprop v2 Results", STATE.get("chemprop_v2_results")),
+                ("Ensemble Results", STATE.get("ensemble_results")),
+            ]
+            for title, frame in model_tables:
+                if isinstance(frame, pd.DataFrame) and not frame.empty:
+                    sections.append(_report_section(title, _report_table_html(frame, max_rows=max_html_report_table_rows)))
+        else:
+            sections.append(_report_section("Model Result Tables", "<p class='muted'>Model tables were excluded by user choice.</p>"))
+
+        if include_prediction_outputs:
+            prediction_frame = None
+            prediction_title = "Prediction Results"
+            if isinstance(STATE.get("latest_prediction_results_with_ad"), pd.DataFrame):
+                prediction_frame = STATE["latest_prediction_results_with_ad"]
+                prediction_title = "Prediction Results With Applicability-Domain Columns"
+            elif isinstance(STATE.get("latest_prediction_results"), pd.DataFrame):
+                prediction_frame = STATE["latest_prediction_results"]
+            if isinstance(prediction_frame, pd.DataFrame) and not prediction_frame.empty:
+                sections.append(_report_section(prediction_title, _report_table_html(prediction_frame, max_rows=max_html_report_table_rows)))
+            else:
+                sections.append(_report_section("Prediction Results", "<p class='muted'>No prediction table is available. Run block 9A first if you need one.</p>"))
+
+        if include_applicability_domain_outputs:
+            ad_frame = STATE.get("latest_prediction_results_with_ad")
+            if isinstance(ad_frame, pd.DataFrame) and not ad_frame.empty:
+                ad_columns = [col for col in ad_frame.columns if "ad_" in str(col).lower() or "mastml_" in str(col).lower()]
+                ad_summary_parts = []
+                for concern_col in ["ad_consensus_concern", "mastml_overall_concern"]:
+                    if concern_col in ad_frame.columns:
+                        counts = ad_frame[concern_col].astype(str).value_counts(dropna=False).rename_axis("Concern").reset_index(name="Count")
+                        ad_summary_parts.append(f"<h3>{_report_escape(concern_col)}</h3>" + _report_table_html(counts, max_rows=20))
+                if ad_columns:
+                    ad_summary_parts.append(
+                        "<h3>Applicability-domain columns</h3>"
+                        + _report_table_html(ad_frame[ad_columns].copy(), max_rows=max_html_report_table_rows)
+                    )
+                sections.append(_report_section("Applicability Domain Summary", "".join(ad_summary_parts) or "<p class='muted'>No AD columns found.</p>"))
+            else:
+                sections.append(_report_section("Applicability Domain Summary", "<p class='muted'>No applicability-domain results are available. Run block 9D first if you need them.</p>"))
+
+        reproducibility_parts = [
+            "<p>This record lists every choice the notebook made, so the run can be repeated exactly: the option values each "
+            "step ran with (next to the default and the benchmark evidence for that default), the decisions the code made "
+            "automatically, fingerprints of the data and split, and the software versions. Click a heading to expand it.</p>"
+        ]
+        legend = globals().get("QSARENA_DEFAULTS_LEGEND", [])
+        if legend:
+            reproducibility_parts.append(
+                _report_details(
+                    "How to read the Status column",
+                    "<table class='kv-table'>"
+                    + "".join(f"<tr><th>{_report_escape(status)}</th><td>{_report_escape(meaning)}</td></tr>" for status, meaning in legend)
+                    + "</table><p class='muted'>The benchmark is the QSARena 44-dataset benchmark: 22 regression and 22 classification "
+                    "datasets run under one fixed configuration with no per-dataset tuning.</p>",
+                )
+            )
+
+        widget_log = STATE.get("widget_log", {})
+        step_parts = []
+        not_run = []
+        for block in globals().get("QSARENA_NOTEBOOK_BLOCKS", []):
+            title = block["title"]
+            entry = widget_log.get(title)
+            if entry is None:
+                not_run.append(title)
+                continue
+            values = entry.get("values", {})
+            rows = []
+            changed = 0
+            for option, meta in block.get("options", {}).items():
+                used = values.get(option, "(not recorded)")
+                is_changed = option in values and used != meta.get("default")
+                changed += int(is_changed)
+                row_class = " class='changed'" if is_changed else ""
+                rows.append(
+                    f"<tr{row_class}><td><code>{_report_escape(option)}</code></td><td>{_report_escape(used)}</td>"
+                    f"<td>{_report_escape(meta.get('default'))}</td><td>{_report_escape(meta.get('benchmark'))}</td>"
+                    f"<td><b>{_report_escape(meta.get('status'))}</b></td><td>{_report_escape(meta.get('why'))}</td></tr>"
+                )
+            body = f"<p>{_report_escape(block.get('summary', ''))}</p>" if block.get("summary") else ""
+            body += f"<p class='muted'>Last run {_report_escape(entry.get('recorded_at'))} (step run #{_report_escape(entry.get('run_number'))} of this session).</p>"
+            if rows:
+                body += (
+                    "<table><tr><th>Option</th><th>Value used</th><th>Default</th><th>Benchmark</th><th>Status</th><th>Why this default</th></tr>"
+                    + "".join(rows)
+                    + "</table><p class='muted'>Highlighted rows were changed from the default.</p>"
+                )
+            else:
+                body += "<p class='muted'>This step has no options.</p>"
+            label = f"{_report_escape(title)}"
+            if rows:
+                label += f" <span class='muted'>({len(rows)} option(s), {changed} changed from default)</span>"
+            step_parts.append(_report_details(label, body))
+        if not_run:
+            step_parts.append(
+                _report_details(
+                    f"Steps not run in this session ({len(not_run)})",
+                    "<ul>" + "".join(f"<li>{_report_escape(title)}</li>" for title in not_run) + "</ul>",
+                )
+            )
+        reproducibility_parts.append("<h3>Choices made at each step</h3>" + ("".join(step_parts) or "<p class='muted'>No steps recorded.</p>"))
+
+        automatic_keys = [
+            ("Target transform", ["target_transform_label", "target_transform"]),
+            ("Train/test split", ["model_split_strategy", "model_test_fraction", "model_split_random_seed", "split_strategy"]),
+            ("Molecular features", ["feature_builder_config"]),
+            ("Feature selection settings", ["feature_selection_config"]),
+            ("Feature selection outcome", ["traditional_train_only_feature_selector"]),
+            ("Conventional-model features per model", ["traditional_model_feature_columns"]),
+            ("Model used for new predictions", ["prediction_model_selection"]),
+        ]
+        automatic_parts = []
+        for label, keys in automatic_keys:
+            found = {key: _report_jsonable(STATE[key]) for key in keys if key in STATE}
+            if found:
+                if label == "Conventional-model features per model":
+                    found = {key: {model: f"{len(columns)} columns" for model, columns in value.items()} if isinstance(value, dict) else value for key, value in found.items()}
+                automatic_parts.append(_report_details(_report_escape(label), _report_pre(found)))
+        skipped_types = (pd.DataFrame, pd.Series, np.ndarray)
+        excluded_keys = {"widget_log", "report_figures", "report_images", "latest_run_yaml_text"}
+        state_snapshot = {}
+        for key, value in STATE.items():
+            if key in excluded_keys or isinstance(value, skipped_types):
+                continue
+            if isinstance(value, (bool, int, float, str)) or value is None:
+                state_snapshot[key] = _report_jsonable(value)
+            elif isinstance(value, (dict, list, tuple)):
+                try:
+                    text = _json.dumps(_report_jsonable(value), default=str)
+                except Exception:
+                    continue
+                if len(text) <= 50000:
+                    state_snapshot[key] = _report_jsonable(value)
+        automatic_parts.append(
+            _report_details(
+                f"All recorded settings and decisions ({len(state_snapshot)} entries, JSON)",
+                "<p class='muted'>Every small setting, summary and decision held in the notebook state when the report was written. "
+                "Large tables, arrays and fitted models are omitted; they are in the result tables above.</p>" + _report_pre(state_snapshot, limit=400000),
+            )
+        )
+        reproducibility_parts.append("<h3>Decisions made automatically</h3>" + "".join(automatic_parts))
+
+        fingerprint_rows = []
+
+        def _report_sha256_of(values):
+            digest = _hashlib.sha256()
+            for item in values:
+                digest.update(str(item).encode("utf-8"))
+                digest.update(b"|")
+            return digest.hexdigest()
+
+        if isinstance(cleaned_df, pd.DataFrame):
+            fingerprint_rows.append(("Curated dataset (all columns, CSV) SHA-256", _hashlib.sha256(cleaned_df.to_csv(index=False).encode("utf-8")).hexdigest()))
+            fingerprint_rows.append(("Curated dataset shape", f"{cleaned_df.shape[0]:,} rows x {cleaned_df.shape[1]:,} columns"))
+        for label, key in [("Training SMILES SHA-256 (in order)", "smiles_train"), ("Test SMILES SHA-256 (in order)", "smiles_test")]:
+            if key in STATE:
+                fingerprint_rows.append((label, _report_sha256_of(list(STATE[key]))))
+        for label, key in [("Training targets SHA-256", "y_train"), ("Test targets SHA-256", "y_test")]:
+            if key in STATE:
+                fingerprint_rows.append((label, _report_sha256_of([f"{float(value):.10g}" for value in np.asarray(STATE[key], dtype=float)])))
+        reproducibility_parts.append(
+            "<h3>Data and split fingerprints</h3>"
+            + _report_details(
+                "SHA-256 fingerprints (match these to confirm a rerun used identical data and an identical split)",
+                _report_key_value_table(fingerprint_rows) if fingerprint_rows else "<p class='muted'>No dataset loaded.</p>",
+            )
+        )
+
+        version_rows = [("Python", _platform.python_version()), ("Platform", _platform.platform())]
+        try:
+            from importlib import metadata as _metadata
+        except Exception:
+            _metadata = None
+        for package_name in [
+            "numpy", "pandas", "scikit-learn", "rdkit", "xgboost", "lightgbm", "catboost", "torch", "tensorflow",
+            "chemml", "tabpfn", "tabpfn-client", "chemprop", "unimol_tools", "dgl", "dgllife", "molfeat", "mastml",
+            "shap", "umap-learn", "plotly", "matplotlib",
+        ]:
+            version = ""
+            if _metadata is not None:
+                try:
+                    version = _metadata.version(package_name)
+                except Exception:
+                    version = ""
+            version_rows.append((package_name, version or "not installed"))
+        reproducibility_parts.append(
+            "<h3>Software environment</h3>"
+            + _report_details("Package versions used for this run", _report_key_value_table(version_rows))
+        )
+
+        run_yaml_text = STATE.get("latest_run_yaml_text")
+        if run_yaml_text:
+            run_yaml_body = (
+                "<p>Rerun these settings with <code>qsarena-benchmark --config run.yaml</code>, or load the file in step 0B "
+                "to set the notebook widgets.</p>" + _report_pre(run_yaml_text)
+            )
+        else:
+            run_yaml_body = "<p class='muted'>Run step 9E before 9F to include the exported run.yaml here.</p>"
+        reproducibility_parts.append("<h3>run.yaml</h3>" + _report_details("Exported run configuration", run_yaml_body))
+
+        reproducibility_parts.append(
+            "<h3>How to reproduce this run</h3>"
+            + _report_details(
+                "Steps",
+                "<ol>"
+                "<li>Open the same notebook version (QSARena tutorial notebook) and run step 0.</li>"
+                "<li>Load the run.yaml above in step 0B, or set each option to the <i>Value used</i> column above.</li>"
+                "<li>Load the same dataset in 1A and check the curated-dataset fingerprint matches.</li>"
+                "<li>Run the steps listed above in the same order. Seeds are recorded with each step, so the split fingerprints "
+                "should match exactly; GPU-trained models (Chemprop, Uni-Mol) can still differ slightly between hardware.</li>"
+                "<li>Install the package versions listed above if results differ.</li>"
+                "</ol>",
+            )
+        )
+        sections.append(_report_section("Reproducibility Record", "".join(reproducibility_parts)))
+
+        config_frame = pd.DataFrame(
+            [
+                {"Setting": "Report path", "Value": str(html_report_path)},
+                {"Setting": "Maximum table rows shown", "Value": int(max_html_report_table_rows)},
+                {"Setting": "Includes model result tables", "Value": bool(include_model_result_tables)},
+                {"Setting": "Includes prediction outputs", "Value": bool(include_prediction_outputs)},
+                {"Setting": "Includes AD outputs", "Value": bool(include_applicability_domain_outputs)},
+            ]
+        )
+        sections.append(_report_section("Report Export Settings", _report_table_html(config_frame, max_rows=20)))
+
+        report_css = '''
+        body { font-family: Arial, Helvetica, sans-serif; color: #1f2933; margin: 0; background: #f7f9fb; }
+        header { background: #174a7c; color: white; padding: 28px 36px; }
+        header h1 { margin: 0 0 8px 0; font-size: 28px; }
+        header p { margin: 0; opacity: 0.9; }
+        main { max-width: 1180px; margin: 0 auto; padding: 24px 24px 48px; }
+        section { background: white; border: 1px solid #d8e0e8; border-radius: 8px; padding: 18px 20px; margin: 0 0 18px; }
+        h2 { margin-top: 0; color: #174a7c; font-size: 21px; }
+        h3 { color: #315b7d; font-size: 16px; margin-bottom: 8px; }
+        table { border-collapse: collapse; width: 100%; margin: 8px 0 12px; font-size: 13px; }
+        th, td { border: 1px solid #d9e2ec; padding: 7px 9px; vertical-align: top; }
+        th { background: #eef4f8; text-align: left; }
+        .kv-table th { width: 230px; }
+        .report-table tr:nth-child(even) td { background: #fbfdff; }
+        .muted { color: #637381; font-size: 13px; }
+        footer { color: #637381; font-size: 12px; margin-top: 24px; }
+        details { border: 1px solid #d9e2ec; border-radius: 6px; margin: 8px 0; background: #fbfdff; }
+        details > summary { cursor: pointer; padding: 9px 12px; font-weight: bold; color: #174a7c; }
+        details[open] > summary { border-bottom: 1px solid #d9e2ec; }
+        .details-body { padding: 10px 14px; }
+        tr.changed td { background: #fff4d6 !important; }
+        pre { background: #f3f6f9; padding: 10px; overflow-x: auto; font-size: 12px; white-space: pre-wrap; }
+        code { background: #eef4f8; padding: 1px 4px; border-radius: 3px; }
+        '''
+        report_title_text = str(html_report_title).strip() or "QSARena Notebook Report"
+        report_html = (
+            "<!doctype html><html><head><meta charset='utf-8'>"
+            f"<title>{_report_escape(report_title_text)}</title>"
+            f"<style>{report_css}</style>"
+            + (f"<script type='text/javascript'>{_get_plotlyjs()}</script>" if _report_plotly_ok else "")
+            + "</head><body>"
+            f"<header><h1>{_report_escape(report_title_text)}</h1>"
+            "<p>Interactive, self-contained export from the QSARena notebook. It works offline; open it in any browser.</p></header>"
+            "<main>"
+            + "".join(sections)
+            + "<footer>Generated by QSARena. Re-run the report cell after changing models, predictions, or applicability-domain settings.</footer>"
+            + "</main></body></html>"
+        )
+
+        report_path_text = str(html_report_path).strip() or "qsarena_notebook_report.html"
+        report_path = resolve_output_path(report_path_text)
+        report_path.parent.mkdir(parents=True, exist_ok=True)
+        report_path.write_text(report_html, encoding="utf-8")
+        STATE["latest_html_report_path"] = str(report_path)
+
+        print(f"Wrote HTML report: {report_path}")
+        if RUNNING_IN_COLAB:
+            # A file:// link cannot reach the Colab VM from the browser. Clicking this link asks the
+            # kernel to send the file with google.colab.files.download instead.
+            try:
+                from google.colab import files as _colab_files
+                from google.colab import output as _colab_output
+
+                _report_download_path = str(report_path)
+                _colab_output.register_callback(
+                    "qsarena_download_html_report", lambda: _colab_files.download(_report_download_path)
+                )
+                _download_js = 'google.colab.kernel.invokeFunction("qsarena_download_html_report", [], {}); return false;'
+                display(
+                    HTML(
+                        "<p><b>HTML report ready:</b> "
+                        f"<a href='#' onclick='{_download_js}'>"
+                        f"download {_report_escape(report_path.name)}</a> "
+                        f"<span style='color:#637381'>(saved at {_report_escape(report_path)})</span></p>"
+                    )
+                )
+            except Exception as exc:
+                print(f"Could not create the download link ({type(exc).__name__}: {exc}); use the Files pane or Drive.")
+        else:
+            display(HTML(f"<p><b>HTML report ready:</b> <a href='{report_path.as_uri()}' target='_blank'>{_report_escape(report_path.name)}</a></p>"))
+        if RUNNING_IN_COLAB and download_html_report_in_colab:
+            try:
+                from google.colab import files
+                files.download(str(report_path))
+            except Exception as exc:
+                print(f"Colab download did not start automatically: {type(exc).__name__}: {exc}")
+                print("The report file was still written successfully; use the Files pane or Drive to download it.")
         """
     ),
     md(
@@ -14753,7 +15968,33 @@ cells += [
 ]
 # CELLS_END
 
+def _notebook_block_catalogue():
+    """Every titled cell in notebook order, with its options' defaults and benchmark evidence."""
+    blocks = []
+    flat = []
+    for cell in cells:
+        flat.extend(cell if isinstance(cell, list) else [cell])
+    for cell in flat:
+        if not isinstance(cell, NotebookCodeCell):
+            continue
+        _dedented, _lines, title, schema, _last, _indent = _extract_form_schema(cell.text)
+        if not title or title == "Local form":
+            continue
+        guidance = textwrap.dedent(BLOCK_GUIDANCE.get(title) or "")
+        summary_match = re.search(r"\*\*What this does\.\*\*\s*(.+)", guidance)
+        blocks.append(
+            {
+                "title": title,
+                "summary": summary_match.group(1).strip() if summary_match else "",
+                "options": default_evidence_records(title, schema),
+            }
+        )
+    return blocks
+
+
 def build_notebook(interface: str):
+    REGISTRY_FALLBACK_TOKENS["__NOTEBOOK_BLOCKS_FALLBACK__"] = repr(_notebook_block_catalogue())
+    REGISTRY_FALLBACK_TOKENS["__DEFAULTS_LEGEND_FALLBACK__"] = repr(DEFAULTS_LEGEND)
     rendered_cells = []
     for cell in cells:
         if isinstance(cell, NotebookCodeCell):
@@ -14773,10 +16014,16 @@ def build_notebook(interface: str):
         else:
             rendered_cells.append(_render_markdown_cell(cell, interface))
     name = OUT_PATHS[interface].name
+    # Colab only knows its stock "python3" runtime; any other kernelspec name triggers an
+    # "Unrecognized runtime" warning on open. The local notebook targets the conda env kernel.
+    if interface == "colab":
+        kernelspec = {"display_name": "Python 3", "language": "python", "name": "python3"}
+    else:
+        kernelspec = {"display_name": "QSARena (py311)", "language": "python", "name": "qsarena-py311"}
     return {
         "cells": rendered_cells,
         "metadata": {
-            "kernelspec": {"display_name": "QSARena (py311)", "language": "python", "name": "qsarena-py311"},
+            "kernelspec": kernelspec,
             "language_info": {"name": "python", "version": "3.11"},
             "colab": {"name": name, "provenance": [], "toc_visible": True},
         },

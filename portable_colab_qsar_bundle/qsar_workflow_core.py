@@ -1187,6 +1187,7 @@ def fill_oof_predictions(
     cache_root: Path | None = None,
     memory_cache: dict[Any, np.ndarray] | None = None,
     on_model_done: Callable[[str, np.ndarray], None] | None = None,
+    on_progress: Callable[[str, int], None] | None = None,
     log: Callable[..., None] | None = print,
     dataset_id: str = "",
 ) -> list[str]:
@@ -1194,8 +1195,46 @@ def fill_oof_predictions(
 
     Providers supply already-saved full-training OOF vectors. Otherwise refitters are called per
     fold. ``cache_root`` enables runner-style on-disk ``.npy`` fold caches; ``memory_cache`` enables
-    notebook-style in-memory full-vector caches.
+    notebook-style in-memory full-vector caches. ``on_progress(model_name, units)`` is called so that
+    every member reports exactly ``len(folds)`` units (one per fold, cached or skipped folds in one
+    step), which lets a caller drive a progress bar of ``len(payloads) * len(folds)`` units.
     """
+    kwargs = dict(
+        refitters=refitters, folds=folds, fold_signature=fold_signature, n_train=n_train, providers=providers,
+        cache_root=cache_root, memory_cache=memory_cache, on_model_done=on_model_done, log=log, dataset_id=dataset_id,
+    )
+    if on_progress is None:
+        return _fill_oof_predictions_impl(payloads, **kwargs)
+    notes: list[str] = []
+    for model_name, payload in payloads.items():
+        completed = [0]
+
+        def _fold_done(model_name=model_name, completed=completed):
+            completed[0] += 1
+            on_progress(str(model_name), 1)
+
+        notes.extend(_fill_oof_predictions_impl({model_name: payload}, on_fold_done=_fold_done, **kwargs))
+        remaining = len(folds) - completed[0]
+        if remaining > 0:
+            on_progress(str(model_name), remaining)
+    return notes
+
+
+def _fill_oof_predictions_impl(
+    payloads: dict[str, dict[str, Any]],
+    *,
+    refitters: dict[str, Callable[[np.ndarray, np.ndarray, Path | None], np.ndarray]],
+    folds: list[tuple[np.ndarray, np.ndarray]],
+    fold_signature: str,
+    n_train: int,
+    providers: dict[str, Callable[[], tuple[np.ndarray | None, str]]] | None = None,
+    cache_root: Path | None = None,
+    memory_cache: dict[Any, np.ndarray] | None = None,
+    on_model_done: Callable[[str, np.ndarray], None] | None = None,
+    on_fold_done: Callable[[], None] | None = None,
+    log: Callable[..., None] | None = print,
+    dataset_id: str = "",
+) -> list[str]:
     notes: list[str] = []
     for model_name, payload in payloads.items():
         if is_fusion_member(model_name, (payload or {}).get("workflow", "")):
@@ -1264,6 +1303,8 @@ def fill_oof_predictions(
                             flush=True,
                         )
                 oof_full[np.asarray(val_idx, dtype=int)] = values
+                if on_fold_done is not None:
+                    on_fold_done()
         except Exception as exc:
             notes.append(f"{model_name}: out-of-fold refit failed ({str(exc)[:200]})")
             continue
