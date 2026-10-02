@@ -54,6 +54,49 @@ def test_core_weighted_ensemble_uses_oof_error() -> None:
     assert any("out-of-fold" in note for note in build.notes)
 
 
+def test_core_clips_wild_member_predictions_to_training_range() -> None:
+    # One member extrapolates to -1800 on a single test molecule (seen with Chemprop on PODUAM);
+    # without clipping, even a small weight wrecks the ensemble.
+    rng = np.random.default_rng(1)
+    y = np.linspace(-11.0, -2.0, 40)
+    wild_test = y + rng.normal(0, 0.3, 40)
+    wild_test[3] = -1800.0
+    payloads = {
+        "good": _payload(y, y + rng.normal(0, 0.3, 40), y + rng.normal(0, 0.4, 40), y + rng.normal(0, 0.4, 40)),
+        "wild": _payload(y, y + rng.normal(0, 0.3, 40), y + rng.normal(0, 0.4, 40), wild_test),
+    }
+    kwargs = dict(
+        method="Weighted average (inverse train RMSE)",
+        task_type="regression",
+        primary_metric="rmse",
+        lower_is_better=True,
+        selection_split="oof",
+        drop_highly_correlated=False,
+    )
+    clipped = build_ensemble(payloads, **kwargs)
+    unclipped = build_ensemble(payloads, clip_to_train_range=False, **kwargs)
+    assert clipped.test_pred.min() >= y.min() - 1e-9
+    assert np.sqrt(np.mean((clipped.test_pred - y) ** 2)) < 2.0
+    assert np.sqrt(np.mean((unclipped.test_pred - y) ** 2)) > 50.0
+    assert any("clipped to the training target range" in note and "wild (" in note for note in clipped.notes)
+
+
+def test_core_clipping_leaves_classification_alone() -> None:
+    y = np.array([0.0, 1.0] * 10)
+    probs = np.clip(y * 0.8 + 0.1, 0, 1)
+    payloads = {"a": _payload(y, probs, probs, probs), "b": _payload(y, probs * 0.9, probs * 0.9, probs * 0.9)}
+    build = build_ensemble(
+        payloads,
+        method="Simple average",
+        task_type="classification",
+        primary_metric="roc_auc",
+        lower_is_better=False,
+        selection_split="oof",
+        drop_highly_correlated=False,
+    )
+    assert not any("clipped" in note for note in build.notes)
+
+
 def test_core_excludes_fusion_outputs_and_missing_oof() -> None:
     y = np.linspace(0.0, 1.0, 12)
     payloads = {

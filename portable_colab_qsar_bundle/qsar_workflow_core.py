@@ -1136,17 +1136,48 @@ def oof_fold_signature(folds: list[tuple[np.ndarray, np.ndarray]]) -> str:
     return digest.hexdigest()[:16]
 
 
+def rebuild_unimol_target_scaler(train_targets):
+    """Re-create unimol_tools' ``TargetScaler('auto', 'regression')`` from the training targets.
+
+    unimol_tools fits it on exactly these targets: log1p/expm1 when the targets are skewed
+    (|skew| > 5 or |excess kurtosis| > 20), otherwise a StandardScaler. It is deterministic, so a
+    missing ``target_scaler.ss`` (the files are gitignored) can be rebuilt exactly.
+    """
+    from sklearn.preprocessing import FunctionTransformer, StandardScaler
+
+    y = np.asarray(train_targets, dtype=float).reshape(-1, 1)
+    try:
+        from unimol_tools.data.datascaler import TargetScaler
+
+        skewed = bool(np.any(TargetScaler("auto", "regression").is_skewed(y)))
+    except ImportError:
+        from scipy.stats import kurtosis, skew
+
+        skewed = bool(np.any(np.abs(skew(y)) > 5.0) or np.any(np.abs(kurtosis(y)) > 20.0))
+    scaler = FunctionTransformer(func=np.log1p, inverse_func=np.expm1) if skewed else StandardScaler()
+    return scaler.fit(y)
+
+
 def load_unimol_saved_oof(
     model_dir: Path,
     *,
     n_train: int,
     reference_train_pred: np.ndarray | None = None,
+    train_targets: np.ndarray | None = None,
 ) -> tuple[np.ndarray | None, str]:
-    """Read Uni-Mol's saved internal-fold predictions from ``cv.data`` when usable."""
+    """Read Uni-Mol's saved internal-fold predictions from ``cv.data`` when usable.
+
+    Regression values in ``cv.data`` are on Uni-Mol's normalised target scale. Pass
+    ``train_targets`` for regression: without ``target_scaler.ss`` the scaler is rebuilt from them,
+    and the result is checked to be on the target scale. Without either, a regression vector cannot
+    be placed on the right scale and is rejected, never used as-is. Classification (probabilities)
+    needs no transform; leave ``train_targets`` as None.
+    """
     model_dir = Path(model_dir)
     cv_path = model_dir / "cv.data"
     if not cv_path.exists():
         return None, f"no cv.data in {model_dir}"
+    scale_note = ""
     try:
         import joblib
 
@@ -1156,10 +1187,13 @@ def load_unimol_saved_oof(
         elif raw.ndim != 1:
             return None, f"cv.data has unexpected shape {raw.shape}"
         scaler_path = model_dir / "target_scaler.ss"
-        if scaler_path.exists():
-            scaler = joblib.load(scaler_path)
-            if scaler is not None and hasattr(scaler, "inverse_transform"):
-                raw = np.asarray(scaler.inverse_transform(raw.reshape(-1, 1)), dtype=float)
+        scaler = joblib.load(scaler_path) if scaler_path.exists() else None
+        if (scaler is None or not hasattr(scaler, "inverse_transform")) and train_targets is not None:
+            if len(np.asarray(train_targets).reshape(-1)) == int(n_train):
+                scaler = rebuild_unimol_target_scaler(train_targets)
+                scale_note = " (target scaler rebuilt from the training targets)"
+        if scaler is not None and hasattr(scaler, "inverse_transform"):
+            raw = np.asarray(scaler.inverse_transform(raw.reshape(-1, 1)), dtype=float)
         oof = np.asarray(raw, dtype=float).reshape(-1)
     except Exception as exc:
         return None, f"could not read {cv_path} ({str(exc)[:160]})"
@@ -1167,13 +1201,18 @@ def load_unimol_saved_oof(
         return None, f"cv.data has {len(oof)} rows for {int(n_train)} training molecules"
     if not np.isfinite(oof).all():
         return None, "cv.data contains non-finite values"
+    if train_targets is not None:
+        y = np.asarray(train_targets, dtype=float).reshape(-1)
+        spread = float(np.std(y)) or 1.0
+        if abs(float(np.mean(oof)) - float(np.mean(y))) > spread:
+            return None, "cv.data is not on the target scale (no target_scaler.ss and the rebuilt scaler did not fit)"
     if reference_train_pred is not None:
         reference = np.asarray(reference_train_pred, dtype=float).reshape(-1)
         if len(reference) == len(oof) and np.std(reference) > 0 and np.std(oof) > 0:
             corr = float(np.corrcoef(reference, oof)[0, 1])
             if not np.isfinite(corr) or corr < 0.3:
                 return None, f"cv.data does not line up with the training rows (correlation {corr:.2f})"
-    return oof, f"read saved Uni-Mol internal-fold predictions from {cv_path}"
+    return oof, f"read saved Uni-Mol internal-fold predictions from {cv_path}{scale_note}"
 
 
 def fill_oof_predictions(
@@ -1241,15 +1280,19 @@ def _fill_oof_predictions_impl(
             continue
         row_ids = np.asarray(payload.get("train_row_id", np.arange(len(payload["train"]))), dtype=int)
         existing = payload.get("oof")
+        provider = (providers or {}).get(str(model_name))
+        # Provider-backed members (Uni-Mol cv.data) are re-read every time: it costs nothing, and a
+        # previously saved vector may predate a loader fix (e.g. the missing-target-scaler bug that
+        # left regression OOF on Uni-Mol's normalised scale).
         if (
-            existing is not None
+            provider is None
+            and existing is not None
             and str(payload.get("oof_signature", "")) == fold_signature
             and len(np.asarray(existing).reshape(-1)) == len(row_ids)
         ):
             continue
         payload.pop("oof", None)
         payload.pop("oof_signature", None)
-        provider = (providers or {}).get(str(model_name))
         if provider is not None and not (len(row_ids) and (row_ids.min() < 0 or row_ids.max() >= int(n_train))):
             saved_oof, provider_note = provider()
             if saved_oof is not None and len(saved_oof) == int(n_train):
@@ -1385,6 +1428,7 @@ def build_ensemble(
     drop_highly_correlated: bool = True,
     max_correlation: float = 0.995,
     exclude_nonpositive_r2: bool = True,
+    clip_to_train_range: bool = True,
 ) -> EnsembleBuild:
     """Build stacking, weighted-average or simple-average ensembles from prediction payloads."""
     selection_split = str(selection_split or "oof").strip().lower()
@@ -1417,6 +1461,28 @@ def build_ensemble(
     aligned_test, _ = _ensemble_split_frame(working_payloads, "test")
     if aligned_train.empty or aligned_test.empty:
         raise ValueError("Selected models do not share molecules for ensemble alignment.")
+
+    clip_notes: list[str] = []
+    if bool(clip_to_train_range) and not is_classification:
+        # A member that extrapolates wildly on a few molecules (seen: Chemprop test predictions of
+        # -1803 on a target spanning -11..-1, and diverged tabular-NN fold models) can wreck an average
+        # or a stack even with a small weight. Bound every member to the training target range before
+        # combining. Label-free for the test split; base-model metrics elsewhere are unaffected.
+        observed = np.asarray(aligned_train["Observed"], dtype=float)
+        low, high = float(np.nanmin(observed)), float(np.nanmax(observed))
+        clipped = []
+        for model_name in prediction_columns:
+            n_out = 0
+            for frame in (aligned_train, aligned_test):
+                values = np.asarray(frame[model_name], dtype=float)
+                n_out += int(np.sum((values < low) | (values > high)))
+                frame[model_name] = np.clip(values, low, high)
+            if n_out:
+                clipped.append(f"{model_name} ({n_out})")
+        if clipped:
+            clip_notes.append(
+                f"Member predictions clipped to the training target range [{low:.4g}, {high:.4g}]: " + ", ".join(clipped)
+            )
 
     member_metrics: dict[str, dict[str, float]] = {}
     for model_name in prediction_columns:
@@ -1456,7 +1522,7 @@ def build_ensemble(
             )
         member_metrics[model_name] = split_metrics
 
-    member_filter_notes: list[str] = list(oof_exclusion_notes)
+    member_filter_notes: list[str] = list(oof_exclusion_notes) + clip_notes
     active_columns = list(prediction_columns)
     sel_r2_key = "Test R2" if selection_split == "test" else "Train R2"
     sel_primary_key = "Test Primary" if selection_split == "test" else "Train Primary"

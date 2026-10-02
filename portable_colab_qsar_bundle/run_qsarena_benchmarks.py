@@ -7278,6 +7278,7 @@ def load_unimol_saved_oof(
     *,
     n_train: int,
     reference_train_pred: np.ndarray | None = None,
+    train_targets: np.ndarray | None = None,
 ) -> tuple[np.ndarray | None, str]:
     """Out-of-fold training predictions that unimol_tools already saved, or ``(None, reason)``.
 
@@ -7295,6 +7296,7 @@ def load_unimol_saved_oof(
         model_dir,
         n_train=n_train,
         reference_train_pred=reference_train_pred,
+        train_targets=train_targets,
     )
 
 
@@ -10105,7 +10107,14 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
                 reference = prediction_payloads.get(_label, {}).get("train")
                 reasons = []
                 for candidate in _candidates:
-                    oof, reason = load_unimol_saved_oof(candidate, n_train=len(y_tr), reference_train_pred=reference)
+                    # Regression cv.data is on Uni-Mol's normalised scale; the targets let the scaler be
+                    # rebuilt when target_scaler.ss is absent (it is gitignored, so absent after a transfer).
+                    oof, reason = load_unimol_saved_oof(
+                        candidate,
+                        n_train=len(y_tr),
+                        reference_train_pred=reference,
+                        train_targets=None if current_dataset_task_type() == "classification" else y_tr,
+                    )
                     if oof is not None:
                         return oof, reason
                     reasons.append(reason)

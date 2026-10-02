@@ -208,6 +208,41 @@ def test_unimol_saved_oof_is_unscaled_back_to_the_target(tmp_path) -> None:
     assert "cv.data" in note
 
 
+def test_unimol_saved_oof_rebuilds_missing_scaler_from_training_targets(tmp_path) -> None:
+    # target_scaler.ss is gitignored, so after a machine transfer only cv.data exists. Regression
+    # OOF must then be unscaled with a scaler rebuilt from the training targets, not used as-is.
+    from sklearn.preprocessing import StandardScaler
+
+    y = np.linspace(-6.0, -1.0, 40)
+    oof_true = y + 0.2
+    scaled = StandardScaler().fit(y.reshape(-1, 1)).transform(oof_true.reshape(-1, 1))
+    model_dir = _write_unimol_dir(tmp_path / "noscaler", scaled)
+    oof, note = runner.load_unimol_saved_oof(model_dir, n_train=40, reference_train_pred=y, train_targets=y)
+    np.testing.assert_allclose(oof, oof_true, atol=1e-10)
+    assert "rebuilt" in note
+
+
+def test_unimol_saved_oof_rebuilds_log1p_scaler_for_skewed_targets(tmp_path) -> None:
+    y = np.concatenate([np.full(95, 1.0), np.array([1e3, 2e3, 5e3, 1e4, 3e4])])  # heavily skewed
+    oof_true = y * 1.1
+    model_dir = _write_unimol_dir(tmp_path / "skewed", np.log1p(oof_true))
+    oof, note = runner.load_unimol_saved_oof(model_dir, n_train=100, train_targets=y)
+    np.testing.assert_allclose(oof, oof_true, rtol=1e-9)
+    assert "rebuilt" in note
+
+
+def test_unimol_saved_oof_rejects_normalised_regression_without_scaler(tmp_path) -> None:
+    # A vector that stays far off the target scale (here: a stale scaler from another dataset) is
+    # refused, never silently used.
+    from sklearn.preprocessing import StandardScaler
+
+    y = np.linspace(100.0, 120.0, 30)
+    stale = StandardScaler().fit(np.linspace(-1.0, 1.0, 30).reshape(-1, 1))
+    model_dir = _write_unimol_dir(tmp_path / "bad", np.linspace(-1.0, 1.0, 30), scaler=stale)
+    oof, reason = runner.load_unimol_saved_oof(model_dir, n_train=30, train_targets=y)
+    assert oof is None and "target scale" in reason
+
+
 def test_unimol_saved_oof_classification_probabilities_pass_through(tmp_path) -> None:
     probs = np.linspace(0.05, 0.95, 12)
     model_dir = _write_unimol_dir(tmp_path / "cls", probs)
