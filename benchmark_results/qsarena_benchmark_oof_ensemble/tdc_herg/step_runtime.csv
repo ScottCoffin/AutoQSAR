@@ -1,5 +1,5 @@
 dataset,stage_index,total_stages,stage_label,step_type,model,workflow,started_at,started_epoch,status,ended_at,ended_epoch,duration_seconds
-tdc_herg,1,4,loading PyTDC Tox benchmark group: herg (official train_val/test split),load_dataset,,,2026-09-28 08:18:59 Pacific Daylight Time,1790608739.2701633,completed,2026-09-28 08:18:59 Pacific Daylight Time,1790608739.5092309,0.239
-tdc_herg,2,4,building molecular features (cached),feature_generation,,,2026-09-28 08:18:59 Pacific Daylight Time,1790608739.5092309,resumed_cache,2026-09-28 08:18:59 Pacific Daylight Time,1790608739.5232375,0.014
-tdc_herg,3,4,splitting data and selecting features (cached),feature_selection,,,2026-09-28 08:18:59 Pacific Daylight Time,1790608739.5232375,resumed_cache,2026-09-28 08:18:59 Pacific Daylight Time,1790608739.5573466,0.034
-tdc_herg,4,4,conventional model TabPFNClassifier (repairing missing OOF),model,TabPFNClassifier,conventional,2026-09-28 08:18:59 Pacific Daylight Time,1790608739.5573466,completed,2026-09-28 08:19:33 Pacific Daylight Time,1790608773.5338676,33.977
+tdc_herg,1,4,loading PyTDC Tox benchmark group: herg (official train_val/test split),load_dataset,,,2026-10-02 10:53:49 Pacific Daylight Time,1790963629.0643897,completed,2026-10-02 10:53:49 Pacific Daylight Time,1790963629.288084,0.224
+tdc_herg,2,4,building molecular features (cached),feature_generation,,,2026-10-02 10:53:49 Pacific Daylight Time,1790963629.2890954,resumed_cache,2026-10-02 10:53:49 Pacific Daylight Time,1790963629.2990701,0.01
+tdc_herg,3,4,splitting data and selecting features (cached),feature_selection,,,2026-10-02 10:53:49 Pacific Daylight Time,1790963629.2990701,resumed_cache,2026-10-02 10:53:49 Pacific Daylight Time,1790963629.3233602,0.024
+tdc_herg,4,4,ensemble (2 method(s)),model,Ensemble,ensemble,2026-10-02 10:53:49 Pacific Daylight Time,1790963629.3233602,completed,2026-10-02 10:53:50 Pacific Daylight Time,1790963630.3527877,1.029

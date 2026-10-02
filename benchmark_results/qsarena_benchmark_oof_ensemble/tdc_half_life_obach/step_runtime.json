@@ -7,12 +7,12 @@
     "step_type": "load_dataset",
     "model": "",
     "workflow": "",
-    "started_at": "2026-09-28 08:20:02 Pacific Daylight Time",
-    "started_epoch": 1790608802.3645957,
+    "started_at": "2026-10-02 10:53:53 Pacific Daylight Time",
+    "started_epoch": 1790963633.4565732,
     "status": "completed",
-    "ended_at": "2026-09-28 08:20:02 Pacific Daylight Time",
-    "ended_epoch": 1790608802.5596406,
-    "duration_seconds": 0.195
+    "ended_at": "2026-10-02 10:53:53 Pacific Daylight Time",
+    "ended_epoch": 1790963633.6384218,
+    "duration_seconds": 0.182
   },
   {
     "dataset": "tdc_half_life_obach",
@@ -22,11 +22,11 @@
     "step_type": "feature_generation",
     "model": "",
     "workflow": "",
-    "started_at": "2026-09-28 08:20:02 Pacific Daylight Time",
-    "started_epoch": 1790608802.5596406,
+    "started_at": "2026-10-02 10:53:53 Pacific Daylight Time",
+    "started_epoch": 1790963633.6384218,
     "status": "resumed_cache",
-    "ended_at": "2026-09-28 08:20:02 Pacific Daylight Time",
-    "ended_epoch": 1790608802.5684988,
+    "ended_at": "2026-10-02 10:53:53 Pacific Daylight Time",
+    "ended_epoch": 1790963633.647437,
     "duration_seconds": 0.009
   },
   {
@@ -37,26 +37,26 @@
     "step_type": "feature_selection",
     "model": "",
     "workflow": "",
-    "started_at": "2026-09-28 08:20:02 Pacific Daylight Time",
-    "started_epoch": 1790608802.5684988,
+    "started_at": "2026-10-02 10:53:53 Pacific Daylight Time",
+    "started_epoch": 1790963633.647437,
     "status": "resumed_cache",
-    "ended_at": "2026-09-28 08:20:02 Pacific Daylight Time",
-    "ended_epoch": 1790608802.5971358,
-    "duration_seconds": 0.029
+    "ended_at": "2026-10-02 10:53:53 Pacific Daylight Time",
+    "ended_epoch": 1790963633.6713645,
+    "duration_seconds": 0.024
   },
   {
     "dataset": "tdc_half_life_obach",
     "stage_index": 4,
     "total_stages": 4,
-    "stage_label": "conventional model TabPFNRegressor (repairing missing OOF)",
+    "stage_label": "ensemble (2 method(s))",
     "step_type": "model",
-    "model": "TabPFNRegressor",
-    "workflow": "conventional",
-    "started_at": "2026-09-28 08:20:02 Pacific Daylight Time",
-    "started_epoch": 1790608802.5971358,
+    "model": "Ensemble",
+    "workflow": "ensemble",
+    "started_at": "2026-10-02 10:53:53 Pacific Daylight Time",
+    "started_epoch": 1790963633.6713645,
     "status": "completed",
-    "ended_at": "2026-09-28 08:20:33 Pacific Daylight Time",
-    "ended_epoch": 1790608833.1798801,
-    "duration_seconds": 30.583
+    "ended_at": "2026-10-02 10:54:03 Pacific Daylight Time",
+    "ended_epoch": 1790963643.2559688,
+    "duration_seconds": 9.585
   }
 ]

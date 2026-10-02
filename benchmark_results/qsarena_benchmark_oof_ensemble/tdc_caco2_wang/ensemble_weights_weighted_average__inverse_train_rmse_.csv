@@ -1,16 +1,23 @@
 Model,Weight,Workflow
-ElasticNetCV,0.08047678719352752,conventional
-SVR,0.07071748706331886,conventional
-Random forest,0.06672088654949036,conventional
-Extra trees,0.06699138419980208,conventional
-HistGradientBoosting,0.06963298897527902,conventional
-"Voting Regressor (KNN, SVM)",0.07084566596674466,conventional
-AdaBoost,0.05573872790154578,conventional
-Tabular MLP,0.04645229972883245,conventional
-Tabular CNN,0.04230242960725234,conventional
-XGBoost,0.07115940044975316,conventional
-CatBoost,0.07275590682482018,conventional
-MapLight CatBoost (Strict Parity),0.06637868342914555,conventional
-ChemML MLP (PyTorch),0.07676200242437312,ChemML deep learning
-ChemML MLP (TensorFlow),0.07720095547240485,ChemML deep learning
-"MapLight + GNN (CatBoost, Strict Parity)",0.06586439421371013,MapLight + GNN
+ElasticNetCV,0.055819680887961985,conventional
+SVR,0.04905051131800796,conventional
+Random forest,0.046278420469225735,conventional
+Extra trees,0.04646604093778438,conventional
+HistGradientBoosting,0.04829829022035885,conventional
+"Voting Regressor (KNN, SVM)",0.04913941776836849,conventional
+AdaBoost,0.03866106132049294,conventional
+Tabular MLP,0.04092778740393184,conventional
+Tabular CNN,0.029515830533035733,conventional
+XGBoost,0.049357027831292234,conventional
+CatBoost,0.05046438411997625,conventional
+MapLight CatBoost (Strict Parity),0.04604106421231432,conventional
+ChemML MLP (PyTorch),0.05324414868890473,ChemML deep learning
+ChemML MLP (TensorFlow),0.053548565324903756,ChemML deep learning
+Uni-Mol V1,0.04035933263283609,Uni-Mol
+Uni-Mol V2 (84m),0.04177610767308975,Uni-Mol
+"MapLight + GNN (CatBoost, Strict Parity)",0.04568434694152304,MapLight + GNN
+"Chemprop v2 (D-MPNN, ensemble=3)",0.038780543730284965,Chemprop v2
+"Chemprop v2 (CMPNN, ensemble=3)",0.03734618699006917,Chemprop v2
+"Chemprop v2 (AttentiveFP, ensemble=3)",0.04187896097991848,Chemprop v2
+"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",0.057753629892183564,Chemprop v2
+TabPFNRegressor,0.03960866012353576,conventional

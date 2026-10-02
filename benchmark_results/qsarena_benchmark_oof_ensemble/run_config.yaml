@@ -1,14 +1,14 @@
 # Resolved configuration of this run (qsarena-benchmark --config run_config.yaml reproduces it).
 run:
   mode: auto
-  output_dir: "C:\\Users\\Scott.Coffin\\OneDrive - California OEHHA\\R_new\\AutoQSAR\\benchmark_results\\qsarena_benchmark_oof_ensemble"
+  output_dir: "C:\\Users\\scott\\AutoQSAR\\benchmark_results\\qsarena_benchmark_oof_ensemble"
   resume: true
   overwrite: false
   verbosity: normal
   dry_run: false
-  n_jobs: 12
+  n_jobs: 16
   parallel_datasets: 1
-  dataset_names: [tdc_skin_reaction, tdc_dili, chemml_cep_homo, chemml_organic_density, tdc_hia_hou, tdc_hydrationfreeenergy_freesolv, tdc_bioavailability_ma, freesolv_sampl, tdc_herg, tdc_cyp2d6_substrate_carbonmangels, tdc_half_life_obach, tdc_cyp2c9_substrate_carbonmangels, tdc_cyp3a4_substrate_carbonmangels, polaris_adme_fang_rppb_1, tdc_caco2_wang, esol_delaney, tdc_clearance_microsome_az, tdc_vdss_lombardo, tdc_clearance_hepatocyte_az, tdc_pgp_broccatelli, tdc_clintox, tdc_toxcast, polaris_adme_fang_hppb_1, poduam_pod_nc_std, tdc_bbb_martins, tdc_pampa_ncats, polaris_adme_fang_solu_1, poduam_pod_rd_std, polaris_adme_fang_perm_1, tdc_ppbr_az, polaris_adme_fang_rclint_1, lipophilicity, tdc_lipophilicity_astrazeneca, tdc_tox21, tdc_ames, tdc_ld50_zhu, tdc_solubility_aqsoldb]
+  dataset_names: [chemml_cep_homo, chemml_organic_density, esol_delaney, freesolv_sampl, lipophilicity, poduam_pod_nc_std, poduam_pod_rd_std, polaris_adme_fang_hppb_1, polaris_adme_fang_perm_1, polaris_adme_fang_rclint_1, polaris_adme_fang_rppb_1, polaris_adme_fang_solu_1, tdc_ames, tdc_bbb_martins, tdc_bioavailability_ma, tdc_caco2_wang, tdc_carcinogens_lagunin, tdc_clearance_hepatocyte_az, tdc_clearance_microsome_az, tdc_clintox, tdc_cyp1a2_veith, tdc_cyp2c19_veith, tdc_cyp2c9_substrate_carbonmangels, tdc_cyp2c9_veith, tdc_cyp2d6_substrate_carbonmangels, tdc_cyp2d6_veith, tdc_cyp3a4_substrate_carbonmangels, tdc_cyp3a4_veith, tdc_dili, tdc_half_life_obach, tdc_herg, tdc_herg_karim, tdc_hia_hou, tdc_hydrationfreeenergy_freesolv, tdc_ld50_zhu, tdc_lipophilicity_astrazeneca, tdc_pampa_ncats, tdc_pgp_broccatelli, tdc_ppbr_az, tdc_skin_reaction, tdc_solubility_aqsoldb, tdc_tox21, tdc_toxcast, tdc_vdss_lombardo]
 input:
   path: null
   smiles_col: null
@@ -55,9 +55,9 @@ models:
     pretrained_3d: true
     maplight_gnn: true
     fusion: true
-    ensemble: false
+    ensemble: true
   disable_models: []
-  only_models: [TabPFNClassifier, TabPFNRegressor]
+  only_models: [Ensemble]
 ga_tuning:
   mode: "off"
   estimators: [elastic_net, catboost]
@@ -74,10 +74,10 @@ deep:
     batch_size: 32
     seed: 42
   unimol:
-    v1: "false"
-    v2: "false"
+    v1: "true"
+    v2: "true"
     v2_size: 84m
-    epochs: 10
+    epochs: 20
     lr: 0.0001
     batch_size: 32
     early_stopping_patience: 5
@@ -86,7 +86,7 @@ deep:
     tensorflow: true
     epochs: 80
   tabpfn: true
-  tabpfn_max_features: 40
+  tabpfn_max_features: 0
   cnn: true
 fusion:
   cfa_score: true
@@ -100,7 +100,7 @@ ensemble:
   oof_folds: 5
   oof_scope: all
   oof_allow_api_refits: false
-  oof_source_run: null
+  oof_source_run: benchmark_results\autoqsar_benchmark_20260623_153839
   exclude_negative_test_r2_members: true
   drop_correlated_members: true
   max_member_correlation: 0.995

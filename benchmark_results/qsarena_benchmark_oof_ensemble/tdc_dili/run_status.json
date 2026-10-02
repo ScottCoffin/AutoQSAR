@@ -2,9 +2,9 @@
   "status": "completed",
   "dataset": "tdc_dili",
   "source": "PyTDC Tox benchmark group: dili (official train_val/test split)",
-  "completed_at": "2026-09-28 08:15:18",
-  "elapsed_seconds": 33.25,
-  "n_metrics_rows": 45,
+  "completed_at": "2026-10-02 10:53:19",
+  "elapsed_seconds": 2.13,
+  "n_metrics_rows": 47,
   "n_stage_records": 4,
   "n_rows": 475,
   "task_type": "classification",
@@ -61,6 +61,6 @@
     "selected_model": "LogisticRegression",
     "notes": []
   },
-  "stage23_signature": "c2094ecd09178e1d6a78d58c8c4b0c5960ee2503cc31892fab2ed73fc165f4d8",
-  "resume_fingerprint": "638bedb85e6e50e4af9ab293"
+  "stage23_signature": "2e186b832d0dae67c88b5d535312fd7aa6195c24dfec3fce2b06fb64547894c9",
+  "resume_fingerprint": "5f45aa290ded30aed641580a"
 }

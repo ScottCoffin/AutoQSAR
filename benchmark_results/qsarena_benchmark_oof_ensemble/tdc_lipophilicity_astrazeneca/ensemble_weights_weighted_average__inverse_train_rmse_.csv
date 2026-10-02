@@ -1,16 +1,23 @@
 Model,Weight,Workflow
-ElasticNetCV,0.0805492203049941,conventional
-SVR,0.07241547606318308,conventional
-Random forest,0.06350995260609195,conventional
-Extra trees,0.06465884172451386,conventional
-HistGradientBoosting,0.07326028931226385,conventional
-"Voting Regressor (KNN, SVM)",0.06292108383545884,conventional
-AdaBoost,0.04779106350563446,conventional
-Tabular MLP,0.07004151131226552,conventional
-Tabular CNN,0.042350419557966375,conventional
-XGBoost,0.07221463823436891,conventional
-CatBoost,0.06850937477772329,conventional
-MapLight CatBoost (Strict Parity),0.06481953172866302,conventional
-ChemML MLP (PyTorch),0.07966777155034539,ChemML deep learning
-ChemML MLP (TensorFlow),0.07138516004712149,ChemML deep learning
-"MapLight + GNN (CatBoost, Strict Parity)",0.06590566543940586,MapLight + GNN
+ElasticNetCV,0.055840767294607574,conventional
+SVR,0.04972505018164677,conventional
+Random forest,0.04359682505465183,conventional
+Extra trees,0.04438548755316909,conventional
+HistGradientBoosting,0.05029000787340506,conventional
+"Voting Regressor (KNN, SVM)",0.043192592210507384,conventional
+AdaBoost,0.03280649015365579,conventional
+Tabular MLP,0.0481243473088834,conventional
+Tabular CNN,0.029071724299833002,conventional
+XGBoost,0.04957221380742711,conventional
+CatBoost,0.047028711315736084,conventional
+MapLight CatBoost (Strict Parity),0.04449579426434511,conventional
+ChemML MLP (PyTorch),0.055045956633012316,ChemML deep learning
+ChemML MLP (TensorFlow),0.049183746205647985,ChemML deep learning
+Uni-Mol V1,0.04651698418041808,Uni-Mol
+"MapLight + GNN (CatBoost, Strict Parity)",0.04524137790014006,MapLight + GNN
+"Chemprop v2 (D-MPNN, ensemble=3)",0.048813453413110025,Chemprop v2
+"Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",0.04442645457364648,Chemprop v2
+"Chemprop v2 (CMPNN, ensemble=3)",0.04532651530042371,Chemprop v2
+"Chemprop v2 (AttentiveFP, ensemble=3)",0.04509851391662821,Chemprop v2
+"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",0.055968420418003755,Chemprop v2
+TabPFNRegressor,0.026248566141101187,conventional

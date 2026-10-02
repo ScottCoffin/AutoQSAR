@@ -1,5 +1,5 @@
 dataset,stage_index,total_stages,stage_label,step_type,model,workflow,started_at,started_epoch,status,ended_at,ended_epoch,duration_seconds
-freesolv_sampl,1,4,loading MoleculeNet PhysChem benchmark: FreeSolv (SAMPL),load_dataset,,,2026-09-28 08:17:55 Pacific Daylight Time,1790608675.7696972,completed,2026-09-28 08:17:55 Pacific Daylight Time,1790608675.8729196,0.103
-freesolv_sampl,2,4,building molecular features (cached),feature_generation,,,2026-09-28 08:17:55 Pacific Daylight Time,1790608675.8729196,resumed_cache,2026-09-28 08:17:55 Pacific Daylight Time,1790608675.8844128,0.011
-freesolv_sampl,3,4,splitting data and selecting features (cached),feature_selection,,,2026-09-28 08:17:55 Pacific Daylight Time,1790608675.8844128,resumed_cache,2026-09-28 08:17:55 Pacific Daylight Time,1790608675.9197998,0.035
-freesolv_sampl,4,4,conventional model TabPFNRegressor (repairing missing OOF),model,TabPFNRegressor,conventional,2026-09-28 08:17:55 Pacific Daylight Time,1790608675.9197998,completed,2026-09-28 08:18:29 Pacific Daylight Time,1790608709.181479,33.262
+freesolv_sampl,1,4,loading MoleculeNet PhysChem benchmark: FreeSolv (SAMPL),load_dataset,,,2026-10-02 10:53:38 Pacific Daylight Time,1790963618.840648,completed,2026-10-02 10:53:38 Pacific Daylight Time,1790963618.9720936,0.131
+freesolv_sampl,2,4,building molecular features (cached),feature_generation,,,2026-10-02 10:53:38 Pacific Daylight Time,1790963618.9720936,resumed_cache,2026-10-02 10:53:38 Pacific Daylight Time,1790963618.986864,0.015
+freesolv_sampl,3,4,splitting data and selecting features (cached),feature_selection,,,2026-10-02 10:53:38 Pacific Daylight Time,1790963618.986864,resumed_cache,2026-10-02 10:53:39 Pacific Daylight Time,1790963619.0057633,0.019
+freesolv_sampl,4,4,ensemble (2 method(s)),model,Ensemble,ensemble,2026-10-02 10:53:39 Pacific Daylight Time,1790963619.0057633,completed,2026-10-02 10:53:43 Pacific Daylight Time,1790963623.536655,4.531

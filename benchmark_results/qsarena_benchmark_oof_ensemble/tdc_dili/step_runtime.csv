@@ -1,5 +1,5 @@
 dataset,stage_index,total_stages,stage_label,step_type,model,workflow,started_at,started_epoch,status,ended_at,ended_epoch,duration_seconds
-tdc_dili,1,4,loading PyTDC Tox benchmark group: dili (official train_val/test split),load_dataset,,,2026-09-28 08:14:45 Pacific Daylight Time,1790608485.373216,completed,2026-09-28 08:14:45 Pacific Daylight Time,1790608485.50896,0.136
-tdc_dili,2,4,building molecular features (cached),feature_generation,,,2026-09-28 08:14:45 Pacific Daylight Time,1790608485.50896,resumed_cache,2026-09-28 08:14:45 Pacific Daylight Time,1790608485.5186908,0.01
-tdc_dili,3,4,splitting data and selecting features (cached),feature_selection,,,2026-09-28 08:14:45 Pacific Daylight Time,1790608485.5186908,resumed_cache,2026-09-28 08:14:45 Pacific Daylight Time,1790608485.5462303,0.028
-tdc_dili,4,4,conventional model TabPFNClassifier (repairing missing OOF),model,TabPFNClassifier,conventional,2026-09-28 08:14:45 Pacific Daylight Time,1790608485.5462303,completed,2026-09-28 08:15:18 Pacific Daylight Time,1790608518.4287448,32.883
+tdc_dili,1,4,loading PyTDC Tox benchmark group: dili (official train_val/test split),load_dataset,,,2026-10-02 10:53:18 Pacific Daylight Time,1790963598.1311429,completed,2026-10-02 10:53:18 Pacific Daylight Time,1790963598.2860658,0.155
+tdc_dili,2,4,building molecular features (cached),feature_generation,,,2026-10-02 10:53:18 Pacific Daylight Time,1790963598.2860658,resumed_cache,2026-10-02 10:53:18 Pacific Daylight Time,1790963598.2970495,0.011
+tdc_dili,3,4,splitting data and selecting features (cached),feature_selection,,,2026-10-02 10:53:18 Pacific Daylight Time,1790963598.2970495,resumed_cache,2026-10-02 10:53:18 Pacific Daylight Time,1790963598.32496,0.028
+tdc_dili,4,4,ensemble (2 method(s)),model,Ensemble,ensemble,2026-10-02 10:53:18 Pacific Daylight Time,1790963598.32496,completed,2026-10-02 10:53:19 Pacific Daylight Time,1790963599.9314618,1.607

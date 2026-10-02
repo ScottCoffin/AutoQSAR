@@ -1,5 +1,5 @@
 dataset,stage_index,total_stages,stage_label,step_type,model,workflow,started_at,started_epoch,status,ended_at,ended_epoch,duration_seconds
-tdc_cyp2d6_veith,1,4,loading PyTDC ADME benchmark group: cyp2d6_veith (official train_val/test split),load_dataset,,,2026-09-27 20:28:17 Pacific Daylight Time,1790566097.979508,completed,2026-09-27 20:28:21 Pacific Daylight Time,1790566101.4658613,3.486
-tdc_cyp2d6_veith,2,4,building molecular features (cached),feature_generation,,,2026-09-27 20:28:21 Pacific Daylight Time,1790566101.4658613,resumed_cache,2026-09-27 20:28:21 Pacific Daylight Time,1790566101.5571208,0.091
-tdc_cyp2d6_veith,3,4,splitting data and selecting features (cached),feature_selection,,,2026-09-27 20:28:21 Pacific Daylight Time,1790566101.5571208,resumed_cache,2026-09-27 20:28:21 Pacific Daylight Time,1790566101.5891287,0.032
-tdc_cyp2d6_veith,4,4,ensemble (2 method(s)),model,Ensemble,ensemble,2026-09-27 20:28:21 Pacific Daylight Time,1790566101.5891287,completed,2026-09-27 20:28:27 Pacific Daylight Time,1790566107.8216438,6.233
+tdc_cyp2d6_veith,1,4,loading PyTDC ADME benchmark group: cyp2d6_veith (official train_val/test split),load_dataset,,,2026-10-02 11:34:24 Pacific Daylight Time,1790966064.0305398,completed,2026-10-02 11:34:27 Pacific Daylight Time,1790966067.8634226,3.833
+tdc_cyp2d6_veith,2,4,building molecular features (cached),feature_generation,,,2026-10-02 11:34:27 Pacific Daylight Time,1790966067.8634226,resumed_cache,2026-10-02 11:34:28 Pacific Daylight Time,1790966068.0473409,0.184
+tdc_cyp2d6_veith,3,4,splitting data and selecting features (cached),feature_selection,,,2026-10-02 11:34:28 Pacific Daylight Time,1790966068.0473409,resumed_cache,2026-10-02 11:34:28 Pacific Daylight Time,1790966068.0833735,0.036
+tdc_cyp2d6_veith,4,4,ensemble (2 method(s)),model,Ensemble,ensemble,2026-10-02 11:34:28 Pacific Daylight Time,1790966068.0833735,completed,2026-10-02 11:34:36 Pacific Daylight Time,1790966076.9030533,8.82

@@ -1,16 +1,24 @@
 Model,Weight,Workflow
-ElasticNetCV,0.12765554472527654,conventional
-SVR,0.04999780277320382,conventional
-Random forest,0.06719101471554995,conventional
-Extra trees,0.07713976874346094,conventional
-HistGradientBoosting,0.06921798541445477,conventional
-"Voting Regressor (KNN, SVM)",0.051738452464284754,conventional
-AdaBoost,0.0562472740547863,conventional
-Tabular MLP,0.05064413345599856,conventional
-Tabular CNN,0.03300712802278903,conventional
-XGBoost,0.07643949252528315,conventional
-CatBoost,0.08086286834044581,conventional
-MapLight CatBoost (Strict Parity),0.0650843305707999,conventional
-ChemML MLP (PyTorch),0.0699197829868774,ChemML deep learning
-ChemML MLP (TensorFlow),0.06610201695663742,ChemML deep learning
-"MapLight + GNN (CatBoost, Strict Parity)",0.05875240425015166,MapLight + GNN
+ElasticNetCV,0.06918331030092087,conventional
+SVR,0.025519685010790934,conventional
+Random forest,0.03882820370602047,conventional
+Extra trees,0.04912121251416202,conventional
+HistGradientBoosting,0.04061262499566813,conventional
+"Voting Regressor (KNN, SVM)",0.026604564316770676,conventional
+AdaBoost,0.03332266754955021,conventional
+Tabular MLP,0.0556445228437351,conventional
+Tabular CNN,0.028803696765714586,conventional
+XGBoost,0.04630773632519649,conventional
+CatBoost,0.047162534228070555,conventional
+MapLight CatBoost (Strict Parity),0.038705734275428595,conventional
+ChemML MLP (PyTorch),0.07251327219272055,ChemML deep learning
+ChemML MLP (TensorFlow),0.055853423299997776,ChemML deep learning
+Uni-Mol V1,0.03776517603114156,Uni-Mol
+"MapLight + GNN (CatBoost, Strict Parity)",0.03657804953456243,MapLight + GNN
+Uni-Mol V2 (84m),0.024442922151457058,Uni-Mol
+"Chemprop v2 (D-MPNN, ensemble=3)",0.034785453499299075,Chemprop v2
+"Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",0.04049524466460684,Chemprop v2
+"Chemprop v2 (CMPNN, ensemble=3)",0.033979248521947406,Chemprop v2
+"Chemprop v2 (AttentiveFP, ensemble=3)",0.04073870827204645,Chemprop v2
+"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",0.055406022493942234,Chemprop v2
+TabPFNRegressor,0.0676259865062499,conventional

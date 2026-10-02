@@ -2,9 +2,9 @@
   "status": "completed",
   "dataset": "tdc_pgp_broccatelli",
   "source": "PyTDC ADME benchmark group: pgp_broccatelli (official train_val/test split)",
-  "completed_at": "2026-09-28 08:26:50",
-  "elapsed_seconds": 112.754,
-  "n_metrics_rows": 42,
+  "completed_at": "2026-10-02 10:55:35",
+  "elapsed_seconds": 2.924,
+  "n_metrics_rows": 44,
   "n_stage_records": 4,
   "n_rows": 1218,
   "task_type": "classification",
@@ -57,6 +57,6 @@
     "selected_model": "LogisticRegression",
     "notes": []
   },
-  "stage23_signature": "30742e4ddaaf95b5b598c4067d6d06473a0b43136d36b7fa3b8c8b8feb3ee4d8",
-  "resume_fingerprint": "f98a3ec12ee5e8afcc2a22d7"
+  "stage23_signature": "c67b8335f85a1614f08e8aebd0937ecb601ecaee2a846ad5fa97c28ecb2d5aa4",
+  "resume_fingerprint": "b566bf5fb9b20d74513a73c2"
 }

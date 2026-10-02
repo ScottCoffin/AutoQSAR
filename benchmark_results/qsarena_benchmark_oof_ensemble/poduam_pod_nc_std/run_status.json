@@ -2,9 +2,9 @@
   "status": "completed",
   "dataset": "poduam_pod_nc_std",
   "source": "PODUAM benchmark: POD non-cancer standardized set (Aurisano et al., Nature Communications 2025)",
-  "completed_at": "2026-09-28 08:29:01",
-  "elapsed_seconds": 33.082,
-  "n_metrics_rows": 47,
+  "completed_at": "2026-10-02 10:56:20",
+  "elapsed_seconds": 16.031,
+  "n_metrics_rows": 49,
   "n_stage_records": 4,
   "n_rows": 1842,
   "task_type": "regression",
@@ -63,6 +63,6 @@
     "mae_in_domain": 0.5430315699699599,
     "mae_out_of_domain": 0.8084642980153096
   },
-  "stage23_signature": "5d9611cc33fd73769bb042732e51f04ea383a9504df378b7f0f47c4bcfa67334",
-  "resume_fingerprint": "1d258945f67db987b368e157"
+  "stage23_signature": "b6792fc8b8bde51b9b839c54190455025c306c1eb5169e15fa7b693852c61f16",
+  "resume_fingerprint": "369e6fdf529488fd49368cad"
 }

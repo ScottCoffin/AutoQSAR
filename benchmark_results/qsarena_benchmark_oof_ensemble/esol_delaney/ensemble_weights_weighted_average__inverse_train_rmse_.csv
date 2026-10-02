@@ -1,16 +1,23 @@
 Model,Weight,Workflow
-ElasticNetCV,0.08911165478256501,conventional
-SVR,0.05155970933380431,conventional
-Random forest,0.06572073468746811,conventional
-Extra trees,0.07100223038125292,conventional
-HistGradientBoosting,0.06631844476524079,conventional
-"Voting Regressor (KNN, SVM)",0.050031395041447733,conventional
-AdaBoost,0.054733401489637706,conventional
-Tabular MLP,0.074037509894897,conventional
-Tabular CNN,0.045251503515387134,conventional
-XGBoost,0.06981751321304269,conventional
-CatBoost,0.07386987844722862,conventional
-MapLight CatBoost (Strict Parity),0.06811839606125758,conventional
-ChemML MLP (PyTorch),0.08156936863297157,ChemML deep learning
-ChemML MLP (TensorFlow),0.07351229016609043,ChemML deep learning
-"MapLight + GNN (CatBoost, Strict Parity)",0.06534596958770839,MapLight + GNN
+ElasticNetCV,0.06095581049070123,conventional
+SVR,0.031238555082597888,conventional
+Random forest,0.04374090142876045,conventional
+Extra trees,0.04642511529125915,conventional
+HistGradientBoosting,0.044230972386149016,conventional
+"Voting Regressor (KNN, SVM)",0.031939283485118854,conventional
+AdaBoost,0.03649890557228479,conventional
+Tabular MLP,0.04804425821404783,conventional
+Tabular CNN,0.027545369617080144,conventional
+XGBoost,0.04544090542039474,conventional
+CatBoost,0.04964912202163777,conventional
+MapLight CatBoost (Strict Parity),0.04605736849624106,conventional
+ChemML MLP (PyTorch),0.05468694344817642,ChemML deep learning
+ChemML MLP (TensorFlow),0.05179930828645153,ChemML deep learning
+Uni-Mol V1,0.04931501111912119,Uni-Mol
+Uni-Mol V2 (84m),0.04156909512402064,Uni-Mol
+"MapLight + GNN (CatBoost, Strict Parity)",0.04399205829624355,MapLight + GNN
+"Chemprop v2 (D-MPNN, ensemble=3)",0.04605727687421024,Chemprop v2
+"Chemprop v2 (CMPNN, ensemble=3)",0.041036239013466494,Chemprop v2
+"Chemprop v2 (AttentiveFP, ensemble=3)",0.0443525296316074,Chemprop v2
+"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",0.056783711688344916,Chemprop v2
+TabPFNRegressor,0.058641259012084605,conventional

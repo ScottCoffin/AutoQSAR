@@ -2,9 +2,9 @@
   "status": "completed",
   "dataset": "tdc_hydrationfreeenergy_freesolv",
   "source": "PyTDC ADME benchmark: hydrationfreeenergy_freesolv",
-  "completed_at": "2026-09-28 08:18:59",
-  "elapsed_seconds": 29.919,
-  "n_metrics_rows": 50,
+  "completed_at": "2026-10-02 10:53:48",
+  "elapsed_seconds": 5.296,
+  "n_metrics_rows": 52,
   "n_stage_records": 4,
   "n_rows": 642,
   "task_type": "regression",
@@ -65,6 +65,6 @@
     "mae_in_domain": 0.7762753593176602,
     "mae_out_of_domain": 1.2437193858623505
   },
-  "stage23_signature": "c02231a9df957de2bcce4d191783587f8839beb9706f76b44b05da4d8e473e77",
-  "resume_fingerprint": "a0bc5497476b303869b76f5f"
+  "stage23_signature": "f20c5415c279892a67ce17016d6f0f4f3b4d7b4270e4e05eba5d6d7dd915bd28",
+  "resume_fingerprint": "199621e0dbbcc69f0b44f077"
 }

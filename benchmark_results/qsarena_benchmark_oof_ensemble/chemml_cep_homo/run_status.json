@@ -2,9 +2,9 @@
   "status": "completed",
   "dataset": "chemml_cep_homo",
   "source": "ChemML bundled dataset: cep_homo",
-  "completed_at": "2026-09-28 08:15:52",
-  "elapsed_seconds": 34.294,
-  "n_metrics_rows": 64,
+  "completed_at": "2026-10-02 10:53:28",
+  "elapsed_seconds": 8.34,
+  "n_metrics_rows": 66,
   "n_stage_records": 4,
   "n_rows": 500,
   "task_type": "regression",
@@ -79,6 +79,6 @@
     "mae_in_domain": 0.07102611541748052,
     "mae_out_of_domain": 0.12714773368835458
   },
-  "stage23_signature": "707dd42cb557d85567e015ea0728940833ffeeff5c011c38ae5766f42693e06a",
-  "resume_fingerprint": "b67554b3cece3ce57514f6f2"
+  "stage23_signature": "3378b5664a9917292b438121f992f72d04292eaa6a068c1b6249b7862713fbf0",
+  "resume_fingerprint": "adee6e7ea93f095f9d2a7584"
 }

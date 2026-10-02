@@ -7,12 +7,12 @@
     "step_type": "load_dataset",
     "model": "",
     "workflow": "",
-    "started_at": "2026-09-27 20:27:48 Pacific Daylight Time",
-    "started_epoch": 1790566068.7289782,
+    "started_at": "2026-10-02 11:33:09 Pacific Daylight Time",
+    "started_epoch": 1790965989.5967848,
     "status": "completed",
-    "ended_at": "2026-09-27 20:27:52 Pacific Daylight Time",
-    "ended_epoch": 1790566072.13073,
-    "duration_seconds": 3.402
+    "ended_at": "2026-10-02 11:33:13 Pacific Daylight Time",
+    "ended_epoch": 1790965993.135683,
+    "duration_seconds": 3.539
   },
   {
     "dataset": "tdc_cyp1a2_veith",
@@ -22,12 +22,12 @@
     "step_type": "feature_generation",
     "model": "",
     "workflow": "",
-    "started_at": "2026-09-27 20:27:52 Pacific Daylight Time",
-    "started_epoch": 1790566072.13073,
+    "started_at": "2026-10-02 11:33:13 Pacific Daylight Time",
+    "started_epoch": 1790965993.135683,
     "status": "resumed_cache",
-    "ended_at": "2026-09-27 20:27:52 Pacific Daylight Time",
-    "ended_epoch": 1790566072.219095,
-    "duration_seconds": 0.088
+    "ended_at": "2026-10-02 11:33:13 Pacific Daylight Time",
+    "ended_epoch": 1790965993.2432816,
+    "duration_seconds": 0.108
   },
   {
     "dataset": "tdc_cyp1a2_veith",
@@ -37,12 +37,12 @@
     "step_type": "feature_selection",
     "model": "",
     "workflow": "",
-    "started_at": "2026-09-27 20:27:52 Pacific Daylight Time",
-    "started_epoch": 1790566072.219095,
+    "started_at": "2026-10-02 11:33:13 Pacific Daylight Time",
+    "started_epoch": 1790965993.244287,
     "status": "resumed_cache",
-    "ended_at": "2026-09-27 20:27:52 Pacific Daylight Time",
-    "ended_epoch": 1790566072.2503846,
-    "duration_seconds": 0.031
+    "ended_at": "2026-10-02 11:33:13 Pacific Daylight Time",
+    "ended_epoch": 1790965993.2812881,
+    "duration_seconds": 0.037
   },
   {
     "dataset": "tdc_cyp1a2_veith",
@@ -52,11 +52,11 @@
     "step_type": "model",
     "model": "Ensemble",
     "workflow": "ensemble",
-    "started_at": "2026-09-27 20:27:52 Pacific Daylight Time",
-    "started_epoch": 1790566072.2503846,
+    "started_at": "2026-10-02 11:33:13 Pacific Daylight Time",
+    "started_epoch": 1790965993.2812881,
     "status": "completed",
-    "ended_at": "2026-09-27 20:28:00 Pacific Daylight Time",
-    "ended_epoch": 1790566080.7887406,
-    "duration_seconds": 8.538
+    "ended_at": "2026-10-02 11:33:46 Pacific Daylight Time",
+    "ended_epoch": 1790966026.025889,
+    "duration_seconds": 32.745
   }
 ]

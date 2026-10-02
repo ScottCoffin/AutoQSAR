@@ -1,3 +1,9 @@
 Model,Weight,Workflow
-Uni-Mol V1,0.49052303911803746,Uni-Mol
-Uni-Mol V2 (84m),0.5094769608819625,Uni-Mol
+Uni-Mol V1,0.11863464346218977,Uni-Mol
+Uni-Mol V2 (84m),0.12321871306005507,Uni-Mol
+"Chemprop v2 (D-MPNN, ensemble=3)",0.12088295166318684,Chemprop v2
+"Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",0.1237815501359535,Chemprop v2
+"Chemprop v2 (CMPNN, ensemble=3)",0.12060002725330887,Chemprop v2
+"Chemprop v2 (AttentiveFP, ensemble=3)",0.12337956017181201,Chemprop v2
+"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",0.1355759747333427,Chemprop v2
+TabPFNClassifier,0.13392657952015116,conventional

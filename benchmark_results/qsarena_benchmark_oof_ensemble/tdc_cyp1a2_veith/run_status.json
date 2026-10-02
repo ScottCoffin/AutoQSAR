@@ -2,8 +2,8 @@
   "status": "completed",
   "dataset": "tdc_cyp1a2_veith",
   "source": "PyTDC ADME benchmark: cyp1a2_veith",
-  "completed_at": "2026-09-27 20:28:00",
-  "elapsed_seconds": 14.623,
+  "completed_at": "2026-10-02 11:33:46",
+  "elapsed_seconds": 38.542,
   "n_metrics_rows": 34,
   "n_stage_records": 4,
   "n_rows": 12579,
@@ -54,6 +54,6 @@
     "selected_model": "XGBoost",
     "notes": []
   },
-  "stage23_signature": "86a424ee9a1d8d7655331ad9cf7485482251628548c1a869e46ed12684da8b29",
-  "resume_fingerprint": "a1a5c19051f3c1674b7cc94c"
+  "stage23_signature": "2851ead239a5eddc9dcb693739d2858b8a2796ca9934c5883b3cbbfe03f13697",
+  "resume_fingerprint": "b564ecc0e3cae025937512bb"
 }

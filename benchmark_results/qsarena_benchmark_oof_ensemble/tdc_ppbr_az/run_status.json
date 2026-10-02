@@ -2,9 +2,9 @@
   "status": "completed",
   "dataset": "tdc_ppbr_az",
   "source": "PyTDC ADME benchmark group: ppbr_az (official train_val/test split)",
-  "completed_at": "2026-09-28 08:33:30",
-  "elapsed_seconds": 34.009,
-  "n_metrics_rows": 41,
+  "completed_at": "2026-10-02 10:58:16",
+  "elapsed_seconds": 35.128,
+  "n_metrics_rows": 43,
   "n_stage_records": 4,
   "n_rows": 2790,
   "task_type": "regression",
@@ -57,6 +57,6 @@
     "mae_in_domain": 9.736671118170204,
     "mae_out_of_domain": 9.773598814933528
   },
-  "stage23_signature": "4ed8def9ac51e7a2a47bded12f5ded68b618058c75eee2f8fcd25f460ba54ad0",
-  "resume_fingerprint": "8c4a9d99ecec8add5867d19e"
+  "stage23_signature": "b16bd15a4a3d5d6101f61d7066857c9310658252399d816f46d0890492d679f6",
+  "resume_fingerprint": "27a6a380f1471ae0a76e1461"
 }

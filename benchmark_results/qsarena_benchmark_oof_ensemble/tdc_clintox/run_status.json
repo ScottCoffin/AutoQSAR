@@ -2,9 +2,9 @@
   "status": "completed",
   "dataset": "tdc_clintox",
   "source": "PyTDC Tox benchmark: clintox",
-  "completed_at": "2026-09-28 08:27:25",
-  "elapsed_seconds": 34.504,
-  "n_metrics_rows": 47,
+  "completed_at": "2026-10-02 10:55:38",
+  "elapsed_seconds": 3.2,
+  "n_metrics_rows": 49,
   "n_stage_records": 4,
   "n_rows": 1478,
   "task_type": "classification",
@@ -65,6 +65,6 @@
     "selected_model": "TabPFNClassifier",
     "notes": []
   },
-  "stage23_signature": "c34784a09693bc5ae90fcfd2ea30bb35b65457ef80662a6939243a6ff61cc3a7",
-  "resume_fingerprint": "9a808bf55e2cd35651530819"
+  "stage23_signature": "4aea0455d1a769bf283e3ab96d2b68abed15e91f83c68f80280409374ed28687",
+  "resume_fingerprint": "76045758d836277501169b5d"
 }

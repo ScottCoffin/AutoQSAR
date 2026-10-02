@@ -7,12 +7,12 @@
     "step_type": "load_dataset",
     "model": "",
     "workflow": "",
-    "started_at": "2026-09-28 08:36:32 Pacific Daylight Time",
-    "started_epoch": 1790609792.7013113,
+    "started_at": "2026-10-02 11:13:58 Pacific Daylight Time",
+    "started_epoch": 1790964838.4978685,
     "status": "completed",
-    "ended_at": "2026-09-28 08:36:34 Pacific Daylight Time",
-    "ended_epoch": 1790609794.0403996,
-    "duration_seconds": 1.339
+    "ended_at": "2026-10-02 11:14:00 Pacific Daylight Time",
+    "ended_epoch": 1790964840.0225978,
+    "duration_seconds": 1.525
   },
   {
     "dataset": "tdc_ames",
@@ -22,12 +22,12 @@
     "step_type": "feature_generation",
     "model": "",
     "workflow": "",
-    "started_at": "2026-09-28 08:36:34 Pacific Daylight Time",
-    "started_epoch": 1790609794.0403996,
+    "started_at": "2026-10-02 11:14:00 Pacific Daylight Time",
+    "started_epoch": 1790964840.0225978,
     "status": "resumed_cache",
-    "ended_at": "2026-09-28 08:36:34 Pacific Daylight Time",
-    "ended_epoch": 1790609794.110678,
-    "duration_seconds": 0.07
+    "ended_at": "2026-10-02 11:14:00 Pacific Daylight Time",
+    "ended_epoch": 1790964840.0733433,
+    "duration_seconds": 0.051
   },
   {
     "dataset": "tdc_ames",
@@ -37,26 +37,26 @@
     "step_type": "feature_selection",
     "model": "",
     "workflow": "",
-    "started_at": "2026-09-28 08:36:34 Pacific Daylight Time",
-    "started_epoch": 1790609794.110678,
+    "started_at": "2026-10-02 11:14:00 Pacific Daylight Time",
+    "started_epoch": 1790964840.0733433,
     "status": "resumed_cache",
-    "ended_at": "2026-09-28 08:36:34 Pacific Daylight Time",
-    "ended_epoch": 1790609794.1483448,
-    "duration_seconds": 0.038
+    "ended_at": "2026-10-02 11:14:00 Pacific Daylight Time",
+    "ended_epoch": 1790964840.1149373,
+    "duration_seconds": 0.042
   },
   {
     "dataset": "tdc_ames",
     "stage_index": 4,
     "total_stages": 4,
-    "stage_label": "conventional model TabPFNClassifier (repairing missing OOF)",
+    "stage_label": "ensemble (2 method(s))",
     "step_type": "model",
-    "model": "TabPFNClassifier",
-    "workflow": "conventional",
-    "started_at": "2026-09-28 08:36:34 Pacific Daylight Time",
-    "started_epoch": 1790609794.1483448,
+    "model": "Ensemble",
+    "workflow": "ensemble",
+    "started_at": "2026-10-02 11:14:00 Pacific Daylight Time",
+    "started_epoch": 1790964840.1149373,
     "status": "completed",
-    "ended_at": "2026-09-28 08:37:11 Pacific Daylight Time",
-    "ended_epoch": 1790609831.6857564,
-    "duration_seconds": 37.537
+    "ended_at": "2026-10-02 11:14:06 Pacific Daylight Time",
+    "ended_epoch": 1790964846.2245255,
+    "duration_seconds": 6.11
   }
 ]

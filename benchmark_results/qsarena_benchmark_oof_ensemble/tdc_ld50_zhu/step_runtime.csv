@@ -1,5 +1,5 @@
 dataset,stage_index,total_stages,stage_label,step_type,model,workflow,started_at,started_epoch,status,ended_at,ended_epoch,duration_seconds
-tdc_ld50_zhu,1,4,loading PyTDC Tox benchmark group: ld50_zhu (official train_val/test split),load_dataset,,,2026-09-28 08:37:12 Pacific Daylight Time,1790609832.9760742,completed,2026-09-28 08:37:14 Pacific Daylight Time,1790609834.6119761,1.636
-tdc_ld50_zhu,2,4,building molecular features (cached),feature_generation,,,2026-09-28 08:37:14 Pacific Daylight Time,1790609834.6119761,resumed_cache,2026-09-28 08:37:14 Pacific Daylight Time,1790609834.686112,0.074
-tdc_ld50_zhu,3,4,splitting data and selecting features (cached),feature_selection,,,2026-09-28 08:37:14 Pacific Daylight Time,1790609834.686112,resumed_cache,2026-09-28 08:37:14 Pacific Daylight Time,1790609834.7144358,0.028
-tdc_ld50_zhu,4,4,conventional model TabPFNRegressor (repairing missing OOF),model,TabPFNRegressor,conventional,2026-09-28 08:37:14 Pacific Daylight Time,1790609834.7144358,completed,2026-09-28 08:37:58 Pacific Daylight Time,1790609878.3779259,43.663
+tdc_ld50_zhu,1,4,loading PyTDC Tox benchmark group: ld50_zhu (official train_val/test split),load_dataset,,,2026-10-02 11:14:07 Pacific Daylight Time,1790964847.9747539,completed,2026-10-02 11:14:09 Pacific Daylight Time,1790964849.4612713,1.487
+tdc_ld50_zhu,2,4,building molecular features (cached),feature_generation,,,2026-10-02 11:14:09 Pacific Daylight Time,1790964849.4612713,resumed_cache,2026-10-02 11:14:09 Pacific Daylight Time,1790964849.5168502,0.056
+tdc_ld50_zhu,3,4,splitting data and selecting features (cached),feature_selection,,,2026-10-02 11:14:09 Pacific Daylight Time,1790964849.517876,resumed_cache,2026-10-02 11:14:09 Pacific Daylight Time,1790964849.5471637,0.029
+tdc_ld50_zhu,4,4,ensemble (2 method(s)),model,Ensemble,ensemble,2026-10-02 11:14:09 Pacific Daylight Time,1790964849.5471637,completed,2026-10-02 11:15:01 Pacific Daylight Time,1790964901.401178,51.854

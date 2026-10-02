@@ -2,9 +2,9 @@
   "status": "completed",
   "dataset": "tdc_bbb_martins",
   "source": "PyTDC ADME benchmark group: bbb_martins (official train_val/test split)",
-  "completed_at": "2026-09-28 08:29:34",
-  "elapsed_seconds": 32.335,
-  "n_metrics_rows": 47,
+  "completed_at": "2026-10-02 10:56:23",
+  "elapsed_seconds": 3.23,
+  "n_metrics_rows": 49,
   "n_stage_records": 4,
   "n_rows": 2030,
   "task_type": "classification",
@@ -65,6 +65,6 @@
     "selected_model": "TabPFNClassifier",
     "notes": []
   },
-  "stage23_signature": "bb37f46a975a569a5f109c140bf5c57fd0f1f6c3afc6937578808e0b9185bb88",
-  "resume_fingerprint": "bd2b668bb1a5f675322ede4b"
+  "stage23_signature": "1b2d9089b47448607140054409e5a2ec60810ccfc3068d80f75e5185d8b8ccad",
+  "resume_fingerprint": "6d0a266d184d2b754e821d1b"
 }

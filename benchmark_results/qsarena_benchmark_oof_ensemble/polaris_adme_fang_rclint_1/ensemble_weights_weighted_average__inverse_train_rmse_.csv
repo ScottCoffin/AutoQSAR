@@ -1,16 +1,23 @@
 Model,Weight,Workflow
-ElasticNetCV,0.07516802367968335,conventional
-SVR,0.07265127062683951,conventional
-Random forest,0.06396166891494735,conventional
-Extra trees,0.06464015594947886,conventional
-HistGradientBoosting,0.07090630482567566,conventional
-"Voting Regressor (KNN, SVM)",0.06768416649943326,conventional
-AdaBoost,0.055439027099387986,conventional
-Tabular MLP,0.06555861146744259,conventional
-Tabular CNN,0.04992183838292255,conventional
-XGBoost,0.07043516644098491,conventional
-CatBoost,0.06928041998964725,conventional
-MapLight CatBoost (Strict Parity),0.06432834599422176,conventional
-ChemML MLP (PyTorch),0.07370770600752025,ChemML deep learning
-ChemML MLP (TensorFlow),0.07081605328350768,ChemML deep learning
-"MapLight + GNN (CatBoost, Strict Parity)",0.06550124083830709,MapLight + GNN
+ElasticNetCV,0.05228329620734034,conventional
+SVR,0.05050561242730926,conventional
+Random forest,0.0444647868172149,conventional
+Extra trees,0.044936456519717574,conventional
+HistGradientBoosting,0.04929254945274467,conventional
+"Voting Regressor (KNN, SVM)",0.04705258767247187,conventional
+AdaBoost,0.03854002816289891,conventional
+Tabular MLP,0.04630739679781166,conventional
+Tabular CNN,0.0347045963445986,conventional
+XGBoost,0.04896502410526605,conventional
+CatBoost,0.04816226902307861,conventional
+MapLight CatBoost (Strict Parity),0.04471969289514066,conventional
+ChemML MLP (PyTorch),0.05124002375185735,ChemML deep learning
+ChemML MLP (TensorFlow),0.04922980850726121,ChemML deep learning
+Uni-Mol V1,0.0429889910533157,Uni-Mol
+"MapLight + GNN (CatBoost, Strict Parity)",0.04553506435254611,MapLight + GNN
+"Chemprop v2 (D-MPNN, ensemble=3)",0.04391980546380931,Chemprop v2
+"Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",0.0433472596922307,Chemprop v2
+"Chemprop v2 (CMPNN, ensemble=3)",0.04348454555834294,Chemprop v2
+"Chemprop v2 (AttentiveFP, ensemble=3)",0.04347849155179862,Chemprop v2
+"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",0.052827791622225444,Chemprop v2
+TabPFNRegressor,0.03401392202101936,conventional

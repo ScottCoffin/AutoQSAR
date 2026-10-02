@@ -1,16 +1,23 @@
 Model,Weight,Workflow
-ElasticNetCV,0.08234531692012773,conventional
-SVR,0.07265450897328737,conventional
-Random forest,0.0632784093956802,conventional
-Extra trees,0.06398097423160853,conventional
-HistGradientBoosting,0.07257151887669579,conventional
-"Voting Regressor (KNN, SVM)",0.0625454901665779,conventional
-AdaBoost,0.04960423618097958,conventional
-Tabular MLP,0.06964055617095478,conventional
-Tabular CNN,0.04250214309128239,conventional
-XGBoost,0.07075565439101743,conventional
-CatBoost,0.06877718306357926,conventional
-MapLight CatBoost (Strict Parity),0.06448775885035042,conventional
-ChemML MLP (PyTorch),0.07865633143408933,ChemML deep learning
-ChemML MLP (TensorFlow),0.07295399087657631,ChemML deep learning
-"MapLight + GNN (CatBoost, Strict Parity)",0.06524592737719291,MapLight + GNN
+ElasticNetCV,0.05567405950208275,conventional
+SVR,0.04886693265922894,conventional
+Random forest,0.04249973363281625,conventional
+Extra trees,0.04249696084724209,conventional
+HistGradientBoosting,0.0482709509168873,conventional
+"Voting Regressor (KNN, SVM)",0.04178254104003729,conventional
+AdaBoost,0.03334419899853654,conventional
+Tabular MLP,0.04711884853862279,conventional
+Tabular CNN,0.02849641574251127,conventional
+XGBoost,0.04792439636889907,conventional
+CatBoost,0.04576518625360742,conventional
+MapLight CatBoost (Strict Parity),0.04245916857467839,conventional
+ChemML MLP (PyTorch),0.053089448775454275,ChemML deep learning
+ChemML MLP (TensorFlow),0.04659230475837382,ChemML deep learning
+Uni-Mol V1,0.04607529785741782,Uni-Mol
+"MapLight + GNN (CatBoost, Strict Parity)",0.0434346683305765,MapLight + GNN
+"Chemprop v2 (D-MPNN, ensemble=3)",0.04833998245912471,Chemprop v2
+"Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",0.04185418925227662,Chemprop v2
+"Chemprop v2 (CMPNN, ensemble=3)",0.04468003762315321,Chemprop v2
+"Chemprop v2 (AttentiveFP, ensemble=3)",0.04274142461993414,Chemprop v2
+"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",0.05359995736781822,Chemprop v2
+TabPFNRegressor,0.054893295880720526,conventional

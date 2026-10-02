@@ -7,12 +7,12 @@
     "step_type": "load_dataset",
     "model": "",
     "workflow": "",
-    "started_at": "2026-09-28 08:24:20 Pacific Daylight Time",
-    "started_epoch": 1790609060.8950834,
+    "started_at": "2026-10-02 10:55:16 Pacific Daylight Time",
+    "started_epoch": 1790963716.8081887,
     "status": "completed",
-    "ended_at": "2026-09-28 08:24:21 Pacific Daylight Time",
-    "ended_epoch": 1790609061.2262456,
-    "duration_seconds": 0.331
+    "ended_at": "2026-10-02 10:55:17 Pacific Daylight Time",
+    "ended_epoch": 1790963717.1798313,
+    "duration_seconds": 0.372
   },
   {
     "dataset": "tdc_clearance_hepatocyte_az",
@@ -22,12 +22,12 @@
     "step_type": "feature_generation",
     "model": "",
     "workflow": "",
-    "started_at": "2026-09-28 08:24:21 Pacific Daylight Time",
-    "started_epoch": 1790609061.2262456,
+    "started_at": "2026-10-02 10:55:17 Pacific Daylight Time",
+    "started_epoch": 1790963717.1798313,
     "status": "resumed_cache",
-    "ended_at": "2026-09-28 08:24:21 Pacific Daylight Time",
-    "ended_epoch": 1790609061.2393987,
-    "duration_seconds": 0.013
+    "ended_at": "2026-10-02 10:55:17 Pacific Daylight Time",
+    "ended_epoch": 1790963717.1972334,
+    "duration_seconds": 0.017
   },
   {
     "dataset": "tdc_clearance_hepatocyte_az",
@@ -37,26 +37,26 @@
     "step_type": "feature_selection",
     "model": "",
     "workflow": "",
-    "started_at": "2026-09-28 08:24:21 Pacific Daylight Time",
-    "started_epoch": 1790609061.2393987,
+    "started_at": "2026-10-02 10:55:17 Pacific Daylight Time",
+    "started_epoch": 1790963717.1972334,
     "status": "resumed_cache",
-    "ended_at": "2026-09-28 08:24:21 Pacific Daylight Time",
-    "ended_epoch": 1790609061.2632012,
-    "duration_seconds": 0.024
+    "ended_at": "2026-10-02 10:55:17 Pacific Daylight Time",
+    "ended_epoch": 1790963717.2252314,
+    "duration_seconds": 0.028
   },
   {
     "dataset": "tdc_clearance_hepatocyte_az",
     "stage_index": 4,
     "total_stages": 4,
-    "stage_label": "conventional model TabPFNRegressor (repairing missing OOF)",
+    "stage_label": "ensemble (2 method(s))",
     "step_type": "model",
-    "model": "TabPFNRegressor",
-    "workflow": "conventional",
-    "started_at": "2026-09-28 08:24:21 Pacific Daylight Time",
-    "started_epoch": 1790609061.2632012,
+    "model": "Ensemble",
+    "workflow": "ensemble",
+    "started_at": "2026-10-02 10:55:17 Pacific Daylight Time",
+    "started_epoch": 1790963717.2252314,
     "status": "completed",
-    "ended_at": "2026-09-28 08:24:57 Pacific Daylight Time",
-    "ended_epoch": 1790609097.8516402,
-    "duration_seconds": 36.588
+    "ended_at": "2026-10-02 10:55:32 Pacific Daylight Time",
+    "ended_epoch": 1790963732.505081,
+    "duration_seconds": 15.28
   }
 ]

@@ -2,9 +2,9 @@
   "status": "completed",
   "dataset": "tdc_tox21",
   "source": "PyTDC Tox benchmark: tox21 [label=NR-AR]",
-  "completed_at": "2026-09-28 08:36:31",
-  "elapsed_seconds": 43.53,
-  "n_metrics_rows": 40,
+  "completed_at": "2026-10-02 11:13:56",
+  "elapsed_seconds": 810.045,
+  "n_metrics_rows": 42,
   "n_stage_records": 4,
   "n_rows": 7258,
   "task_type": "classification",
@@ -56,6 +56,6 @@
     "selected_model": "TabPFNClassifier",
     "notes": []
   },
-  "stage23_signature": "d8933bfb1ffff9ba24c5b36f5bf7ee6282e2491732846c6cfad385c9595fe9f3",
-  "resume_fingerprint": "90a3d2d998872563d526955d"
+  "stage23_signature": "ff3a195a6241febf06a45b840726227e46dd066c65f93cc46fdd0b2d2d6c403d",
+  "resume_fingerprint": "88d7aedf6f096223f75b4f3e"
 }

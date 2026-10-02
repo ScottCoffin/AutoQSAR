@@ -1,10 +1,10 @@
 # QSARena run report
 
 - Output directory: `benchmark_results\qsarena_benchmark_oof_ensemble`
-- Generated: 2026-09-28 08:39:09 with qsarena 0.1.0
-- Mode: benchmark; profile: full; GPU: no
-- 37 dataset(s): 37 completed
-- Config signature: `43e2192d39f42ccdc4e03be93f6686d9561ae491cd600e177dfcbf97a82e2e1a`
+- Generated: 2026-10-02 11:35:54 with qsarena 0.1.0
+- Mode: benchmark; profile: full; GPU: yes
+- 44 dataset(s): 44 completed
+- Config signature: `2864ae01613d5ff02577f8b0d757842c01bdc7acfd01be7812f24a456b52ca46`
 
 ## Warnings
 
@@ -16,6 +16,8 @@
 - **tdc_tox21**: 7 SMILES (0.1%) cannot be parsed by RDKit and will be dropped. *Remedy:* Fix them in the CSV, or pass --no-drop-unparseable to stop instead of dropping.
 - **tdc_tox21**: minority class is 4.2% of the data ({'0': 6950, '1': 308}). *Remedy:* Judge models by AUPRC or balanced accuracy (--primary-metric auprc) rather than accuracy.
 - **tdc_solubility_aqsoldb**: 2 SMILES (0.0%) cannot be parsed by RDKit and will be dropped. *Remedy:* Fix them in the CSV, or pass --no-drop-unparseable to stop instead of dropping.
+- lightgbm not installed: those gradient-boosting models (and MapLight CatBoost) are skipped. *Remedy:* pip install 'qsarena[boosting]'
+- **tdc_carcinogens_lagunin**: Uni-Mol V2 (84m) failed: CUDA out of memory. Tried to allocate 25.83 GiB. GPU 0 has a total capacity of 39.39 GiB of which 12.82 GiB is free. Process 29510 has 8.51 GiB memory in use. I *Remedy:* GPU memory exhausted: lower the batch size (--unimol-batch-size, --chemprop-batch-size) or use a larger GPU.
 - **tdc_skin_reaction**: 35% of test molecules are outside the applicability domain. *Remedy:* Treat their predictions as extrapolations (applicability_domain.csv lists them).
 - **tdc_skin_reaction**: Chemprop v2 (D-MPNN, ensemble=3) failed: 'ascii' codec can't decode byte 0xe2 in position 4290: ordinal not in range(128) *Remedy:* See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail.
 - **tdc_dili**: 26% of test molecules are outside the applicability domain. *Remedy:* Treat their predictions as extrapolations (applicability_domain.csv lists them).
@@ -72,11 +74,22 @@
 - **tdc_ld50_zhu**: 23% of test molecules are outside the applicability domain. *Remedy:* Treat their predictions as extrapolations (applicability_domain.csv lists them).
 - **tdc_ld50_zhu**: Chemprop v2 (D-MPNN, ensemble=3) failed: 'ascii' codec can't decode byte 0xe2 in position 3384: ordinal not in range(128) *Remedy:* See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail.
 - **tdc_solubility_aqsoldb**: Chemprop v2 (D-MPNN, ensemble=3) failed: 'ascii' codec can't decode byte 0xe2 in position 152: ordinal not in range(128) *Remedy:* See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail.
+- **tdc_cyp2c9_veith**: 22% of test molecules are outside the applicability domain. *Remedy:* Treat their predictions as extrapolations (applicability_domain.csv lists them).
+- **tdc_cyp2c9_veith**: Chemprop v2 (D-MPNN, ensemble=3) failed: 'ascii' codec can't decode byte 0xe2 in position 146: ordinal not in range(128) *Remedy:* See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail.
+- **tdc_cyp3a4_veith**: 31% of test molecules are outside the applicability domain. *Remedy:* Treat their predictions as extrapolations (applicability_domain.csv lists them).
+- **tdc_cyp3a4_veith**: Chemprop v2 (D-MPNN, ensemble=3) failed: 'ascii' codec can't decode byte 0xe2 in position 146: ordinal not in range(128) *Remedy:* See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail.
+- **tdc_cyp1a2_veith**: Chemprop v2 (D-MPNN, ensemble=3) failed: Chemprop command failed during training (exit=1).
+Command: /home/exouser/miniconda3/envs/autoqsar-py311/bin/chemprop train --data-path benchmark_results/autoqs *Remedy:* Install PyTorch: pip install 'qsarena[deep]', or --disable-model-families deep_tabular.
+- **tdc_cyp2c19_veith**: Chemprop v2 (D-MPNN, ensemble=3) failed: Chemprop command failed during training (exit=1).
+Command: /home/exouser/miniconda3/envs/autoqsar-py311/bin/chemprop train --data-path benchmark_results/autoqs *Remedy:* Install PyTorch: pip install 'qsarena[deep]', or --disable-model-families deep_tabular.
+- **tdc_cyp2d6_veith**: Chemprop v2 (D-MPNN, ensemble=3) failed: 'ascii' codec can't decode byte 0xe2 in position 146: ordinal not in range(128) *Remedy:* See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail.
+- **tdc_herg_karim**: Chemprop v2 (D-MPNN, ensemble=3) failed: 'ascii' codec can't decode byte 0xe2 in position 144: ordinal not in range(128) *Remedy:* See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail.
 
 ## Datasets
 
 | Dataset | Status | Task | Rows used | Unparseable SMILES dropped | Primary metric | Error / remedy |
 |---|---|---|---|---|---|---|
+| tdc_carcinogens_lagunin | completed | classification | 280 | 0 | AUROC |  |
 | tdc_skin_reaction | completed | classification | 404 | 0 | AUROC |  |
 | tdc_dili | completed | classification | 475 | 0 | AUROC |  |
 | chemml_cep_homo | completed | regression | 500 | 0 | RMSE |  |
@@ -114,6 +127,12 @@
 | tdc_ames | completed | classification | 7278 | 0 | AUROC |  |
 | tdc_ld50_zhu | completed | regression | 7385 | 0 | MAE |  |
 | tdc_solubility_aqsoldb | completed | regression | 9980 | 2 | MAE |  |
+| tdc_cyp2c9_veith | completed | classification | 12092 | 0 | AUPRC |  |
+| tdc_cyp3a4_veith | completed | classification | 12328 | 0 | AUPRC |  |
+| tdc_cyp1a2_veith | completed | classification | 12579 | 0 | AUROC |  |
+| tdc_cyp2c19_veith | completed | classification | 12665 | 0 | AUROC |  |
+| tdc_cyp2d6_veith | completed | classification | 13130 | 0 | AUPRC |  |
+| tdc_herg_karim | completed | classification | 13445 | 0 | AUROC |  |
 
 ## Best model per dataset
 
@@ -125,13 +144,13 @@ CV scores are computed on the training split after train-only feature selection 
 
 | Dataset | Selected by | Best model | Family | Primary metric | CV score | Test score | Test RMSE | Test MAE | Test R2 | Test Spearman |
 |---|---|---|---|---|---|---|---|---|---|---|
-| chemml_cep_homo | test (optimistic) | CFA (Combinatorial Fusion) | fusion | RMSE | – | 0.101 | 0.101 | 0.076 | 0.980 | 0.989 |
+| chemml_cep_homo | test (optimistic) | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | ensemble | RMSE | – | 0.093 | 0.093 | 0.068 | 0.982 | 0.990 |
 | chemml_cep_homo | CV (honest) | TabPFNRegressor | deep_tabular | RMSE | 0.087 | 0.102 | 0.102 | 0.077 | 0.979 | 0.988 |
 | chemml_organic_density | test (optimistic) | TabPFNRegressor | deep_tabular | RMSE | 0.004 | 0.005 | 0.005 | 0.004 | 0.976 | 0.988 |
 | chemml_organic_density | CV (honest) | TabPFNRegressor | deep_tabular | RMSE | 0.004 | 0.005 | 0.005 | 0.004 | 0.976 | 0.988 |
 | freesolv_sampl | test (optimistic) | TabPFNRegressor | deep_tabular | RMSE | 0.865 | 0.933 | 0.933 | 0.537 | 0.955 | 0.982 |
 | freesolv_sampl | CV (honest) | TabPFNRegressor | deep_tabular | RMSE | 0.865 | 0.933 | 0.933 | 0.537 | 0.955 | 0.982 |
-| tdc_hydrationfreeenergy_freesolv | test (optimistic) | TabPFNRegressor | deep_tabular | RMSE | 0.816 | 1.116 | 1.116 | 0.825 | 0.868 | 0.933 |
+| tdc_hydrationfreeenergy_freesolv | test (optimistic) | Ensemble (Weighted average (inverse OOF error)) | ensemble | RMSE | – | 1.093 | 1.093 | 0.824 | 0.874 | 0.941 |
 | tdc_hydrationfreeenergy_freesolv | CV (honest) | TabPFNRegressor | deep_tabular | RMSE | 0.816 | 1.116 | 1.116 | 0.825 | 0.868 | 0.933 |
 | tdc_half_life_obach | test (optimistic) | Uni-Mol V1 | pretrained_3d | Spearman | – | 0.597 | 19.128 | 8.253 | 0.223 | 0.597 |
 | tdc_half_life_obach | CV (honest) | TabPFNRegressor | deep_tabular | Spearman | 0.282 | 0.221 | 20.342 | 10.424 | 0.121 | 0.221 |
@@ -141,7 +160,7 @@ CV scores are computed on the training split after train-only feature selection 
 | tdc_caco2_wang | CV (honest) | TabPFNRegressor | deep_tabular | MAE | 0.238 | 0.302 | 0.384 | 0.302 | 0.687 | 0.811 |
 | tdc_clearance_microsome_az | test (optimistic) | Uni-Mol V2 (84m) | pretrained_3d | Spearman | – | 0.678 | 33.507 | 23.315 | 0.395 | 0.678 |
 | tdc_clearance_microsome_az | CV (honest) | TabPFNRegressor | deep_tabular | Spearman | 0.638 | 0.437 | 38.297 | 27.632 | 0.210 | 0.437 |
-| esol_delaney | test (optimistic) | MapLight CatBoost (Strict Parity) | gradient_boosting | RMSE | – | 0.645 | 0.645 | 0.518 | 0.802 | 0.904 |
+| esol_delaney | test (optimistic) | Ensemble (Weighted average (inverse OOF error)) | ensemble | RMSE | – | 0.626 | 0.626 | 0.479 | 0.813 | 0.900 |
 | esol_delaney | CV (honest) | TabPFNRegressor | deep_tabular | RMSE | 0.562 | 0.673 | 0.673 | 0.500 | 0.784 | 0.895 |
 | tdc_vdss_lombardo | test (optimistic) | MapLight + GNN (CatBoost, Strict Parity) | maplight_gnn | Spearman | – | 0.680 | 4.670 | 1.980 | 0.258 | 0.680 |
 | tdc_vdss_lombardo | CV (honest) | TabPFNRegressor | deep_tabular | Spearman | 0.567 | 0.489 | 4.953 | 2.733 | 0.166 | 0.489 |
@@ -153,7 +172,7 @@ CV scores are computed on the training split after train-only feature selection 
 | poduam_pod_nc_std | CV (honest) | TabPFNRegressor | deep_tabular | RMSE | 0.602 | 0.745 | 0.745 | 0.565 | 0.590 | 0.660 |
 | polaris_adme_fang_solu_1 | test (optimistic) | Uni-Mol V2 (84m) | pretrained_3d | mse | – | 0.304 | 0.551 | 0.403 | 0.455 | 0.572 |
 | polaris_adme_fang_solu_1 | CV (honest) | TabPFNRegressor | deep_tabular | mse | 0.170 | 0.373 | 0.611 | 0.399 | 0.331 | 0.548 |
-| poduam_pod_rd_std | test (optimistic) | Random forest | conventional_ml | RMSE | 0.614 | 0.572 | 0.572 | 0.424 | 0.456 | 0.653 |
+| poduam_pod_rd_std | test (optimistic) | Ensemble (Weighted average (inverse OOF error)) | ensemble | RMSE | – | 0.570 | 0.570 | 0.421 | 0.460 | 0.648 |
 | poduam_pod_rd_std | CV (honest) | TabPFNRegressor | deep_tabular | RMSE | 0.512 | 0.589 | 0.589 | 0.425 | 0.425 | 0.652 |
 | polaris_adme_fang_perm_1 | test (optimistic) | Uni-Mol V1 | pretrained_3d | mse | – | 0.159 | 0.399 | 0.299 | 0.686 | 0.805 |
 | polaris_adme_fang_perm_1 | CV (honest) | ChemML MLP (PyTorch) | deep_tabular | mse | 0.138 | 0.212 | 0.461 | 0.343 | 0.581 | 0.754 |
@@ -161,7 +180,7 @@ CV scores are computed on the training split after train-only feature selection 
 | tdc_ppbr_az | CV (honest) | ChemML MLP (PyTorch) | deep_tabular | MAE | 6.232 | 9.741 | 14.528 | 9.741 | 0.081 | 0.574 |
 | polaris_adme_fang_rclint_1 | test (optimistic) | Chemprop v2 (D-MPNN, ensemble=3) | graph_nn | mse | – | 0.268 | 0.517 | 0.403 | 0.539 | 0.744 |
 | polaris_adme_fang_rclint_1 | CV (honest) | TabPFNRegressor | deep_tabular | mse | 0.180 | 0.281 | 0.530 | 0.413 | 0.515 | 0.720 |
-| lipophilicity | test (optimistic) | Chemprop v2 (D-MPNN, ensemble=3) | graph_nn | RMSE | – | 0.551 | 0.551 | 0.413 | 0.807 | 0.896 |
+| lipophilicity | test (optimistic) | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | ensemble | RMSE | – | 0.548 | 0.548 | 0.410 | 0.808 | 0.892 |
 | lipophilicity | CV (honest) | ElasticNetCV | conventional_ml | RMSE | 0.541 | 0.682 | 0.682 | 0.512 | 0.703 | 0.840 |
 | tdc_lipophilicity_astrazeneca | test (optimistic) | Chemprop v2 (D-MPNN, ensemble=3) | graph_nn | MAE | – | 0.425 | 0.577 | 0.425 | 0.763 | 0.861 |
 | tdc_lipophilicity_astrazeneca | CV (honest) | TabPFNRegressor | deep_tabular | MAE | 0.377 | 0.439 | 0.598 | 0.439 | 0.746 | 0.846 |
@@ -174,6 +193,8 @@ CV scores are computed on the training split after train-only feature selection 
 
 | Dataset | Selected by | Best model | Family | Primary metric | CV score | Test score | Test AUROC | Test AUPRC | Test Bal. acc. | Test MCC |
 |---|---|---|---|---|---|---|---|---|---|---|
+| tdc_carcinogens_lagunin | test (optimistic) | Chemprop v2 (AttentiveFP, ensemble=3) | graph_nn | AUROC | – | 0.929 | 0.929 | 0.835 | 0.895 | 0.801 |
+| tdc_carcinogens_lagunin | CV (honest) | TabPFNClassifier | deep_tabular | AUROC | 0.986 | 0.870 | 0.870 | 0.779 | 0.803 | 0.586 |
 | tdc_skin_reaction | test (optimistic) | Uni-Mol V2 (84m) | pretrained_3d | AUROC | – | 0.658 | 0.658 | 0.840 | 0.558 | 0.169 |
 | tdc_skin_reaction | CV (honest) | TabPFNClassifier | deep_tabular | AUROC | 0.849 | 0.525 | 0.525 | 0.762 | 0.496 | -0.010 |
 | tdc_dili | test (optimistic) | Uni-Mol V1 | pretrained_3d | AUROC | – | 0.922 | 0.922 | 0.919 | 0.855 | 0.709 |
@@ -204,19 +225,32 @@ CV scores are computed on the training split after train-only feature selection 
 | tdc_tox21 | CV (honest) | TabPFNClassifier | deep_tabular | AUROC | 0.913 | 0.468 | 0.468 | 0.015 | 0.500 | 0.000 |
 | tdc_ames | test (optimistic) | TabPFNClassifier | deep_tabular | AUROC | 0.929 | 0.876 | 0.876 | 0.913 | 0.794 | 0.584 |
 | tdc_ames | CV (honest) | TabPFNClassifier | deep_tabular | AUROC | 0.929 | 0.876 | 0.876 | 0.913 | 0.794 | 0.584 |
+| tdc_cyp2c9_veith | test (optimistic) | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | ensemble | AUPRC | – | 0.829 | 0.914 | 0.829 | 0.835 | 0.676 |
+| tdc_cyp2c9_veith | CV (honest) | XGBoost | gradient_boosting | AUPRC | 0.838 | 0.796 | 0.898 | 0.796 | 0.806 | 0.622 |
+| tdc_cyp3a4_veith | test (optimistic) | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | ensemble | AUPRC | – | 0.902 | 0.921 | 0.902 | 0.843 | 0.687 |
+| tdc_cyp3a4_veith | CV (honest) | XGBoost | gradient_boosting | AUPRC | 0.887 | 0.882 | 0.901 | 0.882 | 0.807 | 0.612 |
+| tdc_cyp1a2_veith | test (optimistic) | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | ensemble | AUROC | – | 0.973 | 0.973 | 0.976 | 0.934 | 0.866 |
+| tdc_cyp1a2_veith | CV (honest) | XGBoost | gradient_boosting | AUROC | 0.928 | 0.914 | 0.914 | 0.896 | 0.914 | 0.827 |
+| tdc_cyp2c19_veith | test (optimistic) | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | ensemble | AUROC | – | 0.931 | 0.931 | 0.887 | 0.864 | 0.752 |
+| tdc_cyp2c19_veith | CV (honest) | XGBoost | gradient_boosting | AUROC | 0.894 | 0.840 | 0.840 | 0.701 | 0.840 | 0.700 |
+| tdc_cyp2d6_veith | test (optimistic) | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | ensemble | AUPRC | – | 0.761 | 0.905 | 0.761 | 0.790 | 0.656 |
+| tdc_cyp2d6_veith | CV (honest) | XGBoost | gradient_boosting | AUPRC | 0.751 | 0.729 | 0.894 | 0.729 | 0.740 | 0.576 |
+| tdc_herg_karim | test (optimistic) | Ensemble (Weighted average (inverse OOF error)) | ensemble | AUROC | – | 0.905 | 0.905 | 0.915 | 0.503 | 0.058 |
+| tdc_herg_karim | CV (honest) | XGBoost | gradient_boosting | AUROC | 0.884 | 0.815 | 0.815 | 0.776 | 0.815 | 0.629 |
 
 
 ## Leaderboard / rank table
 
 | Dataset | Leaderboard metric | Our model | Our value | Published best | Est. rank vs top-10 | Published entries | Caution |
 |---|---|---|---|---|---|---|---|
+| tdc_carcinogens_lagunin | AUROC | Chemprop v2 (AttentiveFP, ensemble=3) | 0.929 | – | 1 | 10 | test-selected |
 | tdc_skin_reaction | AUROC | Uni-Mol V2 (84m) | 0.658 | – | 7 | 10 | test-selected |
-| tdc_hydrationfreeenergy_freesolv | RMSE | TabPFNRegressor | 1.116 | 0.654 | 5 | 6 | sparse reference (6 published entries); test-selected |
+| tdc_hydrationfreeenergy_freesolv | RMSE | Ensemble (Weighted average (inverse OOF error)) | 1.093 | – | 4 | 6 | sparse reference (6 published entries); test-selected |
 | tdc_half_life_obach | Spearman | Uni-Mol V1 | 0.597 | – | 1 | 10 | test-selected |
 | polaris_adme_fang_rppb_1 | mse | Chemprop v2 (AttentiveFP, ensemble=3) | 0.248 | – | 3 | 10 | test-selected |
 | tdc_caco2_wang | MAE | MapLight CatBoost (Strict Parity) | 0.272 | 0.256 | 2 | 10 | test-selected |
 | tdc_clearance_microsome_az | Spearman | Uni-Mol V2 (84m) | 0.678 | – | 1 | 10 | test-selected |
-| esol_delaney | RMSE | Uni-Mol V2 (84m) | 0.672 | – | 1 | 2 | sparse reference (2 published entries); test-selected |
+| esol_delaney | RMSE | Ensemble (Weighted average (inverse OOF error)) | 0.626 | – | 1 | 2 | sparse reference (2 published entries); test-selected |
 | tdc_vdss_lombardo | Spearman | Uni-Mol V1 | 0.605 | – | 6 | 10 | test-selected |
 | tdc_clearance_hepatocyte_az | Spearman | Chemprop v2 (D-MPNN + RDKit2D, ensemble=3) | 0.403 | – | 11 | 10 | test-selected |
 | tdc_clintox | AUROC | CFA (Combinatorial Fusion) | 0.974 | 0.996 | 2 | 6 | sparse reference (6 published entries); test-selected |
@@ -224,11 +258,11 @@ CV scores are computed on the training split after train-only feature selection 
 | polaris_adme_fang_hppb_1 | mse | Chemprop v2 (D-MPNN, ensemble=3) | 0.197 | – | 4 | 10 | test-selected |
 | poduam_pod_nc_std | RMSE | Random forest | 0.720 | 0.730 | 1 | 2 | sparse reference (2 published entries); test-selected |
 | polaris_adme_fang_solu_1 | mse | Uni-Mol V2 (84m) | 0.304 | – | 7 | 10 | test-selected |
-| poduam_pod_rd_std | RMSE | Random forest | 0.572 | 0.630 | 1 | 2 | sparse reference (2 published entries); test-selected |
+| poduam_pod_rd_std | RMSE | Ensemble (Weighted average (inverse OOF error)) | 0.570 | – | 1 | 2 | sparse reference (2 published entries); test-selected |
 | polaris_adme_fang_perm_1 | mse | Uni-Mol V1 | 0.159 | – | 4 | 10 | test-selected |
 | tdc_ppbr_az | MAE | MapLight + GNN (CatBoost, Strict Parity) | 7.306 | 7.440 | 1 | 10 | test-selected |
 | polaris_adme_fang_rclint_1 | mse | Chemprop v2 (D-MPNN, ensemble=3) | 0.268 | – | 6 | 10 | test-selected |
-| lipophilicity | RMSE | Chemprop v2 (D-MPNN, ensemble=3) | 0.551 | – | 1 | 2 | sparse reference (2 published entries); test-selected |
+| lipophilicity | RMSE | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 0.548 | – | 1 | 2 | sparse reference (2 published entries); test-selected |
 | tdc_lipophilicity_astrazeneca | MAE | Chemprop v2 (D-MPNN, ensemble=3) | 0.425 | – | 1 | 10 | test-selected |
 | tdc_tox21 | AUROC | Chemprop v2 (AttentiveFP, ensemble=3) | 0.597 | – | 7 | 6 | sparse reference (6 published entries); test-selected |
 | tdc_ld50_zhu | MAE | TabPFNRegressor | 0.552 | 0.552 | 1 | 10 | test-selected |
@@ -254,6 +288,29 @@ Share of each dataset's test molecules that every enabled applicability-domain m
 
 | Dataset | Model | Error | Remedy |
 |---|---|---|---|
+| tdc_carcinogens_lagunin | Uni-Mol V2 (84m) | CUDA out of memory. Tried to allocate 25.83 GiB. GPU 0 has a total capacity of 39.39 GiB of which 12.82 GiB is free. Process 29510 has 8.51 GiB memory in use. I | GPU memory exhausted: lower the batch size (--unimol-batch-size, --chemprop-batch-size) or use a larger GPU. |
+| tdc_carcinogens_lagunin | Uni-Mol V2 (310m) | CUDA out of memory. Tried to allocate 842.00 MiB. GPU 0 has a total capacity of 39.39 GiB of which 420.81 MiB is free. Process 29510 has 8.51 GiB memory in use. | GPU memory exhausted: lower the batch size (--unimol-batch-size, --chemprop-batch-size) or use a larger GPU. |
+| tdc_carcinogens_lagunin | Uni-Mol V2 (310m) | CUDA out of memory. Tried to allocate 842.00 MiB. GPU 0 has a total capacity of 39.39 GiB of which 420.81 MiB is free. Process 29510 has 8.51 GiB memory in use. | GPU memory exhausted: lower the batch size (--unimol-batch-size, --chemprop-batch-size) or use a larger GPU. |
+| tdc_carcinogens_lagunin | Uni-Mol V2 (310m) | CUDA out of memory. Tried to allocate 842.00 MiB. GPU 0 has a total capacity of 39.39 GiB of which 420.81 MiB is free. Process 29510 has 8.51 GiB memory in use. | GPU memory exhausted: lower the batch size (--unimol-batch-size, --chemprop-batch-size) or use a larger GPU. |
+| tdc_carcinogens_lagunin | Uni-Mol V2 (310m) | CUDA out of memory. Tried to allocate 20.00 MiB. GPU 0 has a total capacity of 39.39 GiB of which 5.69 MiB is free. Process 29510 has 8.51 GiB memory in use. Pr | GPU memory exhausted: lower the batch size (--unimol-batch-size, --chemprop-batch-size) or use a larger GPU. |
+| tdc_carcinogens_lagunin | Uni-Mol V2 (310m) | CUDA out of memory. Tried to allocate 20.00 MiB. GPU 0 has a total capacity of 39.39 GiB of which 19.44 MiB is free. Process 29510 has 8.51 GiB memory in use. P | GPU memory exhausted: lower the batch size (--unimol-batch-size, --chemprop-batch-size) or use a larger GPU. |
+| tdc_carcinogens_lagunin | Uni-Mol V2 (310m) | [Errno 32] Broken pipe | See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail. |
+| tdc_carcinogens_lagunin | Uni-Mol V2 (310m) | CUDA out of memory. Tried to allocate 2.96 GiB. GPU 0 has a total capacity of 39.39 GiB of which 1.90 GiB is free. Process 29510 has 8.51 GiB memory in use. Inc | GPU memory exhausted: lower the batch size (--unimol-batch-size, --chemprop-batch-size) or use a larger GPU. |
+| tdc_carcinogens_lagunin | Uni-Mol V2 (164m) | CUDA out of memory. Tried to allocate 6.57 GiB. GPU 0 has a total capacity of 39.39 GiB of which 4.65 GiB is free. Process 29510 has 8.51 GiB memory in use. Inc | GPU memory exhausted: lower the batch size (--unimol-batch-size, --chemprop-batch-size) or use a larger GPU. |
+| tdc_carcinogens_lagunin | Uni-Mol V2 (164m) | CUDA out of memory. Tried to allocate 842.00 MiB. GPU 0 has a total capacity of 39.39 GiB of which 163.69 MiB is free. Process 29510 has 8.51 GiB memory in use. | GPU memory exhausted: lower the batch size (--unimol-batch-size, --chemprop-batch-size) or use a larger GPU. |
+| tdc_carcinogens_lagunin | Uni-Mol V2 (164m) | CUDA out of memory. Tried to allocate 822.00 MiB. GPU 0 has a total capacity of 39.39 GiB of which 563.25 MiB is free. Process 29510 has 8.51 GiB memory in use. | GPU memory exhausted: lower the batch size (--unimol-batch-size, --chemprop-batch-size) or use a larger GPU. |
+| tdc_carcinogens_lagunin | Uni-Mol V2 (164m) | CUDA out of memory. Tried to allocate 6.57 GiB. GPU 0 has a total capacity of 39.39 GiB of which 5.06 GiB is free. Process 29510 has 8.51 GiB memory in use. Inc | GPU memory exhausted: lower the batch size (--unimol-batch-size, --chemprop-batch-size) or use a larger GPU. |
+| tdc_carcinogens_lagunin | Uni-Mol V2 (84m) | CUDA out of memory. Tried to allocate 12.92 GiB. GPU 0 has a total capacity of 39.39 GiB of which 8.29 GiB is free. Process 29510 has 8.51 GiB memory in use. In | GPU memory exhausted: lower the batch size (--unimol-batch-size, --chemprop-batch-size) or use a larger GPU. |
+| tdc_carcinogens_lagunin | Uni-Mol V2 (84m) | CUDA out of memory. Tried to allocate 6.46 GiB. GPU 0 has a total capacity of 39.39 GiB of which 6.00 GiB is free. Process 29510 has 8.51 GiB memory in use. Inc | GPU memory exhausted: lower the batch size (--unimol-batch-size, --chemprop-batch-size) or use a larger GPU. |
+| tdc_carcinogens_lagunin | Uni-Mol V2 (84m) | CUDA out of memory. Tried to allocate 6.46 GiB. GPU 0 has a total capacity of 39.39 GiB of which 6.00 GiB is free. Process 29510 has 8.51 GiB memory in use. Inc | GPU memory exhausted: lower the batch size (--unimol-batch-size, --chemprop-batch-size) or use a larger GPU. |
+| tdc_carcinogens_lagunin | Uni-Mol V2 (84m) | CUDA out of memory. Tried to allocate 6.46 GiB. GPU 0 has a total capacity of 39.39 GiB of which 6.00 GiB is free. Process 29510 has 8.51 GiB memory in use. Inc | GPU memory exhausted: lower the batch size (--unimol-batch-size, --chemprop-batch-size) or use a larger GPU. |
+| tdc_carcinogens_lagunin | Uni-Mol V2 (84m) | CUDA out of memory. Tried to allocate 6.46 GiB. GPU 0 has a total capacity of 39.39 GiB of which 6.00 GiB is free. Process 29510 has 8.51 GiB memory in use. Inc | GPU memory exhausted: lower the batch size (--unimol-batch-size, --chemprop-batch-size) or use a larger GPU. |
+| tdc_carcinogens_lagunin | Uni-Mol V2 (84m) | CUDA out of memory. Tried to allocate 6.46 GiB. GPU 0 has a total capacity of 39.39 GiB of which 6.00 GiB is free. Process 29510 has 8.51 GiB memory in use. Inc | GPU memory exhausted: lower the batch size (--unimol-batch-size, --chemprop-batch-size) or use a larger GPU. |
+| tdc_carcinogens_lagunin | Uni-Mol V2 (84m) | CUDA out of memory. Tried to allocate 828.00 MiB. GPU 0 has a total capacity of 39.39 GiB of which 568.81 MiB is free. Process 3158928 has 37.90 GiB memory in u | GPU memory exhausted: lower the batch size (--unimol-batch-size, --chemprop-batch-size) or use a larger GPU. |
+| tdc_carcinogens_lagunin | Uni-Mol V2 (84m) | CUDA out of memory. Tried to allocate 3.23 GiB. GPU 0 has a total capacity of 39.39 GiB of which 1.48 GiB is free. Including non-PyTorch memory, this process ha | GPU memory exhausted: lower the batch size (--unimol-batch-size, --chemprop-batch-size) or use a larger GPU. |
+| tdc_carcinogens_lagunin | Uni-Mol V2 (84m) | CUDA out of memory. Tried to allocate 3.23 GiB. GPU 0 has a total capacity of 39.49 GiB of which 1.58 GiB is free. Including non-PyTorch memory, this process ha | GPU memory exhausted: lower the batch size (--unimol-batch-size, --chemprop-batch-size) or use a larger GPU. |
+| tdc_carcinogens_lagunin | Uni-Mol V2 (84m) | CUDA out of memory. Tried to allocate 3.23 GiB. GPU 0 has a total capacity of 39.49 GiB of which 1.58 GiB is free. Including non-PyTorch memory, this process ha | GPU memory exhausted: lower the batch size (--unimol-batch-size, --chemprop-batch-size) or use a larger GPU. |
+| tdc_carcinogens_lagunin | Uni-Mol V2 (84m) | CUDA out of memory. Tried to allocate 3.23 GiB. GPU 0 has a total capacity of 39.49 GiB of which 1.58 GiB is free. Including non-PyTorch memory, this process ha | GPU memory exhausted: lower the batch size (--unimol-batch-size, --chemprop-batch-size) or use a larger GPU. |
 | tdc_skin_reaction | Chemprop v2 (D-MPNN, ensemble=3) | 'ascii' codec can't decode byte 0xe2 in position 4290: ordinal not in range(128) | See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail. |
 | tdc_skin_reaction | Chemprop v2 (D-MPNN + RDKit2D, ensemble=3) | 'ascii' codec can't decode byte 0xe2 in position 4625: ordinal not in range(128) | See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail. |
 | tdc_skin_reaction | Chemprop v2 (CMPNN, ensemble=3) | 'ascii' codec can't decode byte 0xe2 in position 4288: ordinal not in range(128) | See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail. |
@@ -1097,6 +1154,91 @@ Share of each dataset's test molecules that every enabled applicability-domain m
 | tdc_solubility_aqsoldb | Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3) | 'ascii' codec can't decode byte 0xe2 in position 170: ordinal not in range(128) | See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail. |
 | tdc_solubility_aqsoldb | Uni-Mol V2 (84m) | CUDA out of memory. Tried to allocate 2.97 GiB. GPU 0 has a total capacity of 39.49 GiB of which 2.35 GiB is free. Including non-PyTorch memory, this process ha | GPU memory exhausted: lower the batch size (--unimol-batch-size, --chemprop-batch-size) or use a larger GPU. |
 | tdc_solubility_aqsoldb | TabPFNRegressor | Fail to call predict: [HTTP 429] Daily usage limit reached. Your daily limit is 5000000 tokens. Resets at 2026-09-27 00:00:00 UTC. To learn more or request an i | TabPFN API budget or authentication problem; set PRIORLABS_API_KEY, install local tabpfn on a GPU, or --no-run-tabpfn. |
+| tdc_cyp2c9_veith | Chemprop v2 (D-MPNN, ensemble=3) | 'ascii' codec can't decode byte 0xe2 in position 146: ordinal not in range(128) | See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail. |
+| tdc_cyp2c9_veith | Chemprop v2 (D-MPNN + RDKit2D, ensemble=3) | 'ascii' codec can't decode byte 0xe2 in position 154: ordinal not in range(128) | See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail. |
+| tdc_cyp2c9_veith | Chemprop v2 (CMPNN, ensemble=3) | 'ascii' codec can't decode byte 0xe2 in position 146: ordinal not in range(128) | See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail. |
+| tdc_cyp2c9_veith | Chemprop v2 (AttentiveFP, ensemble=3) | 'ascii' codec can't decode byte 0xe2 in position 158: ordinal not in range(128) | See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail. |
+| tdc_cyp2c9_veith | Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3) | 'ascii' codec can't decode byte 0xe2 in position 164: ordinal not in range(128) | See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail. |
+| tdc_cyp2c9_veith | Chemprop v2 (D-MPNN, ensemble=3) | 'ascii' codec can't decode byte 0xe2 in position 146: ordinal not in range(128) | See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail. |
+| tdc_cyp2c9_veith | Chemprop v2 (D-MPNN + RDKit2D, ensemble=3) | 'ascii' codec can't decode byte 0xe2 in position 154: ordinal not in range(128) | See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail. |
+| tdc_cyp2c9_veith | Chemprop v2 (CMPNN, ensemble=3) | 'ascii' codec can't decode byte 0xe2 in position 146: ordinal not in range(128) | See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail. |
+| tdc_cyp2c9_veith | Chemprop v2 (AttentiveFP, ensemble=3) | 'ascii' codec can't decode byte 0xe2 in position 158: ordinal not in range(128) | See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail. |
+| tdc_cyp2c9_veith | Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3) | 'ascii' codec can't decode byte 0xe2 in position 164: ordinal not in range(128) | See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail. |
+| tdc_cyp2c9_veith | Uni-Mol V2 (84m) | CUDA out of memory. Tried to allocate 3.96 GiB. GPU 0 has a total capacity of 39.39 GiB of which 2.63 GiB is free. Including non-PyTorch memory, this process ha | GPU memory exhausted: lower the batch size (--unimol-batch-size, --chemprop-batch-size) or use a larger GPU. |
+| tdc_cyp2c9_veith | Chemprop v2 (D-MPNN, ensemble=3) | 'ascii' codec can't decode byte 0xe2 in position 146: ordinal not in range(128) | See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail. |
+| tdc_cyp2c9_veith | Chemprop v2 (D-MPNN + RDKit2D, ensemble=3) | 'ascii' codec can't decode byte 0xe2 in position 154: ordinal not in range(128) | See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail. |
+| tdc_cyp2c9_veith | Chemprop v2 (CMPNN, ensemble=3) | 'ascii' codec can't decode byte 0xe2 in position 146: ordinal not in range(128) | See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail. |
+| tdc_cyp2c9_veith | Chemprop v2 (AttentiveFP, ensemble=3) | 'ascii' codec can't decode byte 0xe2 in position 158: ordinal not in range(128) | See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail. |
+| tdc_cyp2c9_veith | Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3) | 'ascii' codec can't decode byte 0xe2 in position 164: ordinal not in range(128) | See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail. |
+| tdc_cyp2c9_veith | Uni-Mol V2 (84m) | CUDA out of memory. Tried to allocate 3.96 GiB. GPU 0 has a total capacity of 39.49 GiB of which 2.72 GiB is free. Including non-PyTorch memory, this process ha | GPU memory exhausted: lower the batch size (--unimol-batch-size, --chemprop-batch-size) or use a larger GPU. |
+| tdc_cyp3a4_veith | Chemprop v2 (D-MPNN, ensemble=3) | 'ascii' codec can't decode byte 0xe2 in position 146: ordinal not in range(128) | See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail. |
+| tdc_cyp3a4_veith | Chemprop v2 (D-MPNN + RDKit2D, ensemble=3) | 'ascii' codec can't decode byte 0xe2 in position 154: ordinal not in range(128) | See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail. |
+| tdc_cyp3a4_veith | Chemprop v2 (CMPNN, ensemble=3) | 'ascii' codec can't decode byte 0xe2 in position 146: ordinal not in range(128) | See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail. |
+| tdc_cyp3a4_veith | Chemprop v2 (AttentiveFP, ensemble=3) | 'ascii' codec can't decode byte 0xe2 in position 158: ordinal not in range(128) | See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail. |
+| tdc_cyp3a4_veith | Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3) | 'ascii' codec can't decode byte 0xe2 in position 164: ordinal not in range(128) | See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail. |
+| tdc_cyp3a4_veith | Uni-Mol V2 (84m) | CUDA out of memory. Tried to allocate 4.31 GiB. GPU 0 has a total capacity of 39.39 GiB of which 4.08 GiB is free. Including non-PyTorch memory, this process ha | GPU memory exhausted: lower the batch size (--unimol-batch-size, --chemprop-batch-size) or use a larger GPU. |
+| tdc_cyp3a4_veith | Chemprop v2 (D-MPNN, ensemble=3) | 'ascii' codec can't decode byte 0xe2 in position 146: ordinal not in range(128) | See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail. |
+| tdc_cyp3a4_veith | Chemprop v2 (D-MPNN + RDKit2D, ensemble=3) | 'ascii' codec can't decode byte 0xe2 in position 154: ordinal not in range(128) | See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail. |
+| tdc_cyp3a4_veith | Chemprop v2 (CMPNN, ensemble=3) | 'ascii' codec can't decode byte 0xe2 in position 146: ordinal not in range(128) | See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail. |
+| tdc_cyp3a4_veith | Chemprop v2 (AttentiveFP, ensemble=3) | 'ascii' codec can't decode byte 0xe2 in position 158: ordinal not in range(128) | See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail. |
+| tdc_cyp3a4_veith | Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3) | 'ascii' codec can't decode byte 0xe2 in position 164: ordinal not in range(128) | See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail. |
+| tdc_cyp3a4_veith | Uni-Mol V2 (84m) | CUDA out of memory. Tried to allocate 4.31 GiB. GPU 0 has a total capacity of 39.49 GiB of which 4.11 GiB is free. Including non-PyTorch memory, this process ha | GPU memory exhausted: lower the batch size (--unimol-batch-size, --chemprop-batch-size) or use a larger GPU. |
+| tdc_cyp1a2_veith | Chemprop v2 (D-MPNN, ensemble=3) | Chemprop command failed during training (exit=1). Command: /home/exouser/miniconda3/envs/autoqsar-py311/bin/chemprop train --data-path benchmark_results/autoqs | Install PyTorch: pip install 'qsarena[deep]', or --disable-model-families deep_tabular. |
+| tdc_cyp1a2_veith | Chemprop v2 (D-MPNN + RDKit2D, ensemble=3) | Chemprop command failed during training (exit=1). Command: /home/exouser/miniconda3/envs/autoqsar-py311/bin/chemprop train --data-path benchmark_results/autoqs | Install PyTorch: pip install 'qsarena[deep]', or --disable-model-families deep_tabular. |
+| tdc_cyp1a2_veith | Chemprop v2 (CMPNN, ensemble=3) | Chemprop command failed during training (exit=1). Command: /home/exouser/miniconda3/envs/autoqsar-py311/bin/chemprop train --data-path benchmark_results/autoqs | Install PyTorch: pip install 'qsarena[deep]', or --disable-model-families deep_tabular. |
+| tdc_cyp1a2_veith | Chemprop v2 (AttentiveFP, ensemble=3) | Chemprop command failed during training (exit=1). Command: /home/exouser/miniconda3/envs/autoqsar-py311/bin/chemprop train --data-path benchmark_results/autoqs | Install PyTorch: pip install 'qsarena[deep]', or --disable-model-families deep_tabular. |
+| tdc_cyp1a2_veith | Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3) | Chemprop command failed during training (exit=1). Command: /home/exouser/miniconda3/envs/autoqsar-py311/bin/chemprop train --data-path benchmark_results/autoqs | Install PyTorch: pip install 'qsarena[deep]', or --disable-model-families deep_tabular. |
+| tdc_cyp1a2_veith | Uni-Mol V2 (84m) | CUDA out of memory. Tried to allocate 326.00 MiB. GPU 0 has a total capacity of 39.39 GiB of which 316.38 MiB is free. Including non-PyTorch memory, this proces | GPU memory exhausted: lower the batch size (--unimol-batch-size, --chemprop-batch-size) or use a larger GPU. |
+| tdc_cyp1a2_veith | Chemprop v2 (D-MPNN, ensemble=3) | Chemprop command failed during training (exit=1). Command: /home/exouser/miniconda3/envs/autoqsar-py311/bin/chemprop train --data-path benchmark_results/autoqs | Install PyTorch: pip install 'qsarena[deep]', or --disable-model-families deep_tabular. |
+| tdc_cyp1a2_veith | Chemprop v2 (D-MPNN + RDKit2D, ensemble=3) | Chemprop command failed during training (exit=1). Command: /home/exouser/miniconda3/envs/autoqsar-py311/bin/chemprop train --data-path benchmark_results/autoqs | Install PyTorch: pip install 'qsarena[deep]', or --disable-model-families deep_tabular. |
+| tdc_cyp1a2_veith | Chemprop v2 (CMPNN, ensemble=3) | Chemprop command failed during training (exit=1). Command: /home/exouser/miniconda3/envs/autoqsar-py311/bin/chemprop train --data-path benchmark_results/autoqs | Install PyTorch: pip install 'qsarena[deep]', or --disable-model-families deep_tabular. |
+| tdc_cyp1a2_veith | Chemprop v2 (AttentiveFP, ensemble=3) | Chemprop command failed during training (exit=1). Command: /home/exouser/miniconda3/envs/autoqsar-py311/bin/chemprop train --data-path benchmark_results/autoqs | Install PyTorch: pip install 'qsarena[deep]', or --disable-model-families deep_tabular. |
+| tdc_cyp1a2_veith | Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3) | Chemprop command failed during training (exit=1). Command: /home/exouser/miniconda3/envs/autoqsar-py311/bin/chemprop train --data-path benchmark_results/autoqs | Install PyTorch: pip install 'qsarena[deep]', or --disable-model-families deep_tabular. |
+| tdc_cyp1a2_veith | Uni-Mol V2 (84m) | CUDA out of memory. Tried to allocate 5.08 GiB. GPU 0 has a total capacity of 39.49 GiB of which 3.50 GiB is free. Including non-PyTorch memory, this process ha | GPU memory exhausted: lower the batch size (--unimol-batch-size, --chemprop-batch-size) or use a larger GPU. |
+| tdc_cyp1a2_veith | Chemprop v2 (D-MPNN, ensemble=3) | Chemprop training failed during training (exit=1). Command: /home/exouser/miniconda3/envs/autoqsar-py311/bin/chemprop train --data-path benchmark_results/qsare | Chemprop itself failed on this dataset; see run.log. Small datasets often need --chemprop-batch-size 16. |
+| tdc_cyp1a2_veith | Chemprop v2 (D-MPNN + RDKit2D, ensemble=3) | Chemprop training failed during training (exit=1). Command: /home/exouser/miniconda3/envs/autoqsar-py311/bin/chemprop train --data-path benchmark_results/qsare | Chemprop itself failed on this dataset; see run.log. Small datasets often need --chemprop-batch-size 16. |
+| tdc_cyp1a2_veith | Chemprop v2 (CMPNN, ensemble=3) | Chemprop training failed during training (exit=1). Command: /home/exouser/miniconda3/envs/autoqsar-py311/bin/chemprop train --data-path benchmark_results/qsare | Chemprop itself failed on this dataset; see run.log. Small datasets often need --chemprop-batch-size 16. |
+| tdc_cyp1a2_veith | Chemprop v2 (AttentiveFP, ensemble=3) | Chemprop training failed during training (exit=1). Command: /home/exouser/miniconda3/envs/autoqsar-py311/bin/chemprop train --data-path benchmark_results/qsare | Chemprop itself failed on this dataset; see run.log. Small datasets often need --chemprop-batch-size 16. |
+| tdc_cyp1a2_veith | Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3) | Chemprop training failed during training (exit=1). Command: /home/exouser/miniconda3/envs/autoqsar-py311/bin/chemprop train --data-path benchmark_results/qsare | Chemprop itself failed on this dataset; see run.log. Small datasets often need --chemprop-batch-size 16. |
+| tdc_cyp2c19_veith | Chemprop v2 (D-MPNN, ensemble=3) | Chemprop command failed during training (exit=1). Command: /home/exouser/miniconda3/envs/autoqsar-py311/bin/chemprop train --data-path benchmark_results/autoqs | Install PyTorch: pip install 'qsarena[deep]', or --disable-model-families deep_tabular. |
+| tdc_cyp2c19_veith | Chemprop v2 (D-MPNN + RDKit2D, ensemble=3) | Chemprop command failed during training (exit=1). Command: /home/exouser/miniconda3/envs/autoqsar-py311/bin/chemprop train --data-path benchmark_results/autoqs | Install PyTorch: pip install 'qsarena[deep]', or --disable-model-families deep_tabular. |
+| tdc_cyp2c19_veith | Chemprop v2 (CMPNN, ensemble=3) | Chemprop command failed during training (exit=1). Command: /home/exouser/miniconda3/envs/autoqsar-py311/bin/chemprop train --data-path benchmark_results/autoqs | Install PyTorch: pip install 'qsarena[deep]', or --disable-model-families deep_tabular. |
+| tdc_cyp2c19_veith | Chemprop v2 (AttentiveFP, ensemble=3) | Chemprop command failed during training (exit=1). Command: /home/exouser/miniconda3/envs/autoqsar-py311/bin/chemprop train --data-path benchmark_results/autoqs | Install PyTorch: pip install 'qsarena[deep]', or --disable-model-families deep_tabular. |
+| tdc_cyp2c19_veith | Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3) | Chemprop command failed during training (exit=1). Command: /home/exouser/miniconda3/envs/autoqsar-py311/bin/chemprop train --data-path benchmark_results/autoqs | Install PyTorch: pip install 'qsarena[deep]', or --disable-model-families deep_tabular. |
+| tdc_cyp2c19_veith | Uni-Mol V2 (84m) | CUDA out of memory. Tried to allocate 3.28 GiB. GPU 0 has a total capacity of 39.39 GiB of which 2.19 GiB is free. Including non-PyTorch memory, this process ha | GPU memory exhausted: lower the batch size (--unimol-batch-size, --chemprop-batch-size) or use a larger GPU. |
+| tdc_cyp2c19_veith | Chemprop v2 (D-MPNN, ensemble=3) | Chemprop command failed during training (exit=1). Command: /home/exouser/miniconda3/envs/autoqsar-py311/bin/chemprop train --data-path benchmark_results/autoqs | Install PyTorch: pip install 'qsarena[deep]', or --disable-model-families deep_tabular. |
+| tdc_cyp2c19_veith | Chemprop v2 (D-MPNN + RDKit2D, ensemble=3) | Chemprop command failed during training (exit=1). Command: /home/exouser/miniconda3/envs/autoqsar-py311/bin/chemprop train --data-path benchmark_results/autoqs | Install PyTorch: pip install 'qsarena[deep]', or --disable-model-families deep_tabular. |
+| tdc_cyp2c19_veith | Chemprop v2 (CMPNN, ensemble=3) | Chemprop command failed during training (exit=1). Command: /home/exouser/miniconda3/envs/autoqsar-py311/bin/chemprop train --data-path benchmark_results/autoqs | Install PyTorch: pip install 'qsarena[deep]', or --disable-model-families deep_tabular. |
+| tdc_cyp2c19_veith | Chemprop v2 (AttentiveFP, ensemble=3) | Chemprop command failed during training (exit=1). Command: /home/exouser/miniconda3/envs/autoqsar-py311/bin/chemprop train --data-path benchmark_results/autoqs | Install PyTorch: pip install 'qsarena[deep]', or --disable-model-families deep_tabular. |
+| tdc_cyp2c19_veith | Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3) | Chemprop command failed during training (exit=1). Command: /home/exouser/miniconda3/envs/autoqsar-py311/bin/chemprop train --data-path benchmark_results/autoqs | Install PyTorch: pip install 'qsarena[deep]', or --disable-model-families deep_tabular. |
+| tdc_cyp2c19_veith | Uni-Mol V2 (84m) | CUDA out of memory. Tried to allocate 3.28 GiB. GPU 0 has a total capacity of 39.49 GiB of which 2.29 GiB is free. Including non-PyTorch memory, this process ha | GPU memory exhausted: lower the batch size (--unimol-batch-size, --chemprop-batch-size) or use a larger GPU. |
+| tdc_cyp2c19_veith | Chemprop v2 (D-MPNN, ensemble=3) | Chemprop training failed during training (exit=1). Command: /home/exouser/miniconda3/envs/autoqsar-py311/bin/chemprop train --data-path benchmark_results/qsare | Chemprop itself failed on this dataset; see run.log. Small datasets often need --chemprop-batch-size 16. |
+| tdc_cyp2c19_veith | Chemprop v2 (D-MPNN + RDKit2D, ensemble=3) | Chemprop training failed during training (exit=1). Command: /home/exouser/miniconda3/envs/autoqsar-py311/bin/chemprop train --data-path benchmark_results/qsare | Chemprop itself failed on this dataset; see run.log. Small datasets often need --chemprop-batch-size 16. |
+| tdc_cyp2c19_veith | Chemprop v2 (CMPNN, ensemble=3) | Chemprop training failed during training (exit=1). Command: /home/exouser/miniconda3/envs/autoqsar-py311/bin/chemprop train --data-path benchmark_results/qsare | Chemprop itself failed on this dataset; see run.log. Small datasets often need --chemprop-batch-size 16. |
+| tdc_cyp2c19_veith | Chemprop v2 (AttentiveFP, ensemble=3) | Chemprop training failed during training (exit=1). Command: /home/exouser/miniconda3/envs/autoqsar-py311/bin/chemprop train --data-path benchmark_results/qsare | Chemprop itself failed on this dataset; see run.log. Small datasets often need --chemprop-batch-size 16. |
+| tdc_cyp2c19_veith | Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3) | Chemprop training failed during training (exit=1). Command: /home/exouser/miniconda3/envs/autoqsar-py311/bin/chemprop train --data-path benchmark_results/qsare | Chemprop itself failed on this dataset; see run.log. Small datasets often need --chemprop-batch-size 16. |
+| tdc_cyp2d6_veith | Chemprop v2 (D-MPNN, ensemble=3) | 'ascii' codec can't decode byte 0xe2 in position 146: ordinal not in range(128) | See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail. |
+| tdc_cyp2d6_veith | Chemprop v2 (D-MPNN + RDKit2D, ensemble=3) | 'ascii' codec can't decode byte 0xe2 in position 154: ordinal not in range(128) | See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail. |
+| tdc_cyp2d6_veith | Chemprop v2 (CMPNN, ensemble=3) | 'ascii' codec can't decode byte 0xe2 in position 146: ordinal not in range(128) | See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail. |
+| tdc_cyp2d6_veith | Chemprop v2 (AttentiveFP, ensemble=3) | 'ascii' codec can't decode byte 0xe2 in position 158: ordinal not in range(128) | See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail. |
+| tdc_cyp2d6_veith | Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3) | 'ascii' codec can't decode byte 0xe2 in position 164: ordinal not in range(128) | See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail. |
+| tdc_cyp2d6_veith | Uni-Mol V2 (84m) | CUDA out of memory. Tried to allocate 4.31 GiB. GPU 0 has a total capacity of 39.39 GiB of which 3.99 GiB is free. Including non-PyTorch memory, this process ha | GPU memory exhausted: lower the batch size (--unimol-batch-size, --chemprop-batch-size) or use a larger GPU. |
+| tdc_cyp2d6_veith | Chemprop v2 (D-MPNN, ensemble=3) | 'ascii' codec can't decode byte 0xe2 in position 146: ordinal not in range(128) | See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail. |
+| tdc_cyp2d6_veith | Chemprop v2 (D-MPNN + RDKit2D, ensemble=3) | 'ascii' codec can't decode byte 0xe2 in position 154: ordinal not in range(128) | See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail. |
+| tdc_cyp2d6_veith | Chemprop v2 (CMPNN, ensemble=3) | 'ascii' codec can't decode byte 0xe2 in position 146: ordinal not in range(128) | See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail. |
+| tdc_cyp2d6_veith | Chemprop v2 (AttentiveFP, ensemble=3) | 'ascii' codec can't decode byte 0xe2 in position 158: ordinal not in range(128) | See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail. |
+| tdc_cyp2d6_veith | Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3) | 'ascii' codec can't decode byte 0xe2 in position 164: ordinal not in range(128) | See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail. |
+| tdc_cyp2d6_veith | Uni-Mol V2 (84m) | CUDA out of memory. Tried to allocate 4.31 GiB. GPU 0 has a total capacity of 39.49 GiB of which 4.19 GiB is free. Including non-PyTorch memory, this process ha | GPU memory exhausted: lower the batch size (--unimol-batch-size, --chemprop-batch-size) or use a larger GPU. |
+| tdc_herg_karim | Chemprop v2 (D-MPNN, ensemble=3) | 'ascii' codec can't decode byte 0xe2 in position 144: ordinal not in range(128) | See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail. |
+| tdc_herg_karim | Chemprop v2 (D-MPNN + RDKit2D, ensemble=3) | 'ascii' codec can't decode byte 0xe2 in position 152: ordinal not in range(128) | See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail. |
+| tdc_herg_karim | Chemprop v2 (CMPNN, ensemble=3) | 'ascii' codec can't decode byte 0xe2 in position 144: ordinal not in range(128) | See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail. |
+| tdc_herg_karim | Chemprop v2 (AttentiveFP, ensemble=3) | 'ascii' codec can't decode byte 0xe2 in position 156: ordinal not in range(128) | See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail. |
+| tdc_herg_karim | Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3) | 'ascii' codec can't decode byte 0xe2 in position 162: ordinal not in range(128) | See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail. |
+| tdc_herg_karim | Chemprop v2 (D-MPNN, ensemble=3) | 'ascii' codec can't decode byte 0xe2 in position 144: ordinal not in range(128) | See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail. |
+| tdc_herg_karim | Chemprop v2 (D-MPNN + RDKit2D, ensemble=3) | 'ascii' codec can't decode byte 0xe2 in position 152: ordinal not in range(128) | See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail. |
+| tdc_herg_karim | Chemprop v2 (CMPNN, ensemble=3) | 'ascii' codec can't decode byte 0xe2 in position 144: ordinal not in range(128) | See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail. |
+| tdc_herg_karim | Chemprop v2 (AttentiveFP, ensemble=3) | 'ascii' codec can't decode byte 0xe2 in position 156: ordinal not in range(128) | See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail. |
+| tdc_herg_karim | Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3) | 'ascii' codec can't decode byte 0xe2 in position 162: ordinal not in range(128) | See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail. |
 
 Skipped by design:
 
@@ -1105,10 +1247,12 @@ Skipped by design:
 
 ## What to do next
 
-- 717 model fit(s) failed (Chemprop v2 (AttentiveFP, ensemble=3), Chemprop v2 (CMPNN, ensemble=3), Chemprop v2 (D-MPNN + RDKit2D, ensemble=3), Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3) ...). See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail.
-- 119 model fit(s) failed (Uni-Mol V1, Uni-Mol V2 (164m), Uni-Mol V2 (310m), Uni-Mol V2 (84m)). GPU memory exhausted: lower the batch size (--unimol-batch-size, --chemprop-batch-size) or use a larger GPU.
+- 151 model fit(s) failed (Uni-Mol V1, Uni-Mol V2 (164m), Uni-Mol V2 (310m), Uni-Mol V2 (84m)). GPU memory exhausted: lower the batch size (--unimol-batch-size, --chemprop-batch-size) or use a larger GPU.
+- 763 model fit(s) failed (Chemprop v2 (AttentiveFP, ensemble=3), Chemprop v2 (CMPNN, ensemble=3), Chemprop v2 (D-MPNN + RDKit2D, ensemble=3), Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3) ...). See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail.
 - 7 model fit(s) failed (TabPFNClassifier, TabPFNRegressor). TabPFN API budget or authentication problem; set PRIORLABS_API_KEY, install local tabpfn on a GPU, or --no-run-tabpfn.
-- On 31 dataset(s) the test-selected winner differs from the CV-selected one (tdc_skin_reaction, tdc_dili, chemml_cep_homo, tdc_hia_hou, tdc_bioavailability_ma). Choosing on the test set is optimistic; report the CV-selected model and its test score as the honest estimate.
+- 20 model fit(s) failed (Chemprop v2 (AttentiveFP, ensemble=3), Chemprop v2 (CMPNN, ensemble=3), Chemprop v2 (D-MPNN + RDKit2D, ensemble=3), Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3) ...). Install PyTorch: pip install 'qsarena[deep]', or --disable-model-families deep_tabular.
+- 10 model fit(s) failed (Chemprop v2 (AttentiveFP, ensemble=3), Chemprop v2 (CMPNN, ensemble=3), Chemprop v2 (D-MPNN + RDKit2D, ensemble=3), Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3) ...). Chemprop itself failed on this dataset; see run.log. Small datasets often need --chemprop-batch-size 16.
+- On 39 dataset(s) the test-selected winner differs from the CV-selected one (tdc_carcinogens_lagunin, tdc_skin_reaction, tdc_dili, chemml_cep_homo, tdc_hia_hou). Choosing on the test set is optimistic; report the CV-selected model and its test score as the honest estimate.
 - All scores come from one train/test split and one seed. Estimate split-to-split variance by repeating the run with other seeds.
 
   ```bash
@@ -1132,7 +1276,8 @@ Skipped by design:
 - 23% of the test molecules of tdc_toxcast fall outside the applicability domain; read their predictions with caution (see applicability_domain.csv in that dataset's folder).
 - 39% of the test molecules of tdc_ames fall outside the applicability domain; read their predictions with caution (see applicability_domain.csv in that dataset's folder).
 - 23% of the test molecules of tdc_ld50_zhu fall outside the applicability domain; read their predictions with caution (see applicability_domain.csv in that dataset's folder).
-- Uni-Mol was skipped because no GPU was detected. On a CUDA machine with qsarena[foundation] installed it runs automatically.
+- 22% of the test molecules of tdc_cyp2c9_veith fall outside the applicability domain; read their predictions with caution (see applicability_domain.csv in that dataset's folder).
+- 31% of the test molecules of tdc_cyp3a4_veith fall outside the applicability domain; read their predictions with caution (see applicability_domain.csv in that dataset's folder).
 - Check new molecules against the training set's applicability domain before trusting their predictions.
 
   ```bash
@@ -1147,14 +1292,14 @@ Rerun exactly this configuration with `qsarena-benchmark --config run_config.yam
 ```yaml
 run:
   mode: auto
-  output_dir: "C:\\Users\\Scott.Coffin\\OneDrive - California OEHHA\\R_new\\AutoQSAR\\benchmark_results\\qsarena_benchmark_oof_ensemble"
+  output_dir: "C:\\Users\\scott\\AutoQSAR\\benchmark_results\\qsarena_benchmark_oof_ensemble"
   resume: true
   overwrite: false
   verbosity: normal
   dry_run: false
-  n_jobs: 12
+  n_jobs: 16
   parallel_datasets: 1
-  dataset_names: [tdc_skin_reaction, tdc_dili, chemml_cep_homo, chemml_organic_density, tdc_hia_hou, tdc_hydrationfreeenergy_freesolv, tdc_bioavailability_ma, freesolv_sampl, tdc_herg, tdc_cyp2d6_substrate_carbonmangels, tdc_half_life_obach, tdc_cyp2c9_substrate_carbonmangels, tdc_cyp3a4_substrate_carbonmangels, polaris_adme_fang_rppb_1, tdc_caco2_wang, esol_delaney, tdc_clearance_microsome_az, tdc_vdss_lombardo, tdc_clearance_hepatocyte_az, tdc_pgp_broccatelli, tdc_clintox, tdc_toxcast, polaris_adme_fang_hppb_1, poduam_pod_nc_std, tdc_bbb_martins, tdc_pampa_ncats, polaris_adme_fang_solu_1, poduam_pod_rd_std, polaris_adme_fang_perm_1, tdc_ppbr_az, polaris_adme_fang_rclint_1, lipophilicity, tdc_lipophilicity_astrazeneca, tdc_tox21, tdc_ames, tdc_ld50_zhu, tdc_solubility_aqsoldb]
+  dataset_names: [chemml_cep_homo, chemml_organic_density, esol_delaney, freesolv_sampl, lipophilicity, poduam_pod_nc_std, poduam_pod_rd_std, polaris_adme_fang_hppb_1, polaris_adme_fang_perm_1, polaris_adme_fang_rclint_1, polaris_adme_fang_rppb_1, polaris_adme_fang_solu_1, tdc_ames, tdc_bbb_martins, tdc_bioavailability_ma, tdc_caco2_wang, tdc_carcinogens_lagunin, tdc_clearance_hepatocyte_az, tdc_clearance_microsome_az, tdc_clintox, tdc_cyp1a2_veith, tdc_cyp2c19_veith, tdc_cyp2c9_substrate_carbonmangels, tdc_cyp2c9_veith, tdc_cyp2d6_substrate_carbonmangels, tdc_cyp2d6_veith, tdc_cyp3a4_substrate_carbonmangels, tdc_cyp3a4_veith, tdc_dili, tdc_half_life_obach, tdc_herg, tdc_herg_karim, tdc_hia_hou, tdc_hydrationfreeenergy_freesolv, tdc_ld50_zhu, tdc_lipophilicity_astrazeneca, tdc_pampa_ncats, tdc_pgp_broccatelli, tdc_ppbr_az, tdc_skin_reaction, tdc_solubility_aqsoldb, tdc_tox21, tdc_toxcast, tdc_vdss_lombardo]
 input:
   path: null
   smiles_col: null
@@ -1201,9 +1346,9 @@ models:
     pretrained_3d: true
     maplight_gnn: true
     fusion: true
-    ensemble: false
+    ensemble: true
   disable_models: []
-  only_models: [TabPFNClassifier, TabPFNRegressor]
+  only_models: [Ensemble]
 ga_tuning:
   mode: "off"
   estimators: [elastic_net, catboost]
@@ -1220,10 +1365,10 @@ deep:
     batch_size: 32
     seed: 42
   unimol:
-    v1: "false"
-    v2: "false"
+    v1: "true"
+    v2: "true"
     v2_size: 84m
-    epochs: 10
+    epochs: 20
     lr: 0.0001
     batch_size: 32
     early_stopping_patience: 5
@@ -1232,7 +1377,7 @@ deep:
     tensorflow: true
     epochs: 80
   tabpfn: true
-  tabpfn_max_features: 40
+  tabpfn_max_features: 0
   cnn: true
 fusion:
   cfa_score: true
@@ -1246,7 +1391,7 @@ ensemble:
   oof_folds: 5
   oof_scope: all
   oof_allow_api_refits: false
-  oof_source_run: null
+  oof_source_run: benchmark_results\autoqsar_benchmark_20260623_153839
   exclude_negative_test_r2_members: true
   drop_correlated_members: true
   max_member_correlation: 0.995

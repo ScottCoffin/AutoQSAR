@@ -2,9 +2,9 @@
   "status": "completed",
   "dataset": "poduam_pod_rd_std",
   "source": "PODUAM benchmark: POD reproductive/developmental standardized set (Aurisano et al., Nature Communications 2025)",
-  "completed_at": "2026-09-28 08:32:23",
-  "elapsed_seconds": 31.991,
-  "n_metrics_rows": 47,
+  "completed_at": "2026-10-02 10:57:12",
+  "elapsed_seconds": 21.04,
+  "n_metrics_rows": 49,
   "n_stage_records": 4,
   "n_rows": 2355,
   "task_type": "regression",
@@ -63,6 +63,6 @@
     "mae_in_domain": 0.4126272451721908,
     "mae_out_of_domain": 0.5693732486756329
   },
-  "stage23_signature": "64fd6b66df80a8fdaa47be9b6f1f3cebc0334a45a018d1afdec03af9eb83592e",
-  "resume_fingerprint": "b4fc1e1e6948cdda9ca3a2f3"
+  "stage23_signature": "beb81861ad52f87b980a046a35f6af4a1407c620767ba30aea739a6275bfe4b9",
+  "resume_fingerprint": "c3452395f9ed1e55e852cbd3"
 }

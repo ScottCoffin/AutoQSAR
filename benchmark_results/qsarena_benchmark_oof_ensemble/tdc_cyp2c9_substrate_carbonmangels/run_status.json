@@ -2,9 +2,9 @@
   "status": "completed",
   "dataset": "tdc_cyp2c9_substrate_carbonmangels",
   "source": "PyTDC ADME benchmark group: cyp2c9_substrate_carbonmangels (official train_val/test split)",
-  "completed_at": "2026-09-28 08:21:04",
-  "elapsed_seconds": 31.151,
-  "n_metrics_rows": 45,
+  "completed_at": "2026-10-02 10:54:05",
+  "elapsed_seconds": 2.18,
+  "n_metrics_rows": 47,
   "n_stage_records": 4,
   "n_rows": 669,
   "task_type": "classification",
@@ -61,6 +61,6 @@
     "selected_model": "LogisticRegression",
     "notes": []
   },
-  "stage23_signature": "df812fcb104c2b8da52ea204a384a6891f5e4665829e089a863e08321ce8efff",
-  "resume_fingerprint": "9541655bd4bf4385f0edffc8"
+  "stage23_signature": "0224c79f2cd4aca7e9e5d7b3b555aac868d0cae24074a5b676f7a759ecde2a8e",
+  "resume_fingerprint": "03f5a84a82bc8e38305f464c"
 }
