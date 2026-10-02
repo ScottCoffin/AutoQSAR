@@ -11,7 +11,53 @@ QSARena: SMILES → molecular property QSAR/AutoML workspace plus a 45-dataset b
 (`manuscript.md`, target: *Journal of Cheminformatics*). Windows + OneDrive checkout (paths contain spaces:
 always quote). Bash (Git Bash) and PowerShell are both available.
 
-## A100 task: regenerate the clean (out-of-fold) ensemble results — Jetstream2 credits are low
+## Current status and next steps (updated 2026-10-02) - read this first
+
+**Done**
+- **OOF-ensemble run complete:** `benchmark_results/qsarena_benchmark_oof_ensemble`, 44/44 datasets, with
+  Chemprop OOF (`--ensemble-oof-scope all`, run on the RTX 4060 workstation) and both 2026-09-29 ensemble
+  fixes applied. `python tools/verify_oof_ensemble_run.py` passes: 0 hard failures and 5 soft warnings, all
+  weak ensembles on small or heavy-tailed sets where the best models are members, so not a bug.
+- **Manuscript regenerated from that run:**
+  - `render_manuscript_assets.py --run-dir benchmark_results/qsarena_benchmark_oof_ensemble`; the verifier passes 96/96;
+  - prose synced in `manuscript.md`, `submission/body.tex` and `submission/abstract.tex`. The abstract is at exactly
+    **350 words, the cap**, so any addition needs a cut;
+  - PDFs build with no errors or undefined references (TeX Live 2026 at `C:/texlive/2026/bin/windows`; commands
+    in `submission/README.md`).
+- **Current headline numbers:**
+  - wins: Ensemble 13, Chemprop 8, Uni-Mol 8, TabPFN 5, Conventional 4, MapLight+GNN 4, CFA 2;
+  - top-10 placement: 35 -> 28 -> 27 (7 placements from library breadth, 1 from honest selection);
+  - first places: 5 -> 3 -> 1;
+  - CV-pick median gap to the best model: 7.9%.
+- **Meta-analysis** (§3.14, Figs 7-9, Tables S9-S11), including selector v2 and the auto-rendered CV-leak caveat.
+- **PODUAM attribution** fixed (see traps).
+- **Graphical abstract** PNG/PDF render through headless Edge/Chrome when `cairosvg` has no libcairo (the case on Windows).
+
+**In progress (detached jobs that survive the session).** Feature-expansion arm: GPU XGBoost on
+`admetboost+chemeleon`, then `chemeleon`, plus `unimol_repr` featurization. Status, logs and resume commands
+are in the checklist of `docs/FEATURE_EXPANSION_PLAN.md`.
+
+**Next steps**
+1. When those jobs finish: `python -m qsarena.feature_expansion.evaluate`, train `admetboost+emb` / `emb`, then
+   write up the results and decide whether to integrate (plan checklist; TODO.md).
+2. Anything from the arm that enters the paper is supplementary. New numbers go through the render and the
+   verifier, never hand-typed.
+3. Zenodo deposit: the last blocking submission item (`ZENODO.md`).
+4. Optional, each needing approval: Phase 7 learning curve (~18 GPU-h, `docs/HANDOFF_RTX_GPU_WORK.md`), CheMeleon
+   fine-tuning as a Chemprop variant (unscoped), and a 5-seed TDC-22 replication.
+5. **Declined (2026-10-02): nested-selection CV** (`docs/NESTED_SELECTION_CV_PLAN.md`). The caveat stays.
+
+**Running long jobs on the RTX box.** Launch them detached through WMI: write a `.cmd` under `logs/`, then run
+`Invoke-CimMethod -ClassName Win32_Process -MethodName Create -Arguments @{CommandLine='cmd.exe /c <path>'}`.
+The agent session kills its own background tasks after 30 min. Windows EcoQoS throttles WMI-launched processes
+(Chemprop child start-up went from 7 s to ~19 s, and conformer generation slowed ~5x). The fix is
+`powercfg /overlaysetactive ded574b5-45a0-4f42-8737-46345c09c238`, which resets on reboot.
+
+## A100 task (COMPLETED; historical): regenerate the clean (out-of-fold) ensemble results
+
+**Done.** Steps 4-7 were completed on the RTX 4060 workstation, including the Chemprop OOF that
+the 2026-09-26 status below calls "out of reach" (that judgment applied to the A100 allocation only). Keep
+this section as the recipe for any future repair run.
 
 **Read this whole section before running anything on the A100.** The goal is
 `benchmark_results/qsarena_benchmark_oof_ensemble`: the same base models as
@@ -214,6 +260,8 @@ stack stopped first). Only matters for step 6.
 | Any user-facing run option (the 15 decision groups) | `qsarena/config.py` (`RunConfig`) | Then `python -m qsarena.config --write-docs` (regenerates `docs/options_reference.md`, `configs/run.example.yaml`, the tutorial's option tables). Tests fail if they are stale. |
 | Batch mode, preflight/dry-run, reports, run.log/events, atomic writes | `qsarena/batch.py`, `preflight.py`, `reporting.py`, `run_events.py`, `artifacts.py` | Wired into the runner's `prepare_args()` / `_run_main()`. |
 | Tutorial = Additional file 2 | `docs/tutorial.md` | Every command runs in `tests/docs` (~6 min). PDF: `python submission/build_additional_file_2.py`; never edit the generated `.tex`. Work order: `docs/AGENT_WORK_ORDER_tutorial.md`. |
+| Dataset-property meta-analysis (§3.14, Figs 7-9, Tables S9-S10) | `qsarena/meta_analysis/` | Spec `docs/QSARena_spec.md`; methods `docs/meta_analysis/METHODS.md`; inventory `docs/meta_analysis/INVENTORY.md`. Run by `render_manuscript_assets.py` after the notebook (~4 min CPU; `--no-meta-analysis` skips it). Reads the notebook's Fig 6 export (`manuscript_assets/tables/figure6_family_best_models*.csv`) and the committed partitions `data/meta_analysis/dataset_partitions.csv.gz`, which are hash-verified against `split_*_hash`. §3.14 prose lives between `META` markers in `manuscript.md` / `body.tex`, rendered from `meta_numbers.json`; never hand-edit it. Edit the templates in `text.py`. Blocks: `section_3_14`, `limitation_meta`, and `limitation_cvleak` (the selection-leak caveat; numbers from `cv_leak.py`, which measures CV-vs-test overstatement from `metrics.csv` with the feature-expansion arm as the reference). Selector v2: `selection.py` / `selector_features.py`, pre-registered in `docs/meta_analysis/SELECTOR_V2_PLAN.md`; the nested permutation test is cached in `manuscript_assets/tables/meta_selector_v2_permutation.json` by input hash (~1 h when recomputed). Tests: `tests/meta` (the pipeline tests are `slow`). |
+| Feature-expansion arm (ADMETboost features, pretrained embeddings, full-feature trees) | `qsarena/feature_expansion/` | **Read `docs/FEATURE_EXPANSION_PLAN.md` first; its checklist is the status tracker, so tick items as you go.** Experimental and separate from the canonical run: it uses the committed partitions and writes `benchmark_results/qsarena_feature_expansion/<feature_set>/metrics.csv`. Feature cache: `.model_cache/feature_expansion/<family>/<dataset>.npy` (gitignored, hash-checked, resumable). CPU featurization runs in **system Python** (scikit-fingerprints, mordredcommunity and gensim are installed there, not in the benchmark env). Mol2Vec model: `.model_cache/mol2vec/model_300dim.pkl` (download URL and sha256 in `featurize.py`). Motivation: honest CV-selected QSARena loses 3-19 to MaxQsaring on the 22 official TDC splits, and ADMETboost, the NIST meta-model and MaxQsaring all feed Mordred-rich, unselected features to XGBoost. Tests: `tests/feature_expansion`. |
 | Tutorial example data | `tests/fixtures/tutorial/make_tutorial_data.py` -> `qsarena/examples/data/` | Synthetic targets; shipped in the wheel; `qsarena-examples DIR` copies them out. |
 
 Notebook generation notes:
@@ -262,20 +310,18 @@ Notebook generation notes:
      trap below). Its selector times and wall-clock totals come from reusing cached features and
      selections, so they are not real costs either. Take selector scaling and dataset wall-clock from
      the canonical run.
-   - `benchmark_results/qsarena_benchmark_oof_ensemble`: **pending A100 run.** Same base models, with
-     ensembles rebuilt on out-of-fold predictions and no full model retrained. This is the run the
-     manuscript should be regenerated from. Uni-Mol OOF comes free from its saved `cv.data`, CPU
-     members refit on 5 folds (~10 h), and Chemprop is the only GPU cost (~65 h with
-     `--ensemble-oof-scope all`; excluded with `cpu`). Command and checks:
-     [submission/chemprop_rerun_command.md](submission/chemprop_rerun_command.md) §7.
-   - Regenerate with `render_manuscript_assets.py --run-dir <run>`. `verify_manuscript_numbers.py`
-     is pinned to the canonical run and will fail until its assertions are moved to the new run
-     (update each value; never loosen a check).
+   - `benchmark_results/qsarena_benchmark_oof_ensemble`: **the manuscript's run since 2026-10-02.**
+     Same base models, ensembles rebuilt on out-of-fold predictions with Chemprop OOF included
+     (`--ensemble-oof-scope all`, run on the RTX 4060), no full model retrained, and both
+     2026-09-29 ensemble fixes applied. Post-run checks: `python tools/verify_oof_ensemble_run.py`.
+   - Regenerate with `render_manuscript_assets.py --run-dir benchmark_results/qsarena_benchmark_oof_ensemble`.
+     `verify_manuscript_numbers.py` is pinned to this run (96 checks). If the run changes, update
+     each expected value; never loosen a check.
 2. Regenerate every figure, table and number (~1.5 min; system Python suffices):
    ```bash
    python portable_colab_qsar_bundle/render_manuscript_assets.py   # notebook + figures + tables + numbers JSON + LaTeX tables
-   python portable_colab_qsar_bundle/render_graphical_abstract.py  # 920x300 J.Cheminform graphical abstract
-   python portable_colab_qsar_bundle/verify_manuscript_numbers.py  # 78 assertions; non-zero exit on drift
+   python portable_colab_qsar_bundle/render_graphical_abstract.py  # 920x300 J.Cheminform graphical abstract (SVG+PNG+PDF)
+   python portable_colab_qsar_bundle/verify_manuscript_numbers.py  # 96 checks; non-zero exit on drift
    ```
    The first also rewrites the `<!-- TABLE:stem -->` blocks in `manuscript.md` and
    `submission/tables/*.tex`. **Never hand-edit inside those blocks or those .tex files.**
@@ -287,7 +333,7 @@ Notebook generation notes:
    `manuscript_assets/tables/*.csv`. Never from old notebook outputs, `Manuscript Outline.md` or
    `publication_recommendations.md` (all predate the A100 run).
    Update after the OECD reliability work: `verify_manuscript_numbers.py` now also checks the 3.13
-   reliability numbers in `submission/body.tex`, and the verifier currently runs 78 checks. Still
+   reliability numbers in `submission/body.tex`, and the verifier currently runs 96 checks. Still
    grep both manuscript formats after other numeric prose edits.
 5. Table S8 / 3.13 comes from the separate reliability study, not the manuscript-assets notebook:
    ```bash
@@ -306,19 +352,18 @@ The paper makes three load-bearing claims. Keep them straight when editing:
    **Since the focused review of 2026-09-25 this is a provisional, secondary result**: the
    reference set contains leaked and self-reported entries (see traps below). The abstract,
    conclusions and graphical abstract lead with claim 2 and with the internal CV-vs-test gap
-   (CV selection never picks the winner; median relative gap 16.1%). Don't move the ranks back
+   (OOF run: CV selection picks the winner on 5/44, median relative gap 7.9%). Don't move the ranks back
    into the headline. The novelty claim is the uniform cross-suite benchmark plus the
    decomposition; code-free access is described as a usability feature (OCHEM/ChemSAR already
    offer it).
-2. **The 35/37 → 25/37 drop is real but has TWO causes, and the paper now decomposes them.** A
+2. **The 35/37 → 27/37 drop is real but has TWO causes, and the paper decomposes them.** A
    matched-candidate-set control (test-selected, restricted to the CV-eligible pool) gives 28/37,
-   3 firsts, median rank 6. So **7 of the 10 lost placements are the value of the broad model
-   library (35→28) and only 3 are the cost of honest selection (28→25)**; median rank 3 → 6 → 8.
-   In the canonical run honest selection removed *every* first place (5 → 3 → 0). With TabPFN
-   eligible for CV selection (chemprop_fixed), that becomes 5 → 3 → **1**; re-check this against the
-   OOF-ensemble run before quoting it. Never re-attribute the whole
-   ten-dataset gap to selection — that was the pre-2026-09-25 error. Never drop the decomposition
-   to make the headline look better either. Verified by `chk("gap decomposition 7+3", ...)`.
+   3 firsts, median rank 6. In the OOF run **7 of the 8 lost placements are the value of the broad
+   model library (35→28) and 1 is the cost of honest selection (28→27)**; median rank 3 → 6 → 7;
+   first places 5 → 3 → 1. (The canonical run was 35 → 28 → 25 with first places 5 → 3 → 0; TabPFN
+   becoming CV-eligible is what changed it.) Never re-attribute the whole gap to selection — that was
+   the pre-2026-09-25 error. Never drop the decomposition to make the headline look better either.
+   Verified by `chk("gap decomposition 7+1", ...)`.
 3. **No effort and no hardware required**: all 44 datasets ran under ONE fixed configuration with no
    per-dataset tuning and GA disabled, and the notebook runs code-free in Colab with no install.
    §3.12 states this and its limits. It is evidenced by the run design, not a marketing line.
@@ -380,8 +425,59 @@ Open work is tracked in [TODO.md](TODO.md); the Zenodo deposit is the last block
 - **Leakage-free CV selection is no longer model-starved.** TabPFN emits CV metrics. In the
   chemprop_fixed run, the CV-selected model picked the per-dataset winner on 3 datasets (it was 0),
   sat a median 8.7% from the best (it was 16.1%), and reached **one** estimated first place (it was
-  0). The top-10 counts 35 → 28 → 25 were unchanged. After the OOF run, re-check the "every first
-  place" and "CV never picks the winner" wording before quoting it.
+  0). In the OOF run: winner on 5/44, median gap 7.9%, one first place, top-10 35 → 28 → 27. The
+  "every first place" and "CV never picks the winner" wording is retired; don't reintroduce it.
+- **Two OOF-ensemble bugs found 2026-09-29, fixed in `qsar_workflow_core.py`; every ensemble built
+  before the fix needs rebuilding (folds are cached, so the rebuild is CPU-only). The OOF run was rebuilt
+  with both fixes on 2026-10-01/02.**
+  (1) `target_scaler.ss` files are gitignored (`**/*.ss`), so after the SSD/git transfer Uni-Mol's
+  regression `cv.data` was used on its *normalised* scale (OOF mean ~0 vs target mean -4). Those
+  members then failed the non-positive-R² filter, so Uni-Mol silently dropped out of nearly every
+  regression ensemble. `load_unimol_saved_oof` now rebuilds the scaler exactly from the training
+  targets (unimol_tools rule: log1p if |skew|>5 or |kurtosis|>20, else StandardScaler) and rejects
+  any vector still off the target scale. Provider-backed OOF (Uni-Mol) is now re-read every run
+  instead of trusting saved `split="oof"` rows. (2) Members can extrapolate wildly on a few
+  molecules: Chemprop RDKit2D/AttentiveFP test predictions reached -1803 on PODUAM (target -11..-1),
+  and tabular-NN fold models reached 42,228 on LD50. One such value wrecked whole ensembles
+  (PODUAM NC ensemble RMSE 4.1 vs 0.72 for the best member). `build_ensemble` now clips member
+  predictions to the training target range (regression; label-free) and lists clipped members in
+  the notes. Base-model metrics are unaffected. Tests: `tests/unit/test_ensemble_oof.py`,
+  `tests/unit/test_core_ensemble.py`. Note: `test_work_order_guards` fails under pandas 3 (a
+  `MergeError` in `_ensemble_split_frame`, which predates these changes); it passes under the
+  benchmark env's pandas 2.3.
+- **The benchmark's model CV leaks through feature selection (found 2026-10-02).** Stage 3 fits the
+  ElasticNetCV selector once on ALL training rows, then each model's `cross_validate` (runner ~L5605) runs
+  on `X_train_selected`, so every held-out CV fold influenced which features were kept. On predefined/
+  scaffold test splits the median CV-vs-test overstatement is 11-44% for benchmark models (ElasticNetCV
+  +44%, TabPFNRegressor +27%, SVR +25%, MLPs +23-25%, trees +12-15%), versus ~4% for the
+  feature-expansion arm's XGBoost/RF, which use no selection, on the SAME random folds. So the inflation
+  comes from selection leakage, not fold geometry (scaffold CV only moved the arm's overstatement from
+  ~4% to ~0%). Consequences: the CV-selected ("honest") pick and the CV-vs-test gap in the manuscript
+  rest on leaky CV scores, and conventional members' OOF predictions (same folds) carry some of the
+  leak into ensemble weighting. Test-set and leaderboard numbers are unaffected. The fix would be to
+  refit selection inside each CV fold (costly: ElasticNet times out on large sets). Scoped in `docs/NESTED_SELECTION_CV_PLAN.md` and
+  DECLINED by the user (2026-10-02, not worth the compute); the paper carries the `limitation_cvleak` caveat. Data:
+  `benchmark_results/qsarena_feature_expansion/admetboost__scaffoldcv/cv_geometry_*.csv`; benchmark
+  optimism recomputable from `metrics.csv` (`cv_primary` vs `test_<primary>`).
+- **Feature selection is NOT reproducible across machines. Transfer `stage23_resume_cache.pkl`; never let
+  a repair run recompute it.** The RTX run had no stage 2/3 caches (they were skipped in the SSD transfer as
+  "regenerable"), so it reselected features. 38/44 datasets came out identical, but six did not: Tox21
+  (8% overlap, 181 vs 580 features), Ames (16%), LD50 (18%), ESOL (73%), CYP2C9 (93%) and AqSolDB (96%).
+  These are mostly datasets where ElasticNetCV hit its 7,200 s limit and the random-forest-importance
+  fallback took over. The base models were trained on the ORIGINAL selection (the committed
+  `selected_features.csv`, whose sha256 matches `chemprop_selected_descriptor_columns_sha256` in
+  `metrics.csv`), so fold refits on a new selection give OOF predictions inconsistent with those models'
+  test predictions. Affected member: Chemprop "D-MPNN + Selected descriptors". Repair on 2026-10-01:
+  restored the committed selection files, moved the stale Chemprop Selected-descriptor fold caches to
+  `benchmark_results/_stale_selection_backup_20261001/`, and copied the original caches over the local
+  ones from the A100-era machine. Check with a sha comparison of `selected_features.csv` against git HEAD.
+  The cache loader ignores the feature-store path (`_stage23_payload_matches_ignoring_cache_location`),
+  so Linux-built caches load on Windows.
+- **Tox21 Chemprop OOF: a deterministic one-row drop.** The AttentiveFP and D-MPNN + RDKit2D fold refits
+  return 4636 predictions for 4637 training rows (Chemprop cannot featurize one molecule), and
+  `_align_chemprop_predictions` refuses to guess, so those two members get no OOF vector and are
+  excluded from Tox21's ensembles. The wrapper's retry passes fail the same way. Impact is negligible:
+  both base models score test AUROC 0.53-0.60 on Tox21.
 - **All `subprocess.run` calls must use `_SUBPROCESS_TEXT_KWARGS`** (`text`/`encoding="utf-8"`/`errors="replace"`),
   never bare `text=True`. Bare `text=True` decodes with the ambient locale; under the C/POSIX locale on
   Jetstream2 that was ASCII, and Chemprop v2's UTF-8 progress output (`0xe2`) made `subprocess.run` itself
@@ -464,11 +560,14 @@ Open work is tracked in [TODO.md](TODO.md); the Zenodo deposit is the last block
   evidence applies only to `benchmark_results/benchmark_name_date`, which is retained as the
   hardware-comparison arm. On 37 identically split datasets the two runs differ by a median of
   -0.19%, which is the paper's accessibility result, not a discrepancy to fix.
-- **PODUAM is misattributed in repo metadata.** `data/benchmark_dataset_catalog.csv` and the cached
-  `data/benchmark_leaderboards/leaderboard_top10_reference_*.csv` credit "Aurisano et al., Nature Communications 2025".
-  The actual PODUAM paper is von Borries K, Beckwith KV, Goodman JM, Chiu WA, Jolliet O, Fantke P, *Nat Commun*
-  2026;17:647, doi:10.1038/s41467-025-67374-4 (software: github.com/kejbo/PODUAM). The manuscript cites the correct one;
-  the repo metadata still needs fixing.
+- **PODUAM attribution (fixed 2026-10-02).** The registry, catalog and `leaderboard_top10_reference_latest.csv`
+  now credit von Borries K, Beckwith KV, Goodman JM, Chiu WA, Jolliet O, Fantke P, *Nat Commun* 2026;17:647,
+  doi:10.1038/s41467-025-67374-4 (software: github.com/kejbo/PODUAM), not "Aurisano et al. 2025". Committed run
+  outputs, timestamped leaderboard snapshots and `chemprop_oof_seed/` keep the old string as historical records.
+  The `source_label` feeds the stage 2/3 signature (`dataset_source`), which keys cached feature selections and
+  every metrics row's `stage_config_signature`; `SIGNATURE_SOURCE_LABEL_ALIASES` in the runner maps the corrected
+  labels back so resumes do not retrain. **Any future label correction must add an alias the same way**
+  (test: `tests/unit/test_source_label_signature.py`).
 - `predictions.csv` files are gitignored and absent locally, so prediction-diversity panels are skipped (expected).
 - No TDC-22 multi-seed artifacts exist for the canonical run (`tdc22_best_model_multiseed*`); results are single-split, single-seed.
 

@@ -1,0 +1,9 @@
+entry,mean_rank,median_rank,n,firsts
+MaxQsaring,1.9545454545454546,1.0,22,13
+fixed: XGBoost [admetboost],3.909090909090909,4.0,22,2
+MolE,4.2272727272727275,3.5,22,4
+ADMETboost (XGBoost),4.318181818181818,4.5,22,0
+"CV pick, benchmark + arm",4.636363636363637,5.5,22,3
+Meta-model (NIST),4.681818181818182,4.0,22,1
+"CV pick, benchmark pool",4.7727272727272725,6.0,22,3
+fixed: Random forest [admetboost],6.318181818181818,6.5,22,0

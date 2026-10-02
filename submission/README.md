@@ -28,6 +28,12 @@ this folder into it. The class is preinstalled there, and Springer's own instruc
 **Local.** Download the template `.zip` from the Springer page above, copy `sn-jnl.cls` and the
 `sn-*.bst` files into this directory, then:
 
+> Verified 2026-09-29 with TeX Live 2026 (`C:\texlive\2026\bin\windows`) and the December 2024
+> template (<https://cms-resources.apps.public.k8s.springernature.io/springer-cms/rest/v1/content/18782940/data/v12>).
+> That template renamed the class option `sn-vancouver` to `sn-vancouver-num`. With the old name,
+> no `\bibliographystyle` is written and every citation is undefined, so `manuscript.tex` now uses
+> `sn-vancouver-num`. `sn-jnl.cls` and `sn-*.bst` are gitignored.
+
 ```bash
 pdflatex manuscript && bibtex manuscript && pdflatex manuscript && pdflatex manuscript
 ```

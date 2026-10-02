@@ -1,34 +1,34 @@
 | Dataset | Task | Same split | A100 best model | A100 value | RTX 4060 best model | RTX 4060 value | Change (%) |
 |---|---|---|---|---|---|---|---|
-| tdc_ames | classification | yes | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 0.879 | XGBoost | 0.875 | 0.513 |
+| tdc_ames | classification | yes | TabPFNClassifier | 0.876 | XGBoost | 0.875 | 0.166 |
 | tdc_bbb_martins | classification | yes | Random forest | 0.925 | Random forest | 0.932 | -0.788 |
 | tdc_bioavailability_ma | classification | yes | CatBoost | 0.777 | CatBoost | 0.777 | 0.000 |
-| tdc_cyp1a2_veith | classification | yes | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 0.974 | Ensemble (Weighted average (inverse train RMSE)) | 0.970 | 0.405 |
-| tdc_cyp2c19_veith | classification | yes | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 0.935 | Ensemble (Weighted average (inverse train RMSE)) | 0.921 | 1.493 |
+| tdc_cyp1a2_veith | classification | yes | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 0.973 | Ensemble (Weighted average (inverse train RMSE)) | 0.970 | 0.301 |
+| tdc_cyp2c19_veith | classification | yes | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 0.931 | Ensemble (Weighted average (inverse train RMSE)) | 0.921 | 1.116 |
 | tdc_cyp2c9_substrate_carbonmangels | classification | yes | Chemprop v2 (AttentiveFP, ensemble=3) | 0.438 | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 0.482 | -8.990 |
-| tdc_cyp2c9_veith | classification | yes | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 0.829 | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 0.810 | 2.365 |
+| tdc_cyp2c9_veith | classification | yes | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 0.829 | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 0.810 | 2.384 |
 | tdc_cyp2d6_substrate_carbonmangels | classification | yes | Chemprop v2 (D-MPNN + RDKit2D, ensemble=3) | 0.693 | Ensemble (Weighted average (inverse train RMSE)) | 0.673 | 2.919 |
-| tdc_cyp2d6_veith | classification | yes | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 0.762 | XGBoost | 0.722 | 5.484 |
-| tdc_cyp3a4_substrate_carbonmangels | classification | yes | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 0.706 | LogisticRegression | 0.717 | -1.485 |
-| tdc_cyp3a4_veith | classification | yes | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 0.901 | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 0.890 | 1.262 |
+| tdc_cyp2d6_veith | classification | yes | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 0.761 | XGBoost | 0.722 | 5.317 |
+| tdc_cyp3a4_substrate_carbonmangels | classification | yes | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 0.724 | LogisticRegression | 0.717 | 1.017 |
+| tdc_cyp3a4_veith | classification | yes | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 0.902 | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 0.890 | 1.439 |
 | tdc_dili | classification | yes | Uni-Mol V1 | 0.922 | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 0.915 | 0.760 |
 | tdc_herg | classification | yes | Chemprop v2 (AttentiveFP, ensemble=3) | 0.857 | AdaBoost | 0.861 | -0.411 |
-| tdc_herg_karim | classification | yes | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 0.904 | Ensemble (Weighted average (inverse train RMSE)) | 0.902 | 0.172 |
+| tdc_herg_karim | classification | yes | Ensemble (Weighted average (inverse OOF error)) | 0.905 | Ensemble (Weighted average (inverse train RMSE)) | 0.902 | 0.330 |
 | tdc_hia_hou | classification | yes | CFA (Combinatorial Fusion) | 0.987 | CFA (Combinatorial Fusion) | 0.990 | -0.249 |
 | tdc_pgp_broccatelli | classification | yes | Uni-Mol V2 (84m) | 0.933 | Ensemble (Weighted average (inverse train RMSE)) | 0.929 | 0.423 |
-| chemml_cep_homo | regression | yes | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 0.099 | TabPFNRegressor | 0.086 | -15.363 |
+| chemml_cep_homo | regression | yes | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 0.093 | TabPFNRegressor | 0.086 | -8.909 |
 | chemml_organic_density | regression | yes | TabPFNRegressor | 0.005 | TabPFNRegressor | 0.005 | 5.907 |
-| esol_delaney | regression | yes | MapLight CatBoost (Strict Parity) | 0.645 | Ensemble (Weighted average (inverse train RMSE)) | 0.592 | -8.880 |
+| esol_delaney | regression | yes | Ensemble (Weighted average (inverse OOF error)) | 0.626 | Ensemble (Weighted average (inverse train RMSE)) | 0.592 | -5.716 |
 | freesolv_sampl | regression | yes | TabPFNRegressor | 0.933 | Chemprop v2 (AttentiveFP, ensemble=1) | 1.080 | 13.562 |
-| lipophilicity | regression | yes | Chemprop v2 (D-MPNN, ensemble=3) | 0.551 | Ensemble (Weighted average (inverse train RMSE)) | 0.582 | 5.384 |
+| lipophilicity | regression | yes | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 0.548 | Ensemble (Weighted average (inverse train RMSE)) | 0.582 | 5.848 |
 | poduam_pod_nc_std | regression | yes | Random forest | 0.720 | Ensemble (Weighted average (inverse train RMSE)) | 0.699 | -3.062 |
-| poduam_pod_rd_std | regression | yes | Random forest | 0.572 | XGBoost | 0.551 | -3.896 |
+| poduam_pod_rd_std | regression | yes | Ensemble (Weighted average (inverse OOF error)) | 0.570 | XGBoost | 0.551 | -3.493 |
 | polaris_adme_fang_hppb_1 | regression | yes | Chemprop v2 (D-MPNN, ensemble=3) | 0.444 | MapLight + GNN (CatBoost, Strict Parity) | 0.449 | 1.072 |
 | polaris_adme_fang_perm_1 | regression | yes | Uni-Mol V1 | 0.399 | Uni-Mol V1 | 0.399 | -0.040 |
 | polaris_adme_fang_rclint_1 | regression | yes | Chemprop v2 (D-MPNN, ensemble=3) | 0.517 | Uni-Mol V1 | 0.512 | -0.968 |
 | polaris_adme_fang_rppb_1 | regression | yes | MapLight + GNN (CatBoost, Strict Parity) | 0.493 | MapLight + GNN (CatBoost, Strict Parity) | 0.494 | 0.170 |
 | polaris_adme_fang_solu_1 | regression | yes | Uni-Mol V2 (84m) | 0.551 | Uni-Mol V1 | 0.575 | 4.202 |
-| tdc_caco2_wang | regression | yes | MapLight CatBoost (Strict Parity) | 0.350 | Ensemble (Weighted average (inverse train RMSE)) | 0.336 | -3.919 |
+| tdc_caco2_wang | regression | yes | Ensemble (Weighted average (inverse OOF error)) | 0.345 | Ensemble (Weighted average (inverse train RMSE)) | 0.336 | -2.388 |
 | tdc_clearance_hepatocyte_az | regression | yes | MapLight + GNN (CatBoost, Strict Parity) | 44.113 | MapLight + GNN (CatBoost, Strict Parity) | 43.976 | -0.311 |
 | tdc_clearance_microsome_az | regression | yes | Uni-Mol V2 (84m) | 33.507 | Uni-Mol V1 | 35.888 | 6.634 |
 | tdc_half_life_obach | regression | yes | Uni-Mol V1 | 19.128 | Uni-Mol V1 | 17.222 | -11.067 |
@@ -43,4 +43,4 @@
 | tdc_skin_reaction | classification | no | Uni-Mol V2 (84m) | 0.658 | CFA (Combinatorial Fusion) | 0.769 | -14.470 |
 | tdc_tox21 | classification | no | Chemprop v2 (AttentiveFP, ensemble=3) | 0.597 | XGBoost | 0.812 | -26.451 |
 | tdc_toxcast | classification | no | HistGradientBoosting | 0.716 | CatBoost | 0.791 | -9.562 |
-| tdc_hydrationfreeenergy_freesolv | regression | no | TabPFNRegressor | 1.116 | CFA (Combinatorial Fusion) | 0.556 | -100.519 |
+| tdc_hydrationfreeenergy_freesolv | regression | no | Ensemble (Weighted average (inverse OOF error)) | 1.093 | CFA (Combinatorial Fusion) | 0.556 | -96.349 |

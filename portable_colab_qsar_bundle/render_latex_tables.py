@@ -115,6 +115,29 @@ TABLE_SPEC = {
         "tab:s4", False, 3,
         "Model coverage: datasets attempted and datasets yielding a valid metric, per model.",
     ),
+    # Written by qsarena.meta_analysis (render_manuscript_assets.py runs it after the notebook).
+    "tableS9_meta_feature_catalog": (
+        "tab:s9", True, 3,
+        "Dataset meta-feature catalog computed on each benchmark train/test partition (verified against the "
+        "recorded split hashes). Diversity and similarity use Morgan radius-2, 2,048-bit fingerprints; SNN is "
+        "the maximum Tanimoto similarity of a test molecule to any training molecule, and OOD fraction is the "
+        "share of test molecules with SNN below 0.40.",
+    ),
+    "tableS10_meta_effect_sizes": (
+        "tab:s10", False, 3,
+        "Exploratory family $\\times$ meta-feature associations: Spearman correlation between each meta-feature "
+        "and the relative gap of the family's best model to the per-dataset best, with a dataset-bootstrap 95\\% "
+        "CI (10,000 resamples), a two-sided label-permutation p-value and a Benjamini--Hochberg q-value over the "
+        "whole grid. Positive $\\rho$ means the family falls further behind as the meta-feature increases.",
+    ),
+    "tableS11_meta_selector_regret": (
+        "tab:s11", False, 3,
+        "Family selector (v2), leave-one-dataset-out regret: the relative gap (\\%) of the recommended family to the "
+        "per-dataset best. Rows are pre-specified variants (model $|$ feature blocks: F0 size, similarity, label "
+        "asymmetry and task; F1 chemistry; F2 label landscape; F3 training-set CV landmarks); ``sbs'' always picks "
+        "the family with the best record on the other datasets. The nested row chooses the variant inside an inner "
+        "leave-one-dataset-out loop and is the only unbiased estimate; single variants are exploratory.",
+    ),
 }
 
 

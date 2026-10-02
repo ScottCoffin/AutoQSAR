@@ -1,0 +1,68 @@
+\begin{landscape}
+\begingroup\footnotesize
+\begin{xltabular}{\linewidth}{@{}>{\raggedright\arraybackslash\hsize=1.388\hsize}X>{\raggedright\arraybackslash\hsize=0.985\hsize}Xrr>{\raggedright\arraybackslash\hsize=0.627\hsize}Xrr@{}}
+\caption{Exploratory family $\times$ meta-feature associations: Spearman correlation between each meta-feature and the relative gap of the family's best model to the per-dataset best, with a dataset-bootstrap 95\% CI (10,000 resamples), a two-sided label-permutation p-value and a Benjamini--Hochberg q-value over the whole grid. Positive $\rho$ means the family falls further behind as the meta-feature increases.}\label{tab:s10}\\
+\toprule
+\textbf{Model family} & \textbf{Meta-feature} & \textbf{Datasets} & \textbf{Spearman rho} & \textbf{95\% CI} & \textbf{Permutation p} & \textbf{BH q} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Model family} & \textbf{Meta-feature} & \textbf{Datasets} & \textbf{Spearman rho} & \textbf{95\% CI} & \textbf{Permutation p} & \textbf{BH q} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{7}{r@{}}{\itshape continued on next page}\\
+\endfoot
+\bottomrule
+\endlastfoot
+Conventional ML & log10\_\allowbreak{}n\_\allowbreak{}train & 44 & -\allowbreak{}0.024 & -\allowbreak{}0.32 to 0.31 & 0.875 & 0.942 \\
+Conventional ML & internal\_\allowbreak{}diversity & 44 & -\allowbreak{}0.316 & -\allowbreak{}0.60 to 0.00 & 0.036 & 0.208 \\
+Conventional ML & mean\_\allowbreak{}snn & 44 & 0.226 & -\allowbreak{}0.10 to 0.53 & 0.144 & 0.434 \\
+Conventional ML & ood\_\allowbreak{}fraction & 44 & -\allowbreak{}0.332 & -\allowbreak{}0.61 to 0.00 & 0.028 & 0.208 \\
+Conventional ML & scaffolds\_\allowbreak{}per\_\allowbreak{}molecule & 44 & 0.331 & 0.03 to 0.57 & 0.031 & 0.208 \\
+Conventional ML & label\_\allowbreak{}asymmetry & 44 & -\allowbreak{}0.191 & -\allowbreak{}0.45 to 0.11 & 0.215 & 0.465 \\
+Ensemble (stacking /\allowbreak{} averaging) & log10\_\allowbreak{}n\_\allowbreak{}train & 44 & -\allowbreak{}0.401 & -\allowbreak{}0.66 to -\allowbreak{}0.09 & 0.005 & 0.208 \\
+Ensemble (stacking /\allowbreak{} averaging) & internal\_\allowbreak{}diversity & 44 & 0.047 & -\allowbreak{}0.28 to 0.35 & 0.756 & 0.879 \\
+Ensemble (stacking /\allowbreak{} averaging) & mean\_\allowbreak{}snn & 44 & -\allowbreak{}0.314 & -\allowbreak{}0.58 to -\allowbreak{}0.00 & 0.039 & 0.208 \\
+Ensemble (stacking /\allowbreak{} averaging) & ood\_\allowbreak{}fraction & 44 & 0.325 & -\allowbreak{}0.00 to 0.61 & 0.032 & 0.208 \\
+Ensemble (stacking /\allowbreak{} averaging) & scaffolds\_\allowbreak{}per\_\allowbreak{}molecule & 44 & 0.106 & -\allowbreak{}0.17 to 0.37 & 0.491 & 0.732 \\
+Ensemble (stacking /\allowbreak{} averaging) & label\_\allowbreak{}asymmetry & 44 & 0.325 & 0.00 to 0.60 & 0.032 & 0.208 \\
+CFA combinatorial fusion & log10\_\allowbreak{}n\_\allowbreak{}train & 38 & 0.072 & -\allowbreak{}0.26 to 0.40 & 0.653 & 0.804 \\
+CFA combinatorial fusion & internal\_\allowbreak{}diversity & 38 & -\allowbreak{}0.113 & -\allowbreak{}0.45 to 0.23 & 0.497 & 0.732 \\
+CFA combinatorial fusion & mean\_\allowbreak{}snn & 38 & 0.305 & -\allowbreak{}0.03 to 0.59 & 0.059 & 0.259 \\
+CFA combinatorial fusion & ood\_\allowbreak{}fraction & 38 & -\allowbreak{}0.320 & -\allowbreak{}0.63 to 0.04 & 0.049 & 0.236 \\
+CFA combinatorial fusion & scaffolds\_\allowbreak{}per\_\allowbreak{}molecule & 38 & 0.140 & -\allowbreak{}0.18 to 0.45 & 0.398 & 0.682 \\
+CFA combinatorial fusion & label\_\allowbreak{}asymmetry & 38 & 0.162 & -\allowbreak{}0.17 to 0.46 & 0.330 & 0.633 \\
+Uni-\allowbreak{}Mol (3D pretrained) & log10\_\allowbreak{}n\_\allowbreak{}train & 44 & -\allowbreak{}0.144 & -\allowbreak{}0.45 to 0.17 & 0.353 & 0.652 \\
+Uni-\allowbreak{}Mol (3D pretrained) & internal\_\allowbreak{}diversity & 44 & 0.243 & -\allowbreak{}0.11 to 0.57 & 0.114 & 0.400 \\
+Uni-\allowbreak{}Mol (3D pretrained) & mean\_\allowbreak{}snn & 44 & 0.006 & -\allowbreak{}0.31 to 0.31 & 0.971 & 0.971 \\
+Uni-\allowbreak{}Mol (3D pretrained) & ood\_\allowbreak{}fraction & 44 & -\allowbreak{}0.085 & -\allowbreak{}0.40 to 0.25 & 0.584 & 0.757 \\
+Uni-\allowbreak{}Mol (3D pretrained) & scaffolds\_\allowbreak{}per\_\allowbreak{}molecule & 44 & 0.016 & -\allowbreak{}0.32 to 0.36 & 0.919 & 0.942 \\
+Uni-\allowbreak{}Mol (3D pretrained) & label\_\allowbreak{}asymmetry & 44 & 0.042 & -\allowbreak{}0.28 to 0.37 & 0.781 & 0.879 \\
+TabPFN (tabular foundation) & log10\_\allowbreak{}n\_\allowbreak{}train & 44 & 0.243 & -\allowbreak{}0.13 to 0.55 & 0.117 & 0.400 \\
+TabPFN (tabular foundation) & internal\_\allowbreak{}diversity & 44 & -\allowbreak{}0.283 & -\allowbreak{}0.55 to 0.02 & 0.066 & 0.262 \\
+TabPFN (tabular foundation) & mean\_\allowbreak{}snn & 44 & 0.192 & -\allowbreak{}0.11 to 0.47 & 0.223 & 0.465 \\
+TabPFN (tabular foundation) & ood\_\allowbreak{}fraction & 44 & -\allowbreak{}0.139 & -\allowbreak{}0.45 to 0.20 & 0.371 & 0.660 \\
+TabPFN (tabular foundation) & scaffolds\_\allowbreak{}per\_\allowbreak{}molecule & 44 & 0.106 & -\allowbreak{}0.23 to 0.43 & 0.487 & 0.732 \\
+TabPFN (tabular foundation) & label\_\allowbreak{}asymmetry & 44 & -\allowbreak{}0.211 & -\allowbreak{}0.49 to 0.09 & 0.163 & 0.435 \\
+Chemprop v2 GNN & log10\_\allowbreak{}n\_\allowbreak{}train & 42 & -\allowbreak{}0.080 & -\allowbreak{}0.37 to 0.23 & 0.613 & 0.774 \\
+Chemprop v2 GNN & internal\_\allowbreak{}diversity & 42 & 0.041 & -\allowbreak{}0.28 to 0.37 & 0.787 & 0.879 \\
+Chemprop v2 GNN & mean\_\allowbreak{}snn & 42 & -\allowbreak{}0.016 & -\allowbreak{}0.33 to 0.30 & 0.922 & 0.942 \\
+Chemprop v2 GNN & ood\_\allowbreak{}fraction & 42 & -\allowbreak{}0.020 & -\allowbreak{}0.34 to 0.29 & 0.898 & 0.942 \\
+Chemprop v2 GNN & scaffolds\_\allowbreak{}per\_\allowbreak{}molecule & 42 & 0.043 & -\allowbreak{}0.25 to 0.34 & 0.785 & 0.879 \\
+Chemprop v2 GNN & label\_\allowbreak{}asymmetry & 42 & 0.333 & -\allowbreak{}0.00 to 0.61 & 0.027 & 0.208 \\
+Map\allowbreak{}Light + GNN & log10\_\allowbreak{}n\_\allowbreak{}train & 44 & -\allowbreak{}0.213 & -\allowbreak{}0.46 to 0.08 & 0.161 & 0.435 \\
+Map\allowbreak{}Light + GNN & internal\_\allowbreak{}diversity & 44 & 0.154 & -\allowbreak{}0.17 to 0.45 & 0.318 & 0.633 \\
+Map\allowbreak{}Light + GNN & mean\_\allowbreak{}snn & 44 & -\allowbreak{}0.102 & -\allowbreak{}0.40 to 0.21 & 0.506 & 0.732 \\
+Map\allowbreak{}Light + GNN & ood\_\allowbreak{}fraction & 44 & -\allowbreak{}0.096 & -\allowbreak{}0.39 to 0.22 & 0.535 & 0.732 \\
+Map\allowbreak{}Light + GNN & scaffolds\_\allowbreak{}per\_\allowbreak{}molecule & 44 & 0.222 & -\allowbreak{}0.07 to 0.49 & 0.145 & 0.434 \\
+Map\allowbreak{}Light + GNN & label\_\allowbreak{}asymmetry & 44 & -\allowbreak{}0.092 & -\allowbreak{}0.39 to 0.24 & 0.549 & 0.732 \\
+Deep tabular NN (ChemML MLP) & log10\_\allowbreak{}n\_\allowbreak{}train & 44 & -\allowbreak{}0.376 & -\allowbreak{}0.62 to -\allowbreak{}0.08 & 0.013 & 0.208 \\
+Deep tabular NN (ChemML MLP) & internal\_\allowbreak{}diversity & 44 & -\allowbreak{}0.194 & -\allowbreak{}0.46 to 0.10 & 0.209 & 0.465 \\
+Deep tabular NN (ChemML MLP) & mean\_\allowbreak{}snn & 44 & -\allowbreak{}0.098 & -\allowbreak{}0.40 to 0.22 & 0.530 & 0.732 \\
+Deep tabular NN (ChemML MLP) & ood\_\allowbreak{}fraction & 44 & 0.096 & -\allowbreak{}0.24 to 0.41 & 0.540 & 0.732 \\
+Deep tabular NN (ChemML MLP) & scaffolds\_\allowbreak{}per\_\allowbreak{}molecule & 44 & 0.198 & -\allowbreak{}0.13 to 0.49 & 0.193 & 0.465 \\
+Deep tabular NN (ChemML MLP) & label\_\allowbreak{}asymmetry & 44 & 0.200 & -\allowbreak{}0.12 to 0.49 & 0.198 & 0.465 \\
+\end{xltabular}
+\endgroup
+\end{landscape}

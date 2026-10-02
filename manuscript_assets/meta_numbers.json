@@ -1,0 +1,635 @@
+{
+  "chemprop_valid_datasets": 42,
+  "crossover_primary": {
+    "ci_high_n": 8306.4658561877,
+    "ci_low_n": 288.7356520155,
+    "crossover_log10_n": 2.9572508839,
+    "crossover_n": 906.2559770149,
+    "intercept_a": 3.9127937624,
+    "intercept_b": 7.0237777633,
+    "log10_n_range": [
+      2.348304863,
+      4.0316104147
+    ],
+    "p_cross_in_range": 0.6826,
+    "slope_a": 0.0,
+    "slope_b": -1.0519851453
+  },
+  "crossover_secondary": {
+    "ci_high_n": 8475.5106463946,
+    "ci_low_n": 252.7067602412,
+    "crossover_log10_n": 2.4371489035,
+    "crossover_n": 273.6206709633,
+    "intercept_a": 11.188681879,
+    "intercept_b": 7.0237777633,
+    "log10_n_range": [
+      2.348304863,
+      4.0316104147
+    ],
+    "p_cross_in_range": 0.5638,
+    "slope_a": -2.7609099097,
+    "slope_b": -1.0519851453
+  },
+  "cv_leak": {
+    "arm_median_overstatement_pct": 3.4243480425,
+    "median_overstatement_all_benchmark_pct": 15.9099795753,
+    "n_arm_rows": 70,
+    "n_benchmark_model_rows": 469,
+    "n_benchmark_models": 18,
+    "per_model_median_pct": {
+      "AdaBoost": 4.7407438952,
+      "CatBoost": 11.5951102096,
+      "ChemML MLP (PyTorch)": 23.3403238582,
+      "ChemML MLP (TensorFlow)": 17.4615350313,
+      "ElasticNetCV": 43.8131258834,
+      "Extra trees": 15.0543942331,
+      "HistGradientBoosting": 14.9812836345,
+      "LogisticRegression": 14.0873167934,
+      "Random forest": 11.5387402781,
+      "SVC": 16.9751051409,
+      "SVR": 25.194562336,
+      "TabPFNClassifier": 11.9578160686,
+      "TabPFNRegressor": 26.8901535136,
+      "Tabular CNN": 7.5950143662,
+      "Tabular MLP": 24.8350013954,
+      "Voting Classifier (KNN, SVM)": 13.4061016885,
+      "Voting Regressor (KNN, SVM)": 21.8565020732,
+      "XGBoost": 14.167476058
+    },
+    "per_model_median_range_pct": [
+      4.7407438952,
+      43.8131258834
+    ],
+    "top_models": [
+      "ElasticNetCV",
+      "TabPFNRegressor",
+      "SVR"
+    ]
+  },
+  "difficulty": {
+    "internal_diversity": {
+      "classification": {
+        "ci": [
+          -0.7229558439,
+          0.1030233201
+        ],
+        "n": 22,
+        "p": 0.0849915008,
+        "rho": -0.3766233766
+      },
+      "pooled": {
+        "ci": [
+          -0.3987367264,
+          0.2666721553
+        ],
+        "n": 44,
+        "p": 0.598140186,
+        "rho": -0.0820932612
+      },
+      "regression": {
+        "ci": [
+          -0.3899159543,
+          0.6195397537
+        ],
+        "n": 22,
+        "p": 0.6291370863,
+        "rho": 0.1067193676
+      }
+    },
+    "log10_n_train": {
+      "classification": {
+        "ci": [
+          -0.3048507937,
+          0.5320877036
+        ],
+        "n": 22,
+        "p": 0.6273372663,
+        "rho": 0.110107284
+      },
+      "pooled": {
+        "ci": [
+          -0.3528048605,
+          0.2794135404
+        ],
+        "n": 44,
+        "p": 0.7618238176,
+        "rho": -0.0481027063
+      },
+      "regression": {
+        "ci": [
+          -0.7074653449,
+          0.2828765848
+        ],
+        "n": 22,
+        "p": 0.2104789521,
+        "rho": -0.276757989
+      }
+    },
+    "mean_snn": {
+      "classification": {
+        "ci": [
+          -0.3845278726,
+          0.5235998904
+        ],
+        "n": 22,
+        "p": 0.7830216978,
+        "rho": 0.062676454
+      },
+      "pooled": {
+        "ci": [
+          -0.1589461114,
+          0.4567435213
+        ],
+        "n": 44,
+        "p": 0.3198680132,
+        "rho": 0.1531843327
+      },
+      "regression": {
+        "ci": [
+          -0.1986263144,
+          0.6514855968
+        ],
+        "n": 22,
+        "p": 0.2326767323,
+        "rho": 0.2648221344
+      }
+    },
+    "ood_fraction": {
+      "classification": {
+        "ci": [
+          -0.4329630649,
+          0.4613246563
+        ],
+        "n": 22,
+        "p": 0.8812118788,
+        "rho": 0.0344438171
+      },
+      "pooled": {
+        "ci": [
+          -0.5448289101,
+          0.0855277247
+        ],
+        "n": 44,
+        "p": 0.1256874313,
+        "rho": -0.2378165607
+      },
+      "regression": {
+        "ci": [
+          -0.8204578454,
+          -0.0484332069
+        ],
+        "n": 22,
+        "p": 0.0154984502,
+        "rho": -0.5166572558
+      }
+    },
+    "scaffolds_per_molecule": {
+      "classification": {
+        "ci": [
+          -0.5085366167,
+          0.3825067748
+        ],
+        "n": 22,
+        "p": 0.8339166083,
+        "rho": -0.0468661773
+      },
+      "pooled": {
+        "ci": [
+          -0.2021519937,
+          0.389580998
+        ],
+        "n": 44,
+        "p": 0.495050495,
+        "rho": 0.1069187147
+      },
+      "regression": {
+        "ci": [
+          -0.2161597118,
+          0.6478682612
+        ],
+        "n": 22,
+        "p": 0.2448755124,
+        "rho": 0.2603049125
+      }
+    }
+  },
+  "difficulty_strongest_feature": "ood_fraction",
+  "feature_selection_vs_diversity": {
+    "morgan_type_share": {
+      "ci": [
+        -0.3663213084,
+        0.2478412339
+      ],
+      "p": 0.7085291471,
+      "rho": -0.057861724
+    },
+    "physchem_share": {
+      "ci": [
+        -0.1440499636,
+        0.513593267
+      ],
+      "p": 0.1767823218,
+      "rho": 0.2097251586
+    }
+  },
+  "figures": {
+    "M1": {
+      "crossover_n": 906.2559770149,
+      "files": [
+        "figureM1_size_crossover.pdf",
+        "figureM1_size_crossover.png"
+      ],
+      "slopes_pp_per_decade": {
+        "CFA combinatorial fusion": 1.0112850729,
+        "Chemprop v2 GNN": -0.2095051259,
+        "Conventional ML": 0.0,
+        "Deep tabular NN (ChemML MLP)": -7.3098040466,
+        "Ensemble (stacking / averaging)": -2.7609099097,
+        "MapLight + GNN": -4.1328834905,
+        "TabPFN (tabular foundation)": 4.5128663154,
+        "Uni-Mol (3D pretrained)": -1.0519851453
+      }
+    },
+    "M2": {
+      "files": [
+        "figureM2_shift_difficulty.pdf",
+        "figureM2_shift_difficulty.png"
+      ],
+      "natural_experiment_median_delta_pp": {
+        "CFA combinatorial fusion": 5.3152326076,
+        "Conventional ML": 4.3997017151,
+        "Deep tabular NN (ChemML MLP)": 0.0139821029,
+        "Ensemble (stacking / averaging)": 1.062639821,
+        "MapLight + GNN": -6.7524490972,
+        "TabPFN (tabular foundation)": 1.1863284941,
+        "Uni-Mol (3D pretrained)": 1.7694011186
+      },
+      "rho_snn_classification": 0.062676454,
+      "rho_snn_regression": 0.2648221344
+    },
+    "M3": {
+      "files": [
+        "figureM3_recommender.pdf",
+        "figureM3_recommender.png"
+      ],
+      "lodo_bacc_decision_tree": 0.3115384615,
+      "lodo_bacc_l1_logistic": 0.2128205128,
+      "majority_bacc": 0.25
+    },
+    "S1": {
+      "files": [
+        "figureS_meta_feature_selection_diversity.pdf",
+        "figureS_meta_feature_selection_diversity.png"
+      ],
+      "rho_morgan_type_share": -0.057861724,
+      "rho_physchem_share": 0.2097251586
+    }
+  },
+  "macros": {
+    "baseline_bacc": "0.25",
+    "crossover_ci": "290 to 8,300",
+    "crossover_comparison": "the estimated crossover is consistent with that range, although its interval spans more than an order of magnitude",
+    "crossover_n": "910",
+    "crossover_p_in_range": "68%",
+    "crossover_secondary_n": "270",
+    "crossover_secondary_p_in_range": "56%",
+    "crossover_statement": "the fitted gap curves cross at about 910 training molecules (95% CI 290 to 8,300; a crossing inside the observed size range occurred in 68% of dataset-bootstrap replicates)",
+    "cvleak_arm": "3.4%",
+    "cvleak_median": "15.9%",
+    "cvleak_n_models": "18",
+    "cvleak_range": "4.7% to 43.8%",
+    "cvleak_top": "ElasticNetCV, TabPFNRegressor and SVR",
+    "grid_min_q": "0.21",
+    "grid_min_q_cell": "Conventional ML vs internal_diversity",
+    "grid_sentence": "none survived at q < 0.10; the smallest q was for Conventional ML versus internal diversity (\u03c1 = -0.32, 95% CI -0.60 to 0.00, q = 0.21)",
+    "k": "4",
+    "k_words": "four",
+    "lodo_bacc": "0.31",
+    "lodo_bacc_ci": "0.23 to 0.39",
+    "lodo_model": "depth-3 decision tree",
+    "lodo_perm_null": "0.21",
+    "lodo_perm_p": "0.170",
+    "n_datasets": "44",
+    "n_grid_cells": "48",
+    "n_grid_significant": "0",
+    "n_resplit": "7",
+    "natural_sentence": "Moving them to scaffold splits changed the median family gap by +4.4 percentage points for conventional ML, +0.4 for ensembles and +1.1 for Uni-Mol. Families valid in both runs on fewer than 3 of them are not summarised: Chemprop (1 of 7). With 7 datasets, and with the two runs also differing in hardware and model settings, this is descriptive only.",
+    "p_snn": "0.320",
+    "q_size_conventional": "0.94",
+    "recommender_sentence": "Its interval overlaps the baselines, so dataset meta-features alone do not reliably identify the winning family at this sample size; the per-dataset winner remains an empirical question, which is the case for benchmarking many families on every dataset.",
+    "rho_size_conventional": "-0.02",
+    "rho_size_conventional_ci": "-0.32 to 0.31",
+    "rho_snn": "0.15",
+    "rho_snn_ci": "-0.16 to 0.46",
+    "rho_strongest": "-0.24",
+    "rho_strongest_ci": "-0.54 to 0.09",
+    "sens_same_sign": "79%",
+    "sens_sig_agree": "100%",
+    "size_sentence": "The gap of the best conventional-ML model to the per-dataset best showed no clear monotone trend with training-set size (Spearman \u03c1 = -0.02, 95% CI -0.32 to 0.31, BH q = 0.94).",
+    "snn_sentence": "Mean SNN was not clearly associated with the achievable best held-out metric (within-task rank; Spearman \u03c1 = 0.15, 95% CI -0.16 to 0.46, permutation p = 0.320; Fig. 8a).",
+    "strongest_difficulty_feature": "ood fraction",
+    "strongest_sentence": "Of the screened properties, the out-of-domain fraction (test molecules with SNN < 0.40) had the strongest association with achievable performance (\u03c1 = -0.24, 95% CI -0.54 to 0.09), although its interval also includes zero.",
+    "v2_most_picked": "the per-family ridge model on F0+F3",
+    "v2_most_picked_share": "66%",
+    "v2_n_candidates": "12",
+    "v2_nested_regret": "6.5%",
+    "v2_nested_within5": "64%",
+    "v2_perm_p": "0.653",
+    "v2_random_regret": "10.3%",
+    "v2_sbs_regret": "5.2%",
+    "v2_sbs_within5": "61%",
+    "v2_verdict": "Nested selection did not reliably beat the single best family (mean regret 6.5% versus 5.2% for always choosing the family with the best average record (difference -1.3 percentage points, 95% CI -4.3 to 0.7; permutation p = 0.653)). Both lose little: a randomly chosen valid family would cost 10.3% on average."
+  },
+  "n_bootstrap": 10000,
+  "n_datasets": 44,
+  "n_permutation": 10000,
+  "natural_experiment_median_delta_pp": {
+    "CFA combinatorial fusion": 7.4878506789,
+    "Chemprop v2 GNN": -25.8310549062,
+    "Conventional ML": 4.3997017151,
+    "Deep tabular NN (ChemML MLP)": 0.7320555276,
+    "Ensemble (stacking / averaging)": 0.3701829016,
+    "MapLight + GNN": 4.6888548648,
+    "TabPFN (tabular foundation)": 1.1863284941,
+    "Uni-Mol (3D pretrained)": 1.1129797575
+  },
+  "recommender": {
+    "classes": {
+      "Chemprop GNN": 8,
+      "Descriptor-based ML": 13,
+      "Fusion (ensemble / CFA)": 15,
+      "Uni-Mol (3D pretrained)": 8
+    },
+    "majority_accuracy": 0.3409090909,
+    "majority_balanced_accuracy": 0.25,
+    "models": {
+      "decision_tree": {
+        "feature_importance": {
+          "is_classification": 0.0,
+          "label_asymmetry": 0.0,
+          "log10_n_train": 1.0,
+          "mean_snn": 0.0
+        },
+        "lodo_accuracy": 0.3863636364,
+        "lodo_accuracy_ci": [
+          0.25,
+          0.5227272727
+        ],
+        "lodo_balanced_accuracy": 0.3115384615,
+        "lodo_balanced_accuracy_ci": [
+          0.2294117647,
+          0.390625
+        ],
+        "permutation_null_balanced_accuracy_mean": 0.2140173077,
+        "permutation_p": 0.1696606786,
+        "rules": "|--- log10_n_train <= 3.94\n|   |--- log10_n_train <= 3.76\n|   |   |--- log10_n_train <= 3.37\n|   |   |   |--- class: Descriptor-based ML\n|   |   |--- log10_n_train >  3.37\n|   |   |   |--- class: Chemprop GNN\n|   |--- log10_n_train >  3.76\n|   |   |--- class: Descriptor-based ML\n|--- log10_n_train >  3.94\n|   |--- class: Fusion (ensemble / CFA)\n"
+      },
+      "l1_logistic": {
+        "coefficients": {
+          "Chemprop GNN": {
+            "is_classification": 0.0228002639,
+            "label_asymmetry": 0.0,
+            "log10_n_train": -0.0414736584,
+            "mean_snn": 0.0
+          },
+          "Descriptor-based ML": {
+            "is_classification": -0.3704214004,
+            "label_asymmetry": 0.2130149024,
+            "log10_n_train": 0.047788576,
+            "mean_snn": 0.0
+          },
+          "Fusion (ensemble / CFA)": {
+            "is_classification": 0.0,
+            "label_asymmetry": -0.0797972202,
+            "log10_n_train": 0.3386270296,
+            "mean_snn": 0.0743896491
+          },
+          "Uni-Mol (3D pretrained)": {
+            "is_classification": 0.0,
+            "label_asymmetry": 0.0919823063,
+            "log10_n_train": -0.2891378087,
+            "mean_snn": 0.0
+          }
+        },
+        "feature_importance": {
+          "is_classification": 0.0983054161,
+          "label_asymmetry": 0.0961986072,
+          "log10_n_train": 0.1792567682,
+          "mean_snn": 0.0185974123
+        },
+        "lodo_accuracy": 0.2727272727,
+        "lodo_accuracy_ci": [
+          0.1363636364,
+          0.4090909091
+        ],
+        "lodo_balanced_accuracy": 0.2128205128,
+        "lodo_balanced_accuracy_ci": [
+          0.1202380952,
+          0.3078993886
+        ],
+        "permutation_null_balanced_accuracy_mean": 0.2178983974,
+        "permutation_p": 0.5409181637
+      }
+    },
+    "n_datasets": 44,
+    "predictors": [
+      "log10_n_train",
+      "mean_snn",
+      "label_asymmetry",
+      "is_classification"
+    ]
+  },
+  "run_dir": "qsarena_benchmark_oof_ensemble",
+  "seed": 0,
+  "selector_v2": {
+    "best_grid_variant": "ridge|F0+F3",
+    "n_candidates": 12,
+    "nested": {
+      "gap_closed": -0.253355648,
+      "mean_regret_pct": 6.4948107655,
+      "median_regret_pct": 3.0366001692,
+      "within5_pct": 63.6363636364
+    },
+    "nested_pick_counts": {
+      "knn|F0+F2": 6,
+      "knn|F0-F3": 3,
+      "ridge|F0+F1": 1,
+      "ridge|F0+F2": 1,
+      "ridge|F0+F3": 29,
+      "ridge|F0-F3": 4
+    },
+    "permutation": {
+      "n_perm": 100,
+      "null_mean_regret_pct": 6.1363558966,
+      "p_value": 0.6534653465
+    },
+    "random_valid_family_mean_regret_pct": 10.2702073033,
+    "sbs": {
+      "gap_closed": 0.0,
+      "mean_regret_pct": 5.1819376056,
+      "median_regret_pct": 2.6237017691,
+      "within5_pct": 61.3636363636
+    },
+    "sbs_minus_nested_ci": [
+      -4.2656933322,
+      0.6787774033
+    ],
+    "sbs_minus_nested_pct": -1.3128731598,
+    "variants": {
+      "knn|F0": {
+        "gap_closed": -0.464836181,
+        "mean_regret_pct": 7.5906896924,
+        "median_regret_pct": 2.2013838895,
+        "within5_pct": 61.3636363636
+      },
+      "knn|F0+F1": {
+        "gap_closed": -0.0300704884,
+        "mean_regret_pct": 5.3377610004,
+        "median_regret_pct": 1.5857079799,
+        "within5_pct": 75.0
+      },
+      "knn|F0+F2": {
+        "gap_closed": 0.0156780759,
+        "mean_regret_pct": 5.1006947943,
+        "median_regret_pct": 1.8703445916,
+        "within5_pct": 65.9090909091
+      },
+      "knn|F0+F3": {
+        "gap_closed": -0.2988157862,
+        "mean_regret_pct": 6.7303823653,
+        "median_regret_pct": 2.6237017691,
+        "within5_pct": 63.6363636364
+      },
+      "knn|F0-F3": {
+        "gap_closed": -0.0062021138,
+        "mean_regret_pct": 5.2140765724,
+        "median_regret_pct": 1.835902063,
+        "within5_pct": 70.4545454545
+      },
+      "nested (headline)": {
+        "gap_closed": -0.253355648,
+        "mean_regret_pct": 6.4948107655,
+        "median_regret_pct": 3.0366001692,
+        "within5_pct": 63.6363636364
+      },
+      "rf|F0": {
+        "gap_closed": 0.1524536557,
+        "mean_regret_pct": 4.3919322739,
+        "median_regret_pct": 2.8224323999,
+        "within5_pct": 70.4545454545
+      },
+      "rf|F0+F1": {
+        "gap_closed": -0.0990716382,
+        "mean_regret_pct": 5.6953206533,
+        "median_regret_pct": 1.9908976865,
+        "within5_pct": 72.7272727273
+      },
+      "rf|F0+F2": {
+        "gap_closed": -0.0434464628,
+        "mean_regret_pct": 5.4070744652,
+        "median_regret_pct": 3.5798117742,
+        "within5_pct": 63.6363636364
+      },
+      "rf|F0+F3": {
+        "gap_closed": 0.0921285221,
+        "mean_regret_pct": 4.7045333526,
+        "median_regret_pct": 3.6384078997,
+        "within5_pct": 59.0909090909
+      },
+      "rf|F0-F3": {
+        "gap_closed": -0.0164576067,
+        "mean_regret_pct": 5.2672198966,
+        "median_regret_pct": 3.5772156819,
+        "within5_pct": 59.0909090909
+      },
+      "ridge|F0": {
+        "gap_closed": -0.0809667706,
+        "mean_regret_pct": 5.6015023593,
+        "median_regret_pct": 2.6183296975,
+        "within5_pct": 61.3636363636
+      },
+      "ridge|F0+F1": {
+        "gap_closed": -0.1181375109,
+        "mean_regret_pct": 5.794118816,
+        "median_regret_pct": 3.0338474233,
+        "within5_pct": 65.9090909091
+      },
+      "ridge|F0+F2": {
+        "gap_closed": 0.0448646859,
+        "mean_regret_pct": 4.9494516025,
+        "median_regret_pct": 2.0348072961,
+        "within5_pct": 68.1818181818
+      },
+      "ridge|F0+F3": {
+        "gap_closed": 0.1886307293,
+        "mean_regret_pct": 4.2044649357,
+        "median_regret_pct": 2.6183296975,
+        "within5_pct": 65.9090909091
+      },
+      "ridge|F0-F3": {
+        "gap_closed": -0.1707432172,
+        "mean_regret_pct": 6.0667183036,
+        "median_regret_pct": 2.6183296975,
+        "within5_pct": 63.6363636364
+      },
+      "sbs": {
+        "gap_closed": 0.0,
+        "mean_regret_pct": 5.1819376056,
+        "median_regret_pct": 2.6237017691,
+        "within5_pct": 61.3636363636
+      },
+      "tree_cls|F0": {
+        "gap_closed": -0.1400066033,
+        "mean_regret_pct": 5.9074430885,
+        "median_regret_pct": 2.5935281922,
+        "within5_pct": 70.4545454545
+      }
+    }
+  },
+  "sensitivity": {
+    "cells_compared": 24,
+    "feature_value_rank_agreement": {
+      "internal_diversity": 0.9802677942,
+      "mean_snn": 0.9847780127,
+      "ood_fraction": 0.8148983408
+    },
+    "fingerprint_alternative": {
+      "n_bits": 4096,
+      "radius": 3
+    },
+    "fingerprint_default": {
+      "n_bits": 2048,
+      "radius": 2
+    },
+    "same_sign_fraction": 0.7916666667,
+    "significance_agreement_fraction": 1.0,
+    "significant_cells_alternative": 0,
+    "significant_cells_default": 0
+  },
+  "trend_families": [
+    "Conventional ML",
+    "Ensemble (stacking / averaging)",
+    "CFA combinatorial fusion",
+    "Uni-Mol (3D pretrained)",
+    "TabPFN (tabular foundation)",
+    "Chemprop v2 GNN",
+    "MapLight + GNN",
+    "Deep tabular NN (ChemML MLP)"
+  ],
+  "winner_groups": {
+    "Chemprop GNN": 8,
+    "Descriptor-based ML": 13,
+    "Fusion (ensemble / CFA)": 15,
+    "Uni-Mol (3D pretrained)": 8
+  },
+  "within5_pct_by_family": {
+    "CFA combinatorial fusion": 42.1052631579,
+    "Chemprop v2 GNN": 54.7619047619,
+    "Conventional ML": 59.0909090909,
+    "Deep tabular NN (ChemML MLP)": 18.1818181818,
+    "Ensemble (stacking / averaging)": 61.3636363636,
+    "MapLight + GNN": 27.2727272727,
+    "TabPFN (tabular foundation)": 29.5454545455,
+    "Uni-Mol (3D pretrained)": 56.8181818182
+  }
+}

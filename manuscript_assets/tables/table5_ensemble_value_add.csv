@@ -1,7 +1,7 @@
 Fusion method,Task,Datasets,Overall wins,Top-3,Beats best base,Loses to best base,Median rank,Median rel. change vs best base
-OOF stacking,classification,22,8,9,8,14,4.0,-0.01647766323205706
-Other ensemble,classification,22,0,8,6,16,6.0,-0.029682870289349083
-CFA fusion,classification,16,2,6,2,14,4.0,-0.022857593991054886
-CFA fusion,regression,22,0,4,1,21,8.5,-0.07482973246278904
-OOF stacking,regression,22,1,2,1,21,10.5,-0.127456734311018
-Other ensemble,regression,22,0,2,0,22,8.0,-0.08444896669398576
+Other ensemble,classification,22,1,10,6,16,5.5,-0.024270123239591282
+OOF stacking,classification,22,6,8,7,15,7.0,-0.03329784983082154
+CFA fusion,classification,16,2,7,2,14,4.0,-0.022857593991054886
+Other ensemble,regression,22,4,12,5,17,3.0,-0.060757944977537316
+OOF stacking,regression,22,2,6,2,20,8.0,-0.09593766697891717
+CFA fusion,regression,22,0,4,1,21,9.0,-0.07482973246278904

@@ -1,0 +1,19 @@
+{
+  "n_arm_rows": 88,
+  "arm_models": [
+    "Random forest [admetboost]",
+    "XGBoost [admetboost]"
+  ],
+  "tdc_datasets_with_arm_results": 22,
+  "cv_pick_is_arm_model": 1,
+  "mean_rank": {
+    "MaxQsaring": 1.955,
+    "fixed: XGBoost [admetboost]": 3.909,
+    "MolE": 4.227,
+    "ADMETboost (XGBoost)": 4.318,
+    "CV pick, benchmark + arm": 4.636,
+    "Meta-model (NIST)": 4.682,
+    "CV pick, benchmark pool": 4.773,
+    "fixed: Random forest [admetboost]": 6.318
+  }
+}

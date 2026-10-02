@@ -1,0 +1,4 @@
+group,datasets,pick_correct_benchmark_cv,pick_correct_scaffold_cv,median_optimism_benchmark_cv_pct,median_optimism_scaffold_cv_pct,median_abs_error_benchmark_cv_pct,median_abs_error_scaffold_cv_pct
+all,44,34/44,36/44,1.3,-0.5,7.2,6.9
+test split predefined/scaffold,39,29/39,31/39,1.3,-0.3,6.3,6.2
+test split random/target-quartile,5,5/5,5/5,1.1,-8.2,10.1,15.2

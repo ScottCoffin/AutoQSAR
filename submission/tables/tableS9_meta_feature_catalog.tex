@@ -1,0 +1,64 @@
+\begin{landscape}
+\begingroup\scriptsize
+\begin{xltabular}{\linewidth}{@{}>{\raggedright\arraybackslash\hsize=1.789\hsize}X>{\raggedright\arraybackslash\hsize=0.737\hsize}X>{\raggedright\arraybackslash\hsize=0.842\hsize}X>{\raggedright\arraybackslash\hsize=0.632\hsize}Xrrrrrrrrrrrr@{}}
+\caption{Dataset meta-feature catalog computed on each benchmark train/test partition (verified against the recorded split hashes). Diversity and similarity use Morgan radius-2, 2,048-bit fingerprints; SNN is the maximum Tanimoto similarity of a test molecule to any training molecule, and OOD fraction is the share of test molecules with SNN below 0.40.}\label{tab:s9}\\
+\toprule
+\textbf{Dataset} & \textbf{Task} & \textbf{Split} & \textbf{Metric} & \textbf{n train} & \textbf{n test} & \makecell[r]{\textbf{Positive}\\\textbf{fraction}} & \textbf{Imbalance ratio} & \textbf{Target SD} & \textbf{Target skew} & \textbf{Scaffolds} & \makecell[r]{\textbf{Scaffolds}\\\textbf{/}\\\textbf{molecule}} & \makecell[r]{\textbf{Singleton}\\\textbf{scaffold}\\\textbf{fraction}} & \makecell[r]{\textbf{Internal}\\\textbf{diversity}} & \textbf{Mean SNN} & \makecell[r]{\textbf{OOD}\\\textbf{fraction}\\\textbf{(SNN <}\\\textbf{0.40)}} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Dataset} & \textbf{Task} & \textbf{Split} & \textbf{Metric} & \textbf{n train} & \textbf{n test} & \makecell[r]{\textbf{Positive}\\\textbf{fraction}} & \textbf{Imbalance ratio} & \textbf{Target SD} & \textbf{Target skew} & \textbf{Scaffolds} & \makecell[r]{\textbf{Scaffolds}\\\textbf{/}\\\textbf{molecule}} & \makecell[r]{\textbf{Singleton}\\\textbf{scaffold}\\\textbf{fraction}} & \makecell[r]{\textbf{Internal}\\\textbf{diversity}} & \textbf{Mean SNN} & \makecell[r]{\textbf{OOD}\\\textbf{fraction}\\\textbf{(SNN <}\\\textbf{0.40)}} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{16}{r@{}}{\itshape continued on next page}\\
+\endfoot
+\bottomrule
+\endlastfoot
+tdc\_\allowbreak{}ames & classification & predefined & test\_\allowbreak{}roc\_\allowbreak{}auc & 5,821 & 1,457 & 0.533 & 1.142 &  &  & 2,387 & 0.410 & 0.809 & 0.916 & 0.517 & 0.251 \\
+tdc\_\allowbreak{}bbb\_\allowbreak{}martins & classification & predefined & test\_\allowbreak{}roc\_\allowbreak{}auc & 1,624 & 406 & 0.753 & 3.050 &  &  & 829 & 0.510 & 0.744 & 0.890 & 0.418 & 0.520 \\
+tdc\_\allowbreak{}bioavailability\_\allowbreak{}ma & classification & predefined & test\_\allowbreak{}roc\_\allowbreak{}auc & 512 & 128 & 0.771 & 3.376 &  &  & 363 & 0.709 & 0.837 & 0.899 & 0.435 & 0.492 \\
+tdc\_\allowbreak{}carcinogens\_\allowbreak{}lagunin & classification & scaffold & test\_\allowbreak{}roc\_\allowbreak{}auc & 223 & 57 & 0.184 & 4.439 &  &  & 191 & 0.857 & 0.864 & 0.914 & 0.346 & 0.684 \\
+tdc\_\allowbreak{}clintox & classification & scaffold & test\_\allowbreak{}roc\_\allowbreak{}auc & 1,180 & 298 & 0.083 & 11.041 &  &  & 894 & 0.758 & 0.813 & 0.915 & 0.425 & 0.517 \\
+tdc\_\allowbreak{}cyp1a2\_\allowbreak{}veith & classification & scaffold & test\_\allowbreak{}roc\_\allowbreak{}auc & 10,061 & 2,518 & 0.445 & 1.249 &  &  & 7,622 & 0.758 & 0.811 & 0.887 & 0.561 & 0.199 \\
+tdc\_\allowbreak{}cyp2c19\_\allowbreak{}veith & classification & scaffold & test\_\allowbreak{}roc\_\allowbreak{}auc & 10,131 & 2,534 & 0.496 & 1.018 &  &  & 7,615 & 0.752 & 0.807 & 0.887 & 0.563 & 0.204 \\
+tdc\_\allowbreak{}cyp2c9\_\allowbreak{}substrate\_\allowbreak{}carbonmangels & classification & predefined & test\_\allowbreak{}auprc & 534 & 135 & 0.193 & 4.184 &  &  & 366 & 0.685 & 0.831 & 0.899 & 0.408 & 0.504 \\
+tdc\_\allowbreak{}cyp2c9\_\allowbreak{}veith & classification & predefined & test\_\allowbreak{}auprc & 9,673 & 2,419 & 0.339 & 1.954 &  &  & 5,727 & 0.592 & 0.784 & 0.885 & 0.509 & 0.338 \\
+tdc\_\allowbreak{}cyp2d6\_\allowbreak{}substrate\_\allowbreak{}carbonmangels & classification & predefined & test\_\allowbreak{}auprc & 532 & 135 & 0.278 & 2.595 &  &  & 373 & 0.701 & 0.845 & 0.898 & 0.426 & 0.526 \\
+tdc\_\allowbreak{}cyp2d6\_\allowbreak{}veith & classification & predefined & test\_\allowbreak{}auprc & 10,504 & 2,626 & 0.197 & 4.072 &  &  & 6,643 & 0.632 & 0.779 & 0.884 & 0.487 & 0.364 \\
+tdc\_\allowbreak{}cyp3a4\_\allowbreak{}substrate\_\allowbreak{}carbonmangels & classification & predefined & test\_\allowbreak{}auprc & 535 & 135 & 0.516 & 1.066 &  &  & 375 & 0.701 & 0.832 & 0.899 & 0.436 & 0.474 \\
+tdc\_\allowbreak{}cyp3a4\_\allowbreak{}veith & classification & predefined & test\_\allowbreak{}auprc & 9,861 & 2,467 & 0.408 & 1.448 &  &  & 6,088 & 0.617 & 0.800 & 0.889 & 0.534 & 0.260 \\
+tdc\_\allowbreak{}dili & classification & predefined & test\_\allowbreak{}roc\_\allowbreak{}auc & 379 & 96 & 0.491 & 1.038 &  &  & 265 & 0.699 & 0.879 & 0.907 & 0.332 & 0.781 \\
+tdc\_\allowbreak{}herg & classification & predefined & test\_\allowbreak{}roc\_\allowbreak{}auc & 523 & 132 & 0.677 & 2.095 &  &  & 341 & 0.652 & 0.792 & 0.895 & 0.484 & 0.379 \\
+tdc\_\allowbreak{}herg\_\allowbreak{}karim & classification & scaffold & test\_\allowbreak{}roc\_\allowbreak{}auc & 10,755 & 2,690 & 0.492 & 1.031 &  &  & 5,884 & 0.547 & 0.646 & 0.878 & 0.672 & 0.084 \\
+tdc\_\allowbreak{}hia\_\allowbreak{}hou & classification & predefined & test\_\allowbreak{}roc\_\allowbreak{}auc & 461 & 117 & 0.889 & 8.039 &  &  & 317 & 0.688 & 0.868 & 0.894 & 0.371 & 0.598 \\
+tdc\_\allowbreak{}pampa\_\allowbreak{}ncats & classification & scaffold & test\_\allowbreak{}roc\_\allowbreak{}auc & 1,626 & 408 & 0.846 & 5.504 &  &  & 1,355 & 0.833 & 0.862 & 0.871 & 0.642 & 0.064 \\
+tdc\_\allowbreak{}pgp\_\allowbreak{}broccatelli & classification & predefined & test\_\allowbreak{}roc\_\allowbreak{}auc & 973 & 245 & 0.541 & 1.177 &  &  & 546 & 0.561 & 0.764 & 0.874 & 0.490 & 0.400 \\
+tdc\_\allowbreak{}skin\_\allowbreak{}reaction & classification & scaffold & test\_\allowbreak{}roc\_\allowbreak{}auc & 289 & 115 & 0.661 & 1.949 &  &  & 247 & 0.855 & 0.895 & 0.918 & 0.312 & 0.904 \\
+tdc\_\allowbreak{}tox21 & classification & scaffold & test\_\allowbreak{}roc\_\allowbreak{}auc & 5,797 & 1,461 & 0.049 & 19.412 &  &  & 3,853 & 0.665 & 0.872 & 0.925 & 0.467 & 0.305 \\
+tdc\_\allowbreak{}toxcast & classification & scaffold & test\_\allowbreak{}roc\_\allowbreak{}auc & 1,357 & 374 & 0.262 & 2.812 &  &  & 1,002 & 0.738 & 0.889 & 0.926 & 0.439 & 0.422 \\
+chemml\_\allowbreak{}cep\_\allowbreak{}homo & regression & target\_\allowbreak{}quartiles & test\_\allowbreak{}rmse & 400 & 100 &  &  & 0.687 & 0.029 & 400 & 1 & 1 & 0.844 & 0.492 & 0.220 \\
+chemml\_\allowbreak{}organic\_\allowbreak{}density & regression & target\_\allowbreak{}quartiles & test\_\allowbreak{}rmse & 400 & 100 &  &  & 0.031 & -\allowbreak{}0.093 & 399 & 0.998 & 0.997 & 0.841 & 0.463 & 0.250 \\
+esol\_\allowbreak{}delaney & regression & scaffold & test\_\allowbreak{}rmse & 874 & 254 &  &  & 2.247 & -\allowbreak{}0.435 & 583 & 0.667 & 0.873 & 0.930 & 0.437 & 0.417 \\
+freesolv\_\allowbreak{}sampl & regression & random & test\_\allowbreak{}rmse & 513 & 129 &  &  & 3.677 & -\allowbreak{}0.753 & 308 & 0.600 & 0.932 & 0.923 & 0.570 & 0.163 \\
+lipophilicity & regression & scaffold & test\_\allowbreak{}rmse & 3,357 & 843 &  &  & 1.190 & -\allowbreak{}0.557 & 2,355 & 0.702 & 0.791 & 0.882 & 0.584 & 0.152 \\
+poduam\_\allowbreak{}pod\_\allowbreak{}nc\_\allowbreak{}std & regression & target\_\allowbreak{}quartiles & test\_\allowbreak{}rmse & 1,473 & 369 &  &  & 1.109 & -\allowbreak{}1.529 & 945 & 0.642 & 0.899 & 0.922 & 0.521 & 0.322 \\
+poduam\_\allowbreak{}pod\_\allowbreak{}rd\_\allowbreak{}std & regression & target\_\allowbreak{}quartiles & test\_\allowbreak{}rmse & 1,884 & 471 &  &  & 0.865 & -\allowbreak{}1.743 & 1,237 & 0.657 & 0.905 & 0.917 & 0.549 & 0.268 \\
+polaris\_\allowbreak{}adme\_\allowbreak{}fang\_\allowbreak{}hppb\_\allowbreak{}1 & regression & predefined & test\_\allowbreak{}rmse & 1,446 & 362 &  &  & 0.719 & -\allowbreak{}0.337 & 1,003 & 0.694 & 0.827 & 0.878 & 0.583 & 0.331 \\
+polaris\_\allowbreak{}adme\_\allowbreak{}fang\_\allowbreak{}perm\_\allowbreak{}1 & regression & predefined & test\_\allowbreak{}rmse & 2,113 & 529 &  &  & 0.682 & 0.746 & 1,885 & 0.892 & 0.926 & 0.875 & 0.443 & 0.465 \\
+polaris\_\allowbreak{}adme\_\allowbreak{}fang\_\allowbreak{}rclint\_\allowbreak{}1 & regression & predefined & test\_\allowbreak{}rmse & 2,443 & 611 &  &  & 0.751 & -\allowbreak{}0.134 & 2,146 & 0.878 & 0.922 & 0.876 & 0.444 & 0.435 \\
+polaris\_\allowbreak{}adme\_\allowbreak{}fang\_\allowbreak{}rppb\_\allowbreak{}1 & regression & predefined & test\_\allowbreak{}rmse & 708 & 177 &  &  & 0.751 & -\allowbreak{}0.435 & 569 & 0.804 & 0.872 & 0.877 & 0.511 & 0.429 \\
+polaris\_\allowbreak{}adme\_\allowbreak{}fang\_\allowbreak{}solu\_\allowbreak{}1 & regression & predefined & test\_\allowbreak{}rmse & 1,738 & 435 &  &  & 0.668 & -\allowbreak{}1.657 & 1,531 & 0.881 & 0.925 & 0.874 & 0.446 & 0.492 \\
+tdc\_\allowbreak{}caco2\_\allowbreak{}wang & regression & predefined & test\_\allowbreak{}rmse & 728 & 182 &  &  & 0.797 & -\allowbreak{}0.715 & 402 & 0.552 & 0.694 & 0.890 & 0.459 & 0.473 \\
+tdc\_\allowbreak{}clearance\_\allowbreak{}hepatocyte\_\allowbreak{}az & regression & predefined & test\_\allowbreak{}rmse & 970 & 243 &  &  & 50.287 & 1.216 & 601 & 0.620 & 0.687 & 0.877 & 0.425 & 0.580 \\
+tdc\_\allowbreak{}clearance\_\allowbreak{}microsome\_\allowbreak{}az & regression & predefined & test\_\allowbreak{}rmse & 881 & 221 &  &  & 45.128 & 1.548 & 587 & 0.666 & 0.818 & 0.871 & 0.520 & 0.321 \\
+tdc\_\allowbreak{}half\_\allowbreak{}life\_\allowbreak{}obach & regression & predefined & test\_\allowbreak{}rmse & 532 & 135 &  &  & 90.920 & 9.338 & 355 & 0.667 & 0.820 & 0.899 & 0.413 & 0.533 \\
+tdc\_\allowbreak{}hydrationfreeenergy\_\allowbreak{}freesolv & regression & scaffold & test\_\allowbreak{}rmse & 490 & 152 &  &  & 4.014 & -\allowbreak{}1.427 & 381 & 0.778 & 0.934 & 0.927 & 0.384 & 0.625 \\
+tdc\_\allowbreak{}ld50\_\allowbreak{}zhu & regression & predefined & test\_\allowbreak{}rmse & 5,907 & 1,478 &  &  & 0.921 & 0.928 & 3,136 & 0.531 & 0.894 & 0.917 & 0.448 & 0.438 \\
+tdc\_\allowbreak{}lipophilicity\_\allowbreak{}astrazeneca & regression & predefined & test\_\allowbreak{}rmse & 3,360 & 840 &  &  & 1.204 & -\allowbreak{}0.582 & 1,932 & 0.575 & 0.769 & 0.879 & 0.575 & 0.219 \\
+tdc\_\allowbreak{}ppbr\_\allowbreak{}az & regression & predefined & test\_\allowbreak{}rmse & 2,231 & 559 &  &  & 18.785 & -\allowbreak{}1.962 & 946 & 0.424 & 0.498 & 0.879 & 0.520 & 0.349 \\
+tdc\_\allowbreak{}solubility\_\allowbreak{}aqsoldb & regression & predefined & test\_\allowbreak{}rmse & 7,985 & 1,995 &  &  & 2.369 & -\allowbreak{}0.587 & 4,265 & 0.534 & 0.900 & 0.922 & 0.475 & 0.327 \\
+tdc\_\allowbreak{}vdss\_\allowbreak{}lombardo & regression & predefined & test\_\allowbreak{}rmse & 904 & 226 &  &  & 24.829 & 24.663 & 613 & 0.678 & 0.822 & 0.900 & 0.384 & 0.619 \\
+\end{xltabular}
+\endgroup
+\end{landscape}

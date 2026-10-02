@@ -115,6 +115,10 @@ SHORT_FAMILY = {
 }
 
 
+def first_places(count: int) -> str:
+    return "zero first places" if count == 0 else f"{count} first place{'s' if count != 1 else ''}"
+
+
 def draw() -> str:
     n = load_numbers()
     lb = n["leaderboard"]
@@ -186,7 +190,7 @@ def draw() -> str:
 
     # Three stages. Reading down, the first drop is the value of a broad model library and the
     # second is the cost of refusing held-out information; the paper decomposes them in this order.
-    bar(96, "Best of 28 models, chosen on the test set", lb["top10_test_selected"], GREEN,
+    bar(96, f"Best of {n['models_with_valid_results']} models, chosen on the test set", lb["top10_test_selected"], GREEN,
         f"{tdc['top10_test_selected']}/{tdc['datasets']} on official TDC splits "
         f"- median rank {int(lb['median_rank_test_selected'])}")
     bar(152, "Same protocol, cross-validation-eligible models only",
@@ -194,9 +198,9 @@ def draw() -> str:
         f"median rank {int(lb['median_rank_matched_pool'])}")
     bar(208, "Chosen by cross-validation only - the honest estimate",
         lb["top10_cv_selected"], ORANGE,
-        f"median rank {int(lb['median_rank_cv_selected'])} - and zero first places")
+        f"median rank {int(lb['median_rank_cv_selected'])} - and {first_places(lb['rank1_cv_selected'])}")
 
-    # Two labelled brackets attribute the 10-placement gap to its two distinct causes.
+    # Two labelled brackets attribute the top-10 gap to its two distinct causes.
     gx = hx + track_w + 58
     drop_library = lb["top10_test_selected"] - lb["top10_matched_pool"]
     drop_selection = lb["top10_matched_pool"] - lb["top10_cv_selected"]
@@ -243,6 +247,45 @@ def draw() -> str:
     return "\n".join(svg.parts)
 
 
+def find_browser() -> str | None:
+    import os
+    import shutil
+
+    candidates = [os.environ.get("QSARENA_BROWSER", "")]
+    candidates += [shutil.which(name) or "" for name in ("msedge", "chrome", "google-chrome", "chromium")]
+    candidates += [
+        r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
+        r"C:\Program Files\Google\Chrome\Application\chrome.exe",
+    ]
+    return next((c for c in candidates if c and Path(c).exists()), None)
+
+
+def browser_export(svg_path: Path, png_path: Path, pdf_path: Path) -> bool:
+    """Render the SVG to PNG and a page-sized PDF with headless Chrome/Edge. Returns False if no browser."""
+    import subprocess
+    import tempfile
+
+    browser = find_browser()
+    if browser is None:
+        return False
+    page = (
+        "<!doctype html><html><head><meta charset='utf-8'><style>"
+        f"@page {{ size: {WIDTH}px {HEIGHT}px; margin: 0 }} html, body {{ margin: 0; padding: 0; background: #fff }}"
+        "svg { display: block }</style></head><body>" + svg_path.read_text(encoding="utf-8") + "</body></html>"
+    )
+    with tempfile.TemporaryDirectory() as tmp:
+        html = Path(tmp) / "graphical_abstract.html"
+        html.write_text(page, encoding="utf-8")
+        common = [browser, "--headless=new", "--disable-gpu", "--hide-scrollbars", f"--user-data-dir={tmp}"]
+        for extra in (
+            [f"--window-size={WIDTH},{HEIGHT}", f"--screenshot={png_path}"],
+            ["--no-pdf-header-footer", f"--print-to-pdf={pdf_path}"],
+        ):
+            subprocess.run(common + extra + [html.as_uri()], capture_output=True, text=True,
+                           encoding="utf-8", errors="replace", timeout=120, check=True)
+    return png_path.exists() and pdf_path.exists()
+
+
 def main() -> None:
     OUT_PATH.parent.mkdir(parents=True, exist_ok=True)
     OUT_PATH.write_text(draw(), encoding="utf-8")
@@ -252,18 +295,20 @@ def main() -> None:
     # Also emit PNG and PDF from the same source. These used to be produced by hand, which meant a
     # regenerated SVG left a stale PNG and PDF behind; the submission then carried a graphical
     # abstract that contradicted the manuscript. Deriving all three here makes that impossible.
-    try:
-        import cairosvg
-    except ImportError:
-        print("  cairosvg not installed: PNG/PDF NOT regenerated (pip install cairosvg)")
-        return
-
-    svg_bytes = OUT_PATH.read_bytes()
     png_path = OUT_PATH.with_suffix(".png")
     pdf_path = OUT_PATH.with_suffix(".pdf")
-    cairosvg.svg2png(bytestring=svg_bytes, write_to=str(png_path),
-                     output_width=WIDTH, output_height=HEIGHT)
-    cairosvg.svg2pdf(bytestring=svg_bytes, write_to=str(pdf_path))
+    try:
+        import cairosvg
+
+        svg_bytes = OUT_PATH.read_bytes()
+        cairosvg.svg2png(bytestring=svg_bytes, write_to=str(png_path),
+                         output_width=WIDTH, output_height=HEIGHT)
+        cairosvg.svg2pdf(bytestring=svg_bytes, write_to=str(pdf_path))
+    except (ImportError, OSError) as exc:
+        # cairosvg needs libcairo, which Windows lacks; a headless Chromium browser renders the same SVG.
+        if not browser_export(OUT_PATH, png_path, pdf_path):
+            print(f"  cairosvg unavailable ({type(exc).__name__}) and no Chrome/Edge found: PNG/PDF NOT regenerated")
+            return
     png_kb = png_path.stat().st_size / 1024
     print(f"Wrote {png_path} ({png_kb:.1f} KB)" + ("  [OVER 150 KB LIMIT]" if png_kb > 150 else ""))
     print(f"Wrote {pdf_path}")

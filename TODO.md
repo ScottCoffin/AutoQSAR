@@ -181,9 +181,18 @@ Source: `Peer_Review_Report_QSARena_No_Single_Model_Family_Dominates.docx`; item
 - [ ] **Blind the ensemble member filter.** `exclude_negative_test_r2_members` and the
       correlated-member tie-break consult held-out data; disclosed in §4, but it should be changed.
 
+## Feature-expansion arm (in progress, see docs/FEATURE_EXPANSION_PLAN.md)
+
+- [ ] Finish GPU XGBoost on `admetboost+chemeleon` and `chemeleon`; evaluate.
+- [ ] Finish `unimol_repr` featurization; train `admetboost+emb` and `emb`; evaluate.
+- [ ] Write-up and decision: integrate CheMeleon / the ADMETboost feature set into the runner and paper, or report
+      the arm as a supplementary analysis. Option B (CheMeleon fine-tuning as a Chemprop variant) is unscoped.
+- [x] Nested-selection CV for the benchmark: scoped (`docs/NESTED_SELECTION_CV_PLAN.md`) and DECLINED
+      2026-10-02 (not worth the compute); the paper carries the auto-rendered caveat.
+
 ## Repository hygiene
 
-- [ ] **Fix the PODUAM attribution** in `data/benchmark_dataset_catalog.csv` and the cached
+- [x] **Fix the PODUAM attribution** (done 2026-10-02; registry, catalog, latest leaderboard cache; signature-preserving alias in the runner) in `data/benchmark_dataset_catalog.csv` and the cached
       `data/benchmark_leaderboards/leaderboard_top10_reference_*.csv`, which credit "Aurisano et al.,
       Nature Communications 2025". The correct citation is von Borries K, Beckwith KV, Goodman JM,
       Chiu WA, Jolliet O, Fantke P, *Nat Commun* 2026;17:647, doi:10.1038/s41467-025-67374-4.

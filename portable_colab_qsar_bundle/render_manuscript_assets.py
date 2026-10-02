@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import argparse
 import re
+import shutil
 import sys
 from pathlib import Path
 
@@ -50,6 +51,9 @@ def main() -> int:
     parser.add_argument("--run-dir", default=None, help="Override benchmark_run_dir (repo-relative or absolute).")
     parser.add_argument("--kernel", default="python3", help="Jupyter kernel name used for execution.")
     parser.add_argument("--timeout", type=int, default=3600, help="Per-cell timeout in seconds.")
+    parser.add_argument(
+        "--no-meta-analysis", action="store_true", help="Skip qsarena.meta_analysis (about 4 minutes on CPU)."
+    )
     args = parser.parse_args()
 
     nb = nbformat.read(NOTEBOOK, as_version=4)
@@ -85,6 +89,30 @@ def main() -> int:
     if missing:
         print(f"manuscript.md references missing tables: {', '.join(missing)}", file=sys.stderr)
     print("Refreshed table blocks in manuscript.md. Prose numbers still need checking against manuscript_numbers.json.")
+
+    # Dataset-property meta-analysis (qsarena.meta_analysis): reads the Fig 6 export the notebook just
+    # wrote, writes meta_numbers.json, Figures 7-9 and Tables S9-S10, and re-renders the META blocks.
+    if not args.no_meta_analysis:
+        try:
+            sys.path.insert(0, str(REPO_ROOT))
+            from qsarena.meta_analysis.pipeline import run_meta_analysis
+            from qsarena.meta_analysis.text import sync_manuscript
+
+            run_dir = REPO_ROOT / args.run_dir if args.run_dir else None
+            kwargs = {"run_dir": run_dir} if run_dir else {}
+            results = run_meta_analysis(REPO_ROOT / "manuscript_assets", **kwargs)
+            for line in sync_manuscript(results["numbers"]):
+                print(f"meta-analysis: {line}")
+            submission_figs = REPO_ROOT / "submission" / "figures"
+            for path in (REPO_ROOT / "manuscript_assets" / "figures").glob("figureM*.*"):
+                shutil.copy2(path, submission_figs / path.name)
+            # The meta-analysis writes Tables S9-S11 after the first table sync above, so sync again.
+            still_missing = sync_manuscript_tables()
+            if still_missing:
+                print(f"manuscript.md still references missing tables: {', '.join(still_missing)}", file=sys.stderr)
+        except Exception as exc:
+            print(f"meta-analysis failed: {exc!r}", file=sys.stderr)
+            errors.append((-1, type(exc).__name__, str(exc)))
 
     # Keep the LaTeX submission package in step with the Markdown: both are generated from the same CSVs.
     try:

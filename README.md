@@ -1184,6 +1184,49 @@ in the repository.
 
 Tests: `pip install -e .[dev]` then `pytest -q -m "not gpu and not slow"`.
 
+## Project Status (2026-10-02)
+
+- **Manuscript run:** `benchmark_results/qsarena_benchmark_oof_ensemble`. It has the same base models as
+  `qsarena_benchmark_chemprop_fixed`, with every ensemble rebuilt from out-of-fold predictions (Chemprop
+  included). Manuscript figures, tables and numbers are regenerated from it and checked by
+  `verify_manuscript_numbers.py` (96 checks).
+- **Known limitation, disclosed in the paper:** the benchmark fits feature selection once on the whole
+  training split, so model cross-validation scores are optimistic (a median 15.9% CV-vs-test overstatement,
+  versus 3.4% for unselected-feature models). Test metrics are unaffected. A nested-selection fix was scoped
+  (`docs/NESTED_SELECTION_CV_PLAN.md`) and judged not worth the compute.
+- **In progress:** the feature-expansion arm below: CheMeleon and Uni-Mol embedding runs, then a
+  decision on integration. Agents and contributors: start with the status section of `AGENTS.md`.
+
+## Dataset-Property Meta-Analysis And Feature-Expansion Arm (in progress)
+
+Two analysis packages sit on top of the benchmark and never modify it:
+
+| Package | What it does | Docs |
+|---|---|---|
+| `qsarena.meta_analysis` | Which dataset properties predict which model family wins (manuscript §3.14, Figs 7-9, Tables S9-S11), including a regret-based family selector | `docs/meta_analysis/METHODS.md`, `docs/meta_analysis/SELECTOR_V2_PLAN.md` |
+| `qsarena.feature_expansion` | Experimental arm: the ADMETboost feature set (Mordred 2D, Mol2Vec, PubChem, MACCS, ECFP4, RDKit descriptors) and label-free pretrained embeddings (Uni-Mol, CheMeleon), with fixed-configuration XGBoost / random forest on the **full, unselected** features | `docs/FEATURE_EXPANSION_PLAN.md` (design, compute and a status checklist) |
+
+Both use the committed, hash-verified train/test partitions
+(`data/meta_analysis/dataset_partitions.csv.gz`), so their results are directly comparable with the
+benchmark and the leaderboards.
+
+```bash
+python -m qsarena.meta_analysis --sync-manuscript            # ~4 min CPU (+~1 h once, for the cached permutation test)
+pip install scikit-fingerprints mordredcommunity gensim      # feature-expansion extras
+python -m qsarena.feature_expansion.featurize --workers 2    # CPU families -> .model_cache/feature_expansion/
+python -m qsarena.feature_expansion.train --feature-set admetboost
+# GPU embeddings (benchmark env): featurize, then train XGBoost on CUDA and compare against the TDC references
+python -m qsarena.feature_expansion.featurize --families chemeleon unimol_repr --workers 1
+python -m qsarena.feature_expansion.train --feature-set admetboost+chemeleon --models xgboost --device cuda --n-jobs 2
+python -m qsarena.feature_expansion.evaluate
+```
+
+Findings so far, on the 22 official TDC splits:
+- A fixed XGBoost on the unselected ADMETboost features is the best honest QSARena entry (mean rank 3.91; it
+  beats ADMETboost and the NIST meta-model 13-9). Only MaxQsaring ranks higher (1.96).
+- Cross-validation selection rarely picks that model, because the benchmark's CV scores are inflated by the
+  feature-selection limitation above. Details: `docs/FEATURE_EXPANSION_PLAN.md`.
+
 ## Development Notes
 
 - For notebook behavior, edit `build_colab_qsar_tutorial.py` and regenerate

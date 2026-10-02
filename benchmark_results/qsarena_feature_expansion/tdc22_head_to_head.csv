@@ -1,0 +1,17 @@
+entry,method,qsarena_wins,qsarena_losses
+"CV pick, benchmark pool",ADMETboost (XGBoost),9,13
+"CV pick, benchmark pool",MaxQsaring,3,19
+"CV pick, benchmark pool",Meta-model (NIST),11,11
+"CV pick, benchmark pool",MolE,9,13
+"CV pick, benchmark + arm",ADMETboost (XGBoost),10,12
+"CV pick, benchmark + arm",MaxQsaring,3,19
+"CV pick, benchmark + arm",Meta-model (NIST),11,11
+"CV pick, benchmark + arm",MolE,9,13
+fixed: Random forest [admetboost],ADMETboost (XGBoost),2,20
+fixed: Random forest [admetboost],MaxQsaring,1,21
+fixed: Random forest [admetboost],Meta-model (NIST),4,18
+fixed: Random forest [admetboost],MolE,4,18
+fixed: XGBoost [admetboost],ADMETboost (XGBoost),13,9
+fixed: XGBoost [admetboost],MaxQsaring,5,17
+fixed: XGBoost [admetboost],Meta-model (NIST),13,9
+fixed: XGBoost [admetboost],MolE,11,11

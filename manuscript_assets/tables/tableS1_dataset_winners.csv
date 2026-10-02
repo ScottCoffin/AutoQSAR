@@ -1,43 +1,43 @@
 dataset,suite,task_kind,family,model,analysis_metric,analysis_metric_value,cv_selected_model,cv_selected_family,cv_selected_gap_to_best
-tdc_ames,TDC,classification,Ensemble (stacking / averaging),"Ensemble (OOF Stacking (RidgeCV, 5-fold))",test_roc_auc,0.8791458614815251,TabPFNClassifier,TabPFN (tabular foundation),0.3454566107833457
+tdc_ames,TDC,classification,TabPFN (tabular foundation),TabPFNClassifier,test_roc_auc,0.876108793984609,TabPFNClassifier,TabPFN (tabular foundation),0.0
 tdc_bbb_martins,TDC,classification,Conventional ML,Random forest,test_roc_auc,0.9250703564727956,TabPFNClassifier,TabPFN (tabular foundation),1.7070182110111025
 tdc_bioavailability_ma,TDC,classification,Conventional ML,CatBoost,test_roc_auc,0.7766877286331892,TabPFNClassifier,TabPFN (tabular foundation),5.801755512738168
 tdc_carcinogens_lagunin,TDC,classification,Chemprop v2 GNN,"Chemprop v2 (AttentiveFP, ensemble=3)",test_roc_auc,0.9286703601108032,TabPFNClassifier,TabPFN (tabular foundation),6.3385533184190725
 tdc_clintox,TDC,classification,CFA combinatorial fusion,CFA (Combinatorial Fusion),test_roc_auc,0.9739688128772636,TabPFNClassifier,TabPFN (tabular foundation),5.19044544867655
-tdc_cyp1a2_veith,TDC,classification,Ensemble (stacking / averaging),"Ensemble (OOF Stacking (RidgeCV, 5-fold))",test_roc_auc,0.973706456673724,ChemML MLP (TensorFlow),Deep tabular NN (ChemML MLP),1.7407292982463198
-tdc_cyp2c19_veith,TDC,classification,Ensemble (stacking / averaging),"Ensemble (OOF Stacking (RidgeCV, 5-fold))",test_roc_auc,0.9346753981728514,XGBoost,Conventional ML,10.141315630135793
+tdc_cyp1a2_veith,TDC,classification,Ensemble (stacking / averaging),"Ensemble (OOF Stacking (RidgeCV, 5-fold))",test_roc_auc,0.9726960941109573,ChemML MLP (TensorFlow),Deep tabular NN (ChemML MLP),1.6386650572538064
+tdc_cyp2c19_veith,TDC,classification,Ensemble (stacking / averaging),"Ensemble (OOF Stacking (RidgeCV, 5-fold))",test_roc_auc,0.9312040181097906,XGBoost,Conventional ML,9.806336786243344
 tdc_cyp2c9_substrate_carbonmangels,TDC,classification,Chemprop v2 GNN,"Chemprop v2 (AttentiveFP, ensemble=3)",test_auprc,0.4382163122335878,SVC,Conventional ML,31.36822102399359
-tdc_cyp2c9_veith,TDC,classification,Ensemble (stacking / averaging),"Ensemble (OOF Stacking (RidgeCV, 5-fold))",test_auprc,0.8287940641388594,TabPFNClassifier,TabPFN (tabular foundation),36.101846947633796
+tdc_cyp2c9_veith,TDC,classification,Ensemble (stacking / averaging),"Ensemble (OOF Stacking (RidgeCV, 5-fold))",test_auprc,0.82894523232554,TabPFNClassifier,TabPFN (tabular foundation),36.1134995484963
 tdc_cyp2d6_substrate_carbonmangels,TDC,classification,Chemprop v2 GNN,"Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",test_auprc,0.6927059569479546,AdaBoost,Conventional ML,10.519896593193256
-tdc_cyp2d6_veith,TDC,classification,Ensemble (stacking / averaging),"Ensemble (OOF Stacking (RidgeCV, 5-fold))",test_auprc,0.7620072184140178,TabPFNClassifier,TabPFN (tabular foundation),39.97648876216381
-tdc_cyp3a4_substrate_carbonmangels,TDC,classification,Ensemble (stacking / averaging),"Ensemble (OOF Stacking (RidgeCV, 5-fold))",test_auprc,0.7060174235676229,TabPFNClassifier,TabPFN (tabular foundation),4.179439371365431
-tdc_cyp3a4_veith,TDC,classification,Ensemble (stacking / averaging),"Ensemble (OOF Stacking (RidgeCV, 5-fold))",test_auprc,0.9008826840184312,TabPFNClassifier,TabPFN (tabular foundation),17.82955025255719
+tdc_cyp2d6_veith,TDC,classification,Ensemble (stacking / averaging),"Ensemble (OOF Stacking (RidgeCV, 5-fold))",test_auprc,0.7608043084618412,TabPFNClassifier,TabPFN (tabular foundation),39.88158541023807
+tdc_cyp3a4_substrate_carbonmangels,TDC,classification,Ensemble (stacking / averaging),"Ensemble (OOF Stacking (RidgeCV, 5-fold))",test_auprc,0.7239478429666679,TabPFNClassifier,TabPFN (tabular foundation),6.552680559684224
+tdc_cyp3a4_veith,TDC,classification,Ensemble (stacking / averaging),"Ensemble (OOF Stacking (RidgeCV, 5-fold))",test_auprc,0.9024556628102453,TabPFNClassifier,TabPFN (tabular foundation),17.972773216402373
 tdc_dili,TDC,classification,Uni-Mol (3D pretrained),Uni-Mol V1,test_roc_auc,0.9217391304347826,LogisticRegression,Conventional ML,19.150943396226417
 tdc_herg,TDC,classification,Chemprop v2 GNN,"Chemprop v2 (AttentiveFP, ensemble=3)",test_roc_auc,0.8572901325478646,TabPFNClassifier,TabPFN (tabular foundation),14.67101872530494
-tdc_herg_karim,TDC,classification,Ensemble (stacking / averaging),"Ensemble (OOF Stacking (RidgeCV, 5-fold))",test_roc_auc,0.903704003625188,ChemML MLP (PyTorch),Deep tabular NN (ChemML MLP),3.4961717275559008
+tdc_herg_karim,TDC,classification,Ensemble (stacking / averaging),Ensemble (Weighted average (inverse OOF error)),test_roc_auc,0.9051288977287664,ChemML MLP (PyTorch),Deep tabular NN (ChemML MLP),3.6480923393308573
 tdc_hia_hou,TDC,classification,CFA combinatorial fusion,CFA (Combinatorial Fusion),test_roc_auc,0.987448559670782,LogisticRegression,Conventional ML,0.4375911648260163
 tdc_pampa_ncats,TDC,classification,Uni-Mol (3D pretrained),Uni-Mol V1,test_roc_auc,0.7633302724211816,LogisticRegression,Conventional ML,26.28117731975299
 tdc_pgp_broccatelli,TDC,classification,Uni-Mol (3D pretrained),Uni-Mol V2 (84m),test_roc_auc,0.9328845641162358,LogisticRegression,Conventional ML,6.965778381081676
 tdc_skin_reaction,TDC,classification,Uni-Mol (3D pretrained),Uni-Mol V2 (84m),test_roc_auc,0.6577560240963856,TabPFNClassifier,TabPFN (tabular foundation),20.120206067544363
 tdc_tox21,TDC,classification,Chemprop v2 GNN,"Chemprop v2 (AttentiveFP, ensemble=3)",test_roc_auc,0.5974251913709115,TabPFNClassifier,TabPFN (tabular foundation),21.68753640069889
 tdc_toxcast,TDC,classification,Conventional ML,HistGradientBoosting,test_roc_auc,0.7156874524410268,TabPFNClassifier,TabPFN (tabular foundation),8.337996642417458
-chemml_cep_homo,ChemML,regression,Ensemble (stacking / averaging),"Ensemble (OOF Stacking (RidgeCV, 5-fold))",test_rmse,0.0988562966894023,TabPFNRegressor,TabPFN (tabular foundation),3.3532616636930612
+chemml_cep_homo,ChemML,regression,Ensemble (stacking / averaging),"Ensemble (OOF Stacking (RidgeCV, 5-fold))",test_rmse,0.0933256252953359,TabPFNRegressor,TabPFN (tabular foundation),9.478191723983942
 chemml_organic_density,ChemML,regression,TabPFN (tabular foundation),TabPFNRegressor,test_rmse,0.0048101712939232,TabPFNRegressor,TabPFN (tabular foundation),0.0
-esol_delaney,MoleculeNet,regression,Conventional ML,MapLight CatBoost (Strict Parity),test_rmse,0.6446969537072641,TabPFNRegressor,TabPFN (tabular foundation),4.378143593063894
+esol_delaney,MoleculeNet,regression,Ensemble (stacking / averaging),Ensemble (Weighted average (inverse OOF error)),test_rmse,0.6259642765171779,TabPFNRegressor,TabPFN (tabular foundation),7.501775632432634
 freesolv_sampl,MoleculeNet,regression,TabPFN (tabular foundation),TabPFNRegressor,test_rmse,0.933412912990602,TabPFNRegressor,TabPFN (tabular foundation),0.0
-lipophilicity,MoleculeNet,regression,Chemprop v2 GNN,"Chemprop v2 (D-MPNN, ensemble=3)",test_rmse,0.5506893871153222,ElasticNetCV,Conventional ML,23.91200013633323
+lipophilicity,MoleculeNet,regression,Ensemble (stacking / averaging),"Ensemble (OOF Stacking (RidgeCV, 5-fold))",test_rmse,0.5479856526008019,ElasticNetCV,Conventional ML,24.52337590856702
 poduam_pod_nc_std,PODUAM,regression,Conventional ML,Random forest,test_rmse,0.7200851779122264,TabPFNRegressor,TabPFN (tabular foundation),3.4154412695393486
-poduam_pod_rd_std,PODUAM,regression,Conventional ML,Random forest,test_rmse,0.5722334861689493,TabPFNRegressor,TabPFN (tabular foundation),2.8517440288581186
+poduam_pod_rd_std,PODUAM,regression,Ensemble (stacking / averaging),Ensemble (Weighted average (inverse OOF error)),test_rmse,0.5700142933583752,TabPFNRegressor,TabPFN (tabular foundation),3.252168813926362
 polaris_adme_fang_hppb_1,Polaris,regression,Chemprop v2 GNN,"Chemprop v2 (D-MPNN, ensemble=3)",test_rmse,0.4443979298698169,ElasticNetCV,Conventional ML,23.269115565598238
 polaris_adme_fang_perm_1,Polaris,regression,Uni-Mol (3D pretrained),Uni-Mol V1,test_rmse,0.3992212119521127,ChemML MLP (PyTorch),Deep tabular NN (ChemML MLP),15.412817227232223
 polaris_adme_fang_rclint_1,Polaris,regression,Chemprop v2 GNN,"Chemprop v2 (D-MPNN, ensemble=3)",test_rmse,0.5172546095669546,TabPFNRegressor,TabPFN (tabular foundation),2.507245880244679
 polaris_adme_fang_rppb_1,Polaris,regression,MapLight + GNN,"MapLight + GNN (CatBoost, Strict Parity)",test_rmse,0.4927168918367268,TabPFNRegressor,TabPFN (tabular foundation),12.638208369044138
 polaris_adme_fang_solu_1,Polaris,regression,Uni-Mol (3D pretrained),Uni-Mol V2 (84m),test_rmse,0.5509331416342176,TabPFNRegressor,TabPFN (tabular foundation),10.837291783829732
-tdc_caco2_wang,TDC,regression,Conventional ML,MapLight CatBoost (Strict Parity),test_rmse,0.349679972640062,TabPFNRegressor,TabPFN (tabular foundation),9.799298843502855
+tdc_caco2_wang,TDC,regression,Ensemble (stacking / averaging),Ensemble (Weighted average (inverse OOF error)),test_rmse,0.3445283807071727,TabPFNRegressor,TabPFN (tabular foundation),11.441082841088395
 tdc_clearance_hepatocyte_az,TDC,regression,MapLight + GNN,"MapLight + GNN (CatBoost, Strict Parity)",test_rmse,44.113107767580935,TabPFNRegressor,TabPFN (tabular foundation),14.668972601486821
 tdc_clearance_microsome_az,TDC,regression,Uni-Mol (3D pretrained),Uni-Mol V2 (84m),test_rmse,33.50711719182458,TabPFNRegressor,TabPFN (tabular foundation),14.29423991651723
 tdc_half_life_obach,TDC,regression,Uni-Mol (3D pretrained),Uni-Mol V1,test_rmse,19.12820047077432,TabPFNRegressor,TabPFN (tabular foundation),6.345589357447647
-tdc_hydrationfreeenergy_freesolv,TDC,regression,TabPFN (tabular foundation),TabPFNRegressor,test_rmse,1.115739039250064,TabPFNRegressor,TabPFN (tabular foundation),0.0
+tdc_hydrationfreeenergy_freesolv,TDC,regression,Ensemble (stacking / averaging),Ensemble (Weighted average (inverse OOF error)),test_rmse,1.0925350441693331,TabPFNRegressor,TabPFN (tabular foundation),2.123867349113094
 tdc_ld50_zhu,TDC,regression,TabPFN (tabular foundation),TabPFNRegressor,test_rmse,0.8063452480723439,TabPFNRegressor,TabPFN (tabular foundation),0.0
 tdc_lipophilicity_astrazeneca,TDC,regression,Chemprop v2 GNN,"Chemprop v2 (D-MPNN, ensemble=3)",test_rmse,0.5772469529992958,TabPFNRegressor,TabPFN (tabular foundation),3.5561368504263555
 tdc_ppbr_az,TDC,regression,MapLight + GNN,"MapLight + GNN (CatBoost, Strict Parity)",test_rmse,11.35635011770925,ChemML MLP (PyTorch),Deep tabular NN (ChemML MLP),27.930707644086112

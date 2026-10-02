@@ -1490,6 +1490,17 @@ def auxiliary_feature_content_signature(frame: pd.DataFrame, columns: Sequence[s
     return hasher.hexdigest()
 
 
+# Corrected display labels that must hash like the label each signature was first computed with:
+# the stage 2/3 signature also keys cached feature selections (not reproducible across machines) and
+# every metrics.csv row's stage_config_signature, so a citation fix must not invalidate them.
+SIGNATURE_SOURCE_LABEL_ALIASES = {
+    "PODUAM benchmark: POD non-cancer standardized set (von Borries et al., Nature Communications 2026)":
+        "PODUAM benchmark: POD non-cancer standardized set (Aurisano et al., Nature Communications 2025)",
+    "PODUAM benchmark: POD reproductive/developmental standardized set (von Borries et al., Nature Communications 2026)":
+        "PODUAM benchmark: POD reproductive/developmental standardized set (Aurisano et al., Nature Communications 2025)",
+}
+
+
 def stage23_resume_signature(
     *,
     args: argparse.Namespace,
@@ -1501,7 +1512,7 @@ def stage23_resume_signature(
     payload = {
         "cache_version": int(STAGE23_RESUME_CACHE_VERSION),
         "dataset_name": str(spec.name),
-        "dataset_source": str(spec.source),
+        "dataset_source": SIGNATURE_SOURCE_LABEL_ALIASES.get(str(spec.source), str(spec.source)),
         "dataset_rows": int(len(canonical_df)),
         "dataset_content_hash": dataset_content_signature(
             canonical_df["canonical_smiles"],
@@ -1606,6 +1617,7 @@ def _stage23_payload_matches_ignoring_cache_location(
         "enable_persistent_feature_store",
         "reuse_persistent_feature_store",
         "persistent_feature_store_path",
+        "dataset_source",  # display label only; data identity is dataset_content_hash
     }
     stored_clean = {key: value for key, value in stored_payload.items() if key not in ignored_keys}
     expected_clean = {key: value for key, value in expected_payload.items() if key not in ignored_keys}
