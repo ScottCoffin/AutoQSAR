@@ -81,7 +81,8 @@ python -m qsarena.feature_expansion.train --feature-set admetboost
 python -m qsarena.feature_expansion.evaluate
 ```
 
-(Embedding families need the benchmark env: `C:/Users/scott/.conda/envs/autoqsar-py311/python.exe`.)
+(Embedding families need the benchmark conda env with torch, Chemprop 2.2 and unimol_tools; on the RTX box
+its path is in AGENTS.md, Chemprop-on-Windows trap.)
 
 ## Checklist
 

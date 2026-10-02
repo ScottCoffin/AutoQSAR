@@ -78,6 +78,11 @@ ALLOWED_LINE_PATTERNS = [
         r"autoqsar(?:\\?_)benchmark(?:\\?_)20260623(?:\\?_)153839",
         r"https://raw\.githubusercontent\.com/ScottCoffin/AutoQSAR/main/portable_colab_qsar_bundle/qsar_workflow_core\.py",
         r"^.*# clone made before the rename.*$",
+        # The GitHub repository still carries the old name; tutorials try both raw URLs as fallbacks.
+        r"https://raw\.githubusercontent\.com/ScottCoffin/AutoQSAR/main\b",
+        r"repository is being renamed AutoQSAR -> QSARena",
+        # Drops our own entries, recorded under the pre-rename name in frozen leaderboard snapshots.
+        r"\"autoqsar\|qsarena\"",
     )
 ]
 
