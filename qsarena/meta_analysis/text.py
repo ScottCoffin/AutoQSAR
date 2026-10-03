@@ -117,7 +117,7 @@ the sign of {{sens_same_sign}} of the fingerprint-dependent correlations). How i
 domain metrics are itself varies with training-set diversity {{cite:sheridan2015relative}}.
 """
 
-CVLEAK = """**Model-selection cross-validation is optimistic.** The runner fits the feature selector once on the full training split and then cross-validates each model on the selected features, so every held-out CV fold has already influenced which features were kept. On datasets with predefined or scaffold test splits, CV scores overstate the corresponding test scores by a median of {{cvleak_median}} across {{cvleak_n_models}} CV-scored models (per-model medians {{cvleak_range}}; largest for {{cvleak_top}}), against {{cvleak_arm}} for fixed-configuration tree models trained on unselected features with the same folds. Test-set results and leaderboard placements are unaffected, because selection never sees test data, but the cross-validation-selected model and the CV-to-test gap in §3.4 rest on these optimistic scores. Nesting feature selection inside each CV fold would remove the bias and is left to future work.
+CVLEAK = """**Model-selection cross-validation is optimistic.** The runner fits the feature selector once on the full training split and then cross-validates each model on the selected features, so every held-out CV fold has already influenced which features were kept. On datasets with predefined or scaffold test splits, CV scores overstate the corresponding test scores by a median of {{cvleak_median}} across {{cvleak_n_models}} CV-scored models (per-model medians {{cvleak_range}}; largest for {{cvleak_top}}), against {{cvleak_arm}} for the fixed-configuration XGBoost and random-forest models trained on the unselected ADMETboost features with the same folds (the post-hoc analysis in §3.12). Test-set results and leaderboard placements are unaffected, because selection never sees test data, but the cross-validation-selected model and the CV-to-test gap in §3.4 rest on these optimistic scores. Nesting feature selection inside each CV fold would remove the bias and is left to future work; the opt-in descriptor model of §3.12 avoids it by not selecting features at all.
 """
 
 BLOCKS = {"section_3_14": SECTION, "limitation_meta": LIMITATION, "limitation_cvleak": CVLEAK}
@@ -161,7 +161,9 @@ _TEX_REPLACEMENTS = [
     ("–", "--"),
     ("§", r"\S"),
 ]
-_SECTION_LABELS = {"3.2": "sec:nowinner", "3.10": "sec:hardware", "3.14": "sec:meta"}
+_SECTION_LABELS = {
+    "3.2": "sec:nowinner", "3.4": "sec:leaderboard", "3.10": "sec:hardware", "3.12": "sec:platforms", "3.14": "sec:meta",
+}
 _FIG_LABELS = {
     "figureM1_size_crossover": "fig:meta_size",
     "figureM2_shift_difficulty": "fig:meta_shift",

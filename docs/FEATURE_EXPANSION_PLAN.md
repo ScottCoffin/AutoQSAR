@@ -192,7 +192,8 @@ selection rarely picks the arm's model because the benchmark's own CV scores are
    Verified end to end on the example data. **Pilot** (Caco-2, 728 train rows, 40 epochs, one model, RTX 4060):
    162 s vs 22 s for D-MPNN (9.3 M vs 318 K parameters); test MAE 0.382 vs 0.380, so no gain on this single
    dataset. **Cost of a full benchmark run:** ~23 GPU-h for the base model (ensemble=3) and ~93 GPU-h more for 5-fold
-   OOF ensemble membership (~116 h total). That exceeds the 12 h approval threshold, so it has **not been run**.
+   OOF ensemble membership (~116 h total). That exceeds the 12 h approval threshold, and the author **declined** the full run (2026-10-03); the variant
+   stays available as an opt-in.
 2. **Opt-in `XGBoost (ADMETboost features)`** in the runner: `--run-admetboost-xgboost` (RunConfig
    `models.admetboost_xgboost`). The arm's fixed XGBoost (`XGB_PARAMS` in `train.py`, the single source of truth)
    on the full, unselected ADMETboost features (`featurize.admetboost_matrix`), computed label-free on train+test

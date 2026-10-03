@@ -36,8 +36,10 @@ always quote). Bash (Git Bash) and PowerShell are both available.
 **Opt-in models from the arm (2026-10-03):** `--run-admetboost-xgboost` (XGBoost on the full, unselected
 ADMETboost features; needs `qsarena[features]` + the Mol2Vec model) and `--run-chemprop-chemeleon` (Chemprop
 fine-tuned from CheMeleon). Both are off by default and outside every family's resume signature; details and
-costs are in `docs/FEATURE_EXPANSION_PLAN.md` ("Implementation of the recommendations"). A full CheMeleon run is ~116
-GPU-h and needs approval.
+costs are in `docs/FEATURE_EXPANSION_PLAN.md` ("Implementation of the recommendations"). A full CheMeleon run (~116
+GPU-h) was **declined by the author (2026-10-03)**; don't propose it again without new evidence. The paper mentions
+both models only in the §3.12 post-hoc note, and the CV-leak caveat (template in `qsarena/meta_analysis/text.py`)
+points to it.
 
 **Feature-expansion arm: complete (2026-10-02).** All five feature sets have been trained and evaluated. Frozen CheMeleon/Uni-Mol
 embeddings add nothing to the ADMETboost features and are worse on their own; the fixed XGBoost on unselected

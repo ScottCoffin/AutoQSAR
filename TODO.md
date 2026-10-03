@@ -195,8 +195,8 @@ Source: `Peer_Review_Report_QSARena_No_Single_Model_Family_Dominates.docx`; item
 - [x] Finish `unimol_repr` featurization; train `admetboost+emb` and `emb`; evaluate. (null / worse; see the plan)
 - [x] **Recommendations implemented (2026-10-03):** opt-in `--run-admetboost-xgboost` and `--run-chemprop-chemeleon`;
       §3.12 post-hoc paragraph. See "Implementation of the recommendations" in `docs/FEATURE_EXPANSION_PLAN.md`.
-- [ ] **Optional, needs approval (~116 GPU-h on the RTX; ~23 h without ensemble OOF):** run the CheMeleon fine-tuned
-      Chemprop variant across the benchmark. Single-dataset pilot: no gain on Caco-2 (MAE 0.382 vs 0.380).
+- [x] **Full CheMeleon run: DECLINED by the author (2026-10-03).** The opt-in variant stays in the code; the
+      single-dataset pilot (Caco-2 MAE 0.382 vs 0.380 for D-MPNN, ~7x slower) is the only CheMeleon fine-tuning result.
 - [ ] **Future run (not this paper):** include `--run-admetboost-xgboost` in the next full benchmark run.
 - [x] Nested-selection CV for the benchmark: scoped (`docs/NESTED_SELECTION_CV_PLAN.md`) and DECLINED
       2026-10-02 (not worth the compute); the paper carries the auto-rendered caveat.

@@ -295,3 +295,7 @@ benchmark_results/qsarena_feature_expansion/*/predictions/
 
 # Stale fold caches moved aside during the 2026-10-01 selection-mismatch repair
 benchmark_results/_stale_selection_backup_*/
+
+# Office owner/lock files and agent heartbeat markers
+~$*
+logs/.*_done_seen
