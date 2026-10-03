@@ -134,6 +134,15 @@ def compute_family(family: str, smiles: list[str]) -> tuple[np.ndarray, dict]:
     return np.nan_to_num(X, nan=0.0, posinf=0.0, neginf=0.0).astype(np.float32), extra
 
 
+def admetboost_matrix(smiles: list[str]) -> np.ndarray:
+    """The full ``admetboost`` feature set for arbitrary SMILES, uncached, columns in family order.
+
+    Used by the benchmark runner's opt-in ``XGBoost (ADMETboost features)`` model. Every family is label-free
+    (nothing is fitted to targets), so computing train and test SMILES together cannot leak.
+    """
+    return np.hstack([compute_family(family, list(smiles))[0] for family in FEATURE_SETS["admetboost"]])
+
+
 # ---------------------------------------------------------------------------------------------
 # Cache
 # ---------------------------------------------------------------------------------------------
@@ -219,7 +228,13 @@ def main(argv: list[str] | None = None) -> int:
     sizes = partitions.groupby("dataset").size()
     datasets = sorted(datasets, key=lambda d: -sizes[d])
     jobs = [(f, d, dataset_smiles(partitions, d)[0], args.cache_dir) for f in args.families for d in datasets]
-    if args.workers <= 1:
+    if any(f in EMBEDDING_FAMILIES for f in args.families):
+        # unimol_tools does not release conformer/model memory between calls (15 GB committed after five
+        # 12k-molecule datasets), so each embedding job runs in a fresh child process.
+        with ProcessPoolExecutor(max_workers=max(1, args.workers), max_tasks_per_child=1) as pool:
+            for line in pool.map(_job, jobs):
+                print(line, flush=True)
+    elif args.workers <= 1:
         for job in jobs:
             print(_job(job), flush=True)
     else:

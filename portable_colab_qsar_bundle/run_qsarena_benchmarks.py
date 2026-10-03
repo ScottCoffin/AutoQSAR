@@ -338,6 +338,7 @@ try:
         resolve_cfa_max_models_for_budget,
         run_cfa_regression_fusion,
         resolve_chemprop_architecture_specs,
+        chemeleon_variant_spec,
         scaffold_train_test_split,
         target_quartile_labels,
     )
@@ -371,6 +372,7 @@ except ModuleNotFoundError:
         resolve_cfa_max_models_for_budget,
         run_cfa_regression_fusion,
         resolve_chemprop_architecture_specs,
+        chemeleon_variant_spec,
         scaffold_train_test_split,
         target_quartile_labels,
     )
@@ -5040,6 +5042,38 @@ def add_leaderboard_reference_columns(
     return row
 
 
+#: Opt-in (``--run-admetboost-xgboost``): fixed-configuration XGBoost on the full, UNSELECTED ADMETboost feature
+#: set, ported from the feature-expansion arm (docs/FEATURE_EXPANSION_PLAN.md), where it was the strongest honest
+#: entry on the 22 official TDC splits. It bypasses stage-3 selection, so its CV scores carry no selection leak.
+ADMETBOOST_XGB_LABEL = "XGBoost (ADMETboost features)"
+
+
+def admetboost_xgboost_estimator(args: argparse.Namespace, n_jobs: int) -> Any:
+    from qsarena.feature_expansion.train import XGB_PARAMS  # single source of truth for the arm's settings
+
+    if current_dataset_task_type() == "classification":
+        return XGBClassifier(**XGB_PARAMS, objective="binary:logistic", eval_metric="auc",
+                             random_state=args.random_seed, n_jobs=n_jobs)
+    return XGBRegressor(**XGB_PARAMS, objective="reg:squarederror", random_state=args.random_seed, n_jobs=n_jobs)
+
+
+def build_admetboost_feature_frames(smiles_train: pd.Series, smiles_test: pd.Series) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """MACCS, ECFP4, Mol2Vec, PubChem, Mordred 2D and RDKit 2D for the train and test SMILES (label-free)."""
+    try:
+        from qsarena.feature_expansion import featurize as fe_featurize
+
+        train = [str(s) for s in smiles_train]
+        test = [str(s) for s in smiles_test]
+        X = fe_featurize.admetboost_matrix(train + test)
+    except (ImportError, FileNotFoundError) as exc:
+        raise RuntimeError(
+            f"{exc}. The ADMETboost feature set needs `pip install qsarena[features]` (scikit-fingerprints, "
+            "mordredcommunity, gensim) and the Mol2Vec model (URL in qsarena/feature_expansion/featurize.py)."
+        ) from exc
+    columns = [f"admetboost_{i}" for i in range(X.shape[1])]
+    return (pd.DataFrame(X[: len(train)], columns=columns), pd.DataFrame(X[len(train):], columns=columns))
+
+
 def adaptive_knn_neighbors(n_train: int, cv_folds: int, default_neighbors: int = 15) -> int:
     train_count = max(1, int(n_train))
     folds = max(2, min(int(cv_folds or 2), train_count))
@@ -5196,6 +5230,8 @@ def conventional_models(
                     ("model", TabPFNClassifier()),
                 ]
             )
+        if bool(getattr(args, "run_admetboost_xgboost", False)) and XGBClassifier is not None:
+            models[ADMETBOOST_XGB_LABEL] = admetboost_xgboost_estimator(args, n_jobs)
         models["_elasticnet_cv_meta"] = {}
         return models
 
@@ -5378,6 +5414,8 @@ def conventional_models(
                 ("model", TabPFNRegressor()),
             ]
         )
+    if bool(getattr(args, "run_admetboost_xgboost", False)) and XGBRegressor is not None:
+        models[ADMETBOOST_XGB_LABEL] = admetboost_xgboost_estimator(args, n_jobs)
     models["_elasticnet_cv_meta"] = {
         "elasticnet_cv_folds": int(elasticnet_cv_folds),
         "elasticnet_cv_split_strategy": elasticnet_cv_strategy,
@@ -7995,6 +8033,8 @@ def selected_conventional_model_names(args: argparse.Namespace) -> list[str]:
         names.append(maplight_catboost_model_label(args))
     if bool(getattr(args, "run_tabpfn", False)) and TabPFNRegressor is not None:
         names.append("TabPFNRegressor")
+    if bool(getattr(args, "run_admetboost_xgboost", False)) and XGBRegressor is not None:
+        names.append(ADMETBOOST_XGB_LABEL)
     return [name for name in names if model_filter_allows(args, name)]
 
 
@@ -8206,15 +8246,18 @@ def chemprop_variant_specs(args: argparse.Namespace) -> list[dict[str, Any]]:
         architecture_keys.append("cmpnn")
     if bool(getattr(args, "run_chemprop_attentivefp", True)):
         architecture_keys.append("attentivefp")
-    if not architecture_keys:
-        return []
-    include_selected_feature_variant = bool(getattr(args, "run_chemprop_selected_features", False))
-    return resolve_chemprop_architecture_specs(
-        architecture_keys,
-        ensemble_size=int(args.chemprop_ensemble_size),
-        include_rdkit2d_extra=bool(getattr(args, "run_chemprop_rdkit2d", False)),
-        include_selected_feature_variant=include_selected_feature_variant,
-    )
+    specs: list[dict[str, Any]] = []
+    if architecture_keys:
+        include_selected_feature_variant = bool(getattr(args, "run_chemprop_selected_features", False))
+        specs = resolve_chemprop_architecture_specs(
+            architecture_keys,
+            ensemble_size=int(args.chemprop_ensemble_size),
+            include_rdkit2d_extra=bool(getattr(args, "run_chemprop_rdkit2d", False)),
+            include_selected_feature_variant=include_selected_feature_variant,
+        )
+    if bool(getattr(args, "run_chemprop_chemeleon", False)):
+        specs.append(chemeleon_variant_spec(ensemble_size=int(args.chemprop_ensemble_size)))
+    return specs
 
 
 def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, dataset_position: int | None = None, dataset_total: int | None = None) -> DatasetRunResult:
@@ -8690,6 +8733,8 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
     maplight_seed_values = maplight_parity_seed_values(args)
     maplight_direct_X_train = pd.DataFrame()
     maplight_direct_X_test = pd.DataFrame()
+    admetboost_X_train: pd.DataFrame | None = None
+    admetboost_X_test: pd.DataFrame | None = None
     shared_feature_cache_enabled = bool(getattr(args, "enable_shared_feature_matrix_cache", True))
     shared_feature_cache_reuse = bool(getattr(args, "reuse_shared_feature_matrix_cache", True))
     shared_feature_cache_path = resolve_shared_feature_matrix_cache_path(
@@ -9124,6 +9169,24 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
                     continue
                 model_X_train = split["X_train"].loc[:, maplight_feature_cols].reset_index(drop=True)
                 model_X_test = split["X_test"].loc[:, maplight_feature_cols].reset_index(drop=True)
+        elif model_name == ADMETBOOST_XGB_LABEL:
+            try:
+                if admetboost_X_train is None:
+                    admetboost_X_train, admetboost_X_test = build_admetboost_feature_frames(
+                        split["smiles_train"], split["smiles_test"]
+                    )
+            except Exception as exc:
+                error_text = f"ADMETboost features unavailable: {exc}"
+                print(f"[warn] {dataset_id} {model_name}: {error_text}", flush=True)
+                # No "skipped" status: a later resume retries once the dependencies are installed.
+                row = add_cost_columns({**base_meta, "model": model_name, "workflow": "conventional", "error": error_text})
+                metrics_rows.append(row)
+                completed_model_names.add(str(model_name))
+                persist_partial(f"conventional:{model_name}")
+                stage_index += 1
+                continue
+            model_X_train = admetboost_X_train
+            model_X_test = admetboost_X_test
         else:
             model_X_train = X_train
             model_X_test = X_test
@@ -9995,6 +10058,8 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
         reported model."""
         nonlocal maplight_direct_X_train
         nonlocal maplight_direct_X_test
+        nonlocal admetboost_X_train
+        nonlocal admetboost_X_test
         X_tr = X_train.reset_index(drop=True)
         y_tr = split["y_train"].reset_index(drop=True)
         smi_tr = split["smiles_train"].reset_index(drop=True)
@@ -10062,7 +10127,16 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
 
                 refitters[bundle_name] = refit_parity
                 continue
-            if bundle_name == maplight_catboost_label:
+            if bundle_name == ADMETBOOST_XGB_LABEL:
+                if admetboost_X_train is None:
+                    try:
+                        admetboost_X_train, admetboost_X_test = build_admetboost_feature_frames(
+                            split["smiles_train"], split["smiles_test"]
+                        )
+                    except Exception:
+                        continue
+                base_X = admetboost_X_train.reset_index(drop=True)
+            elif bundle_name == maplight_catboost_label:
                 if not maplight_feature_cols:
                     continue
                 base_X = split["X_train"].loc[:, maplight_feature_cols].reset_index(drop=True)
@@ -11890,6 +11964,18 @@ def build_arg_parser() -> argparse.ArgumentParser:
         help="Echo full Chemprop CLI commands to the console (verbose mode).",
     )
     parser.add_argument("--run-chemprop-rdkit2d", action=argparse.BooleanOptionalAction, default=False)
+    parser.add_argument(
+        "--run-chemprop-chemeleon",
+        action=argparse.BooleanOptionalAction,
+        default=False,
+        help="Opt-in Chemprop v2 variant fine-tuned from the CheMeleon foundation model (chemprop train --from-foundation CHEMELEON).",
+    )
+    parser.add_argument(
+        "--run-admetboost-xgboost",
+        action=argparse.BooleanOptionalAction,
+        default=False,
+        help="Opt-in fixed XGBoost on the full, unselected ADMETboost feature set (needs qsarena[features] and the Mol2Vec model).",
+    )
     parser.add_argument("--maplight-gnn-kind", default="gin_supervised_masking")
     parser.add_argument("--run-ensemble", action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument(
@@ -12077,6 +12163,11 @@ def _cli_option_provided(argv_tokens: list[str], option_name: str) -> bool:
 QUICK_PROFILE_DISABLED_FAMILIES = ["gradient_boosting", "deep_tabular", "graph_nn", "pretrained_3d", "maplight_gnn"]
 
 
+#: Profile defaults whose CLI flag is not the dest name. Without this, an explicit
+#: `--disable-model-families` was silently overwritten by the profile (found 2026-10-03).
+_PROFILE_FLAG_ALIASES = {"disabled_model_families": "disable_model_families"}
+
+
 def apply_benchmark_profile_defaults(args: argparse.Namespace, argv_tokens: list[str]) -> None:
     profile = str(getattr(args, "benchmark_profile", "cost_optimized")).strip().lower()
     if profile not in {"cost_optimized", "full", "quick"}:
@@ -12117,7 +12208,8 @@ def apply_benchmark_profile_defaults(args: argparse.Namespace, argv_tokens: list
         }
 
     for arg_name, value in profile_defaults.items():
-        if not _cli_option_provided(argv_tokens, arg_name):
+        flag_name = _PROFILE_FLAG_ALIASES.get(arg_name, arg_name)
+        if not (_cli_option_provided(argv_tokens, arg_name) or _cli_option_provided(argv_tokens, flag_name)):
             setattr(args, arg_name, value)
 
 

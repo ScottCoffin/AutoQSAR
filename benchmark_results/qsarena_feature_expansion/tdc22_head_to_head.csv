@@ -3,7 +3,7 @@ entry,method,qsarena_wins,qsarena_losses
 "CV pick, benchmark pool",MaxQsaring,3,19
 "CV pick, benchmark pool",Meta-model (NIST),11,11
 "CV pick, benchmark pool",MolE,9,13
-"CV pick, benchmark + arm",ADMETboost (XGBoost),10,12
+"CV pick, benchmark + arm",ADMETboost (XGBoost),9,13
 "CV pick, benchmark + arm",MaxQsaring,3,19
 "CV pick, benchmark + arm",Meta-model (NIST),11,11
 "CV pick, benchmark + arm",MolE,9,13
@@ -11,7 +11,23 @@ fixed: Random forest [admetboost],ADMETboost (XGBoost),2,20
 fixed: Random forest [admetboost],MaxQsaring,1,21
 fixed: Random forest [admetboost],Meta-model (NIST),4,18
 fixed: Random forest [admetboost],MolE,4,18
+fixed: XGBoost [admetboost+chemeleon],ADMETboost (XGBoost),12,10
+fixed: XGBoost [admetboost+chemeleon],MaxQsaring,4,18
+fixed: XGBoost [admetboost+chemeleon],Meta-model (NIST),14,8
+fixed: XGBoost [admetboost+chemeleon],MolE,10,12
+fixed: XGBoost [admetboost+emb],ADMETboost (XGBoost),11,11
+fixed: XGBoost [admetboost+emb],MaxQsaring,4,18
+fixed: XGBoost [admetboost+emb],Meta-model (NIST),15,7
+fixed: XGBoost [admetboost+emb],MolE,10,12
 fixed: XGBoost [admetboost],ADMETboost (XGBoost),13,9
 fixed: XGBoost [admetboost],MaxQsaring,5,17
 fixed: XGBoost [admetboost],Meta-model (NIST),13,9
 fixed: XGBoost [admetboost],MolE,11,11
+fixed: XGBoost [chemeleon],ADMETboost (XGBoost),11,11
+fixed: XGBoost [chemeleon],MaxQsaring,3,19
+fixed: XGBoost [chemeleon],Meta-model (NIST),10,12
+fixed: XGBoost [chemeleon],MolE,8,14
+fixed: XGBoost [emb],ADMETboost (XGBoost),6,16
+fixed: XGBoost [emb],MaxQsaring,2,20
+fixed: XGBoost [emb],Meta-model (NIST),9,13
+fixed: XGBoost [emb],MolE,9,13

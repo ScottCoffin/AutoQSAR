@@ -187,6 +187,11 @@ models:
   # If non-empty, run only these model labels (plus the ensemble when 'Ensemble' is
   # listed). CLI: --only-model-names.
   only_models: []
+  # Opt-in model XGBoost (ADMETboost features): fixed XGBoost on the full, unselected
+  # ADMETboost feature set (MACCS, ECFP4, Mol2Vec, PubChem, Mordred 2D, RDKit 2D). Needs
+  # qsarena[features] and the Mol2Vec model. CLI: --run-admetboost-xgboost / --no-run-
+  # admetboost-xgboost.
+  admetboost_xgboost: false
 
 # ---------- 7. GA tuning ----------
 ga_tuning:
@@ -214,10 +219,11 @@ deep:
   # and warns if none is detected. CLI: --use-gpu.
   use_gpu: auto
   chemprop:
-    # Chemprop v2 variants. An empty list switches Chemprop off. Choices: dmpnn,
-    # dmpnn_rdkit2d, selected_features, cmpnn, attentivefp. null = profile default
-    # (cost_optimized: attentivefp + selected_features; full: all five). CLI: --run-
-    # chemprop-*.
+    # Chemprop v2 variants. An empty list switches Chemprop off. chemeleon (opt-in, never
+    # a profile default) fine-tunes from the CheMeleon foundation model. Choices: dmpnn,
+    # dmpnn_rdkit2d, selected_features, cmpnn, attentivefp, chemeleon. null = profile
+    # default (cost_optimized: attentivefp + selected_features; full: all five except
+    # chemeleon). CLI: --run-chemprop-*.
     variants: null
     # Training epochs. null = profile default (15; full: 40). CLI: --chemprop-epochs.
     epochs: null

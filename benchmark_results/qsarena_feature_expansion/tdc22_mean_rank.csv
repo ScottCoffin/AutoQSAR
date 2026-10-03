@@ -1,9 +1,13 @@
 entry,mean_rank,median_rank,n,firsts
-MaxQsaring,1.9545454545454546,1.0,22,13
-fixed: XGBoost [admetboost],3.909090909090909,4.0,22,2
-MolE,4.2272727272727275,3.5,22,4
-ADMETboost (XGBoost),4.318181818181818,4.5,22,0
-"CV pick, benchmark + arm",4.636363636363637,5.5,22,3
-Meta-model (NIST),4.681818181818182,4.0,22,1
-"CV pick, benchmark pool",4.7727272727272725,6.0,22,3
-fixed: Random forest [admetboost],6.318181818181818,6.5,22,0
+MaxQsaring,2.5454545454545454,1.0,22,13
+fixed: XGBoost [admetboost+chemeleon],5.2272727272727275,5.0,22,1
+fixed: XGBoost [admetboost],5.590909090909091,5.5,22,1
+MolE,5.909090909090909,3.5,22,4
+fixed: XGBoost [admetboost+emb],6.045454545454546,6.0,22,0
+ADMETboost (XGBoost),6.090909090909091,5.5,22,0
+fixed: XGBoost [chemeleon],6.545454545454546,7.0,22,1
+Meta-model (NIST),6.863636363636363,6.5,22,1
+"CV pick, benchmark + arm",6.954545454545454,7.5,22,2
+"CV pick, benchmark pool",7.318181818181818,8.5,22,2
+fixed: XGBoost [emb],8.5,8.0,22,0
+fixed: Random forest [admetboost],9.181818181818182,10.0,22,0

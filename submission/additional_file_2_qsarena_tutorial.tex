@@ -1011,6 +1011,8 @@ only \\
 \texttt{-\/-chemml-\allowbreak{}training-\allowbreak{}epochs} & \texttt{chemml\_\allowbreak{}training\_\allowbreak{}epochs} \\
 \texttt{deep.\allowbreak{}tabpfn} & \texttt{null} (profile default (on; quick: off)) & true / false &
 \texttt{-\/-run-\allowbreak{}tabpfn\ /\ -\/-no-\allowbreak{}run-\allowbreak{}tabpfn} & CLI / run.yaml only \\
+\texttt{deep.\allowbreak{}tabpfn\_\allowbreak{}max\_\allowbreak{}features} & \texttt{0} & int (\textgreater= 0) &
+\texttt{-\/-tabpfn-\allowbreak{}max-\allowbreak{}features} & CLI / run.yaml only \\
 \texttt{deep.\allowbreak{}cnn} & \texttt{null} (profile default (on; quick: off)) & true / false &
 \texttt{-\/-run-\allowbreak{}cnn\ /\ -\/-no-\allowbreak{}run-\allowbreak{}cnn} & CLI / run.yaml only \\
 \end{longtable}
@@ -1095,8 +1097,17 @@ Notebook widget
 \texttt{-\/-ensemble-\allowbreak{}methods} & CLI / run.yaml only \\
 \texttt{ensemble.\allowbreak{}simple\_\allowbreak{}average} & \texttt{false} & true / false & \texttt{-\/-ensemble-\allowbreak{}methods} &
 CLI / run.yaml only \\
-\texttt{ensemble.\allowbreak{}member\_\allowbreak{}selection\_\allowbreak{}metric} & \texttt{cv} & \texttt{cv}, \texttt{test} &
-\texttt{-\/-ensemble-\allowbreak{}member-\allowbreak{}selection-\allowbreak{}split} & CLI / run.yaml only \\
+\texttt{ensemble.\allowbreak{}member\_\allowbreak{}selection\_\allowbreak{}metric} & \texttt{oof} & \texttt{oof}, \texttt{cv},
+\texttt{test} & \texttt{-\/-ensemble-\allowbreak{}member-\allowbreak{}selection-\allowbreak{}split} & CLI / run.yaml only \\
+\texttt{ensemble.\allowbreak{}oof\_\allowbreak{}folds} & \texttt{5} & int (\textgreater= 2) & \texttt{-\/-ensemble-\allowbreak{}oof-\allowbreak{}folds}
+& CLI / run.yaml only \\
+\texttt{ensemble.\allowbreak{}oof\_\allowbreak{}scope} & \texttt{all} & \texttt{all}, \texttt{cpu} &
+\texttt{-\/-ensemble-\allowbreak{}oof-\allowbreak{}scope} & CLI / run.yaml only \\
+\texttt{ensemble.\allowbreak{}oof\_\allowbreak{}allow\_\allowbreak{}api\_\allowbreak{}refits} & \texttt{false} & true / false &
+\texttt{-\/-ensemble-\allowbreak{}oof-\allowbreak{}allow-\allowbreak{}api-\allowbreak{}refits\ /\ -\/-no-\allowbreak{}ensemble-\allowbreak{}oof-\allowbreak{}allow-\allowbreak{}api-\allowbreak{}refits} & CLI / run.yaml
+only \\
+\texttt{ensemble.\allowbreak{}oof\_\allowbreak{}source\_\allowbreak{}run} & \texttt{null} (look only in this run) & text &
+\texttt{-\/-ensemble-\allowbreak{}oof-\allowbreak{}source-\allowbreak{}run} & CLI / run.yaml only \\
 \texttt{ensemble.\allowbreak{}exclude\_\allowbreak{}negative\_\allowbreak{}test\_\allowbreak{}r2\_\allowbreak{}members} & \texttt{true} & true / false &
 \texttt{-\/-ensemble-\allowbreak{}exclude-\allowbreak{}negative-\allowbreak{}test-\allowbreak{}r2-\allowbreak{}members\ /\ -\/-no-\allowbreak{}ensemble-\allowbreak{}exclude-\allowbreak{}negative-\allowbreak{}test-\allowbreak{}r2-\allowbreak{}members}
 & CLI / run.yaml only \\
@@ -1630,6 +1641,9 @@ delete the lines you do not need, and change the rest.
 \CommentTok{  \# TabPFN tabular foundation model (local package on GPU, else the Prior Labs API}
 \CommentTok{  \# client). null = profile default (on; quick: off). CLI: {-}{-}run{-}tabpfn / {-}{-}no{-}run{-}tabpfn.}
 \AttributeTok{  }\FunctionTok{tabpfn}\KeywordTok{:}\AttributeTok{ }\CharTok{null}
+\CommentTok{  \# Maximum selected descriptor columns passed to TabPFN only for API budget control; 0}
+\CommentTok{  \# uses all selected features. CLI: {-}{-}tabpfn{-}max{-}features.}
+\AttributeTok{  }\FunctionTok{tabpfn\_max\_features}\KeywordTok{:}\AttributeTok{ }\DecValTok{0}
 \CommentTok{  \# 1{-}D CNN on the selected descriptors (needs TensorFlow). null = profile default (on;}
 \CommentTok{  \# quick: off). CLI: {-}{-}run{-}cnn / {-}{-}no{-}run{-}cnn.}
 \AttributeTok{  }\FunctionTok{cnn}\KeywordTok{:}\AttributeTok{ }\CharTok{null}
@@ -1649,17 +1663,38 @@ delete the lines you do not need, and change the rest.
 
 \CommentTok{\# {-}{-}{-}{-}{-}{-}{-}{-}{-}{-} 10. Ensembles {-}{-}{-}{-}{-}{-}{-}{-}{-}{-}}
 \FunctionTok{ensemble}\KeywordTok{:}
-\CommentTok{  \# RidgeCV stacker fitted on out{-}of{-}fold training predictions. CLI: {-}{-}ensemble{-}methods.}
+\CommentTok{  \# RidgeCV stacker fitted on the members\textquotesingle{} out{-}of{-}fold training predictions. CLI:}
+\CommentTok{  \# {-}{-}ensemble{-}methods.}
 \AttributeTok{  }\FunctionTok{oof\_stacking}\KeywordTok{:}\AttributeTok{ }\CharTok{true}
-\CommentTok{  \# Average weighted by inverse training RMSE. CLI: {-}{-}ensemble{-}methods.}
+\CommentTok{  \# Average weighted by inverse member error (out{-}of{-}fold under member\_selection\_metric}
+\CommentTok{  \# oof). CLI: {-}{-}ensemble{-}methods.}
 \AttributeTok{  }\FunctionTok{inverse\_rmse\_average}\KeywordTok{:}\AttributeTok{ }\CharTok{true}
 \CommentTok{  \# Unweighted average of the members. CLI: {-}{-}ensemble{-}methods.}
 \AttributeTok{  }\FunctionTok{simple\_average}\KeywordTok{:}\AttributeTok{ }\CharTok{false}
-\CommentTok{  \# Which split may decide ensemble membership. cv (alias train) uses training{-}split}
-\CommentTok{  \# predictions only and is leakage{-}free; test reproduces the originally deposited}
-\CommentTok{  \# benchmark run and is optimistically biased. Choices: cv, test. CLI: {-}{-}ensemble{-}member{-}}
-\CommentTok{  \# selection{-}split.}
-\AttributeTok{  }\FunctionTok{member\_selection\_metric}\KeywordTok{:}\AttributeTok{ cv}
+\CommentTok{  \# Which predictions drive ensemble membership, weights and the stacking meta{-}model. oof}
+\CommentTok{  \# refits each member on K folds of the training split and uses its out{-}of{-}fold}
+\CommentTok{  \# predictions: leakage{-}free and not biased toward models that memorise the training set.}
+\CommentTok{  \# cv (alias train) uses in{-}sample training predictions and favours overfit members; it}
+\CommentTok{  \# only reproduces the qsarena\_benchmark\_chemprop\_fixed run. test reproduces the}
+\CommentTok{  \# originally deposited benchmark run and is optimistically biased. Choices: oof, cv,}
+\CommentTok{  \# test. CLI: {-}{-}ensemble{-}member{-}selection{-}split.}
+\AttributeTok{  }\FunctionTok{member\_selection\_metric}\KeywordTok{:}\AttributeTok{ oof}
+\CommentTok{  \# Folds for the out{-}of{-}fold member predictions (member\_selection\_metric oof). Same fold}
+\CommentTok{  \# geometry as cross{-}validation. CLI: {-}{-}ensemble{-}oof{-}folds.}
+\AttributeTok{  }\FunctionTok{oof\_folds}\KeywordTok{:}\AttributeTok{ }\DecValTok{5}
+\CommentTok{  \# Which members may be refitted per fold for out{-}of{-}fold predictions. Uni{-}Mol reuses its}
+\CommentTok{  \# saved internal{-}fold predictions (cv.data) and is not refitted. all also refits}
+\CommentTok{  \# Chemprop per fold on the GPU; cpu refits only CPU models, and Chemprop is then left}
+\CommentTok{  \# out of the ensemble. Choices: all, cpu. CLI: {-}{-}ensemble{-}oof{-}scope.}
+\AttributeTok{  }\FunctionTok{oof\_scope}\KeywordTok{:}\AttributeTok{ all}
+\CommentTok{  \# Allow out{-}of{-}fold refits of members that call a metered remote API (TabPFN via the}
+\CommentTok{  \# Prior Labs client; K extra fits per dataset, billed as credits). Off: such members are}
+\CommentTok{  \# left out of the ensemble unless they already have out{-}of{-}fold predictions. CLI:}
+\CommentTok{  \# {-}{-}ensemble{-}oof{-}allow{-}api{-}refits / {-}{-}no{-}ensemble{-}oof{-}allow{-}api{-}refits.}
+\AttributeTok{  }\FunctionTok{oof\_allow\_api\_refits}\KeywordTok{:}\AttributeTok{ }\CharTok{false}
+\CommentTok{  \# Earlier run directory searched for saved Uni{-}Mol model folders (cv.data) when building}
+\CommentTok{  \# out{-}of{-}fold predictions. null = look only in this run. CLI: {-}{-}ensemble{-}oof{-}source{-}run.}
+\AttributeTok{  }\FunctionTok{oof\_source\_run}\KeywordTok{:}\AttributeTok{ }\CharTok{null}
 \CommentTok{  \# Drop members with negative R2 on the member{-}selection split (train when}
 \CommentTok{  \# member\_selection\_metric is cv, so the default is leakage{-}free). CLI: {-}{-}ensemble{-}}
 \CommentTok{  \# exclude{-}negative{-}test{-}r2{-}members / {-}{-}no{-}ensemble{-}exclude{-}negative{-}test{-}r2{-}members.}
@@ -1959,7 +1994,7 @@ the features, the split and the eight models are reused and only the two ensembl
 \begin{Highlighting}[]
 \NormalTok{[resume] solubility: configuration or input changed since this dataset completed; re{-}validating each cached stage against the new config signature.}
 \NormalTok{...}
-\NormalTok{[resume] solubility: config signature changed for 2 cached model stage(s) (Ensemble (OOF Stacking (RidgeCV, 5{-}fold)), Ensemble (Weighted average (inverse train RMSE))); recomputing them.}
+\NormalTok{[resume] solubility: config signature changed for 2 cached model stage(s) (Ensemble (OOF Stacking (RidgeCV, 5{-}fold)), Ensemble (Weighted average (inverse OOF error))); recomputing them.}
 \NormalTok{...}
 \NormalTok{[resume] solubility: stage 2/3 cache hit (signature match); reusing split + selected feature matrices.}
 \NormalTok{...}

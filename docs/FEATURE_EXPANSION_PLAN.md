@@ -122,16 +122,92 @@ its path is in AGENTS.md, Chemprop-on-Windows trap.)
 - [ ] embedding families: `embeddings.py` written and smoke-tested 2026-10-02 (CheMeleon 2048-d from Zenodo 15460715,
       cached at ~/.chemprop/chemeleon_mp.pt; Uni-Mol V1 CLS 512-d).
       - [x] CheMeleon featurized, 44/44 (`.model_cache/feature_expansion/chemeleon/`).
-      - [ ] **IN PROGRESS (2026-10-02 13:30):** `unimol_repr` featurization, detached via WMI
-            (`logs/run_featurize_unimol.cmd` -> `logs/feature_expansion_featurize_unimol_repr.log`, benchmark env).
-            Resumable: re-run the same command and cached datasets are skipped. Conformers are CPU-bound; if it
-            crawls (~3 mol/s instead of ~16), re-apply `powercfg /overlaysetactive ded574b5-45a0-4f42-8737-46345c09c238`
-            (EcoQoS throttles WMI-launched processes; the overlay resets on reboot).
-- [ ] **IN PROGRESS (2026-10-02):** GPU XGBoost on `admetboost+chemeleon` (37/44 at 14:00; partial `metrics.csv`
-      committed), then `chemeleon` alone, chained in `logs/run_train_chemeleon.cmd` (logs
-      `logs/feature_expansion_train_{admetboost_chemeleon,chemeleon}.log`; the second ends with `DONE`). Resume:
-      re-run the same command; finished datasets are skipped.
-- [ ] then: `python -m qsarena.feature_expansion.evaluate` for the CheMeleon sets.
-- [ ] train `admetboost+emb` and `emb` (after unimol_repr finishes):
-      `python -m qsarena.feature_expansion.train --feature-set admetboost+emb --models xgboost --device cuda --n-jobs 2`
-- [ ] write-up: results, and a decision on whether to integrate into the runner/paper
+      - [x] `unimol_repr` featurized 44/44 (done 2026-10-02 ~19:10; `.model_cache/feature_expansion/unimol_repr/`).
+            Embedding families now run one dataset per child process (`max_tasks_per_child=1`): unimol_tools leaked
+            ~3 GB per large dataset (15.7 GB committed after five) until the box started paging.
+- [x] GPU XGBoost on `admetboost+chemeleon`: 44/44, done 2026-10-02 ~14:45. **Result: CheMeleon adds nothing
+      measurable to the ADMETboost features.** Paired test metric vs `XGBoost [admetboost]` on 35 datasets with a
+      comparable test metric: better on 19, worse on 15, median +0.18% (mean -0.87%), Wilcoxon p = 0.54. Biggest
+      losses: half-life Spearman -23%, hepatocyte/microsome clearance -7%; biggest gains: CYP2C9-substrate AUPRC +13%.
+      TDC-22 head-to-head is unchanged within noise (vs ADMETboost 12-10 vs 13-9; vs NIST 14-8 vs 13-9; vs MaxQsaring
+      4-18 vs 5-17). Note that mean ranks in `tdc22_mean_rank.csv` shift whenever entries are added, since arm
+      entries compete with each other; compare head-to-head records instead.
+- [x] `chemeleon` alone: 44/44, done 2026-10-02 ~16:10. **Result: label-free CheMeleon embeddings alone are
+      significantly worse than the ADMETboost features** (paired, 35 datasets: better on 12, worse on 23, median
+      -1.78%, Wilcoxon p = 0.010). They are still competitive with published TDC models (vs ADMETboost 11-11;
+      vs NIST 10-12; vs MolE 8-14; vs MaxQsaring 3-19). Together with the null `admetboost+chemeleon` result:
+      frozen CheMeleon embeddings carry little information beyond the descriptor set. Fine-tuning (option B) is
+      the only route left for CheMeleon, and it is unscoped.
+- [x] `evaluate.py` fix (2026-10-02): it now skips `<set>__<variant>` dirs. `admetboost__scaffoldcv` repeats the model
+      names with scaffold-CV scores and no test metrics, which duplicated CV-pick candidates and blanked the fixed
+      models' test values. Test: `test_load_candidates_skips_cv_protocol_variant_dirs`.
+- [x] `python -m qsarena.feature_expansion.evaluate` run on all five feature sets (2026-10-02).
+- [x] `admetboost+emb` 44/44 (done 2026-10-02 ~21:40). **Result: null.** Paired vs `XGBoost [admetboost]`, 35 datasets:
+      better on 16, worse on 19, median -0.04% (mean -1.59%), Wilcoxon p = 0.30; half-life again the worst (-35%).
+      Vs `admetboost+chemeleon`: better on 12, worse on 23, p = 0.058, so Uni-Mol CLS embeddings add nothing on top.
+- [x] `emb` alone 44/44 (done 2026-10-02 ~22:40). **Result: worst XGBoost set.** Paired vs `XGBoost [admetboost]`:
+      better on 7, worse on 28, median -2.42%, p < 0.001. Vs `chemeleon` alone: better on 9, worse on 26, p = 0.027.
+- [x] write-up: see "Results and recommendation (2026-10-02)" below. The integration decision is the author's.
+
+## Results and recommendation (2026-10-02)
+
+Fixed-configuration XGBoost, committed partitions, test metrics on the dataset's primary metric. Paired comparisons
+use the 35 datasets with a comparable test metric; TDC-22 records are head-to-head against published values.
+
+| feature set | features | vs `admetboost` (paired) | vs ADMETboost | vs NIST | vs MolE | vs MaxQsaring |
+|---|---|---|---|---|---|---|
+| `admetboost` | ~5.2k descriptors + fingerprints | — | **13-9** | **13-9** | 11-11 | 5-17 |
+| `admetboost+chemeleon` | + CheMeleon 2048-d | 19-15, median +0.18%, p = 0.54 | 12-10 | 14-8 | 10-12 | 4-18 |
+| `admetboost+emb` | + CheMeleon + Uni-Mol 512-d | 16-19, median -0.04%, p = 0.30 | 11-11 | 15-7 | 10-12 | 4-18 |
+| `chemeleon` | CheMeleon only | 12-23, median -1.78%, p = 0.010 | 11-11 | 10-12 | 8-14 | 3-19 |
+| `emb` | CheMeleon + Uni-Mol only | 7-28, median -2.42%, p < 0.001 | 6-16 | 9-13 | 9-13 | 2-20 |
+
+(Mean ranks in `tdc22_mean_rank.csv` move whenever an entry is added, because arm entries compete with each other;
+use the head-to-head records above.)
+
+**Reading.** Frozen, label-free embeddings (CheMeleon, Uni-Mol V1 CLS) add nothing measurable to the ADMETboost
+descriptor set, and on their own are significantly worse than it. The arm's one positive result is unchanged: a fixed
+XGBoost on the full, unselected ADMETboost features is the strongest honest QSARena entry on the 22 official TDC
+splits, beating the published ADMETboost and NIST meta-model 13-9. MaxQsaring is still clearly ahead (5-17). CV
+selection rarely picks the arm's model because the benchmark's own CV scores are inflated by feature selection
+(`limitation_cvleak`).
+
+**Recommendation (for the author to decide).**
+1. Do **not** add frozen embeddings to the runner. If CheMeleon is pursued, only fine-tuning (option B, a Chemprop
+   variant starting from the foundation checkpoint) remains untested; it is unscoped.
+2. Consider adding `XGBoost [ADMETboost features, unselected]` to the runner's model library as an opt-in model
+   (it needs scikit-fingerprints, mordredcommunity and gensim plus the Mol2Vec model, so not in the default install).
+   That would change the canonical model set, so it belongs in a future run, not this paper's numbers.
+3. For the paper: at most one supplementary sentence or table row (the TDC-22 head-to-head of the fixed
+   `admetboost` XGBoost), clearly labelled as a post-hoc arm outside the benchmark's fixed configuration. Nothing in
+   the arm changes the paper's main claims.
+
+## Implementation of the recommendations (2026-10-03, author-approved)
+
+1. **No frozen embeddings in the runner** (decision recorded). Option B, CheMeleon *fine-tuning*, is now
+   implemented as an opt-in Chemprop variant: `--run-chemprop-chemeleon` (RunConfig `deep.chemprop.variants:
+   [chemeleon]`; never a profile default). The spec is `chemeleon_variant_spec()` in `qsar_workflow_core.py`; it
+   passes `chemprop train --from-foundation CHEMELEON` (Chemprop >= 2.2; the checkpoint caches at
+   `~/.chemprop/chemeleon_mp.pt`). Label: `Chemprop v2 (CheMeleon fine-tuned, ensemble=N)`, family `graph_nn`.
+   Verified end to end on the example data. **Pilot** (Caco-2, 728 train rows, 40 epochs, one model, RTX 4060):
+   162 s vs 22 s for D-MPNN (9.3 M vs 318 K parameters); test MAE 0.382 vs 0.380, so no gain on this single
+   dataset. **Cost of a full benchmark run:** ~23 GPU-h for the base model (ensemble=3) and ~93 GPU-h more for 5-fold
+   OOF ensemble membership (~116 h total). That exceeds the 12 h approval threshold, so it has **not been run**.
+2. **Opt-in `XGBoost (ADMETboost features)`** in the runner: `--run-admetboost-xgboost` (RunConfig
+   `models.admetboost_xgboost`). The arm's fixed XGBoost (`XGB_PARAMS` in `train.py`, the single source of truth)
+   on the full, unselected ADMETboost features (`featurize.admetboost_matrix`), computed label-free on train+test
+   SMILES. It joins the conventional loop with its own feature matrix (like MapLight CatBoost), so it gets CV
+   metrics without the selection leak, train/test/OOF predictions and ensemble membership, and the ensemble OOF stage
+   refits it on the same features. It needs `pip install qsarena[features]` plus the Mol2Vec model; if they are
+   missing, the row records the error and a later resume retries it. Family `gradient_boosting`, so the quick
+   profile disables it unless `--disable-model-families` is given. That exposed a bug, now fixed: profiles overwrote
+   an explicit `--disable-model-families`. Neither flag enters any family's resume signature (tested), so existing
+   runs resume unchanged. It belongs in a future run, not this paper's numbers.
+3. **Paper:** a "post-hoc check with unselected descriptors" paragraph in §3.12 (13-9 vs ADMETboost and NIST, 5-17
+   vs MaxQsaring; embeddings null), labelled as outside the fixed configuration and naming both opt-in models; the
+   arm's output directory is listed under Availability of data and materials. Numbers are checked by
+   `verify_manuscript_numbers.py` from `tdc22_head_to_head.csv` and `evaluation_summary.json`
+   (`paired_vs_admetboost_xgboost`, now written by `evaluate.py`).
+
+Tests: `tests/unit/test_opt_in_models.py` and `tests/feature_expansion/test_evaluate.py`.
+

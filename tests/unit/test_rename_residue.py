@@ -36,9 +36,6 @@ ALLOWED_PATHS = (
     "environment/requirements-lock.txt",
     "manuscript_assets/",
     "manuscript.html",
-    # Stale pre-rename mirrors (see AGENTS.md: never read these as source).
-    "portable_colab_qsar_bundle/run_autoqsar_ga_benchmarks.txt",
-    "portable_colab_qsar_bundle/qsar_workflow_core.txt",
     # Executed notebooks carry historical outputs; the Colab notebook is checked via its builder.
     "portable_colab_qsar_bundle/benchmark_results_summary.ipynb",
     "portable_colab_qsar_bundle/pfas_aux_qsar_results_summary.ipynb",

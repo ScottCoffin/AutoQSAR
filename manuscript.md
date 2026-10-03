@@ -2,13 +2,13 @@
 
 **Running title:** QSARena: an accessible, leakage-controlled AutoML workspace for molecular property prediction
 
-**Author:** Scott Coffin<sup>1</sup>
+**Author:** Scott Coffin<sup>1</sup> (ORCID [0000-0002-7035-1282](https://orcid.org/0000-0002-7035-1282))
 
 <sup>1</sup> California Office of Environmental Health Hazard Assessment, 1001 I Street, Sacramento, CA 95814, USA
 
 **Corresponding author:** Scott Coffin (scott.l.coffin@gmail.com)
 
-> **Author checklist before submission.** Items still requiring author action are flagged inline with **[AUTHOR]**. They are: the ORCID identifier; the Zenodo DOI for the artifact archive; the repository release tag; and the small number of literature references flagged for final verification.
+> **Author checklist before submission.** Items still requiring author action are flagged inline with **[AUTHOR]**. They are: the Zenodo DOI for the artifact archive; the repository release tag; and the small number of literature references flagged for final verification.
 
 ---
 
@@ -22,7 +22,7 @@
 
 **Background.** ADMET prediction is dominated by ever-larger pretrained models, whose compute cost and reproducibility limit adoption in academic, regulatory and small laboratories. Whether that scale is warranted has not been tested across suites under one pipeline.
 
-**Implementation.** QSARena predicts molecular properties from SMILES in one reproducible workflow: RDKit standardization, ten fingerprint and descriptor families, train-only ElasticNetCV selection, and a 30-model library spanning conventional machine learning, gradient boosting, tabular foundation models, deep tabular and graph networks, 3D pretrained Uni-Mol, and ensembles. It runs as a **code-free Google Colab notebook needing no installation or local hardware** and as a command-line runner sharing the same core.
+**Methods.** QSARena predicts molecular properties from SMILES in one reproducible workflow: RDKit standardization, ten fingerprint and descriptor families, train-only ElasticNetCV selection, and a 30-model library spanning conventional machine learning, gradient boosting, tabular foundation models, deep tabular and graph networks, 3D pretrained Uni-Mol, and ensembles. It runs as a **code-free Google Colab notebook needing no installation or local hardware** and as a command-line runner sharing the same core.
 
 **Results.** Across 44 datasets (22 regression, 22 classification; 1047 model-dataset evaluations) under a **single fixed configuration with no per-dataset tuning**, no single family dominated: Chemprop and 3D pretrained models each won 8 datasets, TabPFN 5 and conventional machine learning 4, while ensembles built from these families won 13 (30%). OOF ensembles were the most consistent (within 5% of best on 61% of datasets), followed by conventional models (59%) and Uni-Mol (57%). Cross-validation selection picked the per-dataset winner on 5 datasets and sat a median 7.9% from the test-selected best. Against published values, estimated top-ten placement fell from 35 to 27 of 37 comparable datasets under cross-validation selection; a matched-candidate-set control attributes 7 of those 8 placements to library breadth and 1 to held-out selection. These ranks are provisional: the reference set includes entries with documented leakage. A consumer GPU changed the best score by a median +0.3%.
 
@@ -32,7 +32,7 @@
 
 **Keywords:** QSAR; ADMET; AutoML; molecular property prediction; benchmarking; reproducibility; data leakage; ensemble learning; foundation models; open-source software; accessibility
 
-## 1. Background
+## 1. Introduction
 
 Unfavourable ADMET properties remain among the most consequential causes of failure in drug development. Approximately 90% of drug candidates that enter clinical testing fail across phases I–III and the subsequent approval process; the dominant causes are lack of clinical efficacy and unmanageable toxicity, with poor drug-like properties — including unfavourable pharmacokinetics — contributing a smaller but material share, having fallen from 30–40% of failures in the 1990s to 10–15% today [44]. The value of screening such liabilities early is well established: inappropriate pharmacokinetics and bioavailability accounted for roughly 40% of clinical attrition in the early 1990s, a share that fell to about 10% by 2000 as the industry adopted routine early ADME profiling [45]. Because experimental ADMET assays are slow, costly and hard to scale to the growing number of synthesized and virtual compounds, *in silico* prediction of ADMET endpoints from chemical structure has become an indispensable complement to laboratory screening [1, 3].
 
@@ -60,7 +60,7 @@ The software that produced these results is QSARena, a portable QSAR modelling a
 
 ---
 
-## 2. Implementation
+## 2. Methods
 
 ### 2.1 Software architecture
 
@@ -161,7 +161,7 @@ Selection was then performed train-only with a cross-validated elastic net. The 
 
 After base models produced aligned train and test prediction vectors, QSARena optionally fused them by combinatorial fusion analysis (CFA) [40] in both score and rank spaces. To control combinatorial growth, inputs were first reduced to the best model per workflow and the subset search bounded by a budget guardrail. For each candidate subset the algorithm computed a performance strength as the inverse of the base model's training error and a diversity strength from the mean pairwise distance between normalized, sorted score profiles, then evaluated three score-space weightings (equal, performance-weighted, diversity-weighted) plus the corresponding rank-space variants. Rank-space combinations were linearly calibrated back to the target scale and given a small metric discount when subset diversity exceeded a threshold, so that diverse rank fusions were preferred only when genuinely complementary. Candidates were ranked by the adjusted training metric and the best fused predictor returned with its selected models, weights and a candidate-diagnostics table. For regression, fusion minimized mean absolute error.
 
-Three further ensemble strategies were available over the same prediction pool: out-of-fold stacking with a RidgeCV meta-model (logistic for classification), an inverse-training-RMSE weighted average (weighting by the primary classification metric for classification), and a simple average. Ensemble construction supported optional member filtering, including removal of highly correlated members and exclusion of members with negative held-out R². We return to the implications of that last option in Section 3.3 and in the Limitations, because it consults held-out data.
+Three further ensemble strategies were available over the same prediction pool: out-of-fold stacking with a RidgeCV meta-model (logistic for classification), a weighted average with weights proportional to each member's inverse out-of-fold error (out-of-fold primary metric for classification), and a simple average. Member selection, weighting and the stacking meta-model read only out-of-fold predictions on the training split (Section 2.13); held-out test predictions are never consulted. Two optional member filters read the same out-of-fold predictions: one removes members with non-positive out-of-fold R², the other drops one member of each highly correlated pair. For regression, member predictions are clipped to the range of the training targets before they are combined, so that a member which extrapolates wildly on a few molecules cannot dominate an average or a stack; this uses no test-split labels. CFA outputs and members without out-of-fold predictions are excluded and listed in each ensemble's notes.
 
 ### 2.9 Evaluation metrics
 
@@ -189,11 +189,21 @@ The runner is designed for long, resumable runs. Completed datasets and compatib
 
 The workflow targets Python 3.11 and runs on Windows, macOS, Linux or Google Colab. The core workflow runs CPU-only; GPU availability primarily affects runtime and whether optional backends such as local TabPFN and Uni-Mol are practical. Pinned conda and pip/uv specifications are distributed with the repository, alongside an Apptainer/Singularity definition, Slurm submission scripts for NSF ACCESS HPC clusters, and an OpenStack orchestration path for Jetstream2 [41, 42] that routes GPU-dependent workflows to A100-backed instances and the remaining workflows to CPU instances under a tracked service-unit budget.
 
-The benchmark reported here was executed on NSF ACCESS Jetstream2 [41, 42] under allocation CIS261142, on a `g3.large` instance providing one NVIDIA A100-SXM4-40GB GPU (39.5 GB device memory, 108 streaming multiprocessors, compute capability 8.0) and 32 CPU cores, running Linux with all timestamps in UTC. The device inventory, CPU count, parallelism settings and `fp32` precision mode are recorded in the run's `run_timing.json` and `run_config.json` and are reproduced in the deposited artifacts. Section 3.11 additionally reports the same benchmark executed on a consumer laptop GPU, as a direct test of whether the results depend on datacentre hardware.
+The benchmark reported here was executed on NSF ACCESS Jetstream2 [41, 42] under allocation CIS261142, on a `g3.large` instance providing one NVIDIA A100-SXM4-40GB GPU (39.5 GB device memory, 108 streaming multiprocessors, compute capability 8.0) and 32 CPU cores, running Linux with all timestamps in UTC. The device inventory, CPU count, parallelism settings and `fp32` precision mode are recorded in the run's `run_timing.json` and `run_config.json` and are reproduced in the deposited artifacts. The Chemprop and TabPFN repair run used the same node; the out-of-fold ensemble rebuild ran on the RTX 4060 workstation (Section 2.13), and the wall-clock and cost figures in this paper come from the original A100 run. Section 3.11 additionally reports the same benchmark executed on a consumer laptop GPU, as a direct test of whether the results depend on datacentre hardware.
 
 All figures, tables and numerical claims in this paper are regenerated from committed benchmark artifacts by a single command, `python portable_colab_qsar_bundle/render_manuscript_assets.py`, which re-executes the analysis notebook and writes `manuscript_assets/` (figures, tables and a `manuscript_numbers.json` containing every headline number quoted in the text).
 
 ---
+
+### 2.13 Benchmark runs and ensemble reconstruction
+
+The reported results combine three runs that share one data, split, feature and feature-selection configuration, which the runner verifies through stage signatures. (i) The base benchmark ran once on the Jetstream2 A100 node described in Section 2.12 (`benchmark_results/autoqsar_benchmark_20260623_153839`). In that run, a text-encoding fault in the Chemprop harness discarded most Chemprop results, and TabPFN was disabled. (ii) A repair run on the same node (`benchmark_results/qsarena_benchmark_chemprop_fixed`) was seeded with the first run's per-model results and trained only what was missing: the five Chemprop variants, which then produced valid results on 38 to 42 of the 44 datasets, TabPFN (valid on 31 of 44 before the API's daily limit stopped it) and one interrupted dataset. No base model was retrained. (iii) Every ensemble was then rebuilt from out-of-fold predictions (`benchmark_results/qsarena_benchmark_oof_ensemble`, from which all reported results are computed). Each candidate member received an out-of-fold prediction for every training molecule on the training split's five cross-validation folds. Uni-Mol supplied the predictions saved from its own internal five-fold training; every other member was refitted on each fold with its reported configuration, on a workstation with a consumer NVIDIA RTX 4060 laptop GPU. Base-model results are unchanged from the source runs, which the release checks automatically.
+
+The rebuild replaced two earlier ensemble protocols. The first run selected and weighted ensemble members by held-out test metrics, which leaks test information into the ensemble row. A second attempt used in-sample training predictions instead. That removed the leak but rewarded memorisation: tree ensembles that fit the training set almost exactly took nearly all of the stacking weight, and regression ensemble wins fell from 7 to 1. Under the out-of-fold protocol, ensembles won 13 datasets (6 regression, 7 classification), against 16 (7 and 9) under the leaky first protocol, even though the honest member pool was larger; the held-out leak was therefore worth at least three outright wins. The rebuild also fixed two faults that would otherwise have biased the ensembles. Uni-Mol's saved fold predictions are on a normalised target scale, and its scaler file was not among the transferred artifacts, so the scaler is now rebuilt from the training targets. And a few members extrapolated far outside the target range on single molecules, which motivated the clipping described in Section 2.8. Some members still lack out-of-fold predictions and are excluded where that happens: TabPFN on three large classification datasets, whose fold refits exceeded the GPU's memory, and two Chemprop variants on Tox21, where Chemprop cannot featurise one training molecule.
+
+### 2.14 Use of large language models
+
+Large language model (LLM) assistants were used during software development, analysis and manuscript preparation; as the journal requires, that use is documented here. Anthropic's Claude models (Claude Sonnet 4.6, Claude Opus 5 and Claude Opus 5.5), accessed through the Claude Code coding assistant, were used to (i) write, refactor, test and debug parts of the QSARena code base and its test suite; (ii) write and run analysis scripts, monitor long-running benchmark jobs and diagnose their failures; and (iii) draft and edit manuscript text and supplementary documentation. The author specified the study design, the benchmark protocol and every analytical decision, reviewed and validated all AI-assisted code and text, and takes full responsibility for the content. No LLM is an author. LLMs did not generate data or results: every reported number is computed by scripted pipelines from the benchmark artifacts and checked against them automatically by `verify_manuscript_numbers.py`, and the code is covered by unit, integration and tutorial tests. All figures, including the graphical abstract, are rendered by code directly from benchmark outputs; no AI image-generation tools were used. **[AUTHOR]** Add any other assistants used (for example ChatGPT or GitHub Copilot).
 
 ## 3. Results and discussion
 
@@ -238,7 +248,7 @@ The OOF ensembles were the most consistent family, within 5% of the best on 61% 
 
 Chemprop v2 no longer appears only on a small successful subset: its configured variants produced valid results on 38 to 42 of the 44 datasets, depending on variant (Table S4). Its eight outright wins show that the repaired backend is a serious competitor in this library, although it still did not dominate and it remains costlier than the conventional tabular models.
 
-Two further cautions apply. Families with more models have more chances to produce a near-best member, so the 15-model conventional family is flattered relative to single-model families. And the ensemble row is not a like-for-like competitor: ensembles are built *from* the other families' predictions, and under the configuration used here their member filtering consults held-out R² (§3.2). Section 3.5 quantifies how much the fusion layer actually adds.
+Two further cautions apply. Families with more models have more chances to produce a near-best member, so the 15-model conventional family is flattered relative to single-model families. And the ensemble row is not a like-for-like competitor: ensembles are built *from* the other families' predictions, although their member selection and weights use only out-of-fold predictions (§2.8). Section 3.5 quantifies how much the fusion layer actually adds.
 
 ### 3.4 Leaderboard competitiveness, and the cost of honest model selection
 
@@ -407,7 +417,9 @@ That path remained incomplete in this run. The ADMET-AI-like Chemprop v2 (D-MPNN
 
 We therefore re-scored every reference value in the honest direction for its metric, producing one consistent ranking per dataset. This is a materially different picture from the published claims. MaxQsaring, whose paper reports first place on 19 of 22 TDC tasks [15], holds 7 first places under joint re-scoring but is top-3 on 19 of 22 with a median rank of 2 — the strongest system in the reference set, and the fairer way to state its lead. ADMETboost's reported 18 first places [12] reduce to **zero**: it was genuinely first in 2022 and has since been overtaken on all 22 datasets, which is a caution about citing leaderboard positions as though they were durable. MapLight's top-3 placement on 16 of 22 [13] is an author self-report we cannot re-score, and DeepAutoQSAR's "top performer on 20 of 22" [43] is best-of-three against ChemProp and DeepPurpose in a vendor white paper rather than a leaderboard position at all — the two figures were never in competition. We also corrected three reference values that were on the wrong scale, all from a model reporting normalised targets (for example a PPBR MAE of 0.679 against a leaderboard best of 7.440).
 
-Against that corrected reference set, QSARena's best model per dataset reaches a median rank of 3 on the 22 official TDC tasks under test-based selection, and falls to a median rank of 8 under cross-validation-only selection (§3.7). MaxQsaring's median rank of 2 is therefore better than ours under either protocol. We make no claim to accuracy leadership. The contribution is the cross-suite benchmark and the selection-protocol decomposition; code-free access is a usability feature.
+Against that corrected reference set, QSARena's best model per dataset reaches a median rank of 3 on the 22 official TDC tasks under test-based selection, and falls to a median rank of 7 under cross-validation-only selection (§3.4). MaxQsaring's median rank of 2 is therefore better than ours under either protocol. We make no claim to accuracy leadership. The contribution is the cross-suite benchmark and the selection-protocol decomposition; code-free access is a usability feature.
+
+**A post-hoc check with unselected descriptors.** After the benchmark, we trained one fixed-configuration XGBoost model, set in advance and never tuned, on the full, unselected ADMETboost feature set (MACCS, ECFP4, Mol2Vec, PubChem, Mordred 2D and RDKit 2D descriptors) on the same 22 official TDC splits. It beat the published ADMETboost and NIST meta-model results on 13 of the 22 datasets each, but lost to MaxQsaring on 17. Adding label-free pretrained embeddings (CheMeleon and Uni-Mol) did not improve it: across the 35 datasets with a comparable test metric, the median change was -0.04% (Wilcoxon p = 0.30), and the embeddings alone were worse (median -2.42%, p < 0.001). This analysis lies outside the benchmark's fixed configuration, is not part of any reported ranking, and is given only as context. Both the descriptor model and a Chemprop variant initialised from CheMeleon are available in QSARena as opt-in models (`--run-admetboost-xgboost`, `--run-chemprop-chemeleon`); neither was used in the benchmark.
 
 The same landscape shows that rigorous benchmarking builds credibility but does not by itself win users. The most widely used tools in this space — SwissADME [55], pkCSM [56] and ADMETlab [1] — are free, fixed-model web services that do not report on the TDC leaderboard at all, and they are popular because they are convenient. QSARena aims to offer both, and we report the two claims separately.
 
@@ -505,7 +517,7 @@ Three results do not rest on close margins and should survive this limitation: n
 
 **Two datasets incomplete.** `tdc_herg_central` was abandoned after more than 24 hours without completing, and `polaris_adme_fang_hppb_1` was interrupted when the run ended, though the latter had already produced a full model table and is retained.
 
-**Ensemble member filtering consults held-out data.** The `exclude_negative_test_r2_members` option, enabled in this run, drops ensemble members by held-out R², and the correlated-member tie-break uses a held-out metric. Ensemble results are therefore mildly optimistic relative to a strictly blinded implementation; this is a configuration default we intend to change rather than a limitation of the method.
+**Feature selection is not reproducible across machines.** ElasticNetCV feature selection has a 7,200-second limit, after which it falls back to random-forest importance, and which datasets reach the limit depends on the hardware. Re-running selection on the RTX 4060 workstation changed the selected features on 6 of the 44 datasets (Tox21, Ames, LD50, ESOL, CYP2C9 and AqSolDB). Every reported model, and the ensemble rebuild, uses the selection from the A100 run, which is deposited with the artifacts; a user who re-runs QSARena on different hardware may obtain a different selection on large datasets.
 
 **One target per task.** Multi-label datasets (Tox21, ToxCast) were reduced to a single label, so results on those datasets are not comparable to multi-task leaderboard entries.
 
@@ -527,9 +539,9 @@ These conclusions rest on a single split and seed per dataset (Section 4). The c
 
 Every number above came from one configuration, with no per-dataset feature engineering, architecture choice or hyperparameter tuning. Repeating the benchmark on a consumer laptop GPU changed the best score by a median of 0.19% across identically split datasets, and the code-free notebook runs in Google Colab with no installation (§3.11). For practitioners who can run only one configuration, our results support a specific default: a MapLight-style descriptor panel with gradient-boosted trees, ensembled by inverse-error averaging, adding a 3D pretrained model where the compute budget allows and the endpoint plausibly depends on molecular shape.
 
-## Availability and requirements
+## Availability of data and materials
 
-**Project name:** QSARena
+**Software availability.** Project name: QSARena
 **Project home page:** https://github.com/ScottCoffin/QSARena
 **Operating systems:** Windows, macOS, Linux, Google Colab
 **Programming language:** Python 3.11
@@ -538,9 +550,7 @@ Every number above came from one configuration, with no per-dataset feature engi
 **License:** MIT License (OSI-approved); see the `LICENSE` file in the repository
 **Any restrictions to use by non-academics:** None beyond the repository license
 
-## Availability of data and materials
-
-The repository contains the workflow core, the notebook builder, the benchmark runner, the dataset registry, the leaderboard reference tables, the complete benchmark artifacts analysed here (`benchmark_results/autoqsar_benchmark_20260623_153839/`, with the consumer-GPU comparison run in `benchmark_results/benchmark_name_date/`), the analysis notebook (`portable_colab_qsar_bundle/benchmark_results_summary.ipynb`) and the one-command regeneration script for all figures, tables and reported numbers (`portable_colab_qsar_bundle/render_manuscript_assets.py`) and the script that verifies the manuscript text against them (`verify_manuscript_numbers.py`). Pinned conda and pip environment specifications, an Apptainer definition and Slurm submission scripts are included for reproduction on HPC.
+The repository contains the workflow core, the notebook builder, the benchmark runner, the dataset registry, the leaderboard reference tables, the complete benchmark artifacts analysed here (`benchmark_results/qsarena_benchmark_oof_ensemble/`, from which every reported result is computed, together with the runs it was built from, `benchmark_results/autoqsar_benchmark_20260623_153839/` and `benchmark_results/qsarena_benchmark_chemprop_fixed/`, and the consumer-GPU comparison run in `benchmark_results/benchmark_name_date/`, plus the post-hoc feature-expansion analysis of Section 3.12 in `benchmark_results/qsarena_feature_expansion/`), the analysis notebook (`portable_colab_qsar_bundle/benchmark_results_summary.ipynb`) and the one-command regeneration script for all figures, tables and reported numbers (`portable_colab_qsar_bundle/render_manuscript_assets.py`) and the script that verifies the manuscript text against them (`verify_manuscript_numbers.py`). Pinned conda and pip environment specifications, an Apptainer definition and Slurm submission scripts are included for reproduction on HPC.
 
 The datasets analysed during the current study are available in the following public repositories: the Therapeutics Data Commons ADMET Benchmark Group and single-prediction tasks, via PyTDC (https://tdcommons.ai) [5]; the MoleculeNet ESOL [24], FreeSolv [25] and Lipophilicity (ChEMBL deposition CHEMBL3301361, https://doi.org/10.6019/CHEMBL3301361) [66] datasets, as distributed by MoleculeNet [4]; the Polaris ADME benchmarks (https://polarishub.io) [49, 50], derived from the Biogen ADME dataset [65]; the PODUAM point-of-departure datasets (https://github.com/kejbo/PODUAM) [26]; and the ChemML example datasets [64]. Each dataset's source, version and split are recorded in the dataset registry and in Table S6.
 
@@ -558,8 +568,6 @@ No registration or login is needed to download, install or run QSARena, so revie
 
 **Authors' contributions:** SC conceived the study, developed the software, designed and executed the benchmark, analysed the results and wrote the manuscript. The author read and approved the final manuscript.
 
-**Use of generative AI:** Large language model assistants, including Anthropic's Claude, were used to help write and review software code, run and document analyses, and edit the manuscript text. The author reviewed, verified and edited all AI-assisted output and takes full responsibility for the content. Every number reported in the manuscript is checked automatically against the benchmark artifacts by `verify_manuscript_numbers.py`. **[AUTHOR]** Confirm the tools used and the scope of assistance.
-
 **Acknowledgements:** This work used Jetstream2 GPU at Indiana University through allocation CIS261142 from the Advanced Cyberinfrastructure Coordination Ecosystem: Services & Support (ACCESS) program, which is supported by U.S. National Science Foundation grants #2138259, #2138286, #2138307, #2137603, and #2138296 [41, 42]. Jetstream2 is supported by the National Science Foundation under Grant 2005506. Any opinions, findings, and conclusions or recommendations expressed in this material are those of the authors and do not necessarily reflect the views of the National Science Foundation. **[AUTHOR]** Remaining acknowledgements to be completed.
 
 **Disclaimer:** The views expressed are those of the authors and do not necessarily represent those of the California Environmental Protection Agency or the Office of Environmental Health Hazard Assessment.
@@ -572,7 +580,7 @@ No registration or login is needed to download, install or run QSARena, so revie
 
 1. Fu L, Shi S, Yi J, Wang N, He Y, Wu Z, Peng J, Deng Y, Wang W, Wu C, Lyu A, Zeng X, Zhao W, Hou T, Cao D. ADMETlab 3.0: an updated comprehensive online ADMET prediction platform enhanced with broader coverage, improved performance, API functionality and decision support. *Nucleic Acids Research*. 2024;52(W1):W422–W431. https://doi.org/10.1093/nar/gkae236
 
-2. Tsaioun K, Bottlaender M, Mabondzo A. ADDME – Avoiding Drug Development Mistakes Early: central nervous system drug discovery perspective. *BMC Neurology*. 2009;9(Suppl 1):S1. https://doi.org/10.1186/1471-2377-9-S1-S1
+2. Tsaioun K, Bottlaender M, Mabondzo A, Alzheimer's Drug Discovery Foundation. ADDME – Avoiding Drug Development Mistakes Early: central nervous system drug discovery perspective. *BMC Neurology*. 2009;9(Suppl 1):S1. https://doi.org/10.1186/1471-2377-9-S1-S1
 
 3. Komura H, Watanabe R, Mizuguchi K. The trends and future prospective of in silico models from the viewpoint of ADME evaluation in drug discovery. *Pharmaceutics*. 2023;15(11):2619. https://doi.org/10.3390/pharmaceutics15112619
 

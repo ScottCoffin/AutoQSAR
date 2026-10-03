@@ -40,3 +40,19 @@ def test_head_to_head_counts():
     row = h2h.iloc[0]
     assert (row["qsarena_wins"], row["qsarena_losses"]) == (5, len(datasets) - 5)
     assert set(rank["entry"]) == {"ours", "Ref"}
+
+
+def test_load_candidates_skips_cv_protocol_variant_dirs(tmp_path):
+    run, arm = tmp_path / "run", tmp_path / "arm"
+    (run / "tdc_caco2_wang").mkdir(parents=True)
+    pd.DataFrame({"model": ["SVR"], "error": [None], "cv_primary": [0.4], "test_mae": [0.3]}).to_csv(
+        run / "tdc_caco2_wang" / "metrics.csv", index=False)
+    row = {"dataset": "tdc_caco2_wang", "model": "XGBoost [admetboost]", "cv_primary": 0.35}
+    (arm / "admetboost").mkdir(parents=True)
+    pd.DataFrame([{**row, "test_mae": 0.28}]).to_csv(arm / "admetboost" / "metrics.csv", index=False)
+    (arm / "admetboost__scaffoldcv").mkdir()
+    pd.DataFrame([{**row, "cv_primary": 0.5, "test_mae": None}]).to_csv(
+        arm / "admetboost__scaffoldcv" / "metrics.csv", index=False)
+    cand = ev.load_candidates(run_dir=run, arm_root=arm)
+    armrows = cand[cand["pool"] == "arm"]
+    assert len(armrows) == 1 and armrows["test_mae"].iloc[0] == 0.28

@@ -76,36 +76,41 @@ Figures are copied from `../manuscript_assets/figures/*.pdf`; re-copy after rege
 
 ## Journal requirements — status
 
-Structure follows the BMC/Springer **Software article** format.
+Structure follows the J. Cheminform. **Research article** format (decided 2026-10-02; previously Software).
 
-- [x] Structured abstract (Background / Implementation / Results / Conclusions), 349 words (limit 350)
+- [x] Structured abstract (Background / Methods / Results / Conclusions), 350 words (limit 350; any addition needs a cut)
 - [x] **Scientific Contribution** section in the abstract (journal-specific requirement, max 3 sentences)
 - [x] Keywords
-- [x] Background, Implementation, Results and discussion, Conclusions
-- [x] `Availability and requirements` with all seven required fields
-- [x] Declarations in order: Ethics approval · Consent for publication · Availability of data and materials · Competing interests · Funding · Authors' contributions · Acknowledgements
+- [x] Introduction, Methods, Results and discussion, Conclusions
+- [x] LLM use documented in the **Methods** (§2.14 "Use of large language models"), as the journal requires;
+  LLMs are not authors; no AI-generated images
+- [x] Software fields (project name, home page, OS, language, requirements, license) given under Availability of data
+  and materials (a separate `Availability and requirements` section is a Software-article requirement only)
+- [x] Declarations: Ethics approval · Consent for publication · Availability of data and materials · Competing interests · Funding · Authors' contributions · Acknowledgements
 - [x] Abbreviations section
 - [x] Additional file 1 cited in the text
-- [x] Additional file 2 (guided tutorial, `additional_file_2_qsarena_tutorial.pdf`) cited in `Availability and
-  requirements` and listed under Supplementary information; every command in it is tested (`tests/docs`)
+- [x] Additional file 2 (guided tutorial, `additional_file_2_qsarena_tutorial.pdf`) cited and listed under
+  Supplementary information; every command in it is tested (`tests/docs`)
 - [x] Vancouver numbered references (`sn-vancouver-num`)
 - [x] Figures as vector PDF, cited in order, captions below
 - [x] Code repository linked in Availability of data and materials
 - [x] ACCESS/Jetstream2 acknowledgement with allocation CIS261142 and required NSF grant numbers
 - [x] Graphical abstract (`figures/graphical_abstract.pdf`; also `manuscript_assets/figures/graphical_abstract.svg`)
-- [x] MIT (OSI-approved) license stated in `Availability and requirements`
-- [x] Canonical run is the NSF ACCESS Jetstream2 A100 benchmark (`autoqsar_benchmark_20260623_153839`)
+- [x] MIT (OSI-approved) license stated under Availability of data and materials
+- [x] Results computed from `benchmark_results/qsarena_benchmark_oof_ensemble` (base models from the A100 runs,
+  ensembles rebuilt from out-of-fold predictions); verifier: 96 checks
+- [x] ORCID 0000-0002-7035-1282 on the title page, in `CITATION.cff` and `.zenodo.json`
+- [x] The four formerly `[VERIFY]` references checked against Crossref (2026-10-02)
 
 ### Before you submit — outstanding items
 
-1. **ORCID** for the author.
+1. **ORCID** — done; also enter it in the submission system.
 2. **Zenodo DOI (last blocking item)** — archive a tagged release and cite it under Availability of
    data and materials. Follow `../ZENODO.md`; `.zenodo.json` and `CITATION.cff` are already in place. The journal's
    reproducibility editorial specifically asks for an external archive (Zenodo/FigShare) referenced
    from the README, not a bare GitHub link.
 3. **Agency disclaimer wording** — confirm OEHHA's required text.
-4. **Four references** marked `[VERIFY]` in `references.bib` (ADDME byline, MolE article number,
-   ChemXploreML venue, CFA pagination).
+4. **Four references** — verified against Crossref 2026-10-02 (ADDME group author added).
 5. **Suggested reviewers** — the journal invites 3–5; see the cover letter.
 6. **Preprint** — if posting to arXiv, disclose it at submission (DOI and license). Springer Nature
    does not treat preprints as prior publication.
@@ -122,4 +127,15 @@ From *Improving reproducibility and reusability in the Journal of Cheminformatic
   documents the procedure and `.zenodo.json` is staged
 - [x] Installation documentation in README
 - [x] Straightforward install (conda/pip specs, Apptainer container)
-- [ ] **Conforms to an external linter** — not currently enforced; consider adding `ruff`/`black` in CI
+- [x] **Conforms to an external linter** — `ruff check qsarena tests` runs in CI (`.github/workflows/ci.yml`); the
+  legacy `portable_colab_qsar_bundle` modules are excluded in `pyproject.toml`
+
+## Cover letter
+
+`cover_letter.md` is the source; rebuild the PDF after editing it (pandoc ships in the `pypandoc_binary` pip package):
+
+```bash
+cd submission
+PANDOC=$(python -c "import pypandoc; print(pypandoc.get_pandoc_path())")
+"$PANDOC" cover_letter.md -o cover_letter.pdf --pdf-engine=pdflatex -V geometry:margin=1in -V fontsize=11pt
+```

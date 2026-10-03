@@ -12,7 +12,7 @@ tdc_cyp2d6_veith,XGBoost,benchmark,0.7512965305975569,XGBoost
 tdc_cyp3a4_substrate_carbonmangels,TabPFNClassifier,benchmark,0.9176315131287204,TabPFNClassifier
 tdc_cyp3a4_veith,XGBoost,benchmark,0.8871002932762518,XGBoost
 tdc_dili,LogisticRegression,benchmark,0.966665907648418,LogisticRegression
-tdc_half_life_obach,Random forest [admetboost],arm,0.3769975082047339,TabPFNRegressor
+tdc_half_life_obach,XGBoost [admetboost+chemeleon],arm,0.3809546101186376,TabPFNRegressor
 tdc_herg,TabPFNClassifier,benchmark,0.9514629201839876,TabPFNClassifier
 tdc_hia_hou,LogisticRegression,benchmark,0.9998168498168498,LogisticRegression
 tdc_ld50_zhu,TabPFNRegressor,benchmark,0.3802345520594261,TabPFNRegressor
@@ -20,4 +20,4 @@ tdc_lipophilicity_astrazeneca,TabPFNRegressor,benchmark,0.3765074414917631,TabPF
 tdc_pgp_broccatelli,LogisticRegression,benchmark,0.9889585101455178,LogisticRegression
 tdc_ppbr_az,ChemML MLP (PyTorch),benchmark,6.232108923716697,ChemML MLP (PyTorch)
 tdc_solubility_aqsoldb,TabPFNRegressor,benchmark,0.5750483171692629,TabPFNRegressor
-tdc_vdss_lombardo,TabPFNRegressor,benchmark,0.5666585044456186,TabPFNRegressor
+tdc_vdss_lombardo,XGBoost [admetboost+chemeleon],arm,0.6006362274436463,TabPFNRegressor

@@ -94,6 +94,10 @@ def load_candidates(run_dir: Path = io.DEFAULT_RUN_DIR, arm_root: Path = OUT_ROO
         m = m[m["error"].isna()].drop_duplicates("model", keep="last")
         rows.append(m.assign(dataset=d.name, pool="benchmark"))
     for path in sorted(Path(arm_root).glob("*/metrics.csv")):
+        # "<feature_set>__<variant>" dirs (e.g. admetboost__scaffoldcv) rescore the same models under another
+        # CV protocol with no test metrics; mixing them in would duplicate candidates and blank test values.
+        if "__" in path.parent.name:
+            continue
         a = pd.read_csv(path)
         rows.append(a.assign(pool="arm"))
     frame = pd.concat(rows, ignore_index=True, sort=False)
@@ -135,6 +139,44 @@ def tdc_table(entries: dict[str, pd.Series], refs: pd.DataFrame, kinds: pd.Serie
     return pd.DataFrame(h2h), rank.sort_values("mean_rank").reset_index()
 
 
+def paired_vs_reference(arm_root: Path = OUT_ROOT, reference: str = "admetboost", model_key: str = "xgboost") -> dict:
+    """Paired test-metric comparison of every arm feature set against ``reference`` (same model, same datasets).
+
+    Relative change is oriented so positive = better (lower error or higher score); only datasets whose primary
+    test metric is present in both sets count. Wilcoxon signed-rank p-value, two-sided.
+    """
+    from scipy.stats import wilcoxon
+
+    def load(feature_set: str) -> pd.DataFrame:
+        frame = pd.read_csv(Path(arm_root) / feature_set / "metrics.csv")
+        frame = frame[frame["model_key"] == model_key]
+        return frame.drop_duplicates("dataset", keep="last").set_index("dataset")
+
+    base = load(reference)
+    out = {}
+    for path in sorted(Path(arm_root).glob("*/metrics.csv")):
+        feature_set = path.parent.name
+        if feature_set == reference or "__" in feature_set:
+            continue
+        other, gains = load(feature_set), []
+        for dataset in other.index.intersection(base.index):
+            metric = str(other.loc[dataset, "primary_metric"])
+            col = f"test_{metric}"
+            if col not in other or pd.isna(other.loc[dataset, col]) or pd.isna(base.loc[dataset, col]):
+                continue
+            x, y = float(base.loc[dataset, col]), float(other.loc[dataset, col])
+            gains.append(100 * ((x - y) / abs(x) if metric in LOWER_IS_BETTER else (y - x) / abs(x)))
+        gains = np.asarray(gains)
+        if len(gains) == 0:
+            continue
+        out[feature_set] = {
+            "n": int(len(gains)), "better": int((gains > 0).sum()), "worse": int((gains < 0).sum()),
+            "median_pct": round(float(np.median(gains)), 3), "mean_pct": round(float(np.mean(gains)), 3),
+            "wilcoxon_p": round(float(wilcoxon(gains).pvalue), 4),
+        }
+    return out
+
+
 def evaluate(out_dir: Path = OUT_ROOT) -> dict:
     kinds = leaderboard_kinds()
     refs = load_references(kinds)
@@ -162,6 +204,7 @@ def evaluate(out_dir: Path = OUT_ROOT) -> dict:
         "tdc_datasets_with_arm_results": int(tdc.loc[tdc["pool"] == "arm", "ds"].nunique()),
         "cv_pick_is_arm_model": int((new_pick["pool"] == "arm").sum()),
         "mean_rank": rank.set_index("entry")["mean_rank"].round(3).to_dict(),
+        "paired_vs_admetboost_xgboost": paired_vs_reference(),
     }
     (out_dir / "evaluation_summary.json").write_text(json.dumps(summary, indent=2) + "\n", encoding="utf-8")
     return {"h2h": h2h, "rank": rank, "picks": picks, "summary": summary}

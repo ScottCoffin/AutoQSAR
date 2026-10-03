@@ -1,19 +1,61 @@
 {
-  "n_arm_rows": 88,
+  "n_arm_rows": 264,
   "arm_models": [
     "Random forest [admetboost]",
-    "XGBoost [admetboost]"
+    "XGBoost [admetboost+chemeleon]",
+    "XGBoost [admetboost+emb]",
+    "XGBoost [admetboost]",
+    "XGBoost [chemeleon]",
+    "XGBoost [emb]"
   ],
   "tdc_datasets_with_arm_results": 22,
-  "cv_pick_is_arm_model": 1,
+  "cv_pick_is_arm_model": 2,
   "mean_rank": {
-    "MaxQsaring": 1.955,
-    "fixed: XGBoost [admetboost]": 3.909,
-    "MolE": 4.227,
-    "ADMETboost (XGBoost)": 4.318,
-    "CV pick, benchmark + arm": 4.636,
-    "Meta-model (NIST)": 4.682,
-    "CV pick, benchmark pool": 4.773,
-    "fixed: Random forest [admetboost]": 6.318
+    "MaxQsaring": 2.545,
+    "fixed: XGBoost [admetboost+chemeleon]": 5.227,
+    "fixed: XGBoost [admetboost]": 5.591,
+    "MolE": 5.909,
+    "fixed: XGBoost [admetboost+emb]": 6.045,
+    "ADMETboost (XGBoost)": 6.091,
+    "fixed: XGBoost [chemeleon]": 6.545,
+    "Meta-model (NIST)": 6.864,
+    "CV pick, benchmark + arm": 6.955,
+    "CV pick, benchmark pool": 7.318,
+    "fixed: XGBoost [emb]": 8.5,
+    "fixed: Random forest [admetboost]": 9.182
+  },
+  "paired_vs_admetboost_xgboost": {
+    "admetboost+chemeleon": {
+      "n": 35,
+      "better": 19,
+      "worse": 15,
+      "median_pct": 0.175,
+      "mean_pct": -0.869,
+      "wilcoxon_p": 0.5439
+    },
+    "admetboost+emb": {
+      "n": 35,
+      "better": 16,
+      "worse": 19,
+      "median_pct": -0.043,
+      "mean_pct": -1.593,
+      "wilcoxon_p": 0.3023
+    },
+    "chemeleon": {
+      "n": 35,
+      "better": 12,
+      "worse": 23,
+      "median_pct": -1.778,
+      "mean_pct": -5.986,
+      "wilcoxon_p": 0.0101
+    },
+    "emb": {
+      "n": 35,
+      "better": 7,
+      "worse": 28,
+      "median_pct": -2.422,
+      "mean_pct": -6.792,
+      "wilcoxon_p": 0.0003
+    }
   }
 }

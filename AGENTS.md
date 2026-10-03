@@ -33,19 +33,34 @@ always quote). Bash (Git Bash) and PowerShell are both available.
 - **PODUAM attribution** fixed (see traps).
 - **Graphical abstract** PNG/PDF render through headless Edge/Chrome when `cairosvg` has no libcairo (the case on Windows).
 
-**In progress (detached jobs that survive the session).** Feature-expansion arm: GPU XGBoost on
-`admetboost+chemeleon`, then `chemeleon`, plus `unimol_repr` featurization. Status, logs and resume commands
-are in the checklist of `docs/FEATURE_EXPANSION_PLAN.md`.
+**Opt-in models from the arm (2026-10-03):** `--run-admetboost-xgboost` (XGBoost on the full, unselected
+ADMETboost features; needs `qsarena[features]` + the Mol2Vec model) and `--run-chemprop-chemeleon` (Chemprop
+fine-tuned from CheMeleon). Both are off by default and outside every family's resume signature; details and
+costs are in `docs/FEATURE_EXPANSION_PLAN.md` ("Implementation of the recommendations"). A full CheMeleon run is ~116
+GPU-h and needs approval.
+
+**Feature-expansion arm: complete (2026-10-02).** All five feature sets have been trained and evaluated. Frozen CheMeleon/Uni-Mol
+embeddings add nothing to the ADMETboost features and are worse on their own; the fixed XGBoost on unselected
+ADMETboost features remains the best honest entry on TDC-22 (13-9 vs ADMETboost and NIST). The write-up and
+recommendation, which the author decides on, are in `docs/FEATURE_EXPANSION_PLAN.md` ("Results and recommendation").
+No detached jobs are running.
 
 **Next steps**
-1. When those jobs finish: `python -m qsarena.feature_expansion.evaluate`, train `admetboost+emb` / `emb`, then
-   write up the results and decide whether to integrate (plan checklist; TODO.md).
+1. Author decisions pending: the arm's integration (see the plan), the title (options in TODO.md), and the remaining
+   `[AUTHOR]` flags (other LLM tools in Methods §2.14, OEHHA disclaimer, reviewers, preprint). The run history is
+   now in Methods §2.13 ("Benchmark runs and ensemble reconstruction"), checked by the verifier.
 2. Anything from the arm that enters the paper is supplementary. New numbers go through the render and the
    verifier, never hand-typed.
 3. Zenodo deposit: the last blocking submission item (`ZENODO.md`).
 4. Optional, each needing approval: Phase 7 learning curve (~18 GPU-h, `docs/HANDOFF_RTX_GPU_WORK.md`), CheMeleon
    fine-tuning as a Chemprop variant (unscoped), and a 5-seed TDC-22 replication.
 5. **Declined (2026-10-02): nested-selection CV** (`docs/NESTED_SELECTION_CV_PLAN.md`). The caveat stays.
+
+**CI** (`.github/workflows/ci.yml`): ruff on `qsarena tests`, then `pytest -m "not gpu and not slow"` on
+Python 3.10-3.12 with only `.[dev]` installed and the newest pandas, plus a LaTeX build of `proof.tex`.
+Job logs need admin rights; to reproduce a failure locally, build a clean venv at a SHORT path (RDKit DLLs fail
+on long Windows paths), e.g. `py -3.13 -m venv C:/Users/scott/qci && C:/Users/scott/qci/Scripts/python -m pip
+install -e .[dev]`, then run the same pytest command.
 
 **Running long jobs on the RTX box.** Launch them detached through WMI: write a `.cmd` under `logs/`, then run
 `Invoke-CimMethod -ClassName Win32_Process -MethodName Create -Arguments @{CommandLine='cmd.exe /c <path>'}`.
@@ -248,8 +263,8 @@ stack stopped first). Only matters for step 6.
 | Want to change | Edit | Notes |
 |---|---|---|
 | Interactive notebooks | `portable_colab_qsar_bundle/build_colab_qsar_tutorial.py` | Regenerates both `colab_qsar_tutorial.ipynb` (Colab `# @param` controls) and `local_qsar_tutorial.ipynb` (`ipywidgets` controls); never hand-edit generated notebooks. |
-| Benchmark runner | `portable_colab_qsar_bundle/run_qsarena_benchmarks.py` | ~10k lines. `run_qsarena_benchmarks.txt` is a **stale mirror**: do not read or grep it as source. |
-| Features, splits, CFA, shared ensemble logic | `portable_colab_qsar_bundle/qsar_workflow_core.py` | Runner orchestration stays in `run_qsarena_benchmarks.py`; notebook member collection stays in builder block 7A. (`qsar_workflow_core.txt` is a mirror.) |
+| Benchmark runner | `portable_colab_qsar_bundle/run_qsarena_benchmarks.py` | ~10k lines. (The stale `.txt` mirrors were deleted 2026-10-02.) |
+| Features, splits, CFA, shared ensemble logic | `portable_colab_qsar_bundle/qsar_workflow_core.py` | Runner orchestration stays in `run_qsarena_benchmarks.py`; notebook member collection stays in builder block 7A. |
 | Dataset registry / catalog | `benchmark_registry.py`, `data/benchmark_dataset_catalog.csv` | |
 | Leaderboard references | `data/benchmark_leaderboards/*.csv` | Current-literature ESOL/Lipophilicity refs live in `ESOL_Lipophilicity_Current_Benchmarks_csv.csv`. |
 | Benchmark analysis, manuscript figures and tables | `portable_colab_qsar_bundle/benchmark_results_summary.ipynb` | Hand-maintained (no builder). The last cell (`# MANUSCRIPT_FIGURE_EXPORT`) writes `manuscript_assets/`. |
@@ -315,13 +330,14 @@ Notebook generation notes:
      (`--ensemble-oof-scope all`, run on the RTX 4060), no full model retrained, and both
      2026-09-29 ensemble fixes applied. Post-run checks: `python tools/verify_oof_ensemble_run.py`.
    - Regenerate with `render_manuscript_assets.py --run-dir benchmark_results/qsarena_benchmark_oof_ensemble`.
-     `verify_manuscript_numbers.py` is pinned to this run (96 checks). If the run changes, update
+     `verify_manuscript_numbers.py` is pinned to this run (110 checks, including the §2.13 run-history numbers,
+     which it recomputes from the committed metrics of all three runs, and the §3.12 post-hoc arm numbers). If the run changes, update
      each expected value; never loosen a check.
 2. Regenerate every figure, table and number (~1.5 min; system Python suffices):
    ```bash
    python portable_colab_qsar_bundle/render_manuscript_assets.py   # notebook + figures + tables + numbers JSON + LaTeX tables
    python portable_colab_qsar_bundle/render_graphical_abstract.py  # 920x300 J.Cheminform graphical abstract (SVG+PNG+PDF)
-   python portable_colab_qsar_bundle/verify_manuscript_numbers.py  # 96 checks; non-zero exit on drift
+   python portable_colab_qsar_bundle/verify_manuscript_numbers.py  # 110 checks; non-zero exit on drift
    ```
    The first also rewrites the `<!-- TABLE:stem -->` blocks in `manuscript.md` and
    `submission/tables/*.tex`. **Never hand-edit inside those blocks or those .tex files.**
@@ -333,7 +349,7 @@ Notebook generation notes:
    `manuscript_assets/tables/*.csv`. Never from old notebook outputs, `Manuscript Outline.md` or
    `publication_recommendations.md` (all predate the A100 run).
    Update after the OECD reliability work: `verify_manuscript_numbers.py` now also checks the 3.13
-   reliability numbers in `submission/body.tex`, and the verifier currently runs 96 checks. Still
+   reliability numbers in `submission/body.tex`, and the verifier currently runs 110 checks. Still
    grep both manuscript formats after other numeric prose edits.
 5. Table S8 / 3.13 comes from the separate reliability study, not the manuscript-assets notebook:
    ```bash
@@ -370,16 +386,22 @@ The paper makes three load-bearing claims. Keep them straight when editing:
 
 Open work is tracked in [TODO.md](TODO.md); the Zenodo deposit is the last blocking submission item.
 
-## Journal requirements already encoded (J. Cheminform., Software article)
+## Journal requirements already encoded (J. Cheminform., **Research article** since 2026-10-02)
 
 - Abstract is capped at **350 words** and must contain a **Scientific Contribution** section
-  (max 3 sentences). Both are in place; re-check the word count after any abstract edit.
+  (max 3 sentences). Both are in place, and the abstract is at exactly 350 words, so re-check the count after any
+  abstract edit. Abstract headings: Background / Methods / Results / Conclusions / Scientific Contribution.
 - Graphical abstract spec: **920x300 px, <=150 KB, white background**. `render_graphical_abstract.py`
   emits exactly that and reads its statistics from `manuscript_numbers.json`.
-- Structure: Background / Implementation / Results and discussion / Conclusions /
-  **Availability and requirements** (seven fields) / Declarations (seven subsections) / Abbreviations.
-  Note `Availability and requirements` and the `Availability of data and materials` declaration are
-  two different required sections.
+- Structure (Research article, from the journal's submission guidelines): Introduction / Methods / Results and
+  discussion / Conclusions / Abbreviations / Declarations. The section labels kept their old LaTeX keys
+  (`sec:background`, `sec:implementation`) so cross-references still resolve. The separate `Availability and
+  requirements` section is a Software-article requirement: its fields now open the `Availability of data and
+  materials` declaration as "Software availability".
+- **LLM use must be documented in the Methods** (journal: "Use of an LLM should be properly documented in the
+  Methods section"; Springer Nature: LLMs cannot be authors, AI-generated images that are not derived from
+  verifiable data are not permitted). It lives in §2.14 "Use of large language models" in both formats, not in
+  the Declarations. Keep it accurate if the tools change.
 - No "highlights" section is required (that is an Elsevier convention).
 - Preprints are permitted and are not prior publication; disclose DOI and license at submission.
 - License is **MIT**; the GitHub issue tracker is enabled with templates in `.github/ISSUE_TEMPLATE/`.
@@ -442,9 +464,10 @@ Open work is tracked in [TODO.md](TODO.md); the Zenodo deposit is the last block
   (PODUAM NC ensemble RMSE 4.1 vs 0.72 for the best member). `build_ensemble` now clips member
   predictions to the training target range (regression; label-free) and lists clipped members in
   the notes. Base-model metrics are unaffected. Tests: `tests/unit/test_ensemble_oof.py`,
-  `tests/unit/test_core_ensemble.py`. Note: `test_work_order_guards` fails under pandas 3 (a
-  `MergeError` in `_ensemble_split_frame`, which predates these changes); it passes under the
-  benchmark env's pandas 2.3.
+  `tests/unit/test_core_ensemble.py`. The pandas 3 `MergeError` in `_ensemble_split_frame` (SMILES
+  alignment created a second `row_id__new_obs` column on the third merge) was fixed 2026-10-02: the right-hand
+  frame's non-key `row_id`/`SMILES`/`Observed` columns are dropped before merging. It had kept GitHub CI red since
+  2026-09-30, because CI installs the latest pandas.
 - **The benchmark's model CV leaks through feature selection (found 2026-10-02).** Stage 3 fits the
   ElasticNetCV selector once on ALL training rows, then each model's `cross_validate` (runner ~L5605) runs
   on `X_train_selected`, so every held-out CV fold influenced which features were kept. On predefined/
@@ -486,6 +509,11 @@ Open work is tracked in [TODO.md](TODO.md); the Zenodo deposit is the last block
   failures, which is why it hid for a whole run. Harness I/O errors now say `Chemprop harness error`;
   model failures say `Chemprop training failed`. Regression test: `tests/test_subprocess_encoding.py`
   (needs pytest, which the Windows workstation does not have).
+- **Profiles used to overwrite an explicit `--disable-model-families`** (fixed 2026-10-03). The profile code checks
+  whether the user set an option by looking for `--<dest>`. That dest is `disabled_model_families`, but the flag is
+  `--disable-model-families`, so the user's value was silently replaced (for example, quick re-disabled
+  gradient boosting). `_PROFILE_FLAG_ALIASES` maps such dests to their real flag; add an entry if you add a profile
+  default whose flag differs from its dest.
 - **Targeted model filters are repeatable exact labels.** Use one `--only-model-names` argument per
   model. Model labels contain commas, so comma-joining labels silently breaks selection. Internal
   TDC multi-seed code stores these filters as a list for the same reason.

@@ -45,6 +45,8 @@
 \usepackage{makecell}
 \usepackage{pdflscape}
 \usepackage{url}
+\let\orcidlogo\relax  % sn-jnl's \orcidlogo needs Orcidlogo.eps (not shipped); orcidlink draws its own
+\usepackage{orcidlink}
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage[htt]{hyphenat}   % allow hyphenation inside \texttt identifiers
@@ -64,7 +66,7 @@
 
 \title[No Single Model Family Dominates]{No Single Model Family Dominates: Ensembles and Conventional Machine Learning Perform Comparably to Pretrained Molecular Models Across 44 Property-Prediction Benchmarks}
 
-\author*[1]{\fnm{Scott} \sur{Coffin}}\email{scott.l.coffin@gmail.com}
+\author*[1]{\fnm{Scott} \sur{Coffin}~\orcidlink{0000-0002-7035-1282}}\email{scott.l.coffin@gmail.com}
 
 \affil*[1]{\orgname{California Office of Environmental Health Hazard Assessment},
 \orgaddress{\street{1001 I Street}, \city{Sacramento}, \postcode{95814}, \state{CA}, \country{USA}}}

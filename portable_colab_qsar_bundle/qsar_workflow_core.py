@@ -676,6 +676,21 @@ def list_supported_chemprop_architectures() -> list[str]:
     return list(CHEMPROP_ARCHITECTURE_REGISTRY.keys())
 
 
+def chemeleon_variant_spec(ensemble_size: int = 1, foundation: str = "CHEMELEON") -> dict[str, Any]:
+    """Opt-in Chemprop v2 variant fine-tuned from the CheMeleon foundation model (Zenodo 15460715,
+    arXiv:2506.15792). ``chemprop train --from-foundation`` replaces the message-passing block with the
+    pretrained one and sets the matching atom featurizer; everything else uses the runner's Chemprop settings."""
+    return {
+        "architecture_key": "dmpnn",
+        "variant_tag": "chemeleon",
+        "label": f"Chemprop v2 (CheMeleon fine-tuned, ensemble={int(ensemble_size)})",
+        "workflow": "Chemprop v2",
+        "train_args": ["--from-foundation", str(foundation)],
+        "featurizers": [],
+        "notes": "D-MPNN initialised from the CheMeleon pretrained message passing, then fine-tuned.",
+    }
+
+
 def resolve_chemprop_architecture_specs(
     architecture_keys: list[str] | None = None,
     *,
@@ -1405,9 +1420,11 @@ def _ensemble_split_frame(payloads: dict[str, dict[str, Any]], split_name: str) 
             merge_columns = [alignment_key]
             if alignment_key == "row_id":
                 merge_columns.append("SMILES")
-            merged = merged.merge(split_df, on=merge_columns, how="inner", suffixes=("", "__new_obs"))
-            if "Observed__new_obs" in merged.columns:
-                merged = merged.drop(columns=["Observed__new_obs"])
+            # Keep the first payload's row_id/SMILES/Observed. Dropping the right-hand copies (rather than
+            # suffixing them) matters under pandas 3: with SMILES alignment a third merge would otherwise
+            # create a second "row_id__new_obs" column, which pandas 3 rejects with MergeError.
+            right = split_df.drop(columns=[c for c in ("row_id", "SMILES", "Observed") if c not in merge_columns])
+            merged = merged.merge(right, on=merge_columns, how="inner")
         prediction_columns.append(str(model_name))
     if merged is None:
         raise ValueError("No predictions were available for ensemble alignment.")

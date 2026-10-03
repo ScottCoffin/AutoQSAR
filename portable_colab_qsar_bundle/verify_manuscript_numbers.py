@@ -198,6 +198,53 @@ if meta_path.exists():
         all(f"manuscript_assets/figures/{s}.png" in t
             for s in ("figureM1_size_crossover", "figureM2_shift_difficulty", "figureM3_recommender")))
 
+# ---- run lineage (Methods 2.13) -------------------------------------------------------------------
+# Ensemble wins per run, recomputed from committed metrics with the plain best-model rule (lowest test RMSE for
+# regression, highest primary metric for classification). It reproduces the notebook's canonical-run counts exactly
+# (7 + 9); only regression counts are quoted for the rejected in-sample run, which was never rendered.
+def _ensemble_wins(run: str) -> tuple[int, int]:
+    import pandas as pd
+
+    reg = cls = 0
+    for f in sorted(pathlib.Path("benchmark_results", run).glob("*/metrics.csv")):
+        m = pd.read_csv(f, low_memory=False)
+        m = m[m["error"].isna()] if "error" in m else m
+        m = m.drop_duplicates("model", keep="last")
+        has_rmse = "test_rmse" in m and m["test_rmse"].notna().any()
+        if has_rmse:
+            best = m.loc[m["test_rmse"].idxmin(), "model"]
+            reg += str(best).startswith("Ensemble")
+        elif "test_roc_auc" in m and m["test_roc_auc"].notna().any():
+            pm = str(m["primary_metric"].dropna().iloc[0]) if m["primary_metric"].notna().any() else "roc_auc"
+            col = f"test_{pm}" if pm in ("roc_auc", "auprc") and f"test_{pm}" in m else "test_roc_auc"
+            best = m.loc[m[col].idxmax(), "model"]
+            cls += str(best).startswith("Ensemble")
+    return reg, cls
+
+
+chk("lineage canonical ensembles 7+9 (test-selected)", _ensemble_wins("autoqsar_benchmark_20260623_153839") == (7, 9))
+chk("lineage in-sample ensembles: regression 1", _ensemble_wins("qsarena_benchmark_chemprop_fixed")[0] == 1)
+chk("lineage OOF regression ensembles 6", _ensemble_wins("qsarena_benchmark_oof_ensemble")[0] == W["Ensemble (stacking / averaging)"]["regression"] == 6)
+for label, text in (("md", t), ("tex", body)):
+    chk(f"lineage prose {label}", "regression ensemble wins fell from 7 to 1" in text
+        and "ensembles won 13 datasets (6 regression, 7 classification), against 16 (7 and 9)" in text)
+    chk(f"tdc official cv median 7 prose {label}", "falls to a median rank of 7 under cross-validation-only selection" in text)
+
+# ---- post-hoc feature-expansion note (Section 3.12) --------------------------------------------------
+fe_dir = pathlib.Path("benchmark_results/qsarena_feature_expansion")
+h2h = {(r["entry"], r["method"]): (int(r["qsarena_wins"]), int(r["qsarena_losses"]))
+       for r in csv.DictReader(io.StringIO((fe_dir / "tdc22_head_to_head.csv").read_text(encoding="utf-8")))}
+xa = "fixed: XGBoost [admetboost]"
+chk("arm vs ADMETboost 13-9", h2h.get((xa, "ADMETboost (XGBoost)")) == (13, 9), str(h2h.get((xa, "ADMETboost (XGBoost)"))))
+chk("arm vs NIST 13-9", h2h.get((xa, "Meta-model (NIST)")) == (13, 9), str(h2h.get((xa, "Meta-model (NIST)"))))
+chk("arm vs MaxQsaring 5-17", h2h.get((xa, "MaxQsaring")) == (5, 17), str(h2h.get((xa, "MaxQsaring"))))
+pv = json.loads((fe_dir / "evaluation_summary.json").read_text(encoding="utf-8"))["paired_vs_admetboost_xgboost"]
+chk("arm +emb median -0.04 p0.30 n35", (pv["admetboost+emb"]["n"], round(pv["admetboost+emb"]["median_pct"], 2),
+                                        round(pv["admetboost+emb"]["wilcoxon_p"], 2)) == (35, -0.04, 0.30))
+chk("arm emb alone -2.42 p<0.001", round(pv["emb"]["median_pct"], 2) == -2.42 and pv["emb"]["wilcoxon_p"] < 0.001)
+for label, text, minus in (("md", t, "-0.04%"), ("tex", body, "$-0.04$\\%")):
+    chk(f"arm prose {label}", "on 13 of the 22 datasets each, but lost to MaxQsaring on 17" in text and minus in text)
+
 # ---- tables agree with the JSON ----------------------------------------------------------------
 t2 = list(csv.DictReader(io.StringIO(pathlib.Path("manuscript_assets/tables/table2_dataset_catalog.csv").read_text(encoding="utf-8"))))
 chk("table2 has leaderboard columns", {"Est. rank", "Best published", "Leaderboard metric", "Best published model"} <= set(t2[0].keys()))
