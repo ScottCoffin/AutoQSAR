@@ -5434,6 +5434,12 @@ def _suppress_console_noise(enabled: bool):
 
 def predict_values_for_metric(estimator: Any, X, metric_name: str) -> np.ndarray:
     metric = normalize_benchmark_metric(metric_name, fallback=str(metric_name).strip().lower())
+    # A binary task can arrive with a regression primary metric: the catalog lists e.g. tdc_cyp1a2_veith,
+    # tdc_cyp2c19_veith, tdc_herg_karim and tdc_pampa_ncats as "rmse". Returning .predict() then saved hard 0/1
+    # labels, so test AUROC/AUPRC were computed on labels and ensembles were built from labels (found 2026-10-04).
+    # For a classification task, always return the positive-class score.
+    if metric not in {"roc_auc", "auprc", "accuracy", "balanced_accuracy", "mcc"} and current_dataset_task_type() == "classification":
+        metric = "roc_auc"
     if metric in {"roc_auc", "auprc", "accuracy", "balanced_accuracy", "mcc"}:
         try:
             if hasattr(estimator, "predict_proba"):
@@ -7323,6 +7329,100 @@ def ensemble_oof_fold_signature(folds: list[tuple[np.ndarray, np.ndarray]]) -> s
     return core_oof_fold_signature(folds)
 
 
+# ---- Nested feature selection (--cv-selection nested; docs/NESTED_SELECTION_CV_PLAN.md) -------------------
+# Stage 3 fits the supervised selector on ALL training rows, so CV and OOF predictions computed on the selected
+# matrix are optimistic: every validation fold helped choose its features (measured causally in
+# qsarena/feature_expansion/selection_leak.py). Nested mode refits the selector on each fold's training rows.
+# Test predictions are untouched: the deployed model legitimately uses the selection fitted on all training rows.
+
+
+def nested_selection_columns(
+    *,
+    split: dict[str, Any],
+    selector_meta: dict[str, Any],
+    args: argparse.Namespace,
+    folds: list[tuple[np.ndarray, np.ndarray]],
+    cv_strategy: str,
+    cache_dir: Path,
+    signature: str,
+    log: Callable[..., None] = print,
+) -> list[list[str]]:
+    """Selected columns per fold, from the full (deduplicated, unselected) training matrix.
+
+    The selector METHOD is pinned to the one the deployed selection used (recorded in ``selector_meta``), so the
+    folds repeat exactly that pipeline; a random-forest fallback that happened on another machine cannot switch
+    methods mid-run. Each fold's selection is cached as ``fold_<k>.json`` under ``cache_dir``, keyed by
+    ``signature`` (stage 2/3 signature + fold signature), so the stage resumes.
+    """
+    method = str(selector_meta.get("selector_method", "elasticnet_cv") or "elasticnet_cv")
+    pinned = argparse.Namespace(**vars(args))
+    if method.startswith("random_forest") or method == "rf_importance":
+        pinned.selector_method = "rf_importance"
+    elif method == "elasticnet_cv":
+        pinned.selector_method = "elasticnet_cv"
+        pinned.selector_auto_rf_by_dataset_size = False
+    X_full = pd.DataFrame(split["X_train"]).reset_index(drop=True)
+    y_full = pd.Series(split["y_train"], dtype=float).reset_index(drop=True)
+    smiles_full = pd.Series(split["smiles_train"], dtype=str).reset_index(drop=True)
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    columns: list[list[str]] = []
+    for fold_index, (fit_idx, val_idx) in enumerate(folds):
+        path = cache_dir / f"fold_{fold_index}.json"
+        cached = qsarena_artifacts.read_json(path, default=None) if path.exists() else None
+        if isinstance(cached, dict) and cached.get("signature") == signature and cached.get("method") == method:
+            columns.append([str(c) for c in cached.get("selected", [])])
+            continue
+        started = time.time()
+        fit_idx = np.asarray(fit_idx, dtype=int)
+        val_idx = np.asarray(val_idx, dtype=int)
+        _, _, fold_meta = select_features(
+            X_full.iloc[fit_idx].reset_index(drop=True),
+            X_full.iloc[val_idx].reset_index(drop=True),
+            y_full.iloc[fit_idx].reset_index(drop=True),
+            smiles_full.iloc[fit_idx].reset_index(drop=True),
+            pinned,
+            split_strategy_for_cv=cv_strategy,
+        )
+        selected = [str(c) for c in fold_meta.get("selected_features", [])]
+        used = str(fold_meta.get("selector_method", method))
+        qsarena_artifacts.atomic_write_json(path, {
+            "signature": signature, "method": method, "fold": fold_index, "selected": selected,
+            "selector_method_used": used, "selector_timed_out": bool(fold_meta.get("selector_timed_out", False)),
+            "seconds": round(time.time() - started, 1),
+        })
+        log(f"[nested-selection] fold {fold_index + 1}/{len(folds)}: {len(selected)} features ({used}, "
+            f"{time.time() - started:.0f}s)", flush=True)
+        columns.append(selected)
+    return columns
+
+
+def nested_cv_metric_columns(
+    y_train: np.ndarray,
+    oof: np.ndarray,
+    folds: list[tuple[np.ndarray, np.ndarray]],
+    primary_metric: str,
+    classification: bool,
+) -> dict[str, float]:
+    """CV metrics from nested out-of-fold predictions, averaged over folds like ``evaluate_model``'s CV."""
+    names = ["roc_auc", "auprc", "balanced_accuracy", "mcc"] if classification else ["r2", "rmse", "mae"]
+    per_fold: dict[str, list[float]] = {name: [] for name in [*names, "primary"]}
+    y = np.asarray(y_train, dtype=float).reshape(-1)
+    pred = np.asarray(oof, dtype=float).reshape(-1)
+    for _, val_idx in folds:
+        val_idx = np.asarray(val_idx, dtype=int)
+        for name in [*names, "primary"]:
+            try:
+                value = compute_primary_metric(primary_metric if name == "primary" else name, y[val_idx], pred[val_idx])
+            except Exception:
+                value = np.nan
+            per_fold[name].append(float(value))
+    out = {f"cv_{name}": float(np.nanmean(values)) if np.isfinite(values).any() else np.nan
+           for name, values in per_fold.items() if name != "primary"}
+    primary_values = per_fold["primary"]
+    out["cv_primary"] = float(np.nanmean(primary_values)) if np.isfinite(primary_values).any() else np.nan
+    return out
+
+
 def load_unimol_saved_oof(
     model_dir: Path,
     *,
@@ -7778,6 +7878,10 @@ def family_arg_signature(args: argparse.Namespace, family: str) -> str:
         "args": {key: getattr(args, key, None) for key in keys},
         "primary_metric_override": getattr(args, "primary_metric_override", None) or None,
     }
+    # Nested selection changes the OOF predictions ensembles are built from. The key enters only when it is not
+    # the old behaviour, so ensembles of runs that keep outer selection resume unchanged.
+    if family == "ensemble" and str(getattr(args, "cv_selection", "outer") or "outer") != "outer":
+        payload["cv_selection"] = str(args.cv_selection)
     return hashlib.sha256(json.dumps(payload, sort_keys=True, default=str).encode("utf-8")).hexdigest()[:16]
 
 
@@ -7858,6 +7962,27 @@ def split_stale_metric_rows(
             for row in metrics_rows
             if _signature_family(row.get("model", "")) in _DERIVED_FAMILIES
         )
+    filters = model_filter_values(args)
+    if filters:
+        # --only-model-names: a stale model the filter excludes will NOT be recomputed in this invocation, so
+        # dropping its row would only delete results (found 2026-10-04: a filtered fold-in run would have dropped
+        # TabPFN and both ensembles on one dataset). Keep such rows; they are revalidated by an unfiltered run.
+        ensemble_requested = any(is_ensemble_result_row(name, "") for name in filters)
+
+        def recomputed(name: str) -> bool:
+            if is_ensemble_result_row(name, ""):
+                return ensemble_requested
+            return model_filter_allows(args, name)
+
+        protected = {name for name in stale if not recomputed(name)}
+        if protected:
+            print(
+                f"[resume] keeping {len(protected)} row(s) whose config signature changed but which "
+                f"--only-model-names excludes (not recomputed here): {', '.join(sorted(protected)[:6])}"
+                f"{' ...' if len(protected) > 6 else ''}",
+                flush=True,
+            )
+            stale -= protected
     kept = [row for row in metrics_rows if str(row.get("model", "")).strip() not in stale]
     return kept, stale, legacy
 
@@ -10051,6 +10176,141 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
             persist_partial("cfa")
             stage_index += 1
 
+    def run_nested_selection(rows, persist_oof, folds, fold_signature, oof_metric, chemml_args, scope) -> list[str]:
+        """--cv-selection nested: replace the OOF predictions and CV metrics of every member trained on the
+        stage-3 selected matrix with ones from per-fold selections (docs/NESTED_SELECTION_CV_PLAN.md).
+
+        Runs before the regular OOF pass. The members it handles end up with OOF vectors carrying the regular
+        fold signature, so that pass reuses them; each one's metrics row is marked ``cv_selection=nested`` (with
+        the outer CV value kept as ``cv_primary_outer``), which is also how a resume knows it is done.
+        """
+        signature = f"{stage23_signature_value}|{fold_signature}"
+        y_tr = split["y_train"].reset_index(drop=True)
+        classification = current_dataset_task_type() == "classification"
+        tabpfn_via_api = str(TABPFN_REGRESSOR_SOURCE).strip().lower() == "tabpfn_client"
+        allow_api_refits = bool(getattr(args, "ensemble_oof_allow_api_refits", False))
+
+        def latest_row(name: str) -> dict[str, Any] | None:
+            for row in reversed(metrics_rows):
+                if str(row.get("model", "")) == name and not _row_has_error_text(row):
+                    return row
+            return None
+
+        # Members trained on the selected matrix. MapLight CatBoost, MapLight + GNN, Uni-Mol, XGBoost (ADMETboost
+        # features) and the other Chemprop variants never see it.
+        candidates: dict[str, str] = {}
+        for name in model_bundle:
+            name = str(name)
+            if name.startswith("_") or name in {maplight_catboost_label, ADMETBOOST_XGB_LABEL}:
+                continue
+            if name in {"TabPFNRegressor", "TabPFNClassifier"} and tabpfn_via_api and not allow_api_refits:
+                continue
+            candidates[name] = "estimator"
+        for chemml_label in ("ChemML MLP (PyTorch)", "ChemML MLP (TensorFlow)"):
+            candidates[chemml_label] = "chemml"
+        if scope == "all":
+            for variant in chemprop_variant_specs(args):
+                if bool(variant.get("use_selected_descriptors", False)):
+                    candidates[str(variant.get("label", ""))] = "chemprop"
+        todo = {}
+        for name, kind in candidates.items():
+            payload = prediction_payloads.get(name)
+            row = latest_row(name)
+            if not payload or row is None:
+                continue
+            done = (
+                str(row.get("cv_selection", "")) == "nested"
+                and str(row.get("cv_selection_signature", "")) == signature
+                and payload.get("oof") is not None
+                and str(payload.get("oof_signature", "")) == fold_signature
+            )
+            if not done:
+                payload.pop("oof", None)
+                payload.pop("oof_signature", None)
+                todo[name] = kind
+        if not todo:
+            return [f"Nested feature selection: all {len(candidates)} selected-feature member(s) already nested"]
+
+        fold_columns = nested_selection_columns(
+            split=split, selector_meta=selector_meta, args=args, folds=folds,
+            cv_strategy=effective_split_strategy_for_dataset(
+                str(cv_strategy_for_workflows or args.split_strategy), allow_predefined=False
+            ),
+            cache_dir=dataset_dir / "nested_selection", signature=signature,
+        )
+        fold_of = {np.asarray(val, dtype=int).tobytes(): k for k, (_fit, val) in enumerate(folds)}
+        full_X = pd.DataFrame(split["X_train"]).reset_index(drop=True)
+        smi_tr = split["smiles_train"].reset_index(drop=True)
+
+        def fold_frame(fit_idx, val_idx):
+            cols = fold_columns[fold_of[np.asarray(val_idx, dtype=int).tobytes()]]
+            return rows(full_X[cols], fit_idx), rows(full_X[cols], val_idx)
+
+        nested_refitters: dict[str, Callable[[np.ndarray, np.ndarray, Path], np.ndarray]] = {}
+        for name, kind in todo.items():
+            if kind == "estimator":
+                def refit(fit_idx, val_idx, fold_dir, _est=model_bundle[name]):
+                    X_fit, X_val = fold_frame(fit_idx, val_idx)
+                    fitted = clone(_est)
+                    fitted.fit(X_fit, rows(y_tr, fit_idx))
+                    return predict_values_for_metric(fitted, X_val, oof_metric)
+            elif kind == "chemml":
+                def refit(fit_idx, val_idx, fold_dir, _label=name):
+                    X_fit, X_val = fold_frame(fit_idx, val_idx)
+                    engine = "pytorch" if "PyTorch" in _label else "tensorflow"
+                    _row, _pred_fit, pred_val = train_chemml_model(
+                        label=_label, engine_name=engine, X_train=X_fit, X_test=X_val,
+                        y_train=rows(y_tr, fit_idx), y_test=rows(y_tr, val_idx),
+                        smiles_train=rows(smi_tr, fit_idx), args=chemml_args,
+                        split_strategy_for_cv=cv_strategy_for_workflows,
+                    )
+                    return pred_val
+            else:  # Chemprop "D-MPNN + Selected descriptors": each fold gets its own descriptor selection
+                variant = next(v for v in chemprop_variant_specs(args) if str(v.get("label", "")) == name)
+
+                def refit(fit_idx, val_idx, fold_dir, _variant=variant, _label=name):
+                    X_fit, X_val = fold_frame(fit_idx, val_idx)
+                    _row, _pred_fit, pred_val = train_chemprop_model(
+                        label=_label, X_train=X_fit, X_test=X_val,
+                        y_train=rows(y_tr, fit_idx), y_test=rows(y_tr, val_idx),
+                        smiles_train=rows(smi_tr, fit_idx), smiles_test=rows(smi_tr, val_idx),
+                        args=args, dataset_dir=Path(fold_dir), split_strategy_for_cv=cv_strategy_for_workflows,
+                        featurizers=[], variant_tag=str(_variant.get("variant_tag", "base")),
+                        architecture_key=str(_variant.get("architecture_key", "dmpnn")),
+                        workflow_label=str(_variant.get("workflow", "Chemprop v2")),
+                        extra_train_args=[str(i).strip() for i in _variant.get("train_args", []) if str(i).strip()],
+                        use_selected_descriptors=True,
+                    )
+                    return pred_val
+            nested_refitters[name] = refit
+
+        primary_metric = str(current_dataset_primary_metric("rmse"))
+
+        def nested_done(model_name: str, oof_full: np.ndarray) -> None:
+            persist_oof(model_name, oof_full)
+            row = latest_row(model_name)
+            if row is None:
+                return
+            if "cv_primary_outer" not in row or pd.isna(row.get("cv_primary_outer")):
+                row["cv_primary_outer"] = row.get("cv_primary", np.nan)
+            if todo.get(model_name) != "chemprop":  # Chemprop rows carry no CV metrics
+                row.update(nested_cv_metric_columns(y_tr.to_numpy(), oof_full, folds, primary_metric, classification))
+            row["cv_selection"] = "nested"
+            row["cv_selection_signature"] = signature
+            persist_partial(f"nested-cv:{model_name}", event_model_name=model_name)
+
+        notes = ensure_ensemble_oof_predictions(
+            payloads={name: prediction_payloads[name] for name in todo},
+            refitters=nested_refitters,
+            folds=folds,
+            fold_signature=fold_signature,
+            cache_root=dataset_dir / "nested_selection" / "oof_folds",
+            n_train=len(y_tr),
+            dataset_id=dataset_id,
+            on_model_done=nested_done,
+        )
+        return [f"Nested feature selection: refitted {len(todo)} member(s) on per-fold selections"] + notes
+
     def run_ensemble_oof_stage() -> list[str]:
         """Give every candidate ensemble member out-of-fold training predictions (see
         ensure_ensemble_oof_predictions). Each refitter repeats that model's own training call on a
@@ -10345,7 +10605,12 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
             prediction_tables.append(frame)
             persist_partial(f"ensemble-oof:{model_name}", event_model_name=model_name)
 
-        notes = ensure_ensemble_oof_predictions(
+        nested_notes: list[str] = []
+        selector_method_used = str(selector_meta.get("selector_method", "") or "")
+        if str(getattr(args, "cv_selection", "outer")) == "nested" and selector_method_used not in {"", "none"}:
+            nested_notes = run_nested_selection(rows, persist_oof, folds, fold_signature, oof_metric, chemml_args, scope)
+
+        notes = nested_notes + ensure_ensemble_oof_predictions(
             payloads=prediction_payloads,
             refitters=refitters,
             folds=folds,
@@ -11965,6 +12230,13 @@ def build_arg_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--run-chemprop-rdkit2d", action=argparse.BooleanOptionalAction, default=False)
     parser.add_argument(
+        "--cv-selection",
+        choices=["outer", "nested"],
+        default="outer",
+        help="nested: refit feature selection inside every CV fold (CV metrics and ensemble OOF predictions are then "
+        "not optimistic). Profile default: nested (quick: outer).",
+    )
+    parser.add_argument(
         "--run-chemprop-chemeleon",
         action=argparse.BooleanOptionalAction,
         default=False,
@@ -12184,6 +12456,7 @@ def apply_benchmark_profile_defaults(args: argparse.Namespace, argv_tokens: list
             "chemprop_epochs": 40,
             "chemprop_ensemble_size": 3,
             "selector_auto_rf_by_dataset_size": False,
+            "cv_selection": "nested",
         }
     elif profile == "quick":
         profile_defaults = {
@@ -12196,6 +12469,7 @@ def apply_benchmark_profile_defaults(args: argparse.Namespace, argv_tokens: list
             "selector_auto_rf_by_dataset_size": True,
             "run_tdc22_multiseed_best": False,
             "disabled_model_families": list(QUICK_PROFILE_DISABLED_FAMILIES),
+            "cv_selection": "outer",
         }
     else:
         profile_defaults = {
@@ -12205,6 +12479,7 @@ def apply_benchmark_profile_defaults(args: argparse.Namespace, argv_tokens: list
             "run_chemprop_cmpnn": False,
             "run_chemprop_rdkit2d": False,
             "selector_auto_rf_by_dataset_size": True,
+            "cv_selection": "nested",
         }
 
     for arg_name, value in profile_defaults.items():

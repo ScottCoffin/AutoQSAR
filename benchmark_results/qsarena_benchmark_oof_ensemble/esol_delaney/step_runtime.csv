@@ -1,5 +1,6 @@
 dataset,stage_index,total_stages,stage_label,step_type,model,workflow,started_at,started_epoch,status,ended_at,ended_epoch,duration_seconds
-esol_delaney,1,4,loading MoleculeNet PhysChem benchmark: ESOL (Delaney),load_dataset,,,2026-10-02 10:54:50 Pacific Daylight Time,1790963690.9140027,completed,2026-10-02 10:54:51 Pacific Daylight Time,1790963691.1157084,0.202
-esol_delaney,2,4,building molecular features (cached),feature_generation,,,2026-10-02 10:54:51 Pacific Daylight Time,1790963691.1157084,resumed_cache,2026-10-02 10:54:51 Pacific Daylight Time,1790963691.1267104,0.011
-esol_delaney,3,4,splitting data and selecting features (cached),feature_selection,,,2026-10-02 10:54:51 Pacific Daylight Time,1790963691.1267104,resumed_cache,2026-10-02 10:54:51 Pacific Daylight Time,1790963691.1476948,0.021
-esol_delaney,4,4,ensemble (2 method(s)),model,Ensemble,ensemble,2026-10-02 10:54:51 Pacific Daylight Time,1790963691.1476948,completed,2026-10-02 10:54:58 Pacific Daylight Time,1790963698.931976,7.784
+esol_delaney,1,5,loading MoleculeNet PhysChem benchmark: ESOL (Delaney),load_dataset,,,2026-10-04 23:01:17 Pacific Daylight Time,1791180077.219652,completed,2026-10-04 23:01:17 Pacific Daylight Time,1791180077.393273,0.174
+esol_delaney,2,5,building molecular features (cached),feature_generation,,,2026-10-04 23:01:17 Pacific Daylight Time,1791180077.393273,resumed_cache,2026-10-04 23:01:17 Pacific Daylight Time,1791180077.4034996,0.01
+esol_delaney,3,5,splitting data and selecting features (cached),feature_selection,,,2026-10-04 23:01:17 Pacific Daylight Time,1791180077.4034996,resumed_cache,2026-10-04 23:01:17 Pacific Daylight Time,1791180077.4205272,0.017
+esol_delaney,4,5,CFA combinatorial fusion,model,CFA (Combinatorial Fusion),cfa,2026-10-04 23:01:17 Pacific Daylight Time,1791180077.4205272,completed,2026-10-04 23:01:17 Pacific Daylight Time,1791180077.6134684,0.193
+esol_delaney,5,5,ensemble (2 method(s)),model,Ensemble,ensemble,2026-10-04 23:01:17 Pacific Daylight Time,1791180077.6134684,completed,2026-10-04 23:01:23 Pacific Daylight Time,1791180083.418091,5.805

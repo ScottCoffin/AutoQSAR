@@ -6077,6 +6077,51 @@ cells += [
                 print(f"Saved train-only selector cache artifacts under: {selector_cache_dir}")
 
         feature_metadata.update(train_selector_summary)
+
+        def _refit_train_only_selector(X_fit, y_fit, smiles_fit):
+            # Repeat the train-only selector on a subset of training rows (used for nested CV in 4C and 7A).
+            X_fit = pd.DataFrame(X_fit).reset_index(drop=True)
+            y_fit = np.asarray(y_fit, dtype=float).reshape(-1)
+            if train_selector_method in {"fixed_lasso", "lasso_cv", "elasticnet_cv"}:
+                _, fold_details = apply_sparse_linear_feature_selection(
+                    feature_df=X_fit,
+                    target_values=y_fit,
+                    selector_method=train_selector_method,
+                    alpha=float(feature_selection_config.get("fixed_lasso_alpha", 1.0)),
+                    alpha_grid_min_log10=float(feature_selection_config.get("alpha_grid_min_log10", -5)),
+                    alpha_grid_max_log10=float(feature_selection_config.get("alpha_grid_max_log10", -1)),
+                    alpha_grid_size=int(feature_selection_config.get("alpha_grid_size", 12)),
+                    elasticnet_l1_ratio_grid=str(feature_selection_config.get("elasticnet_l1_ratio_grid", "0.3, 0.7")),
+                    cv_split_strategy=selector_cv_split_strategy,
+                    cv_folds=int(feature_selection_config.get("cv_folds", 3)),
+                    random_seed=int(model_random_seed),
+                    coefficient_threshold=float(feature_selection_config.get("coefficient_threshold", 1e-10)),
+                    max_iter=int(feature_selection_config.get("max_iter", 10000)),
+                    selection_mode=str(feature_selection_config.get("selection_mode", "cyclic coordinate updates")),
+                    max_selected_features=int(train_selector_max_features),
+                    smiles_values=pd.Series(smiles_fit).reset_index(drop=True),
+                )
+                return list(fold_details["selected_columns"])
+            if train_selector_method == "random_forest_importance":
+                fold_forest = RandomForestRegressor(
+                    n_estimators=int(feature_selection_config.get("random_forest_selector_trees", 500)),
+                    random_state=int(model_random_seed),
+                    n_jobs=-1,
+                ).fit(X_fit, y_fit)
+                fold_importances = np.asarray(fold_forest.feature_importances_, dtype=float)
+                fold_ranked = np.argsort(fold_importances)[::-1]
+                fold_selected = [idx for idx in fold_ranked if fold_importances[idx] > 0][: int(train_selector_max_features)]
+                if not fold_selected:
+                    fold_selected = fold_ranked[: min(int(train_selector_max_features), X_fit.shape[1])].tolist()
+                return X_fit.columns[fold_selected].tolist()
+            return list(X_fit.columns)
+
+        STATE["train_only_selector_refit"] = (
+            _refit_train_only_selector
+            if train_selector_method in {"fixed_lasso", "lasso_cv", "elasticnet_cv", "random_forest_importance"}
+            else None
+        )
+        STATE["nested_fold_columns"] = {}
         STATE["X_train_unselected"] = X_train_unselected_dedup.copy()
         STATE["X_test_unselected"] = X_test_unselected_dedup.copy()
         STATE["X_train"] = X_train.copy()
@@ -6335,6 +6380,7 @@ cells += [
         """
         # @title 4C. Train conventional ML models and show an interactive metrics table { display-mode: "form" }
         use_cross_validation = True # @param {type:"boolean"}
+        nested_selection_cv = True # @param {type:"boolean"}
         cv_folds = 5 # @param [3, 5, 10]
         model_random_seed = 42 # @param {type:"integer"}
         enable_conventional_model_cache = True # @param {type:"boolean"}
@@ -6641,6 +6687,40 @@ cells += [
                 "mse": "neg_mean_squared_error",
             }
 
+        def nested_fold_columns(fold_splits):
+            # Per-fold selected columns from the unselected training matrix (cached per fold geometry).
+            refit_selector = STATE.get("train_only_selector_refit")
+            X_unselected = STATE.get("X_train_unselected")
+            if refit_selector is None or not isinstance(X_unselected, pd.DataFrame):
+                return None
+            key = tuple(np.asarray(val_idx, dtype=int).tobytes() for _fit_idx, val_idx in fold_splits)
+            cache = STATE.setdefault("nested_fold_columns", {})
+            if key not in cache:
+                X_frame = X_unselected.reset_index(drop=True)
+                y_values = np.asarray(STATE["y_train"], dtype=float)
+                smiles_values = pd.Series(STATE["smiles_train"]).reset_index(drop=True)
+                cache[key] = [
+                    refit_selector(X_frame.iloc[fit_idx], y_values[fit_idx], smiles_values.iloc[fit_idx])
+                    for fit_idx, _val_idx in fold_splits
+                ]
+                print(f"Nested feature selection: refitted the selector on {len(fold_splits)} folds.", flush=True)
+            return cache[key]
+
+        def nested_cv_scores(estimator, cv_splitter):
+            # cross_validate-style scores with the selector refitted inside every fold (no selection leak).
+            X_frame = STATE["X_train_unselected"].reset_index(drop=True)
+            y_values = np.asarray(y_train, dtype=float)
+            fold_splits = list(cv_splitter) if isinstance(cv_splitter, list) else list(cv_splitter.split(X_frame, y_values))
+            fold_columns = nested_fold_columns(fold_splits)
+            out = {"test_r2": [], "test_mse": [], "test_mae": []}
+            for (fit_idx, val_idx), columns in zip(fold_splits, fold_columns):
+                fold_model = clone(estimator).fit(X_frame.iloc[fit_idx][columns], y_values[fit_idx])
+                fold_pred = np.asarray(fold_model.predict(X_frame.iloc[val_idx][columns]), dtype=float).reshape(-1)
+                out["test_r2"].append(r2_score(y_values[val_idx], fold_pred))
+                out["test_mse"].append(-mean_squared_error(y_values[val_idx], fold_pred))
+                out["test_mae"].append(-mean_absolute_error(y_values[val_idx], fold_pred))
+            return {key: np.asarray(values, dtype=float) for key, values in out.items()}
+
         metrics_rows = []
         fitted_models = {}
         predictions = {}
@@ -6689,6 +6769,7 @@ cells += [
                             "split_strategy": str(data_split_strategy),
                             "test_fraction": float(test_fraction),
                             "cross_validation_enabled": bool(use_cross_validation),
+                            "nested_selection_cv": bool(nested_selection_cv),
                             "cv_folds": int(effective_cv_folds) if effective_cv_folds is not None else None,
                             "cv_split_strategy": effective_cv_split_strategy if effective_cv_split_strategy is not None else None,
                             "random_seed": int(model_random_seed),
@@ -6741,7 +6822,11 @@ cells += [
             scores = None
             if not cached_model_loaded:
                 if use_cross_validation:
-                    scores = cross_validate(clone(estimator), model_X_train, y_train, cv=cv, scoring=scoring, n_jobs=1)
+                    uses_selected_matrix = name != "MapLight CatBoost" and list(model_X_train.columns) == list(STATE["X_train"].columns)
+                    if nested_selection_cv and uses_selected_matrix and STATE.get("train_only_selector_refit") is not None:
+                        scores = nested_cv_scores(estimator, cv)
+                    else:
+                        scores = cross_validate(clone(estimator), model_X_train, y_train, cv=cv, scoring=scoring, n_jobs=1)
                 fitted = clone(estimator)
                 fitted.fit(model_X_train, y_train)
                 pred_train = np.asarray(fitted.predict(model_X_train)).reshape(-1)
@@ -6843,6 +6928,7 @@ cells += [
                         "split_strategy": str(data_split_strategy),
                         "test_fraction": float(test_fraction),
                         "cross_validation_enabled": bool(use_cross_validation),
+                        "nested_selection_cv": bool(nested_selection_cv),
                         "cv_folds": int(effective_cv_folds) if effective_cv_folds is not None else None,
                         "cv_split_strategy": effective_cv_split_strategy if effective_cv_split_strategy is not None else None,
                         "cv_r2": row["CV R2"],
@@ -12179,6 +12265,31 @@ cells += [
             fold_signature = oof_fold_signature(oof_splits)
             oof_cache = STATE.setdefault("ensemble_oof_cache", {})
 
+            # Nested feature selection: members trained on the selected matrix are refitted on each fold's own
+            # selection, so their OOF predictions carry no selection leak (block 4C's nested_selection_cv).
+            _nested_columns_for = None
+            if bool(globals().get("nested_selection_cv", True)) and STATE.get("train_only_selector_refit") is not None:
+                _unsel = pd.DataFrame(STATE["X_train_unselected"]).reset_index(drop=True)
+                _smiles_unsel = pd.Series(STATE["smiles_train"]).reset_index(drop=True)
+                _nested_key = tuple(np.asarray(v, dtype=int).tobytes() for _f, v in oof_splits)
+                _nested_cache = STATE.setdefault("nested_fold_columns", {})
+                if _nested_key not in _nested_cache:
+                    _nested_cache[_nested_key] = [
+                        STATE["train_only_selector_refit"](_unsel.iloc[f], y_train_state[f], _smiles_unsel.iloc[f])
+                        for f, _v in oof_splits
+                    ]
+                _nested_fold_of = {np.asarray(v, dtype=int).tobytes(): k for k, (_f, v) in enumerate(oof_splits)}
+                _nested_cols = _nested_cache[_nested_key]
+                fold_signature = fold_signature + "|nested"
+
+                def _nested_columns_for(val_idx):
+                    return _nested_cols[_nested_fold_of[np.asarray(val_idx, dtype=int).tobytes()]]
+
+                def _nested_refit(fitted_model, fit_idx, val_idx):
+                    columns = _nested_columns_for(val_idx)
+                    model = _clone(fitted_model).fit(_unsel.iloc[fit_idx][columns], y_train_state[fit_idx])
+                    return np.asarray(model.predict(_unsel.iloc[val_idx][columns]), dtype=float).reshape(-1)
+
             def _feature_matrix_for(model_name):
                 columns = list(STATE.get("traditional_model_feature_columns", {}).get(model_name, []) or [])
                 for source_key in ("X_train", "X_train_unselected"):
@@ -12210,10 +12321,16 @@ cells += [
                     member_name = str(model_name)
                     payloads[member_name] = _base_payload(prediction["train"], prediction["test"], "Conventional ML")
                     X_frame = _feature_matrix_for(model_name)
-                    refitters[member_name] = (
-                        lambda fit_idx, val_idx, _fold_dir, fitted_model=fitted_model, X_frame=X_frame:
-                        np.asarray(_clone(fitted_model).fit(X_frame.iloc[fit_idx], y_train_state[fit_idx]).predict(X_frame.iloc[val_idx]), dtype=float).reshape(-1)
-                    )
+                    if _nested_columns_for is not None and list(X_frame.columns) == list(pd.DataFrame(STATE["X_train"]).columns):
+                        refitters[member_name] = (
+                            lambda fit_idx, val_idx, _fold_dir, fitted_model=fitted_model:
+                            _nested_refit(fitted_model, fit_idx, val_idx)
+                        )
+                    else:
+                        refitters[member_name] = (
+                            lambda fit_idx, val_idx, _fold_dir, fitted_model=fitted_model, X_frame=X_frame:
+                            np.asarray(_clone(fitted_model).fit(X_frame.iloc[fit_idx], y_train_state[fit_idx]).predict(X_frame.iloc[val_idx]), dtype=float).reshape(-1)
+                        )
             if include_tuned_conventional and "tuned_traditional_models" in STATE:
                 for model_name, fitted_model in STATE["tuned_traditional_models"].items():
                     prediction = STATE.get("tuned_traditional_predictions", {}).get(model_name)
@@ -12222,10 +12339,16 @@ cells += [
                     member_name = f"Tuned {model_name}"
                     payloads[member_name] = _base_payload(prediction["train"], prediction["test"], "Tuned conventional ML")
                     X_frame = pd.DataFrame(STATE["X_train"]).reset_index(drop=True)
-                    refitters[member_name] = (
-                        lambda fit_idx, val_idx, _fold_dir, fitted_model=fitted_model, X_frame=X_frame:
-                        np.asarray(_clone(fitted_model).fit(X_frame.iloc[fit_idx], y_train_state[fit_idx]).predict(X_frame.iloc[val_idx]), dtype=float).reshape(-1)
-                    )
+                    if _nested_columns_for is not None:
+                        refitters[member_name] = (
+                            lambda fit_idx, val_idx, _fold_dir, fitted_model=fitted_model:
+                            _nested_refit(fitted_model, fit_idx, val_idx)
+                        )
+                    else:
+                        refitters[member_name] = (
+                            lambda fit_idx, val_idx, _fold_dir, fitted_model=fitted_model, X_frame=X_frame:
+                            np.asarray(_clone(fitted_model).fit(X_frame.iloc[fit_idx], y_train_state[fit_idx]).predict(X_frame.iloc[val_idx]), dtype=float).reshape(-1)
+                        )
             if include_unimol and "unimol_predictions" in STATE:
                 unimol_dirs = dict(STATE.get("unimol_model_dirs", {}) or {})
                 for model_name, prediction in STATE["unimol_predictions"].items():

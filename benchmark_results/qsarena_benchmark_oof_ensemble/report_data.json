@@ -1,13 +1,13 @@
 {
   "title": "QSARena run report",
-  "generated_at": "2026-10-02 11:35:54",
+  "generated_at": "2026-10-04 23:32:22",
   "output_dir": "benchmark_results\\qsarena_benchmark_oof_ensemble",
   "run": {
     "mode": "benchmark",
     "profile": "full",
     "gpu_available": true,
     "qsarena_version": "0.1.0",
-    "config_signature": "2864ae01613d5ff02577f8b0d757842c01bdc7acfd01be7812f24a456b52ca46",
+    "config_signature": "97be762568e0fe5e7d4ccde76269ce3c6e615e0760033fedd2847dc1ea3ad1bb",
     "tdc22_datasets": [
       "tdc_dili",
       "tdc_hia_hou",
@@ -34,7 +34,7 @@
     ],
     "tdc22_multiseed_done": false,
     "deep_skipped_without_gpu": false,
-    "elapsed_seconds": 2565.1,
+    "elapsed_seconds": 1938.4,
     "single_seed": true
   },
   "protocol": "both",
@@ -824,15 +824,15 @@
       "dataset": "tdc_skin_reaction",
       "task": "classification",
       "protocol": "test",
-      "model": "Uni-Mol V2 (84m)",
-      "family": "pretrained_3d",
+      "model": "XGBoost (ADMETboost features)",
+      "family": "gradient_boosting",
       "metric": "roc_auc",
-      "test_value": 0.6577560240963856,
-      "cv_value": null,
-      "test_roc_auc": 0.6577560240963856,
-      "test_auprc": 0.8402172665111483,
-      "test_balanced_accuracy": 0.557605421686747,
-      "test_mcc": 0.168887752291338
+      "test_value": 0.6671686746987953,
+      "cv_value": 0.7668350094017616,
+      "test_roc_auc": 0.6671686746987953,
+      "test_auprc": 0.8360503106255701,
+      "test_balanced_accuracy": 0.5540286144578312,
+      "test_mcc": 0.1802991478158995
     },
     {
       "dataset": "tdc_skin_reaction",
@@ -852,15 +852,15 @@
       "dataset": "tdc_dili",
       "task": "classification",
       "protocol": "test",
-      "model": "Uni-Mol V1",
-      "family": "pretrained_3d",
+      "model": "XGBoost (ADMETboost features)",
+      "family": "gradient_boosting",
       "metric": "roc_auc",
-      "test_value": 0.9217391304347826,
-      "cv_value": null,
-      "test_roc_auc": 0.9217391304347826,
-      "test_auprc": 0.9187867235267092,
-      "test_balanced_accuracy": 0.8547826086956521,
-      "test_mcc": 0.7089490077940542
+      "test_value": 0.922608695652174,
+      "cv_value": 0.8804069096341806,
+      "test_roc_auc": 0.922608695652174,
+      "test_auprc": 0.8992187885045859,
+      "test_balanced_accuracy": 0.8839130434782609,
+      "test_mcc": 0.7713555677066442
     },
     {
       "dataset": "tdc_dili",
@@ -883,12 +883,12 @@
       "model": "Ensemble (OOF Stacking (RidgeCV, 5-fold))",
       "family": "ensemble",
       "metric": "rmse",
-      "test_value": 0.0933256252953359,
+      "test_value": 0.0938934715499376,
       "cv_value": null,
-      "test_rmse": 0.0933256252953359,
-      "test_mae": 0.0684229589045833,
-      "test_r2": 0.9824552793491202,
-      "test_spearman": 0.9895672392194912
+      "test_rmse": 0.0938934715499376,
+      "test_mae": 0.0687569072485041,
+      "test_r2": 0.9822411256638864,
+      "test_spearman": 0.9894772240067056
     },
     {
       "dataset": "chemml_cep_homo",
@@ -936,15 +936,15 @@
       "dataset": "tdc_hia_hou",
       "task": "classification",
       "protocol": "test",
-      "model": "CFA (Combinatorial Fusion)",
-      "family": "fusion",
+      "model": "XGBoost (ADMETboost features)",
+      "family": "gradient_boosting",
       "metric": "roc_auc",
-      "test_value": 0.987448559670782,
-      "cv_value": null,
-      "test_roc_auc": 0.987448559670782,
-      "test_auprc": 0.9958305331331546,
-      "test_balanced_accuracy": 0.5,
-      "test_mcc": 0.0
+      "test_value": 0.9938271604938272,
+      "cv_value": 0.9719218851069488,
+      "test_roc_auc": 0.9938271604938272,
+      "test_auprc": 0.998159802657524,
+      "test_balanced_accuracy": 0.9074074074074074,
+      "test_mcc": 0.878595370213959
     },
     {
       "dataset": "tdc_hia_hou",
@@ -1023,12 +1023,12 @@
       "model": "Ensemble (Weighted average (inverse OOF error))",
       "family": "ensemble",
       "metric": "rmse",
-      "test_value": 1.0925350441693331,
+      "test_value": 1.0853199540579597,
       "cv_value": null,
-      "test_rmse": 1.0925350441693331,
-      "test_mae": 0.8236517772603018,
-      "test_r2": 0.8737801623957693,
-      "test_spearman": 0.94088348880939
+      "test_rmse": 1.0853199540579597,
+      "test_mae": 0.8160278784516762,
+      "test_r2": 0.8754417666099087,
+      "test_spearman": 0.9404973353166408
     },
     {
       "dataset": "tdc_hydrationfreeenergy_freesolv",
@@ -1118,15 +1118,15 @@
       "dataset": "tdc_half_life_obach",
       "task": "regression",
       "protocol": "cv",
-      "model": "TabPFNRegressor",
-      "family": "deep_tabular",
+      "model": "XGBoost (ADMETboost features)",
+      "family": "gradient_boosting",
       "metric": "spearman",
-      "test_value": 0.221072426552453,
-      "cv_value": 0.2821687897922628,
-      "test_rmse": 20.341997524119027,
-      "test_mae": 10.423822900065668,
-      "test_r2": 0.1211698556889052,
-      "test_spearman": 0.221072426552453
+      "test_value": 0.4729537763304827,
+      "cv_value": 0.3560895940974171,
+      "test_rmse": 33.96675116522601,
+      "test_mae": 15.578587561836947,
+      "test_r2": -1.45033673049047,
+      "test_spearman": 0.4729537763304827
     },
     {
       "dataset": "tdc_cyp2c9_substrate_carbonmangels",
@@ -1160,15 +1160,15 @@
       "dataset": "tdc_cyp3a4_substrate_carbonmangels",
       "task": "classification",
       "protocol": "test",
-      "model": "Voting Classifier (KNN, SVM)",
-      "family": "conventional_ml",
+      "model": "XGBoost (ADMETboost features)",
+      "family": "gradient_boosting",
       "metric": "roc_auc",
-      "test_value": 0.6552893309222423,
-      "cv_value": 0.8929769909596121,
-      "test_roc_auc": 0.6552893309222423,
-      "test_auprc": 0.7020311507723488,
-      "test_balanced_accuracy": 0.6300858951175408,
-      "test_mcc": 0.2584252603768499
+      "test_value": 0.6596971066907776,
+      "cv_value": 0.695248414225143,
+      "test_roc_auc": 0.6596971066907776,
+      "test_auprc": 0.7292628303299572,
+      "test_balanced_accuracy": 0.610759493670886,
+      "test_mcc": 0.226008124578032
     },
     {
       "dataset": "tdc_cyp3a4_substrate_carbonmangels",
@@ -1275,12 +1275,12 @@
       "model": "Ensemble (Weighted average (inverse OOF error))",
       "family": "ensemble",
       "metric": "rmse",
-      "test_value": 0.6259642765171779,
+      "test_value": 0.6242312325009619,
       "cv_value": null,
-      "test_rmse": 0.6259642765171779,
-      "test_mae": 0.4794203251317335,
-      "test_r2": 0.81327871163601,
-      "test_spearman": 0.899882904475706
+      "test_rmse": 0.6242312325009619,
+      "test_mae": 0.4792063672411125,
+      "test_r2": 0.8143111931036024,
+      "test_spearman": 0.8995962070180289
     },
     {
       "dataset": "esol_delaney",
@@ -1580,15 +1580,15 @@
       "dataset": "poduam_pod_rd_std",
       "task": "regression",
       "protocol": "test",
-      "model": "Ensemble (Weighted average (inverse OOF error))",
-      "family": "ensemble",
+      "model": "CFA (Combinatorial Fusion)",
+      "family": "fusion",
       "metric": "rmse",
-      "test_value": 0.5700142933583752,
+      "test_value": 0.5635570721340388,
       "cv_value": null,
-      "test_rmse": 0.5700142933583752,
-      "test_mae": 0.4210402260860529,
-      "test_r2": 0.4604898854913993,
-      "test_spearman": 0.6479935988750486
+      "test_rmse": 0.5635570721340388,
+      "test_mae": 0.4031886166184966,
+      "test_r2": 0.4726439806339807,
+      "test_spearman": 0.6669725048277466
     },
     {
       "dataset": "poduam_pod_rd_std",
@@ -1695,12 +1695,12 @@
       "model": "Ensemble (OOF Stacking (RidgeCV, 5-fold))",
       "family": "ensemble",
       "metric": "rmse",
-      "test_value": 0.5479856526008019,
+      "test_value": 0.5476563677263883,
       "cv_value": null,
-      "test_rmse": 0.5479856526008019,
-      "test_mae": 0.4104278850548675,
-      "test_r2": 0.8084911282578056,
-      "test_spearman": 0.8915580724491364
+      "test_rmse": 0.5476563677263883,
+      "test_mae": 0.4101013975943262,
+      "test_r2": 0.8087212146762899,
+      "test_spearman": 0.8919798396215111
     },
     {
       "dataset": "lipophilicity",
@@ -1776,15 +1776,15 @@
       "dataset": "tdc_ames",
       "task": "classification",
       "protocol": "test",
-      "model": "TabPFNClassifier",
-      "family": "deep_tabular",
+      "model": "CFA (Combinatorial Fusion)",
+      "family": "fusion",
       "metric": "roc_auc",
-      "test_value": 0.876108793984609,
-      "cv_value": 0.9286630324372788,
-      "test_roc_auc": 0.876108793984609,
-      "test_auprc": 0.9127442613782396,
-      "test_balanced_accuracy": 0.7936292075427362,
-      "test_mcc": 0.5837167274610516
+      "test_value": 0.8772778006226869,
+      "cv_value": null,
+      "test_roc_auc": 0.8772778006226869,
+      "test_auprc": 0.9135664657065644,
+      "test_balanced_accuracy": 0.5,
+      "test_mcc": 0.0
     },
     {
       "dataset": "tdc_ames",
@@ -1832,15 +1832,15 @@
       "dataset": "tdc_solubility_aqsoldb",
       "task": "regression",
       "protocol": "test",
-      "model": "TabPFNRegressor",
-      "family": "deep_tabular",
+      "model": "Ensemble (OOF Stacking (RidgeCV, 5-fold))",
+      "family": "ensemble",
       "metric": "mae",
-      "test_value": 0.6860771429534456,
-      "cv_value": 0.5750483171692629,
-      "test_rmse": 0.9610703783026984,
-      "test_mae": 0.6860771429534456,
-      "test_r2": 0.8243631717584886,
-      "test_spearman": 0.8935174170589117
+      "test_value": 0.6775277467636995,
+      "cv_value": null,
+      "test_rmse": 0.9560951336589424,
+      "test_mae": 0.6775277467636995,
+      "test_r2": 0.8261769293816014,
+      "test_spearman": 0.8947615729585636
     },
     {
       "dataset": "tdc_solubility_aqsoldb",
@@ -1863,12 +1863,12 @@
       "model": "Ensemble (OOF Stacking (RidgeCV, 5-fold))",
       "family": "ensemble",
       "metric": "auprc",
-      "test_value": 0.82894523232554,
+      "test_value": 0.8271080372679169,
       "cv_value": null,
-      "test_roc_auc": 0.9139061060225402,
-      "test_auprc": 0.82894523232554,
-      "test_balanced_accuracy": 0.8348200011025966,
-      "test_mcc": 0.6761852071985808
+      "test_roc_auc": 0.9127066384191914,
+      "test_auprc": 0.8271080372679169,
+      "test_balanced_accuracy": 0.8322225985051941,
+      "test_mcc": 0.6719516068157871
     },
     {
       "dataset": "tdc_cyp2c9_veith",
@@ -1891,12 +1891,12 @@
       "model": "Ensemble (OOF Stacking (RidgeCV, 5-fold))",
       "family": "ensemble",
       "metric": "auprc",
-      "test_value": 0.9024556628102453,
+      "test_value": 0.9022029234711314,
       "cv_value": null,
-      "test_roc_auc": 0.920810506015735,
-      "test_auprc": 0.9024556628102453,
-      "test_balanced_accuracy": 0.8434487544792703,
-      "test_mcc": 0.686556278751745
+      "test_roc_auc": 0.9206530225481626,
+      "test_auprc": 0.9022029234711314,
+      "test_balanced_accuracy": 0.8423657219882955,
+      "test_mcc": 0.6841929105582399
     },
     {
       "dataset": "tdc_cyp3a4_veith",
@@ -1919,26 +1919,26 @@
       "model": "Ensemble (OOF Stacking (RidgeCV, 5-fold))",
       "family": "ensemble",
       "metric": "roc_auc",
-      "test_value": 0.9726960941109573,
+      "test_value": 0.974313816581116,
       "cv_value": null,
-      "test_roc_auc": 0.9726960941109573,
-      "test_auprc": 0.9756071508621124,
-      "test_balanced_accuracy": 0.9338669469280408,
-      "test_mcc": 0.8663099734173286
+      "test_roc_auc": 0.974313816581116,
+      "test_auprc": 0.979508583292226,
+      "test_balanced_accuracy": 0.9298108997304008,
+      "test_mcc": 0.8578560978470341
     },
     {
       "dataset": "tdc_cyp1a2_veith",
       "task": "classification",
       "protocol": "cv",
-      "model": "XGBoost",
-      "family": "gradient_boosting",
+      "model": "SVC",
+      "family": "conventional_ml",
       "metric": "roc_auc",
-      "test_value": 0.914445392188222,
-      "cv_value": 0.9275629863809888,
-      "test_roc_auc": 0.914445392188222,
-      "test_auprc": 0.8964342108172803,
-      "test_balanced_accuracy": 0.914445392188222,
-      "test_mcc": 0.8270034505322083
+      "test_value": 0.962469029087272,
+      "cv_value": 0.9310570375066648,
+      "test_roc_auc": 0.962469029087272,
+      "test_auprc": 0.9689970739372996,
+      "test_balanced_accuracy": 0.9019059804324758,
+      "test_mcc": 0.8024929340433721
     },
     {
       "dataset": "tdc_cyp2c19_veith",
@@ -1947,12 +1947,12 @@
       "model": "Ensemble (OOF Stacking (RidgeCV, 5-fold))",
       "family": "ensemble",
       "metric": "roc_auc",
-      "test_value": 0.9312040181097906,
+      "test_value": 0.9369910952496447,
       "cv_value": null,
-      "test_roc_auc": 0.9312040181097906,
-      "test_auprc": 0.8871028112133077,
-      "test_balanced_accuracy": 0.864479747756488,
-      "test_mcc": 0.7520145665996338
+      "test_roc_auc": 0.9369910952496447,
+      "test_auprc": 0.8874017988426005,
+      "test_balanced_accuracy": 0.8691537311019484,
+      "test_mcc": 0.7597415326965388
     },
     {
       "dataset": "tdc_cyp2c19_veith",
@@ -1961,12 +1961,12 @@
       "model": "XGBoost",
       "family": "gradient_boosting",
       "metric": "roc_auc",
-      "test_value": 0.8398870159269141,
-      "cv_value": 0.8937623615706073,
-      "test_roc_auc": 0.8398870159269141,
-      "test_auprc": 0.7012817066617816,
-      "test_balanced_accuracy": 0.8398870159269141,
-      "test_mcc": 0.6995087971971568
+      "test_value": 0.9255923506923992,
+      "cv_value": 0.8960771820637202,
+      "test_roc_auc": 0.9255923506923992,
+      "test_auprc": 0.8712047913220267,
+      "test_balanced_accuracy": 0.8446115288220551,
+      "test_mcc": 0.7066096308062145
     },
     {
       "dataset": "tdc_cyp2d6_veith",
@@ -1975,12 +1975,12 @@
       "model": "Ensemble (OOF Stacking (RidgeCV, 5-fold))",
       "family": "ensemble",
       "metric": "auprc",
-      "test_value": 0.7608043084618412,
+      "test_value": 0.7592822877195433,
       "cv_value": null,
-      "test_roc_auc": 0.9048826919278768,
-      "test_auprc": 0.7608043084618412,
-      "test_balanced_accuracy": 0.7898691820335467,
-      "test_mcc": 0.6558164788146953
+      "test_roc_auc": 0.9047689461661992,
+      "test_auprc": 0.7592822877195433,
+      "test_balanced_accuracy": 0.7934676843120811,
+      "test_mcc": 0.6571751985218038
     },
     {
       "dataset": "tdc_cyp2d6_veith",
@@ -2003,12 +2003,12 @@
       "model": "Ensemble (Weighted average (inverse OOF error))",
       "family": "ensemble",
       "metric": "roc_auc",
-      "test_value": 0.9051288977287664,
+      "test_value": 0.9068599582570922,
       "cv_value": null,
-      "test_roc_auc": 0.9051288977287664,
-      "test_auprc": 0.9149793283089048,
-      "test_balanced_accuracy": 0.5031570639305446,
-      "test_mcc": 0.0578801635125226
+      "test_roc_auc": 0.9068599582570922,
+      "test_auprc": 0.915664671558836,
+      "test_balanced_accuracy": 0.8310413374591847,
+      "test_mcc": 0.6613064459408863
     },
     {
       "dataset": "tdc_herg_karim",
@@ -2017,12 +2017,12 @@
       "model": "XGBoost",
       "family": "gradient_boosting",
       "metric": "roc_auc",
-      "test_value": 0.8147157893685929,
-      "cv_value": 0.8836922234998109,
-      "test_roc_auc": 0.8147157893685929,
-      "test_auprc": 0.776192932784681,
-      "test_balanced_accuracy": 0.8147157893685928,
-      "test_mcc": 0.6286365843084804
+      "test_value": 0.90239530855419,
+      "cv_value": 0.8834031356825454,
+      "test_roc_auc": 0.90239530855419,
+      "test_auprc": 0.909087374772856,
+      "test_balanced_accuracy": 0.8223541424816453,
+      "test_mcc": 0.6440335063681275
     }
   ],
   "leaderboard": [
@@ -2039,10 +2039,10 @@
     {
       "dataset": "tdc_skin_reaction",
       "leaderboard_metric": "roc_auc",
-      "reference_best": null,
-      "model": "Uni-Mol V2 (84m)",
-      "value": 0.6577560240963856,
-      "estimated_rank_vs_top10": 7,
+      "reference_best": 0.741,
+      "model": "XGBoost (ADMETboost features)",
+      "value": 0.6671686746987953,
+      "estimated_rank_vs_top10": 6,
       "reference_entries": 10,
       "caution": "test-selected"
     },
@@ -2051,7 +2051,7 @@
       "leaderboard_metric": "rmse",
       "reference_best": null,
       "model": "Ensemble (Weighted average (inverse OOF error))",
-      "value": 1.0925350441693331,
+      "value": 1.0853199540579597,
       "estimated_rank_vs_top10": 4,
       "reference_entries": 6,
       "caution": "sparse reference (6 published entries); test-selected"
@@ -2101,7 +2101,7 @@
       "leaderboard_metric": "rmse",
       "reference_best": null,
       "model": "Ensemble (Weighted average (inverse OOF error))",
-      "value": 0.6259642765171779,
+      "value": 0.6242312325009619,
       "estimated_rank_vs_top10": 1,
       "reference_entries": 2,
       "caution": "sparse reference (2 published entries); test-selected"
@@ -2179,9 +2179,9 @@
     {
       "dataset": "poduam_pod_rd_std",
       "leaderboard_metric": "rmse",
-      "reference_best": null,
-      "model": "Ensemble (Weighted average (inverse OOF error))",
-      "value": 0.5700142933583752,
+      "reference_best": 0.63,
+      "model": "CFA (Combinatorial Fusion)",
+      "value": 0.5635570721340388,
       "estimated_rank_vs_top10": 1,
       "reference_entries": 2,
       "caution": "sparse reference (2 published entries); test-selected"
@@ -2221,7 +2221,7 @@
       "leaderboard_metric": "rmse",
       "reference_best": null,
       "model": "Ensemble (OOF Stacking (RidgeCV, 5-fold))",
-      "value": 0.5479856526008019,
+      "value": 0.5476563677263883,
       "estimated_rank_vs_top10": 1,
       "reference_entries": 2,
       "caution": "sparse reference (2 published entries); test-selected"
@@ -2259,9 +2259,9 @@
     {
       "dataset": "tdc_solubility_aqsoldb",
       "leaderboard_metric": "mae",
-      "reference_best": 0.741,
-      "model": "TabPFNRegressor",
-      "value": 0.6860771429534456,
+      "reference_best": null,
+      "model": "Ensemble (OOF Stacking (RidgeCV, 5-fold))",
+      "value": 0.6775277467636995,
       "estimated_rank_vs_top10": 1,
       "reference_entries": 10,
       "caution": "test-selected"
@@ -2270,61 +2270,61 @@
   "families_won": {
     "test": {
       "graph_nn": 9,
-      "pretrained_3d": 8,
+      "gradient_boosting": 6,
       "ensemble": 11,
-      "deep_tabular": 5,
-      "fusion": 2,
-      "gradient_boosting": 2,
-      "conventional_ml": 4,
-      "maplight_gnn": 3
+      "deep_tabular": 3,
+      "pretrained_3d": 6,
+      "maplight_gnn": 3,
+      "fusion": 3,
+      "conventional_ml": 3
     },
     "cv": {
-      "deep_tabular": 32,
-      "conventional_ml": 6,
+      "deep_tabular": 31,
+      "conventional_ml": 7,
       "gradient_boosting": 6
     }
   },
   "cost_vs_gap": [
     {
       "family": "conventional_ml",
-      "median_seconds": 4.8445,
-      "median_relative_gap": 0.191461022313425,
+      "median_seconds": 4.785500000000001,
+      "median_relative_gap": 0.18597823251743567,
       "n_fits": 350
     },
     {
       "family": "deep_tabular",
       "median_seconds": 46.1605,
-      "median_relative_gap": 0.22316285627454924,
+      "median_relative_gap": 0.2271966311649687,
       "n_fits": 154
     },
     {
       "family": "ensemble",
-      "median_seconds": 6.9445,
-      "median_relative_gap": 0.05524876617245596,
+      "median_seconds": 5.168,
+      "median_relative_gap": 0.05488259344539888,
       "n_fits": 88
     },
     {
       "family": "fusion",
-      "median_seconds": 0.052,
-      "median_relative_gap": 0.07768668942063078,
-      "n_fits": 38
+      "median_seconds": 0.07750000000000001,
+      "median_relative_gap": 0.041379501361481344,
+      "n_fits": 44
     },
     {
       "family": "gradient_boosting",
-      "median_seconds": 8.385,
-      "median_relative_gap": 0.11578766534959625,
-      "n_fits": 105
+      "median_seconds": 32.05,
+      "median_relative_gap": 0.09335151174913785,
+      "n_fits": 149
     },
     {
       "family": "graph_nn",
       "median_seconds": 276.942,
-      "median_relative_gap": 0.10942506318638105,
+      "median_relative_gap": 0.10972752733260574,
       "n_fits": 202
     },
     {
       "family": "maplight_gnn",
       "median_seconds": 136.843,
-      "median_relative_gap": 0.13023790088129467,
+      "median_relative_gap": 0.1294111617436759,
       "n_fits": 39
     },
     {
@@ -2484,10 +2484,10 @@
         "standardization": 0.9703703703703703,
         "knn_similarity": 0.9407407407407408
       },
-      "selected_model": "TabPFNRegressor",
+      "selected_model": "XGBoost (ADMETboost features)",
       "notes": [],
-      "mae_in_domain": 9.93736532403577,
-      "mae_out_of_domain": 15.90752648440274
+      "mae_in_domain": 15.134124141104758,
+      "mae_out_of_domain": 20.58890248645436
     },
     {
       "dataset": "tdc_cyp2c9_substrate_carbonmangels",
@@ -2863,22 +2863,22 @@
       "dataset": "tdc_cyp1a2_veith",
       "method": "both",
       "n_test": 2518,
-      "in_domain_fraction": 0.9972200158856235,
+      "in_domain_fraction": 0.8423351866560762,
       "methods": {
         "standardization": 0.9972200158856235,
-        "confidence": 1.0
+        "confidence": 0.8451151707704527
       },
-      "selected_model": "XGBoost",
+      "selected_model": "SVC",
       "notes": []
     },
     {
       "dataset": "tdc_cyp2c19_veith",
       "method": "both",
       "n_test": 2534,
-      "in_domain_fraction": 0.9968429360694554,
+      "in_domain_fraction": 0.8026835043409629,
       "methods": {
         "standardization": 0.9968429360694554,
-        "confidence": 1.0
+        "confidence": 0.8054459352801894
       },
       "selected_model": "XGBoost",
       "notes": []
@@ -2899,10 +2899,10 @@
       "dataset": "tdc_herg_karim",
       "method": "both",
       "n_test": 2690,
-      "in_domain_fraction": 0.9996282527881041,
+      "in_domain_fraction": 0.7037174721189591,
       "methods": {
         "standardization": 0.9996282527881041,
-        "confidence": 1.0
+        "confidence": 0.704089219330855
       },
       "selected_model": "XGBoost",
       "notes": []
@@ -9068,6 +9068,12 @@
       "dataset": "tdc_cyp2d6_veith"
     },
     {
+      "code": "ad_out_of_domain",
+      "message": "30% of test molecules are outside the applicability domain.",
+      "remedy": "Treat their predictions as extrapolations (applicability_domain.csv lists them).",
+      "dataset": "tdc_herg_karim"
+    },
+    {
       "code": "backend_failure",
       "message": "Chemprop v2 (D-MPNN, ensemble=3) failed: 'ascii' codec can't decode byte 0xe2 in position 144: ordinal not in range(128)",
       "remedy": "See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail.",
@@ -10409,8 +10415,8 @@
           {
             "model": "CFA (Combinatorial Fusion)",
             "family": "fusion",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
+            "status": "planned",
+            "reason": ""
           },
           {
             "model": "Ensemble (OOF Stacking (RidgeCV))",
@@ -10427,9 +10433,10 @@
         ],
         "estimated_seconds": {
           "features": 10.600000000000001,
-          "feature_selection": 166.36188111928678
+          "feature_selection": 166.36188111928678,
+          "fusion": 0.05233644859813084
         },
-        "estimated_total_seconds": 176.96188111928677
+        "estimated_total_seconds": 177.0142175678849
       },
       {
         "dataset": "tdc_skin_reaction",
@@ -10577,8 +10584,8 @@
           {
             "model": "CFA (Combinatorial Fusion)",
             "family": "fusion",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
+            "status": "planned",
+            "reason": ""
           },
           {
             "model": "Ensemble (OOF Stacking (RidgeCV))",
@@ -10595,9 +10602,10 @@
         ],
         "estimated_seconds": {
           "features": 13.08,
-          "feature_selection": 260.4792242769973
+          "feature_selection": 260.4792242769973,
+          "fusion": 0.07551401869158877
         },
-        "estimated_total_seconds": 273.55922427699727
+        "estimated_total_seconds": 273.63473829568886
       },
       {
         "dataset": "tdc_dili",
@@ -10745,8 +10753,8 @@
           {
             "model": "CFA (Combinatorial Fusion)",
             "family": "fusion",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
+            "status": "planned",
+            "reason": ""
           },
           {
             "model": "Ensemble (OOF Stacking (RidgeCV))",
@@ -10763,9 +10771,10 @@
         ],
         "estimated_seconds": {
           "features": 14.5,
-          "feature_selection": 317.85928771588084
+          "feature_selection": 317.85928771588084,
+          "fusion": 0.08878504672897196
         },
-        "estimated_total_seconds": 332.35928771588084
+        "estimated_total_seconds": 332.4480727626098
       },
       {
         "dataset": "chemml_cep_homo",
@@ -10919,8 +10928,8 @@
           {
             "model": "CFA (Combinatorial Fusion)",
             "family": "fusion",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
+            "status": "planned",
+            "reason": ""
           },
           {
             "model": "Ensemble (OOF Stacking (RidgeCV))",
@@ -10937,9 +10946,10 @@
         ],
         "estimated_seconds": {
           "features": 15.0,
-          "feature_selection": 338.4725780968425
+          "feature_selection": 338.4725780968425,
+          "fusion": 0.09345794392523364
         },
-        "estimated_total_seconds": 353.4725780968425
+        "estimated_total_seconds": 353.5660360407677
       },
       {
         "dataset": "chemml_organic_density",
@@ -11093,8 +11103,8 @@
           {
             "model": "CFA (Combinatorial Fusion)",
             "family": "fusion",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
+            "status": "planned",
+            "reason": ""
           },
           {
             "model": "Ensemble (OOF Stacking (RidgeCV))",
@@ -11111,9 +11121,10 @@
         ],
         "estimated_seconds": {
           "features": 15.0,
-          "feature_selection": 338.4725780968425
+          "feature_selection": 338.4725780968425,
+          "fusion": 0.09345794392523364
         },
-        "estimated_total_seconds": 353.4725780968425
+        "estimated_total_seconds": 353.5660360407677
       },
       {
         "dataset": "tdc_hia_hou",
@@ -11261,8 +11272,8 @@
           {
             "model": "CFA (Combinatorial Fusion)",
             "family": "fusion",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
+            "status": "planned",
+            "reason": ""
           },
           {
             "model": "Ensemble (OOF Stacking (RidgeCV))",
@@ -11279,9 +11290,10 @@
         ],
         "estimated_seconds": {
           "features": 16.560000000000002,
-          "feature_selection": 403.81869415436387
+          "feature_selection": 403.81869415436387,
+          "fusion": 0.1080373831775701
         },
-        "estimated_total_seconds": 420.37869415436387
+        "estimated_total_seconds": 420.48673153754146
       },
       {
         "dataset": "tdc_bioavailability_ma",
@@ -11429,8 +11441,8 @@
           {
             "model": "CFA (Combinatorial Fusion)",
             "family": "fusion",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
+            "status": "planned",
+            "reason": ""
           },
           {
             "model": "Ensemble (OOF Stacking (RidgeCV))",
@@ -11447,9 +11459,10 @@
         ],
         "estimated_seconds": {
           "features": 17.8,
-          "feature_selection": 457.9896907050917
+          "feature_selection": 457.9896907050917,
+          "fusion": 0.11962616822429906
         },
-        "estimated_total_seconds": 475.7896907050917
+        "estimated_total_seconds": 475.90931687331596
       },
       {
         "dataset": "freesolv_sampl",
@@ -11603,8 +11616,8 @@
           {
             "model": "CFA (Combinatorial Fusion)",
             "family": "fusion",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
+            "status": "planned",
+            "reason": ""
           },
           {
             "model": "Ensemble (OOF Stacking (RidgeCV))",
@@ -11621,9 +11634,10 @@
         ],
         "estimated_seconds": {
           "features": 17.84,
-          "feature_selection": 460.1822050502995
+          "feature_selection": 460.1822050502995,
+          "fusion": 0.12
         },
-        "estimated_total_seconds": 478.0222050502995
+        "estimated_total_seconds": 478.1422050502995
       },
       {
         "dataset": "tdc_hydrationfreeenergy_freesolv",
@@ -11777,8 +11791,8 @@
           {
             "model": "CFA (Combinatorial Fusion)",
             "family": "fusion",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
+            "status": "planned",
+            "reason": ""
           },
           {
             "model": "Ensemble (OOF Stacking (RidgeCV))",
@@ -11795,9 +11809,10 @@
         ],
         "estimated_seconds": {
           "features": 17.84,
-          "feature_selection": 460.1822050502995
+          "feature_selection": 460.1822050502995,
+          "fusion": 0.12
         },
-        "estimated_total_seconds": 478.0222050502995
+        "estimated_total_seconds": 478.1422050502995
       },
       {
         "dataset": "tdc_herg",
@@ -11945,8 +11960,8 @@
           {
             "model": "CFA (Combinatorial Fusion)",
             "family": "fusion",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
+            "status": "planned",
+            "reason": ""
           },
           {
             "model": "Ensemble (OOF Stacking (RidgeCV))",
@@ -11963,9 +11978,10 @@
         ],
         "estimated_seconds": {
           "features": 18.1,
-          "feature_selection": 471.17346736468977
+          "feature_selection": 471.17346736468977,
+          "fusion": 0.12242990654205607
         },
-        "estimated_total_seconds": 489.2734673646898
+        "estimated_total_seconds": 489.39589727123183
       },
       {
         "dataset": "tdc_cyp2d6_substrate_carbonmangels",
@@ -12113,8 +12129,8 @@
           {
             "model": "CFA (Combinatorial Fusion)",
             "family": "fusion",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
+            "status": "planned",
+            "reason": ""
           },
           {
             "model": "Ensemble (OOF Stacking (RidgeCV))",
@@ -12131,9 +12147,10 @@
         ],
         "estimated_seconds": {
           "features": 18.34,
-          "feature_selection": 482.21202900953335
+          "feature_selection": 482.21202900953335,
+          "fusion": 0.12467289719626168
         },
-        "estimated_total_seconds": 500.5520290095333
+        "estimated_total_seconds": 500.6767019067296
       },
       {
         "dataset": "tdc_half_life_obach",
@@ -12287,8 +12304,8 @@
           {
             "model": "CFA (Combinatorial Fusion)",
             "family": "fusion",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
+            "status": "planned",
+            "reason": ""
           },
           {
             "model": "Ensemble (OOF Stacking (RidgeCV))",
@@ -12305,9 +12322,10 @@
         ],
         "estimated_seconds": {
           "features": 18.34,
-          "feature_selection": 482.21202900953335
+          "feature_selection": 482.21202900953335,
+          "fusion": 0.12467289719626168
         },
-        "estimated_total_seconds": 500.5520290095333
+        "estimated_total_seconds": 500.6767019067296
       },
       {
         "dataset": "tdc_cyp2c9_substrate_carbonmangels",
@@ -12455,8 +12473,8 @@
           {
             "model": "CFA (Combinatorial Fusion)",
             "family": "fusion",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
+            "status": "planned",
+            "reason": ""
           },
           {
             "model": "Ensemble (OOF Stacking (RidgeCV))",
@@ -12473,9 +12491,10 @@
         ],
         "estimated_seconds": {
           "features": 18.380000000000003,
-          "feature_selection": 483.31845995084143
+          "feature_selection": 483.31845995084143,
+          "fusion": 0.12504672897196262
         },
-        "estimated_total_seconds": 501.6984599508414
+        "estimated_total_seconds": 501.82350667981336
       },
       {
         "dataset": "tdc_cyp3a4_substrate_carbonmangels",
@@ -12623,8 +12642,8 @@
           {
             "model": "CFA (Combinatorial Fusion)",
             "family": "fusion",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
+            "status": "planned",
+            "reason": ""
           },
           {
             "model": "Ensemble (OOF Stacking (RidgeCV))",
@@ -12641,9 +12660,10 @@
         ],
         "estimated_seconds": {
           "features": 18.4,
-          "feature_selection": 484.42535631167596
+          "feature_selection": 484.42535631167596,
+          "fusion": 0.1252336448598131
         },
-        "estimated_total_seconds": 502.82535631167593
+        "estimated_total_seconds": 502.95058995653574
       },
       {
         "dataset": "polaris_adme_fang_rppb_1",
@@ -12797,8 +12817,8 @@
           {
             "model": "CFA (Combinatorial Fusion)",
             "family": "fusion",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
+            "status": "planned",
+            "reason": ""
           },
           {
             "model": "Ensemble (OOF Stacking (RidgeCV))",
@@ -12815,9 +12835,10 @@
         ],
         "estimated_seconds": {
           "features": 22.7,
-          "feature_selection": 681.2252558193405
+          "feature_selection": 681.2252558193405,
+          "fusion": 0.16542056074766354
         },
-        "estimated_total_seconds": 703.9252558193406
+        "estimated_total_seconds": 704.0906763800882
       },
       {
         "dataset": "tdc_caco2_wang",
@@ -12971,8 +12992,8 @@
           {
             "model": "CFA (Combinatorial Fusion)",
             "family": "fusion",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
+            "status": "planned",
+            "reason": ""
           },
           {
             "model": "Ensemble (OOF Stacking (RidgeCV))",
@@ -12989,9 +13010,10 @@
         ],
         "estimated_seconds": {
           "features": 23.2,
-          "feature_selection": 704.8731043987848
+          "feature_selection": 704.8731043987848,
+          "fusion": 0.17009345794392522
         },
-        "estimated_total_seconds": 728.0731043987848
+        "estimated_total_seconds": 728.2431978567288
       },
       {
         "dataset": "tdc_clearance_microsome_az",
@@ -13145,8 +13167,8 @@
           {
             "model": "CFA (Combinatorial Fusion)",
             "family": "fusion",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
+            "status": "planned",
+            "reason": ""
           },
           {
             "model": "Ensemble (OOF Stacking (RidgeCV))",
@@ -13163,9 +13185,10 @@
         ],
         "estimated_seconds": {
           "features": 27.04,
-          "feature_selection": 891.6594502201842
+          "feature_selection": 891.6594502201842,
+          "fusion": 0.20598130841121495
         },
-        "estimated_total_seconds": 918.6994502201842
+        "estimated_total_seconds": 918.9054315285954
       },
       {
         "dataset": "esol_delaney",
@@ -13319,8 +13342,8 @@
           {
             "model": "CFA (Combinatorial Fusion)",
             "family": "fusion",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
+            "status": "planned",
+            "reason": ""
           },
           {
             "model": "Ensemble (OOF Stacking (RidgeCV))",
@@ -13337,9 +13360,10 @@
         ],
         "estimated_seconds": {
           "features": 27.56,
-          "feature_selection": 916.4905863165446
+          "feature_selection": 916.4905863165446,
+          "fusion": 0.2108411214953271
         },
-        "estimated_total_seconds": 944.0505863165446
+        "estimated_total_seconds": 944.26142743804
       },
       {
         "dataset": "tdc_vdss_lombardo",
@@ -13493,8 +13517,8 @@
           {
             "model": "CFA (Combinatorial Fusion)",
             "family": "fusion",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
+            "status": "planned",
+            "reason": ""
           },
           {
             "model": "Ensemble (OOF Stacking (RidgeCV))",
@@ -13511,9 +13535,10 @@
         ],
         "estimated_seconds": {
           "features": 27.6,
-          "feature_selection": 918.9805660524271
+          "feature_selection": 918.9805660524271,
+          "fusion": 0.21121495327102802
         },
-        "estimated_total_seconds": 946.5805660524271
+        "estimated_total_seconds": 946.7917810056981
       },
       {
         "dataset": "tdc_clearance_hepatocyte_az",
@@ -13667,8 +13692,8 @@
           {
             "model": "CFA (Combinatorial Fusion)",
             "family": "fusion",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
+            "status": "planned",
+            "reason": ""
           },
           {
             "model": "Ensemble (OOF Stacking (RidgeCV))",
@@ -13685,9 +13710,10 @@
         ],
         "estimated_seconds": {
           "features": 29.26,
-          "feature_selection": 1001.8330954812587
+          "feature_selection": 1001.8330954812587,
+          "fusion": 0.22672897196261682
         },
-        "estimated_total_seconds": 1031.0930954812588
+        "estimated_total_seconds": 1031.3198244532214
       },
       {
         "dataset": "tdc_pgp_broccatelli",
@@ -13835,8 +13861,8 @@
           {
             "model": "CFA (Combinatorial Fusion)",
             "family": "fusion",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
+            "status": "planned",
+            "reason": ""
           },
           {
             "model": "Ensemble (OOF Stacking (RidgeCV))",
@@ -13853,9 +13879,10 @@
         ],
         "estimated_seconds": {
           "features": 29.36,
-          "feature_selection": 1006.8962471401176
+          "feature_selection": 1006.8962471401176,
+          "fusion": 0.22766355140186914
         },
-        "estimated_total_seconds": 1036.2562471401175
+        "estimated_total_seconds": 1036.4839106915194
       },
       {
         "dataset": "tdc_clintox",
@@ -14003,8 +14030,8 @@
           {
             "model": "CFA (Combinatorial Fusion)",
             "family": "fusion",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
+            "status": "planned",
+            "reason": ""
           },
           {
             "model": "Ensemble (OOF Stacking (RidgeCV))",
@@ -14021,9 +14048,10 @@
         ],
         "estimated_seconds": {
           "features": 34.56,
-          "feature_selection": 1276.310695859585
+          "feature_selection": 1276.310695859585,
+          "fusion": 0.27626168224299064
         },
-        "estimated_total_seconds": 1310.8706958595849
+        "estimated_total_seconds": 1311.146957541828
       },
       {
         "dataset": "tdc_toxcast",
@@ -14171,8 +14199,8 @@
           {
             "model": "CFA (Combinatorial Fusion)",
             "family": "fusion",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
+            "status": "planned",
+            "reason": ""
           },
           {
             "model": "Ensemble (OOF Stacking (RidgeCV))",
@@ -14189,9 +14217,10 @@
         ],
         "estimated_seconds": {
           "features": 39.62,
-          "feature_selection": 1549.801127156515
+          "feature_selection": 1549.801127156515,
+          "fusion": 0.32355140186915887
         },
-        "estimated_total_seconds": 1589.4211271565148
+        "estimated_total_seconds": 1589.7446785583838
       },
       {
         "dataset": "polaris_adme_fang_hppb_1",
@@ -14345,8 +14374,8 @@
           {
             "model": "CFA (Combinatorial Fusion)",
             "family": "fusion",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
+            "status": "planned",
+            "reason": ""
           },
           {
             "model": "Ensemble (OOF Stacking (RidgeCV))",
@@ -14363,9 +14392,10 @@
         ],
         "estimated_seconds": {
           "features": 41.160000000000004,
-          "feature_selection": 1633.8273389841072
+          "feature_selection": 1633.8273389841072,
+          "fusion": 0.33794392523364486
         },
-        "estimated_total_seconds": 1674.9873389841073
+        "estimated_total_seconds": 1675.325282909341
       },
       {
         "dataset": "poduam_pod_nc_std",
@@ -14519,8 +14549,8 @@
           {
             "model": "CFA (Combinatorial Fusion)",
             "family": "fusion",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
+            "status": "planned",
+            "reason": ""
           },
           {
             "model": "Ensemble (OOF Stacking (RidgeCV))",
@@ -14537,9 +14567,10 @@
         ],
         "estimated_seconds": {
           "features": 41.84,
-          "feature_selection": 1672.6667246572374
+          "feature_selection": 1672.6667246572374,
+          "fusion": 0.3442990654205607
         },
-        "estimated_total_seconds": 1714.5067246572373
+        "estimated_total_seconds": 1714.8510237226578
       },
       {
         "dataset": "tdc_bbb_martins",
@@ -14687,8 +14718,8 @@
           {
             "model": "CFA (Combinatorial Fusion)",
             "family": "fusion",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
+            "status": "planned",
+            "reason": ""
           },
           {
             "model": "Ensemble (OOF Stacking (RidgeCV))",
@@ -14705,9 +14736,10 @@
         ],
         "estimated_seconds": {
           "features": 45.6,
-          "feature_selection": 1883.5097839825821
+          "feature_selection": 1883.5097839825821,
+          "fusion": 0.37943925233644854
         },
-        "estimated_total_seconds": 1929.109783982582
+        "estimated_total_seconds": 1929.4892232349184
       },
       {
         "dataset": "tdc_pampa_ncats",
@@ -14855,8 +14887,8 @@
           {
             "model": "CFA (Combinatorial Fusion)",
             "family": "fusion",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
+            "status": "planned",
+            "reason": ""
           },
           {
             "model": "Ensemble (OOF Stacking (RidgeCV))",
@@ -14873,9 +14905,10 @@
         ],
         "estimated_seconds": {
           "features": 45.68,
-          "feature_selection": 1887.772922086351
+          "feature_selection": 1887.772922086351,
+          "fusion": 0.3801869158878505
         },
-        "estimated_total_seconds": 1933.452922086351
+        "estimated_total_seconds": 1933.8331090022389
       },
       {
         "dataset": "polaris_adme_fang_solu_1",
@@ -15029,8 +15062,8 @@
           {
             "model": "CFA (Combinatorial Fusion)",
             "family": "fusion",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
+            "status": "planned",
+            "reason": ""
           },
           {
             "model": "Ensemble (OOF Stacking (RidgeCV))",
@@ -15047,9 +15080,10 @@
         ],
         "estimated_seconds": {
           "features": 48.46,
-          "feature_selection": 2046.731958365919
+          "feature_selection": 2046.731958365919,
+          "fusion": 0.4061682242990654
         },
-        "estimated_total_seconds": 2095.1919583659187
+        "estimated_total_seconds": 2095.598126590218
       },
       {
         "dataset": "poduam_pod_rd_std",
@@ -15203,8 +15237,8 @@
           {
             "model": "CFA (Combinatorial Fusion)",
             "family": "fusion",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
+            "status": "planned",
+            "reason": ""
           },
           {
             "model": "Ensemble (OOF Stacking (RidgeCV))",
@@ -15221,9 +15255,10 @@
         ],
         "estimated_seconds": {
           "features": 52.1,
-          "feature_selection": 2259.3010315434813
+          "feature_selection": 2259.3010315434813,
+          "fusion": 0.44018691588785047
         },
-        "estimated_total_seconds": 2311.401031543481
+        "estimated_total_seconds": 2311.841218459369
       },
       {
         "dataset": "polaris_adme_fang_perm_1",
@@ -15377,8 +15412,8 @@
           {
             "model": "CFA (Combinatorial Fusion)",
             "family": "fusion",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
+            "status": "planned",
+            "reason": ""
           },
           {
             "model": "Ensemble (OOF Stacking (RidgeCV))",
@@ -15395,9 +15430,10 @@
         ],
         "estimated_seconds": {
           "features": 57.84,
-          "feature_selection": 2601.678357036165
+          "feature_selection": 2601.678357036165,
+          "fusion": 0.49383177570093456
         },
-        "estimated_total_seconds": 2659.518357036165
+        "estimated_total_seconds": 2660.012188811866
       },
       {
         "dataset": "tdc_ppbr_az",
@@ -15551,8 +15587,8 @@
           {
             "model": "CFA (Combinatorial Fusion)",
             "family": "fusion",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
+            "status": "planned",
+            "reason": ""
           },
           {
             "model": "Ensemble (OOF Stacking (RidgeCV))",
@@ -15569,9 +15605,10 @@
         ],
         "estimated_seconds": {
           "features": 60.800000000000004,
-          "feature_selection": 2780.6759652596575
+          "feature_selection": 2780.6759652596575,
+          "fusion": 0.5214953271028037
         },
-        "estimated_total_seconds": 2841.4759652596576
+        "estimated_total_seconds": 2841.9974605867606
       },
       {
         "dataset": "polaris_adme_fang_rclint_1",
@@ -15725,8 +15762,8 @@
           {
             "model": "CFA (Combinatorial Fusion)",
             "family": "fusion",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
+            "status": "planned",
+            "reason": ""
           },
           {
             "model": "Ensemble (OOF Stacking (RidgeCV))",
@@ -15743,9 +15780,10 @@
         ],
         "estimated_seconds": {
           "features": 66.08,
-          "feature_selection": 3106.034297858973
+          "feature_selection": 3106.034297858973,
+          "fusion": 0.5708411214953271
         },
-        "estimated_total_seconds": 3172.114297858973
+        "estimated_total_seconds": 3172.6851389804683
       },
       {
         "dataset": "lipophilicity",
@@ -15899,8 +15937,8 @@
           {
             "model": "CFA (Combinatorial Fusion)",
             "family": "fusion",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
+            "status": "planned",
+            "reason": ""
           },
           {
             "model": "Ensemble (OOF Stacking (RidgeCV))",
@@ -15917,9 +15955,10 @@
         ],
         "estimated_seconds": {
           "features": 89.0,
-          "feature_selection": 4589.50254269112
+          "feature_selection": 4589.50254269112,
+          "fusion": 0.7850467289719626
         },
-        "estimated_total_seconds": 4678.50254269112
+        "estimated_total_seconds": 4679.2875894200915
       },
       {
         "dataset": "tdc_lipophilicity_astrazeneca",
@@ -16073,8 +16112,8 @@
           {
             "model": "CFA (Combinatorial Fusion)",
             "family": "fusion",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
+            "status": "planned",
+            "reason": ""
           },
           {
             "model": "Ensemble (OOF Stacking (RidgeCV))",
@@ -16091,9 +16130,10 @@
         ],
         "estimated_seconds": {
           "features": 89.0,
-          "feature_selection": 4589.50254269112
+          "feature_selection": 4589.50254269112,
+          "fusion": 0.7850467289719626
         },
-        "estimated_total_seconds": 4678.50254269112
+        "estimated_total_seconds": 4679.2875894200915
       },
       {
         "dataset": "tdc_tox21",
@@ -16241,8 +16281,8 @@
           {
             "model": "CFA (Combinatorial Fusion)",
             "family": "fusion",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
+            "status": "planned",
+            "reason": ""
           },
           {
             "model": "Ensemble (OOF Stacking (RidgeCV))",
@@ -16259,9 +16299,10 @@
         ],
         "estimated_seconds": {
           "features": 150.16,
-          "feature_selection": 7200.0
+          "feature_selection": 7200.0,
+          "fusion": 1.3566355140186914
         },
-        "estimated_total_seconds": 7350.16
+        "estimated_total_seconds": 7351.516635514018
       },
       {
         "dataset": "tdc_ames",
@@ -16409,8 +16450,8 @@
           {
             "model": "CFA (Combinatorial Fusion)",
             "family": "fusion",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
+            "status": "planned",
+            "reason": ""
           },
           {
             "model": "Ensemble (OOF Stacking (RidgeCV))",
@@ -16427,9 +16468,10 @@
         ],
         "estimated_seconds": {
           "features": 150.56,
-          "feature_selection": 7200.0
+          "feature_selection": 7200.0,
+          "fusion": 1.360373831775701
         },
-        "estimated_total_seconds": 7350.56
+        "estimated_total_seconds": 7351.9203738317765
       },
       {
         "dataset": "tdc_ld50_zhu",
@@ -16583,8 +16625,8 @@
           {
             "model": "CFA (Combinatorial Fusion)",
             "family": "fusion",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
+            "status": "planned",
+            "reason": ""
           },
           {
             "model": "Ensemble (OOF Stacking (RidgeCV))",
@@ -16601,9 +16643,10 @@
         ],
         "estimated_seconds": {
           "features": 152.70000000000002,
-          "feature_selection": 7200.0
+          "feature_selection": 7200.0,
+          "fusion": 1.3803738317757008
         },
-        "estimated_total_seconds": 7352.7
+        "estimated_total_seconds": 7354.080373831775
       },
       {
         "dataset": "tdc_solubility_aqsoldb",
@@ -16757,8 +16800,8 @@
           {
             "model": "CFA (Combinatorial Fusion)",
             "family": "fusion",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
+            "status": "planned",
+            "reason": ""
           },
           {
             "model": "Ensemble (OOF Stacking (RidgeCV))",
@@ -16775,9 +16818,10 @@
         ],
         "estimated_seconds": {
           "features": 204.6,
-          "feature_selection": 7200.0
+          "feature_selection": 7200.0,
+          "fusion": 1.8654205607476635
         },
-        "estimated_total_seconds": 7404.6
+        "estimated_total_seconds": 7406.465420560748
       },
       {
         "dataset": "tdc_cyp2c9_veith",
@@ -16925,8 +16969,8 @@
           {
             "model": "CFA (Combinatorial Fusion)",
             "family": "fusion",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
+            "status": "planned",
+            "reason": ""
           },
           {
             "model": "Ensemble (OOF Stacking (RidgeCV))",
@@ -16943,9 +16987,10 @@
         ],
         "estimated_seconds": {
           "features": 246.84,
-          "feature_selection": 7200.0
+          "feature_selection": 7200.0,
+          "fusion": 2.2601869158878505
         },
-        "estimated_total_seconds": 7446.84
+        "estimated_total_seconds": 7449.100186915888
       },
       {
         "dataset": "tdc_cyp3a4_veith",
@@ -17093,8 +17138,8 @@
           {
             "model": "CFA (Combinatorial Fusion)",
             "family": "fusion",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
+            "status": "planned",
+            "reason": ""
           },
           {
             "model": "Ensemble (OOF Stacking (RidgeCV))",
@@ -17111,9 +17156,10 @@
         ],
         "estimated_seconds": {
           "features": 251.56,
-          "feature_selection": 7200.0
+          "feature_selection": 7200.0,
+          "fusion": 2.304299065420561
         },
-        "estimated_total_seconds": 7451.56
+        "estimated_total_seconds": 7453.864299065421
       },
       {
         "dataset": "tdc_cyp1a2_veith",
@@ -17261,8 +17307,8 @@
           {
             "model": "CFA (Combinatorial Fusion)",
             "family": "fusion",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
+            "status": "planned",
+            "reason": ""
           },
           {
             "model": "Ensemble (OOF Stacking (RidgeCV))",
@@ -17279,9 +17325,10 @@
         ],
         "estimated_seconds": {
           "features": 256.58000000000004,
-          "feature_selection": 7200.0
+          "feature_selection": 7200.0,
+          "fusion": 2.351214953271028
         },
-        "estimated_total_seconds": 7456.58
+        "estimated_total_seconds": 7458.931214953271
       },
       {
         "dataset": "tdc_cyp2c19_veith",
@@ -17429,8 +17476,8 @@
           {
             "model": "CFA (Combinatorial Fusion)",
             "family": "fusion",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
+            "status": "planned",
+            "reason": ""
           },
           {
             "model": "Ensemble (OOF Stacking (RidgeCV))",
@@ -17447,9 +17494,10 @@
         ],
         "estimated_seconds": {
           "features": 258.3,
-          "feature_selection": 7200.0
+          "feature_selection": 7200.0,
+          "fusion": 2.3672897196261684
         },
-        "estimated_total_seconds": 7458.3
+        "estimated_total_seconds": 7460.667289719627
       },
       {
         "dataset": "tdc_cyp2d6_veith",
@@ -17597,8 +17645,8 @@
           {
             "model": "CFA (Combinatorial Fusion)",
             "family": "fusion",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
+            "status": "planned",
+            "reason": ""
           },
           {
             "model": "Ensemble (OOF Stacking (RidgeCV))",
@@ -17615,9 +17663,10 @@
         ],
         "estimated_seconds": {
           "features": 267.6,
-          "feature_selection": 7200.0
+          "feature_selection": 7200.0,
+          "fusion": 2.4542056074766356
         },
-        "estimated_total_seconds": 7467.6
+        "estimated_total_seconds": 7470.054205607477
       },
       {
         "dataset": "tdc_herg_karim",
@@ -17765,8 +17814,8 @@
           {
             "model": "CFA (Combinatorial Fusion)",
             "family": "fusion",
-            "status": "skipped",
-            "reason": "not listed in models.only_models"
+            "status": "planned",
+            "reason": ""
           },
           {
             "model": "Ensemble (OOF Stacking (RidgeCV))",
@@ -17783,12 +17832,13 @@
         ],
         "estimated_seconds": {
           "features": 273.9,
-          "feature_selection": 7200.0
+          "feature_selection": 7200.0,
+          "fusion": 2.513084112149533
         },
-        "estimated_total_seconds": 7473.9
+        "estimated_total_seconds": 7476.41308411215
       }
     ],
-    "estimated_total_seconds": 118947.47327951365,
+    "estimated_total_seconds": 118976.6418776445,
     "estimate_note": "Order-of-magnitude estimate: median per-fit wall-clock by model family from the paper's A100 run (Table 6) scaled linearly with dataset size; GPU-accelerated families are assumed 2-8x slower without a GPU."
   },
   "shown_metrics": {
@@ -17914,7 +17964,8 @@
       "drop_duplicate_columns": true,
       "max_selected_features": 0,
       "auto_rf_by_dataset_size": false,
-      "elasticnet_timeout_seconds": 7200.0
+      "elasticnet_timeout_seconds": 7200.0,
+      "cv_selection": "outer"
     },
     "models": {
       "profile": "full",
@@ -17930,8 +17981,10 @@
       },
       "disable_models": [],
       "only_models": [
-        "Ensemble"
-      ]
+        "Ensemble",
+        "CFA (Combinatorial Fusion)"
+      ],
+      "admetboost_xgboost": true
     },
     "ga_tuning": {
       "mode": "off",
@@ -18047,7 +18100,7 @@
       "atomic_writes": true
     }
   },
-  "config_yaml": "run:\n  mode: auto\n  output_dir: \"C:\\\\Users\\\\scott\\\\AutoQSAR\\\\benchmark_results\\\\qsarena_benchmark_oof_ensemble\"\n  resume: true\n  overwrite: false\n  verbosity: normal\n  dry_run: false\n  n_jobs: 16\n  parallel_datasets: 1\n  dataset_names: [chemml_cep_homo, chemml_organic_density, esol_delaney, freesolv_sampl, lipophilicity, poduam_pod_nc_std, poduam_pod_rd_std, polaris_adme_fang_hppb_1, polaris_adme_fang_perm_1, polaris_adme_fang_rclint_1, polaris_adme_fang_rppb_1, polaris_adme_fang_solu_1, tdc_ames, tdc_bbb_martins, tdc_bioavailability_ma, tdc_caco2_wang, tdc_carcinogens_lagunin, tdc_clearance_hepatocyte_az, tdc_clearance_microsome_az, tdc_clintox, tdc_cyp1a2_veith, tdc_cyp2c19_veith, tdc_cyp2c9_substrate_carbonmangels, tdc_cyp2c9_veith, tdc_cyp2d6_substrate_carbonmangels, tdc_cyp2d6_veith, tdc_cyp3a4_substrate_carbonmangels, tdc_cyp3a4_veith, tdc_dili, tdc_half_life_obach, tdc_herg, tdc_herg_karim, tdc_hia_hou, tdc_hydrationfreeenergy_freesolv, tdc_ld50_zhu, tdc_lipophilicity_astrazeneca, tdc_pampa_ncats, tdc_pgp_broccatelli, tdc_ppbr_az, tdc_skin_reaction, tdc_solubility_aqsoldb, tdc_tox21, tdc_toxcast, tdc_vdss_lombardo]\ninput:\n  path: null\n  smiles_col: null\n  target_col: null\n  id_col: null\n  task: auto\n  classification_threshold: null\n  target_transform: auto\n  minimum_rows: 20\n  row_limit: 0\nstandardize:\n  drop_unparseable: true\n  strip_salts: false\n  normalize_charges: false\n  normalize_tautomers: false\n  deduplicate: \"none\"\nfeatures:\n  families: [morgan, ecfp6, fcfp6, layered, atom_pair, topological_torsion, rdk_path, maccs, rdkit]\n  maplight_classic: true\n  fingerprint_bits: 1024\n  cache: true\n  persistent_store: true\nsplit:\n  strategy: target_quartile\n  test_fraction: 0.2\n  seed: 13\n  cv_folds: 5\n  predefined_split_col: null\nfeature_selection:\n  method: elasticnetcv\n  variance_threshold: 1e-08\n  binary_prevalence_range: [0.005, 0.995]\n  drop_duplicate_columns: true\n  max_selected_features: 0\n  auto_rf_by_dataset_size: false\n  elasticnet_timeout_seconds: 7200.0\nmodels:\n  profile: full\n  enable_families:\n    conventional_ml: true\n    gradient_boosting: true\n    deep_tabular: true\n    graph_nn: true\n    pretrained_3d: true\n    maplight_gnn: true\n    fusion: true\n    ensemble: true\n  disable_models: []\n  only_models: [Ensemble]\nga_tuning:\n  mode: \"off\"\n  estimators: [elastic_net, catboost]\n  generations: 12\n  population_size: 16\n  time_budget_min: null\n  max_configs: null\ndeep:\n  use_gpu: auto\n  chemprop:\n    variants: [dmpnn, dmpnn_rdkit2d, selected_features, cmpnn, attentivefp]\n    epochs: 40\n    ensemble_size: 3\n    batch_size: 32\n    seed: 42\n  unimol:\n    v1: \"true\"\n    v2: \"true\"\n    v2_size: 84m\n    epochs: 20\n    lr: 0.0001\n    batch_size: 32\n    early_stopping_patience: 5\n  chemml:\n    pytorch: true\n    tensorflow: true\n    epochs: 80\n  tabpfn: true\n  tabpfn_max_features: 0\n  cnn: true\nfusion:\n  cfa_score: true\n  cfa_rank: true\n  optimize_metric: mae\nensemble:\n  oof_stacking: true\n  inverse_rmse_average: true\n  simple_average: false\n  member_selection_metric: oof\n  oof_folds: 5\n  oof_scope: all\n  oof_allow_api_refits: false\n  oof_source_run: benchmark_results\\autoqsar_benchmark_20260623_153839\n  exclude_negative_test_r2_members: true\n  drop_correlated_members: true\n  max_member_correlation: 0.995\n  stacking_cv_folds: 5\napplicability_domain:\n  method: both\n  confidence_threshold: 0.5\n  knn_quantile: 0.95\nevaluation:\n  regression_metrics: [rmse, mae, r2, spearman]\n  classification_metrics: [roc_auc, auprc, balanced_accuracy, mcc]\n  primary_metric: auto\nselection:\n  protocol: both\nreport:\n  formats: [html, md]\n  include_plots: true\n  what_next: true\n  machine_readable_manifest: true\nbatch:\n  source: null\n  mode: auto\n  continue_on_error: true\n  aggregate_summary: true\nmultiseed:\n  enabled: false\n  seeds: 5\ncaching:\n  granularity: [dataset, stage]\n  validate_against_config_signature: true\n  atomic_writes: true\n",
+  "config_yaml": "run:\n  mode: auto\n  output_dir: \"C:\\\\Users\\\\scott\\\\AutoQSAR\\\\benchmark_results\\\\qsarena_benchmark_oof_ensemble\"\n  resume: true\n  overwrite: false\n  verbosity: normal\n  dry_run: false\n  n_jobs: 16\n  parallel_datasets: 1\n  dataset_names: [chemml_cep_homo, chemml_organic_density, esol_delaney, freesolv_sampl, lipophilicity, poduam_pod_nc_std, poduam_pod_rd_std, polaris_adme_fang_hppb_1, polaris_adme_fang_perm_1, polaris_adme_fang_rclint_1, polaris_adme_fang_rppb_1, polaris_adme_fang_solu_1, tdc_ames, tdc_bbb_martins, tdc_bioavailability_ma, tdc_caco2_wang, tdc_carcinogens_lagunin, tdc_clearance_hepatocyte_az, tdc_clearance_microsome_az, tdc_clintox, tdc_cyp1a2_veith, tdc_cyp2c19_veith, tdc_cyp2c9_substrate_carbonmangels, tdc_cyp2c9_veith, tdc_cyp2d6_substrate_carbonmangels, tdc_cyp2d6_veith, tdc_cyp3a4_substrate_carbonmangels, tdc_cyp3a4_veith, tdc_dili, tdc_half_life_obach, tdc_herg, tdc_herg_karim, tdc_hia_hou, tdc_hydrationfreeenergy_freesolv, tdc_ld50_zhu, tdc_lipophilicity_astrazeneca, tdc_pampa_ncats, tdc_pgp_broccatelli, tdc_ppbr_az, tdc_skin_reaction, tdc_solubility_aqsoldb, tdc_tox21, tdc_toxcast, tdc_vdss_lombardo]\ninput:\n  path: null\n  smiles_col: null\n  target_col: null\n  id_col: null\n  task: auto\n  classification_threshold: null\n  target_transform: auto\n  minimum_rows: 20\n  row_limit: 0\nstandardize:\n  drop_unparseable: true\n  strip_salts: false\n  normalize_charges: false\n  normalize_tautomers: false\n  deduplicate: \"none\"\nfeatures:\n  families: [morgan, ecfp6, fcfp6, layered, atom_pair, topological_torsion, rdk_path, maccs, rdkit]\n  maplight_classic: true\n  fingerprint_bits: 1024\n  cache: true\n  persistent_store: true\nsplit:\n  strategy: target_quartile\n  test_fraction: 0.2\n  seed: 13\n  cv_folds: 5\n  predefined_split_col: null\nfeature_selection:\n  method: elasticnetcv\n  variance_threshold: 1e-08\n  binary_prevalence_range: [0.005, 0.995]\n  drop_duplicate_columns: true\n  max_selected_features: 0\n  auto_rf_by_dataset_size: false\n  elasticnet_timeout_seconds: 7200.0\n  cv_selection: outer\nmodels:\n  profile: full\n  enable_families:\n    conventional_ml: true\n    gradient_boosting: true\n    deep_tabular: true\n    graph_nn: true\n    pretrained_3d: true\n    maplight_gnn: true\n    fusion: true\n    ensemble: true\n  disable_models: []\n  only_models: [Ensemble, CFA (Combinatorial Fusion)]\n  admetboost_xgboost: true\nga_tuning:\n  mode: \"off\"\n  estimators: [elastic_net, catboost]\n  generations: 12\n  population_size: 16\n  time_budget_min: null\n  max_configs: null\ndeep:\n  use_gpu: auto\n  chemprop:\n    variants: [dmpnn, dmpnn_rdkit2d, selected_features, cmpnn, attentivefp]\n    epochs: 40\n    ensemble_size: 3\n    batch_size: 32\n    seed: 42\n  unimol:\n    v1: \"true\"\n    v2: \"true\"\n    v2_size: 84m\n    epochs: 20\n    lr: 0.0001\n    batch_size: 32\n    early_stopping_patience: 5\n  chemml:\n    pytorch: true\n    tensorflow: true\n    epochs: 80\n  tabpfn: true\n  tabpfn_max_features: 0\n  cnn: true\nfusion:\n  cfa_score: true\n  cfa_rank: true\n  optimize_metric: mae\nensemble:\n  oof_stacking: true\n  inverse_rmse_average: true\n  simple_average: false\n  member_selection_metric: oof\n  oof_folds: 5\n  oof_scope: all\n  oof_allow_api_refits: false\n  oof_source_run: benchmark_results\\autoqsar_benchmark_20260623_153839\n  exclude_negative_test_r2_members: true\n  drop_correlated_members: true\n  max_member_correlation: 0.995\n  stacking_cv_folds: 5\napplicability_domain:\n  method: both\n  confidence_threshold: 0.5\n  knn_quantile: 0.95\nevaluation:\n  regression_metrics: [rmse, mae, r2, spearman]\n  classification_metrics: [roc_auc, auprc, balanced_accuracy, mcc]\n  primary_metric: auto\nselection:\n  protocol: both\nreport:\n  formats: [html, md]\n  include_plots: true\n  what_next: true\n  machine_readable_manifest: true\nbatch:\n  source: null\n  mode: auto\n  continue_on_error: true\n  aggregate_summary: true\nmultiseed:\n  enabled: false\n  seeds: 5\ncaching:\n  granularity: [dataset, stage]\n  validate_against_config_signature: true\n  atomic_writes: true\n",
   "files": {
     "run_config.json": "run_config.json",
     "run_config.yaml": "run_config.yaml",
@@ -18081,7 +18134,7 @@
       "command": ""
     },
     {
-      "text": "On 39 dataset(s) the test-selected winner differs from the CV-selected one (tdc_carcinogens_lagunin, tdc_skin_reaction, tdc_dili, chemml_cep_homo, tdc_hia_hou). Choosing on the test set is optimistic; report the CV-selected model and its test score as the honest estimate.",
+      "text": "On 41 dataset(s) the test-selected winner differs from the CV-selected one (tdc_carcinogens_lagunin, tdc_skin_reaction, tdc_dili, chemml_cep_homo, tdc_hia_hou). Choosing on the test set is optimistic; report the CV-selected model and its test score as the honest estimate.",
       "command": ""
     },
     {
@@ -18142,6 +18195,10 @@
     },
     {
       "text": "31% of the test molecules of tdc_cyp3a4_veith fall outside the applicability domain; read their predictions with caution (see applicability_domain.csv in that dataset's folder).",
+      "command": ""
+    },
+    {
+      "text": "30% of the test molecules of tdc_herg_karim fall outside the applicability domain; read their predictions with caution (see applicability_domain.csv in that dataset's folder).",
       "command": ""
     },
     {

@@ -1,5 +1,6 @@
 dataset,stage_index,total_stages,stage_label,step_type,model,workflow,started_at,started_epoch,status,ended_at,ended_epoch,duration_seconds
-tdc_toxcast,1,4,loading PyTDC Tox benchmark: toxcast [label=ACEA_T47D_80hr_Negative],load_dataset,,,2026-10-02 10:55:39 Pacific Daylight Time,1790963739.2263749,completed,2026-10-02 10:55:39 Pacific Daylight Time,1790963739.5184875,0.292
-tdc_toxcast,2,4,building molecular features (cached),feature_generation,,,2026-10-02 10:55:39 Pacific Daylight Time,1790963739.5184875,resumed_cache,2026-10-02 10:55:39 Pacific Daylight Time,1790963739.5455284,0.027
-tdc_toxcast,3,4,splitting data and selecting features (cached),feature_selection,,,2026-10-02 10:55:39 Pacific Daylight Time,1790963739.5455284,resumed_cache,2026-10-02 10:55:39 Pacific Daylight Time,1790963739.5718403,0.026
-tdc_toxcast,4,4,ensemble (2 method(s)),model,Ensemble,ensemble,2026-10-02 10:55:39 Pacific Daylight Time,1790963739.5718403,completed,2026-10-02 10:55:41 Pacific Daylight Time,1790963741.7815158,2.21
+tdc_toxcast,1,5,loading PyTDC Tox benchmark: toxcast [label=ACEA_T47D_80hr_Negative],load_dataset,,,2026-10-04 23:01:53 Pacific Daylight Time,1791180113.1766133,completed,2026-10-04 23:01:53 Pacific Daylight Time,1791180113.407748,0.231
+tdc_toxcast,2,5,building molecular features (cached),feature_generation,,,2026-10-04 23:01:53 Pacific Daylight Time,1791180113.4087493,resumed_cache,2026-10-04 23:01:53 Pacific Daylight Time,1791180113.4245515,0.016
+tdc_toxcast,3,5,splitting data and selecting features (cached),feature_selection,,,2026-10-04 23:01:53 Pacific Daylight Time,1791180113.4245515,resumed_cache,2026-10-04 23:01:53 Pacific Daylight Time,1791180113.4405515,0.016
+tdc_toxcast,4,5,CFA combinatorial fusion,model,CFA (Combinatorial Fusion),cfa,2026-10-04 23:01:53 Pacific Daylight Time,1791180113.441552,completed,2026-10-04 23:01:53 Pacific Daylight Time,1791180113.880462,0.439
+tdc_toxcast,5,5,ensemble (2 method(s)),model,Ensemble,ensemble,2026-10-04 23:01:53 Pacific Daylight Time,1791180113.880462,completed,2026-10-04 23:01:55 Pacific Daylight Time,1791180115.7361994,1.856

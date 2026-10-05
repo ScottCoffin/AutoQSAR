@@ -8,6 +8,7 @@ LogisticRegression,conventional,22,22,0,0,0,0.0,True
 SVC,conventional,22,22,0,0,0,0.0,True
 SVR,conventional,22,22,0,0,0,0.0,True
 Tabular CNN,conventional,22,22,0,0,0,0.0,True
+"Voting Classifier (KNN, SVM)",conventional,22,22,0,0,0,0.0,True
 "Voting Regressor (KNN, SVM)",conventional,22,22,0,0,0,0.0,True
 ElasticNetCV,conventional,22,20,0,0,0,0.0,True
 TabPFNClassifier,conventional,22,20,0,0,0,0.0,True

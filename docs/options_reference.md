@@ -85,6 +85,7 @@ the widgets back to a `run.yaml`.
 | `feature_selection.max_selected_features` | `0` | int (>= 0) | `--max-selected-features` | CLI / run.yaml only | 0 caps the selection at ceil(10% of training rows); a positive value overrides. *Per dataset.* |
 | `feature_selection.auto_rf_by_dataset_size` | `null` (profile default (on for cost_optimized/quick, off for full)) | true / false | `--selector-auto-rf-by-dataset-size / --no-selector-auto-rf-by-dataset-size` | CLI / run.yaml only | Switch to random-forest importance up front when ElasticNetCV is predicted to exceed its time limit. *Per dataset.* |
 | `feature_selection.elasticnet_timeout_seconds` | `7200.0` | float (>= 1.0) | `--selector-elasticnet-timeout-seconds` | CLI / run.yaml only | Wall-clock limit for the ElasticNetCV selector before falling back to random forest. *Per dataset.* |
+| `feature_selection.cv_selection` | `null` (profile default (nested; quick: outer)) | `outer`, `nested` | `--cv-selection` | CLI / run.yaml only | Where feature selection happens for cross-validation and the out-of-fold predictions that ensembles use. nested refits the selector inside every CV fold, so CV scores are not optimistic; outer reuses the selection fitted on all training rows (faster, but every validation fold helped choose its features). Test predictions are identical either way. *Per dataset.* |
 
 ## 6. Model library
 

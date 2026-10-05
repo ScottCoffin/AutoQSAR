@@ -1,21 +1,22 @@
 Model,Weight,Workflow
-LogisticRegression,0.04373812561677765,conventional
-SVC,0.049539531723864175,conventional
-Random forest,0.0481574031804642,conventional
-Extra trees,0.04894933277079343,conventional
-HistGradientBoosting,0.04836854776293884,conventional
-"Voting Classifier (KNN, SVM)",0.04883380432845724,conventional
-AdaBoost,0.03967052580161381,conventional
-Tabular MLP,0.04766815171937613,conventional
-XGBoost,0.04906568504517156,conventional
-CatBoost,0.0474448804604708,conventional
-ChemML MLP (PyTorch),0.0543728879863991,ChemML deep learning
-ChemML MLP (TensorFlow),0.04900598775321589,ChemML deep learning
-Uni-Mol V1,0.052056496534208366,Uni-Mol
-Uni-Mol V2 (84m),0.05735151187978407,Uni-Mol
-"MapLight + GNN (CatBoost, Strict Parity)",0.04921489109129176,MapLight + GNN
-"Chemprop v2 (D-MPNN, ensemble=3)",0.05320409018727255,Chemprop v2
-"Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",0.053013651602473795,Chemprop v2
-"Chemprop v2 (CMPNN, ensemble=3)",0.05202807095201083,Chemprop v2
-"Chemprop v2 (AttentiveFP, ensemble=3)",0.05289332045811358,Chemprop v2
-"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",0.055423103145302285,Chemprop v2
+ChemML MLP (PyTorch),0.047840672471386826,ChemML deep learning
+ChemML MLP (TensorFlow),0.04311853749289253,ChemML deep learning
+Uni-Mol V1,0.045802566185631007,Uni-Mol
+Uni-Mol V2 (84m),0.05046145233753119,Uni-Mol
+"MapLight + GNN (CatBoost, Strict Parity)",0.043302343734296644,MapLight + GNN
+"Chemprop v2 (D-MPNN, ensemble=3)",0.046812290960600085,Chemprop v2
+"Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",0.04664473116566054,Chemprop v2
+"Chemprop v2 (CMPNN, ensemble=3)",0.045777555577990285,Chemprop v2
+"Chemprop v2 (AttentiveFP, ensemble=3)",0.04653885628796628,Chemprop v2
+"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",0.04876471754793565,Chemprop v2
+LogisticRegression,0.04467197329903443,conventional
+SVC,0.0513801273785611,conventional
+Random forest,0.049727279190674545,conventional
+Extra trees,0.0501729861398855,conventional
+HistGradientBoosting,0.05077553455141325,conventional
+"Voting Classifier (KNN, SVM)",0.050712636264000986,conventional
+AdaBoost,0.04209814126040586,conventional
+Tabular MLP,0.045062395049995485,conventional
+XGBoost,0.051252914497991166,conventional
+CatBoost,0.04985258948117141,conventional
+XGBoost (ADMETboost features),0.049229699124975025,conventional

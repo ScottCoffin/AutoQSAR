@@ -1,5 +1,6 @@
 dataset,stage_index,total_stages,stage_label,step_type,model,workflow,started_at,started_epoch,status,ended_at,ended_epoch,duration_seconds
-freesolv_sampl,1,4,loading MoleculeNet PhysChem benchmark: FreeSolv (SAMPL),load_dataset,,,2026-10-02 10:53:38 Pacific Daylight Time,1790963618.840648,completed,2026-10-02 10:53:38 Pacific Daylight Time,1790963618.9720936,0.131
-freesolv_sampl,2,4,building molecular features (cached),feature_generation,,,2026-10-02 10:53:38 Pacific Daylight Time,1790963618.9720936,resumed_cache,2026-10-02 10:53:38 Pacific Daylight Time,1790963618.986864,0.015
-freesolv_sampl,3,4,splitting data and selecting features (cached),feature_selection,,,2026-10-02 10:53:38 Pacific Daylight Time,1790963618.986864,resumed_cache,2026-10-02 10:53:39 Pacific Daylight Time,1790963619.0057633,0.019
-freesolv_sampl,4,4,ensemble (2 method(s)),model,Ensemble,ensemble,2026-10-02 10:53:39 Pacific Daylight Time,1790963619.0057633,completed,2026-10-02 10:53:43 Pacific Daylight Time,1790963623.536655,4.531
+freesolv_sampl,1,5,loading MoleculeNet PhysChem benchmark: FreeSolv (SAMPL),load_dataset,,,2026-10-04 23:00:26 Pacific Daylight Time,1791180026.419962,completed,2026-10-04 23:00:26 Pacific Daylight Time,1791180026.5325646,0.113
+freesolv_sampl,2,5,building molecular features (cached),feature_generation,,,2026-10-04 23:00:26 Pacific Daylight Time,1791180026.5325646,resumed_cache,2026-10-04 23:00:26 Pacific Daylight Time,1791180026.5395532,0.007
+freesolv_sampl,3,5,splitting data and selecting features (cached),feature_selection,,,2026-10-04 23:00:26 Pacific Daylight Time,1791180026.5395532,resumed_cache,2026-10-04 23:00:26 Pacific Daylight Time,1791180026.5555553,0.016
+freesolv_sampl,4,5,CFA combinatorial fusion,model,CFA (Combinatorial Fusion),cfa,2026-10-04 23:00:26 Pacific Daylight Time,1791180026.5555553,completed,2026-10-04 23:00:26 Pacific Daylight Time,1791180026.6932466,0.138
+freesolv_sampl,5,5,ensemble (2 method(s)),model,Ensemble,ensemble,2026-10-04 23:00:26 Pacific Daylight Time,1791180026.6932466,completed,2026-10-04 23:00:29 Pacific Daylight Time,1791180029.73722,3.044

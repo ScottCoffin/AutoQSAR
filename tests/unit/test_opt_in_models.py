@@ -82,3 +82,32 @@ def test_explicit_disable_model_families_survives_the_profile():
     args = runner.build_arg_parser().parse_args(argv)
     runner.apply_benchmark_profile_defaults(args, argv)
     assert "gradient_boosting" in args.disabled_model_families
+
+
+def test_filtered_run_keeps_stale_rows_it_will_not_recompute():
+    """A --only-model-names run must not delete stale rows of models it excludes (they are not recomputed)."""
+    args = _args("--only-model-names", "XGBoost (ADMETboost features)")
+    rows = [
+        {"model": "TabPFNClassifier", "stage_config_signature": "old-signature"},
+        {"model": "Ensemble (OOF Stacking (RidgeCV, 5-fold))", "stage_config_signature": "old-signature"},
+        {"model": "XGBoost (ADMETboost features)", "stage_config_signature": "old-signature"},
+    ]
+    kept, stale, _legacy = runner.split_stale_metric_rows(rows, args, "stage23")
+    assert stale == {"XGBoost (ADMETboost features)"}
+    assert {r["model"] for r in kept} == {"TabPFNClassifier", "Ensemble (OOF Stacking (RidgeCV, 5-fold))"}
+    unfiltered_kept, unfiltered_stale, _ = runner.split_stale_metric_rows(rows, _args(), "stage23")
+    assert len(unfiltered_stale) == 3 and not unfiltered_kept  # an unfiltered run recomputes everything stale
+
+
+def test_classification_task_with_regression_metric_returns_probabilities(monkeypatch):
+    """Binary datasets catalogued with "rmse" used to save hard 0/1 labels as predictions (AUROC on labels)."""
+    from sklearn.linear_model import LogisticRegression
+
+    X = np.random.default_rng(1).normal(size=(60, 3))
+    y = (X[:, 0] > 0).astype(int)
+    clf = LogisticRegression().fit(X, y)
+    monkeypatch.setattr(runner, "current_dataset_task_type", lambda: "classification")
+    pred = runner.predict_values_for_metric(clf, X, "rmse")
+    assert len(np.unique(pred)) > 2 and pred.min() >= 0 and pred.max() <= 1
+    monkeypatch.setattr(runner, "current_dataset_task_type", lambda: "regression")
+    assert set(np.unique(runner.predict_values_for_metric(clf, X, "rmse"))) <= {0.0, 1.0}

@@ -421,6 +421,14 @@ class FeatureSelectionSection:
         dest="selector_elasticnet_timeout_seconds", per_dataset=True,
         help="Wall-clock limit for the ElasticNetCV selector before falling back to random forest.",
     )
+    cv_selection: str | None = _opt(
+        None, group=5, kind="choice", nullable=True, choices=("outer", "nested"), cli="--cv-selection",
+        dest="cv_selection", per_dataset=True, null_means="profile default (nested; quick: outer)",
+        help="Where feature selection happens for cross-validation and the out-of-fold predictions that ensembles "
+        "use. nested refits the selector inside every CV fold, so CV scores are not optimistic; outer reuses the "
+        "selection fitted on all training rows (faster, but every validation fold helped choose its features). "
+        "Test predictions are identical either way.",
+    )
 
 
 def _enable_families_default() -> dict[str, bool]:

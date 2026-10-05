@@ -1,5 +1,6 @@
 dataset,stage_index,total_stages,stage_label,step_type,model,workflow,started_at,started_epoch,status,ended_at,ended_epoch,duration_seconds
-tdc_cyp1a2_veith,1,4,loading PyTDC ADME benchmark: cyp1a2_veith,load_dataset,,,2026-10-02 11:33:09 Pacific Daylight Time,1790965989.5967848,completed,2026-10-02 11:33:13 Pacific Daylight Time,1790965993.135683,3.539
-tdc_cyp1a2_veith,2,4,building molecular features (cached),feature_generation,,,2026-10-02 11:33:13 Pacific Daylight Time,1790965993.135683,resumed_cache,2026-10-02 11:33:13 Pacific Daylight Time,1790965993.2432816,0.108
-tdc_cyp1a2_veith,3,4,splitting data and selecting features (cached),feature_selection,,,2026-10-02 11:33:13 Pacific Daylight Time,1790965993.244287,resumed_cache,2026-10-02 11:33:13 Pacific Daylight Time,1790965993.2812881,0.037
-tdc_cyp1a2_veith,4,4,ensemble (2 method(s)),model,Ensemble,ensemble,2026-10-02 11:33:13 Pacific Daylight Time,1790965993.2812881,completed,2026-10-02 11:33:46 Pacific Daylight Time,1790966026.025889,32.745
+tdc_cyp1a2_veith,1,5,loading PyTDC ADME benchmark: cyp1a2_veith,load_dataset,,,2026-10-04 23:29:56 Pacific Daylight Time,1791181796.1443257,completed,2026-10-04 23:29:58 Pacific Daylight Time,1791181798.6501596,2.506
+tdc_cyp1a2_veith,2,5,building molecular features (cached),feature_generation,,,2026-10-04 23:29:58 Pacific Daylight Time,1791181798.6501596,resumed_cache,2026-10-04 23:29:58 Pacific Daylight Time,1791181798.7544086,0.104
+tdc_cyp1a2_veith,3,5,splitting data and selecting features (cached),feature_selection,,,2026-10-04 23:29:58 Pacific Daylight Time,1791181798.7544086,resumed_cache,2026-10-04 23:29:58 Pacific Daylight Time,1791181798.7758663,0.021
+tdc_cyp1a2_veith,4,5,CFA combinatorial fusion,model,CFA (Combinatorial Fusion),cfa,2026-10-04 23:29:58 Pacific Daylight Time,1791181798.7758663,completed,2026-10-04 23:30:00 Pacific Daylight Time,1791181800.0064437,1.231
+tdc_cyp1a2_veith,5,5,ensemble (2 method(s)),model,Ensemble,ensemble,2026-10-04 23:30:00 Pacific Daylight Time,1791181800.0064437,completed,2026-10-04 23:30:30 Pacific Daylight Time,1791181830.23328,30.227

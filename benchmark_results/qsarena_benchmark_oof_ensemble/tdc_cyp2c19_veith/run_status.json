@@ -2,10 +2,10 @@
   "status": "completed",
   "dataset": "tdc_cyp2c19_veith",
   "source": "PyTDC ADME benchmark: cyp2c19_veith",
-  "completed_at": "2026-10-02 11:34:20",
-  "elapsed_seconds": 34.876,
-  "n_metrics_rows": 34,
-  "n_stage_records": 4,
+  "completed_at": "2026-10-04 23:31:05",
+  "elapsed_seconds": 35.254,
+  "n_metrics_rows": 36,
+  "n_stage_records": 5,
   "n_rows": 12665,
   "task_type": "classification",
   "primary_metric": "roc_auc",
@@ -46,10 +46,10 @@
   "applicability_domain": {
     "method": "both",
     "n_test": 2534,
-    "in_domain_fraction": 0.9968429360694554,
+    "in_domain_fraction": 0.8026835043409629,
     "methods": {
       "standardization": 0.9968429360694554,
-      "confidence": 1.0
+      "confidence": 0.8054459352801894
     },
     "selected_model": "XGBoost",
     "notes": []

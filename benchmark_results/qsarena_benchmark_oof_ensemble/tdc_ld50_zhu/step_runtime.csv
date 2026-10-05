@@ -1,5 +1,6 @@
 dataset,stage_index,total_stages,stage_label,step_type,model,workflow,started_at,started_epoch,status,ended_at,ended_epoch,duration_seconds
-tdc_ld50_zhu,1,4,loading PyTDC Tox benchmark group: ld50_zhu (official train_val/test split),load_dataset,,,2026-10-02 11:14:07 Pacific Daylight Time,1790964847.9747539,completed,2026-10-02 11:14:09 Pacific Daylight Time,1790964849.4612713,1.487
-tdc_ld50_zhu,2,4,building molecular features (cached),feature_generation,,,2026-10-02 11:14:09 Pacific Daylight Time,1790964849.4612713,resumed_cache,2026-10-02 11:14:09 Pacific Daylight Time,1790964849.5168502,0.056
-tdc_ld50_zhu,3,4,splitting data and selecting features (cached),feature_selection,,,2026-10-02 11:14:09 Pacific Daylight Time,1790964849.517876,resumed_cache,2026-10-02 11:14:09 Pacific Daylight Time,1790964849.5471637,0.029
-tdc_ld50_zhu,4,4,ensemble (2 method(s)),model,Ensemble,ensemble,2026-10-02 11:14:09 Pacific Daylight Time,1790964849.5471637,completed,2026-10-02 11:15:01 Pacific Daylight Time,1790964901.401178,51.854
+tdc_ld50_zhu,1,5,loading PyTDC Tox benchmark group: ld50_zhu (official train_val/test split),load_dataset,,,2026-10-04 23:15:22 Pacific Daylight Time,1791180922.8951719,completed,2026-10-04 23:15:23 Pacific Daylight Time,1791180923.84364,0.948
+tdc_ld50_zhu,2,5,building molecular features (cached),feature_generation,,,2026-10-04 23:15:23 Pacific Daylight Time,1791180923.8446395,resumed_cache,2026-10-04 23:15:23 Pacific Daylight Time,1791180923.887628,0.043
+tdc_ld50_zhu,3,5,splitting data and selecting features (cached),feature_selection,,,2026-10-04 23:15:23 Pacific Daylight Time,1791180923.887628,resumed_cache,2026-10-04 23:15:23 Pacific Daylight Time,1791180923.9107835,0.023
+tdc_ld50_zhu,4,5,CFA combinatorial fusion,model,CFA (Combinatorial Fusion),cfa,2026-10-04 23:15:23 Pacific Daylight Time,1791180923.9107835,completed,2026-10-04 23:15:24 Pacific Daylight Time,1791180924.7769449,0.866
+tdc_ld50_zhu,5,5,ensemble (2 method(s)),model,Ensemble,ensemble,2026-10-04 23:15:24 Pacific Daylight Time,1791180924.7769449,completed,2026-10-04 23:16:01 Pacific Daylight Time,1791180961.9478192,37.171

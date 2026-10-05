@@ -1,5 +1,6 @@
 dataset,stage_index,total_stages,stage_label,step_type,model,workflow,started_at,started_epoch,status,ended_at,ended_epoch,duration_seconds
-lipophilicity,1,4,loading MoleculeNet PhysChem benchmark: Lipophilicity,load_dataset,,,2026-10-02 10:58:48 Pacific Daylight Time,1790963928.0039973,completed,2026-10-02 10:58:49 Pacific Daylight Time,1790963929.248835,1.245
-lipophilicity,2,4,building molecular features (cached),feature_generation,,,2026-10-02 10:58:49 Pacific Daylight Time,1790963929.248835,resumed_cache,2026-10-02 10:58:49 Pacific Daylight Time,1790963929.3199623,0.071
-lipophilicity,3,4,splitting data and selecting features (cached),feature_selection,,,2026-10-02 10:58:49 Pacific Daylight Time,1790963929.3199623,resumed_cache,2026-10-02 10:58:49 Pacific Daylight Time,1790963929.3459973,0.026
-lipophilicity,4,4,ensemble (2 method(s)),model,Ensemble,ensemble,2026-10-02 10:58:49 Pacific Daylight Time,1790963929.3459973,completed,2026-10-02 10:59:36 Pacific Daylight Time,1790963976.9067938,47.561
+lipophilicity,1,5,loading MoleculeNet PhysChem benchmark: Lipophilicity,load_dataset,,,2026-10-04 23:04:10 Pacific Daylight Time,1791180250.6332676,completed,2026-10-04 23:04:11 Pacific Daylight Time,1791180251.4880083,0.855
+lipophilicity,2,5,building molecular features (cached),feature_generation,,,2026-10-04 23:04:11 Pacific Daylight Time,1791180251.4880083,resumed_cache,2026-10-04 23:04:11 Pacific Daylight Time,1791180251.525517,0.038
+lipophilicity,3,5,splitting data and selecting features (cached),feature_selection,,,2026-10-04 23:04:11 Pacific Daylight Time,1791180251.525517,resumed_cache,2026-10-04 23:04:11 Pacific Daylight Time,1791180251.545033,0.02
+lipophilicity,4,5,CFA combinatorial fusion,model,CFA (Combinatorial Fusion),cfa,2026-10-04 23:04:11 Pacific Daylight Time,1791180251.545033,completed,2026-10-04 23:04:12 Pacific Daylight Time,1791180252.1075974,0.563
+lipophilicity,5,5,ensemble (2 method(s)),model,Ensemble,ensemble,2026-10-04 23:04:12 Pacific Daylight Time,1791180252.1075974,completed,2026-10-04 23:04:45 Pacific Daylight Time,1791180285.1391203,33.032

@@ -2,10 +2,10 @@
   "status": "completed",
   "dataset": "tdc_herg_karim",
   "source": "PyTDC Tox benchmark: herg_karim",
-  "completed_at": "2026-10-02 11:35:26",
-  "elapsed_seconds": 49.43,
-  "n_metrics_rows": 33,
-  "n_stage_records": 4,
+  "completed_at": "2026-10-04 23:32:00",
+  "elapsed_seconds": 40.215,
+  "n_metrics_rows": 35,
+  "n_stage_records": 5,
   "n_rows": 13445,
   "task_type": "classification",
   "primary_metric": "roc_auc",
@@ -39,10 +39,10 @@
   "applicability_domain": {
     "method": "both",
     "n_test": 2690,
-    "in_domain_fraction": 0.9996282527881041,
+    "in_domain_fraction": 0.7037174721189591,
     "methods": {
       "standardization": 0.9996282527881041,
-      "confidence": 1.0
+      "confidence": 0.704089219330855
     },
     "selected_model": "XGBoost",
     "notes": []

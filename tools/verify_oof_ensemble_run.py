@@ -20,6 +20,13 @@ import pandas as pd
 
 RUN = Path("benchmark_results/qsarena_benchmark_oof_ensemble")
 FUSION = ("Ensemble", "CFA")
+# Base models deliberately retrained after the committed state; their metrics are allowed to differ from HEAD.
+# 2026-10-04: these binary datasets are catalogued as "rmse", so the models saved hard 0/1 labels as test predictions;
+# the predict_values_for_metric fix makes them save probabilities (see AGENTS.md). Everything else must still match.
+_PROBA_FIX_MODELS = {"AdaBoost", "CatBoost", "Extra trees", "HistGradientBoosting", "LogisticRegression", "Random forest",
+                     "SVC", "Tabular MLP", "Voting Classifier (KNN, SVM)", "XGBoost"}
+INTENTIONAL_RETRAINS = {ds: _PROBA_FIX_MODELS for ds in
+                        ("tdc_cyp1a2_veith", "tdc_cyp2c19_veith", "tdc_herg_karim", "tdc_pampa_ncats")}
 
 
 def git_csv(path: Path) -> pd.DataFrame | None:
@@ -70,6 +77,7 @@ def main() -> int:
             a, b = base_vals(old), base_vals(m)
             common = a.index.intersection(b.index)
             diff = [k for k in common if not np.isclose(a[k], b[k], rtol=0, atol=1e-12, equal_nan=True)]
+            diff = [k for k in diff if k not in INTENTIONAL_RETRAINS.get(d.name, set())]
             if diff:
                 hard.append(f"{d.name}: base-model metric changed for {diff[:3]}")
             if len(common) < len(a):

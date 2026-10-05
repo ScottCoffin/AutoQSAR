@@ -1,5 +1,6 @@
 dataset,stage_index,total_stages,stage_label,step_type,model,workflow,started_at,started_epoch,status,ended_at,ended_epoch,duration_seconds
-tdc_cyp2c19_veith,1,4,loading PyTDC ADME benchmark: cyp2c19_veith,load_dataset,,,2026-10-02 11:33:48 Pacific Daylight Time,1790966028.265341,completed,2026-10-02 11:33:51 Pacific Daylight Time,1790966031.7934191,3.528
-tdc_cyp2c19_veith,2,4,building molecular features (cached),feature_generation,,,2026-10-02 11:33:51 Pacific Daylight Time,1790966031.7934191,resumed_cache,2026-10-02 11:33:51 Pacific Daylight Time,1790966031.8910346,0.098
-tdc_cyp2c19_veith,3,4,splitting data and selecting features (cached),feature_selection,,,2026-10-02 11:33:51 Pacific Daylight Time,1790966031.892034,resumed_cache,2026-10-02 11:33:51 Pacific Daylight Time,1790966031.9164572,0.024
-tdc_cyp2c19_veith,4,4,ensemble (2 method(s)),model,Ensemble,ensemble,2026-10-02 11:33:51 Pacific Daylight Time,1790966031.9164572,completed,2026-10-02 11:34:20 Pacific Daylight Time,1790966060.9834998,29.067
+tdc_cyp2c19_veith,1,5,loading PyTDC ADME benchmark: cyp2c19_veith,load_dataset,,,2026-10-04 23:30:31 Pacific Daylight Time,1791181831.8565361,completed,2026-10-04 23:30:34 Pacific Daylight Time,1791181834.4431827,2.587
+tdc_cyp2c19_veith,2,5,building molecular features (cached),feature_generation,,,2026-10-04 23:30:34 Pacific Daylight Time,1791181834.4431827,resumed_cache,2026-10-04 23:30:34 Pacific Daylight Time,1791181834.5598428,0.117
+tdc_cyp2c19_veith,3,5,splitting data and selecting features (cached),feature_selection,,,2026-10-04 23:30:34 Pacific Daylight Time,1791181834.5598428,resumed_cache,2026-10-04 23:30:34 Pacific Daylight Time,1791181834.5913367,0.031
+tdc_cyp2c19_veith,4,5,CFA combinatorial fusion,model,CFA (Combinatorial Fusion),cfa,2026-10-04 23:30:34 Pacific Daylight Time,1791181834.5913367,completed,2026-10-04 23:30:36 Pacific Daylight Time,1791181836.2305188,1.639
+tdc_cyp2c19_veith,5,5,ensemble (2 method(s)),model,Ensemble,ensemble,2026-10-04 23:30:36 Pacific Daylight Time,1791181836.2305188,completed,2026-10-04 23:31:05 Pacific Daylight Time,1791181865.5880265,29.358

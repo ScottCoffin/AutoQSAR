@@ -1,21 +1,22 @@
 Model,Weight,Workflow
-LogisticRegression,0.053563920683094,conventional
-SVC,0.05108637512275286,conventional
-Random forest,0.050505856077875215,conventional
-Extra trees,0.05034929400915552,conventional
-HistGradientBoosting,0.04486115355535611,conventional
-"Voting Classifier (KNN, SVM)",0.05214450714437089,conventional
-AdaBoost,0.041581567714199984,conventional
-Tabular MLP,0.04951524791514134,conventional
-XGBoost,0.04828274009920925,conventional
-CatBoost,0.04955007438951141,conventional
-ChemML MLP (PyTorch),0.06882826436263291,ChemML deep learning
-ChemML MLP (TensorFlow),0.07387158423585655,ChemML deep learning
-Uni-Mol V1,0.042530106528734464,Uni-Mol
-"MapLight + GNN (CatBoost, Strict Parity)",0.039183742691197815,MapLight + GNN
-"Chemprop v2 (D-MPNN, ensemble=3)",0.04273864444590688,Chemprop v2
-"Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",0.04433758437592543,Chemprop v2
-"Chemprop v2 (CMPNN, ensemble=3)",0.04258016878638369,Chemprop v2
-"Chemprop v2 (AttentiveFP, ensemble=3)",0.044296440320173665,Chemprop v2
-"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",0.056108224706967955,Chemprop v2
-TabPFNClassifier,0.054084502835553966,conventional
+LogisticRegression,0.051416277931444376,conventional
+SVC,0.0490380694378581,conventional
+Random forest,0.04848082627538462,conventional
+Extra trees,0.048330541555069995,conventional
+HistGradientBoosting,0.043062447821438275,conventional
+"Voting Classifier (KNN, SVM)",0.05005377570838219,conventional
+AdaBoost,0.03991435681244433,conventional
+Tabular MLP,0.04752993649796103,conventional
+XGBoost,0.046346846021974954,conventional
+CatBoost,0.047563366606563004,conventional
+ChemML MLP (PyTorch),0.06606859850580388,ChemML deep learning
+ChemML MLP (TensorFlow),0.0709097067180466,ChemML deep learning
+Uni-Mol V1,0.040824864010104725,Uni-Mol
+"MapLight + GNN (CatBoost, Strict Parity)",0.0376126724651937,MapLight + GNN
+"Chemprop v2 (D-MPNN, ensemble=3)",0.04102504060979799,Chemprop v2
+"Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",0.04255987112237221,Chemprop v2
+"Chemprop v2 (CMPNN, ensemble=3)",0.040872919024008525,Chemprop v2
+"Chemprop v2 (AttentiveFP, ensemble=3)",0.0425203767355017,Chemprop v2
+"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",0.053858568211268595,Chemprop v2
+TabPFNClassifier,0.05191598736823845,conventional
+XGBoost (ADMETboost features),0.04009495056114273,conventional

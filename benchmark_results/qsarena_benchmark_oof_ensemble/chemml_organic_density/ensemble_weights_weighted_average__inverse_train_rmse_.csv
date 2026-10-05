@@ -1,18 +1,19 @@
 Model,Weight,Workflow
-Random forest,0.04587237840017753,conventional
-Extra trees,0.0561816810830544,conventional
-HistGradientBoosting,0.06402242249079397,conventional
-"Voting Regressor (KNN, SVM)",0.019577470558547486,conventional
-AdaBoost,0.0373923694269584,conventional
-XGBoost,0.05260239352877198,conventional
-CatBoost,0.06579044536930442,conventional
-MapLight CatBoost (Strict Parity),0.055436102679179984,conventional
-ChemML MLP (PyTorch),0.08498417106939377,ChemML deep learning
-ChemML MLP (TensorFlow),0.07447156228820295,ChemML deep learning
-Uni-Mol V1,0.049730033833656734,Uni-Mol
-Uni-Mol V2 (84m),0.021664097139937916,Uni-Mol
-"Chemprop v2 (D-MPNN, ensemble=3)",0.055421881919815306,Chemprop v2
-"Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",0.07966547691423803,Chemprop v2
-"Chemprop v2 (CMPNN, ensemble=3)",0.04940773249916104,Chemprop v2
-"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",0.07746756925634016,Chemprop v2
-TabPFNRegressor,0.11031221154246575,conventional
+Random forest,0.04320286747635375,conventional
+Extra trees,0.05291222751207023,conventional
+HistGradientBoosting,0.06029668246663655,conventional
+"Voting Regressor (KNN, SVM)",0.018438173374936036,conventional
+AdaBoost,0.03521634668442422,conventional
+XGBoost,0.049541234089439515,conventional
+CatBoost,0.06196181649236984,conventional
+MapLight CatBoost (Strict Parity),0.05221003752107353,conventional
+ChemML MLP (PyTorch),0.08003857677204254,ChemML deep learning
+ChemML MLP (TensorFlow),0.07013774189397173,ChemML deep learning
+Uni-Mol V1,0.046836029354469774,Uni-Mol
+Uni-Mol V2 (84m),0.020403370184266918,Uni-Mol
+"Chemprop v2 (D-MPNN, ensemble=3)",0.05219664432883733,Chemprop v2
+"Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",0.07502940029708652,Chemprop v2
+"Chemprop v2 (CMPNN, ensemble=3)",0.04653248412033787,Chemprop v2
+"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",0.07295939833553447,Chemprop v2
+TabPFNRegressor,0.10389266967404952,conventional
+XGBoost (ADMETboost features),0.05819429942209943,conventional

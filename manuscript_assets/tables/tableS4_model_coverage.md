@@ -14,17 +14,17 @@
 | Voting Regressor (KNN, SVM) | 22 | 22 |
 | Tabular CNN | 22 | 22 |
 | Chemprop v2 (D-MPNN + RDKit2D, ensemble=3) | 44 | 38 |
-| CFA (Combinatorial Fusion) | 38 | 38 |
 | Chemprop v2 (AttentiveFP, ensemble=3) | 44 | 38 |
-| Chemprop v2 (CMPNN, ensemble=3) | 44 | 42 |
 | Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3) | 44 | 42 |
 | Chemprop v2 (D-MPNN, ensemble=3) | 44 | 42 |
+| Chemprop v2 (CMPNN, ensemble=3) | 44 | 42 |
+| HistGradientBoosting | 44 | 44 |
 | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 44 | 44 |
 | ChemML MLP (PyTorch) | 44 | 44 |
 | CatBoost | 44 | 44 |
-| AdaBoost | 44 | 44 |
+| CFA (Combinatorial Fusion) | 44 | 44 |
 | ChemML MLP (TensorFlow) | 44 | 44 |
-| HistGradientBoosting | 44 | 44 |
+| AdaBoost | 44 | 44 |
 | Extra trees | 44 | 44 |
 | Ensemble (Weighted average (inverse OOF error)) | 44 | 44 |
 | Random forest | 44 | 44 |
@@ -32,3 +32,4 @@
 | Uni-Mol V1 | 44 | 44 |
 | Tabular MLP | 44 | 44 |
 | XGBoost | 44 | 44 |
+| XGBoost (ADMETboost features) | 44 | 44 |

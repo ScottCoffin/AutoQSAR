@@ -134,13 +134,35 @@ def compute_family(family: str, smiles: list[str]) -> tuple[np.ndarray, dict]:
     return np.nan_to_num(X, nan=0.0, posinf=0.0, neginf=0.0).astype(np.float32), extra
 
 
-def admetboost_matrix(smiles: list[str]) -> np.ndarray:
-    """The full ``admetboost`` feature set for arbitrary SMILES, uncached, columns in family order.
+def find_cached_matrix(families: list[str], smiles: list[str], cache_dir: Path = CACHE_DIR) -> np.ndarray | None:
+    """The cached matrix for exactly these SMILES (same order) if every family has it, else None.
 
-    Used by the benchmark runner's opt-in ``XGBoost (ADMETboost features)`` model. Every family is label-free
-    (nothing is fitted to targets), so computing train and test SMILES together cannot leak.
+    The arm caches by dataset name; the runner knows only the SMILES, so match on the SMILES hash instead.
     """
-    return np.hstack([compute_family(family, list(smiles))[0] for family in FEATURE_SETS["admetboost"]])
+    sha = _smiles_sha(list(smiles))
+    first = Path(cache_dir) / families[0]
+    for meta in sorted(first.glob("*.json")) if first.is_dir() else []:
+        info = json.loads(meta.read_text(encoding="utf-8"))
+        if info.get("smiles_sha256") != sha or info.get("n_rows") != len(smiles):
+            continue
+        dataset = meta.stem
+        if all(is_cached(family, dataset, list(smiles), cache_dir) for family in families):
+            return np.hstack([np.load(cache_paths(family, dataset, cache_dir)[0]) for family in families])
+    return None
+
+
+def admetboost_matrix(smiles: list[str]) -> np.ndarray:
+    """The full ``admetboost`` feature set for arbitrary SMILES, columns in family order.
+
+    Used by the benchmark runner's ``XGBoost (ADMETboost features)`` model. Reuses the feature-expansion cache when
+    it holds exactly these SMILES, otherwise computes every family. Every family is label-free (nothing is fitted to
+    targets), so computing train and test SMILES together cannot leak.
+    """
+    families = FEATURE_SETS["admetboost"]
+    cached = find_cached_matrix(families, list(smiles))
+    if cached is not None:
+        return cached
+    return np.hstack([compute_family(family, list(smiles))[0] for family in families])
 
 
 # ---------------------------------------------------------------------------------------------

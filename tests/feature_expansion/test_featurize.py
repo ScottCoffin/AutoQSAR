@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import json
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -54,3 +56,17 @@ def test_mol2vec_sentence_interleaves_radii():
 
     words = fz.mol2vec_sentence(Chem.MolFromSmiles("CCO"))
     assert len(words) == 6  # 3 atoms x radii 0 and 1
+
+
+def test_find_cached_matrix_matches_on_smiles_hash(tmp_path):
+    """The runner knows only SMILES, so the arm cache is found by hash; any order change is a miss."""
+    smiles = ["CCO", "c1ccccc1", "CC(=O)O"]
+    for family, width in (("maccs", 2), ("ecfp4", 3)):
+        npy, meta = fz.cache_paths(family, "some_dataset", tmp_path)
+        npy.parent.mkdir(parents=True, exist_ok=True)
+        np.save(npy, np.full((3, width), 1.0 if family == "maccs" else 2.0, dtype=np.float32))
+        meta.write_text(json.dumps({"n_rows": 3, "smiles_sha256": fz._smiles_sha(smiles)}), encoding="utf-8")
+    X = fz.find_cached_matrix(["maccs", "ecfp4"], smiles, tmp_path)
+    assert X.shape == (3, 5) and X[0, 0] == 1.0 and X[0, -1] == 2.0
+    assert fz.find_cached_matrix(["maccs", "ecfp4"], list(reversed(smiles)), tmp_path) is None
+    assert fz.find_cached_matrix(["maccs", "pubchem"], smiles, tmp_path) is None

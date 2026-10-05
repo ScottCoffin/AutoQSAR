@@ -165,6 +165,7 @@ EVIDENCE: dict[str, dict[str, tuple[str, str, str]]] = {
     },
     "4C. Train conventional ML models and show an interactive metrics table": {
         "use_cross_validation": ("on", BENCH, "5-fold CV on the training split, as in the benchmark. CV scores are what you should choose a model by; the test set is for the final check."),
+        "nested_selection_cv": ("on", EVID, "Refits the feature selector inside every CV fold. Selecting features once on all training rows and then cross-validating overstates CV scores (by 22.7 points for ElasticNetCV and 6.1 for random forest in a controlled test on 9 datasets); test scores are unaffected. Off is faster on large feature matrices."),
         "cv_folds": ("5", BENCH, "As in the benchmark."),
         "model_random_seed": ("13", NOEFFECT, "Seed."),
         "enable_conventional_model_cache": (NA, NOEFFECT, "Caching only."),

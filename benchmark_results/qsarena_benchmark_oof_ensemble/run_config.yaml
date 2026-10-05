@@ -45,6 +45,7 @@ feature_selection:
   max_selected_features: 0
   auto_rf_by_dataset_size: false
   elasticnet_timeout_seconds: 7200.0
+  cv_selection: outer
 models:
   profile: full
   enable_families:
@@ -57,7 +58,8 @@ models:
     fusion: true
     ensemble: true
   disable_models: []
-  only_models: [Ensemble]
+  only_models: [Ensemble, CFA (Combinatorial Fusion)]
+  admetboost_xgboost: true
 ga_tuning:
   mode: "off"
   estimators: [elastic_net, catboost]

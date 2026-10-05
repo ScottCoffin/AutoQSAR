@@ -1,10 +1,10 @@
 # QSARena run report
 
 - Output directory: `benchmark_results\qsarena_benchmark_oof_ensemble`
-- Generated: 2026-10-02 11:35:54 with qsarena 0.1.0
+- Generated: 2026-10-04 23:32:22 with qsarena 0.1.0
 - Mode: benchmark; profile: full; GPU: yes
 - 44 dataset(s): 44 completed
-- Config signature: `2864ae01613d5ff02577f8b0d757842c01bdc7acfd01be7812f24a456b52ca46`
+- Config signature: `97be762568e0fe5e7d4ccde76269ce3c6e615e0760033fedd2847dc1ea3ad1bb`
 
 ## Warnings
 
@@ -83,6 +83,7 @@ Command: /home/exouser/miniconda3/envs/autoqsar-py311/bin/chemprop train --data-
 - **tdc_cyp2c19_veith**: Chemprop v2 (D-MPNN, ensemble=3) failed: Chemprop command failed during training (exit=1).
 Command: /home/exouser/miniconda3/envs/autoqsar-py311/bin/chemprop train --data-path benchmark_results/autoqs *Remedy:* Install PyTorch: pip install 'qsarena[deep]', or --disable-model-families deep_tabular.
 - **tdc_cyp2d6_veith**: Chemprop v2 (D-MPNN, ensemble=3) failed: 'ascii' codec can't decode byte 0xe2 in position 146: ordinal not in range(128) *Remedy:* See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail.
+- **tdc_herg_karim**: 30% of test molecules are outside the applicability domain. *Remedy:* Treat their predictions as extrapolations (applicability_domain.csv lists them).
 - **tdc_herg_karim**: Chemprop v2 (D-MPNN, ensemble=3) failed: 'ascii' codec can't decode byte 0xe2 in position 144: ordinal not in range(128) *Remedy:* See run.log and events.jsonl for the traceback; rerun with --verbosity debug for more detail.
 
 ## Datasets
@@ -144,23 +145,23 @@ CV scores are computed on the training split after train-only feature selection 
 
 | Dataset | Selected by | Best model | Family | Primary metric | CV score | Test score | Test RMSE | Test MAE | Test R2 | Test Spearman |
 |---|---|---|---|---|---|---|---|---|---|---|
-| chemml_cep_homo | test (optimistic) | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | ensemble | RMSE | – | 0.093 | 0.093 | 0.068 | 0.982 | 0.990 |
+| chemml_cep_homo | test (optimistic) | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | ensemble | RMSE | – | 0.094 | 0.094 | 0.069 | 0.982 | 0.989 |
 | chemml_cep_homo | CV (honest) | TabPFNRegressor | deep_tabular | RMSE | 0.087 | 0.102 | 0.102 | 0.077 | 0.979 | 0.988 |
 | chemml_organic_density | test (optimistic) | TabPFNRegressor | deep_tabular | RMSE | 0.004 | 0.005 | 0.005 | 0.004 | 0.976 | 0.988 |
 | chemml_organic_density | CV (honest) | TabPFNRegressor | deep_tabular | RMSE | 0.004 | 0.005 | 0.005 | 0.004 | 0.976 | 0.988 |
 | freesolv_sampl | test (optimistic) | TabPFNRegressor | deep_tabular | RMSE | 0.865 | 0.933 | 0.933 | 0.537 | 0.955 | 0.982 |
 | freesolv_sampl | CV (honest) | TabPFNRegressor | deep_tabular | RMSE | 0.865 | 0.933 | 0.933 | 0.537 | 0.955 | 0.982 |
-| tdc_hydrationfreeenergy_freesolv | test (optimistic) | Ensemble (Weighted average (inverse OOF error)) | ensemble | RMSE | – | 1.093 | 1.093 | 0.824 | 0.874 | 0.941 |
+| tdc_hydrationfreeenergy_freesolv | test (optimistic) | Ensemble (Weighted average (inverse OOF error)) | ensemble | RMSE | – | 1.085 | 1.085 | 0.816 | 0.875 | 0.940 |
 | tdc_hydrationfreeenergy_freesolv | CV (honest) | TabPFNRegressor | deep_tabular | RMSE | 0.816 | 1.116 | 1.116 | 0.825 | 0.868 | 0.933 |
 | tdc_half_life_obach | test (optimistic) | Uni-Mol V1 | pretrained_3d | Spearman | – | 0.597 | 19.128 | 8.253 | 0.223 | 0.597 |
-| tdc_half_life_obach | CV (honest) | TabPFNRegressor | deep_tabular | Spearman | 0.282 | 0.221 | 20.342 | 10.424 | 0.121 | 0.221 |
+| tdc_half_life_obach | CV (honest) | XGBoost (ADMETboost features) | gradient_boosting | Spearman | 0.356 | 0.473 | 33.967 | 15.579 | -1.450 | 0.473 |
 | polaris_adme_fang_rppb_1 | test (optimistic) | Chemprop v2 (AttentiveFP, ensemble=3) | graph_nn | mse | – | 0.248 | 0.498 | 0.376 | 0.556 | 0.771 |
 | polaris_adme_fang_rppb_1 | CV (honest) | TabPFNRegressor | deep_tabular | mse | 0.149 | 0.308 | 0.555 | 0.423 | 0.449 | 0.705 |
 | tdc_caco2_wang | test (optimistic) | MapLight CatBoost (Strict Parity) | gradient_boosting | MAE | – | 0.272 | 0.350 | 0.272 | 0.740 | 0.842 |
 | tdc_caco2_wang | CV (honest) | TabPFNRegressor | deep_tabular | MAE | 0.238 | 0.302 | 0.384 | 0.302 | 0.687 | 0.811 |
 | tdc_clearance_microsome_az | test (optimistic) | Uni-Mol V2 (84m) | pretrained_3d | Spearman | – | 0.678 | 33.507 | 23.315 | 0.395 | 0.678 |
 | tdc_clearance_microsome_az | CV (honest) | TabPFNRegressor | deep_tabular | Spearman | 0.638 | 0.437 | 38.297 | 27.632 | 0.210 | 0.437 |
-| esol_delaney | test (optimistic) | Ensemble (Weighted average (inverse OOF error)) | ensemble | RMSE | – | 0.626 | 0.626 | 0.479 | 0.813 | 0.900 |
+| esol_delaney | test (optimistic) | Ensemble (Weighted average (inverse OOF error)) | ensemble | RMSE | – | 0.624 | 0.624 | 0.479 | 0.814 | 0.900 |
 | esol_delaney | CV (honest) | TabPFNRegressor | deep_tabular | RMSE | 0.562 | 0.673 | 0.673 | 0.500 | 0.784 | 0.895 |
 | tdc_vdss_lombardo | test (optimistic) | MapLight + GNN (CatBoost, Strict Parity) | maplight_gnn | Spearman | – | 0.680 | 4.670 | 1.980 | 0.258 | 0.680 |
 | tdc_vdss_lombardo | CV (honest) | TabPFNRegressor | deep_tabular | Spearman | 0.567 | 0.489 | 4.953 | 2.733 | 0.166 | 0.489 |
@@ -172,7 +173,7 @@ CV scores are computed on the training split after train-only feature selection 
 | poduam_pod_nc_std | CV (honest) | TabPFNRegressor | deep_tabular | RMSE | 0.602 | 0.745 | 0.745 | 0.565 | 0.590 | 0.660 |
 | polaris_adme_fang_solu_1 | test (optimistic) | Uni-Mol V2 (84m) | pretrained_3d | mse | – | 0.304 | 0.551 | 0.403 | 0.455 | 0.572 |
 | polaris_adme_fang_solu_1 | CV (honest) | TabPFNRegressor | deep_tabular | mse | 0.170 | 0.373 | 0.611 | 0.399 | 0.331 | 0.548 |
-| poduam_pod_rd_std | test (optimistic) | Ensemble (Weighted average (inverse OOF error)) | ensemble | RMSE | – | 0.570 | 0.570 | 0.421 | 0.460 | 0.648 |
+| poduam_pod_rd_std | test (optimistic) | CFA (Combinatorial Fusion) | fusion | RMSE | – | 0.564 | 0.564 | 0.403 | 0.473 | 0.667 |
 | poduam_pod_rd_std | CV (honest) | TabPFNRegressor | deep_tabular | RMSE | 0.512 | 0.589 | 0.589 | 0.425 | 0.425 | 0.652 |
 | polaris_adme_fang_perm_1 | test (optimistic) | Uni-Mol V1 | pretrained_3d | mse | – | 0.159 | 0.399 | 0.299 | 0.686 | 0.805 |
 | polaris_adme_fang_perm_1 | CV (honest) | ChemML MLP (PyTorch) | deep_tabular | mse | 0.138 | 0.212 | 0.461 | 0.343 | 0.581 | 0.754 |
@@ -180,13 +181,13 @@ CV scores are computed on the training split after train-only feature selection 
 | tdc_ppbr_az | CV (honest) | ChemML MLP (PyTorch) | deep_tabular | MAE | 6.232 | 9.741 | 14.528 | 9.741 | 0.081 | 0.574 |
 | polaris_adme_fang_rclint_1 | test (optimistic) | Chemprop v2 (D-MPNN, ensemble=3) | graph_nn | mse | – | 0.268 | 0.517 | 0.403 | 0.539 | 0.744 |
 | polaris_adme_fang_rclint_1 | CV (honest) | TabPFNRegressor | deep_tabular | mse | 0.180 | 0.281 | 0.530 | 0.413 | 0.515 | 0.720 |
-| lipophilicity | test (optimistic) | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | ensemble | RMSE | – | 0.548 | 0.548 | 0.410 | 0.808 | 0.892 |
+| lipophilicity | test (optimistic) | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | ensemble | RMSE | – | 0.548 | 0.548 | 0.410 | 0.809 | 0.892 |
 | lipophilicity | CV (honest) | ElasticNetCV | conventional_ml | RMSE | 0.541 | 0.682 | 0.682 | 0.512 | 0.703 | 0.840 |
 | tdc_lipophilicity_astrazeneca | test (optimistic) | Chemprop v2 (D-MPNN, ensemble=3) | graph_nn | MAE | – | 0.425 | 0.577 | 0.425 | 0.763 | 0.861 |
 | tdc_lipophilicity_astrazeneca | CV (honest) | TabPFNRegressor | deep_tabular | MAE | 0.377 | 0.439 | 0.598 | 0.439 | 0.746 | 0.846 |
 | tdc_ld50_zhu | test (optimistic) | TabPFNRegressor | deep_tabular | MAE | 0.380 | 0.552 | 0.806 | 0.552 | 0.420 | 0.708 |
 | tdc_ld50_zhu | CV (honest) | TabPFNRegressor | deep_tabular | MAE | 0.380 | 0.552 | 0.806 | 0.552 | 0.420 | 0.708 |
-| tdc_solubility_aqsoldb | test (optimistic) | TabPFNRegressor | deep_tabular | MAE | 0.575 | 0.686 | 0.961 | 0.686 | 0.824 | 0.894 |
+| tdc_solubility_aqsoldb | test (optimistic) | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | ensemble | MAE | – | 0.678 | 0.956 | 0.678 | 0.826 | 0.895 |
 | tdc_solubility_aqsoldb | CV (honest) | TabPFNRegressor | deep_tabular | MAE | 0.575 | 0.686 | 0.961 | 0.686 | 0.824 | 0.894 |
 
 **Classification**
@@ -195,11 +196,11 @@ CV scores are computed on the training split after train-only feature selection 
 |---|---|---|---|---|---|---|---|---|---|---|
 | tdc_carcinogens_lagunin | test (optimistic) | Chemprop v2 (AttentiveFP, ensemble=3) | graph_nn | AUROC | – | 0.929 | 0.929 | 0.835 | 0.895 | 0.801 |
 | tdc_carcinogens_lagunin | CV (honest) | TabPFNClassifier | deep_tabular | AUROC | 0.986 | 0.870 | 0.870 | 0.779 | 0.803 | 0.586 |
-| tdc_skin_reaction | test (optimistic) | Uni-Mol V2 (84m) | pretrained_3d | AUROC | – | 0.658 | 0.658 | 0.840 | 0.558 | 0.169 |
+| tdc_skin_reaction | test (optimistic) | XGBoost (ADMETboost features) | gradient_boosting | AUROC | 0.767 | 0.667 | 0.667 | 0.836 | 0.554 | 0.180 |
 | tdc_skin_reaction | CV (honest) | TabPFNClassifier | deep_tabular | AUROC | 0.849 | 0.525 | 0.525 | 0.762 | 0.496 | -0.010 |
-| tdc_dili | test (optimistic) | Uni-Mol V1 | pretrained_3d | AUROC | – | 0.922 | 0.922 | 0.919 | 0.855 | 0.709 |
+| tdc_dili | test (optimistic) | XGBoost (ADMETboost features) | gradient_boosting | AUROC | 0.880 | 0.923 | 0.923 | 0.899 | 0.884 | 0.771 |
 | tdc_dili | CV (honest) | LogisticRegression | conventional_ml | AUROC | 0.967 | 0.745 | 0.745 | 0.700 | 0.725 | 0.460 |
-| tdc_hia_hou | test (optimistic) | CFA (Combinatorial Fusion) | fusion | AUROC | – | 0.987 | 0.987 | 0.996 | 0.500 | 0.000 |
+| tdc_hia_hou | test (optimistic) | XGBoost (ADMETboost features) | gradient_boosting | AUROC | 0.972 | 0.994 | 0.994 | 0.998 | 0.907 | 0.879 |
 | tdc_hia_hou | CV (honest) | LogisticRegression | conventional_ml | AUROC | 1.000 | 0.983 | 0.983 | 0.994 | 0.939 | 0.902 |
 | tdc_bioavailability_ma | test (optimistic) | CatBoost | gradient_boosting | AUROC | 0.709 | 0.777 | 0.777 | 0.907 | 0.652 | 0.359 |
 | tdc_bioavailability_ma | CV (honest) | TabPFNClassifier | deep_tabular | AUROC | 0.768 | 0.732 | 0.732 | 0.893 | 0.566 | 0.194 |
@@ -209,7 +210,7 @@ CV scores are computed on the training split after train-only feature selection 
 | tdc_cyp2d6_substrate_carbonmangels | CV (honest) | TabPFNClassifier | deep_tabular | AUPRC | 0.836 | 0.582 | 0.704 | 0.582 | 0.614 | 0.225 |
 | tdc_cyp2c9_substrate_carbonmangels | test (optimistic) | Chemprop v2 (AttentiveFP, ensemble=3) | graph_nn | AUPRC | – | 0.438 | 0.655 | 0.438 | 0.521 | 0.129 |
 | tdc_cyp2c9_substrate_carbonmangels | CV (honest) | LogisticRegression | conventional_ml | AUPRC | 0.412 | 0.361 | 0.564 | 0.361 | 0.530 | 0.094 |
-| tdc_cyp3a4_substrate_carbonmangels | test (optimistic) | Voting Classifier (KNN, SVM) | conventional_ml | AUROC | 0.893 | 0.655 | 0.655 | 0.702 | 0.630 | 0.258 |
+| tdc_cyp3a4_substrate_carbonmangels | test (optimistic) | XGBoost (ADMETboost features) | gradient_boosting | AUROC | 0.695 | 0.660 | 0.660 | 0.729 | 0.611 | 0.226 |
 | tdc_cyp3a4_substrate_carbonmangels | CV (honest) | TabPFNClassifier | deep_tabular | AUROC | 0.918 | 0.621 | 0.621 | 0.677 | 0.624 | 0.245 |
 | tdc_pgp_broccatelli | test (optimistic) | Uni-Mol V2 (84m) | pretrained_3d | AUROC | – | 0.933 | 0.933 | 0.937 | 0.874 | 0.748 |
 | tdc_pgp_broccatelli | CV (honest) | LogisticRegression | conventional_ml | AUROC | 0.989 | 0.868 | 0.868 | 0.880 | 0.796 | 0.592 |
@@ -223,20 +224,20 @@ CV scores are computed on the training split after train-only feature selection 
 | tdc_pampa_ncats | CV (honest) | TabPFNClassifier | deep_tabular | AUROC | 0.820 | 0.578 | 0.578 | 0.905 | 0.578 | 0.251 |
 | tdc_tox21 | test (optimistic) | Chemprop v2 (AttentiveFP, ensemble=3) | graph_nn | AUROC | – | 0.597 | 0.597 | 0.047 | 0.500 | 0.000 |
 | tdc_tox21 | CV (honest) | TabPFNClassifier | deep_tabular | AUROC | 0.913 | 0.468 | 0.468 | 0.015 | 0.500 | 0.000 |
-| tdc_ames | test (optimistic) | TabPFNClassifier | deep_tabular | AUROC | 0.929 | 0.876 | 0.876 | 0.913 | 0.794 | 0.584 |
+| tdc_ames | test (optimistic) | CFA (Combinatorial Fusion) | fusion | AUROC | – | 0.877 | 0.877 | 0.914 | 0.500 | 0.000 |
 | tdc_ames | CV (honest) | TabPFNClassifier | deep_tabular | AUROC | 0.929 | 0.876 | 0.876 | 0.913 | 0.794 | 0.584 |
-| tdc_cyp2c9_veith | test (optimistic) | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | ensemble | AUPRC | – | 0.829 | 0.914 | 0.829 | 0.835 | 0.676 |
+| tdc_cyp2c9_veith | test (optimistic) | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | ensemble | AUPRC | – | 0.827 | 0.913 | 0.827 | 0.832 | 0.672 |
 | tdc_cyp2c9_veith | CV (honest) | XGBoost | gradient_boosting | AUPRC | 0.838 | 0.796 | 0.898 | 0.796 | 0.806 | 0.622 |
-| tdc_cyp3a4_veith | test (optimistic) | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | ensemble | AUPRC | – | 0.902 | 0.921 | 0.902 | 0.843 | 0.687 |
+| tdc_cyp3a4_veith | test (optimistic) | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | ensemble | AUPRC | – | 0.902 | 0.921 | 0.902 | 0.842 | 0.684 |
 | tdc_cyp3a4_veith | CV (honest) | XGBoost | gradient_boosting | AUPRC | 0.887 | 0.882 | 0.901 | 0.882 | 0.807 | 0.612 |
-| tdc_cyp1a2_veith | test (optimistic) | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | ensemble | AUROC | – | 0.973 | 0.973 | 0.976 | 0.934 | 0.866 |
-| tdc_cyp1a2_veith | CV (honest) | XGBoost | gradient_boosting | AUROC | 0.928 | 0.914 | 0.914 | 0.896 | 0.914 | 0.827 |
-| tdc_cyp2c19_veith | test (optimistic) | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | ensemble | AUROC | – | 0.931 | 0.931 | 0.887 | 0.864 | 0.752 |
-| tdc_cyp2c19_veith | CV (honest) | XGBoost | gradient_boosting | AUROC | 0.894 | 0.840 | 0.840 | 0.701 | 0.840 | 0.700 |
-| tdc_cyp2d6_veith | test (optimistic) | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | ensemble | AUPRC | – | 0.761 | 0.905 | 0.761 | 0.790 | 0.656 |
+| tdc_cyp1a2_veith | test (optimistic) | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | ensemble | AUROC | – | 0.974 | 0.974 | 0.980 | 0.930 | 0.858 |
+| tdc_cyp1a2_veith | CV (honest) | SVC | conventional_ml | AUROC | 0.931 | 0.962 | 0.962 | 0.969 | 0.902 | 0.802 |
+| tdc_cyp2c19_veith | test (optimistic) | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | ensemble | AUROC | – | 0.937 | 0.937 | 0.887 | 0.869 | 0.760 |
+| tdc_cyp2c19_veith | CV (honest) | XGBoost | gradient_boosting | AUROC | 0.896 | 0.926 | 0.926 | 0.871 | 0.845 | 0.707 |
+| tdc_cyp2d6_veith | test (optimistic) | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | ensemble | AUPRC | – | 0.759 | 0.905 | 0.759 | 0.793 | 0.657 |
 | tdc_cyp2d6_veith | CV (honest) | XGBoost | gradient_boosting | AUPRC | 0.751 | 0.729 | 0.894 | 0.729 | 0.740 | 0.576 |
-| tdc_herg_karim | test (optimistic) | Ensemble (Weighted average (inverse OOF error)) | ensemble | AUROC | – | 0.905 | 0.905 | 0.915 | 0.503 | 0.058 |
-| tdc_herg_karim | CV (honest) | XGBoost | gradient_boosting | AUROC | 0.884 | 0.815 | 0.815 | 0.776 | 0.815 | 0.629 |
+| tdc_herg_karim | test (optimistic) | Ensemble (Weighted average (inverse OOF error)) | ensemble | AUROC | – | 0.907 | 0.907 | 0.916 | 0.831 | 0.661 |
+| tdc_herg_karim | CV (honest) | XGBoost | gradient_boosting | AUROC | 0.883 | 0.902 | 0.902 | 0.909 | 0.822 | 0.644 |
 
 
 ## Leaderboard / rank table
@@ -244,13 +245,13 @@ CV scores are computed on the training split after train-only feature selection 
 | Dataset | Leaderboard metric | Our model | Our value | Published best | Est. rank vs top-10 | Published entries | Caution |
 |---|---|---|---|---|---|---|---|
 | tdc_carcinogens_lagunin | AUROC | Chemprop v2 (AttentiveFP, ensemble=3) | 0.929 | – | 1 | 10 | test-selected |
-| tdc_skin_reaction | AUROC | Uni-Mol V2 (84m) | 0.658 | – | 7 | 10 | test-selected |
-| tdc_hydrationfreeenergy_freesolv | RMSE | Ensemble (Weighted average (inverse OOF error)) | 1.093 | – | 4 | 6 | sparse reference (6 published entries); test-selected |
+| tdc_skin_reaction | AUROC | XGBoost (ADMETboost features) | 0.667 | 0.741 | 6 | 10 | test-selected |
+| tdc_hydrationfreeenergy_freesolv | RMSE | Ensemble (Weighted average (inverse OOF error)) | 1.085 | – | 4 | 6 | sparse reference (6 published entries); test-selected |
 | tdc_half_life_obach | Spearman | Uni-Mol V1 | 0.597 | – | 1 | 10 | test-selected |
 | polaris_adme_fang_rppb_1 | mse | Chemprop v2 (AttentiveFP, ensemble=3) | 0.248 | – | 3 | 10 | test-selected |
 | tdc_caco2_wang | MAE | MapLight CatBoost (Strict Parity) | 0.272 | 0.256 | 2 | 10 | test-selected |
 | tdc_clearance_microsome_az | Spearman | Uni-Mol V2 (84m) | 0.678 | – | 1 | 10 | test-selected |
-| esol_delaney | RMSE | Ensemble (Weighted average (inverse OOF error)) | 0.626 | – | 1 | 2 | sparse reference (2 published entries); test-selected |
+| esol_delaney | RMSE | Ensemble (Weighted average (inverse OOF error)) | 0.624 | – | 1 | 2 | sparse reference (2 published entries); test-selected |
 | tdc_vdss_lombardo | Spearman | Uni-Mol V1 | 0.605 | – | 6 | 10 | test-selected |
 | tdc_clearance_hepatocyte_az | Spearman | Chemprop v2 (D-MPNN + RDKit2D, ensemble=3) | 0.403 | – | 11 | 10 | test-selected |
 | tdc_clintox | AUROC | CFA (Combinatorial Fusion) | 0.974 | 0.996 | 2 | 6 | sparse reference (6 published entries); test-selected |
@@ -258,7 +259,7 @@ CV scores are computed on the training split after train-only feature selection 
 | polaris_adme_fang_hppb_1 | mse | Chemprop v2 (D-MPNN, ensemble=3) | 0.197 | – | 4 | 10 | test-selected |
 | poduam_pod_nc_std | RMSE | Random forest | 0.720 | 0.730 | 1 | 2 | sparse reference (2 published entries); test-selected |
 | polaris_adme_fang_solu_1 | mse | Uni-Mol V2 (84m) | 0.304 | – | 7 | 10 | test-selected |
-| poduam_pod_rd_std | RMSE | Ensemble (Weighted average (inverse OOF error)) | 0.570 | – | 1 | 2 | sparse reference (2 published entries); test-selected |
+| poduam_pod_rd_std | RMSE | CFA (Combinatorial Fusion) | 0.564 | 0.630 | 1 | 2 | sparse reference (2 published entries); test-selected |
 | polaris_adme_fang_perm_1 | mse | Uni-Mol V1 | 0.159 | – | 4 | 10 | test-selected |
 | tdc_ppbr_az | MAE | MapLight + GNN (CatBoost, Strict Parity) | 7.306 | 7.440 | 1 | 10 | test-selected |
 | polaris_adme_fang_rclint_1 | mse | Chemprop v2 (D-MPNN, ensemble=3) | 0.268 | – | 6 | 10 | test-selected |
@@ -266,7 +267,7 @@ CV scores are computed on the training split after train-only feature selection 
 | tdc_lipophilicity_astrazeneca | MAE | Chemprop v2 (D-MPNN, ensemble=3) | 0.425 | – | 1 | 10 | test-selected |
 | tdc_tox21 | AUROC | Chemprop v2 (AttentiveFP, ensemble=3) | 0.597 | – | 7 | 6 | sparse reference (6 published entries); test-selected |
 | tdc_ld50_zhu | MAE | TabPFNRegressor | 0.552 | 0.552 | 1 | 10 | test-selected |
-| tdc_solubility_aqsoldb | MAE | TabPFNRegressor | 0.686 | 0.741 | 1 | 10 | test-selected |
+| tdc_solubility_aqsoldb | MAE | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 0.678 | – | 1 | 10 | test-selected |
 
 Ranks are estimated by inserting our test score into the cached published top-10; they are only leaderboard-equivalent on official splits.
 
@@ -1252,7 +1253,7 @@ Skipped by design:
 - 7 model fit(s) failed (TabPFNClassifier, TabPFNRegressor). TabPFN API budget or authentication problem; set PRIORLABS_API_KEY, install local tabpfn on a GPU, or --no-run-tabpfn.
 - 20 model fit(s) failed (Chemprop v2 (AttentiveFP, ensemble=3), Chemprop v2 (CMPNN, ensemble=3), Chemprop v2 (D-MPNN + RDKit2D, ensemble=3), Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3) ...). Install PyTorch: pip install 'qsarena[deep]', or --disable-model-families deep_tabular.
 - 10 model fit(s) failed (Chemprop v2 (AttentiveFP, ensemble=3), Chemprop v2 (CMPNN, ensemble=3), Chemprop v2 (D-MPNN + RDKit2D, ensemble=3), Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3) ...). Chemprop itself failed on this dataset; see run.log. Small datasets often need --chemprop-batch-size 16.
-- On 39 dataset(s) the test-selected winner differs from the CV-selected one (tdc_carcinogens_lagunin, tdc_skin_reaction, tdc_dili, chemml_cep_homo, tdc_hia_hou). Choosing on the test set is optimistic; report the CV-selected model and its test score as the honest estimate.
+- On 41 dataset(s) the test-selected winner differs from the CV-selected one (tdc_carcinogens_lagunin, tdc_skin_reaction, tdc_dili, chemml_cep_homo, tdc_hia_hou). Choosing on the test set is optimistic; report the CV-selected model and its test score as the honest estimate.
 - All scores come from one train/test split and one seed. Estimate split-to-split variance by repeating the run with other seeds.
 
   ```bash
@@ -1278,6 +1279,7 @@ Skipped by design:
 - 23% of the test molecules of tdc_ld50_zhu fall outside the applicability domain; read their predictions with caution (see applicability_domain.csv in that dataset's folder).
 - 22% of the test molecules of tdc_cyp2c9_veith fall outside the applicability domain; read their predictions with caution (see applicability_domain.csv in that dataset's folder).
 - 31% of the test molecules of tdc_cyp3a4_veith fall outside the applicability domain; read their predictions with caution (see applicability_domain.csv in that dataset's folder).
+- 30% of the test molecules of tdc_herg_karim fall outside the applicability domain; read their predictions with caution (see applicability_domain.csv in that dataset's folder).
 - Check new molecules against the training set's applicability domain before trusting their predictions.
 
   ```bash
@@ -1336,6 +1338,7 @@ feature_selection:
   max_selected_features: 0
   auto_rf_by_dataset_size: false
   elasticnet_timeout_seconds: 7200.0
+  cv_selection: outer
 models:
   profile: full
   enable_families:
@@ -1348,7 +1351,8 @@ models:
     fusion: true
     ensemble: true
   disable_models: []
-  only_models: [Ensemble]
+  only_models: [Ensemble, CFA (Combinatorial Fusion)]
+  admetboost_xgboost: true
 ga_tuning:
   mode: "off"
   estimators: [elastic_net, catboost]

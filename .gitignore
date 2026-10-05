@@ -299,3 +299,6 @@ benchmark_results/_stale_selection_backup_*/
 # Office owner/lock files and agent heartbeat markers
 ~$*
 logs/.*_done_seen
+
+benchmark_results/_proba_fix_backup_*/
+benchmark_results/_cfa_rebuild_backup_*/

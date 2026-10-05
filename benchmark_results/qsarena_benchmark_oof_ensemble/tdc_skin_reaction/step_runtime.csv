@@ -1,5 +1,6 @@
 dataset,stage_index,total_stages,stage_label,step_type,model,workflow,started_at,started_epoch,status,ended_at,ended_epoch,duration_seconds
-tdc_skin_reaction,1,4,loading PyTDC Tox benchmark: skin_reaction,load_dataset,,,2026-10-02 10:53:15 Pacific Daylight Time,1790963595.840095,completed,2026-10-02 10:53:15 Pacific Daylight Time,1790963595.9242842,0.084
-tdc_skin_reaction,2,4,building molecular features (cached),feature_generation,,,2026-10-02 10:53:15 Pacific Daylight Time,1790963595.9242842,resumed_cache,2026-10-02 10:53:15 Pacific Daylight Time,1790963595.9322822,0.008
-tdc_skin_reaction,3,4,splitting data and selecting features (cached),feature_selection,,,2026-10-02 10:53:15 Pacific Daylight Time,1790963595.9322822,resumed_cache,2026-10-02 10:53:15 Pacific Daylight Time,1790963595.951805,0.02
-tdc_skin_reaction,4,4,ensemble (2 method(s)),model,Ensemble,ensemble,2026-10-02 10:53:15 Pacific Daylight Time,1790963595.951805,completed,2026-10-02 10:53:17 Pacific Daylight Time,1790963597.7921438,1.84
+tdc_skin_reaction,1,5,loading PyTDC Tox benchmark: skin_reaction,load_dataset,,,2026-10-04 23:00:08 Pacific Daylight Time,1791180008.0511742,completed,2026-10-04 23:00:08 Pacific Daylight Time,1791180008.1076841,0.057
+tdc_skin_reaction,2,5,building molecular features (cached),feature_generation,,,2026-10-04 23:00:08 Pacific Daylight Time,1791180008.1076841,resumed_cache,2026-10-04 23:00:08 Pacific Daylight Time,1791180008.1126838,0.005
+tdc_skin_reaction,3,5,splitting data and selecting features (cached),feature_selection,,,2026-10-04 23:00:08 Pacific Daylight Time,1791180008.1126838,resumed_cache,2026-10-04 23:00:08 Pacific Daylight Time,1791180008.127685,0.015
+tdc_skin_reaction,4,5,CFA combinatorial fusion,model,CFA (Combinatorial Fusion),cfa,2026-10-04 23:00:08 Pacific Daylight Time,1791180008.1286862,completed,2026-10-04 23:00:08 Pacific Daylight Time,1791180008.4022756,0.274
+tdc_skin_reaction,5,5,ensemble (2 method(s)),model,Ensemble,ensemble,2026-10-04 23:00:08 Pacific Daylight Time,1791180008.4022756,completed,2026-10-04 23:00:10 Pacific Daylight Time,1791180010.1144028,1.712

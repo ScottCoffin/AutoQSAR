@@ -1,19 +1,20 @@
 Model,Weight,Workflow
-LogisticRegression,0.05929263540746528,conventional
-SVC,0.051804551164661095,conventional
-Random forest,0.05705007579070491,conventional
-Extra trees,0.056427101289747955,conventional
-HistGradientBoosting,0.05634678083534642,conventional
-"Voting Classifier (KNN, SVM)",0.05514608443984386,conventional
-AdaBoost,0.036757506864814285,conventional
-Tabular MLP,0.055733640550673605,conventional
-XGBoost,0.05827201432075254,conventional
-CatBoost,0.05891004787523688,conventional
-ChemML MLP (PyTorch),0.05609616195765249,ChemML deep learning
-ChemML MLP (TensorFlow),0.06440618482436607,ChemML deep learning
-Uni-Mol V1,0.055053849246421586,Uni-Mol
-"MapLight + GNN (CatBoost, Strict Parity)",0.05482535546797072,MapLight + GNN
-"Chemprop v2 (D-MPNN, ensemble=3)",0.05243599012738676,Chemprop v2
-"Chemprop v2 (CMPNN, ensemble=3)",0.0529064116613652,Chemprop v2
-"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",0.05937906280040845,Chemprop v2
-TabPFNClassifier,0.059156545375181856,conventional
+LogisticRegression,0.056168071075789625,conventional
+SVC,0.049074588975002935,conventional
+Random forest,0.054043688391830984,conventional
+Extra trees,0.05345354299168659,conventional
+HistGradientBoosting,0.053377455211801914,conventional
+"Voting Classifier (KNN, SVM)",0.052240032325813264,conventional
+AdaBoost,0.034820483926268,conventional
+Tabular MLP,0.052796625790875275,conventional
+XGBoost,0.05520123400831947,conventional
+CatBoost,0.05580564488988577,conventional
+ChemML MLP (PyTorch),0.05314004328300991,ChemML deep learning
+ChemML MLP (TensorFlow),0.06101215002630771,ChemML deep learning
+Uni-Mol V1,0.05215265768199402,Uni-Mol
+"MapLight + GNN (CatBoost, Strict Parity)",0.05193620491850649,MapLight + GNN
+"Chemprop v2 (D-MPNN, ensemble=3)",0.049672752782272886,Chemprop v2
+"Chemprop v2 (CMPNN, ensemble=3)",0.05011838435142989,Chemprop v2
+"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",0.056249943974782335,Chemprop v2
+TabPFNClassifier,0.05603915262658472,conventional
+XGBoost (ADMETboost features),0.052697342767838176,conventional

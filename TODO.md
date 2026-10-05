@@ -197,9 +197,22 @@ Source: `Peer_Review_Report_QSARena_No_Single_Model_Family_Dominates.docx`; item
       §3.12 post-hoc paragraph. See "Implementation of the recommendations" in `docs/FEATURE_EXPANSION_PLAN.md`.
 - [x] **Full CheMeleon run: DECLINED by the author (2026-10-03).** The opt-in variant stays in the code; the
       single-dataset pilot (Caco-2 MAE 0.382 vs 0.380 for D-MPNN, ~7x slower) is the only CheMeleon fine-tuning result.
-- [ ] **Future run (not this paper):** include `--run-admetboost-xgboost` in the next full benchmark run.
-- [x] Nested-selection CV for the benchmark: scoped (`docs/NESTED_SELECTION_CV_PLAN.md`) and DECLINED
-      2026-10-02 (not worth the compute); the paper carries the auto-rendered caveat.
+- [ ] **Fold `XGBoost (ADMETboost features)` into the benchmark (approved 2026-10-03; in progress).** The base model
+      is training into `qsarena_benchmark_oof_ensemble` (`logs/run_foldin_admetboost.ps1`). PAUSED 2026-10-03 at
+      34/44 by the author; relaunch the same script to resume. Then rebuild the ensembles
+      (once, after the nested-selection decision), render, and update the paper: 31 models, Table 1, §2.13, and §3.12,
+      where the descriptor model becomes a member rather than a post-hoc note.
+- [ ] **Fix the feature-selection CV leak throughout (REOPENED 2026-10-03; needs a go-ahead for ~50-55 h of RTX compute).**
+      Confirmed causally: `qsarena/feature_expansion/selection_leak.py`. Scope (CV metrics, OOF and ensembles, Chemprop
+      selected-descriptor OOF, notebook; CFA's in-sample ranking as a related fix), design (pin the selector method per
+      dataset) and cost: `docs/NESTED_SELECTION_CV_PLAN.md`. **Code done 2026-10-04** (runner + notebooks; notebook
+      not yet executed end to end). Next: a 1 h pilot after the fold-in, then the run (needs the go-ahead).
+- [ ] **Hard-label predictions on 4 binary datasets catalogued as rmse** (fixed in code 2026-10-04; 11 models retrained
+      and validated, see AGENTS.md). The paper's §2.13 line "base-model results are unchanged from the source runs" must
+      then say these were retrained. Decide TabPFN on cyp1a2/cyp2c19/herg_karim/pampa (API credits vs exclude); then the ensemble
+      rebuild picks up the probability OOF; re-render the paper (wins/rankings on those 4 datasets will change).
+- [ ] CFA ranks fusion candidates by in-sample training error; move it to OOF predictions (needs the CFA stage
+      after the OOF stage).
 
 ## Repository hygiene
 

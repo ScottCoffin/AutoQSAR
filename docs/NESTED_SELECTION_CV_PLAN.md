@@ -1,66 +1,111 @@
-# Nested-selection CV: scope (follow-up to the 2026-10-02 CV-leak decision)
+# Nested-selection CV: removing the feature-selection leak from the benchmark
 
-**Status: DECLINED by the user on 2026-10-02 (not worth the compute). Kept for the record.** The paper
-keeps the auto-rendered caveat (`limitation_cvleak`) instead. Don't start this without a new decision.
+**Status (2026-10-03): REOPENED by the author** ("we need to address this leakage throughout our benchmarking"),
+after the controlled test below confirmed the leak. It was declined on 2026-10-02 on cost. The estimate below
+replaces that one. The compute exceeds the 12 h threshold, so **the run needs the author's go-ahead**; the code
+changes do not.
 
-## Problem
+## The problem, now measured causally
 
-Stage 3 fits the ElasticNetCV feature selector once on all training rows. Each model's
-`cross_validate` then runs on `X_train_selected`, so every CV validation fold helped choose the
-features. The manuscript's caveat (`limitation_cvleak` META block, `qsarena/meta_analysis/cv_leak.py`)
-measures the effect: median CV-vs-test overstatement is 15.9% for benchmark models (per model
-4.7-43.8%), versus 3.4% for the unselected feature-expansion models on the same folds.
+Stage 3 (`select_features`) fits a supervised selector on **all** training rows (ElasticNetCV on 34 datasets,
+random-forest importance after an ElasticNetCV timeout on 10). Every model's CV then runs on that pre-selected
+matrix, so each validation fold's labels helped choose its features.
 
-The leak affects three things:
-1. CV-selected ("honest") picks and the 35 -> 28 -> 27 decomposition.
-2. The CV-vs-test gap numbers.
-3. Conventional members' OOF predictions, which use the same folds, so ensemble weighting.
+`qsarena/feature_expansion/selection_leak.py` holds everything fixed (the full ADMETboost features, models, 5
+folds, test split) and varies only where the selector is fitted. Output:
+`benchmark_results/qsarena_feature_expansion/selection_leak.csv`. Final medians over all 9 small regression
+datasets with predefined or scaffold test splits (completed 2026-10-03):
 
-Test-set metrics and leaderboard ranks are unaffected.
+| model | CV overstatement, selection outside folds | selection inside folds | leak | datasets where leak > 0 | Wilcoxon p |
+|---|---|---|---|---|---|
+| ElasticNetCV | 17.7% | -4.8% | 22.7 points | 9/9 | 0.004 |
+| Random forest | 2.8% | -3.4% | 6.1 points | 9/9 | 0.004 |
+| SVR | -4.9% | -7.9% | 2.5 points | 8/9 | 0.055 |
+| all pooled | | | 7.4 points | 26/27 | < 0.001 |
 
-## Fix
+Nested selection makes CV roughly honest (slightly pessimistic). Test metrics are unaffected either way. The
+deployed model legitimately uses the selection fitted on all training rows.
 
-Refit the selector inside each CV fold, keeping the same folds (`--cv-folds`, the same splitter):
+## What the leak touches
 
-- For each fold: fit the selector on fold-train, transform fold-train and fold-val, fit the model,
-  then score fold-val. That replaces `cross_validate(model, X_train_selected, ...)` (runner ~L5605)
-  with a manual loop. The deployed model is still the full-train selector plus a full-train fit, so
-  **test metrics do not change**.
-- Cache the per-fold selections as `<dataset>/nested_selection/fold_<k>.pkl`, keyed by the
-  stage 2/3 signature plus fold index, so the step resumes.
-- Write the fold predictions as the new `split="oof"` rows for conventional members. Ensembles are
-  then rebuilt CPU-only; the Chemprop and Uni-Mol OOF already exist.
-- Add a `--cv-selection {outer,nested}` flag that defaults to `outer`, so old runs reproduce.
-
-## Costs
-
-| Item | Estimate | Basis |
+| Affected | Why | Fix |
 |---|---|---|
-| Selector refits, 5 folds x 44 | ~18 h on 32 cores (A100 box) | observed median 295 s per full fit (canonical run), x5 folds, x0.84 for 80% fold size |
-| The same on this RTX box (16 cores) | **>60 h** | the six largest sets (hERG-Karim, CYP x5) already hit the 7,200 s ElasticNetCV timeout here and fall back to RF; 6 x 5 x 2 h |
-| Conventional model fold fits | a few CPU-h | same work as today's CV, minus caching |
-| TabPFN CV re-run | **Prior Labs API credits** | the runner prefers `tabpfn_client` (capped API) when `PRIORLABS_API_KEY` is set; exclude it, or ask first |
-| Ensemble rebuild + render | ~2-3 CPU-h | folds cached; same as the 2026-10-01 refresh |
+| CV metrics of every model trained on selected features (conventional ML, gradient boosting except MapLight CatBoost, TabPFN, ChemML MLPs) | CV runs on the pre-selected matrix | refit selection per fold, using the dataset's recorded selector method |
+| The CV-selected ("honest") pick, the CV-vs-test gap, the 35 -> 28 -> 27 decomposition (the CV leg) | built on those CV scores | follow from the fixed CV |
+| OOF predictions of those members, and so ensemble selection, weights and stacking | the OOF predictions come from the same folds | the same per-fold selections |
+| Chemprop "D-MPNN + Selected descriptors" OOF | its fold refits use the full-train descriptor selection | pass each fold's own selection as descriptors |
+| CFA fusion | ranks candidates by in-sample **training** error (a related in-sample issue, not the selection leak) | rank on OOF predictions instead (cheap once OOF exist) |
+| Colab notebook (`build_colab_qsar_tutorial.py`) | same select-then-CV pattern | the same nested option |
 
-A secondary problem: the fallback after a timeout makes nested selection non-reproducible across
-machines (the trap already seen with `stage23_resume_cache.pkl`). Running it on a machine where
-ElasticNetCV never times out (the A100: max 1,003 s) avoids that.
+**Not affected:** test metrics and leaderboard placements, Uni-Mol, the other four Chemprop variants, MapLight +
+GNN and MapLight CatBoost (none of them use the selected matrix), and `XGBoost (ADMETboost features)` (no
+selection).
 
-## Options
+## Implementation status (2026-10-04)
 
-1. **Pilot (recommended first, about 2-4 h on this box, no API use):** nested CV for the
-   conventional models on the 25 datasets with fewer than 1,500 training rows. It reports how much
-   the CV overstatement shrinks and whether any CV-selected pick changes. It decides whether the full
-   run is worth it. If the overstatement falls to the arm's ~3-4% and no picks change, the caveat
-   plus the pilot result may suffice for the paper.
-2. **Full run on an A100 / 32-core box (~18 h + ~3 h rebuild):** replaces the caveat with corrected
-   numbers. TabPFN stays on the outer protocol unless credits are approved, and the paper says so.
-3. **Cheaper selector inside folds** (for example a fixed-alpha ElasticNet): fast, but the CV would
-   then measure a different pipeline from the one deployed. Not recommended.
+**Code done; the benchmark run still needs the author's go-ahead.**
+- **Runner:** `--cv-selection {outer,nested}` (RunConfig `feature_selection.cv_selection`). The default is nested
+  for the `full` and `cost_optimized` profiles and outer for `quick`. `nested_selection_columns()` refits the
+  stage-3 selector per fold with the deployed method pinned; selections are cached in
+  `<dataset>/nested_selection/fold_<k>.json`. `run_nested_selection()` runs inside the ensemble OOF stage, before
+  the regular OOF pass. It refits every selected-feature member on its fold's own columns (conventional models and
+  TabPFN when not API-billed, ChemML MLPs, and with `--ensemble-oof-scope all` the Chemprop selected-descriptor
+  variant). Fold predictions are cached in `<dataset>/nested_selection/oof_folds/`. It overwrites those members'
+  `split="oof"` rows and patches their metrics rows: `cv_*` from fold-averaged nested predictions, the old value
+  kept as `cv_primary_outer`, and `cv_selection=nested` plus `cv_selection_signature` as the resume marker.
+  `cv_selection` enters only the ensemble family's resume signature, and only when it is not outer, so outer runs
+  resume unchanged. Tests: `tests/unit/test_nested_selection.py`. On the example data, ElasticNetCV's CV RMSE moved
+  from 0.384 (outer) to 0.798 (nested) against a test RMSE of 0.676.
+- **Notebooks:** block 4C option `nested_selection_cv` (default on; evidence entry in `notebook_default_evidence.py`).
+  4B keeps `STATE["train_only_selector_refit"]` (all four selector methods). 4C cross-validates selected-matrix
+  models with per-fold selection, and 7A refits conventional and tuned members on per-fold selections (OOF cache
+  key `<fold signature>|nested`). Verified only by a syntax check of both generated notebooks; **not yet executed end
+  to end**.
+- **Applying it to the manuscript run:** re-run the OOF launcher (`tools/run_oof_ensemble_rtx.ps1` flags:
+  `--only-model-names Ensemble --rebuild-ensemble`, scope `all`) with `--cv-selection nested` and
+  `--run-admetboost-xgboost`. Base models are not retrained. The nested stage patches CV metrics and OOF, then the
+  ensembles are rebuilt once with the new member.
+- **Still open:** CFA ranks candidates by in-sample training error (related, not the selection leak). Moving it to
+  OOF predictions needs the CFA stage after the OOF stage; not done.
 
-## Acceptance checks
+## Design
 
-- Test metrics for every base model are bit-identical before and after (`tools/verify_oof_ensemble_run.py`).
-- On the feature-expansion arm's folds, nested CV overstatement for the conventional models should
-  approach the arm's ~3-4%; if it stays near 15%, the leak was not the main cause, so stop and report.
-- `verify_manuscript_numbers.py` values move only via the render. Never loosen a check.
+- New option `--cv-selection {outer,nested}`; `nested` becomes the default for new runs. A dataset's stage 2/3
+  signature is unchanged, so cached full-train selections and test results are reused.
+- **Pin the selector method per dataset** to the one recorded in `metrics.csv` (`selector_method`). The nested fits
+  then repeat exactly the deployed pipeline, and the 7,200 s ElasticNetCV timeout and its hardware-dependent RF
+  fallback cannot change the method mid-run (the cross-machine reproducibility trap in AGENTS.md).
+- One selection per fold serves both the CV metrics and the OOF predictions (the folds are identical). Cache it as
+  `<dataset>/nested_selection/fold_<k>.json`, keyed by the stage 2/3 signature, so the stage resumes.
+- `evaluate_model` gains per-fold feature matrices; the ensemble OOF refitters and the Chemprop selected-descriptor
+  fold refits read the same per-fold selections. ChemML's internal CV gets the same treatment.
+
+## Cost on the RTX 4060 workstation (16 cores)
+
+| Step | Estimate | Basis |
+|---|---|---|
+| Code + tests (runner, notebook builder) | one working session | no compute |
+| Pilot on one mid-size dataset, to calibrate | ~1 h | do this before the full run |
+| Nested selector refits, 5 folds x 44 | **~34 h CPU** (+/-50%) | ~27 h for 34 ElasticNetCV datasets (~10 min per fit at 900 rows, scaling n^0.77, from the controlled test's timings) + ~7 h for 10 RF-importance datasets |
+| Refit affected models on each fold | ~15 h CPU | same work as the 2026-10-01 CPU OOF rebuild |
+| Chemprop selected-descriptor fold refits | ~8-10 h GPU | 220 fold trainings; runs in parallel with the CPU work |
+| Ensemble rebuild + render + manuscript update | ~3 h | as in the 2026-10-02 refresh |
+| **Total** | **~50-55 h CPU-bound, about 2-3 days of wall-clock** | GPU work overlaps |
+
+A Jetstream2 A100 node (32 cores) would roughly halve the CPU part, but the allocation is nearly spent.
+
+## What changes in the paper
+
+- The CV metrics, the CV-selected picks, the CV-vs-test gap and the CV leg of the decomposition. The
+  matched-candidate-set leg is test-selected, so it does not change.
+- Ensembles whose members used selected features (most of them), and so the win counts.
+- The `limitation_cvleak` caveat becomes a Methods sentence ("feature selection is refitted inside every CV fold").
+  The controlled test can be reported as the evidence that this mattered.
+- The verifier's expected values move through the render, as before; never loosen a check.
+
+## Sequencing with the ADMETboost fold-in
+
+`XGBoost (ADMETboost features)` was approved as a benchmark member on 2026-10-03. Its base model (no selection,
+honest CV) is being trained into `qsarena_benchmark_oof_ensemble` now (`logs/run_foldin_admetboost.ps1`, after the
+controlled test finishes). The ensembles are **not** rebuilt yet, so they are rebuilt only once, after the nested
+selection run. If the nested run is not approved, rebuild them right after the fold-in instead.

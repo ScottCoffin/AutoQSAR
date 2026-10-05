@@ -1203,10 +1203,12 @@ Tests: `pip install -e .[dev]` then `pytest -q -m "not gpu and not slow"`.
   `verify_manuscript_numbers.py` (96 checks).
 - **Known limitation, disclosed in the paper:** the benchmark fits feature selection once on the whole
   training split, so model cross-validation scores are optimistic (a median 15.9% CV-vs-test overstatement,
-  versus 3.4% for unselected-feature models). Test metrics are unaffected. A nested-selection fix was scoped
-  (`docs/NESTED_SELECTION_CV_PLAN.md`) and judged not worth the compute.
-- **Feature-expansion arm (below): complete.** It added two opt-in models to the runner (see below); neither is part
-  of the paper's benchmark. Agents and contributors: start with
+  versus 3.4% for unselected-feature models), and a controlled test confirms that the selection causes it. Test
+  metrics are unaffected. A fix (feature selection refitted inside every CV fold) is planned in
+  `docs/NESTED_SELECTION_CV_PLAN.md` (~2-3 days of compute; pending a go-ahead).
+- **Feature-expansion arm (below): complete.** It added two opt-in models to the runner (see below). One of them,
+  `XGBoost (ADMETboost features)`, is being folded into the benchmark (31 models); the paper is updated after the
+  ensemble rebuild. Agents and contributors: start with
   the status section of `AGENTS.md`.
 
 ## Dataset-Property Meta-Analysis And Feature-Expansion Arm

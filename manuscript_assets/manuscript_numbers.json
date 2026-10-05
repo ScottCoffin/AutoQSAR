@@ -15,8 +15,8 @@
     "ChemML": 2,
     "PODUAM": 2
   },
-  "models_with_valid_results": 30,
-  "valid_model_dataset_rows": 1047,
+  "models_with_valid_results": 31,
+  "valid_model_dataset_rows": 1097,
   "wins_by_family": {
     "Deep tabular NN (ChemML MLP)": {
       "regression": 0,
@@ -24,39 +24,39 @@
       "total": 0
     },
     "CFA combinatorial fusion": {
-      "regression": 0,
-      "classification": 2,
-      "total": 2
-    },
-    "Conventional ML": {
       "regression": 1,
-      "classification": 3,
-      "total": 4
+      "classification": 2,
+      "total": 3
+    },
+    "TabPFN (tabular foundation)": {
+      "regression": 3,
+      "classification": 0,
+      "total": 3
     },
     "MapLight + GNN": {
       "regression": 4,
       "classification": 0,
       "total": 4
     },
-    "TabPFN (tabular foundation)": {
+    "Uni-Mol (3D pretrained)": {
       "regression": 4,
-      "classification": 1,
-      "total": 5
+      "classification": 2,
+      "total": 6
+    },
+    "Conventional ML": {
+      "regression": 1,
+      "classification": 7,
+      "total": 8
     },
     "Chemprop v2 GNN": {
       "regression": 3,
       "classification": 5,
       "total": 8
     },
-    "Uni-Mol (3D pretrained)": {
-      "regression": 4,
-      "classification": 4,
-      "total": 8
-    },
     "Ensemble (stacking / averaging)": {
       "regression": 6,
-      "classification": 7,
-      "total": 13
+      "classification": 6,
+      "total": 12
     }
   },
   "family_consistency": {
@@ -64,51 +64,41 @@
       "Models": 2,
       "Datasets with valid results": 44,
       "Wins (regression)": 6,
-      "Wins (classification)": 7,
-      "Median gap to best, regression (%)": 4.340537473373664,
-      "Median gap to best, classification (%)": 2.193015648612559,
+      "Wins (classification)": 6,
+      "Median gap to best, regression (%)": 4.084339453548323,
+      "Median gap to best, classification (%)": 2.210598358816894,
       "Within 5% of best (% of datasets)": 61.36363636363637,
       "Median rank of family-best model": 3.0
     },
-    "Uni-Mol (3D pretrained)": {
-      "Models": 2,
+    "Conventional ML": {
+      "Models": 16,
       "Datasets with valid results": 44,
-      "Wins (regression)": 4,
-      "Wins (classification)": 4,
-      "Median gap to best, regression (%)": 5.241179005389794,
-      "Median gap to best, classification (%)": 2.23583337615993,
-      "Within 5% of best (% of datasets)": 56.81818181818182,
-      "Median rank of family-best model": 4.0
+      "Wins (regression)": 1,
+      "Wins (classification)": 7,
+      "Median gap to best, regression (%)": 3.781429393526915,
+      "Median gap to best, classification (%)": 1.1236385926930614,
+      "Within 5% of best (% of datasets)": 77.27272727272727,
+      "Median rank of family-best model": 3.0
     },
     "Chemprop v2 GNN": {
       "Models": 5,
       "Datasets with valid results": 42,
       "Wins (regression)": 3,
       "Wins (classification)": 5,
-      "Median gap to best, regression (%)": 7.834704887808142,
-      "Median gap to best, classification (%)": 2.677009063312126,
+      "Median gap to best, regression (%)": 8.169202199920857,
+      "Median gap to best, classification (%)": 2.741356727333165,
       "Within 5% of best (% of datasets)": 54.761904761904766,
-      "Median rank of family-best model": 6.0
+      "Median rank of family-best model": 6.5
     },
-    "TabPFN (tabular foundation)": {
+    "Uni-Mol (3D pretrained)": {
       "Models": 2,
       "Datasets with valid results": 44,
       "Wins (regression)": 4,
-      "Wins (classification)": 1,
-      "Median gap to best, regression (%)": 6.923682494940139,
-      "Median gap to best, classification (%)": 15.31729889843803,
-      "Within 5% of best (% of datasets)": 29.545454545454547,
-      "Median rank of family-best model": 10.0
-    },
-    "Conventional ML": {
-      "Models": 15,
-      "Datasets with valid results": 44,
-      "Wins (regression)": 1,
-      "Wins (classification)": 3,
-      "Median gap to best, regression (%)": 3.781429393526915,
-      "Median gap to best, classification (%)": 4.058782066382275,
-      "Within 5% of best (% of datasets)": 59.09090909090909,
-      "Median rank of family-best model": 4.0
+      "Wins (classification)": 2,
+      "Median gap to best, regression (%)": 5.513687612020471,
+      "Median gap to best, classification (%)": 2.5364547778781423,
+      "Within 5% of best (% of datasets)": 56.81818181818182,
+      "Median rank of family-best model": 6.0
     },
     "MapLight + GNN": {
       "Models": 1,
@@ -116,43 +106,53 @@
       "Wins (regression)": 4,
       "Wins (classification)": 0,
       "Median gap to best, regression (%)": 7.989556117972778,
-      "Median gap to best, classification (%)": 12.828981402889585,
-      "Within 5% of best (% of datasets)": 27.27272727272727,
-      "Median rank of family-best model": 12.0
+      "Median gap to best, classification (%)": 12.72014728337899,
+      "Within 5% of best (% of datasets)": 22.727272727272727,
+      "Median rank of family-best model": 16.5
     },
     "CFA combinatorial fusion": {
       "Models": 1,
-      "Datasets with valid results": 38,
-      "Wins (regression)": 0,
+      "Datasets with valid results": 44,
+      "Wins (regression)": 1,
       "Wins (classification)": 2,
-      "Median gap to best, regression (%)": 8.549513023543284,
-      "Median gap to best, classification (%)": 2.2857593991054888,
-      "Within 5% of best (% of datasets)": 42.10526315789473,
-      "Median rank of family-best model": 6.0
+      "Median gap to best, regression (%)": 7.911197603458048,
+      "Median gap to best, classification (%)": 1.66240180280228,
+      "Within 5% of best (% of datasets)": 56.81818181818182,
+      "Median rank of family-best model": 5.0
+    },
+    "TabPFN (tabular foundation)": {
+      "Models": 2,
+      "Datasets with valid results": 44,
+      "Wins (regression)": 3,
+      "Wins (classification)": 0,
+      "Median gap to best, regression (%)": 7.028416393056213,
+      "Median gap to best, classification (%)": 15.356907349169157,
+      "Within 5% of best (% of datasets)": 29.545454545454547,
+      "Median rank of family-best model": 11.0
     },
     "Deep tabular NN (ChemML MLP)": {
       "Models": 2,
       "Datasets with valid results": 44,
       "Wins (regression)": 0,
       "Wins (classification)": 0,
-      "Median gap to best, regression (%)": 20.50304917130069,
-      "Median gap to best, classification (%)": 9.655526804420841,
+      "Median gap to best, regression (%)": 20.81614985244631,
+      "Median gap to best, classification (%)": 9.642833643425783,
       "Within 5% of best (% of datasets)": 18.181818181818183,
-      "Median rank of family-best model": 16.0
+      "Median rank of family-best model": 17.0
     }
   },
   "fusion_vs_best_single": {
     "classification": {
       "datasets": 22,
-      "fusion_better": 9,
-      "median_rel_improvement_when_better_pct": 1.994363070392231,
-      "median_rel_improvement_all_pct": -0.13578453523889078
+      "fusion_better": 8,
+      "median_rel_improvement_when_better_pct": 1.5362011127054114,
+      "median_rel_improvement_all_pct": -0.6136253449344333
     },
     "regression": {
       "datasets": 22,
-      "fusion_better": 6,
-      "median_rel_improvement_when_better_pct": 1.7764639072828194,
-      "median_rel_improvement_all_pct": -2.6237017690597226
+      "fusion_better": 7,
+      "median_rel_improvement_when_better_pct": 1.717184377516046,
+      "median_rel_improvement_all_pct": -2.454043967676446
     }
   },
   "leaderboard": {
@@ -179,7 +179,7 @@
     "matched_pool_compared": 37,
     "top10_matched_pool": 28,
     "rank1_matched_pool": 3,
-    "median_rank_matched_pool": 6.0
+    "median_rank_matched_pool": 5.0
   },
   "leaderboard_by_comparability": {
     "local_split": {
@@ -216,8 +216,8 @@
   },
   "cv_selected_all_datasets": {
     "datasets": 44,
-    "median_relative_gap_to_test_best_pct": 7.9198861374250455,
-    "is_overall_winner": 5
+    "median_relative_gap_to_test_best_pct": 7.516985608796397,
+    "is_overall_winner": 3
   },
   "feature_families": {
     "selected_features_total": 12137,
@@ -349,70 +349,70 @@
   },
   "ensemble_value_add": [
     {
+      "Fusion method": "CFA fusion",
+      "Task": "classification",
+      "Datasets": 22,
+      "Overall wins": 2,
+      "Top-3": 10,
+      "Beats best base": 4,
+      "Loses to best base": 18,
+      "Median rank": 5.0,
+      "Median rel. change vs best base": -0.006293385022336917
+    },
+    {
       "Fusion method": "Other ensemble",
       "Task": "classification",
       "Datasets": 22,
       "Overall wins": 1,
-      "Top-3": 10,
-      "Beats best base": 6,
-      "Loses to best base": 16,
+      "Top-3": 8,
+      "Beats best base": 7,
+      "Loses to best base": 15,
       "Median rank": 5.5,
-      "Median rel. change vs best base": -0.024270123239591282
+      "Median rel. change vs best base": -0.02444595034163475
     },
     {
       "Fusion method": "OOF stacking",
       "Task": "classification",
       "Datasets": 22,
-      "Overall wins": 6,
+      "Overall wins": 5,
       "Top-3": 8,
-      "Beats best base": 7,
-      "Loses to best base": 15,
-      "Median rank": 7.0,
-      "Median rel. change vs best base": -0.03329784983082154
-    },
-    {
-      "Fusion method": "CFA fusion",
-      "Task": "classification",
-      "Datasets": 16,
-      "Overall wins": 2,
-      "Top-3": 7,
-      "Beats best base": 2,
-      "Loses to best base": 14,
-      "Median rank": 4.0,
-      "Median rel. change vs best base": -0.022857593991054886
+      "Beats best base": 5,
+      "Loses to best base": 17,
+      "Median rank": 8.5,
+      "Median rel. change vs best base": -0.03389503537346039
     },
     {
       "Fusion method": "Other ensemble",
       "Task": "regression",
       "Datasets": 22,
-      "Overall wins": 4,
+      "Overall wins": 3,
       "Top-3": 12,
-      "Beats best base": 5,
-      "Loses to best base": 17,
+      "Beats best base": 4,
+      "Loses to best base": 18,
       "Median rank": 3.0,
-      "Median rel. change vs best base": -0.060757944977537316
-    },
-    {
-      "Fusion method": "OOF stacking",
-      "Task": "regression",
-      "Datasets": 22,
-      "Overall wins": 2,
-      "Top-3": 6,
-      "Beats best base": 2,
-      "Loses to best base": 20,
-      "Median rank": 8.0,
-      "Median rel. change vs best base": -0.09593766697891717
+      "Median rel. change vs best base": -0.056621069724559214
     },
     {
       "Fusion method": "CFA fusion",
       "Task": "regression",
       "Datasets": 22,
-      "Overall wins": 0,
-      "Top-3": 4,
-      "Beats best base": 1,
-      "Loses to best base": 21,
-      "Median rank": 9.0,
-      "Median rel. change vs best base": -0.07482973246278904
+      "Overall wins": 1,
+      "Top-3": 7,
+      "Beats best base": 2,
+      "Loses to best base": 20,
+      "Median rank": 6.0,
+      "Median rel. change vs best base": -0.06717454975704068
+    },
+    {
+      "Fusion method": "OOF stacking",
+      "Task": "regression",
+      "Datasets": 22,
+      "Overall wins": 3,
+      "Top-3": 5,
+      "Beats best base": 3,
+      "Loses to best base": 19,
+      "Median rank": 8.5,
+      "Median rel. change vs best base": -0.09684887377666365
     }
   ],
   "component_ablation": [
@@ -422,19 +422,19 @@
     },
     {
       "stage": "+ MapLight classic features",
-      "datasets_improved_vs_previous": 10
+      "datasets_improved_vs_previous": 9
     },
     {
       "stage": "+ neural/deep backends",
-      "datasets_improved_vs_previous": 31
+      "datasets_improved_vs_previous": 26
     },
     {
       "stage": "+ CFA fusion",
-      "datasets_improved_vs_previous": 3
+      "datasets_improved_vs_previous": 6
     },
     {
       "stage": "Full pipeline incl. ensembles",
-      "datasets_improved_vs_previous": 13
+      "datasets_improved_vs_previous": 12
     }
   ],
   "model_coverage": {
@@ -494,17 +494,9 @@
       "datasets_attempted": 44,
       "datasets_valid": 38
     },
-    "CFA (Combinatorial Fusion)": {
-      "datasets_attempted": 38,
-      "datasets_valid": 38
-    },
     "Chemprop v2 (AttentiveFP, ensemble=3)": {
       "datasets_attempted": 44,
       "datasets_valid": 38
-    },
-    "Chemprop v2 (CMPNN, ensemble=3)": {
-      "datasets_attempted": 44,
-      "datasets_valid": 42
     },
     "Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)": {
       "datasets_attempted": 44,
@@ -513,6 +505,14 @@
     "Chemprop v2 (D-MPNN, ensemble=3)": {
       "datasets_attempted": 44,
       "datasets_valid": 42
+    },
+    "Chemprop v2 (CMPNN, ensemble=3)": {
+      "datasets_attempted": 44,
+      "datasets_valid": 42
+    },
+    "HistGradientBoosting": {
+      "datasets_attempted": 44,
+      "datasets_valid": 44
     },
     "Ensemble (OOF Stacking (RidgeCV, 5-fold))": {
       "datasets_attempted": 44,
@@ -526,7 +526,7 @@
       "datasets_attempted": 44,
       "datasets_valid": 44
     },
-    "AdaBoost": {
+    "CFA (Combinatorial Fusion)": {
       "datasets_attempted": 44,
       "datasets_valid": 44
     },
@@ -534,7 +534,7 @@
       "datasets_attempted": 44,
       "datasets_valid": 44
     },
-    "HistGradientBoosting": {
+    "AdaBoost": {
       "datasets_attempted": 44,
       "datasets_valid": 44
     },
@@ -565,10 +565,14 @@
     "XGBoost": {
       "datasets_attempted": 44,
       "datasets_valid": 44
+    },
+    "XGBoost (ADMETboost features)": {
+      "datasets_attempted": 44,
+      "datasets_valid": 44
     }
   },
   "reproducibility": {
-    "analysis_time_git_commit": "cd07315d1654844f594871d71ef08288fcad9798",
+    "analysis_time_git_commit": "cb08d97fbc801ab1bbb7655c7ded177010e123e7",
     "analysis_time_git_is_dirty": true,
     "run_artifacts_committed_in": "bbfb188",
     "random_seed": 13,
@@ -588,9 +592,9 @@
       "tdc_tox21",
       "tdc_toxcast"
     ],
-    "median_change_pct_same_split": 0.30057779258234163,
-    "a100_better_same_split": 21,
-    "rtx_better_same_split": 15,
-    "median_change_pct_all": 0.16826016097448332
+    "median_change_pct_same_split": 0.4233031998852306,
+    "a100_better_same_split": 22,
+    "rtx_better_same_split": 14,
+    "median_change_pct_all": 0.3473484013365834
   }
 }

@@ -1,7 +1,7 @@
 dataset,family,gap_low_shift_pct,gap_scaffold_pct,delta_pp
-tdc_carcinogens_lagunin,Conventional ML,0,4.399701715,4.399701715
+tdc_carcinogens_lagunin,Conventional ML,0,2.237136465,2.237136465
 tdc_carcinogens_lagunin,Ensemble (stacking / averaging),13.1147541,2.908277405,-10.20647669
-tdc_carcinogens_lagunin,CFA combinatorial fusion,19.90632319,4.3251305,-15.58119269
+tdc_carcinogens_lagunin,CFA combinatorial fusion,19.90632319,6.114839672,-13.79148351
 tdc_carcinogens_lagunin,Uni-Mol (3D pretrained),6.791569087,7.904548844,1.112979757
 tdc_carcinogens_lagunin,TabPFN (tabular foundation),5.152224824,6.338553318,1.186328494
 tdc_carcinogens_lagunin,Deep tabular NN (ChemML MLP),19.90632319,12.30425056,-7.602072626
@@ -11,34 +11,34 @@ tdc_clintox,CFA combinatorial fusion,2.705245825,0,-2.705245825
 tdc_clintox,Uni-Mol (3D pretrained),11.43260409,13.06649451,1.633890419
 tdc_clintox,MapLight + GNN,25.17054811,41.32989025,16.15934215
 tdc_clintox,Deep tabular NN (ChemML MLP),7.315925665,2.775984506,-4.539941158
-tdc_hydrationfreeenergy_freesolv,Conventional ML,31.0396832,4.25837612,-26.78130708
+tdc_hydrationfreeenergy_freesolv,Conventional ML,31.0396832,4.830224181,-26.20945902
 tdc_hydrationfreeenergy_freesolv,Ensemble (stacking / averaging),8.276604049,0,-8.276604049
-tdc_hydrationfreeenergy_freesolv,CFA combinatorial fusion,0,7.7599193,7.7599193
-tdc_hydrationfreeenergy_freesolv,Uni-Mol (3D pretrained),76.12290139,35.33738429,-40.78551711
-tdc_hydrationfreeenergy_freesolv,TabPFN (tabular foundation),6.319602102,2.123867349,-4.195734752
-tdc_hydrationfreeenergy_freesolv,Chemprop v2 GNN,43.18122695,17.35017205,-25.83105491
-tdc_hydrationfreeenergy_freesolv,MapLight + GNN,104.1253882,16.06404394,-88.0613443
-tdc_hydrationfreeenergy_freesolv,Deep tabular NN (ChemML MLP),95.31764322,22.31249994,-73.00514328
-tdc_pampa_ncats,Conventional ML,0.05440696409,18.08886037,18.03445341
-tdc_pampa_ncats,Ensemble (stacking / averaging),0,0.1764375652,0.1764375652
-tdc_pampa_ncats,CFA combinatorial fusion,1.557757288,9.583767744,8.026010456
+tdc_hydrationfreeenergy_freesolv,CFA combinatorial fusion,0,4.774520164,4.774520164
+tdc_hydrationfreeenergy_freesolv,Uni-Mol (3D pretrained),76.12290139,36.23709264,-39.88580876
+tdc_hydrationfreeenergy_freesolv,TabPFN (tabular foundation),6.319602102,2.802775815,-3.516826286
+tdc_hydrationfreeenergy_freesolv,Chemprop v2 GNN,43.18122695,18.13030335,-25.05092361
+tdc_hydrationfreeenergy_freesolv,MapLight + GNN,104.1253882,16.8356252,-87.28976304
+tdc_hydrationfreeenergy_freesolv,Deep tabular NN (ChemML MLP),95.31764322,23.12562027,-72.19202296
+tdc_pampa_ncats,Conventional ML,0.05440696409,2.714732537,2.660325573
+tdc_pampa_ncats,Ensemble (stacking / averaging),0,1.980912663,1.980912663
+tdc_pampa_ncats,CFA combinatorial fusion,1.557757288,2.281658513,0.7239012254
 tdc_pampa_ncats,Uni-Mol (3D pretrained),4.455644007,0,-4.455644007
 tdc_pampa_ncats,MapLight + GNN,23.0599622,27.74881707,4.688854865
 tdc_pampa_ncats,Deep tabular NN (ChemML MLP),6.437202909,10.44991579,4.012712882
-tdc_skin_reaction,Conventional ML,3.565436242,18.66056096,15.09512472
-tdc_skin_reaction,Ensemble (stacking / averaging),1.845637584,16.54264453,14.69700695
-tdc_skin_reaction,CFA combinatorial fusion,0,18.60331998,18.60331998
-tdc_skin_reaction,Uni-Mol (3D pretrained),5.201342282,0,-5.201342282
-tdc_skin_reaction,TabPFN (tabular foundation),2.810402685,20.12020607,17.30980338
-tdc_skin_reaction,Deep tabular NN (ChemML MLP),12.29026846,13.02232398,0.7320555276
-tdc_tox21,Conventional ML,0,6.891865657,6.891865657
-tdc_tox21,Ensemble (stacking / averaging),0.2207149009,13.77887789,13.55816299
-tdc_tox21,CFA combinatorial fusion,2.444686693,9.932537371,7.487850679
+tdc_skin_reaction,Conventional ML,3.565436242,0,-3.565436242
+tdc_skin_reaction,Ensemble (stacking / averaging),1.845637584,16.64785553,14.80221795
+tdc_skin_reaction,CFA combinatorial fusion,0,1.410835214,1.410835214
+tdc_skin_reaction,Uni-Mol (3D pretrained),5.201342282,1.410835214,-3.790507067
+tdc_skin_reaction,TabPFN (tabular foundation),2.810402685,21.24717833,18.43677565
+tdc_skin_reaction,Deep tabular NN (ChemML MLP),12.29026846,14.24943567,1.95916721
+tdc_tox21,Conventional ML,0,2.501941371,2.501941371
+tdc_tox21,Ensemble (stacking / averaging),0.2207149009,13.77402446,13.55330956
+tdc_tox21,CFA combinatorial fusion,2.444686693,1.827315084,-0.6173716081
 tdc_tox21,Uni-Mol (3D pretrained),1.831664513,8.87449039,7.042825877
 tdc_tox21,MapLight + GNN,10.67371878,16.3075131,5.633794327
 tdc_tox21,Deep tabular NN (ChemML MLP),7.333387166,9.932537371,2.599150205
 tdc_toxcast,Conventional ML,0,0,0
-tdc_toxcast,Ensemble (stacking / averaging),1.52972028,6.351426973,4.821706693
+tdc_toxcast,Ensemble (stacking / averaging),1.52972028,5.780637941,4.250917661
 tdc_toxcast,CFA combinatorial fusion,6.015078671,0.09513150532,-5.919947166
 tdc_toxcast,Uni-Mol (3D pretrained),6.495847902,8.265249021,1.769401119
 tdc_toxcast,MapLight + GNN,13.47792832,16.2311136,2.753185277

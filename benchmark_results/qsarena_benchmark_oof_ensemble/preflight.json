@@ -1333,8 +1333,8 @@
         {
           "model": "CFA (Combinatorial Fusion)",
           "family": "fusion",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
+          "status": "planned",
+          "reason": ""
         },
         {
           "model": "Ensemble (OOF Stacking (RidgeCV))",
@@ -1351,9 +1351,10 @@
       ],
       "estimated_seconds": {
         "features": 10.600000000000001,
-        "feature_selection": 166.36188111928678
+        "feature_selection": 166.36188111928678,
+        "fusion": 0.05233644859813084
       },
-      "estimated_total_seconds": 176.96188111928677
+      "estimated_total_seconds": 177.0142175678849
     },
     {
       "dataset": "tdc_skin_reaction",
@@ -1501,8 +1502,8 @@
         {
           "model": "CFA (Combinatorial Fusion)",
           "family": "fusion",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
+          "status": "planned",
+          "reason": ""
         },
         {
           "model": "Ensemble (OOF Stacking (RidgeCV))",
@@ -1519,9 +1520,10 @@
       ],
       "estimated_seconds": {
         "features": 13.08,
-        "feature_selection": 260.4792242769973
+        "feature_selection": 260.4792242769973,
+        "fusion": 0.07551401869158877
       },
-      "estimated_total_seconds": 273.55922427699727
+      "estimated_total_seconds": 273.63473829568886
     },
     {
       "dataset": "tdc_dili",
@@ -1669,8 +1671,8 @@
         {
           "model": "CFA (Combinatorial Fusion)",
           "family": "fusion",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
+          "status": "planned",
+          "reason": ""
         },
         {
           "model": "Ensemble (OOF Stacking (RidgeCV))",
@@ -1687,9 +1689,10 @@
       ],
       "estimated_seconds": {
         "features": 14.5,
-        "feature_selection": 317.85928771588084
+        "feature_selection": 317.85928771588084,
+        "fusion": 0.08878504672897196
       },
-      "estimated_total_seconds": 332.35928771588084
+      "estimated_total_seconds": 332.4480727626098
     },
     {
       "dataset": "chemml_cep_homo",
@@ -1843,8 +1846,8 @@
         {
           "model": "CFA (Combinatorial Fusion)",
           "family": "fusion",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
+          "status": "planned",
+          "reason": ""
         },
         {
           "model": "Ensemble (OOF Stacking (RidgeCV))",
@@ -1861,9 +1864,10 @@
       ],
       "estimated_seconds": {
         "features": 15.0,
-        "feature_selection": 338.4725780968425
+        "feature_selection": 338.4725780968425,
+        "fusion": 0.09345794392523364
       },
-      "estimated_total_seconds": 353.4725780968425
+      "estimated_total_seconds": 353.5660360407677
     },
     {
       "dataset": "chemml_organic_density",
@@ -2017,8 +2021,8 @@
         {
           "model": "CFA (Combinatorial Fusion)",
           "family": "fusion",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
+          "status": "planned",
+          "reason": ""
         },
         {
           "model": "Ensemble (OOF Stacking (RidgeCV))",
@@ -2035,9 +2039,10 @@
       ],
       "estimated_seconds": {
         "features": 15.0,
-        "feature_selection": 338.4725780968425
+        "feature_selection": 338.4725780968425,
+        "fusion": 0.09345794392523364
       },
-      "estimated_total_seconds": 353.4725780968425
+      "estimated_total_seconds": 353.5660360407677
     },
     {
       "dataset": "tdc_hia_hou",
@@ -2185,8 +2190,8 @@
         {
           "model": "CFA (Combinatorial Fusion)",
           "family": "fusion",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
+          "status": "planned",
+          "reason": ""
         },
         {
           "model": "Ensemble (OOF Stacking (RidgeCV))",
@@ -2203,9 +2208,10 @@
       ],
       "estimated_seconds": {
         "features": 16.560000000000002,
-        "feature_selection": 403.81869415436387
+        "feature_selection": 403.81869415436387,
+        "fusion": 0.1080373831775701
       },
-      "estimated_total_seconds": 420.37869415436387
+      "estimated_total_seconds": 420.48673153754146
     },
     {
       "dataset": "tdc_bioavailability_ma",
@@ -2353,8 +2359,8 @@
         {
           "model": "CFA (Combinatorial Fusion)",
           "family": "fusion",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
+          "status": "planned",
+          "reason": ""
         },
         {
           "model": "Ensemble (OOF Stacking (RidgeCV))",
@@ -2371,9 +2377,10 @@
       ],
       "estimated_seconds": {
         "features": 17.8,
-        "feature_selection": 457.9896907050917
+        "feature_selection": 457.9896907050917,
+        "fusion": 0.11962616822429906
       },
-      "estimated_total_seconds": 475.7896907050917
+      "estimated_total_seconds": 475.90931687331596
     },
     {
       "dataset": "freesolv_sampl",
@@ -2527,8 +2534,8 @@
         {
           "model": "CFA (Combinatorial Fusion)",
           "family": "fusion",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
+          "status": "planned",
+          "reason": ""
         },
         {
           "model": "Ensemble (OOF Stacking (RidgeCV))",
@@ -2545,9 +2552,10 @@
       ],
       "estimated_seconds": {
         "features": 17.84,
-        "feature_selection": 460.1822050502995
+        "feature_selection": 460.1822050502995,
+        "fusion": 0.12
       },
-      "estimated_total_seconds": 478.0222050502995
+      "estimated_total_seconds": 478.1422050502995
     },
     {
       "dataset": "tdc_hydrationfreeenergy_freesolv",
@@ -2701,8 +2709,8 @@
         {
           "model": "CFA (Combinatorial Fusion)",
           "family": "fusion",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
+          "status": "planned",
+          "reason": ""
         },
         {
           "model": "Ensemble (OOF Stacking (RidgeCV))",
@@ -2719,9 +2727,10 @@
       ],
       "estimated_seconds": {
         "features": 17.84,
-        "feature_selection": 460.1822050502995
+        "feature_selection": 460.1822050502995,
+        "fusion": 0.12
       },
-      "estimated_total_seconds": 478.0222050502995
+      "estimated_total_seconds": 478.1422050502995
     },
     {
       "dataset": "tdc_herg",
@@ -2869,8 +2878,8 @@
         {
           "model": "CFA (Combinatorial Fusion)",
           "family": "fusion",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
+          "status": "planned",
+          "reason": ""
         },
         {
           "model": "Ensemble (OOF Stacking (RidgeCV))",
@@ -2887,9 +2896,10 @@
       ],
       "estimated_seconds": {
         "features": 18.1,
-        "feature_selection": 471.17346736468977
+        "feature_selection": 471.17346736468977,
+        "fusion": 0.12242990654205607
       },
-      "estimated_total_seconds": 489.2734673646898
+      "estimated_total_seconds": 489.39589727123183
     },
     {
       "dataset": "tdc_cyp2d6_substrate_carbonmangels",
@@ -3037,8 +3047,8 @@
         {
           "model": "CFA (Combinatorial Fusion)",
           "family": "fusion",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
+          "status": "planned",
+          "reason": ""
         },
         {
           "model": "Ensemble (OOF Stacking (RidgeCV))",
@@ -3055,9 +3065,10 @@
       ],
       "estimated_seconds": {
         "features": 18.34,
-        "feature_selection": 482.21202900953335
+        "feature_selection": 482.21202900953335,
+        "fusion": 0.12467289719626168
       },
-      "estimated_total_seconds": 500.5520290095333
+      "estimated_total_seconds": 500.6767019067296
     },
     {
       "dataset": "tdc_half_life_obach",
@@ -3211,8 +3222,8 @@
         {
           "model": "CFA (Combinatorial Fusion)",
           "family": "fusion",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
+          "status": "planned",
+          "reason": ""
         },
         {
           "model": "Ensemble (OOF Stacking (RidgeCV))",
@@ -3229,9 +3240,10 @@
       ],
       "estimated_seconds": {
         "features": 18.34,
-        "feature_selection": 482.21202900953335
+        "feature_selection": 482.21202900953335,
+        "fusion": 0.12467289719626168
       },
-      "estimated_total_seconds": 500.5520290095333
+      "estimated_total_seconds": 500.6767019067296
     },
     {
       "dataset": "tdc_cyp2c9_substrate_carbonmangels",
@@ -3379,8 +3391,8 @@
         {
           "model": "CFA (Combinatorial Fusion)",
           "family": "fusion",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
+          "status": "planned",
+          "reason": ""
         },
         {
           "model": "Ensemble (OOF Stacking (RidgeCV))",
@@ -3397,9 +3409,10 @@
       ],
       "estimated_seconds": {
         "features": 18.380000000000003,
-        "feature_selection": 483.31845995084143
+        "feature_selection": 483.31845995084143,
+        "fusion": 0.12504672897196262
       },
-      "estimated_total_seconds": 501.6984599508414
+      "estimated_total_seconds": 501.82350667981336
     },
     {
       "dataset": "tdc_cyp3a4_substrate_carbonmangels",
@@ -3547,8 +3560,8 @@
         {
           "model": "CFA (Combinatorial Fusion)",
           "family": "fusion",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
+          "status": "planned",
+          "reason": ""
         },
         {
           "model": "Ensemble (OOF Stacking (RidgeCV))",
@@ -3565,9 +3578,10 @@
       ],
       "estimated_seconds": {
         "features": 18.4,
-        "feature_selection": 484.42535631167596
+        "feature_selection": 484.42535631167596,
+        "fusion": 0.1252336448598131
       },
-      "estimated_total_seconds": 502.82535631167593
+      "estimated_total_seconds": 502.95058995653574
     },
     {
       "dataset": "polaris_adme_fang_rppb_1",
@@ -3721,8 +3735,8 @@
         {
           "model": "CFA (Combinatorial Fusion)",
           "family": "fusion",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
+          "status": "planned",
+          "reason": ""
         },
         {
           "model": "Ensemble (OOF Stacking (RidgeCV))",
@@ -3739,9 +3753,10 @@
       ],
       "estimated_seconds": {
         "features": 22.7,
-        "feature_selection": 681.2252558193405
+        "feature_selection": 681.2252558193405,
+        "fusion": 0.16542056074766354
       },
-      "estimated_total_seconds": 703.9252558193406
+      "estimated_total_seconds": 704.0906763800882
     },
     {
       "dataset": "tdc_caco2_wang",
@@ -3895,8 +3910,8 @@
         {
           "model": "CFA (Combinatorial Fusion)",
           "family": "fusion",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
+          "status": "planned",
+          "reason": ""
         },
         {
           "model": "Ensemble (OOF Stacking (RidgeCV))",
@@ -3913,9 +3928,10 @@
       ],
       "estimated_seconds": {
         "features": 23.2,
-        "feature_selection": 704.8731043987848
+        "feature_selection": 704.8731043987848,
+        "fusion": 0.17009345794392522
       },
-      "estimated_total_seconds": 728.0731043987848
+      "estimated_total_seconds": 728.2431978567288
     },
     {
       "dataset": "tdc_clearance_microsome_az",
@@ -4069,8 +4085,8 @@
         {
           "model": "CFA (Combinatorial Fusion)",
           "family": "fusion",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
+          "status": "planned",
+          "reason": ""
         },
         {
           "model": "Ensemble (OOF Stacking (RidgeCV))",
@@ -4087,9 +4103,10 @@
       ],
       "estimated_seconds": {
         "features": 27.04,
-        "feature_selection": 891.6594502201842
+        "feature_selection": 891.6594502201842,
+        "fusion": 0.20598130841121495
       },
-      "estimated_total_seconds": 918.6994502201842
+      "estimated_total_seconds": 918.9054315285954
     },
     {
       "dataset": "esol_delaney",
@@ -4243,8 +4260,8 @@
         {
           "model": "CFA (Combinatorial Fusion)",
           "family": "fusion",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
+          "status": "planned",
+          "reason": ""
         },
         {
           "model": "Ensemble (OOF Stacking (RidgeCV))",
@@ -4261,9 +4278,10 @@
       ],
       "estimated_seconds": {
         "features": 27.56,
-        "feature_selection": 916.4905863165446
+        "feature_selection": 916.4905863165446,
+        "fusion": 0.2108411214953271
       },
-      "estimated_total_seconds": 944.0505863165446
+      "estimated_total_seconds": 944.26142743804
     },
     {
       "dataset": "tdc_vdss_lombardo",
@@ -4417,8 +4435,8 @@
         {
           "model": "CFA (Combinatorial Fusion)",
           "family": "fusion",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
+          "status": "planned",
+          "reason": ""
         },
         {
           "model": "Ensemble (OOF Stacking (RidgeCV))",
@@ -4435,9 +4453,10 @@
       ],
       "estimated_seconds": {
         "features": 27.6,
-        "feature_selection": 918.9805660524271
+        "feature_selection": 918.9805660524271,
+        "fusion": 0.21121495327102802
       },
-      "estimated_total_seconds": 946.5805660524271
+      "estimated_total_seconds": 946.7917810056981
     },
     {
       "dataset": "tdc_clearance_hepatocyte_az",
@@ -4591,8 +4610,8 @@
         {
           "model": "CFA (Combinatorial Fusion)",
           "family": "fusion",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
+          "status": "planned",
+          "reason": ""
         },
         {
           "model": "Ensemble (OOF Stacking (RidgeCV))",
@@ -4609,9 +4628,10 @@
       ],
       "estimated_seconds": {
         "features": 29.26,
-        "feature_selection": 1001.8330954812587
+        "feature_selection": 1001.8330954812587,
+        "fusion": 0.22672897196261682
       },
-      "estimated_total_seconds": 1031.0930954812588
+      "estimated_total_seconds": 1031.3198244532214
     },
     {
       "dataset": "tdc_pgp_broccatelli",
@@ -4759,8 +4779,8 @@
         {
           "model": "CFA (Combinatorial Fusion)",
           "family": "fusion",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
+          "status": "planned",
+          "reason": ""
         },
         {
           "model": "Ensemble (OOF Stacking (RidgeCV))",
@@ -4777,9 +4797,10 @@
       ],
       "estimated_seconds": {
         "features": 29.36,
-        "feature_selection": 1006.8962471401176
+        "feature_selection": 1006.8962471401176,
+        "fusion": 0.22766355140186914
       },
-      "estimated_total_seconds": 1036.2562471401175
+      "estimated_total_seconds": 1036.4839106915194
     },
     {
       "dataset": "tdc_clintox",
@@ -4927,8 +4948,8 @@
         {
           "model": "CFA (Combinatorial Fusion)",
           "family": "fusion",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
+          "status": "planned",
+          "reason": ""
         },
         {
           "model": "Ensemble (OOF Stacking (RidgeCV))",
@@ -4945,9 +4966,10 @@
       ],
       "estimated_seconds": {
         "features": 34.56,
-        "feature_selection": 1276.310695859585
+        "feature_selection": 1276.310695859585,
+        "fusion": 0.27626168224299064
       },
-      "estimated_total_seconds": 1310.8706958595849
+      "estimated_total_seconds": 1311.146957541828
     },
     {
       "dataset": "tdc_toxcast",
@@ -5095,8 +5117,8 @@
         {
           "model": "CFA (Combinatorial Fusion)",
           "family": "fusion",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
+          "status": "planned",
+          "reason": ""
         },
         {
           "model": "Ensemble (OOF Stacking (RidgeCV))",
@@ -5113,9 +5135,10 @@
       ],
       "estimated_seconds": {
         "features": 39.62,
-        "feature_selection": 1549.801127156515
+        "feature_selection": 1549.801127156515,
+        "fusion": 0.32355140186915887
       },
-      "estimated_total_seconds": 1589.4211271565148
+      "estimated_total_seconds": 1589.7446785583838
     },
     {
       "dataset": "polaris_adme_fang_hppb_1",
@@ -5269,8 +5292,8 @@
         {
           "model": "CFA (Combinatorial Fusion)",
           "family": "fusion",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
+          "status": "planned",
+          "reason": ""
         },
         {
           "model": "Ensemble (OOF Stacking (RidgeCV))",
@@ -5287,9 +5310,10 @@
       ],
       "estimated_seconds": {
         "features": 41.160000000000004,
-        "feature_selection": 1633.8273389841072
+        "feature_selection": 1633.8273389841072,
+        "fusion": 0.33794392523364486
       },
-      "estimated_total_seconds": 1674.9873389841073
+      "estimated_total_seconds": 1675.325282909341
     },
     {
       "dataset": "poduam_pod_nc_std",
@@ -5443,8 +5467,8 @@
         {
           "model": "CFA (Combinatorial Fusion)",
           "family": "fusion",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
+          "status": "planned",
+          "reason": ""
         },
         {
           "model": "Ensemble (OOF Stacking (RidgeCV))",
@@ -5461,9 +5485,10 @@
       ],
       "estimated_seconds": {
         "features": 41.84,
-        "feature_selection": 1672.6667246572374
+        "feature_selection": 1672.6667246572374,
+        "fusion": 0.3442990654205607
       },
-      "estimated_total_seconds": 1714.5067246572373
+      "estimated_total_seconds": 1714.8510237226578
     },
     {
       "dataset": "tdc_bbb_martins",
@@ -5611,8 +5636,8 @@
         {
           "model": "CFA (Combinatorial Fusion)",
           "family": "fusion",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
+          "status": "planned",
+          "reason": ""
         },
         {
           "model": "Ensemble (OOF Stacking (RidgeCV))",
@@ -5629,9 +5654,10 @@
       ],
       "estimated_seconds": {
         "features": 45.6,
-        "feature_selection": 1883.5097839825821
+        "feature_selection": 1883.5097839825821,
+        "fusion": 0.37943925233644854
       },
-      "estimated_total_seconds": 1929.109783982582
+      "estimated_total_seconds": 1929.4892232349184
     },
     {
       "dataset": "tdc_pampa_ncats",
@@ -5779,8 +5805,8 @@
         {
           "model": "CFA (Combinatorial Fusion)",
           "family": "fusion",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
+          "status": "planned",
+          "reason": ""
         },
         {
           "model": "Ensemble (OOF Stacking (RidgeCV))",
@@ -5797,9 +5823,10 @@
       ],
       "estimated_seconds": {
         "features": 45.68,
-        "feature_selection": 1887.772922086351
+        "feature_selection": 1887.772922086351,
+        "fusion": 0.3801869158878505
       },
-      "estimated_total_seconds": 1933.452922086351
+      "estimated_total_seconds": 1933.8331090022389
     },
     {
       "dataset": "polaris_adme_fang_solu_1",
@@ -5953,8 +5980,8 @@
         {
           "model": "CFA (Combinatorial Fusion)",
           "family": "fusion",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
+          "status": "planned",
+          "reason": ""
         },
         {
           "model": "Ensemble (OOF Stacking (RidgeCV))",
@@ -5971,9 +5998,10 @@
       ],
       "estimated_seconds": {
         "features": 48.46,
-        "feature_selection": 2046.731958365919
+        "feature_selection": 2046.731958365919,
+        "fusion": 0.4061682242990654
       },
-      "estimated_total_seconds": 2095.1919583659187
+      "estimated_total_seconds": 2095.598126590218
     },
     {
       "dataset": "poduam_pod_rd_std",
@@ -6127,8 +6155,8 @@
         {
           "model": "CFA (Combinatorial Fusion)",
           "family": "fusion",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
+          "status": "planned",
+          "reason": ""
         },
         {
           "model": "Ensemble (OOF Stacking (RidgeCV))",
@@ -6145,9 +6173,10 @@
       ],
       "estimated_seconds": {
         "features": 52.1,
-        "feature_selection": 2259.3010315434813
+        "feature_selection": 2259.3010315434813,
+        "fusion": 0.44018691588785047
       },
-      "estimated_total_seconds": 2311.401031543481
+      "estimated_total_seconds": 2311.841218459369
     },
     {
       "dataset": "polaris_adme_fang_perm_1",
@@ -6301,8 +6330,8 @@
         {
           "model": "CFA (Combinatorial Fusion)",
           "family": "fusion",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
+          "status": "planned",
+          "reason": ""
         },
         {
           "model": "Ensemble (OOF Stacking (RidgeCV))",
@@ -6319,9 +6348,10 @@
       ],
       "estimated_seconds": {
         "features": 57.84,
-        "feature_selection": 2601.678357036165
+        "feature_selection": 2601.678357036165,
+        "fusion": 0.49383177570093456
       },
-      "estimated_total_seconds": 2659.518357036165
+      "estimated_total_seconds": 2660.012188811866
     },
     {
       "dataset": "tdc_ppbr_az",
@@ -6475,8 +6505,8 @@
         {
           "model": "CFA (Combinatorial Fusion)",
           "family": "fusion",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
+          "status": "planned",
+          "reason": ""
         },
         {
           "model": "Ensemble (OOF Stacking (RidgeCV))",
@@ -6493,9 +6523,10 @@
       ],
       "estimated_seconds": {
         "features": 60.800000000000004,
-        "feature_selection": 2780.6759652596575
+        "feature_selection": 2780.6759652596575,
+        "fusion": 0.5214953271028037
       },
-      "estimated_total_seconds": 2841.4759652596576
+      "estimated_total_seconds": 2841.9974605867606
     },
     {
       "dataset": "polaris_adme_fang_rclint_1",
@@ -6649,8 +6680,8 @@
         {
           "model": "CFA (Combinatorial Fusion)",
           "family": "fusion",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
+          "status": "planned",
+          "reason": ""
         },
         {
           "model": "Ensemble (OOF Stacking (RidgeCV))",
@@ -6667,9 +6698,10 @@
       ],
       "estimated_seconds": {
         "features": 66.08,
-        "feature_selection": 3106.034297858973
+        "feature_selection": 3106.034297858973,
+        "fusion": 0.5708411214953271
       },
-      "estimated_total_seconds": 3172.114297858973
+      "estimated_total_seconds": 3172.6851389804683
     },
     {
       "dataset": "lipophilicity",
@@ -6823,8 +6855,8 @@
         {
           "model": "CFA (Combinatorial Fusion)",
           "family": "fusion",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
+          "status": "planned",
+          "reason": ""
         },
         {
           "model": "Ensemble (OOF Stacking (RidgeCV))",
@@ -6841,9 +6873,10 @@
       ],
       "estimated_seconds": {
         "features": 89.0,
-        "feature_selection": 4589.50254269112
+        "feature_selection": 4589.50254269112,
+        "fusion": 0.7850467289719626
       },
-      "estimated_total_seconds": 4678.50254269112
+      "estimated_total_seconds": 4679.2875894200915
     },
     {
       "dataset": "tdc_lipophilicity_astrazeneca",
@@ -6997,8 +7030,8 @@
         {
           "model": "CFA (Combinatorial Fusion)",
           "family": "fusion",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
+          "status": "planned",
+          "reason": ""
         },
         {
           "model": "Ensemble (OOF Stacking (RidgeCV))",
@@ -7015,9 +7048,10 @@
       ],
       "estimated_seconds": {
         "features": 89.0,
-        "feature_selection": 4589.50254269112
+        "feature_selection": 4589.50254269112,
+        "fusion": 0.7850467289719626
       },
-      "estimated_total_seconds": 4678.50254269112
+      "estimated_total_seconds": 4679.2875894200915
     },
     {
       "dataset": "tdc_tox21",
@@ -7165,8 +7199,8 @@
         {
           "model": "CFA (Combinatorial Fusion)",
           "family": "fusion",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
+          "status": "planned",
+          "reason": ""
         },
         {
           "model": "Ensemble (OOF Stacking (RidgeCV))",
@@ -7183,9 +7217,10 @@
       ],
       "estimated_seconds": {
         "features": 150.16,
-        "feature_selection": 7200.0
+        "feature_selection": 7200.0,
+        "fusion": 1.3566355140186914
       },
-      "estimated_total_seconds": 7350.16
+      "estimated_total_seconds": 7351.516635514018
     },
     {
       "dataset": "tdc_ames",
@@ -7333,8 +7368,8 @@
         {
           "model": "CFA (Combinatorial Fusion)",
           "family": "fusion",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
+          "status": "planned",
+          "reason": ""
         },
         {
           "model": "Ensemble (OOF Stacking (RidgeCV))",
@@ -7351,9 +7386,10 @@
       ],
       "estimated_seconds": {
         "features": 150.56,
-        "feature_selection": 7200.0
+        "feature_selection": 7200.0,
+        "fusion": 1.360373831775701
       },
-      "estimated_total_seconds": 7350.56
+      "estimated_total_seconds": 7351.9203738317765
     },
     {
       "dataset": "tdc_ld50_zhu",
@@ -7507,8 +7543,8 @@
         {
           "model": "CFA (Combinatorial Fusion)",
           "family": "fusion",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
+          "status": "planned",
+          "reason": ""
         },
         {
           "model": "Ensemble (OOF Stacking (RidgeCV))",
@@ -7525,9 +7561,10 @@
       ],
       "estimated_seconds": {
         "features": 152.70000000000002,
-        "feature_selection": 7200.0
+        "feature_selection": 7200.0,
+        "fusion": 1.3803738317757008
       },
-      "estimated_total_seconds": 7352.7
+      "estimated_total_seconds": 7354.080373831775
     },
     {
       "dataset": "tdc_solubility_aqsoldb",
@@ -7681,8 +7718,8 @@
         {
           "model": "CFA (Combinatorial Fusion)",
           "family": "fusion",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
+          "status": "planned",
+          "reason": ""
         },
         {
           "model": "Ensemble (OOF Stacking (RidgeCV))",
@@ -7699,9 +7736,10 @@
       ],
       "estimated_seconds": {
         "features": 204.6,
-        "feature_selection": 7200.0
+        "feature_selection": 7200.0,
+        "fusion": 1.8654205607476635
       },
-      "estimated_total_seconds": 7404.6
+      "estimated_total_seconds": 7406.465420560748
     },
     {
       "dataset": "tdc_cyp2c9_veith",
@@ -7849,8 +7887,8 @@
         {
           "model": "CFA (Combinatorial Fusion)",
           "family": "fusion",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
+          "status": "planned",
+          "reason": ""
         },
         {
           "model": "Ensemble (OOF Stacking (RidgeCV))",
@@ -7867,9 +7905,10 @@
       ],
       "estimated_seconds": {
         "features": 246.84,
-        "feature_selection": 7200.0
+        "feature_selection": 7200.0,
+        "fusion": 2.2601869158878505
       },
-      "estimated_total_seconds": 7446.84
+      "estimated_total_seconds": 7449.100186915888
     },
     {
       "dataset": "tdc_cyp3a4_veith",
@@ -8017,8 +8056,8 @@
         {
           "model": "CFA (Combinatorial Fusion)",
           "family": "fusion",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
+          "status": "planned",
+          "reason": ""
         },
         {
           "model": "Ensemble (OOF Stacking (RidgeCV))",
@@ -8035,9 +8074,10 @@
       ],
       "estimated_seconds": {
         "features": 251.56,
-        "feature_selection": 7200.0
+        "feature_selection": 7200.0,
+        "fusion": 2.304299065420561
       },
-      "estimated_total_seconds": 7451.56
+      "estimated_total_seconds": 7453.864299065421
     },
     {
       "dataset": "tdc_cyp1a2_veith",
@@ -8185,8 +8225,8 @@
         {
           "model": "CFA (Combinatorial Fusion)",
           "family": "fusion",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
+          "status": "planned",
+          "reason": ""
         },
         {
           "model": "Ensemble (OOF Stacking (RidgeCV))",
@@ -8203,9 +8243,10 @@
       ],
       "estimated_seconds": {
         "features": 256.58000000000004,
-        "feature_selection": 7200.0
+        "feature_selection": 7200.0,
+        "fusion": 2.351214953271028
       },
-      "estimated_total_seconds": 7456.58
+      "estimated_total_seconds": 7458.931214953271
     },
     {
       "dataset": "tdc_cyp2c19_veith",
@@ -8353,8 +8394,8 @@
         {
           "model": "CFA (Combinatorial Fusion)",
           "family": "fusion",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
+          "status": "planned",
+          "reason": ""
         },
         {
           "model": "Ensemble (OOF Stacking (RidgeCV))",
@@ -8371,9 +8412,10 @@
       ],
       "estimated_seconds": {
         "features": 258.3,
-        "feature_selection": 7200.0
+        "feature_selection": 7200.0,
+        "fusion": 2.3672897196261684
       },
-      "estimated_total_seconds": 7458.3
+      "estimated_total_seconds": 7460.667289719627
     },
     {
       "dataset": "tdc_cyp2d6_veith",
@@ -8521,8 +8563,8 @@
         {
           "model": "CFA (Combinatorial Fusion)",
           "family": "fusion",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
+          "status": "planned",
+          "reason": ""
         },
         {
           "model": "Ensemble (OOF Stacking (RidgeCV))",
@@ -8539,9 +8581,10 @@
       ],
       "estimated_seconds": {
         "features": 267.6,
-        "feature_selection": 7200.0
+        "feature_selection": 7200.0,
+        "fusion": 2.4542056074766356
       },
-      "estimated_total_seconds": 7467.6
+      "estimated_total_seconds": 7470.054205607477
     },
     {
       "dataset": "tdc_herg_karim",
@@ -8689,8 +8732,8 @@
         {
           "model": "CFA (Combinatorial Fusion)",
           "family": "fusion",
-          "status": "skipped",
-          "reason": "not listed in models.only_models"
+          "status": "planned",
+          "reason": ""
         },
         {
           "model": "Ensemble (OOF Stacking (RidgeCV))",
@@ -8707,11 +8750,12 @@
       ],
       "estimated_seconds": {
         "features": 273.9,
-        "feature_selection": 7200.0
+        "feature_selection": 7200.0,
+        "fusion": 2.513084112149533
       },
-      "estimated_total_seconds": 7473.9
+      "estimated_total_seconds": 7476.41308411215
     }
   ],
-  "estimated_total_seconds": 118947.47327951365,
+  "estimated_total_seconds": 118976.6418776445,
   "estimate_note": "Order-of-magnitude estimate: median per-fit wall-clock by model family from the paper's A100 run (Table 6) scaled linearly with dataset size; GPU-accelerated families are assumed 2-8x slower without a GPU."
 }

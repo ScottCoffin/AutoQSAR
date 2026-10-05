@@ -33,24 +33,36 @@ always quote). Bash (Git Bash) and PowerShell are both available.
 - **PODUAM attribution** fixed (see traps).
 - **Graphical abstract** PNG/PDF render through headless Edge/Chrome when `cairosvg` has no libcairo (the case on Windows).
 
-**Opt-in models from the arm (2026-10-03):** `--run-admetboost-xgboost` (XGBoost on the full, unselected
-ADMETboost features; needs `qsarena[features]` + the Mol2Vec model) and `--run-chemprop-chemeleon` (Chemprop
-fine-tuned from CheMeleon). Both are off by default and outside every family's resume signature; details and
-costs are in `docs/FEATURE_EXPANSION_PLAN.md` ("Implementation of the recommendations"). A full CheMeleon run (~116
-GPU-h) was **declined by the author (2026-10-03)**; don't propose it again without new evidence. The paper mentions
-both models only in the §3.12 post-hoc note, and the CV-leak caveat (template in `qsarena/meta_analysis/text.py`)
-points to it.
-
-**Feature-expansion arm: complete (2026-10-02).** All five feature sets have been trained and evaluated. Frozen CheMeleon/Uni-Mol
-embeddings add nothing to the ADMETboost features and are worse on their own; the fixed XGBoost on unselected
-ADMETboost features remains the best honest entry on TDC-22 (13-9 vs ADMETboost and NIST). The write-up and
-recommendation, which the author decides on, are in `docs/FEATURE_EXPANSION_PLAN.md` ("Results and recommendation").
-No detached jobs are running.
+**Decisions of 2026-10-03 (author) and work in flight:**
+- **`XGBoost (ADMETboost features)` joins the benchmark** (31 models). Its base model is being trained into
+  `qsarena_benchmark_oof_ensemble` by `logs/run_foldin_admetboost.ps1` (detached; it waits for the leak test, logs
+  `logs/foldin_admetboost_20261003.log`, ends with `LAUNCHER_DONE`). It uses the OOF run's exact flags plus
+  `--run-admetboost-xgboost --only-model-names "XGBoost (ADMETboost features)" --no-run-ensemble`. The pilot on
+  carcinogens passed: stage 2/3 cache hit, nothing else retrained, ensembles untouched. Features come from the arm's
+  cache (`featurize.find_cached_matrix`, matched by SMILES hash), so the benchmark env needs no skfp/mordred.
+  **Ensembles are deliberately NOT rebuilt yet**; rebuild them once, after the nested-selection decision.
+  **PAUSED by the author on 2026-10-03 at dataset 34/44** (process stopped). Completed datasets keep their new row;
+  resume by relaunching `logs/run_foldin_admetboost.ps1` (detached via WMI). `--resume` skips finished datasets.
+- **The feature-selection CV leak is to be fixed throughout** (reopened). The causal test
+  `qsarena/feature_expansion/selection_leak.py` finished: the leak is positive in 26 of 27 dataset-model pairs
+  (results in `benchmark_results/qsarena_feature_expansion/selection_leak.csv`). Plan, scope and cost (~50-55 h on the RTX, so it needs the
+  author's go-ahead) are in `docs/NESTED_SELECTION_CV_PLAN.md`. **The code is implemented** (2026-10-04): runner
+  `--cv-selection nested` (default for the full and cost_optimized profiles) and notebook option `nested_selection_cv`;
+  see the plan's "Implementation status". The notebook path has only been syntax-checked.
+- **Opt-in models from the arm:** `--run-admetboost-xgboost` (now also a benchmark member) and
+  `--run-chemprop-chemeleon`. A full CheMeleon run (~116 GPU-h) was **declined by the author**; don't propose it
+  again without new evidence.
 
 **Next steps**
-1. Author decisions pending: the arm's integration (see the plan), the title (options in TODO.md), and the remaining
-   `[AUTHOR]` flags (other LLM tools in Methods §2.14, OEHHA disclaimer, reviewers, preprint). The run history is
-   now in Methods §2.13 ("Benchmark runs and ensemble reconstruction"), checked by the verifier.
+1. When the fold-in finishes: check `logs/foldin_admetboost_20261003.log` (no `config signature changed`; every
+   stage `(cached)` except the new model), `tools/verify_oof_ensemble_run.py`, and the new row on all 44 datasets.
+2. Nested selection: implement per `docs/NESTED_SELECTION_CV_PLAN.md` (code needs no approval); run it only with
+   the author's go-ahead. Then rebuild every ensemble ONCE (the new member plus nested OOF), render, and update the
+   paper: 31 models, Table 1, §2.13 (fold-in, nested CV), §3.12 (the descriptor model is now a member, no longer
+   post-hoc), and the CV-leak caveat (it becomes a Methods statement). If nested selection is declined, rebuild the
+   ensembles right after the fold-in instead.
+3. Author items: title (options in TODO.md), the `[AUTHOR]` flags (other LLM tools in §2.14, OEHHA disclaimer,
+   reviewers, preprint), the Zenodo deposit (rename the repo first; bundles in `dist/zenodo/`).
 2. Anything from the arm that enters the paper is supplementary. New numbers go through the render and the
    verifier, never hand-typed.
 3. Zenodo deposit: the last blocking submission item (`ZENODO.md`).
@@ -480,8 +492,11 @@ Open work is tracked in [TODO.md](TODO.md); the Zenodo deposit is the last block
   ~4% to ~0%). Consequences: the CV-selected ("honest") pick and the CV-vs-test gap in the manuscript
   rest on leaky CV scores, and conventional members' OOF predictions (same folds) carry some of the
   leak into ensemble weighting. Test-set and leaderboard numbers are unaffected. The fix would be to
-  refit selection inside each CV fold (costly: ElasticNet times out on large sets). Scoped in `docs/NESTED_SELECTION_CV_PLAN.md` and
-  DECLINED by the user (2026-10-02, not worth the compute); the paper carries the `limitation_cvleak` caveat. Data:
+  refit selection inside each CV fold (costly: ElasticNet times out on large sets). **Causally confirmed on 2026-10-03**
+  (`qsarena/feature_expansion/selection_leak.py`: the same features, models and folds, with selection fitted outside
+  vs inside the folds; on 9 datasets, the leak is 22.7 points of CV overstatement for ElasticNetCV (9/9 datasets),
+  6.1 for random forest (9/9) and 2.5 for SVR (8/9); positive in 26 of 27 pairs, p < 0.001).
+  Fixing it throughout was REOPENED by the author; the plan and cost are in `docs/NESTED_SELECTION_CV_PLAN.md`. Data:
   `benchmark_results/qsarena_feature_expansion/admetboost__scaffoldcv/cv_geometry_*.csv`; benchmark
   optimism recomputable from `metrics.csv` (`cv_primary` vs `test_<primary>`).
 - **Feature selection is NOT reproducible across machines. Transfer `stage23_resume_cache.pkl`; never let
@@ -516,6 +531,29 @@ Open work is tracked in [TODO.md](TODO.md); the Zenodo deposit is the last block
   `--disable-model-families`, so the user's value was silently replaced (for example, quick re-disabled
   gradient boosting). `_PROFILE_FLAG_ALIASES` maps such dests to their real flag; add an entry if you add a profile
   default whose flag differs from its dest.
+- **Binary datasets catalogued as "rmse" saved HARD 0/1 LABELS as test predictions** (found and fixed 2026-10-04 in
+  `predict_values_for_metric`). On `tdc_cyp1a2_veith`, `tdc_cyp2c19_veith`, `tdc_herg_karim` and `tdc_pampa_ncats` the
+  catalog's metric is rmse, so every model scored through `predict_values_for_metric` (10 conventional and
+  gradient-boosting models plus TabPFN) called `.predict()`. Test AUROC/AUPRC were computed on labels (PAMPA AdaBoost
+  0.500, LogisticRegression 0.563), and their OOF predictions, so the ensembles, were labels too. Chemprop, Uni-Mol
+  and MapLight already returned probabilities. CV AUROC was fine: the scorer calls `predict_proba` itself. The fix
+  returns the positive-class score whenever the task is classification. **Repair (2026-10-04):** the 10 models plus
+  `XGBoost (ADMETboost features)` were retrained on those 4 datasets (`logs/run_proba_fix.ps1`, backup
+  `benchmark_results/_proba_fix_backup_20261004/`). Done and validated on all 4 datasets: no label predictions
+  remain, every other model is unchanged, and test AUROC rose by a median of 0.06-0.11 per dataset (PAMPA AdaBoost
+  0.500 -> 0.742). `tools/verify_oof_ensemble_run.py` exempts exactly these retrains (`INTENTIONAL_RETRAINS`). TabPFN
+  on those 4 datasets still holds label predictions: retraining it needs Prior Labs API credits or a local GPU run that
+  already OOMs on them (author decision). Retrained CV values differ by 0.01-0.03 because scaffold `GroupKFold`
+  breaks group ties differently across scikit-learn versions (A100 env vs RTX env). Within one machine it is
+  deterministic.
+- **A filtered resume (`--only-model-names X`) used to DELETE stale rows of models it excludes** (fixed 2026-10-04 in
+  `split_stale_metric_rows`). When a cached row's `stage_config_signature` no longer matched, the runner dropped it
+  to recompute it, but the filter blocked the recompute, so the row was gone on the next save. It nearly happened in
+  the ADMETboost fold-in: on `tdc_cyp2c9_veith`, TabPFNClassifier and both ensemble rows carry signatures that match
+  no current flag set (probably written by a late-September TabPFN repair session with different settings), and the
+  run was stopped before CYP2C9 was saved. Such rows are now kept, with a `[resume] keeping N row(s)` notice.
+  **An UNFILTERED resume would still recompute them**, which would retrain TabPFN on CYP2C9; check before running
+  one. Test: `test_filtered_run_keeps_stale_rows_it_will_not_recompute`.
 - **Targeted model filters are repeatable exact labels.** Use one `--only-model-names` argument per
   model. Model labels contain commas, so comma-joining labels silently breaks selection. Internal
   TDC multi-seed code stores these filters as a list for the same reason.

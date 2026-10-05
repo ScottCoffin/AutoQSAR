@@ -1,20 +1,21 @@
 Model,Weight,Workflow
-LogisticRegression,0.05026491259413756,conventional
-SVC,0.05147008477729658,conventional
-Random forest,0.04234611278187133,conventional
-Extra trees,0.041068874236472215,conventional
-HistGradientBoosting,0.03154394226431821,conventional
-"Voting Classifier (KNN, SVM)",0.04683911615158179,conventional
-AdaBoost,0.029209025879938837,conventional
-Tabular MLP,0.04463052231708577,conventional
-XGBoost,0.03838987610565743,conventional
-CatBoost,0.03995480775185421,conventional
-ChemML MLP (PyTorch),0.17821057213559743,ChemML deep learning
-ChemML MLP (TensorFlow),0.16180856497937346,ChemML deep learning
-"Chemprop v2 (D-MPNN, ensemble=3)",0.029211590319318522,Chemprop v2
-"Chemprop v2 (CMPNN, ensemble=3)",0.029094532800879907,Chemprop v2
-"Chemprop v2 (AttentiveFP, ensemble=3)",0.03419965224839629,Chemprop v2
-"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",0.04664287536351322,Chemprop v2
-Uni-Mol V1,0.025241642410318798,Uni-Mol
-"MapLight + GNN (CatBoost, Strict Parity)",0.03049456682452054,MapLight + GNN
-TabPFNClassifier,0.049378728057867895,conventional
+LogisticRegression,0.04861794433830736,conventional
+SVC,0.04978362813431848,conventional
+Random forest,0.04095861005063845,conventional
+Extra trees,0.039723221201793675,conventional
+HistGradientBoosting,0.030510380901294338,conventional
+"Voting Classifier (KNN, SVM)",0.045304396732974934,conventional
+AdaBoost,0.028251969835767124,conventional
+Tabular MLP,0.04316816916249311,conventional
+XGBoost,0.037132002491078696,conventional
+CatBoost,0.0386456579565201,conventional
+ChemML MLP (PyTorch),0.1723713666140325,ChemML deep learning
+ChemML MLP (TensorFlow),0.15650678375089982,ChemML deep learning
+"Chemprop v2 (D-MPNN, ensemble=3)",0.028254450249331698,Chemprop v2
+"Chemprop v2 (CMPNN, ensemble=3)",0.028141228209898714,Chemprop v2
+"Chemprop v2 (AttentiveFP, ensemble=3)",0.03307907451918902,Chemprop v2
+"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",0.0451145859242253,Chemprop v2
+Uni-Mol V1,0.024414580716001617,Uni-Mol
+"MapLight + GNN (CatBoost, Strict Parity)",0.029495389049343512,MapLight + GNN
+TabPFNClassifier,0.047760796315277625,conventional
+XGBoost (ADMETboost features),0.03276576384661395,conventional
