@@ -84,6 +84,9 @@
 \begin{figure*}[htbp]
 \centering
 \includegraphics[width=\textwidth]{figures/graphical_abstract.pdf}
+% sn-jnl steps the figure counter for every figure float, so the unnumbered graphical abstract used to take the
+% number 1 and the workflow figure printed as Figure 2. Give the number back.
+\addtocounter{figure}{-1}%
 \caption*{\textbf{Graphical abstract.} QSARena evaluates conventional, ensemble and pretrained molecular models under one leakage-controlled pipeline across 44 benchmarks. No single model family wins more than 6 of 44 datasets; out-of-fold ensembles built from them win 22. Choosing the model by cross-validation instead of on held-out data costs 8 of 35 estimated top-ten placements against published values: 7 reflect the breadth of the model library and 1 the selection protocol. Absolute ranks are provisional.}
 \end{figure*}
 
@@ -97,7 +100,7 @@ ADMET: absorption, distribution, metabolism, excretion and toxicity; ADME: absor
 
 \section*{Supplementary information}
 
-\textbf{Additional file 1.} Supplementary tables S1--S15, notes S1--S6 and figures S1--S3. Tables: per-dataset winning models with cross-validation-selected comparators (S1), staged component ablation (S2), feature-family selection summary (S3), model coverage (S4), hardware comparison (S5), dataset catalog (S6), leaderboard comparison (S7), applicability-domain/calibration audit (S8), dataset meta-feature catalog (S9), family $\times$ meta-feature associations (S10), family-selector regret (S11), model inventory (S12), common-subset family comparison (S13), wins without the post-hoc descriptor model (S14) and positioning against other tools (S15). Notes: benchmark runs, ensemble reconstruction and computing environment (S1); representations, feature store and model configurations (S2); sensitivity of the family comparison (S3); the dataset-property meta-analysis, with Figures S1--S3 (S4); comparison with automated QSAR platforms (S5); and coverage, cost and hardware details (S6).
+\textbf{Additional file 1.} Supplementary tables S1--S16, notes S1--S6 and figures S1--S5. Tables: per-dataset winning models with cross-validation-selected comparators (S1), staged component ablation (S2), feature-family selection summary (S3), model coverage (S4), hardware comparison (S5), dataset catalog (S6), leaderboard comparison (S7), applicability-domain/calibration audit (S8), dataset meta-feature catalog (S9), family $\times$ meta-feature associations (S10), family-selector regret (S11), model inventory (S12), common-subset family comparison (S13), wins without the post-hoc descriptor model (S14), positioning against other tools (S15) and per-family cost with published comparators (S16). Notes: benchmark runs, ensemble reconstruction and computing environment (S1); representations, splitting, feature selection, model and ensemble configurations (S2); sensitivity of the family comparison and the exploratory analysis behind the descriptor model (S3); the dataset-property meta-analysis, with Figures S1--S3 (S4); comparison with automated QSAR platforms, with per-dataset leaderboard ranks in Figure S4 (S5); and coverage, cost and hardware details, with the per-dataset family-gap heatmap in Figure S5 (S6).
 
 \textbf{Additional file 2.} Guided installation and usage tutorial: choosing between the notebook and the command-line runner, installation, a single-dataset quickstart, a reference for all fifteen groups of workflow options, batch mode over any number of datasets, resume, the HTML/Markdown run reports, applicability domain, reproducibility, and troubleshooting. Every command in the tutorial is executed on the bundled example data by an automated test.
 

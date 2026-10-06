@@ -1,0 +1,8 @@
+Model family,Model-dataset fits timed,Median own wall-clock (s),IQR own wall-clock (s),Median cost incl. base pool (s),Median trainable parameters
+CFA combinatorial fusion,44.0,0.26850000000013097,0-0,1378.1010000000003,
+Ensemble (stacking / averaging),87.0,0.6009999999999991,0-1,1378.2105000000006,
+Conventional ML,440.0,6.78550000000001,3-20,,157953.0
+Deep tabular NN (ChemML MLP),88.0,39.761499999999984,27-94,,90369.0
+MapLight + GNN,44.0,137.37350000000015,126-160,,
+Chemprop v2 GNN,25.0,268.5799999999999,229-274,,325552.0
+Uni-Mol (3D pretrained),61.0,373.53600000000006,170-1285,,47331652.0
