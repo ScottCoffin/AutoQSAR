@@ -192,8 +192,6 @@ rather than the work order's suggested keys (mapping below).
 
 ## Open items for the author (`TODO(author)`)
 
-- Title: choose among the primary title and the three commented alternatives (`manuscript.md`, `manuscript.tex`).
-- Other AI assistants used, if any (`body.tex` Section 2.13, `manuscript.md`).
 - Zenodo: rename the GitHub repository, mint the release DOI, upload `dist/zenodo/*` (rebuilt 2026-10-06), and
   insert the DOI (`declarations.tex`, `manuscript.md`, `REPRODUCIBILITY.md`, `cover_letter.md`, `CITATION.cff`).
 - Agency disclaimer wording (`declarations.tex`, `manuscript.md`); remaining acknowledgements (`manuscript.md`).
@@ -201,3 +199,11 @@ rather than the work order's suggested keys (mapping below).
   collection's guest editors.
 - Additional file 2 command tests (`tests/docs`, about 6 minutes) were not rerun; only its generated options table
   changed.
+
+## Author decisions after the revision (2026-10-06)
+
+- Title: the author kept "Ensembles Across Model Families Outperform Any Single Architecture: A Single-Configuration,
+  Leakage-Controlled Benchmark of 31 Molecular Property Models Across 44 Datasets". The work-order title is now a
+  commented alternative.
+- AI assistants: the author added Human Chemical to the Methods disclosure (Section 2.13), named as given.
+- The revision branch was merged into main.

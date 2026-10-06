@@ -20,7 +20,7 @@ keywords:
 # doi: "10.5281/zenodo.XXXXXXX"   # TODO: add the concept DOI after the first Zenodo release
 preferred-citation:
   type: article
-  title: "QSARena: separating model-library breadth from held-out selection in a leakage-controlled, cross-suite benchmark of molecular property-prediction models"
+  title: "Ensembles Across Model Families Outperform Any Single Architecture: A Single-Configuration, Leakage-Controlled Benchmark of 31 Molecular Property Models Across 44 Datasets"
   authors:
     - family-names: Coffin
       given-names: Scott

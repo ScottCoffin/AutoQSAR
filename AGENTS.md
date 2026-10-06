@@ -15,7 +15,7 @@ always quote). Bash (Git Bash) and PowerShell are both available.
 
 **Revision R1 (branch `revision/jcheminf-r1`, 2026-10-06; work order `docs/reframe_work_order.md`).** Read
 `REVISION_NOTES.md` first: per-phase commits, deviations from the work order, and every `TODO(author)`. In short:
-new title (alternatives commented above it), reordered 350-word abstract, Introduction with two research questions
+the author kept the 2026-10-06 title (the work-order title is a commented alternative), reordered 350-word abstract, Introduction with two research questions
 and four new references, main text compressed from 46 to 29 pages. **Section numbers changed**: Methods 2.1-2.13
 (feature store merged into 2.3), Results 3.1-3.14 with a new 3.4 "Nested feature selection removes most
 cross-validation optimism" (META `results_nested_selection`); the old 3.9 Reproducibility is folded into 2.11.

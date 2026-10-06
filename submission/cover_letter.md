@@ -24,8 +24,7 @@ To the Editors, *Journal of Cheminformatics*
 
 Dear Editors,
 
-I am pleased to submit **"QSARena: separating model-library breadth from held-out selection in a
-leakage-controlled, cross-suite benchmark of molecular property-prediction models"** for consideration as a
+I am pleased to submit **"Ensembles Across Model Families Outperform Any Single Architecture: A Single-Configuration, Leakage-Controlled Benchmark of 31 Molecular Property Models Across 44 Datasets"** for consideration as a
 **Research article**.
 
 QSARena is an open-source, MIT-licensed, code-free and command-line benchmarking pipeline that evaluates
