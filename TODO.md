@@ -102,7 +102,10 @@ Source: `Peer_Review_Report_QSARena_No_Single_Model_Family_Dominates.docx`; item
       TDC-22 subset, rather than only estimated ranks. The positioning review asks for this to
       substantiate "match pretrained models" in the title. It needs competitor per-dataset values,
       which are available for MapLight and MaxQsaring but not for DeepAutoQSAR.
-- [x] **Title chosen by the author (2026-10-06): option 2, "Ensembles Across Model Families Outperform Any Single
+- [x] **Final title (revision R2, `docs/remaining_work.md`, 2026-10-06): "Ensembles Across Model Families Outperform Any
+      Single Family: A Single-Configuration, Leakage-Controlled Benchmark of 31 Molecular Property Models Across 44
+      Datasets".** Applied everywhere the earlier title was (below); the commented alternatives were removed.
+- [x] **Title chosen by the author (2026-10-06, superseded by R2): option 2, "Ensembles Across Model Families Outperform Any Single
       Architecture: A Single-Configuration, Leakage-Controlled Benchmark of 31 Molecular Property Models Across 44 Datasets".**
       Applied to manuscript.md, manuscript.tex (short title "Ensembles Across Model Families"), proof.tex, Additional files 1
       and 2, the cover letter and CITATION.cff. Options considered (2026-10-06): The
