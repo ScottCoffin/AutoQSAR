@@ -146,7 +146,7 @@ def draw() -> str:
     svg.text(24, 26, f"QSARena: {driver} drives most leaderboard standing", size=19, weight="700")
     svg.text(24, 45,
              f"One leakage-controlled pipeline, {n_ds} datasets, {n['models_with_valid_results']} models "
-             "- and no model family dominates.",
+             "- and no single model family dominates.",
              size=11.5, color=MUTED)
     svg.line(24, 56, WIDTH - 24, 56, color=RULE, sw=1)
 
@@ -218,7 +218,7 @@ def draw() -> str:
 
     # ---- Panel 3: supporting findings ----------------------------------------------------
     rx = 660
-    svg.text(rx, 78, "NO SINGLE WINNER", size=9.5, weight="700", color=MUTED, spacing="0.8")
+    svg.text(rx, 78, "NO SINGLE FAMILY DOMINATES", size=9.5, weight="700", color=MUTED, spacing="0.8")
     for i, (fam, count) in enumerate(top):
         yy = 94 + i * 21
         svg.text(rx, yy + 9, SHORT_FAMILY.get(fam, fam), size=10, color=INK)
