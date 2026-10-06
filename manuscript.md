@@ -16,15 +16,15 @@
 
 ![Graphical abstract](manuscript_assets/figures/graphical_abstract.png)
 
-**Graphical abstract.** QSARena evaluates conventional, ensemble and pretrained molecular models under one leakage-controlled pipeline across 44 benchmarks. No single model family wins more than 8 of 44 datasets; ensembles built from them win 12. Choosing the model by cross-validation instead of on held-out data costs 8 of 35 estimated top-ten placements against published values: 7 reflect the breadth of the model library and 1 the selection protocol. Absolute ranks are provisional.
+**Graphical abstract.** QSARena evaluates conventional, ensemble and pretrained molecular models under one leakage-controlled pipeline across 44 benchmarks. No single model family wins more than 6 of 44 datasets; out-of-fold ensembles built from them win 22. Choosing the model by cross-validation instead of on held-out data costs 8 of 35 estimated top-ten placements against published values: 7 reflect the breadth of the model library and 1 the selection protocol. Absolute ranks are provisional.
 
 ## Abstract
 
 **Background.** ADMET prediction is dominated by ever-larger pretrained models, whose compute cost and reproducibility limit adoption in academic, regulatory and small laboratories. Whether that scale is warranted has not been tested across suites under one pipeline.
 
-**Methods.** QSARena predicts molecular properties from SMILES in one reproducible workflow: RDKit standardization, ten fingerprint and descriptor families, train-only ElasticNetCV selection, and a 31-model library spanning conventional machine learning, gradient boosting, tabular foundation models, deep tabular and graph networks, 3D pretrained Uni-Mol, and ensembles. It runs as a **code-free Google Colab notebook needing no installation or local hardware** and as a command-line runner sharing the same core.
+**Methods.** QSARena predicts molecular properties from SMILES in one reproducible workflow: RDKit standardization, ten fingerprint and descriptor families, ElasticNetCV selection nested in cross-validation, and a 31-model library spanning conventional machine learning, gradient boosting, tabular foundation models, deep tabular and graph networks, 3D pretrained Uni-Mol, and ensembles. It runs as a **code-free Google Colab notebook needing no installation or local hardware** and as a command-line runner sharing the same core.
 
-**Results.** Across 44 datasets (22 regression, 22 classification; 1097 model-dataset evaluations) under a **single fixed configuration with no per-dataset tuning**, no single family dominated: conventional machine learning and Chemprop each won 8 datasets, 3D pretrained models 6 and TabPFN 3, while ensembles built from these families won 12 (27%). Conventional models were the most consistent (within 5% of best on 77% of datasets), ahead of OOF ensembles (61%) and Uni-Mol (57%). Cross-validation selection picked the per-dataset winner on 3 datasets and sat a median 7.5% from the test-selected best. Against published values, estimated top-ten placement fell from 35 to 27 of 37 comparable datasets under cross-validation selection; a matched-candidate-set control attributes 7 of those 8 placements to library breadth and 1 to held-out selection. These ranks are provisional: the reference set includes entries with documented leakage. A consumer GPU changed the best score by a median +0.4%.
+**Results.** Across 44 datasets (22 regression, 22 classification; 1094 model-dataset evaluations) under a **single fixed configuration with no per-dataset tuning**, no single family dominated: conventional machine learning won 6 datasets, Chemprop and 3D pretrained models 5 each and TabPFN 3, while ensembles of these families won 22 and were most consistent (within 5% of best on 84% of datasets). Nested feature selection cut median cross-validation optimism from 15.9% to 3.4%; cross-validation selection then picked the per-dataset winner on 4 datasets and sat a median 7.7% from the test-selected best. Against published values, estimated top-ten placement fell from 35 to 27 of 37 comparable datasets under cross-validation selection; a matched-candidate-set control attributes 7 of those 8 placements to library breadth and 1 to held-out selection. These ranks are provisional: some references have documented leakage. A consumer GPU changed the best single-model score by a median +0.5%.
 
 **Conclusions.** Library breadth drives most leaderboard standing; held-out selection still contributes measurable optimism. No tuning, installation or specialized hardware is needed. Results are single-split, so close margins are provisional.
 
@@ -77,12 +77,12 @@ For each dataset the runner executes a fixed sequence: build molecular features;
 <!-- TABLE:table1_model_inventory -->
 | Model family | Model | Valid regression datasets | Valid classification datasets | Wins | Datasets attempted |
 |---|---|---|---|---|---|
-| CFA combinatorial fusion | CFA (Combinatorial Fusion) | 22 | 22 | 3 | 44 |
+| CFA combinatorial fusion | CFA (Combinatorial Fusion) | 22 | 22 | 1 | 44 |
 | Chemprop v2 GNN | Chemprop v2 (AttentiveFP, ensemble=3) | 20 | 18 | 4 | 44 |
 | Chemprop v2 GNN | Chemprop v2 (CMPNN, ensemble=3) | 22 | 20 | 0 | 44 |
 | Chemprop v2 GNN | Chemprop v2 (D-MPNN + RDKit2D, ensemble=3) | 20 | 18 | 1 | 44 |
 | Chemprop v2 GNN | Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3) | 22 | 20 | 0 | 44 |
-| Chemprop v2 GNN | Chemprop v2 (D-MPNN, ensemble=3) | 22 | 20 | 3 | 44 |
+| Chemprop v2 GNN | Chemprop v2 (D-MPNN, ensemble=3) | 22 | 20 | 0 | 44 |
 | Conventional ML | AdaBoost | 22 | 22 | 0 | 44 |
 | Conventional ML | CatBoost | 22 | 22 | 1 | 44 |
 | Conventional ML | ElasticNetCV | 20 | 0 | 0 | 22 |
@@ -90,7 +90,7 @@ For each dataset the runner executes a fixed sequence: build molecular features;
 | Conventional ML | HistGradientBoosting | 22 | 22 | 1 | 44 |
 | Conventional ML | LogisticRegression | 0 | 22 | 0 | 22 |
 | Conventional ML | MapLight CatBoost (Strict Parity) | 22 | 0 | 0 | 22 |
-| Conventional ML | Random forest | 22 | 22 | 2 | 44 |
+| Conventional ML | Random forest | 22 | 22 | 1 | 44 |
 | Conventional ML | SVC | 0 | 22 | 0 | 22 |
 | Conventional ML | SVR | 22 | 0 | 0 | 22 |
 | Conventional ML | Tabular CNN | 22 | 0 | 0 | 22 |
@@ -98,15 +98,15 @@ For each dataset the runner executes a fixed sequence: build molecular features;
 | Conventional ML | Voting Classifier (KNN, SVM) | 0 | 22 | 0 | 22 |
 | Conventional ML | Voting Regressor (KNN, SVM) | 22 | 0 | 0 | 22 |
 | Conventional ML | XGBoost | 22 | 22 | 0 | 44 |
-| Conventional ML | XGBoost (ADMETboost features) | 22 | 22 | 4 | 44 |
+| Conventional ML | XGBoost (ADMETboost features) | 22 | 22 | 3 | 44 |
 | Deep tabular NN (ChemML MLP) | ChemML MLP (PyTorch) | 22 | 22 | 0 | 44 |
 | Deep tabular NN (ChemML MLP) | ChemML MLP (TensorFlow) | 22 | 22 | 0 | 44 |
-| Ensemble (stacking / averaging) | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 22 | 22 | 8 | 44 |
+| Ensemble (stacking / averaging) | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 22 | 22 | 18 | 44 |
 | Ensemble (stacking / averaging) | Ensemble (Weighted average (inverse OOF error)) | 22 | 22 | 4 | 44 |
-| MapLight + GNN | MapLight + GNN (CatBoost, Strict Parity) | 22 | 22 | 4 | 44 |
-| TabPFN (tabular foundation) | TabPFNClassifier | 0 | 22 | 0 | 22 |
+| MapLight + GNN | MapLight + GNN (CatBoost, Strict Parity) | 22 | 22 | 2 | 44 |
+| TabPFN (tabular foundation) | TabPFNClassifier | 0 | 19 | 0 | 22 |
 | TabPFN (tabular foundation) | TabPFNRegressor | 22 | 0 | 3 | 22 |
-| Uni-Mol (3D pretrained) | Uni-Mol V1 | 22 | 22 | 3 | 44 |
+| Uni-Mol (3D pretrained) | Uni-Mol V1 | 22 | 22 | 2 | 44 |
 | Uni-Mol (3D pretrained) | Uni-Mol V2 (84m) | 10 | 7 | 3 | 44 |
 <!-- /TABLE -->
 
@@ -150,6 +150,10 @@ Before model fitting, a leak-free pre-filter removed degenerate and redundant co
 
 Selection was then performed train-only with a cross-validated elastic net. The ElasticNetCV selector was fit in an isolated subprocess with a wall-clock timeout over a configurable L1-ratio grid and log-spaced alpha grid, using folds matched to the active split strategy. Features were retained when the absolute coefficient exceeded a threshold, with at least one feature always kept and the retained set capped at the larger of one feature or 10% of the training-row count. To bound runtime, the selector used a dataset-size runtime model: when predicted elastic-net runtime exceeded a configurable threshold (default 7200 s), or when the elastic net timed out or failed, selection fell back to RandomForest importance ranking. Selected features, coefficients and diagnostics were written per dataset.
 
+<!-- META:methods_nested_selection -->
+**Feature selection inside cross-validation.** Selecting features on the whole training split and then cross-validating models on the selected columns lets every held-out fold influence the selection, which inflates cross-validated scores. Selection was therefore refitted inside every cross-validation fold, on that fold's training rows only and with the method pinned to the one recorded for the full training split. These fold-specific selections produce both the cross-validated metrics of every model that uses the selected features and their out-of-fold ensemble predictions (§2.13). A controlled comparison on 9 datasets, with identical features, models and folds and selection fitted either outside or inside the folds, measured the bias this removes: fitting selection outside the folds raised the overstatement of cross-validated over test RMSE by a median of 22.7 percentage points for ElasticNetCV, 6.1 for random forest and 2.5 for SVR, and raised it in 26 of 27 dataset-model pairs (sign test, p < 0.001). In the benchmark, on datasets with predefined or scaffold test splits, the median overstatement of cross-validated over test scores fell from 15.9% to 3.4% across 462 model-dataset pairs (lower in 96% of them), the level of fixed-configuration models trained without feature selection on the same folds (3.4%). Where TabPFN's local fold refits did not fit the GPU, its cross-validated scores are withdrawn rather than reported from the leaky protocol.
+<!-- /META -->
+
 ### 2.7 Model library
 
 **Conventional machine learning.** For regression: elastic-net regression with internal cross-validated alpha/L1 search, support vector regression (C = 10, ε = 0.1, RBF kernel), random forests (400 trees), extremely randomized trees (500 trees), histogram gradient boosting (learning rate 0.05, up to 500 iterations, max depth 8), a soft-voting KNN+SVR regressor with adaptively chosen neighbour count, AdaBoost (500 estimators, learning rate 0.05), and a tabular multilayer perceptron (hidden layers 512 and 256, ReLU, Adam, L2 1 × 10⁻⁴, up to 300 iterations), all via scikit-learn [33]. Gradient-boosting libraries were added when installed: XGBoost (400 trees, depth 6, learning rate 0.05, subsample and column-sample 0.9) [34], LightGBM (500 trees, learning rate 0.05, 63 leaves) [35] and CatBoost (400 iterations, depth 6, learning rate 0.05) [36]. Numeric pipelines were preceded by median imputation and standardization where appropriate. The classification table substituted the analogous estimators (logistic regression, SVC with probability estimates, random forest, extra trees, histogram gradient boosting, soft-voting KNN+SVC, AdaBoost, tabular MLP and the gradient-boosting classifiers) with classification losses and metrics. One further gradient-boosting model, XGBoost on the full, unselected ADMETboost feature set (MACCS keys, ECFP4 and PubChem fingerprints, Mol2Vec embeddings, and Mordred 2D and RDKit 2D descriptors; 1,000 trees, learning rate 0.05, maximum depth 6, row and column subsampling 0.8 and 0.5), bypasses feature selection altogether. It joined the library after the main run (Section 2.13).
@@ -182,7 +186,7 @@ We report every headline result under two selection protocols.
 
 **Test-selected.** The best model per dataset is the one with the best held-out primary metric. This is the protocol used by AutoML leaderboard submissions generally, and it is what Sections 3.2–3.4 report as the primary analysis for comparability with published entries.
 
-**Cross-validation-selected.** The model is chosen per dataset solely by its cross-validated primary metric on the training partition, and its held-out score is then read off without further choice. This estimates what a practitioner obtains when the test set is genuinely untouched. It is available for the models that emit cross-validated metrics — the conventional estimators, TabPFN and the ChemML MLP — but not for Chemprop, Uni-Mol, MapLight + GNN or the fusion methods, so it is a conservative lower bound on what a fully CV-driven QSARena would achieve.
+**Cross-validation-selected.** The model is chosen per dataset solely by its cross-validated primary metric on the training partition, and its held-out score is then read off without further choice. This estimates what a practitioner obtains when the test set is genuinely untouched. It is available for the models that emit cross-validated metrics — the conventional estimators, TabPFN and the ChemML MLP — but not for Chemprop, Uni-Mol, MapLight + GNN or the fusion methods, so it is a conservative lower bound on what a fully CV-driven QSARena would achieve. Its cross-validated scores come from feature selection refitted inside each fold (Section 2.6), so no held-out fold influences the features a model is scored on.
 
 ### 2.12 Reproducibility, caching and computing environment
 
@@ -198,9 +202,9 @@ All figures, tables and numerical claims in this paper are regenerated from comm
 
 ### 2.13 Benchmark runs and ensemble reconstruction
 
-The reported results combine three runs that share one data, split, feature and feature-selection configuration, which the runner verifies through stage signatures. (i) The base benchmark ran once on the Jetstream2 A100 node described in Section 2.12 (`benchmark_results/autoqsar_benchmark_20260623_153839`). In that run, a text-encoding fault in the Chemprop harness discarded most Chemprop results, and TabPFN was disabled. (ii) A repair run on the same node (`benchmark_results/qsarena_benchmark_chemprop_fixed`) was seeded with the first run's per-model results and trained only what was missing: the five Chemprop variants, which then produced valid results on 38 to 42 of the 44 datasets, TabPFN (valid on 31 of 44 before the API's daily limit stopped it) and one interrupted dataset. No base model was retrained. (iii) Every ensemble was then rebuilt from out-of-fold predictions (`benchmark_results/qsarena_benchmark_oof_ensemble`, from which all reported results are computed). Each candidate member received an out-of-fold prediction for every training molecule on the training split's five cross-validation folds. Uni-Mol supplied the predictions saved from its own internal five-fold training; every other member was refitted on each fold with its reported configuration, on a workstation with a consumer NVIDIA RTX 4060 laptop GPU. Base-model results are unchanged from the source runs, which the release checks automatically, with two documented exceptions. (iv) The descriptor model of Section 2.7 was trained into this run with the same configuration as every other model, after it performed well in an exploratory analysis. We flag this because adding a model after seeing results can flatter test-selected comparisons. (v) Four binary datasets are catalogued with a regression metric (CYP1A2, CYP2C19, hERG-Karim and PAMPA). On them, ten conventional and gradient-boosting models saved hard class labels instead of probabilities, so their test AUROC was computed on labels. Those models were retrained on those datasets with probability outputs, which raised their test AUROC by a median of 0.06 to 0.11 per dataset. TabPFN on those four datasets still carries label outputs in this revision, so its results there are understated. The ensembles and fusion models were then rebuilt over the corrected 31-model pool.
+The reported results combine three runs that share one data, split, feature and feature-selection configuration, which the runner verifies through stage signatures. (i) The base benchmark ran once on the Jetstream2 A100 node described in Section 2.12 (`benchmark_results/autoqsar_benchmark_20260623_153839`). In that run, a text-encoding fault in the Chemprop harness discarded most Chemprop results, and TabPFN was disabled. (ii) A repair run on the same node (`benchmark_results/qsarena_benchmark_chemprop_fixed`) was seeded with the first run's per-model results and trained only what was missing: the five Chemprop variants, which then produced valid results on 38 to 42 of the 44 datasets, TabPFN (valid on 31 of 44 before the API's daily limit stopped it) and one interrupted dataset. No base model was retrained. (iii) Every ensemble was then rebuilt from out-of-fold predictions (`benchmark_results/qsarena_benchmark_oof_ensemble`, from which all reported results are computed). Each candidate member received an out-of-fold prediction for every training molecule on the training split's five cross-validation folds. Uni-Mol supplied the predictions saved from its own internal five-fold training; every other member was refitted on each fold with its reported configuration, on a workstation with a consumer NVIDIA RTX 4060 laptop GPU. Base-model results are unchanged from the source runs, which the release checks automatically, with the documented exceptions below. (iv) The descriptor model of Section 2.7 was trained into this run with the same configuration as every other model, after it performed well in an exploratory analysis. We flag this because adding a model after seeing results can flatter test-selected comparisons. (v) Four binary datasets are catalogued with a regression metric (CYP1A2, CYP2C19, hERG-Karim and PAMPA). On them, ten conventional and gradient-boosting models saved hard class labels instead of probabilities, so their test AUROC was computed on labels. Those models were retrained on those datasets with probability outputs, which raised their test AUROC by a median of 0.06 to 0.11 per dataset. TabPFN was retrained on PAMPA with the locally installed TabPFN package (version 2.6 weights); on the other three datasets its label-based results are withdrawn, because the local model does not fit the workstation GPU at their size (about 10,000 training molecules and 1,000 selected features). (vi) Finally, the cross-validated metrics and out-of-fold predictions of every model that uses the selected features were recomputed with feature selection nested inside each fold (Section 2.6), and every ensemble was rebuilt once over the corrected 31-model pool. TabPFN is not an ensemble member, because most of its full-fit predictions came from the Prior Labs API while its fold refits used the local package. On hERG and bioavailability, the conventional and ChemML models have no saved predictions, so they receive nested cross-validated scores but are not ensemble members there. Combinatorial fusion uses no cross-validated scores and was rebuilt once over the 31-model pool.
 
-The rebuild replaced two earlier ensemble protocols. The first run selected and weighted ensemble members by held-out test metrics, which leaks test information into the ensemble row. A second attempt used in-sample training predictions instead. That removed the leak but rewarded memorisation: tree ensembles that fit the training set almost exactly took nearly all of the stacking weight, and regression ensemble wins fell from 7 to 1. Under the out-of-fold protocol, ensembles won 12 datasets (6 regression, 6 classification), against 16 (7 and 9) under the leaky first protocol, even though the honest member pool was larger; the held-out leak was therefore worth at least four outright wins. The rebuild also fixed two faults that would otherwise have biased the ensembles. Uni-Mol's saved fold predictions are on a normalised target scale, and its scaler file was not among the transferred artifacts, so the scaler is now rebuilt from the training targets. And a few members extrapolated far outside the target range on single molecules, which motivated the clipping described in Section 2.8. Some members still lack out-of-fold predictions and are excluded where that happens: TabPFN on three large classification datasets, whose fold refits exceeded the GPU's memory, and two Chemprop variants on Tox21, where Chemprop cannot featurise one training molecule.
+The rebuild replaced two earlier ensemble protocols. The first run selected and weighted ensemble members by held-out test metrics, which leaks test information into the ensemble row. A second attempt used in-sample training predictions instead. That removed the leak but rewarded memorisation: tree ensembles that fit the training set almost exactly took nearly all of the stacking weight, and regression ensemble wins fell from 7 to 1. Under the out-of-fold protocol with nested feature selection, ensembles won 22 datasets (14 regression, 8 classification), against 16 (7 and 9) under the leaky first protocol and 12 (6 and 6) when their out-of-fold predictions came from the outer feature selection. The feature-selection leak had also inflated the out-of-fold predictions of the members that use selected features, so the stacker over-weighted them; nesting the selection improved the best ensemble on 39 of the 44 datasets (median error reduction 4.9% for regression; median AUROC gain 0.7% for classification), while no base model's test result changed. The rebuild also fixed two faults that would otherwise have biased the ensembles. Uni-Mol's saved fold predictions are on a normalised target scale, and its scaler file was not among the transferred artifacts, so the scaler is now rebuilt from the training targets. And a few members extrapolated far outside the target range on single molecules, which motivated the clipping described in Section 2.8. Two Chemprop variants still lack out-of-fold predictions on Tox21, where Chemprop cannot featurise one training molecule, and are excluded there.
 
 ### 2.14 Use of large language models
 
@@ -216,13 +220,13 @@ We executed QSARena across the full analysed benchmark suite under a single fixe
 
 ### 3.2 No single model family dominates
 
-The central finding is that no model family won across the benchmark (Figure 2, Table 2). Stacking and averaging ensembles produced the most outright wins (12 of 44 datasets), followed by conventional machine learning and Chemprop v2 (8 each), the 3D pretrained Uni-Mol models (6), the MapLight + GNN descriptor-graph hybrid (4, all regression), combinatorial fusion and TabPFN (3 each) and deep tabular networks (0). The ensemble row holds the largest share, 27% of datasets; no single model family won more than 18% (8 of 44). We flag immediately that the ensemble row is not a like-for-like competitor: ensembles are built *from* the other families' predictions. In this rebuilt analysis, ensemble member selection uses out-of-fold predictions rather than in-sample or held-out-test member scores, so the row estimates what the pipeline can obtain from honest training-set predictions rather than what stacking can gain by consulting the final test set.
+The central finding is that no single model family won across the benchmark (Figure 2, Table 2). Stacking and averaging ensembles built from the other families produced the most outright wins (22 of 44 datasets: 14 regression, 8 classification), followed by conventional machine learning (6), Chemprop v2 and the 3D pretrained Uni-Mol models (5 each), TabPFN (3), the MapLight + GNN descriptor-graph hybrid (2, both regression), combinatorial fusion (1) and deep tabular networks (0). The ensemble row holds half of the datasets; no single model family won more than 14% (6 of 44). We flag immediately that the ensemble row is not a like-for-like competitor: ensembles are built *from* the other families' predictions. In this rebuilt analysis, ensemble member selection uses out-of-fold predictions rather than in-sample or held-out-test member scores, so the row estimates what the pipeline can obtain from honest training-set predictions rather than what stacking can gain by consulting the final test set.
 
 ![Figure 2. Best-model win counts by model family.](manuscript_assets/figures/figure2_wins_by_family.png)
 
 **Figure 2.** Datasets won by each model family, split by task kind. A win is the best held-out primary metric on that dataset among all 31 models. *Single split and single seed: individual placements are provisional and no variance is estimated (see Limitations).*
 
-The distribution of winners is more even than in our earlier consumer-GPU run (§3.10), and one difference reverses a conclusion we drew from that run: with a longer training schedule (20 epochs, batch size 32, mixed precision) and the addition of Uni-Mol V2, the 3D pretrained family won two classification datasets (`tdc_pampa_ncats`, `tdc_pgp_broccatelli`) as well as four regression datasets. Conformer-based pretraining is therefore not a regression-only tool, and any claim that it categorically fails on classification is an artifact of undertraining it. The regression datasets it won remain chemically coherent — permeability, microsomal clearance, half-life and aqueous solubility — properties for which conformational and shape information is mechanistically plausible as signal that 2D descriptors capture only indirectly.
+The distribution of winners is more even than in our earlier consumer-GPU run (§3.10), and one difference reverses a conclusion we drew from that run: with a longer training schedule (20 epochs, batch size 32, mixed precision) and the addition of Uni-Mol V2, the 3D pretrained family won two classification datasets (`tdc_pampa_ncats`, `tdc_pgp_broccatelli`) as well as three regression datasets. Conformer-based pretraining is therefore not a regression-only tool, and any claim that it categorically fails on classification is an artifact of undertraining it. The regression datasets it won remain chemically coherent — aqueous solubility, microsomal clearance and half-life — properties for which conformational and shape information is mechanistically plausible as signal that 2D descriptors capture only indirectly.
 
 Per-dataset winners, including the corresponding cross-validation-selected model, are listed in Table S1, and the full dataset × family landscape is shown in Figure 6. These are single-split, single-seed outcomes: an unknown fraction of individual winners would change under a different seed, so we read Figure 2 as a distribution of capability across families, and we base the claim below on that breadth (see Limitations).
 
@@ -233,19 +237,19 @@ Win counts reward only the single best model per dataset and understate the reli
 <!-- TABLE:table3_architecture_families -->
 | Model family | Models | Datasets with valid results | Wins (regression) | Wins (classification) | Median gap to best, regression (%) | Median gap to best, classification (%) | Within 5% of best (% of datasets) | Median rank of family-best model |
 |---|---|---|---|---|---|---|---|---|
-| Ensemble (stacking / averaging) | 2 | 44 | 6 | 6 | 4.1 | 2.2 | 61.4 | 3.0 |
-| Conventional ML | 16 | 44 | 1 | 7 | 3.8 | 1.1 | 77.3 | 3.0 |
-| Chemprop v2 GNN | 5 | 42 | 3 | 5 | 8.2 | 2.7 | 54.8 | 6.5 |
-| Uni-Mol (3D pretrained) | 2 | 44 | 4 | 2 | 5.5 | 2.5 | 56.8 | 6.0 |
-| MapLight + GNN | 1 | 44 | 4 | 0 | 8.0 | 12.7 | 22.7 | 16.5 |
-| CFA combinatorial fusion | 1 | 44 | 1 | 2 | 7.9 | 1.7 | 56.8 | 5.0 |
-| TabPFN (tabular foundation) | 2 | 44 | 3 | 0 | 7.0 | 15.4 | 29.5 | 11.0 |
-| Deep tabular NN (ChemML MLP) | 2 | 44 | 0 | 0 | 20.8 | 9.6 | 18.2 | 17.0 |
+| Ensemble (stacking / averaging) | 2 | 44 | 14 | 8 | 0.0 | 0.8 | 84.1 | 1.5 |
+| Conventional ML | 16 | 44 | 0 | 6 | 7.0 | 1.3 | 65.9 | 3.5 |
+| Uni-Mol (3D pretrained) | 2 | 44 | 3 | 2 | 8.1 | 2.7 | 47.7 | 6.5 |
+| Chemprop v2 GNN | 5 | 42 | 0 | 5 | 9.7 | 2.9 | 47.6 | 7.0 |
+| TabPFN (tabular foundation) | 2 | 41 | 3 | 0 | 9.0 | 8.3 | 22.0 | 11.0 |
+| MapLight + GNN | 1 | 44 | 2 | 0 | 9.8 | 12.9 | 11.4 | 16.5 |
+| CFA combinatorial fusion | 1 | 44 | 0 | 1 | 10.1 | 1.7 | 50.0 | 5.5 |
+| Deep tabular NN (ChemML MLP) | 2 | 44 | 0 | 0 | 23.5 | 9.8 | 18.2 | 17.5 |
 <!-- /TABLE -->
 
 **Table 2.** Model-family coverage and consistency. Gaps are relative to the per-dataset best primary metric. "Within 5% of best" counts datasets where the family's best member fell within 5% of the dataset winner. Families evaluated on fewer than 44 datasets were limited by task applicability, size guardrails or backend failures (Table S4); their percentages are computed over the datasets on which they ran, which makes the Chemprop row in particular not comparable with the others. All values derive from a single split and seed, so adjacent rows are not separated. *Single split and single seed: individual placements are provisional and no variance is estimated (see Limitations).*
 
-Conventional machine learning was the most consistent family, within 5% of the best on 77% of datasets with a median rank of 3, ahead of the OOF ensembles at 61% (median rank 3). Uni-Mol and CFA fusion followed at 57% (median ranks 6 and 5) and Chemprop v2 at 55% (median rank 6.5). Further back, TabPFN (30%, median rank 11), MapLight + GNN (23%, median rank 16.5) and the deep tabular networks (18%, median rank 17) were less consistent despite several strong per-dataset wins.
+The OOF ensembles were the most consistent, within 5% of the best on 84% of datasets with a median rank of 1.5, ahead of conventional machine learning at 66% (median rank 3.5), the most consistent single family. CFA fusion followed at 50% (median rank 5.5), and Uni-Mol and Chemprop v2 at 48% (median ranks 6.5 and 7). Further back, TabPFN (22%, median rank 11), the deep tabular networks (18%, median rank 17.5) and MapLight + GNN (11%, median rank 16.5) were less consistent despite several strong per-dataset wins.
 
 Chemprop v2 no longer appears only on a small successful subset: its configured variants produced valid results on 38 to 42 of the 44 datasets, depending on variant (Table S4). Its eight outright wins show that the repaired backend is a serious competitor in this library, although it still did not dominate and it remains costlier than the conventional tabular models.
 
@@ -255,20 +259,20 @@ Two further cautions apply. Families with more models have more chances to produ
 
 This section reports two kinds of result. The primary one is the comparison between selection protocols, which is internal to a single run. The secondary one is the set of estimated ranks against published values, which are provisional: the reference set contains entries with documented leakage (see the end of this section), and each rank rests on one split and seed.
 
-Across the leaderboard-comparison layer, 37 datasets could be compared against 430 published reference values. The best QSARena model per dataset placed within the estimated top ten on 35 of 37 datasets, with a median estimated rank of 3 and five estimated first places (`lipophilicity`, `tdc_bioavailability_ma`, `tdc_carcinogens_lagunin`, `tdc_clearance_microsome_az`, `tdc_toxcast`). The two datasets below the top ten were `tdc_skin_reaction` and `tdc_tox21`, both evaluated on locally generated scaffold splits that are harder than the references they are scored against.
+Across the leaderboard-comparison layer, 37 datasets could be compared against 430 published reference values. The best QSARena model per dataset placed within the estimated top ten on 35 of 37 datasets, with a median estimated rank of 3 and six estimated first places (`lipophilicity`, `polaris_adme_fang_rppb_1`, `tdc_bioavailability_ma`, `tdc_carcinogens_lagunin`, `tdc_clearance_microsome_az`, `tdc_toxcast`). The two datasets below the top ten were `tdc_skin_reaction` and `tdc_tox21`, both evaluated on locally generated scaffold splits that are harder than the references they are scored against.
 
 ![Figure 3. Estimated leaderboard rank distribution and per-dataset ranks.](manuscript_assets/figures/figure3_leaderboard_rank.png)
 
 **Figure 3.** Estimated leaderboard placement across 37 comparable datasets. (a) Rank distribution for the test-selected best model and for the model selected by cross-validation alone. (b) Per-dataset ranks; filled markers are the test-selected model coloured by model family, open markers the cross-validation-selected model. The dashed line marks the top-ten boundary. *Single split and single seed: individual placements are provisional and no variance is estimated (see Limitations).*
 
-Comparability varies by dataset, and the aggregate obscures it. Restricted to the 22 TDC datasets evaluated on official `admet_group` splits -- the only subset directly comparable to the public TDC leaderboard -- the test-selected model placed in the top ten on **all 22**, with a median rank of 3 and two estimated first places. On the 5 Polaris datasets it placed in the top ten on all 5, median rank 4. The remaining 10 comparable datasets used locally generated splits and are *not* leaderboard-equivalent; both sub-top-ten results and three of the five first places fall in this group, and those should be read as "competitive with published values under a comparable but not identical protocol", not as leaderboard claims. Table 3 gives the breakdown by comparison class; per-dataset detail, including both selection protocols and the reference counts behind each rank, is given in Table S7.
+Comparability varies by dataset, and the aggregate obscures it. Restricted to the 22 TDC datasets evaluated on official `admet_group` splits -- the only subset directly comparable to the public TDC leaderboard -- the test-selected model placed in the top ten on **all 22**, with a median rank of 2.5 and two estimated first places. On the 5 Polaris datasets it placed in the top ten on all 5, median rank 4, with one first place. The remaining 10 comparable datasets used locally generated splits and are *not* leaderboard-equivalent; both sub-top-ten results and three of the six first places fall in this group, and those should be read as "competitive with published values under a comparable but not identical protocol", not as leaderboard claims. Table 3 gives the breakdown by comparison class; per-dataset detail, including both selection protocols and the reference counts behind each rank, is given in Table S7.
 
 <!-- TABLE:table4_leaderboard_summary -->
 | Comparison class | n | Top-10 test | Median rank test | Top-10 CV | Median rank CV |
 |---|---|---|---|---|---|
-| TDC ADMET Group (official) | 22 | 22 | 3.000 | 16 | 7.000 |
-| Polaris ADME (official) | 5 | 5 | 4.000 | 4 | 9.000 |
-| Local splits (not leaderboard-equivalent) | 10 | 8 | 2.500 | 7 | 6.000 |
+| TDC ADMET Group (official) | 22 | 22 | 2.500 | 16 | 7.000 |
+| Polaris ADME (official) | 5 | 5 | 4.000 | 4 | 6.000 |
+| Local splits (not leaderboard-equivalent) | 10 | 8 | 2.500 | 7 | 8.500 |
 | All comparable datasets | 37 | 35 | 3.000 | 27 | 7.000 |
 <!-- /TABLE -->
 
@@ -276,7 +280,7 @@ Comparability varies by dataset, and the aggregate obscures it. Restricted to th
 
 
 
-That headline, however, is produced by choosing the best of 31 models using held-out scores. Under the stricter protocol in which the model is chosen by cross-validation alone (Section 2.11), top-ten placement falls from 35 to 27 of 37 datasets, first places from five to one, and the median estimated rank from 3 to 7 (Figure 3). On the official TDC subset the fall is from 22 of 22 to 16 of 22. Across all 44 datasets, the cross-validation-selected model was the overall winner on 3 datasets and sat a median of 7.5% above the per-dataset best.
+That headline, however, is produced by choosing the best of 31 models using held-out scores. Under the stricter protocol in which the model is chosen by cross-validation alone (Section 2.11), top-ten placement falls from 35 to 27 of 37 datasets, first places from six to one, and the median estimated rank from 3 to 7 (Figure 3). On the official TDC subset the fall is from 22 of 22 to 16 of 22. Across all 44 datasets, the cross-validation-selected model was the overall winner on 4 datasets and sat a median of 7.7% above the per-dataset best. These cross-validated scores come from feature selection nested inside each fold (Section 2.6).
 
 **That eight-dataset gap has two causes, and separating them changes its interpretation.** Cross-validation selection is restricted to models that emit cross-validated metrics, which in this run excludes Chemprop, the Uni-Mol models, MapLight + GNN and the fusion methods. The comparison above therefore confounds the cost of not peeking at the test set with the cost of losing those candidate families. To separate them we added a third protocol that holds the candidate set fixed at the cross-validation-eligible models and selects among them on the test metric:
 
@@ -301,19 +305,19 @@ Because fusion and ensembling add computational cost and interpretive complexity
 <!-- TABLE:table5_ensemble_value_add -->
 | Fusion method | Task | Datasets | Overall wins | Top-3 | Beats best base | Loses to best base | Median rank | Median rel. change vs best base |
 |---|---|---|---|---|---|---|---|---|
-| CFA fusion | classification | 22 | 2 | 10 | 4 | 18 | 5.000 | -0.006 |
-| Other ensemble | classification | 22 | 1 | 8 | 7 | 15 | 5.500 | -0.024 |
-| OOF stacking | classification | 22 | 5 | 8 | 5 | 17 | 8.500 | -0.034 |
-| Other ensemble | regression | 22 | 3 | 12 | 4 | 18 | 3.000 | -0.057 |
-| CFA fusion | regression | 22 | 1 | 7 | 2 | 20 | 6.000 | -0.067 |
-| OOF stacking | regression | 22 | 3 | 5 | 3 | 19 | 8.500 | -0.097 |
+| OOF stacking | classification | 22 | 6 | 15 | 8 | 14 | 2.000 | -0.005 |
+| CFA fusion | classification | 22 | 1 | 10 | 4 | 18 | 5.000 | -0.006 |
+| Other ensemble | classification | 22 | 2 | 7 | 7 | 15 | 4.500 | -0.018 |
+| OOF stacking | regression | 22 | 12 | 18 | 14 | 8 | 1.000 | 0.024 |
+| Other ensemble | regression | 22 | 2 | 9 | 5 | 17 | 4.000 | -0.040 |
+| CFA fusion | regression | 22 | 0 | 5 | 2 | 20 | 6.500 | -0.067 |
 <!-- /TABLE -->
 
 **Table 4.** Ensemble and fusion value-add against the best single base model available on the same dataset, under each dataset's primary metric.
 
-Taking the best fusion method per dataset, some fusion beat the best single model on 8 of 22 classification datasets, with a median relative improvement of 1.5% where it won, and on 7 of 22 regression datasets, with a median improvement of 1.7% where it won. Across all datasets the typical fusion result was slightly worse than the best single model (median −0.6% for classification, −2.5% for regression), because fusion also loses on the datasets where it does not win. The directional conclusion is that fusion is worth its cost on roughly one dataset in three for either task, and that a practitioner who can afford to run it should, but should not expect it to win by default. These margins are the smallest quantities we report — median relative changes below 3% on a single split and seed — and are correspondingly the most fragile.
+Taking the best fusion method per dataset, some fusion beat the best single model on 9 of 22 classification datasets, with a median relative improvement of 1.4% where it won, and on 14 of 22 regression datasets, with a median improvement of 4.1% where it won. Across all datasets the typical fusion result was better than the best single model for regression (median +3.2%) and slightly worse for classification (median −0.3%), because fusion also loses on the datasets where it does not win. The directional conclusion is that fusion is worth its cost on most regression datasets and on roughly two classification datasets in five, and that a practitioner who can afford to run it should, but should not expect it to win by default on classification. These margins are the smallest quantities we report — median relative changes below 3% on a single split and seed — and are correspondingly the most fragile.
 
-A staged ablation over the same artifacts (Table S2) tells a consistent story: starting from conventional machine learning alone, adding MapLight classic features improved the achievable result on 9 of 44 datasets, adding the neural and pretrained backends improved 26, adding CFA improved 6, and adding the OOF ensemble layer improved 12. The deep and pretrained backends are therefore the single largest source of incremental accuracy -- which cuts against a purely "conventional models are enough" reading of Figure 2 -- while the fusion layers contribute more modestly. What Figure 2 and Table 2 add is that this incremental accuracy is not free (Section 3.7) and does not make any pretrained family a reliable default.
+A staged ablation over the same artifacts (Table S2) tells a consistent story: starting from conventional machine learning alone, adding MapLight classic features improved the achievable result on 9 of 44 datasets, adding the neural and pretrained backends improved 26, adding CFA improved 6, and adding the OOF ensemble layer improved 22. The deep and pretrained backends are therefore the single largest source of incremental accuracy -- which cuts against a purely "conventional models are enough" reading of Figure 2 -- closely followed by the ensemble layer that combines them, while CFA contributes modestly. What Figure 2 and Table 2 add is that this incremental accuracy is not free (Section 3.7) and does not make any pretrained family a reliable default.
 
 ### 3.6 Feature representations
 
@@ -378,7 +382,7 @@ One limitation applies: per-molecule prediction files are excluded from the repo
 
 Because accessibility is a central claim of this work, we repeated the analysis on an earlier execution of the same benchmark performed on a consumer laptop GPU (NVIDIA GeForce RTX 4060 Laptop GPU, Windows, `cost_optimized` profile) and compared the two runs dataset by dataset under identical analysis code (Table S5).
 
-Thirty-seven of the 44 datasets used byte-identical held-out partitions across the two runs, verified by split-signature hash; the other seven were re-split from random or target-quartile to scaffold splits in the A100 run and are therefore not directly comparable. On those 37 directly comparable datasets, the best available model changed the primary metric by a median of **+0.42%** -- the A100/OOF run was better on 22 datasets and the consumer-GPU run on 14. At this resolution the two hardware configurations are indistinguishable in accuracy.
+Thirty-seven of the 44 datasets used byte-identical held-out partitions across the two runs, verified by split-signature hash; the other seven were re-split from random or target-quartile to scaffold splits in the A100 run and are therefore not directly comparable. On those 37 directly comparable datasets, the best single model (ensembles and fusion excluded, because the two runs built them under different protocols) changed the primary metric by a median of **+0.50%** -- the A100 run was better on 22 datasets and the consumer-GPU run on 13. At this resolution the two hardware configurations are indistinguishable in accuracy.
 
 The A100 bought capacity and throughput: a `full` rather than cost-optimized model profile, a longer Chemprop schedule (40 epochs, 3-model ensembles versus 15 epochs and single models), a longer Uni-Mol schedule with mixed precision, the addition of Uni-Mol V2 and a TensorFlow deep tabular backend, 32-way parallel feature selection, and a complete run in 112 hours rather than 155. Those changes are what produced the shifts in *which family wins* reported in §3.2 — most notably the 3D pretrained family's classification wins, which did not occur under the shorter schedule.
 
@@ -418,9 +422,9 @@ That path remained incomplete in this run. The ADMET-AI-like Chemprop v2 (D-MPNN
 
 We therefore re-scored every reference value in the honest direction for its metric, producing one consistent ranking per dataset. This is a materially different picture from the published claims. MaxQsaring, whose paper reports first place on 19 of 22 TDC tasks [15], holds 7 first places under joint re-scoring but is top-3 on 19 of 22 with a median rank of 2 — the strongest system in the reference set, and the fairer way to state its lead. ADMETboost's reported 18 first places [12] reduce to **zero**: it was genuinely first in 2022 and has since been overtaken on all 22 datasets, which is a caution about citing leaderboard positions as though they were durable. MapLight's top-3 placement on 16 of 22 [13] is an author self-report we cannot re-score, and DeepAutoQSAR's "top performer on 20 of 22" [43] is best-of-three against ChemProp and DeepPurpose in a vendor white paper rather than a leaderboard position at all — the two figures were never in competition. We also corrected three reference values that were on the wrong scale, all from a model reporting normalised targets (for example a PPBR MAE of 0.679 against a leaderboard best of 7.440).
 
-Against that corrected reference set, QSARena's best model per dataset reaches a median rank of 3 on the 22 official TDC tasks under test-based selection, and falls to a median rank of 7 under cross-validation-only selection (§3.4). MaxQsaring's median rank of 2 is therefore better than ours under either protocol. We make no claim to accuracy leadership. The contribution is the cross-suite benchmark and the selection-protocol decomposition; code-free access is a usability feature.
+Against that corrected reference set, QSARena's best model per dataset reaches a median rank of 2.5 on the 22 official TDC tasks under test-based selection, and falls to a median rank of 7 under cross-validation-only selection (§3.4). MaxQsaring's median rank of 2 is therefore better than ours under either protocol. We make no claim to accuracy leadership. The contribution is the cross-suite benchmark and the selection-protocol decomposition; code-free access is a usability feature.
 
-**A descriptor model without feature selection.** One library member came from an exploratory analysis run after the main benchmark: fixed-configuration XGBoost on the full, unselected ADMETboost feature set (Section 2.7). In the benchmark it won 4 of the 44 datasets outright (CYP3A4 substrate, DILI, HIA and skin reaction). Because it skips feature selection, its cross-validation scores carry none of the selection optimism described in the Limitations. Scored on its own against the 22 official TDC splits, it beat the published ADMETboost results on 12 of the 22 datasets and the NIST meta-model on 13, but lost to MaxQsaring on 17. In that exploratory analysis, adding label-free pretrained embeddings (CheMeleon and Uni-Mol) did not improve it: across the 35 datasets with a comparable test metric the median change was -0.04% (Wilcoxon p = 0.30), and the embeddings alone were worse (median -2.42%, p < 0.001). A Chemprop variant initialised from CheMeleon is available in QSARena as an opt-in model (`--run-chemprop-chemeleon`) and was not used in the benchmark.
+**A descriptor model without feature selection.** One library member came from an exploratory analysis run after the main benchmark: fixed-configuration XGBoost on the full, unselected ADMETboost feature set (Section 2.7). In the benchmark it won 3 of the 44 datasets outright (CYP3A4 substrate, HIA and skin reaction). Because it selects no features, its cross-validation scores never needed the nested selection of Section 2.6. Scored on its own against the 22 official TDC splits, it beat the published ADMETboost results on 12 of the 22 datasets and the NIST meta-model on 13, but lost to MaxQsaring on 17. In that exploratory analysis, adding label-free pretrained embeddings (CheMeleon and Uni-Mol) did not improve it: across the 35 datasets with a comparable test metric the median change was -0.04% (Wilcoxon p = 0.30), and the embeddings alone were worse (median -2.42%, p < 0.001). A Chemprop variant initialised from CheMeleon is available in QSARena as an opt-in model (`--run-chemprop-chemeleon`) and was not used in the benchmark.
 
 The same landscape shows that rigorous benchmarking builds credibility but does not by itself win users. The most widely used tools in this space — SwissADME [55], pkCSM [56] and ADMETlab [1] — are free, fixed-model web services that do not report on the TDC leaderboard at all, and they are popular because they are convenient. QSARena aims to offer both, and we report the two claims separately.
 
@@ -469,17 +473,17 @@ The regulatory conclusion is therefore a limited one. The workflow can emit the 
 
 Section 3.2 found that no model family dominates. Here we ask when each family comes close to the best, using properties of the dataset alone. This is per-dataset algorithm selection from dataset meta-features, the approach Meta-QSAR applied to thousands of QSAR problems [67], and it addresses the observation that the best ADMET model and representation are strongly dataset-dependent [16]. For each of the 44 datasets we computed meta-features on the exact train/test partition used in the benchmark, verified against the recorded split hashes (Table S9). They are: training-set size, label imbalance or skew, Bemis–Murcko scaffold diversity, internal fingerprint diversity, and train-to-test similarity. Similarity is summarised by SNN, the Tanimoto similarity of each test molecule to its nearest training molecule, which is known to track prediction error [68]. Winners are single-split, single-seed outcomes, so the outcome modelled is the continuous relative gap of Fig. 6, never the identity of the winner. Every interval is a 95% percentile bootstrap over datasets.
 
-**Training-set size.** The gap of the best conventional-ML model to the per-dataset best showed no clear monotone trend with training-set size (Spearman ρ = 0.04, 95% CI -0.29 to 0.36, BH q = 0.92). For the pre-registered contrast between conventional ML and the 3D-pretrained Uni-Mol family (Fig. 7), the fitted gap curves do not cross inside the observed size range (a crossing occurred in only 51% of dataset-bootstrap replicates). Tuned comparisons of D-MPNN and random forest report crossovers at roughly 500–2,000 training compounds [70], and dataset size is known to govern when representation learning pays off [46]. Under QSARena's single fixed configuration, no such crossover is resolved: neither family's fitted gap overtakes the other within the observed sizes.
+**Training-set size.** The gap of the best conventional-ML model to the per-dataset best showed no clear monotone trend with training-set size (Spearman ρ = 0.03, 95% CI -0.29 to 0.35, BH q = 0.87). For the pre-registered contrast between conventional ML and the 3D-pretrained Uni-Mol family (Fig. 7), the fitted gap curves do not cross inside the observed size range (a crossing occurred in only 30% of dataset-bootstrap replicates). Tuned comparisons of D-MPNN and random forest report crossovers at roughly 500–2,000 training compounds [70], and dataset size is known to govern when representation learning pays off [46]. Under QSARena's single fixed configuration, no such crossover is resolved: neither family's fitted gap overtakes the other within the observed sizes.
 
-**Chemical-space shift.** Mean SNN was not clearly associated with the achievable best held-out metric (within-task rank; Spearman ρ = 0.16, 95% CI -0.15 to 0.46, permutation p = 0.288; Fig. 8a). Of the screened properties, the out-of-domain fraction (test molecules with SNN < 0.40) had the strongest association with achievable performance (ρ = -0.25, 95% CI -0.55 to 0.08), although its interval also includes zero. Message-passing models have been reported to generalise to unseen chemical space better than tree-based models [37], and the 7 datasets re-split to scaffold splits between our two runs (§3.10) offer a small natural experiment on identical chemistry (Fig. 8b). Moving them to scaffold splits changed the median family gap by +1.8 percentage points for conventional ML, +2.0 for ensembles and +1.1 for Uni-Mol. Families valid in both runs on fewer than 3 of them are not summarised: Chemprop (1 of 7). With 7 datasets, and with the two runs also differing in hardware and model settings, this is descriptive only.
+**Chemical-space shift.** Mean SNN was not clearly associated with the achievable best held-out metric (within-task rank; Spearman ρ = 0.17, 95% CI -0.14 to 0.48, permutation p = 0.262; Fig. 8a). Of the screened properties, the out-of-domain fraction (test molecules with SNN < 0.40) had the strongest association with achievable performance (ρ = -0.26, 95% CI -0.57 to 0.08), although its interval also includes zero. Message-passing models have been reported to generalise to unseen chemical space better than tree-based models [37], and the 7 datasets re-split to scaffold splits between our two runs (§3.10) offer a small natural experiment on identical chemistry (Fig. 8b). Moving them to scaffold splits changed the median family gap by +1.8 percentage points for conventional ML and +1.1 for Uni-Mol. Families valid in both runs on fewer than 3 of them are not summarised: Chemprop (1 of 7). With 7 datasets, and with the two runs also differing in hardware and model settings, this is descriptive only.
 
-**Family × property grid.** Across 48 family × meta-feature correlations with Benjamini–Hochberg control (Table S10), one survived at q < 0.10, the strongest being Ensemble (stacking / averaging) versus log10 training-set size (ρ = -0.45, 95% CI -0.70 to -0.13, q = 0.06).
+**Family × property grid.** Across 48 family × meta-feature correlations with Benjamini–Hochberg control (Table S10), one survived at q < 0.10, the strongest being Ensemble (stacking / averaging) versus log10 training-set size (ρ = -0.47, 95% CI -0.70 to -0.19, q = 0.06).
 
-**A family recommender.** A leave-one-dataset-out L1-penalised multinomial logistic model used four meta-features: log10 training-set size, mean SNN, label asymmetry and task. It predicted the best family group (fusion, descriptor-based ML, Uni-Mol or Chemprop) with balanced accuracy 0.33 (95% CI 0.24 to 0.42). The majority-class baseline scored 0.25, and label permutation scored 0.22 (permutation p = 0.078; Fig. 9). Its interval overlaps the baselines, so dataset meta-features alone do not reliably identify the winning family at this sample size; the per-dataset winner remains an empirical question, which is the case for benchmarking many families on every dataset.
+**A family recommender.** A leave-one-dataset-out depth-3 decision tree used four meta-features: log10 training-set size, mean SNN, label asymmetry and task. It predicted the best family group (fusion, descriptor-based ML, Uni-Mol or Chemprop) with balanced accuracy 0.32 (95% CI 0.23 to 0.41). The majority-class baseline scored 0.25, and label permutation scored 0.24 (permutation p = 0.138; Fig. 9). Its interval overlaps the baselines, so dataset meta-features alone do not reliably identify the winning family at this sample size; the per-dataset winner remains an empirical question, which is the case for benchmarking many families on every dataset.
 
-Predicting the winner's identity is a harsh test, because many datasets have several families within a few percent of each other. Algorithm selection is usually judged instead by regret, the performance given up by the recommended choice [67]. Here regret is the gap of the recommended family, and the selector was designed and fixed before any result was seen. Each held-out dataset's selector was chosen by an inner leave-one-dataset-out loop among 12 variants. These were nearest-dataset and per-family ridge models over size, similarity, chemistry, label-landscape and training-set cross-validation landmark features. Nested selection did not reliably beat the single best family (mean regret 6.0% versus 7.1% for always choosing the family with the best average record (difference 1.1 percentage points, 95% CI -1.3 to 3.6; permutation p = 0.297)). Both lose little: a randomly chosen valid family would cost 10.0% on average. The picked family was within 5% of the best on 64% of datasets, against 57% for the single best family. The inner loop most often chose the per-family ridge model on F0+F2 (52% of held-out datasets; all variants in Table S11).
+Predicting the winner's identity is a harsh test, because many datasets have several families within a few percent of each other. Algorithm selection is usually judged instead by regret, the performance given up by the recommended choice [67]. Here regret is the gap of the recommended family, and the selector was designed and fixed before any result was seen. Each held-out dataset's selector was chosen by an inner leave-one-dataset-out loop among 12 variants. These were nearest-dataset and per-family ridge models over size, similarity, chemistry, label-landscape and training-set cross-validation landmark features. Nested selection did not reliably beat the single best family (mean regret 3.1% versus 3.3% for always choosing the family with the best average record (difference 0.2 percentage points, 95% CI -0.9 to 1.3; permutation p = 0.099)). Both lose little: a randomly chosen valid family would cost 10.7% on average. The picked family was within 5% of the best on 86% of datasets, against 84% for the single best family. The inner loop most often chose the nearest-datasets model on F0+F3 (66% of held-out datasets; all variants in Table S11).
 
-Diversity metrics depend on the fingerprint. Recomputed with ECFP6 at 4,096 bits, the fingerprint-dependent correlations kept their sign in 79% of cells and their significance classification in 100%. These relationships are exploratory. They rest on one split and one seed per dataset and on n = 44 datasets, so they generate hypotheses for a multi-seed or learning-curve study; they do not establish selection rules.
+Diversity metrics depend on the fingerprint. Recomputed with ECFP6 at 4,096 bits, the fingerprint-dependent correlations kept their sign in 92% of cells and their significance classification in 100%. These relationships are exploratory. They rest on one split and one seed per dataset and on n = 44 datasets, so they generate hypotheses for a multi-seed or learning-curve study; they do not establish selection rules.
 
 ![Figure 7. Training-set size and the family crossover.](manuscript_assets/figures/figureM1_size_crossover.png)
 
@@ -502,12 +506,12 @@ We report no variance estimates, no confidence intervals and no significance tes
 
 The hardware comparison in §3.10 gives an empirical sense of the noise floor: across 37 datasets with identical splits, changing the entire execution environment moved the best score by a median of 0.19%. Differences between models smaller than roughly a percent should not be interpreted.
 
-Three results do not rest on close margins and should survive this limitation: no single model family won more than 8 of 44 datasets; the model-selection gap is large enough to change the leaderboard interpretation; and the cost differences in Table 5 span orders of magnitude. The estimated top-ten placements are less secure. Many clear the cutoff comfortably, but they also depend on the quality of the published reference set (Section 3.4), which seed replication would not fix. Readers should treat every specific model-to-model comparison in this paper as provisional pending multi-seed replication, which we regard as the necessary next step for this work and the first thing any user of QSARena should run on a dataset that matters to them.
+Three results do not rest on close margins and should survive this limitation: no single model family won more than 6 of 44 datasets; the model-selection gap is large enough to change the leaderboard interpretation; and the cost differences in Table 5 span orders of magnitude. The estimated top-ten placements are less secure. Many clear the cutoff comfortably, but they also depend on the quality of the published reference set (Section 3.4), which seed replication would not fix. Readers should treat every specific model-to-model comparison in this paper as provisional pending multi-seed replication, which we regard as the necessary next step for this work and the first thing any user of QSARena should run on a dataset that matters to them.
 
 **Model selection.** As quantified in Section 3.4, the test-selected headline is an optimistic maximum over 31 models. The cross-validation-selected protocol is the honest comparator but is itself incomplete, since the Chemprop, Uni-Mol, MapLight + GNN and fusion families do not emit cross-validated metrics in this run.
 
 <!-- META:limitation_cvleak -->
-**Model-selection cross-validation is optimistic.** The runner fits the feature selector once on the full training split and then cross-validates each model on the selected features, so every held-out CV fold has already influenced which features were kept. On datasets with predefined or scaffold test splits, CV scores overstate the corresponding test scores by a median of 14.9% across 19 CV-scored models (per-model medians 3.2% to 43.8%; largest for ElasticNetCV, TabPFNRegressor and SVR), against 3.4% for fixed-configuration XGBoost and random-forest models trained on the unselected ADMETboost features with the same folds (the descriptor analysis in §3.12). Test-set results and leaderboard placements are unaffected, because selection never sees test data, but the cross-validation-selected model and the CV-to-test gap in §3.4 rest on these optimistic scores. Nesting feature selection inside each CV fold would remove the bias; the descriptor model added to the library (§2.7) avoids it by not selecting features at all.
+**Residual cross-validation optimism.** With feature selection nested inside the folds (§2.6), cross-validated scores still exceed the corresponding test scores by a median of 3.4% on datasets with predefined or scaffold test splits (per-model medians -3.9% to 6.5% across 19 CV-scored models). Fixed-configuration models that select no features show 3.4% on the same folds, so the remainder reflects the gap between training-set folds and harder held-out splits rather than leakage. The cross-validation-selected protocol in §3.4 should be read with that margin in mind.
 <!-- /META -->
 
 **Self-benchmarking asymmetry.** Competitors were not re-run under our pipeline; every comparison in §3.4 sets our single controlled run against other groups' best published effort on the same dataset. The bias runs against us on tasks where a published entry reflects extensive tuning we did not perform, and in our favour wherever a published entry was itself selected on test data (see the reference-quality discussion in §3.4). We cannot quantify the net direction, and we do not claim the comparison is symmetric.
@@ -525,14 +529,14 @@ Three results do not rest on close margins and should survive this limitation: n
 **Applicability domain and calibration.** Section 3.13 reports applicability-domain and calibration diagnostics for a fixed reference random forest on the 22 official TDC splits, not for every model family or for the per-dataset selected winners. Those diagnostics are useful for regulatory auditability, but they do not prove that the leaderboard-selected QSARena models are calibrated or inside-domain on individual predictions. Regulatory use should therefore run the reliability workflow on the final chosen model and dataset, not rely on the aggregate benchmark alone.
 
 <!-- META:limitation_meta -->
-**Meta-analysis.** Section 3.14 relates dataset properties to family performance, but it inherits the single-split, single-seed design: individual winners are noisy, which is why it models the continuous gap and bootstraps over datasets, not seeds. With n = 44 datasets the meta-models are kept to four predictors, and the diversity and similarity features depend on the fingerprint used (the ECFP6 sensitivity check preserved the sign of 79% of the fingerprint-dependent correlations). How informative similarity-based domain metrics are itself varies with training-set diversity [69].
+**Meta-analysis.** Section 3.14 relates dataset properties to family performance, but it inherits the single-split, single-seed design: individual winners are noisy, which is why it models the continuous gap and bootstraps over datasets, not seeds. With n = 44 datasets the meta-models are kept to four predictors, and the diversity and similarity features depend on the fingerprint used (the ECFP6 sensitivity check preserved the sign of 92% of the fingerprint-dependent correlations). How informative similarity-based domain metrics are itself varies with training-set diversity [69].
 <!-- /META -->
 
 ## 5. Conclusions
 
-Across 44 molecular property benchmarks from five suites, evaluated under one leakage-controlled pipeline and one fixed configuration, no model family dominated. Ensembles over conventional learners won the most datasets (16 of 44) and were the most consistent; 3D pretrained models were close behind on both measures at roughly 55 times the median compute cost; conventional machine learning was third. Compact descriptors — the RDKit 2D panel and pharmacophore fingerprints — were selected far above their numerical share, and large hashed fingerprints below theirs. Genetic-algorithm tuning was disabled throughout, so its value is untested here.
+Across 44 molecular property benchmarks from five suites, evaluated under one leakage-controlled pipeline and one fixed configuration, no model family dominated. Out-of-fold ensembles over the other families won the most datasets (22 of 44) and were the most consistent, and no single family won more than 6; conventional machine learning was the most consistent single family. Compact descriptors — the RDKit 2D panel and pharmacophore fingerprints — were selected far above their numerical share, and large hashed fingerprints below theirs. Genetic-algorithm tuning was disabled throughout, so its value is untested here.
 
-The most robust result concerns model selection. Choosing the model by cross-validation instead of on held-out data selected the per-dataset winner on 3 datasets and left a median relative gap of 7.5%. Against published values, estimated top-ten placement fell from 35 of 37 comparable datasets to 27, and on the official TDC subset from 22 of 22 to 16. A matched-candidate-set control attributes 7 of those 8 placements to the breadth of the model library and 1 to selection on held-out data. Both protocols come from one run and are scored against the same references, so the decomposition is far less sensitive to the reference set's quality than the absolute ranks are. We encourage leaderboard entries to report both protocols, together with the candidate set each one saw.
+The most robust result concerns model selection. Choosing the model by cross-validation instead of on held-out data selected the per-dataset winner on 4 datasets and left a median relative gap of 7.7%, with feature selection refitted inside every cross-validation fold. Against published values, estimated top-ten placement fell from 35 of 37 comparable datasets to 27, and on the official TDC subset from 22 of 22 to 16. A matched-candidate-set control attributes 7 of those 8 placements to the breadth of the model library and 1 to selection on held-out data. Both protocols come from one run and are scored against the same references, so the decomposition is far less sensitive to the reference set's quality than the absolute ranks are. We encourage leaderboard entries to report both protocols, together with the candidate set each one saw.
 
 The absolute ranks are a secondary result. The test-selected best model reached a median estimated rank of 3, but the reference values mix self-reported ranks from different dates with entries that have documented leakage, so we treat those ranks as provisional.
 
@@ -736,50 +740,50 @@ No registration or login is needed to download, install or run QSARena, so revie
 <!-- TABLE:tableS1_dataset_winners -->
 | dataset | suite | task_kind | family | model | analysis_metric | analysis_metric_value | cv_selected_model | cv_selected_family | cv_selected_gap_to_best |
 |---|---|---|---|---|---|---|---|---|---|
-| tdc_ames | TDC | classification | CFA combinatorial fusion | CFA (Combinatorial Fusion) | test_roc_auc | 0.877 | TabPFNClassifier | TabPFN (tabular foundation) | 0.133 |
-| tdc_bbb_martins | TDC | classification | Conventional ML | Random forest | test_roc_auc | 0.925 | TabPFNClassifier | TabPFN (tabular foundation) | 1.707 |
-| tdc_bioavailability_ma | TDC | classification | Conventional ML | CatBoost | test_roc_auc | 0.777 | TabPFNClassifier | TabPFN (tabular foundation) | 5.802 |
-| tdc_carcinogens_lagunin | TDC | classification | Chemprop v2 GNN | Chemprop v2 (AttentiveFP, ensemble=3) | test_roc_auc | 0.929 | TabPFNClassifier | TabPFN (tabular foundation) | 6.339 |
-| tdc_clintox | TDC | classification | CFA combinatorial fusion | CFA (Combinatorial Fusion) | test_roc_auc | 0.974 | TabPFNClassifier | TabPFN (tabular foundation) | 5.190 |
-| tdc_cyp1a2_veith | TDC | classification | Ensemble (stacking / averaging) | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | test_roc_auc | 0.974 | ChemML MLP (TensorFlow) | Deep tabular NN (ChemML MLP) | 1.802 |
-| tdc_cyp2c19_veith | TDC | classification | Ensemble (stacking / averaging) | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | test_roc_auc | 0.937 | XGBoost | Conventional ML | 1.217 |
+| tdc_ames | TDC | classification | Ensemble (stacking / averaging) | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | test_roc_auc | 0.883 | Extra trees | Conventional ML | 1.386 |
+| tdc_bbb_martins | TDC | classification | Conventional ML | Random forest | test_roc_auc | 0.925 | XGBoost (ADMETboost features) | Conventional ML | 0.963 |
+| tdc_bioavailability_ma | TDC | classification | Conventional ML | CatBoost | test_roc_auc | 0.777 | XGBoost (ADMETboost features) | Conventional ML | 7.129 |
+| tdc_carcinogens_lagunin | TDC | classification | Chemprop v2 GNN | Chemprop v2 (AttentiveFP, ensemble=3) | test_roc_auc | 0.929 | XGBoost (ADMETboost features) | Conventional ML | 2.237 |
+| tdc_clintox | TDC | classification | CFA combinatorial fusion | CFA (Combinatorial Fusion) | test_roc_auc | 0.974 | AdaBoost | Conventional ML | 8.986 |
+| tdc_cyp1a2_veith | TDC | classification | Ensemble (stacking / averaging) | Ensemble (Weighted average (inverse OOF error)) | test_roc_auc | 0.974 | SVC | Conventional ML | 1.196 |
+| tdc_cyp2c19_veith | TDC | classification | Ensemble (stacking / averaging) | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | test_roc_auc | 0.938 | XGBoost | Conventional ML | 1.338 |
 | tdc_cyp2c9_substrate_carbonmangels | TDC | classification | Chemprop v2 GNN | Chemprop v2 (AttentiveFP, ensemble=3) | test_auprc | 0.438 | SVC | Conventional ML | 31.368 |
-| tdc_cyp2c9_veith | TDC | classification | Ensemble (stacking / averaging) | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | test_auprc | 0.827 | TabPFNClassifier | TabPFN (tabular foundation) | 35.972 |
-| tdc_cyp2d6_substrate_carbonmangels | TDC | classification | Chemprop v2 GNN | Chemprop v2 (D-MPNN + RDKit2D, ensemble=3) | test_auprc | 0.693 | XGBoost (ADMETboost features) | Conventional ML | 7.044 |
-| tdc_cyp2d6_veith | TDC | classification | Ensemble (stacking / averaging) | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | test_auprc | 0.759 | TabPFNClassifier | TabPFN (tabular foundation) | 39.761 |
-| tdc_cyp3a4_substrate_carbonmangels | TDC | classification | Conventional ML | XGBoost (ADMETboost features) | test_auprc | 0.729 | TabPFNClassifier | TabPFN (tabular foundation) | 7.234 |
-| tdc_cyp3a4_veith | TDC | classification | Ensemble (stacking / averaging) | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | test_auprc | 0.902 | TabPFNClassifier | TabPFN (tabular foundation) | 17.950 |
-| tdc_dili | TDC | classification | Conventional ML | XGBoost (ADMETboost features) | test_roc_auc | 0.923 | LogisticRegression | Conventional ML | 19.227 |
-| tdc_herg | TDC | classification | Chemprop v2 GNN | Chemprop v2 (AttentiveFP, ensemble=3) | test_roc_auc | 0.857 | TabPFNClassifier | TabPFN (tabular foundation) | 14.671 |
-| tdc_herg_karim | TDC | classification | Ensemble (stacking / averaging) | Ensemble (Weighted average (inverse OOF error)) | test_roc_auc | 0.907 | ChemML MLP (PyTorch) | Deep tabular NN (ChemML MLP) | 3.832 |
-| tdc_hia_hou | TDC | classification | Conventional ML | XGBoost (ADMETboost features) | test_roc_auc | 0.994 | LogisticRegression | Conventional ML | 1.077 |
-| tdc_pampa_ncats | TDC | classification | Uni-Mol (3D pretrained) | Uni-Mol V1 | test_roc_auc | 0.763 | TabPFNClassifier | TabPFN (tabular foundation) | 24.296 |
-| tdc_pgp_broccatelli | TDC | classification | Uni-Mol (3D pretrained) | Uni-Mol V2 (84m) | test_roc_auc | 0.933 | LogisticRegression | Conventional ML | 6.966 |
-| tdc_skin_reaction | TDC | classification | Conventional ML | XGBoost (ADMETboost features) | test_roc_auc | 0.667 | TabPFNClassifier | TabPFN (tabular foundation) | 21.247 |
-| tdc_tox21 | TDC | classification | Chemprop v2 GNN | Chemprop v2 (AttentiveFP, ensemble=3) | test_roc_auc | 0.597 | TabPFNClassifier | TabPFN (tabular foundation) | 21.688 |
-| tdc_toxcast | TDC | classification | Conventional ML | HistGradientBoosting | test_roc_auc | 0.716 | TabPFNClassifier | TabPFN (tabular foundation) | 8.338 |
-| chemml_cep_homo | ChemML | regression | Ensemble (stacking / averaging) | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | test_rmse | 0.094 | TabPFNRegressor | TabPFN (tabular foundation) | 8.816 |
+| tdc_cyp2c9_veith | TDC | classification | Ensemble (stacking / averaging) | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | test_auprc | 0.827 | AdaBoost | Conventional ML | 14.709 |
+| tdc_cyp2d6_substrate_carbonmangels | TDC | classification | Chemprop v2 GNN | Chemprop v2 (D-MPNN + RDKit2D, ensemble=3) | test_auprc | 0.693 | ChemML MLP (PyTorch) | Deep tabular NN (ChemML MLP) | 26.129 |
+| tdc_cyp2d6_veith | TDC | classification | Ensemble (stacking / averaging) | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | test_auprc | 0.763 | AdaBoost | Conventional ML | 19.417 |
+| tdc_cyp3a4_substrate_carbonmangels | TDC | classification | Conventional ML | XGBoost (ADMETboost features) | test_auprc | 0.729 | XGBoost (ADMETboost features) | Conventional ML | 0.000 |
+| tdc_cyp3a4_veith | TDC | classification | Ensemble (stacking / averaging) | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | test_auprc | 0.905 | AdaBoost | Conventional ML | 11.894 |
+| tdc_dili | TDC | classification | Ensemble (stacking / averaging) | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | test_roc_auc | 0.933 | XGBoost (ADMETboost features) | Conventional ML | 1.072 |
+| tdc_herg | TDC | classification | Chemprop v2 GNN | Chemprop v2 (AttentiveFP, ensemble=3) | test_roc_auc | 0.857 | XGBoost (ADMETboost features) | Conventional ML | 7.662 |
+| tdc_herg_karim | TDC | classification | Ensemble (stacking / averaging) | Ensemble (Weighted average (inverse OOF error)) | test_roc_auc | 0.907 | XGBoost | Conventional ML | 0.494 |
+| tdc_hia_hou | TDC | classification | Conventional ML | XGBoost (ADMETboost features) | test_roc_auc | 0.994 | XGBoost (ADMETboost features) | Conventional ML | 0.000 |
+| tdc_pampa_ncats | TDC | classification | Uni-Mol (3D pretrained) | Uni-Mol V1 | test_roc_auc | 0.763 | Random forest | Conventional ML | 10.598 |
+| tdc_pgp_broccatelli | TDC | classification | Uni-Mol (3D pretrained) | Uni-Mol V2 (84m) | test_roc_auc | 0.933 | Random forest | Conventional ML | 3.065 |
+| tdc_skin_reaction | TDC | classification | Conventional ML | XGBoost (ADMETboost features) | test_roc_auc | 0.667 | XGBoost (ADMETboost features) | Conventional ML | 0.000 |
+| tdc_tox21 | TDC | classification | Chemprop v2 GNN | Chemprop v2 (AttentiveFP, ensemble=3) | test_roc_auc | 0.597 | Extra trees | Conventional ML | 8.142 |
+| tdc_toxcast | TDC | classification | Conventional ML | HistGradientBoosting | test_roc_auc | 0.716 | XGBoost (ADMETboost features) | Conventional ML | 1.662 |
+| chemml_cep_homo | ChemML | regression | Ensemble (stacking / averaging) | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | test_rmse | 0.090 | TabPFNRegressor | TabPFN (tabular foundation) | 13.888 |
 | chemml_organic_density | ChemML | regression | TabPFN (tabular foundation) | TabPFNRegressor | test_rmse | 0.005 | TabPFNRegressor | TabPFN (tabular foundation) | 0.000 |
-| esol_delaney | MoleculeNet | regression | Ensemble (stacking / averaging) | Ensemble (Weighted average (inverse OOF error)) | test_rmse | 0.624 | TabPFNRegressor | TabPFN (tabular foundation) | 7.800 |
-| freesolv_sampl | MoleculeNet | regression | TabPFN (tabular foundation) | TabPFNRegressor | test_rmse | 0.933 | TabPFNRegressor | TabPFN (tabular foundation) | 0.000 |
-| lipophilicity | MoleculeNet | regression | Ensemble (stacking / averaging) | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | test_rmse | 0.548 | ElasticNetCV | Conventional ML | 24.598 |
-| poduam_pod_nc_std | PODUAM | regression | Conventional ML | Random forest | test_rmse | 0.720 | TabPFNRegressor | TabPFN (tabular foundation) | 3.415 |
-| poduam_pod_rd_std | PODUAM | regression | CFA combinatorial fusion | CFA (Combinatorial Fusion) | test_rmse | 0.564 | TabPFNRegressor | TabPFN (tabular foundation) | 4.435 |
-| polaris_adme_fang_hppb_1 | Polaris | regression | Chemprop v2 GNN | Chemprop v2 (D-MPNN, ensemble=3) | test_rmse | 0.444 | ElasticNetCV | Conventional ML | 23.269 |
-| polaris_adme_fang_perm_1 | Polaris | regression | Uni-Mol (3D pretrained) | Uni-Mol V1 | test_rmse | 0.399 | ChemML MLP (PyTorch) | Deep tabular NN (ChemML MLP) | 15.413 |
-| polaris_adme_fang_rclint_1 | Polaris | regression | Chemprop v2 GNN | Chemprop v2 (D-MPNN, ensemble=3) | test_rmse | 0.517 | TabPFNRegressor | TabPFN (tabular foundation) | 2.507 |
-| polaris_adme_fang_rppb_1 | Polaris | regression | MapLight + GNN | MapLight + GNN (CatBoost, Strict Parity) | test_rmse | 0.493 | TabPFNRegressor | TabPFN (tabular foundation) | 12.638 |
-| polaris_adme_fang_solu_1 | Polaris | regression | Uni-Mol (3D pretrained) | Uni-Mol V2 (84m) | test_rmse | 0.551 | TabPFNRegressor | TabPFN (tabular foundation) | 10.837 |
-| tdc_caco2_wang | TDC | regression | Ensemble (stacking / averaging) | Ensemble (Weighted average (inverse OOF error)) | test_rmse | 0.344 | TabPFNRegressor | TabPFN (tabular foundation) | 11.718 |
-| tdc_clearance_hepatocyte_az | TDC | regression | MapLight + GNN | MapLight + GNN (CatBoost, Strict Parity) | test_rmse | 44.113 | TabPFNRegressor | TabPFN (tabular foundation) | 14.669 |
-| tdc_clearance_microsome_az | TDC | regression | Uni-Mol (3D pretrained) | Uni-Mol V2 (84m) | test_rmse | 33.507 | TabPFNRegressor | TabPFN (tabular foundation) | 14.294 |
+| esol_delaney | MoleculeNet | regression | Ensemble (stacking / averaging) | Ensemble (Weighted average (inverse OOF error)) | test_rmse | 0.622 | TabPFNRegressor | TabPFN (tabular foundation) | 8.211 |
+| freesolv_sampl | MoleculeNet | regression | TabPFN (tabular foundation) | TabPFNRegressor | test_rmse | 0.933 | XGBoost (ADMETboost features) | Conventional ML | 121.064 |
+| lipophilicity | MoleculeNet | regression | Ensemble (stacking / averaging) | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | test_rmse | 0.507 | TabPFNRegressor | TabPFN (tabular foundation) | 17.351 |
+| poduam_pod_nc_std | PODUAM | regression | Ensemble (stacking / averaging) | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | test_rmse | 0.694 | XGBoost (ADMETboost features) | Conventional ML | 5.048 |
+| poduam_pod_rd_std | PODUAM | regression | Ensemble (stacking / averaging) | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | test_rmse | 0.556 | XGBoost (ADMETboost features) | Conventional ML | 1.824 |
+| polaris_adme_fang_hppb_1 | Polaris | regression | Ensemble (stacking / averaging) | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | test_rmse | 0.422 | XGBoost (ADMETboost features) | Conventional ML | 9.517 |
+| polaris_adme_fang_perm_1 | Polaris | regression | Ensemble (stacking / averaging) | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | test_rmse | 0.379 | XGBoost (ADMETboost features) | Conventional ML | 16.319 |
+| polaris_adme_fang_rclint_1 | Polaris | regression | Ensemble (stacking / averaging) | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | test_rmse | 0.484 | XGBoost | Conventional ML | 11.804 |
+| polaris_adme_fang_rppb_1 | Polaris | regression | Ensemble (stacking / averaging) | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | test_rmse | 0.478 | XGBoost (ADMETboost features) | Conventional ML | 6.138 |
+| polaris_adme_fang_solu_1 | Polaris | regression | Uni-Mol (3D pretrained) | Uni-Mol V2 (84m) | test_rmse | 0.551 | XGBoost (ADMETboost features) | Conventional ML | 7.782 |
+| tdc_caco2_wang | TDC | regression | Ensemble (stacking / averaging) | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | test_rmse | 0.338 | XGBoost (ADMETboost features) | Conventional ML | 11.813 |
+| tdc_clearance_hepatocyte_az | TDC | regression | MapLight + GNN | MapLight + GNN (CatBoost, Strict Parity) | test_rmse | 44.113 | XGBoost (ADMETboost features) | Conventional ML | 6.388 |
+| tdc_clearance_microsome_az | TDC | regression | Uni-Mol (3D pretrained) | Uni-Mol V2 (84m) | test_rmse | 33.507 | XGBoost (ADMETboost features) | Conventional ML | 13.113 |
 | tdc_half_life_obach | TDC | regression | Uni-Mol (3D pretrained) | Uni-Mol V1 | test_rmse | 19.128 | XGBoost (ADMETboost features) | Conventional ML | 77.574 |
-| tdc_hydrationfreeenergy_freesolv | TDC | regression | Ensemble (stacking / averaging) | Ensemble (Weighted average (inverse OOF error)) | test_rmse | 1.085 | TabPFNRegressor | TabPFN (tabular foundation) | 2.803 |
-| tdc_ld50_zhu | TDC | regression | TabPFN (tabular foundation) | TabPFNRegressor | test_rmse | 0.806 | TabPFNRegressor | TabPFN (tabular foundation) | 0.000 |
-| tdc_lipophilicity_astrazeneca | TDC | regression | Chemprop v2 GNN | Chemprop v2 (D-MPNN, ensemble=3) | test_rmse | 0.577 | TabPFNRegressor | TabPFN (tabular foundation) | 3.556 |
-| tdc_ppbr_az | TDC | regression | MapLight + GNN | MapLight + GNN (CatBoost, Strict Parity) | test_rmse | 11.356 | ChemML MLP (PyTorch) | Deep tabular NN (ChemML MLP) | 27.931 |
-| tdc_solubility_aqsoldb | TDC | regression | Ensemble (stacking / averaging) | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | test_rmse | 0.956 | TabPFNRegressor | TabPFN (tabular foundation) | 0.520 |
-| tdc_vdss_lombardo | TDC | regression | MapLight + GNN | MapLight + GNN (CatBoost, Strict Parity) | test_rmse | 4.670 | TabPFNRegressor | TabPFN (tabular foundation) | 6.060 |
+| tdc_hydrationfreeenergy_freesolv | TDC | regression | Ensemble (stacking / averaging) | Ensemble (Weighted average (inverse OOF error)) | test_rmse | 1.075 | XGBoost (ADMETboost features) | Conventional ML | 5.821 |
+| tdc_ld50_zhu | TDC | regression | TabPFN (tabular foundation) | TabPFNRegressor | test_rmse | 0.806 | XGBoost | Conventional ML | 4.826 |
+| tdc_lipophilicity_astrazeneca | TDC | regression | Ensemble (stacking / averaging) | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | test_rmse | 0.551 | TabPFNRegressor | TabPFN (tabular foundation) | 8.398 |
+| tdc_ppbr_az | TDC | regression | Ensemble (stacking / averaging) | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | test_rmse | 10.768 | TabPFNRegressor | TabPFN (tabular foundation) | 21.078 |
+| tdc_solubility_aqsoldb | TDC | regression | Ensemble (stacking / averaging) | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | test_rmse | 0.955 | XGBoost (ADMETboost features) | Conventional ML | 4.572 |
+| tdc_vdss_lombardo | TDC | regression | MapLight + GNN | MapLight + GNN (CatBoost, Strict Parity) | test_rmse | 4.670 | XGBoost (ADMETboost features) | Conventional ML | 69.878 |
 <!-- /TABLE -->
 
 **Table S1.** Per-dataset winning model under the ranking metric, with the corresponding cross-validation-selected model and its relative gap to the dataset best (%).
@@ -791,7 +795,7 @@ No registration or login is needed to download, install or run QSARena, so revie
 | 2 | + MapLight classic features | 44 | 9 | 0.205 |
 | 3 | + neural/deep backends | 44 | 26 | 0.591 |
 | 4 | + CFA fusion | 44 | 6 | 0.136 |
-| 5 | Full pipeline incl. ensembles | 44 | 12 | 0.273 |
+| 5 | Full pipeline incl. ensembles | 44 | 22 | 0.500 |
 <!-- /TABLE -->
 
 **Table S2.** Staged component ablation: datasets whose best achievable primary metric improved when each pipeline stage was added, computed from the existing model results.
@@ -821,13 +825,13 @@ No registration or login is needed to download, install or run QSARena, so revie
 | Uni-Mol V2 (310m) | 8 | 0 |
 | Uni-Mol V2 (164m) | 4 | 0 |
 | Uni-Mol V2 (84m) | 44 | 17 |
+| TabPFNClassifier | 22 | 19 |
 | ElasticNetCV | 22 | 20 |
-| MapLight CatBoost (Strict Parity) | 22 | 22 |
 | LogisticRegression | 22 | 22 |
-| SVC | 22 | 22 |
+| MapLight CatBoost (Strict Parity) | 22 | 22 |
 | TabPFNRegressor | 22 | 22 |
+| SVC | 22 | 22 |
 | SVR | 22 | 22 |
-| TabPFNClassifier | 22 | 22 |
 | Voting Classifier (KNN, SVM) | 22 | 22 |
 | Voting Regressor (KNN, SVM) | 22 | 22 |
 | Tabular CNN | 22 | 22 |
@@ -858,50 +862,50 @@ No registration or login is needed to download, install or run QSARena, so revie
 <!-- TABLE:tableS5_run_comparison -->
 | Dataset | Task | Same split | A100 best model | A100 value | RTX 4060 best model | RTX 4060 value | Change (%) |
 |---|---|---|---|---|---|---|---|
-| tdc_ames | classification | yes | CFA (Combinatorial Fusion) | 0.877 | XGBoost | 0.875 | 0.300 |
+| tdc_ames | classification | yes | TabPFNClassifier | 0.876 | XGBoost | 0.875 | 0.166 |
 | tdc_bbb_martins | classification | yes | Random forest | 0.925 | Random forest | 0.932 | -0.788 |
 | tdc_bioavailability_ma | classification | yes | CatBoost | 0.777 | CatBoost | 0.777 | 0.000 |
-| tdc_cyp1a2_veith | classification | yes | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 0.974 | Ensemble (Weighted average (inverse train RMSE)) | 0.970 | 0.467 |
-| tdc_cyp2c19_veith | classification | yes | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 0.937 | Ensemble (Weighted average (inverse train RMSE)) | 0.921 | 1.744 |
-| tdc_cyp2c9_substrate_carbonmangels | classification | yes | Chemprop v2 (AttentiveFP, ensemble=3) | 0.438 | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 0.482 | -8.990 |
-| tdc_cyp2c9_veith | classification | yes | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 0.827 | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 0.810 | 2.157 |
-| tdc_cyp2d6_substrate_carbonmangels | classification | yes | Chemprop v2 (D-MPNN + RDKit2D, ensemble=3) | 0.693 | Ensemble (Weighted average (inverse train RMSE)) | 0.673 | 2.919 |
-| tdc_cyp2d6_veith | classification | yes | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 0.759 | XGBoost | 0.722 | 5.106 |
+| tdc_cyp1a2_veith | classification | yes | XGBoost | 0.969 | Uni-Mol V1 | 0.969 | -0.049 |
+| tdc_cyp2c19_veith | classification | yes | XGBoost | 0.926 | Uni-Mol V1 | 0.921 | 0.551 |
+| tdc_cyp2c9_substrate_carbonmangels | classification | yes | Chemprop v2 (AttentiveFP, ensemble=3) | 0.438 | Uni-Mol V1 | 0.454 | -3.439 |
+| tdc_cyp2c9_veith | classification | yes | XGBoost | 0.796 | HistGradientBoosting | 0.792 | 0.541 |
+| tdc_cyp2d6_substrate_carbonmangels | classification | yes | Chemprop v2 (D-MPNN + RDKit2D, ensemble=3) | 0.693 | Random forest | 0.665 | 4.143 |
+| tdc_cyp2d6_veith | classification | yes | XGBoost | 0.729 | XGBoost | 0.722 | 0.904 |
 | tdc_cyp3a4_substrate_carbonmangels | classification | yes | XGBoost (ADMETboost features) | 0.729 | LogisticRegression | 0.717 | 1.759 |
-| tdc_cyp3a4_veith | classification | yes | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 0.902 | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 0.890 | 1.411 |
-| tdc_dili | classification | yes | XGBoost (ADMETboost features) | 0.923 | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 0.915 | 0.856 |
+| tdc_cyp3a4_veith | classification | yes | XGBoost (ADMETboost features) | 0.883 | XGBoost | 0.883 | 0.002 |
+| tdc_dili | classification | yes | XGBoost (ADMETboost features) | 0.923 | Uni-Mol V1 | 0.914 | 0.903 |
 | tdc_herg | classification | yes | Chemprop v2 (AttentiveFP, ensemble=3) | 0.857 | AdaBoost | 0.861 | -0.411 |
-| tdc_herg_karim | classification | yes | Ensemble (Weighted average (inverse OOF error)) | 0.907 | Ensemble (Weighted average (inverse train RMSE)) | 0.902 | 0.522 |
-| tdc_hia_hou | classification | yes | XGBoost (ADMETboost features) | 0.994 | CFA (Combinatorial Fusion) | 0.990 | 0.395 |
-| tdc_pgp_broccatelli | classification | yes | Uni-Mol V2 (84m) | 0.933 | Ensemble (Weighted average (inverse train RMSE)) | 0.929 | 0.423 |
-| chemml_cep_homo | regression | yes | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 0.094 | TabPFNRegressor | 0.086 | -9.571 |
+| tdc_herg_karim | classification | yes | XGBoost | 0.902 | Uni-Mol V1 | 0.893 | 1.055 |
+| tdc_hia_hou | classification | yes | XGBoost (ADMETboost features) | 0.994 | CatBoost | 0.989 | 0.499 |
+| tdc_pgp_broccatelli | classification | yes | Uni-Mol V2 (84m) | 0.933 | TabPFNClassifier | 0.927 | 0.625 |
+| chemml_cep_homo | regression | yes | TabPFNRegressor | 0.102 | TabPFNRegressor | 0.086 | -19.231 |
 | chemml_organic_density | regression | yes | TabPFNRegressor | 0.005 | TabPFNRegressor | 0.005 | 5.907 |
-| esol_delaney | regression | yes | Ensemble (Weighted average (inverse OOF error)) | 0.624 | Ensemble (Weighted average (inverse train RMSE)) | 0.592 | -5.423 |
+| esol_delaney | regression | yes | MapLight CatBoost (Strict Parity) | 0.645 | TabPFNRegressor | 0.612 | -5.269 |
 | freesolv_sampl | regression | yes | TabPFNRegressor | 0.933 | Chemprop v2 (AttentiveFP, ensemble=1) | 1.080 | 13.562 |
-| lipophilicity | regression | yes | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 0.548 | Ensemble (Weighted average (inverse train RMSE)) | 0.582 | 5.905 |
-| poduam_pod_nc_std | regression | yes | Random forest | 0.720 | Ensemble (Weighted average (inverse train RMSE)) | 0.699 | -3.062 |
-| poduam_pod_rd_std | regression | yes | CFA (Combinatorial Fusion) | 0.564 | XGBoost | 0.551 | -2.320 |
+| lipophilicity | regression | yes | Chemprop v2 (D-MPNN, ensemble=3) | 0.551 | Uni-Mol V1 | 0.592 | 6.932 |
+| poduam_pod_nc_std | regression | yes | Random forest | 0.720 | Extra trees | 0.701 | -2.720 |
+| poduam_pod_rd_std | regression | yes | XGBoost (ADMETboost features) | 0.567 | XGBoost | 0.551 | -2.872 |
 | polaris_adme_fang_hppb_1 | regression | yes | Chemprop v2 (D-MPNN, ensemble=3) | 0.444 | MapLight + GNN (CatBoost, Strict Parity) | 0.449 | 1.072 |
 | polaris_adme_fang_perm_1 | regression | yes | Uni-Mol V1 | 0.399 | Uni-Mol V1 | 0.399 | -0.040 |
 | polaris_adme_fang_rclint_1 | regression | yes | Chemprop v2 (D-MPNN, ensemble=3) | 0.517 | Uni-Mol V1 | 0.512 | -0.968 |
 | polaris_adme_fang_rppb_1 | regression | yes | MapLight + GNN (CatBoost, Strict Parity) | 0.493 | MapLight + GNN (CatBoost, Strict Parity) | 0.494 | 0.170 |
 | polaris_adme_fang_solu_1 | regression | yes | Uni-Mol V2 (84m) | 0.551 | Uni-Mol V1 | 0.575 | 4.202 |
-| tdc_caco2_wang | regression | yes | Ensemble (Weighted average (inverse OOF error)) | 0.344 | Ensemble (Weighted average (inverse train RMSE)) | 0.336 | -2.134 |
+| tdc_caco2_wang | regression | yes | MapLight CatBoost (Strict Parity) | 0.350 | MapLight CatBoost (Strict Parity) | 0.350 | 0.000 |
 | tdc_clearance_hepatocyte_az | regression | yes | MapLight + GNN (CatBoost, Strict Parity) | 44.113 | MapLight + GNN (CatBoost, Strict Parity) | 43.976 | -0.311 |
 | tdc_clearance_microsome_az | regression | yes | Uni-Mol V2 (84m) | 33.507 | Uni-Mol V1 | 35.888 | 6.634 |
 | tdc_half_life_obach | regression | yes | Uni-Mol V1 | 19.128 | Uni-Mol V1 | 17.222 | -11.067 |
-| tdc_ld50_zhu | regression | yes | TabPFNRegressor | 0.806 | CFA (Combinatorial Fusion) | 0.834 | 3.290 |
+| tdc_ld50_zhu | regression | yes | TabPFNRegressor | 0.806 | HistGradientBoosting | 0.839 | 3.931 |
 | tdc_lipophilicity_astrazeneca | regression | yes | Chemprop v2 (D-MPNN, ensemble=3) | 0.577 | Uni-Mol V1 | 0.587 | 1.698 |
-| tdc_ppbr_az | regression | yes | MapLight + GNN (CatBoost, Strict Parity) | 11.356 | Ensemble (Weighted average (inverse train RMSE)) | 11.014 | -3.108 |
-| tdc_solubility_aqsoldb | regression | yes | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 0.956 | Uni-Mol V1 | 0.989 | 3.310 |
+| tdc_ppbr_az | regression | yes | MapLight + GNN (CatBoost, Strict Parity) | 11.356 | MapLight + GNN (CatBoost, Strict Parity) | 11.444 | 0.762 |
+| tdc_solubility_aqsoldb | regression | yes | TabPFNRegressor | 0.961 | Uni-Mol V1 | 0.989 | 2.807 |
 | tdc_vdss_lombardo | regression | yes | MapLight + GNN (CatBoost, Strict Parity) | 4.670 | MapLight + GNN (CatBoost, Strict Parity) | 4.668 | -0.035 |
 | tdc_carcinogens_lagunin | classification | no | Chemprop v2 (AttentiveFP, ensemble=3) | 0.929 | AdaBoost | 0.863 | 7.656 |
-| tdc_clintox | classification | no | CFA (Combinatorial Fusion) | 0.974 | CatBoost | 0.949 | 2.644 |
-| tdc_pampa_ncats | classification | no | Uni-Mol V1 | 0.763 | Ensemble (Weighted average (inverse train RMSE)) | 0.806 | -5.258 |
-| tdc_skin_reaction | classification | no | XGBoost (ADMETboost features) | 0.667 | CFA (Combinatorial Fusion) | 0.769 | -13.246 |
+| tdc_clintox | classification | no | Random forest | 0.956 | CatBoost | 0.949 | 0.788 |
+| tdc_pampa_ncats | classification | no | Uni-Mol V1 | 0.763 | Extra trees | 0.805 | -5.206 |
+| tdc_skin_reaction | classification | no | XGBoost (ADMETboost features) | 0.667 | TabPFNClassifier | 0.747 | -10.737 |
 | tdc_tox21 | classification | no | Chemprop v2 (AttentiveFP, ensemble=3) | 0.597 | XGBoost | 0.812 | -26.451 |
 | tdc_toxcast | classification | no | HistGradientBoosting | 0.716 | CatBoost | 0.791 | -9.562 |
-| tdc_hydrationfreeenergy_freesolv | regression | no | Ensemble (Weighted average (inverse OOF error)) | 1.085 | CFA (Combinatorial Fusion) | 0.556 | -95.052 |
+| tdc_hydrationfreeenergy_freesolv | regression | no | TabPFNRegressor | 1.116 | TabPFNRegressor | 0.592 | -88.600 |
 <!-- /TABLE -->
 
 **Table S5.** Run-to-run comparison: the canonical NSF ACCESS Jetstream2 A100 benchmark against the earlier consumer-GPU (RTX 4060) run, analysed identically. "Same split" marks datasets where both runs used the identical held-out partition; the remainder were re-split to scaffold splits in the A100 run and are not directly comparable. Change is relative and metric-direction aware (positive favours the A100 run).
@@ -909,20 +913,20 @@ No registration or login is needed to download, install or run QSARena, so revie
 <!-- TABLE:table2_dataset_catalog -->
 | Dataset | Suite | Task | Molecules | Train | Test | Split | Target scale | Ranking metric | Best model | Best value | Leaderboard metric | QSARena (lb metric) | Est. rank | Best published | Best published model |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| tdc_ames | TDC | classification | 7278 | 5821 | 1457 | predefined | raw | roc_auc | CFA (Combinatorial Fusion) | 0.877 | ROC_AUC | 0.877 | 2 | 0.912 | QW-MTL |
+| tdc_ames | TDC | classification | 7278 | 5821 | 1457 | predefined | raw | roc_auc | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 0.883 | ROC_AUC | 0.883 | 2 | 0.912 | QW-MTL |
 | tdc_bbb_martins | TDC | classification | 2030 | 1624 | 406 | predefined | raw | roc_auc | Random forest | 0.925 | ROC_AUC | 0.925 | 2 | 0.941 | MolGPS (3B) |
 | tdc_bioavailability_ma | TDC | classification | 640 | 512 | 128 | predefined | raw | roc_auc | CatBoost | 0.777 | ROC_AUC | 0.777 | 1 | 0.748 | MaxQsaring |
 | tdc_carcinogens_lagunin | TDC | classification | 280 | 223 | 57 | scaffold | raw | roc_auc | Chemprop v2 (AttentiveFP, ensemble=3) | 0.929 | ROC_AUC | 0.929 | 1 | 0.848 | FATE-Tox (MTL) |
 | tdc_clintox | TDC | classification | 1478 | 1180 | 298 | scaffold | raw | roc_auc | CFA (Combinatorial Fusion) | 0.974 | ROC_AUC | 0.974 | 3 | 0.996 | PrismNet |
-| tdc_cyp1a2_veith | TDC | classification | 12579 | 10061 | 2518 | scaffold | raw | roc_auc | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 0.974 |  |  |  |  |  |
-| tdc_cyp2c19_veith | TDC | classification | 12665 | 10131 | 2534 | scaffold | raw | roc_auc | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 0.937 |  |  |  |  |  |
+| tdc_cyp1a2_veith | TDC | classification | 12579 | 10061 | 2518 | scaffold | raw | roc_auc | Ensemble (Weighted average (inverse OOF error)) | 0.974 |  |  |  |  |  |
+| tdc_cyp2c19_veith | TDC | classification | 12665 | 10131 | 2534 | scaffold | raw | roc_auc | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 0.938 |  |  |  |  |  |
 | tdc_cyp2c9_substrate_carbonmangels | TDC | classification | 669 | 534 | 135 | predefined | raw | auprc | Chemprop v2 (AttentiveFP, ensemble=3) | 0.438 | AUPRC | 0.438 | 3 | 0.450 | MaxQsaring |
 | tdc_cyp2c9_veith | TDC | classification | 12092 | 9673 | 2419 | predefined | raw | auprc | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 0.827 | AUPRC | 0.827 | 3 | 0.877 | MaxQsaring |
 | tdc_cyp2d6_substrate_carbonmangels | TDC | classification | 667 | 532 | 135 | predefined | raw | auprc | Chemprop v2 (D-MPNN + RDKit2D, ensemble=3) | 0.693 | AUPRC | 0.693 | 4 | 0.766 | MaxQsaring |
-| tdc_cyp2d6_veith | TDC | classification | 13130 | 10504 | 2626 | predefined | raw | auprc | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 0.759 | AUPRC | 0.759 | 2 | 0.811 | MaxQsaring |
-| tdc_cyp3a4_substrate_carbonmangels | TDC | classification | 670 | 535 | 135 | predefined | raw | auprc | XGBoost (ADMETboost features) | 0.729 | ROC_AUC | 0.660 | 7 | 0.692 | MolE |
-| tdc_cyp3a4_veith | TDC | classification | 12328 | 9861 | 2467 | predefined | raw | auprc | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 0.902 | AUPRC | 0.902 | 2 | 0.923 | MaxQsaring |
-| tdc_dili | TDC | classification | 475 | 379 | 96 | predefined | raw | roc_auc | XGBoost (ADMETboost features) | 0.923 | ROC_AUC | 0.923 | 4 | 0.945 | Meta-model (NIST) |
+| tdc_cyp2d6_veith | TDC | classification | 13130 | 10504 | 2626 | predefined | raw | auprc | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 0.763 | AUPRC | 0.763 | 2 | 0.811 | MaxQsaring |
+| tdc_cyp3a4_substrate_carbonmangels | TDC | classification | 670 | 535 | 135 | predefined | raw | auprc | XGBoost (ADMETboost features) | 0.729 | ROC_AUC | 0.665 | 6 | 0.692 | MolE |
+| tdc_cyp3a4_veith | TDC | classification | 12328 | 9861 | 2467 | predefined | raw | auprc | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 0.905 | AUPRC | 0.905 | 2 | 0.923 | MaxQsaring |
+| tdc_dili | TDC | classification | 475 | 379 | 96 | predefined | raw | roc_auc | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 0.933 | ROC_AUC | 0.933 | 4 | 0.945 | Meta-model (NIST) |
 | tdc_herg | TDC | classification | 655 | 523 | 132 | predefined | raw | roc_auc | Chemprop v2 (AttentiveFP, ensemble=3) | 0.857 | ROC_AUC | 0.857 | 3 | 0.880 | MaxQsaring |
 | tdc_herg_karim | TDC | classification | 13445 | 10755 | 2690 | scaffold | raw | roc_auc | Ensemble (Weighted average (inverse OOF error)) | 0.907 |  |  |  |  |  |
 | tdc_hia_hou | TDC | classification | 578 | 461 | 117 | predefined | raw | roc_auc | XGBoost (ADMETboost features) | 0.994 | ROC_AUC | 0.994 | 2 | 0.994 | MiniMol (GINE) |
@@ -931,27 +935,27 @@ No registration or login is needed to download, install or run QSARena, so revie
 | tdc_skin_reaction | TDC | classification | 404 | 289 | 115 | scaffold | raw | roc_auc | XGBoost (ADMETboost features) | 0.667 | ROC_AUC | 0.667 | >10 | 0.741 | FATE-Tox (MTL) |
 | tdc_tox21 | TDC | classification | 7258 | 5797 | 1461 | scaffold | raw | roc_auc | Chemprop v2 (AttentiveFP, ensemble=3) | 0.597 | ROC_AUC | 0.597 | >10 | 0.867 | PrismNet |
 | tdc_toxcast | TDC | classification | 1731 | 1357 | 374 | scaffold | raw | roc_auc | HistGradientBoosting | 0.716 | ROC_AUC | 0.716 | 1 | 0.714 | PrismNet |
-| chemml_cep_homo | ChemML | regression | 500 | 400 | 100 | target_quartiles | raw | rmse | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 0.094 |  |  |  |  |  |
+| chemml_cep_homo | ChemML | regression | 500 | 400 | 100 | target_quartiles | raw | rmse | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 0.090 |  |  |  |  |  |
 | chemml_organic_density | ChemML | regression | 500 | 400 | 100 | target_quartiles | log10 | rmse | TabPFNRegressor | 0.005 |  |  |  |  |  |
-| esol_delaney | MoleculeNet | regression | 1128 | 874 | 254 | scaffold | raw | rmse | Ensemble (Weighted average (inverse OOF error)) | 0.624 | RMSE | 0.624 | 7 | 0.558 | GCN |
+| esol_delaney | MoleculeNet | regression | 1128 | 874 | 254 | scaffold | raw | rmse | Ensemble (Weighted average (inverse OOF error)) | 0.622 | RMSE | 0.622 | 7 | 0.558 | GCN |
 | freesolv_sampl | MoleculeNet | regression | 642 | 513 | 129 | random | raw | rmse | TabPFNRegressor | 0.933 |  |  |  |  |  |
-| lipophilicity | MoleculeNet | regression | 4200 | 3357 | 843 | scaffold | raw | rmse | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 0.548 | RMSE | 0.548 | 1 | 0.549 | GCN |
-| poduam_pod_nc_std | PODUAM | regression | 1842 | 1473 | 369 | target_quartiles | raw | rmse | Random forest | 0.720 | RMSE | 0.720 | 2 | 0.550 | PODUAM BNN (PODnc) |
-| poduam_pod_rd_std | PODUAM | regression | 2355 | 1884 | 471 | target_quartiles | raw | rmse | CFA (Combinatorial Fusion) | 0.564 | RMSE | 0.564 | 2 | 0.410 | PODUAM BNN (PODrd) |
-| polaris_adme_fang_hppb_1 | Polaris | regression | 1808 | 1446 | 362 | predefined | raw | rmse | Chemprop v2 (D-MPNN, ensemble=3) | 0.444 | MSE | 0.197 | 4 | 0.143 | LateFusion-k5 |
-| polaris_adme_fang_perm_1 | Polaris | regression | 2642 | 2113 | 529 | predefined | raw | rmse | Uni-Mol V1 | 0.399 | MSE | 0.159 | 4 | 0.113 | 1B_MPNN_MolGPS-ens_LargeMix |
-| polaris_adme_fang_rclint_1 | Polaris | regression | 3054 | 2443 | 611 | predefined | raw | rmse | Chemprop v2 (D-MPNN, ensemble=3) | 0.517 | MSE | 0.268 | 6 | 0.204 | LateFusion-k5 |
-| polaris_adme_fang_rppb_1 | Polaris | regression | 885 | 708 | 177 | predefined | raw | rmse | MapLight + GNN (CatBoost, Strict Parity) | 0.493 | MSE | 0.243 | 3 | 0.230 | 1B_MPNN_LargeMix-and-Phenomics |
+| lipophilicity | MoleculeNet | regression | 4200 | 3357 | 843 | scaffold | raw | rmse | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 0.507 | RMSE | 0.507 | 1 | 0.549 | GCN |
+| poduam_pod_nc_std | PODUAM | regression | 1842 | 1473 | 369 | target_quartiles | raw | rmse | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 0.694 | RMSE | 0.694 | 2 | 0.550 | PODUAM BNN (PODnc) |
+| poduam_pod_rd_std | PODUAM | regression | 2355 | 1884 | 471 | target_quartiles | raw | rmse | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 0.556 | RMSE | 0.556 | 2 | 0.410 | PODUAM BNN (PODrd) |
+| polaris_adme_fang_hppb_1 | Polaris | regression | 1808 | 1446 | 362 | predefined | raw | rmse | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 0.422 | MSE | 0.178 | 4 | 0.143 | LateFusion-k5 |
+| polaris_adme_fang_perm_1 | Polaris | regression | 2642 | 2113 | 529 | predefined | raw | rmse | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 0.379 | MSE | 0.144 | 4 | 0.113 | 1B_MPNN_MolGPS-ens_LargeMix |
+| polaris_adme_fang_rclint_1 | Polaris | regression | 3054 | 2443 | 611 | predefined | raw | rmse | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 0.484 | MSE | 0.234 | 5 | 0.204 | LateFusion-k5 |
+| polaris_adme_fang_rppb_1 | Polaris | regression | 885 | 708 | 177 | predefined | raw | rmse | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 0.478 | MSE | 0.228 | 1 | 0.230 | 1B_MPNN_LargeMix-and-Phenomics |
 | polaris_adme_fang_solu_1 | Polaris | regression | 2173 | 1738 | 435 | predefined | raw | rmse | Uni-Mol V2 (84m) | 0.551 | MSE | 0.304 | 7 | 0.222 | 1B_MPNN_MolGPS-ens_LargeMix |
-| tdc_caco2_wang | TDC | regression | 910 | 728 | 182 | predefined | raw | rmse | Ensemble (Weighted average (inverse OOF error)) | 0.344 | MAE | 0.272 | 3 | 0.256 | CaliciBoost |
+| tdc_caco2_wang | TDC | regression | 910 | 728 | 182 | predefined | raw | rmse | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 0.338 | MAE | 0.269 | 3 | 0.256 | CaliciBoost |
 | tdc_clearance_hepatocyte_az | TDC | regression | 1213 | 970 | 243 | predefined | raw | rmse | MapLight + GNN (CatBoost, Strict Parity) | 44.113 | SPEARMAN | 0.516 | 3 | 0.633 | CFA |
 | tdc_clearance_microsome_az | TDC | regression | 1102 | 881 | 221 | predefined | raw | rmse | Uni-Mol V2 (84m) | 33.507 | SPEARMAN | 0.678 | 1 | 0.652 | MapLight + GNN |
 | tdc_half_life_obach | TDC | regression | 667 | 532 | 135 | predefined | raw | rmse | Uni-Mol V1 | 19.128 | SPEARMAN | 0.597 | 2 | 0.649 | CFA |
-| tdc_hydrationfreeenergy_freesolv | TDC | regression | 642 | 490 | 152 | scaffold | raw | rmse | Ensemble (Weighted average (inverse OOF error)) | 1.085 | RMSE | 1.085 | 7 | 0.654 | PrismNet |
+| tdc_hydrationfreeenergy_freesolv | TDC | regression | 642 | 490 | 152 | scaffold | raw | rmse | Ensemble (Weighted average (inverse OOF error)) | 1.075 | RMSE | 1.075 | 7 | 0.654 | PrismNet |
 | tdc_ld50_zhu | TDC | regression | 7385 | 5907 | 1478 | predefined | raw | rmse | TabPFNRegressor | 0.806 | MAE | 0.552 | 2 | 0.292 | BaseBoosting KyQVZ6b2 |
-| tdc_lipophilicity_astrazeneca | TDC | regression | 4200 | 3360 | 840 | predefined | raw | rmse | Chemprop v2 (D-MPNN, ensemble=3) | 0.577 | MAE | 0.425 | 3 | 0.406 | MiniMol |
-| tdc_ppbr_az | TDC | regression | 2790 | 2231 | 559 | predefined | raw | rmse | MapLight + GNN (CatBoost, Strict Parity) | 11.356 | MAE | 7.306 | 3 | 0.679 | Gradient Boost |
-| tdc_solubility_aqsoldb | TDC | regression | 9980 | 7985 | 1995 | predefined | raw | rmse | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 0.956 | MAE | 0.678 | 2 | 0.557 | MiniMol |
+| tdc_lipophilicity_astrazeneca | TDC | regression | 4200 | 3360 | 840 | predefined | raw | rmse | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 0.551 | MAE | 0.412 | 3 | 0.406 | MiniMol |
+| tdc_ppbr_az | TDC | regression | 2790 | 2231 | 559 | predefined | raw | rmse | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 10.768 | MAE | 7.118 | 2 | 0.679 | Gradient Boost |
+| tdc_solubility_aqsoldb | TDC | regression | 9980 | 7985 | 1995 | predefined | raw | rmse | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 0.955 | MAE | 0.676 | 2 | 0.557 | MiniMol |
 | tdc_vdss_lombardo | TDC | regression | 1130 | 904 | 226 | predefined | raw | rmse | MapLight + GNN (CatBoost, Strict Parity) | 4.670 | SPEARMAN | 0.680 | 5 | 0.942 | MapLight + GNN |
 <!-- /TABLE -->
 
@@ -960,43 +964,43 @@ No registration or login is needed to download, install or run QSARena, so revie
 <!-- TABLE:table4_leaderboard_comparison -->
 | Dataset | Metric | QSARena best model (test-selected) | QSARena value | Reference top-1 | Reference top-10 cutoff | References (n) | Est. rank | CV-selected model | CV-selected value | CV-selected est. rank |
 |---|---|---|---|---|---|---|---|---|---|---|
-| lipophilicity | RMSE | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 0.548 | 0.549 | 0.610 | 27 | 1 | ElasticNetCV | 0.682 | >10 |
-| tdc_bioavailability_ma | ROC_AUC | CatBoost | 0.777 | 0.748 | 0.640 | 8 | 1 | TabPFNClassifier | 0.732 | 2 |
-| tdc_carcinogens_lagunin | ROC_AUC | Chemprop v2 (AttentiveFP, ensemble=3) | 0.929 | 0.848 | 0.795 | 20 | 1 | TabPFNClassifier | 0.870 | 1 |
-| tdc_clearance_microsome_az | SPEARMAN | Uni-Mol V2 (84m) | 0.678 | 0.652 | 0.599 | 17 | 1 | TabPFNRegressor | 0.437 | >10 |
-| tdc_toxcast | ROC_AUC | HistGradientBoosting | 0.716 | 0.714 | 0.714 | 2 | 1 | TabPFNClassifier | 0.656 | 3 |
-| poduam_pod_nc_std | RMSE | Random forest | 0.720 | 0.550 | 0.730 | 2 | 2 | TabPFNRegressor | 0.745 | 3 |
-| poduam_pod_rd_std | RMSE | CFA (Combinatorial Fusion) | 0.564 | 0.410 | 0.630 | 2 | 2 | TabPFNRegressor | 0.589 | 2 |
-| tdc_ames | ROC_AUC | CFA (Combinatorial Fusion) | 0.877 | 0.912 | 0.834 | 7 | 2 | TabPFNClassifier | 0.876 | 2 |
-| tdc_bbb_martins | ROC_AUC | Random forest | 0.925 | 0.941 | 0.903 | 7 | 2 | TabPFNClassifier | 0.909 | 4 |
-| tdc_cyp2d6_veith | AUPRC | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 0.759 | 0.811 | 0.464 | 6 | 2 | TabPFNClassifier | 0.457 | 7 |
-| tdc_cyp3a4_veith | AUPRC | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 0.902 | 0.923 | 0.750 | 6 | 2 | TabPFNClassifier | 0.740 | 7 |
+| lipophilicity | RMSE | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 0.507 | 0.549 | 0.610 | 27 | 1 | TabPFNRegressor | 0.595 | 8 |
+| polaris_adme_fang_rppb_1 | MSE | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 0.228 | 0.230 | 0.634 | 10 | 1 | XGBoost (ADMETboost features) | 0.257 | 3 |
+| tdc_bioavailability_ma | ROC_AUC | CatBoost | 0.777 | 0.748 | 0.640 | 8 | 1 | XGBoost (ADMETboost features) | 0.721 | 2 |
+| tdc_carcinogens_lagunin | ROC_AUC | Chemprop v2 (AttentiveFP, ensemble=3) | 0.929 | 0.848 | 0.795 | 20 | 1 | XGBoost (ADMETboost features) | 0.908 | 1 |
+| tdc_clearance_microsome_az | SPEARMAN | Uni-Mol V2 (84m) | 0.678 | 0.652 | 0.599 | 17 | 1 | XGBoost (ADMETboost features) | 0.549 | >10 |
+| tdc_toxcast | ROC_AUC | HistGradientBoosting | 0.716 | 0.714 | 0.714 | 2 | 1 | XGBoost (ADMETboost features) | 0.704 | 3 |
+| poduam_pod_nc_std | RMSE | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 0.694 | 0.550 | 0.730 | 2 | 2 | XGBoost (ADMETboost features) | 0.729 | 2 |
+| poduam_pod_rd_std | RMSE | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 0.556 | 0.410 | 0.630 | 2 | 2 | XGBoost (ADMETboost features) | 0.567 | 2 |
+| tdc_ames | ROC_AUC | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 0.883 | 0.912 | 0.834 | 7 | 2 | Extra trees | 0.871 | 2 |
+| tdc_bbb_martins | ROC_AUC | Random forest | 0.925 | 0.941 | 0.903 | 7 | 2 | XGBoost (ADMETboost features) | 0.916 | 2 |
+| tdc_cyp2d6_veith | AUPRC | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 0.763 | 0.811 | 0.464 | 6 | 2 | AdaBoost | 0.615 | 6 |
+| tdc_cyp3a4_veith | AUPRC | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 0.905 | 0.923 | 0.750 | 6 | 2 | AdaBoost | 0.798 | 6 |
 | tdc_half_life_obach | SPEARMAN | Uni-Mol V1 | 0.597 | 0.649 | 0.485 | 16 | 2 | XGBoost (ADMETboost features) | 0.473 | >10 |
-| tdc_hia_hou | ROC_AUC | XGBoost (ADMETboost features) | 0.994 | 0.994 | 0.976 | 8 | 2 | LogisticRegression | 0.983 | 7 |
-| tdc_ld50_zhu | MAE | TabPFNRegressor | 0.552 | 0.292 | 0.605 | 16 | 2 | TabPFNRegressor | 0.552 | 2 |
-| tdc_solubility_aqsoldb | MAE | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 0.678 | 0.557 | 0.776 | 17 | 2 | TabPFNRegressor | 0.686 | 2 |
-| polaris_adme_fang_rppb_1 | MSE | MapLight + GNN (CatBoost, Strict Parity) | 0.243 | 0.230 | 0.634 | 10 | 3 | TabPFNRegressor | 0.308 | 5 |
-| tdc_caco2_wang | MAE | MapLight CatBoost (Strict Parity) | 0.272 | 0.256 | 0.288 | 20 | 3 | TabPFNRegressor | 0.302 | >10 |
-| tdc_clearance_hepatocyte_az | SPEARMAN | MapLight + GNN (CatBoost, Strict Parity) | 0.516 | 0.633 | 0.440 | 16 | 3 | TabPFNRegressor | 0.186 | >10 |
-| tdc_clintox | ROC_AUC | CFA (Combinatorial Fusion) | 0.974 | 0.996 | 0.889 | 12 | 3 | TabPFNClassifier | 0.923 | 3 |
+| tdc_hia_hou | ROC_AUC | XGBoost (ADMETboost features) | 0.994 | 0.994 | 0.976 | 8 | 2 | XGBoost (ADMETboost features) | 0.994 | 2 |
+| tdc_ld50_zhu | MAE | TabPFNRegressor | 0.552 | 0.292 | 0.605 | 16 | 2 | XGBoost | 0.588 | 8 |
+| tdc_ppbr_az | MAE | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 7.118 | 0.679 | 7.914 | 16 | 2 | TabPFNRegressor | 8.537 | >10 |
+| tdc_solubility_aqsoldb | MAE | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 0.676 | 0.557 | 0.776 | 17 | 2 | XGBoost (ADMETboost features) | 0.719 | 2 |
+| tdc_caco2_wang | MAE | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 0.269 | 0.256 | 0.288 | 20 | 3 | XGBoost (ADMETboost features) | 0.293 | >10 |
+| tdc_clearance_hepatocyte_az | SPEARMAN | MapLight + GNN (CatBoost, Strict Parity) | 0.516 | 0.633 | 0.440 | 16 | 3 | XGBoost (ADMETboost features) | 0.369 | >10 |
+| tdc_clintox | ROC_AUC | CFA (Combinatorial Fusion) | 0.974 | 0.996 | 0.889 | 12 | 3 | AdaBoost | 0.886 | >10 |
 | tdc_cyp2c9_substrate_carbonmangels | AUPRC | Chemprop v2 (AttentiveFP, ensemble=3) | 0.438 | 0.450 | 0.360 | 6 | 3 | SVC | 0.301 | 7 |
-| tdc_cyp2c9_veith | AUPRC | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 0.827 | 0.877 | 0.770 | 6 | 3 | TabPFNClassifier | 0.530 | 7 |
-| tdc_herg | ROC_AUC | Chemprop v2 (AttentiveFP, ensemble=3) | 0.857 | 0.880 | 0.806 | 7 | 3 | TabPFNClassifier | 0.732 | 8 |
-| tdc_lipophilicity_astrazeneca | MAE | Chemprop v2 (D-MPNN, ensemble=3) | 0.425 | 0.406 | 0.515 | 17 | 3 | TabPFNRegressor | 0.439 | 4 |
-| tdc_ppbr_az | MAE | MapLight + GNN (CatBoost, Strict Parity) | 7.306 | 0.679 | 7.914 | 16 | 3 | ChemML MLP (PyTorch) | 9.741 | >10 |
-| polaris_adme_fang_hppb_1 | MSE | Chemprop v2 (D-MPNN, ensemble=3) | 0.197 | 0.143 | 0.303 | 10 | 4 | ElasticNetCV | 0.300 | 10 |
-| polaris_adme_fang_perm_1 | MSE | Uni-Mol V1 | 0.159 | 0.113 | 0.239 | 10 | 4 | ChemML MLP (PyTorch) | 0.212 | 9 |
-| tdc_cyp2d6_substrate_carbonmangels | AUPRC | Chemprop v2 (D-MPNN + RDKit2D, ensemble=3) | 0.693 | 0.766 | 0.570 | 7 | 4 | XGBoost (ADMETboost features) | 0.644 | 6 |
-| tdc_dili | ROC_AUC | XGBoost (ADMETboost features) | 0.923 | 0.945 | 0.852 | 6 | 4 | LogisticRegression | 0.745 | 7 |
-| tdc_pgp_broccatelli | ROC_AUC | Uni-Mol V2 (84m) | 0.933 | 0.994 | 0.911 | 8 | 4 | LogisticRegression | 0.868 | 9 |
-| tdc_vdss_lombardo | SPEARMAN | MapLight + GNN (CatBoost, Strict Parity) | 0.680 | 0.942 | 0.582 | 16 | 5 | TabPFNRegressor | 0.489 | >10 |
-| polaris_adme_fang_rclint_1 | MSE | Chemprop v2 (D-MPNN, ensemble=3) | 0.268 | 0.204 | 0.337 | 10 | 6 | TabPFNRegressor | 0.281 | 6 |
-| esol_delaney | RMSE | Ensemble (Weighted average (inverse OOF error)) | 0.624 | 0.558 | 0.743 | 30 | 7 | TabPFNRegressor | 0.673 | 9 |
-| polaris_adme_fang_solu_1 | MSE | Uni-Mol V2 (84m) | 0.304 | 0.222 | 0.323 | 10 | 7 | TabPFNRegressor | 0.373 | >10 |
-| tdc_cyp3a4_substrate_carbonmangels | ROC_AUC | XGBoost (ADMETboost features) | 0.660 | 0.692 | 0.651 | 7 | 7 | TabPFNClassifier | 0.621 | 8 |
-| tdc_hydrationfreeenergy_freesolv | RMSE | Ensemble (Weighted average (inverse OOF error)) | 1.085 | 0.654 | 1.211 | 12 | 7 | TabPFNRegressor | 1.116 | 9 |
-| tdc_skin_reaction | ROC_AUC | XGBoost (ADMETboost features) | 0.667 | 0.741 | 0.677 | 21 | >10 | TabPFNClassifier | 0.525 | >10 |
-| tdc_tox21 | ROC_AUC | Chemprop v2 (AttentiveFP, ensemble=3) | 0.597 | 0.867 | 0.840 | 12 | >10 | TabPFNClassifier | 0.468 | >10 |
+| tdc_cyp2c9_veith | AUPRC | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 0.827 | 0.877 | 0.770 | 6 | 3 | AdaBoost | 0.705 | 7 |
+| tdc_herg | ROC_AUC | Chemprop v2 (AttentiveFP, ensemble=3) | 0.857 | 0.880 | 0.806 | 7 | 3 | XGBoost (ADMETboost features) | 0.792 | 8 |
+| tdc_lipophilicity_astrazeneca | MAE | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 0.412 | 0.406 | 0.515 | 17 | 3 | TabPFNRegressor | 0.439 | 4 |
+| polaris_adme_fang_hppb_1 | MSE | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 0.178 | 0.143 | 0.303 | 10 | 4 | XGBoost (ADMETboost features) | 0.214 | 5 |
+| polaris_adme_fang_perm_1 | MSE | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 0.144 | 0.113 | 0.239 | 10 | 4 | XGBoost (ADMETboost features) | 0.194 | 8 |
+| tdc_cyp2d6_substrate_carbonmangels | AUPRC | Chemprop v2 (D-MPNN + RDKit2D, ensemble=3) | 0.693 | 0.766 | 0.570 | 7 | 4 | ChemML MLP (PyTorch) | 0.512 | 8 |
+| tdc_dili | ROC_AUC | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 0.933 | 0.945 | 0.852 | 6 | 4 | XGBoost (ADMETboost features) | 0.923 | 4 |
+| tdc_pgp_broccatelli | ROC_AUC | Uni-Mol V2 (84m) | 0.933 | 0.994 | 0.911 | 8 | 4 | Random forest | 0.904 | 9 |
+| polaris_adme_fang_rclint_1 | MSE | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 0.234 | 0.204 | 0.337 | 10 | 5 | XGBoost | 0.293 | 6 |
+| tdc_vdss_lombardo | SPEARMAN | MapLight + GNN (CatBoost, Strict Parity) | 0.680 | 0.942 | 0.582 | 16 | 5 | XGBoost (ADMETboost features) | 0.465 | >10 |
+| tdc_cyp3a4_substrate_carbonmangels | ROC_AUC | Ensemble (OOF Stacking (RidgeCV, 5-fold)) | 0.665 | 0.692 | 0.651 | 7 | 6 | XGBoost (ADMETboost features) | 0.660 | 7 |
+| esol_delaney | RMSE | Ensemble (Weighted average (inverse OOF error)) | 0.622 | 0.558 | 0.743 | 30 | 7 | TabPFNRegressor | 0.673 | 9 |
+| polaris_adme_fang_solu_1 | MSE | Uni-Mol V2 (84m) | 0.304 | 0.222 | 0.323 | 10 | 7 | XGBoost (ADMETboost features) | 0.353 | >10 |
+| tdc_hydrationfreeenergy_freesolv | RMSE | Ensemble (Weighted average (inverse OOF error)) | 1.075 | 0.654 | 1.211 | 12 | 7 | XGBoost (ADMETboost features) | 1.138 | 9 |
+| tdc_skin_reaction | ROC_AUC | XGBoost (ADMETboost features) | 0.667 | 0.741 | 0.677 | 21 | >10 | XGBoost (ADMETboost features) | 0.667 | >10 |
+| tdc_tox21 | ROC_AUC | Chemprop v2 (AttentiveFP, ensemble=3) | 0.597 | 0.867 | 0.840 | 12 | >10 | Extra trees | 0.549 | >10 |
 <!-- /TABLE -->
 
 **Table S7.** Per-dataset leaderboard comparison, sorted by estimated rank. "References (n)" is the number of published values available for that dataset and metric; ranks from sparse reference sets are correspondingly uncertain. The `tdc_ppbr_az` top-1 reference (MAE 0.679) is inconsistent in scale with the rest of that dataset's references (top-10 cutoff 7.914) and its top-1 gap should be disregarded. *Single split and single seed: individual placements are provisional and no variance is estimated (see Limitations).*
@@ -1082,54 +1086,54 @@ No registration or login is needed to download, install or run QSARena, so revie
 <!-- TABLE:tableS10_meta_effect_sizes -->
 | Model family | Meta-feature | Datasets | Spearman rho | 95% CI | Permutation p | BH q |
 |---|---|---|---|---|---|---|
-| Conventional ML | log10_n_train | 44 | 0.045 | -0.29 to 0.36 | 0.768 | 0.922 |
-| Conventional ML | internal_diversity | 44 | -0.326 | -0.60 to -0.01 | 0.029 | 0.222 |
-| Conventional ML | mean_snn | 44 | 0.226 | -0.10 to 0.51 | 0.143 | 0.430 |
-| Conventional ML | ood_fraction | 44 | -0.277 | -0.55 to 0.04 | 0.071 | 0.342 |
-| Conventional ML | scaffolds_per_molecule | 44 | 0.148 | -0.17 to 0.43 | 0.330 | 0.587 |
-| Conventional ML | label_asymmetry | 44 | 0.178 | -0.13 to 0.45 | 0.248 | 0.509 |
-| Ensemble (stacking / averaging) | log10_n_train | 44 | -0.445 | -0.70 to -0.13 | 0.001 | 0.062 |
-| Ensemble (stacking / averaging) | internal_diversity | 44 | 0.037 | -0.29 to 0.35 | 0.808 | 0.923 |
-| Ensemble (stacking / averaging) | mean_snn | 44 | -0.328 | -0.59 to -0.02 | 0.032 | 0.222 |
-| Ensemble (stacking / averaging) | ood_fraction | 44 | 0.339 | 0.01 to 0.62 | 0.026 | 0.222 |
-| Ensemble (stacking / averaging) | scaffolds_per_molecule | 44 | 0.151 | -0.14 to 0.42 | 0.325 | 0.587 |
-| Ensemble (stacking / averaging) | label_asymmetry | 44 | 0.338 | 0.03 to 0.60 | 0.026 | 0.222 |
-| CFA combinatorial fusion | log10_n_train | 44 | -0.240 | -0.47 to 0.02 | 0.119 | 0.430 |
-| CFA combinatorial fusion | internal_diversity | 44 | -0.307 | -0.58 to 0.01 | 0.047 | 0.280 |
-| CFA combinatorial fusion | mean_snn | 44 | 0.011 | -0.31 to 0.32 | 0.946 | 0.966 |
-| CFA combinatorial fusion | ood_fraction | 44 | 0.016 | -0.30 to 0.32 | 0.922 | 0.962 |
-| CFA combinatorial fusion | scaffolds_per_molecule | 44 | 0.200 | -0.10 to 0.47 | 0.186 | 0.496 |
-| CFA combinatorial fusion | label_asymmetry | 44 | 0.111 | -0.21 to 0.41 | 0.481 | 0.739 |
-| Uni-Mol (3D pretrained) | log10_n_train | 44 | -0.171 | -0.46 to 0.14 | 0.272 | 0.521 |
-| Uni-Mol (3D pretrained) | internal_diversity | 44 | 0.278 | -0.07 to 0.60 | 0.070 | 0.342 |
-| Uni-Mol (3D pretrained) | mean_snn | 44 | -0.020 | -0.33 to 0.28 | 0.894 | 0.962 |
-| Uni-Mol (3D pretrained) | ood_fraction | 44 | -0.062 | -0.37 to 0.26 | 0.690 | 0.872 |
-| Uni-Mol (3D pretrained) | scaffolds_per_molecule | 44 | 0.032 | -0.31 to 0.38 | 0.841 | 0.939 |
-| Uni-Mol (3D pretrained) | label_asymmetry | 44 | 0.018 | -0.30 to 0.35 | 0.908 | 0.962 |
-| TabPFN (tabular foundation) | log10_n_train | 44 | 0.241 | -0.13 to 0.55 | 0.118 | 0.430 |
-| TabPFN (tabular foundation) | internal_diversity | 44 | -0.255 | -0.54 to 0.05 | 0.101 | 0.430 |
-| TabPFN (tabular foundation) | mean_snn | 44 | 0.179 | -0.12 to 0.47 | 0.254 | 0.509 |
-| TabPFN (tabular foundation) | ood_fraction | 44 | -0.131 | -0.44 to 0.20 | 0.397 | 0.681 |
-| TabPFN (tabular foundation) | scaffolds_per_molecule | 44 | 0.101 | -0.24 to 0.42 | 0.508 | 0.739 |
-| TabPFN (tabular foundation) | label_asymmetry | 44 | -0.203 | -0.48 to 0.10 | 0.181 | 0.496 |
-| Chemprop v2 GNN | log10_n_train | 42 | -0.096 | -0.39 to 0.21 | 0.548 | 0.774 |
-| Chemprop v2 GNN | internal_diversity | 42 | 0.074 | -0.25 to 0.40 | 0.635 | 0.824 |
-| Chemprop v2 GNN | mean_snn | 42 | -0.039 | -0.35 to 0.28 | 0.805 | 0.923 |
-| Chemprop v2 GNN | ood_fraction | 42 | -0.004 | -0.33 to 0.30 | 0.979 | 0.979 |
-| Chemprop v2 GNN | scaffolds_per_molecule | 42 | 0.053 | -0.25 to 0.34 | 0.733 | 0.902 |
-| Chemprop v2 GNN | label_asymmetry | 42 | 0.322 | -0.01 to 0.60 | 0.032 | 0.222 |
-| MapLight + GNN | log10_n_train | 44 | -0.226 | -0.48 to 0.07 | 0.138 | 0.430 |
-| MapLight + GNN | internal_diversity | 44 | 0.179 | -0.15 to 0.47 | 0.246 | 0.509 |
-| MapLight + GNN | mean_snn | 44 | -0.112 | -0.41 to 0.20 | 0.468 | 0.739 |
-| MapLight + GNN | ood_fraction | 44 | -0.087 | -0.39 to 0.23 | 0.574 | 0.787 |
-| MapLight + GNN | scaffolds_per_molecule | 44 | 0.230 | -0.06 to 0.50 | 0.130 | 0.430 |
-| MapLight + GNN | label_asymmetry | 44 | -0.080 | -0.38 to 0.25 | 0.602 | 0.803 |
-| Deep tabular NN (ChemML MLP) | log10_n_train | 44 | -0.392 | -0.63 to -0.10 | 0.009 | 0.222 |
-| Deep tabular NN (ChemML MLP) | internal_diversity | 44 | -0.178 | -0.45 to 0.12 | 0.251 | 0.509 |
-| Deep tabular NN (ChemML MLP) | mean_snn | 44 | -0.110 | -0.40 to 0.20 | 0.478 | 0.739 |
-| Deep tabular NN (ChemML MLP) | ood_fraction | 44 | 0.108 | -0.23 to 0.42 | 0.494 | 0.739 |
-| Deep tabular NN (ChemML MLP) | scaffolds_per_molecule | 44 | 0.193 | -0.13 to 0.49 | 0.208 | 0.499 |
-| Deep tabular NN (ChemML MLP) | label_asymmetry | 44 | 0.196 | -0.12 to 0.48 | 0.206 | 0.499 |
+| Conventional ML | log10_n_train | 44 | 0.034 | -0.29 to 0.35 | 0.818 | 0.873 |
+| Conventional ML | internal_diversity | 44 | -0.329 | -0.59 to -0.01 | 0.028 | 0.238 |
+| Conventional ML | mean_snn | 44 | 0.325 | 0.01 to 0.58 | 0.034 | 0.238 |
+| Conventional ML | ood_fraction | 44 | -0.326 | -0.59 to -0.01 | 0.035 | 0.238 |
+| Conventional ML | scaffolds_per_molecule | 44 | 0.139 | -0.20 to 0.43 | 0.367 | 0.710 |
+| Conventional ML | label_asymmetry | 44 | 0.204 | -0.10 to 0.46 | 0.179 | 0.461 |
+| Ensemble (stacking / averaging) | log10_n_train | 44 | -0.467 | -0.70 to -0.19 | 0.001 | 0.058 |
+| Ensemble (stacking / averaging) | internal_diversity | 44 | 0.207 | -0.14 to 0.52 | 0.180 | 0.461 |
+| Ensemble (stacking / averaging) | mean_snn | 44 | -0.393 | -0.66 to -0.09 | 0.008 | 0.202 |
+| Ensemble (stacking / averaging) | ood_fraction | 44 | 0.288 | -0.03 to 0.59 | 0.062 | 0.297 |
+| Ensemble (stacking / averaging) | scaffolds_per_molecule | 44 | 0.147 | -0.14 to 0.43 | 0.336 | 0.710 |
+| Ensemble (stacking / averaging) | label_asymmetry | 44 | 0.275 | -0.03 to 0.54 | 0.070 | 0.308 |
+| CFA combinatorial fusion | log10_n_train | 44 | -0.220 | -0.47 to 0.07 | 0.156 | 0.461 |
+| CFA combinatorial fusion | internal_diversity | 44 | -0.325 | -0.59 to -0.01 | 0.033 | 0.238 |
+| CFA combinatorial fusion | mean_snn | 44 | 0.125 | -0.21 to 0.43 | 0.421 | 0.710 |
+| CFA combinatorial fusion | ood_fraction | 44 | -0.081 | -0.39 to 0.24 | 0.602 | 0.743 |
+| CFA combinatorial fusion | scaffolds_per_molecule | 44 | 0.216 | -0.10 to 0.50 | 0.159 | 0.461 |
+| CFA combinatorial fusion | label_asymmetry | 44 | 0.108 | -0.19 to 0.40 | 0.486 | 0.710 |
+| Uni-Mol (3D pretrained) | log10_n_train | 44 | -0.108 | -0.41 to 0.20 | 0.488 | 0.710 |
+| Uni-Mol (3D pretrained) | internal_diversity | 44 | 0.146 | -0.21 to 0.49 | 0.348 | 0.710 |
+| Uni-Mol (3D pretrained) | mean_snn | 44 | 0.081 | -0.25 to 0.40 | 0.604 | 0.743 |
+| Uni-Mol (3D pretrained) | ood_fraction | 44 | -0.118 | -0.46 to 0.22 | 0.442 | 0.710 |
+| Uni-Mol (3D pretrained) | scaffolds_per_molecule | 44 | 0.102 | -0.23 to 0.41 | 0.516 | 0.729 |
+| Uni-Mol (3D pretrained) | label_asymmetry | 44 | 0.075 | -0.26 to 0.41 | 0.628 | 0.753 |
+| TabPFN (tabular foundation) | log10_n_train | 41 | 0.149 | -0.24 to 0.50 | 0.346 | 0.710 |
+| TabPFN (tabular foundation) | internal_diversity | 41 | -0.242 | -0.54 to 0.10 | 0.130 | 0.461 |
+| TabPFN (tabular foundation) | mean_snn | 41 | 0.098 | -0.21 to 0.40 | 0.540 | 0.730 |
+| TabPFN (tabular foundation) | ood_fraction | 41 | -0.004 | -0.34 to 0.33 | 0.983 | 0.983 |
+| TabPFN (tabular foundation) | scaffolds_per_molecule | 41 | 0.071 | -0.28 to 0.41 | 0.661 | 0.755 |
+| TabPFN (tabular foundation) | label_asymmetry | 41 | -0.126 | -0.42 to 0.18 | 0.428 | 0.710 |
+| Chemprop v2 GNN | log10_n_train | 42 | -0.008 | -0.31 to 0.30 | 0.965 | 0.983 |
+| Chemprop v2 GNN | internal_diversity | 42 | -0.050 | -0.37 to 0.28 | 0.752 | 0.840 |
+| Chemprop v2 GNN | mean_snn | 42 | 0.131 | -0.19 to 0.43 | 0.405 | 0.710 |
+| Chemprop v2 GNN | ood_fraction | 42 | -0.119 | -0.44 to 0.21 | 0.454 | 0.710 |
+| Chemprop v2 GNN | scaffolds_per_molecule | 42 | 0.141 | -0.16 to 0.42 | 0.370 | 0.710 |
+| Chemprop v2 GNN | label_asymmetry | 42 | 0.325 | -0.03 to 0.62 | 0.031 | 0.238 |
+| MapLight + GNN | log10_n_train | 44 | -0.205 | -0.47 to 0.10 | 0.182 | 0.461 |
+| MapLight + GNN | internal_diversity | 44 | 0.091 | -0.23 to 0.40 | 0.559 | 0.730 |
+| MapLight + GNN | mean_snn | 44 | -0.071 | -0.38 to 0.24 | 0.643 | 0.753 |
+| MapLight + GNN | ood_fraction | 44 | -0.113 | -0.42 to 0.22 | 0.467 | 0.710 |
+| MapLight + GNN | scaffolds_per_molecule | 44 | 0.291 | 0.01 to 0.54 | 0.052 | 0.278 |
+| MapLight + GNN | label_asymmetry | 44 | -0.090 | -0.39 to 0.25 | 0.563 | 0.730 |
+| Deep tabular NN (ChemML MLP) | log10_n_train | 44 | -0.315 | -0.57 to 0.00 | 0.042 | 0.250 |
+| Deep tabular NN (ChemML MLP) | internal_diversity | 44 | -0.251 | -0.51 to 0.04 | 0.100 | 0.401 |
+| Deep tabular NN (ChemML MLP) | mean_snn | 44 | -0.017 | -0.33 to 0.31 | 0.912 | 0.952 |
+| Deep tabular NN (ChemML MLP) | ood_fraction | 44 | 0.039 | -0.31 to 0.36 | 0.807 | 0.873 |
+| Deep tabular NN (ChemML MLP) | scaffolds_per_molecule | 44 | 0.224 | -0.10 to 0.51 | 0.141 | 0.461 |
+| Deep tabular NN (ChemML MLP) | label_asymmetry | 44 | 0.181 | -0.14 to 0.47 | 0.242 | 0.581 |
 <!-- /TABLE -->
 
 **Table S10.** Exploratory family × meta-feature associations: Spearman correlation between each meta-feature and the relative gap of the family's best model to the per-dataset best, with a dataset-bootstrap 95% CI (10,000 resamples), a two-sided label-permutation p-value and a Benjamini–Hochberg q-value over the whole grid. Positive ρ means the family falls further behind as the meta-feature increases.
@@ -1137,24 +1141,24 @@ No registration or login is needed to download, install or run QSARena, so revie
 <!-- TABLE:tableS11_meta_selector_regret -->
 | Selector (model | feature blocks) | Mean regret (%) | Median regret (%) | Pick within 5% of best (%) | SBS-to-oracle gap closed |
 |---|---|---|---|---|
-| sbs | 7.061 | 3.940 | 56.818 | 0.000 |
-| knn/F0 | 7.282 | 1.748 | 65.909 | -0.031 |
-| ridge/F0 | 4.624 | 1.410 | 70.455 | 0.345 |
-| rf/F0 | 3.965 | 2.081 | 70.455 | 0.439 |
-| knn/F0+F1 | 6.080 | 1.583 | 77.273 | 0.139 |
-| ridge/F0+F1 | 5.161 | 2.109 | 70.455 | 0.269 |
-| rf/F0+F1 | 5.448 | 1.585 | 75.000 | 0.228 |
-| knn/F0+F2 | 4.968 | 1.957 | 70.455 | 0.296 |
-| ridge/F0+F2 | 4.587 | 1.410 | 70.455 | 0.350 |
-| rf/F0+F2 | 6.185 | 3.362 | 63.636 | 0.124 |
-| knn/F0+F3 | 6.204 | 1.817 | 68.182 | 0.121 |
-| ridge/F0+F3 | 5.197 | 1.585 | 70.455 | 0.264 |
-| rf/F0+F3 | 4.165 | 2.271 | 65.909 | 0.410 |
-| knn/F0-F3 | 4.900 | 1.745 | 75.000 | 0.306 |
-| ridge/F0-F3 | 5.329 | 1.742 | 70.455 | 0.245 |
-| rf/F0-F3 | 3.622 | 1.650 | 72.727 | 0.487 |
-| tree_cls/F0 | 5.747 | 2.060 | 75.000 | 0.186 |
-| nested (headline) | 5.978 | 2.154 | 63.636 | 0.153 |
+| sbs | 3.310 | 0.031 | 84.091 | 0.000 |
+| knn/F0 | 3.760 | 0.159 | 79.545 | -0.136 |
+| ridge/F0 | 2.982 | 0.000 | 86.364 | 0.099 |
+| rf/F0 | 4.236 | 0.082 | 77.273 | -0.280 |
+| knn/F0+F1 | 3.629 | 0.000 | 81.818 | -0.096 |
+| ridge/F0+F1 | 3.403 | 0.000 | 81.818 | -0.028 |
+| rf/F0+F1 | 3.650 | 1.086 | 81.818 | -0.102 |
+| knn/F0+F2 | 3.728 | 0.159 | 81.818 | -0.126 |
+| ridge/F0+F2 | 3.323 | 0.000 | 84.091 | -0.004 |
+| rf/F0+F2 | 4.163 | 0.159 | 75.000 | -0.257 |
+| knn/F0+F3 | 2.739 | 0.000 | 88.636 | 0.173 |
+| ridge/F0+F3 | 3.133 | 0.000 | 84.091 | 0.054 |
+| rf/F0+F3 | 3.216 | 0.000 | 84.091 | 0.028 |
+| knn/F0-F3 | 3.375 | 0.000 | 81.818 | -0.020 |
+| ridge/F0-F3 | 4.525 | 0.031 | 81.818 | -0.367 |
+| rf/F0-F3 | 3.516 | 0.051 | 81.818 | -0.062 |
+| tree_cls/F0 | 4.837 | 0.000 | 79.545 | -0.461 |
+| nested (headline) | 3.115 | 0.000 | 86.364 | 0.059 |
 <!-- /TABLE -->
 
 **Table S11.** Family selector (v2), leave-one-dataset-out regret: the relative gap (%) of the recommended family to the per-dataset best. Rows are pre-specified variants (model | feature blocks: F0 size, similarity, label asymmetry and task; F1 chemistry; F2 label landscape; F3 training-set CV landmarks); `sbs` always picks the family with the best record on the other datasets. The nested row chooses the variant inside an inner leave-one-dataset-out loop and is the only unbiased estimate; single variants are exploratory.

@@ -197,20 +197,27 @@ Source: `Peer_Review_Report_QSARena_No_Single_Model_Family_Dominates.docx`; item
       §3.12 post-hoc paragraph. See "Implementation of the recommendations" in `docs/FEATURE_EXPANSION_PLAN.md`.
 - [x] **Full CheMeleon run: DECLINED by the author (2026-10-03).** The opt-in variant stays in the code; the
       single-dataset pilot (Caco-2 MAE 0.382 vs 0.380 for D-MPNN, ~7x slower) is the only CheMeleon fine-tuning result.
-- [ ] **Fold `XGBoost (ADMETboost features)` into the benchmark (approved 2026-10-03; in progress).** The base model
-      is training into `qsarena_benchmark_oof_ensemble` (`logs/run_foldin_admetboost.ps1`). PAUSED 2026-10-03 at
-      34/44 by the author; relaunch the same script to resume. Then rebuild the ensembles
-      (once, after the nested-selection decision), render, and update the paper: 31 models, Table 1, §2.13, and §3.12,
-      where the descriptor model becomes a member rather than a post-hoc note.
-- [ ] **Fix the feature-selection CV leak throughout (REOPENED 2026-10-03; needs a go-ahead for ~50-55 h of RTX compute).**
-      Confirmed causally: `qsarena/feature_expansion/selection_leak.py`. Scope (CV metrics, OOF and ensembles, Chemprop
-      selected-descriptor OOF, notebook; CFA's in-sample ranking as a related fix), design (pin the selector method per
-      dataset) and cost: `docs/NESTED_SELECTION_CV_PLAN.md`. **Code done 2026-10-04** (runner + notebooks; notebook
-      not yet executed end to end). Next: a 1 h pilot after the fold-in, then the run (needs the go-ahead).
-- [ ] **Hard-label predictions on 4 binary datasets catalogued as rmse** (fixed in code 2026-10-04; 11 models retrained
-      and validated, see AGENTS.md). The paper's §2.13 line "base-model results are unchanged from the source runs" must
-      then say these were retrained. Decide TabPFN on cyp1a2/cyp2c19/herg_karim/pampa (API credits vs exclude); then the ensemble
-      rebuild picks up the probability OOF; re-render the paper (wins/rankings on those 4 datasets will change).
+- [x] **Fold `XGBoost (ADMETboost features)` into the benchmark** (approved 2026-10-03; done 2026-10-04/05). Base
+      model on 44/44 datasets with nothing else retrained; ensembles and CFA rebuilt once (outer selection); paper
+      updated (31 models, Table 1, §2.7, §2.13, §3.12 as a member); verifier 112/112; pushed 980e3c4.
+- [x] **Fix the feature-selection CV leak throughout (go-ahead 2026-10-05; DONE 2026-10-06, paper updated).** Confirmed causally:
+      `qsarena/feature_expansion/selection_leak.py`. Code done 2026-10-04 (`--cv-selection nested`, runner and
+      notebooks; notebook not yet executed end to end). Run: `logs/run_nested_selection.ps1`; the pilot on
+      `tdc_caco2_wang` passed; the full run started 2026-10-05 03:16 PDT; PAUSED by the author at 20:00 PDT with 39/44 done (CYP3A4,
+      CYP1A2, CYP2C19, CYP2D6, hERG-Karim remain, ~9 h); resumed 22:50 PDT on the five remaining datasets (`-Tag rest`). TabPFN gets nested CV from local fold refits but is kept out of
+      the ensembles (`--ensemble-exclude-model`). After it: checks, render, verifier values, paper (§2.13, the CV-leak
+      caveat becomes a Methods statement, all CV-dependent numbers) -- all done 2026-10-06. Details:
+      `docs/NESTED_SELECTION_CV_PLAN.md`.
+- [ ] **Author: revisit the title.** Ensembles now win 22 of 44 (single families at most 6); the current title says
+      ensembles and conventional ML "perform comparably" to pretrained models. Options are in the title item above.
+- [ ] Notebook nested-selection path (`nested_selection_cv`) is still only syntax-checked; execute it end to end.
+- [x] **Hard-label predictions on 4 binary datasets catalogued as rmse** (fixed 2026-10-04). 11 models retrained and
+      validated (§2.13 discloses it). TabPFN (2026-10-05): pampa retrained with the local `tabpfn` package; on
+      cyp1a2/cyp2c19/herg_karim its rows are withdrawn (local TabPFN does not fit 8 GB at 10k x 1,000; the API rerun
+      is ~110M tokens per dataset). Enters the paper with the nested-run render: replace the §2.13 "TabPFN ... still
+      carries label outputs" sentence with the withdrawal, and say pampa's TabPFN is the local v2.6 model.
+- [ ] **Author decision (optional): TabPFN on cyp1a2/cyp2c19/herg_karim via the Prior Labs API** (~110M estimated
+      tokens each, vs the runner's 5M/day guard) to restore those three results. Not run.
 - [ ] CFA ranks fusion candidates by in-sample training error; move it to OOF predictions (needs the CFA stage
       after the OOF stage).
 

@@ -48,7 +48,7 @@ if not hasattr(np, "product"):
     # Compatibility for older graph/descriptor dependencies under NumPy 2.x.
     np.product = np.prod  # type: ignore[attr-defined]
 
-from sklearn.base import clone
+from sklearn.base import BaseEstimator, ClassifierMixin, RegressorMixin, clone
 from sklearn.ensemble import (
     AdaBoostClassifier,
     AdaBoostRegressor,
@@ -5048,6 +5048,105 @@ def add_leaderboard_reference_columns(
 ADMETBOOST_XGB_LABEL = "XGBoost (ADMETboost features)"
 
 
+TABPFN_LOCAL_PREDICT_CHUNK_ROWS = 2048
+
+
+class _ChunkedPredictMixin:
+    """Predict in row chunks. The local tabpfn package attends every test row to the whole training context at
+    once, so predicting ~10k rows against a ~10k-row, ~1,000-feature context asks for >30 GB of GPU memory. Each
+    call recomputes the context, so chunks start large and halve only on a CUDA out-of-memory error (2,048 rows fit
+    an 8 GB GPU against an ~8k-row context but not a 10k-row one). The last result is reused when the same input
+    comes back: the CV scorers are custom callables, so sklearn would otherwise predict once per metric (5x)."""
+
+    def fit(self, X, y):
+        self.estimator_ = clone(self.estimator)
+        self._last_prediction = None
+        self.estimator_.fit(X, y)
+        if hasattr(self.estimator_, "classes_"):
+            self.classes_ = self.estimator_.classes_
+        return self
+
+    def _chunked(self, method: str, X):
+        # Keyed by content: the Pipeline's imputer/scaler hand over a fresh array on every call.
+        values = np.ascontiguousarray(np.asarray(X, dtype=float))
+        key = (method, values.shape, hashlib.blake2b(values.tobytes(), digest_size=16).hexdigest())
+        cached = getattr(self, "_last_prediction", None)
+        if cached is not None and cached[0] == key:
+            return cached[1].copy()
+        out = self._chunked_uncached(method, X)
+        self._last_prediction = (key, out)
+        return out.copy()
+
+    def _chunked_uncached(self, method: str, X):
+        n_rows = int(X.shape[0])
+        size = max(1, int(self.chunk_rows))
+        take = (lambda a, b: X.iloc[a:b]) if hasattr(X, "iloc") else (lambda a, b: X[a:b])
+        parts: list[np.ndarray] = []
+        start = 0
+        while start < n_rows:
+            try:
+                parts.append(np.asarray(getattr(self.estimator_, method)(take(start, start + size))))
+            except Exception as exc:
+                if "out of memory" not in str(exc).lower() or size <= 1:
+                    raise
+                size = max(1, size // 2)
+                try:
+                    import torch
+
+                    torch.cuda.empty_cache()
+                except Exception:
+                    pass
+                continue
+            start += size
+        return np.concatenate(parts, axis=0)
+
+    def predict(self, X):
+        return self._chunked("predict", X)
+
+
+class ChunkedTabPFNClassifier(_ChunkedPredictMixin, ClassifierMixin, BaseEstimator):
+    def __init__(self, estimator: Any = None, chunk_rows: int = TABPFN_LOCAL_PREDICT_CHUNK_ROWS):
+        self.estimator = estimator
+        self.chunk_rows = chunk_rows
+
+    def predict_proba(self, X):
+        return self._chunked("predict_proba", X)
+
+
+class ChunkedTabPFNRegressor(_ChunkedPredictMixin, RegressorMixin, BaseEstimator):
+    def __init__(self, estimator: Any = None, chunk_rows: int = TABPFN_LOCAL_PREDICT_CHUNK_ROWS):
+        self.estimator = estimator
+        self.chunk_rows = chunk_rows
+
+
+_TORCH_GPU_MEMORY_CAPPED = False
+
+
+def _cap_torch_gpu_memory_once(fraction: float = 0.9) -> None:
+    """Make PyTorch raise out-of-memory instead of letting the Windows driver spill GPU memory into system RAM,
+    which kept local TabPFN 'running' at a fraction of its speed. The OOM is what triggers the chunk halving."""
+    global _TORCH_GPU_MEMORY_CAPPED
+    if _TORCH_GPU_MEMORY_CAPPED:
+        return
+    _TORCH_GPU_MEMORY_CAPPED = True
+    try:
+        import torch
+
+        if torch.cuda.is_available():
+            torch.cuda.set_per_process_memory_fraction(float(fraction))
+    except Exception:
+        pass
+
+
+def tabpfn_estimator(classification: bool) -> Any:
+    """TabPFN model step: chunked prediction on the local backend; the API client batches server-side."""
+    base = TabPFNClassifier() if classification else TabPFNRegressor()
+    if str(TABPFN_REGRESSOR_SOURCE).strip().lower() != "tabpfn":
+        return base
+    _cap_torch_gpu_memory_once()
+    return ChunkedTabPFNClassifier(base) if classification else ChunkedTabPFNRegressor(base)
+
+
 def admetboost_xgboost_estimator(args: argparse.Namespace, n_jobs: int) -> Any:
     from qsarena.feature_expansion.train import XGB_PARAMS  # single source of truth for the arm's settings
 
@@ -5227,7 +5326,7 @@ def conventional_models(
                 [
                     ("imputer", SimpleImputer(strategy="median")),
                     ("scaler", StandardScaler()),
-                    ("model", TabPFNClassifier()),
+                    ("model", tabpfn_estimator(classification=True)),
                 ]
             )
         if bool(getattr(args, "run_admetboost_xgboost", False)) and XGBClassifier is not None:
@@ -5411,7 +5510,7 @@ def conventional_models(
             [
                 ("imputer", SimpleImputer(strategy="median")),
                 ("scaler", StandardScaler()),
-                ("model", TabPFNRegressor()),
+                ("model", tabpfn_estimator(classification=False)),
             ]
         )
     if bool(getattr(args, "run_admetboost_xgboost", False)) and XGBRegressor is not None:
@@ -7396,6 +7495,23 @@ def nested_selection_columns(
     return columns
 
 
+NESTED_CV_METRIC_COLUMNS = ("cv_primary", "cv_roc_auc", "cv_auprc", "cv_balanced_accuracy", "cv_mcc",
+                            "cv_r2", "cv_rmse", "cv_mae")
+
+
+def withdraw_outer_cv_metrics(row: dict[str, Any], signature: str, reason: str) -> None:
+    """A selected-feature member whose CV cannot be redone with nested selection: keep its leaky outer CV value as
+    ``cv_primary_outer`` and blank the CV metrics, so it is never CV-eligible on a leaked score."""
+    if "cv_primary_outer" not in row or pd.isna(row.get("cv_primary_outer")):
+        row["cv_primary_outer"] = row.get("cv_primary", np.nan)
+    for column in NESTED_CV_METRIC_COLUMNS:
+        if column in row:
+            row[column] = np.nan
+    row["cv_selection"] = "outer_withdrawn"
+    row["cv_selection_signature"] = signature
+    row["cv_selection_note"] = reason
+
+
 def nested_cv_metric_columns(
     y_train: np.ndarray,
     oof: np.ndarray,
@@ -7882,6 +7998,8 @@ def family_arg_signature(args: argparse.Namespace, family: str) -> str:
     # the old behaviour, so ensembles of runs that keep outer selection resume unchanged.
     if family == "ensemble" and str(getattr(args, "cv_selection", "outer") or "outer") != "outer":
         payload["cv_selection"] = str(args.cv_selection)
+    if family == "ensemble" and ensemble_excluded_models(args):
+        payload["ensemble_exclude_model"] = sorted(ensemble_excluded_models(args))
     return hashlib.sha256(json.dumps(payload, sort_keys=True, default=str).encode("utf-8")).hexdigest()[:16]
 
 
@@ -7928,6 +8046,11 @@ def completed_dataset_is_current(dataset_dir: Path, spec: "DatasetSpec", args: a
         return True, "legacy checkpoint without a config fingerprint"
     current = dataset_resume_fingerprint(spec, args)
     return (stored == current), ("config fingerprint matches" if stored == current else "configuration or input changed")
+
+
+def ensemble_excluded_models(args: argparse.Namespace) -> set[str]:
+    """Exact model labels kept out of every ensemble (``--ensemble-exclude-model``)."""
+    return {str(name).strip() for name in (getattr(args, "ensemble_exclude_model", None) or []) if str(name).strip()}
 
 
 def split_stale_metric_rows(
@@ -10199,12 +10322,23 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
         # Members trained on the selected matrix. MapLight CatBoost, MapLight + GNN, Uni-Mol, XGBoost (ADMETboost
         # features) and the other Chemprop variants never see it.
         candidates: dict[str, str] = {}
+        withdrawn: dict[str, str] = {}
+        tabpfn_cells = int(len(y_tr)) * int(pd.DataFrame(X_train).shape[1])
+        tabpfn_cell_limit = int(getattr(args, "tabpfn_local_max_cells", 1_500_000) or 0)
         for name in model_bundle:
             name = str(name)
             if name.startswith("_") or name in {maplight_catboost_label, ADMETBOOST_XGB_LABEL}:
                 continue
-            if name in {"TabPFNRegressor", "TabPFNClassifier"} and tabpfn_via_api and not allow_api_refits:
-                continue
+            if name in {"TabPFNRegressor", "TabPFNClassifier"}:
+                if tabpfn_via_api and not allow_api_refits:
+                    withdrawn[name] = "TabPFN via the metered API: no nested fold refits"
+                    continue
+                if not tabpfn_via_api and tabpfn_cell_limit > 0 and tabpfn_cells > tabpfn_cell_limit:
+                    withdrawn[name] = (
+                        f"local TabPFN fold refits skipped: {tabpfn_cells:,} training cells exceed "
+                        f"--tabpfn-local-max-cells {tabpfn_cell_limit:,}"
+                    )
+                    continue
             candidates[name] = "estimator"
         for chemml_label in ("ChemML MLP (PyTorch)", "ChemML MLP (TensorFlow)"):
             candidates[chemml_label] = "chemml"
@@ -10213,10 +10347,18 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
                 if bool(variant.get("use_selected_descriptors", False)):
                     candidates[str(variant.get("label", ""))] = "chemprop"
         todo = {}
+        metrics_only = {}  # a metrics row but no saved predictions (so not an ensemble member): nested CV only
         for name, kind in candidates.items():
             payload = prediction_payloads.get(name)
             row = latest_row(name)
-            if not payload or row is None:
+            if row is None:
+                continue
+            if not payload:
+                if kind != "chemprop" and not (
+                    str(row.get("cv_selection", "")) == "nested"
+                    and str(row.get("cv_selection_signature", "")) == signature
+                ):
+                    metrics_only[name] = kind
                 continue
             done = (
                 str(row.get("cv_selection", "")) == "nested"
@@ -10228,8 +10370,19 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
                 payload.pop("oof", None)
                 payload.pop("oof_signature", None)
                 todo[name] = kind
-        if not todo:
-            return [f"Nested feature selection: all {len(candidates)} selected-feature member(s) already nested"]
+        withdrawn_notes = []
+        for name, reason in withdrawn.items():
+            row = latest_row(name)
+            if row is None:
+                continue
+            withdrawn_notes.append(f"{name}: CV withdrawn ({reason})")
+            if str(row.get("cv_selection", "")) == "outer_withdrawn" and str(row.get("cv_selection_signature", "")) == signature:
+                continue
+            withdraw_outer_cv_metrics(row, signature, reason)
+            persist_partial(f"nested-cv-withdrawn:{name}", event_model_name=name)
+        if not todo and not metrics_only:
+            return [f"Nested feature selection: every selected-feature member with a metrics row is already nested "
+                    f"({len(candidates)} candidate(s))", *withdrawn_notes]
 
         fold_columns = nested_selection_columns(
             split=split, selector_meta=selector_meta, args=args, folds=folds,
@@ -10247,7 +10400,7 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
             return rows(full_X[cols], fit_idx), rows(full_X[cols], val_idx)
 
         nested_refitters: dict[str, Callable[[np.ndarray, np.ndarray, Path], np.ndarray]] = {}
-        for name, kind in todo.items():
+        for name, kind in {**todo, **metrics_only}.items():
             if kind == "estimator":
                 def refit(fit_idx, val_idx, fold_dir, _est=model_bundle[name]):
                     X_fit, X_val = fold_frame(fit_idx, val_idx)
@@ -10299,6 +10452,28 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
             row["cv_selection_signature"] = signature
             persist_partial(f"nested-cv:{model_name}", event_model_name=model_name)
 
+        for name in metrics_only:
+            oof_only = np.full(len(y_tr), np.nan, dtype=float)
+            for k, (fit_idx, val_idx) in enumerate(folds):
+                fold_dir = dataset_dir / "nested_selection" / "metrics_only" / re.sub(r"[^A-Za-z0-9]+", "_", name) / f"fold_{k}"
+                oof_only[np.asarray(val_idx, dtype=int)] = np.asarray(
+                    nested_refitters[name](fit_idx, val_idx, fold_dir), dtype=float
+                ).reshape(-1)
+            row = latest_row(name)
+            if "cv_primary_outer" not in row or pd.isna(row.get("cv_primary_outer")):
+                row["cv_primary_outer"] = row.get("cv_primary", np.nan)
+            row.update(nested_cv_metric_columns(y_tr.to_numpy(), oof_only, folds, primary_metric, classification))
+            row["cv_selection"] = "nested"
+            row["cv_selection_signature"] = signature
+            row["cv_selection_note"] = "nested CV only: no saved predictions, so not an ensemble member"
+            persist_partial(f"nested-cv-metrics-only:{name}", event_model_name=name)
+        metrics_only_notes = (
+            [f"Nested feature selection: CV metrics only for {len(metrics_only)} model(s) without saved predictions"]
+            if metrics_only else []
+        )
+        if not todo:
+            return metrics_only_notes + withdrawn_notes
+
         notes = ensure_ensemble_oof_predictions(
             payloads={name: prediction_payloads[name] for name in todo},
             refitters=nested_refitters,
@@ -10309,7 +10484,8 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
             dataset_id=dataset_id,
             on_model_done=nested_done,
         )
-        return [f"Nested feature selection: refitted {len(todo)} member(s) on per-fold selections"] + notes
+        return [f"Nested feature selection: refitted {len(todo)} member(s) on per-fold selections", *metrics_only_notes,
+                *withdrawn_notes] + notes
 
     def run_ensemble_oof_stage() -> list[str]:
         """Give every candidate ensemble member out-of-fold training predictions (see
@@ -10351,6 +10527,8 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
             if bundle_name.startswith("_"):
                 continue
             if bundle_name in {"TabPFNRegressor", "TabPFNClassifier"} and tabpfn_via_api and not allow_api_refits:
+                continue
+            if bundle_name in ensemble_excluded_models(args):
                 continue
             if bundle_name == maplight_catboost_label and maplight_parity_mode:
                 if maplight_direct_X_train.empty:
@@ -10689,7 +10867,11 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
                             member_filter_notes,
                             _meta_model,
                         ) = build_ensemble_result(
-                            payloads=prediction_payloads,
+                            payloads={
+                                name: payload
+                                for name, payload in prediction_payloads.items()
+                                if name not in ensemble_excluded_models(args)
+                            },
                             method=str(method_name),
                             stacking_cv_folds=int(args.ensemble_stacking_cv_folds),
                             random_seed=int(args.random_seed),
@@ -10709,7 +10891,14 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
                         final_ensemble_row["ensemble_member_count"] = int(len(ensemble_members))
                         final_ensemble_row["ensemble_members"] = ", ".join(ensemble_members)
                         final_ensemble_row["ensemble_member_filter_notes"] = " | ".join(
-                            [*member_filter_notes, *ensemble_oof_notes]
+                            [
+                                *member_filter_notes,
+                                *ensemble_oof_notes,
+                                *(
+                                    f"{name}: excluded by --ensemble-exclude-model"
+                                    for name in sorted(ensemble_excluded_models(args) & set(prediction_payloads))
+                                ),
+                            ]
                         )
                         metrics_rows.append(
                             add_cost_columns({**base_meta, **final_ensemble_row})
@@ -12321,6 +12510,27 @@ def build_arg_parser() -> argparse.ArgumentParser:
             "Allow out-of-fold refits of members that call a metered remote API (TabPFN via the "
             "Prior Labs client): K extra fits per dataset, billed as credits. Off by default; the "
             "member is then left out of the ensemble unless it already has OOF predictions."
+        ),
+    )
+    parser.add_argument(
+        "--tabpfn-local-max-cells",
+        type=int,
+        default=1_500_000,
+        help=(
+            "With --cv-selection nested and the local tabpfn backend: skip TabPFN's nested fold refits when "
+            "training rows x selected features exceeds this (0 = no limit). Its CV metrics are then withdrawn "
+            "(kept as cv_primary_outer) rather than left leaky. ~10M cells did not fit an 8 GB GPU."
+        ),
+    )
+    parser.add_argument(
+        "--ensemble-exclude-model",
+        action="append",
+        default=[],
+        metavar="MODEL",
+        help=(
+            "Exact model label to keep out of every ensemble (repeatable; labels can contain commas). The model "
+            "is still trained and, with --cv-selection nested, still gets nested CV metrics. Used to keep "
+            "TabPFN out when its full-fit predictions came from a different backend than its fold refits."
         ),
     )
     parser.add_argument(

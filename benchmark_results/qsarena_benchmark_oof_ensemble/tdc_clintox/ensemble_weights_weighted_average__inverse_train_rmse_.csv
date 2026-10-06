@@ -1,20 +1,19 @@
 Model,Weight,Workflow
-LogisticRegression,0.053394117891236395,conventional
-SVC,0.04883353407984957,conventional
-Random forest,0.05023580376326843,conventional
-Extra trees,0.04837349208204893,conventional
-HistGradientBoosting,0.046466945952536684,conventional
-"Voting Classifier (KNN, SVM)",0.04772176293636871,conventional
-AdaBoost,0.03555632624317579,conventional
-Tabular MLP,0.04858416332424356,conventional
-XGBoost,0.04817131607458682,conventional
-CatBoost,0.050739888623343436,conventional
-ChemML MLP (PyTorch),0.11777100963244067,ChemML deep learning
-ChemML MLP (TensorFlow),0.0950843820729941,ChemML deep learning
-Uni-Mol V1,0.03700601208898574,Uni-Mol
-"MapLight + GNN (CatBoost, Strict Parity)",0.041436111608679944,MapLight + GNN
-"Chemprop v2 (D-MPNN, ensemble=3)",0.03980039993436204,Chemprop v2
-"Chemprop v2 (CMPNN, ensemble=3)",0.03842282512774088,Chemprop v2
-"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",0.053715149940884735,Chemprop v2
-TabPFNClassifier,0.05382792653616189,conventional
-XGBoost (ADMETboost features),0.044858832087091655,conventional
+LogisticRegression,0.05564008914608527,conventional
+SVC,0.05328529177245231,conventional
+Random forest,0.059494808050342816,conventional
+Extra trees,0.059494595923680185,conventional
+HistGradientBoosting,0.05517604481439709,conventional
+"Voting Classifier (KNN, SVM)",0.053667600657840236,conventional
+AdaBoost,0.044186443618525084,conventional
+Tabular MLP,0.05525095753863464,conventional
+XGBoost,0.05692009164963587,conventional
+CatBoost,0.05897998602986497,conventional
+ChemML MLP (PyTorch),0.06967684215934383,ChemML deep learning
+ChemML MLP (TensorFlow),0.06959194908200168,ChemML deep learning
+Uni-Mol V1,0.046364534061552096,Uni-Mol
+"MapLight + GNN (CatBoost, Strict Parity)",0.05191497001728322,MapLight + GNN
+"Chemprop v2 (D-MPNN, ensemble=3)",0.04986560005392629,Chemprop v2
+"Chemprop v2 (CMPNN, ensemble=3)",0.04813964769001479,Chemprop v2
+"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",0.0561472788368654,Chemprop v2
+XGBoost (ADMETboost features),0.0562032688975542,conventional

@@ -1,0 +1,28 @@
+{
+  "signature": "36e404592c4f4985eb774f70e3b06b2399f06af520f3dcfb934e06dc21aa423e|aef794f472552072",
+  "method": "elasticnet_cv",
+  "fold": 0,
+  "selected": [
+    "morgan_bit_0043",
+    "morgan_bit_0216",
+    "morgan_bit_0251",
+    "morgan_bit_0459",
+    "morgan_bit_0556",
+    "ecfp6_bit_0592",
+    "fcfp6_bit_0198",
+    "fcfp6_bit_0291",
+    "fcfp6_bit_0773",
+    "layered_bit_0075",
+    "layered_bit_0199",
+    "layered_bit_0318",
+    "layered_bit_0726",
+    "topological_torsion_bit_0466",
+    "maccs_bit_039",
+    "maplight_morgan_0216",
+    "avalon_count_0031",
+    "avalon_count_0211"
+  ],
+  "selector_method_used": "elasticnet_cv",
+  "selector_timed_out": false,
+  "seconds": 2.8
+}

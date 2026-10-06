@@ -1,6 +1,5 @@
 dataset,stage_index,total_stages,stage_label,step_type,model,workflow,started_at,started_epoch,status,ended_at,ended_epoch,duration_seconds
-tdc_ppbr_az,1,5,loading PyTDC ADME benchmark group: ppbr_az (official train_val/test split),load_dataset,,,2026-10-04 23:03:23 Pacific Daylight Time,1791180203.661382,completed,2026-10-04 23:03:24 Pacific Daylight Time,1791180204.2548273,0.593
-tdc_ppbr_az,2,5,building molecular features (cached),feature_generation,,,2026-10-04 23:03:24 Pacific Daylight Time,1791180204.2548273,resumed_cache,2026-10-04 23:03:24 Pacific Daylight Time,1791180204.2768447,0.022
-tdc_ppbr_az,3,5,splitting data and selecting features (cached),feature_selection,,,2026-10-04 23:03:24 Pacific Daylight Time,1791180204.2768447,resumed_cache,2026-10-04 23:03:24 Pacific Daylight Time,1791180204.295859,0.019
-tdc_ppbr_az,4,5,CFA combinatorial fusion,model,CFA (Combinatorial Fusion),cfa,2026-10-04 23:03:24 Pacific Daylight Time,1791180204.295859,completed,2026-10-04 23:03:24 Pacific Daylight Time,1791180204.7012286,0.405
-tdc_ppbr_az,5,5,ensemble (2 method(s)),model,Ensemble,ensemble,2026-10-04 23:03:24 Pacific Daylight Time,1791180204.7012286,completed,2026-10-04 23:03:47 Pacific Daylight Time,1791180227.4525397,22.751
+tdc_ppbr_az,1,4,loading PyTDC ADME benchmark group: ppbr_az (official train_val/test split),load_dataset,,,2026-10-05 22:39:40 Pacific Daylight Time,1791265180.026251,completed,2026-10-05 22:39:41 Pacific Daylight Time,1791265181.0424955,1.016
+tdc_ppbr_az,2,4,building molecular features (cached),feature_generation,,,2026-10-05 22:39:41 Pacific Daylight Time,1791265181.0424955,resumed_cache,2026-10-05 22:39:41 Pacific Daylight Time,1791265181.0688097,0.026
+tdc_ppbr_az,3,4,splitting data and selecting features (cached),feature_selection,,,2026-10-05 22:39:41 Pacific Daylight Time,1791265181.0688097,resumed_cache,2026-10-05 22:39:41 Pacific Daylight Time,1791265181.0952053,0.026
+tdc_ppbr_az,4,4,ensemble (2 method(s)),model,Ensemble,ensemble,2026-10-05 22:39:41 Pacific Daylight Time,1791265181.0952053,completed,2026-10-05 22:40:16 Pacific Daylight Time,1791265216.117991,35.023

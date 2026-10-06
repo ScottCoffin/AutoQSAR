@@ -2,10 +2,10 @@
   "status": "completed",
   "dataset": "tdc_ppbr_az",
   "source": "PyTDC ADME benchmark group: ppbr_az (official train_val/test split)",
-  "completed_at": "2026-10-04 23:03:47",
-  "elapsed_seconds": 24.388,
+  "completed_at": "2026-10-05 22:40:16",
+  "elapsed_seconds": 37.067,
   "n_metrics_rows": 44,
-  "n_stage_records": 5,
+  "n_stage_records": 4,
   "n_rows": 2790,
   "task_type": "regression",
   "primary_metric": "mae",
@@ -52,11 +52,11 @@
       "standardization": 0.9964221824686941,
       "knn_similarity": 0.8908765652951699
     },
-    "selected_model": "ChemML MLP (PyTorch)",
+    "selected_model": "TabPFNRegressor",
     "notes": [],
-    "mae_in_domain": 9.736671118170204,
-    "mae_out_of_domain": 9.773598814933528
+    "mae_in_domain": 8.594604840345784,
+    "mae_out_of_domain": 8.075345897059286
   },
   "stage23_signature": "b16bd15a4a3d5d6101f61d7066857c9310658252399d816f46d0890492d679f6",
-  "resume_fingerprint": "27a6a380f1471ae0a76e1461"
+  "resume_fingerprint": "6deef1e0a40025fdbce34ca3"
 }

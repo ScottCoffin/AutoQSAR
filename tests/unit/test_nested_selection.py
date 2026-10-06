@@ -72,3 +72,21 @@ def test_only_the_ensemble_signature_sees_nested_and_outer_is_unchanged():
         assert runner.family_arg_signature(outer, family) == runner.family_arg_signature(legacy, family)
         same = runner.family_arg_signature(outer, family) == runner.family_arg_signature(nested, family)
         assert same == (family != "ensemble"), family
+
+
+def test_ensemble_exclude_model_is_repeatable_and_only_changes_the_ensemble_signature():
+    plain = _args()
+    excluded = _args("--ensemble-exclude-model", "TabPFNRegressor", "--ensemble-exclude-model", "Voting Regressor (KNN, SVM)")
+    assert runner.ensemble_excluded_models(plain) == set()
+    assert runner.ensemble_excluded_models(excluded) == {"TabPFNRegressor", "Voting Regressor (KNN, SVM)"}
+    assert runner.family_arg_signature(plain, "ensemble") != runner.family_arg_signature(excluded, "ensemble")
+    assert runner.family_arg_signature(plain, "conventional") == runner.family_arg_signature(excluded, "conventional")
+
+
+def test_withdrawn_outer_cv_is_kept_aside_and_blanked():
+    row = {"model": "TabPFNRegressor", "cv_primary": 0.41, "cv_rmse": 0.41, "cv_r2": 0.7, "cv_folds": 5}
+    runner.withdraw_outer_cv_metrics(row, "sig", "too large")
+    assert row["cv_primary_outer"] == 0.41
+    assert np.isnan(row["cv_primary"]) and np.isnan(row["cv_rmse"]) and np.isnan(row["cv_r2"])
+    assert row["cv_folds"] == 5 and row["cv_selection"] == "outer_withdrawn" and row["cv_selection_note"] == "too large"
+    assert _args().tabpfn_local_max_cells == 1_500_000

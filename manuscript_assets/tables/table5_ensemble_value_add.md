@@ -1,8 +1,8 @@
 | Fusion method | Task | Datasets | Overall wins | Top-3 | Beats best base | Loses to best base | Median rank | Median rel. change vs best base |
 |---|---|---|---|---|---|---|---|---|
-| CFA fusion | classification | 22 | 2 | 10 | 4 | 18 | 5.000 | -0.006 |
-| Other ensemble | classification | 22 | 1 | 8 | 7 | 15 | 5.500 | -0.024 |
-| OOF stacking | classification | 22 | 5 | 8 | 5 | 17 | 8.500 | -0.034 |
-| Other ensemble | regression | 22 | 3 | 12 | 4 | 18 | 3.000 | -0.057 |
-| CFA fusion | regression | 22 | 1 | 7 | 2 | 20 | 6.000 | -0.067 |
-| OOF stacking | regression | 22 | 3 | 5 | 3 | 19 | 8.500 | -0.097 |
+| OOF stacking | classification | 22 | 6 | 15 | 8 | 14 | 2.000 | -0.005 |
+| CFA fusion | classification | 22 | 1 | 10 | 4 | 18 | 5.000 | -0.006 |
+| Other ensemble | classification | 22 | 2 | 7 | 7 | 15 | 4.500 | -0.018 |
+| OOF stacking | regression | 22 | 12 | 18 | 14 | 8 | 1.000 | 0.024 |
+| Other ensemble | regression | 22 | 2 | 9 | 5 | 17 | 4.000 | -0.040 |
+| CFA fusion | regression | 22 | 0 | 5 | 2 | 20 | 6.500 | -0.067 |

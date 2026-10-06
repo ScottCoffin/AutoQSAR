@@ -2,10 +2,10 @@
   "status": "completed",
   "dataset": "tdc_vdss_lombardo",
   "source": "PyTDC ADME benchmark group: vdss_lombardo (official train_val/test split)",
-  "completed_at": "2026-10-04 23:01:35",
-  "elapsed_seconds": 11.943,
+  "completed_at": "2026-10-05 22:36:58",
+  "elapsed_seconds": 13.908,
   "n_metrics_rows": 52,
-  "n_stage_records": 5,
+  "n_stage_records": 4,
   "n_rows": 1130,
   "task_type": "regression",
   "primary_metric": "spearman",
@@ -62,11 +62,11 @@
       "standardization": 0.995575221238938,
       "knn_similarity": 0.8362831858407079
     },
-    "selected_model": "TabPFNRegressor",
+    "selected_model": "XGBoost (ADMETboost features)",
     "notes": [],
-    "mae_in_domain": 2.9219218811786996,
-    "mae_out_of_domain": 1.765398623878891
+    "mae_in_domain": 3.7914641478681377,
+    "mae_out_of_domain": 3.333263174512902
   },
   "stage23_signature": "252fee281cda64755ba8191c6cbc81f5e0750382bbf86be6974e5462c9362c9f",
-  "resume_fingerprint": "5d0f756c936b5351e87f9378"
+  "resume_fingerprint": "c8d8c36ec7e1603184c1ea2d"
 }

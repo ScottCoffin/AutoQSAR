@@ -4,6 +4,7 @@ ChemML MLP (TensorFlow),ChemML deep learning,44,44,0,0,0,0.0,True
 Extra trees,conventional,44,44,0,0,0,0.0,True
 Tabular MLP,conventional,44,44,0,0,0,0.0,True
 XGBoost,conventional,44,44,0,0,0,0.0,True
+Uni-Mol V1,Uni-Mol,44,43,0,0,0,0.0,True
 LogisticRegression,conventional,22,22,0,0,0,0.0,True
 SVC,conventional,22,22,0,0,0,0.0,True
 SVR,conventional,22,22,0,0,0,0.0,True
@@ -11,7 +12,7 @@ Tabular CNN,conventional,22,22,0,0,0,0.0,True
 "Voting Classifier (KNN, SVM)",conventional,22,22,0,0,0,0.0,True
 "Voting Regressor (KNN, SVM)",conventional,22,22,0,0,0,0.0,True
 ElasticNetCV,conventional,22,20,0,0,0,0.0,True
-TabPFNClassifier,conventional,22,20,0,0,0,0.0,True
+TabPFNClassifier,conventional,22,17,0,0,0,0.0,True
 "Chemprop v2 (CMPNN, ensemble=3)",Chemprop v2,44,2,0,0,0,0.0,True
 "Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",Chemprop v2,44,2,0,0,0,0.0,True
 "Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",Chemprop v2,44,2,0,0,0,0.0,True

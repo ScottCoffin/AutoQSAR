@@ -187,7 +187,12 @@ an interactive session. OOF predictions come from, in order:
 `--ensemble-oof-scope all` also refits Chemprop per fold on the GPU. `cpu` does
 not, and Chemprop is then left out of the ensemble. Members that call a metered API
 (TabPFN via the Prior Labs client) are refitted only with
-`--ensemble-oof-allow-api-refits`. Fold results are cached
+`--ensemble-oof-allow-api-refits`. `--ensemble-exclude-model LABEL` (repeatable, exact
+label) keeps a model out of every ensemble while it is still trained and cross-validated;
+the manuscript run uses it for TabPFN, whose full-fit predictions mostly came from the API
+while its fold refits use the local package. `--tabpfn-local-max-cells` (default 1.5M training
+rows x selected features) skips local TabPFN fold refits that would not fit the GPU; with
+`--cv-selection nested` its CV metrics are then withdrawn rather than left leaky. Fold results are cached
 under `<dataset>/ensemble_oof/` and saved as `split="oof"` rows in
 `predictions.csv`, so the stage resumes after an interruption. To rebuild
 ensembles for an existing run without retraining any full model, see
@@ -1200,16 +1205,16 @@ Tests: `pip install -e .[dev]` then `pytest -q -m "not gpu and not slow"`.
 - **Manuscript run:** `benchmark_results/qsarena_benchmark_oof_ensemble`. It has the same base models as
   `qsarena_benchmark_chemprop_fixed`, with every ensemble rebuilt from out-of-fold predictions (Chemprop
   included). Manuscript figures, tables and numbers are regenerated from it and checked by
-  `verify_manuscript_numbers.py` (96 checks).
-- **Known limitation, disclosed in the paper:** the benchmark fits feature selection once on the whole
-  training split, so model cross-validation scores are optimistic (a median 15.9% CV-vs-test overstatement,
-  versus 3.4% for unselected-feature models), and a controlled test confirms that the selection causes it. Test
-  metrics are unaffected. A fix (feature selection refitted inside every CV fold) is planned in
-  `docs/NESTED_SELECTION_CV_PLAN.md` (~2-3 days of compute; pending a go-ahead).
-- **Feature-expansion arm (below): complete.** It added two opt-in models to the runner (see below). One of them,
-  `XGBoost (ADMETboost features)`, is being folded into the benchmark (31 models); the paper is updated after the
-  ensemble rebuild. Agents and contributors: start with
-  the status section of `AGENTS.md`.
+  `verify_manuscript_numbers.py` (119 checks). It now has 31 models: `XGBoost (ADMETboost features)` was
+  folded in on 2026-10-04/05 and is an ensemble member.
+- **Feature-selection CV leak: fixed.** The benchmark used to fit feature selection once on the whole training
+  split, so model cross-validation scores were optimistic; a controlled test
+  (`qsarena/feature_expansion/selection_leak.py`) confirmed that the selection causes it. `--cv-selection nested`
+  (the default for the `full` and `cost_optimized` profiles) refits the selector inside every CV fold. Applied to
+  the manuscript run on 2026-10-05/06: the median CV-vs-test overstatement fell from 15.9% to 3.4%, and honest
+  out-of-fold predictions raised ensemble wins from 12 to 22 of 44 (`docs/NESTED_SELECTION_CV_PLAN.md`).
+- **Feature-expansion arm (below): complete.** It added two opt-in models to the runner (see below).
+  Agents and contributors: start with the status section of `AGENTS.md`.
 
 ## Dataset-Property Meta-Analysis And Feature-Expansion Arm
 
@@ -1245,8 +1250,8 @@ python -m qsarena.feature_expansion.evaluate
 Findings, on the 22 official TDC splits:
 - A fixed XGBoost on the unselected ADMETboost features is the best honest QSARena entry (mean rank 3.91; it
   beats ADMETboost and the NIST meta-model 13-9). Only MaxQsaring ranks higher (1.96).
-- Cross-validation selection rarely picks that model, because the benchmark's CV scores are inflated by the
-  feature-selection limitation above.
+- Cross-validation selection rarely picked that model, because the benchmark's CV scores were inflated by the
+  feature-selection leak above (being fixed by nested selection).
 - Frozen, label-free embeddings (CheMeleon, Uni-Mol) add nothing measurable to those features, and on their own
   are significantly worse. Details and the recommendation: `docs/FEATURE_EXPANSION_PLAN.md`.
 

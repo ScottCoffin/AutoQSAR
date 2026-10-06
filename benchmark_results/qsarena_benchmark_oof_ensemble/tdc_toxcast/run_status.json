@@ -2,10 +2,10 @@
   "status": "completed",
   "dataset": "tdc_toxcast",
   "source": "PyTDC Tox benchmark: toxcast [label=ACEA_T47D_80hr_Negative]",
-  "completed_at": "2026-10-04 23:01:55",
-  "elapsed_seconds": 2.963,
+  "completed_at": "2026-10-05 22:37:27",
+  "elapsed_seconds": 3.816,
   "n_metrics_rows": 48,
-  "n_stage_records": 5,
+  "n_stage_records": 4,
   "n_rows": 1731,
   "task_type": "classification",
   "primary_metric": "roc_auc",
@@ -53,14 +53,14 @@
   "applicability_domain": {
     "method": "both",
     "n_test": 374,
-    "in_domain_fraction": 0.767379679144385,
+    "in_domain_fraction": 0.9037433155080213,
     "methods": {
       "standardization": 1.0,
-      "confidence": 0.767379679144385
+      "confidence": 0.9037433155080213
     },
-    "selected_model": "TabPFNClassifier",
+    "selected_model": "XGBoost (ADMETboost features)",
     "notes": []
   },
   "stage23_signature": "21f8024fe86c87ad5c477db7270f0649f55f240b3aaf4717941eb45f431c1216",
-  "resume_fingerprint": "53921f509ace5aba6bb715ae"
+  "resume_fingerprint": "31bc39b272c7cb0620546f31"
 }

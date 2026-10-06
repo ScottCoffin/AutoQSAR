@@ -1,9 +1,13 @@
 # Nested-selection CV: removing the feature-selection leak from the benchmark
 
-**Status (2026-10-03): REOPENED by the author** ("we need to address this leakage throughout our benchmarking"),
-after the controlled test below confirmed the leak. It was declined on 2026-10-02 on cost. The estimate below
-replaces that one. The compute exceeds the 12 h threshold, so **the run needs the author's go-ahead**; the code
-changes do not.
+**Status (2026-10-06): DONE; the paper is regenerated from the nested run.** It ran with the author's go-ahead ("start the full leakage-fix run"). Reopened on
+2026-10-03 after the controlled test below confirmed the leak (declined on 2026-10-02 on cost). Launcher:
+`logs/run_nested_selection.ps1`, pilot on `tdc_caco2_wang`, then all 44 datasets. TabPFN's fold refits use the local
+`tabpfn` package (no API credits); TabPFN gets nested CV metrics but is kept out of the ensembles with
+`--ensemble-exclude-model`, because most of its full-fit predictions came from the Prior Labs API. Above
+`--tabpfn-local-max-cells` (1.5M rows x selected features) local TabPFN cannot run on the 8 GB GPU, so its CV
+metrics there are withdrawn (`cv_selection=outer_withdrawn`) instead of left leaky. Pilot (caco2, 18 min): test
+metrics unchanged; outer CV overstatement +3% to +28% became -15% to +1%. Full run started 03:16 PDT.
 
 ## The problem, now measured causally
 
@@ -43,7 +47,7 @@ selection).
 
 ## Implementation status (2026-10-04)
 
-**Code done; the benchmark run still needs the author's go-ahead.**
+**Code done; the benchmark run started 2026-10-05.**
 - **Runner:** `--cv-selection {outer,nested}` (RunConfig `feature_selection.cv_selection`). The default is nested
   for the `full` and `cost_optimized` profiles and outer for `quick`. `nested_selection_columns()` refits the
   stage-3 selector per fold with the deployed method pinned; selections are cached in

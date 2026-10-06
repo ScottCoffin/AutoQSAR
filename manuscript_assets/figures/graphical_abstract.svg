@@ -46,21 +46,21 @@
 <text x="660.0" y="78.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="9.5" font-weight="700" fill="#5A6B7B" text-anchor="start" letter-spacing="0.8">NO SINGLE WINNER</text>
 <text x="660.0" y="103.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="10" font-weight="400" fill="#1B2A38" text-anchor="start">Ensembles</text>
 <rect x="748.0" y="94.0" width="86.0" height="11.0" rx="5.5" fill="#EEF2F6" stroke="none" stroke-width="1"/>
-<rect x="748.0" y="94.0" width="23.5" height="11.0" rx="5.5" fill="#009E73" stroke="none" stroke-width="1"/>
-<text x="840.0" y="103.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="10.5" font-weight="700" fill="#1B2A38" text-anchor="start">12</text>
+<rect x="748.0" y="94.0" width="43.0" height="11.0" rx="5.5" fill="#009E73" stroke="none" stroke-width="1"/>
+<text x="840.0" y="103.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="10.5" font-weight="700" fill="#1B2A38" text-anchor="start">22</text>
 <text x="660.0" y="124.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="10" font-weight="400" fill="#1B2A38" text-anchor="start">Conventional ML</text>
 <rect x="748.0" y="115.0" width="86.0" height="11.0" rx="5.5" fill="#EEF2F6" stroke="none" stroke-width="1"/>
-<rect x="748.0" y="115.0" width="15.6" height="11.0" rx="5.5" fill="#0072B2" stroke="none" stroke-width="1"/>
-<text x="840.0" y="124.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="10.5" font-weight="700" fill="#1B2A38" text-anchor="start">8</text>
+<rect x="748.0" y="115.0" width="11.7" height="11.0" rx="5.5" fill="#0072B2" stroke="none" stroke-width="1"/>
+<text x="840.0" y="124.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="10.5" font-weight="700" fill="#1B2A38" text-anchor="start">6</text>
 <text x="660.0" y="145.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="10" font-weight="400" fill="#1B2A38" text-anchor="start">Chemprop</text>
 <rect x="748.0" y="136.0" width="86.0" height="11.0" rx="5.5" fill="#EEF2F6" stroke="none" stroke-width="1"/>
-<rect x="748.0" y="136.0" width="15.6" height="11.0" rx="5.5" fill="#5A6B7B" stroke="none" stroke-width="1"/>
-<text x="840.0" y="145.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="10.5" font-weight="700" fill="#1B2A38" text-anchor="start">8</text>
-<text x="660.0" y="170.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="10" font-weight="400" fill="#5A6B7B" text-anchor="start">Top family takes only 27% of datasets;</text>
-<text x="660.0" y="183.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="10" font-weight="400" fill="#5A6B7B" text-anchor="start">the best model is dataset-dependent.</text>
+<rect x="748.0" y="136.0" width="9.8" height="11.0" rx="5.5" fill="#5A6B7B" stroke="none" stroke-width="1"/>
+<text x="840.0" y="145.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="10.5" font-weight="700" fill="#1B2A38" text-anchor="start">5</text>
+<text x="660.0" y="170.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="10" font-weight="400" fill="#5A6B7B" text-anchor="start">No single family wins more than 6/44;</text>
+<text x="660.0" y="183.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="10" font-weight="400" fill="#5A6B7B" text-anchor="start">ensembles of them win the most.</text>
 <line x1="660.0" y1="198.0" x2="896.0" y2="198.0" stroke="#D6DEE6" stroke-width="1" stroke-linecap="round"/>
 <text x="660.0" y="218.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="9.5" font-weight="700" fill="#5A6B7B" text-anchor="start" letter-spacing="0.8">RUNS ON A LAPTOP GPU</text>
-<text x="660.0" y="242.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="16" font-weight="700" fill="#0072B2" text-anchor="start">+0.4%</text>
+<text x="660.0" y="242.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="16" font-weight="700" fill="#0072B2" text-anchor="start">+0.5%</text>
 <text x="708.0" y="237.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="10" font-weight="400" fill="#5A6B7B" text-anchor="start">median change vs an A100,</text>
 <text x="708.0" y="249.0" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="10" font-weight="400" fill="#5A6B7B" text-anchor="start">37 identically split datasets</text>
 <line x1="24.0" y1="266.0" x2="896.0" y2="266.0" stroke="#D6DEE6" stroke-width="1" stroke-linecap="round"/>

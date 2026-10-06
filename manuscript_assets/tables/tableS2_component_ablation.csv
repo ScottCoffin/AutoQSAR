@@ -3,4 +3,4 @@ stage_order,stage,datasets_evaluated,datasets_improved_vs_previous,improvement_f
 2,+ MapLight classic features,44,9,0.20454545454545456
 3,+ neural/deep backends,44,26,0.5909090909090909
 4,+ CFA fusion,44,6,0.13636363636363635
-5,Full pipeline incl. ensembles,44,12,0.2727272727272727
+5,Full pipeline incl. ensembles,44,22,0.5

@@ -128,7 +128,6 @@ def draw() -> str:
     top = sorted(wins.items(), key=lambda kv: -kv[1])[:3]
     n_ds = int(n["datasets_analyzed"])
     total = lb["datasets_compared"]
-    share = round(100 * top[0][1] / n_ds)
 
     svg = Svg()
     svg.add(
@@ -226,8 +225,10 @@ def draw() -> str:
         svg.rect(rx + 88, yy, 86, 11, rx=5.5, fill=TRACK)
         svg.rect(rx + 88, yy, 86 * count / n_ds, 11, rx=5.5, fill=[GREEN, BLUE, MUTED][i])
         svg.text(rx + 180, yy + 9, str(count), size=10.5, weight="700", color=INK)
-    svg.text(rx, 170, f"Top family takes only {share}% of datasets;", size=10, color=MUTED)
-    svg.text(rx, 183, "the best model is dataset-dependent.", size=10, color=MUTED)
+    # Ensembles are built from the other families, so the single-family maximum is the "no winner" statistic.
+    single_max = max(v for k, v in wins.items() if not k.startswith(("Ensemble", "CFA")))
+    svg.text(rx, 170, f"No single family wins more than {single_max}/{n_ds};", size=10, color=MUTED)
+    svg.text(rx, 183, "ensembles of them win the most.", size=10, color=MUTED)
 
     svg.line(rx, 198, WIDTH - 24, 198, color=RULE, sw=1)
     svg.text(rx, 218, "RUNS ON A LAPTOP GPU", size=9.5, weight="700", color=MUTED, spacing="0.8")

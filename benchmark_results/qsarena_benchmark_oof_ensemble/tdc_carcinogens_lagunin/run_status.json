@@ -2,10 +2,10 @@
   "status": "completed",
   "dataset": "tdc_carcinogens_lagunin",
   "source": "PyTDC Tox benchmark: carcinogens_lagunin",
-  "completed_at": "2026-10-04 23:00:07",
-  "elapsed_seconds": 1.536,
+  "completed_at": "2026-10-05 22:35:31",
+  "elapsed_seconds": 1.754,
   "n_metrics_rows": 47,
-  "n_stage_records": 5,
+  "n_stage_records": 4,
   "n_rows": 280,
   "task_type": "classification",
   "primary_metric": "roc_auc",
@@ -52,14 +52,14 @@
   "applicability_domain": {
     "method": "both",
     "n_test": 57,
-    "in_domain_fraction": 0.8070175438596491,
+    "in_domain_fraction": 0.7017543859649122,
     "methods": {
       "standardization": 0.8421052631578947,
-      "confidence": 0.9649122807017544
+      "confidence": 0.8421052631578947
     },
-    "selected_model": "TabPFNClassifier",
+    "selected_model": "XGBoost (ADMETboost features)",
     "notes": []
   },
   "stage23_signature": "36e404592c4f4985eb774f70e3b06b2399f06af520f3dcfb934e06dc21aa423e",
-  "resume_fingerprint": "b0311b3700dbd056c80f9607"
+  "resume_fingerprint": "97441dfd8130e4ce3a141bfc"
 }

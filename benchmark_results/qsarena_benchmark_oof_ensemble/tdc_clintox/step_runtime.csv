@@ -1,6 +1,5 @@
 dataset,stage_index,total_stages,stage_label,step_type,model,workflow,started_at,started_epoch,status,ended_at,ended_epoch,duration_seconds
-tdc_clintox,1,5,loading PyTDC Tox benchmark: clintox,load_dataset,,,2026-10-04 23:01:50 Pacific Daylight Time,1791180110.1713152,completed,2026-10-04 23:01:50 Pacific Daylight Time,1791180110.4863253,0.315
-tdc_clintox,2,5,building molecular features (cached),feature_generation,,,2026-10-04 23:01:50 Pacific Daylight Time,1791180110.4863253,resumed_cache,2026-10-04 23:01:50 Pacific Daylight Time,1791180110.5005941,0.014
-tdc_clintox,3,5,splitting data and selecting features (cached),feature_selection,,,2026-10-04 23:01:50 Pacific Daylight Time,1791180110.5005941,resumed_cache,2026-10-04 23:01:50 Pacific Daylight Time,1791180110.5175962,0.017
-tdc_clintox,4,5,CFA combinatorial fusion,model,CFA (Combinatorial Fusion),cfa,2026-10-04 23:01:50 Pacific Daylight Time,1791180110.5175962,completed,2026-10-04 23:01:50 Pacific Daylight Time,1791180110.9183524,0.401
-tdc_clintox,5,5,ensemble (2 method(s)),model,Ensemble,ensemble,2026-10-04 23:01:50 Pacific Daylight Time,1791180110.9183524,completed,2026-10-04 23:01:52 Pacific Daylight Time,1791180112.7600965,1.842
+tdc_clintox,1,4,loading PyTDC Tox benchmark: clintox,load_dataset,,,2026-10-05 22:37:20 Pacific Daylight Time,1791265040.6167653,completed,2026-10-05 22:37:21 Pacific Daylight Time,1791265041.0754862,0.459
+tdc_clintox,2,4,building molecular features (cached),feature_generation,,,2026-10-05 22:37:21 Pacific Daylight Time,1791265041.0754862,resumed_cache,2026-10-05 22:37:21 Pacific Daylight Time,1791265041.0954995,0.02
+tdc_clintox,3,4,splitting data and selecting features (cached),feature_selection,,,2026-10-05 22:37:21 Pacific Daylight Time,1791265041.0954995,resumed_cache,2026-10-05 22:37:21 Pacific Daylight Time,1791265041.1224883,0.027
+tdc_clintox,4,4,ensemble (2 method(s)),model,Ensemble,ensemble,2026-10-05 22:37:21 Pacific Daylight Time,1791265041.1224883,completed,2026-10-05 22:37:24 Pacific Daylight Time,1791265044.0954592,2.973

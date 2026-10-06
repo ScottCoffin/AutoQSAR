@@ -1,0 +1,24 @@
+{
+  "signature": "8b5913b2a6678dc58eea59341f6451a8fa5ef3d175786bed1b72df8a144cb2e0|c99de9c698220386",
+  "method": "elasticnet_cv",
+  "fold": 0,
+  "selected": [
+    "fcfp6_bit_0955",
+    "atom_pair_bit_0505",
+    "atom_pair_bit_0546",
+    "atom_pair_bit_0818",
+    "topological_torsion_bit_0236",
+    "topological_torsion_bit_0728",
+    "topological_torsion_bit_0729",
+    "maccs_bit_030",
+    "rdkit_qed",
+    "maplight_morgan_0807",
+    "avalon_count_0056",
+    "avalon_count_0222",
+    "avalon_count_0885",
+    "erg_007"
+  ],
+  "selector_method_used": "elasticnet_cv",
+  "selector_timed_out": false,
+  "seconds": 4.8
+}

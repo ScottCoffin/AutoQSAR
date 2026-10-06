@@ -1,6 +1,5 @@
 dataset,stage_index,total_stages,stage_label,step_type,model,workflow,started_at,started_epoch,status,ended_at,ended_epoch,duration_seconds
-chemml_organic_density,1,5,loading ChemML bundled dataset: organic_density,load_dataset,,,2026-10-04 23:00:18 Pacific Daylight Time,1791180018.3356628,completed,2026-10-04 23:00:18 Pacific Daylight Time,1791180018.4783318,0.143
-chemml_organic_density,2,5,building molecular features (cached),feature_generation,,,2026-10-04 23:00:18 Pacific Daylight Time,1791180018.4783318,resumed_cache,2026-10-04 23:00:18 Pacific Daylight Time,1791180018.4839725,0.006
-chemml_organic_density,3,5,splitting data and selecting features (cached),feature_selection,,,2026-10-04 23:00:18 Pacific Daylight Time,1791180018.4839725,resumed_cache,2026-10-04 23:00:18 Pacific Daylight Time,1791180018.5016694,0.018
-chemml_organic_density,4,5,CFA combinatorial fusion,model,CFA (Combinatorial Fusion),cfa,2026-10-04 23:00:18 Pacific Daylight Time,1791180018.5016694,completed,2026-10-04 23:00:18 Pacific Daylight Time,1791180018.641094,0.139
-chemml_organic_density,5,5,ensemble (2 method(s)),model,Ensemble,ensemble,2026-10-04 23:00:18 Pacific Daylight Time,1791180018.641094,completed,2026-10-04 23:00:22 Pacific Daylight Time,1791180022.8986635,4.258
+chemml_organic_density,1,4,loading ChemML bundled dataset: organic_density,load_dataset,,,2026-10-05 22:35:41 Pacific Daylight Time,1791264941.6901774,completed,2026-10-05 22:35:41 Pacific Daylight Time,1791264941.785166,0.095
+chemml_organic_density,2,4,building molecular features (cached),feature_generation,,,2026-10-05 22:35:41 Pacific Daylight Time,1791264941.785166,resumed_cache,2026-10-05 22:35:41 Pacific Daylight Time,1791264941.7911806,0.006
+chemml_organic_density,3,4,splitting data and selecting features (cached),feature_selection,,,2026-10-05 22:35:41 Pacific Daylight Time,1791264941.7911806,resumed_cache,2026-10-05 22:35:41 Pacific Daylight Time,1791264941.80918,0.018
+chemml_organic_density,4,4,ensemble (2 method(s)),model,Ensemble,ensemble,2026-10-05 22:35:41 Pacific Daylight Time,1791264941.80918,completed,2026-10-05 22:35:46 Pacific Daylight Time,1791264946.112121,4.303

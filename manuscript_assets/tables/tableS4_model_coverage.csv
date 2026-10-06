@@ -2,13 +2,13 @@ model,datasets_attempted,datasets_valid
 Uni-Mol V2 (310m),8,0
 Uni-Mol V2 (164m),4,0
 Uni-Mol V2 (84m),44,17
+TabPFNClassifier,22,19
 ElasticNetCV,22,20
-MapLight CatBoost (Strict Parity),22,22
 LogisticRegression,22,22
-SVC,22,22
+MapLight CatBoost (Strict Parity),22,22
 TabPFNRegressor,22,22
+SVC,22,22
 SVR,22,22
-TabPFNClassifier,22,22
 "Voting Classifier (KNN, SVM)",22,22
 "Voting Regressor (KNN, SVM)",22,22
 Tabular CNN,22,22

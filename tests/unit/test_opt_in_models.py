@@ -111,3 +111,58 @@ def test_classification_task_with_regression_metric_returns_probabilities(monkey
     assert len(np.unique(pred)) > 2 and pred.min() >= 0 and pred.max() <= 1
     monkeypatch.setattr(runner, "current_dataset_task_type", lambda: "regression")
     assert set(np.unique(runner.predict_values_for_metric(clf, X, "rmse"))) <= {0.0, 1.0}
+
+
+def test_local_tabpfn_predicts_in_chunks(monkeypatch):
+    from sklearn.base import clone
+    from sklearn.linear_model import LinearRegression, LogisticRegression
+
+    rng = np.random.default_rng(0)
+    X = rng.normal(size=(23, 3))
+    y_reg = X @ np.array([1.0, -2.0, 0.5])
+    y_cls = (y_reg > 0).astype(int)
+    reg = runner.ChunkedTabPFNRegressor(LinearRegression(), chunk_rows=5).fit(X, y_reg)
+    np.testing.assert_allclose(reg.predict(X), LinearRegression().fit(X, y_reg).predict(X))
+    cls = clone(runner.ChunkedTabPFNClassifier(LogisticRegression(), chunk_rows=4)).fit(X, y_cls)
+    np.testing.assert_allclose(cls.predict_proba(X), LogisticRegression().fit(X, y_cls).predict_proba(X))
+    assert list(cls.classes_) == [0, 1]
+    from sklearn.base import is_classifier, is_regressor
+    assert is_classifier(cls) and is_regressor(reg)
+    monkeypatch.setattr(runner, "TABPFN_REGRESSOR_SOURCE", "tabpfn_client")
+    monkeypatch.setattr(runner, "TabPFNClassifier", LogisticRegression)
+    assert isinstance(runner.tabpfn_estimator(classification=True), LogisticRegression)
+
+
+def test_chunked_tabpfn_halves_the_chunk_on_out_of_memory():
+    class Flaky:
+        calls: list[int] = []
+
+        def predict(self, X):
+            Flaky.calls.append(len(X))
+            if len(X) > 4:
+                raise RuntimeError("CUDA out of memory with 8 test samples")
+            return np.asarray(X)[:, 0]
+
+    X = np.arange(22, dtype=float).reshape(11, 2)
+    reg = runner.ChunkedTabPFNRegressor(None, chunk_rows=8)
+    reg.estimator_ = Flaky()
+    np.testing.assert_allclose(reg.predict(X), X[:, 0])
+    assert Flaky.calls[0] == 8 and max(Flaky.calls[1:]) <= 4
+
+
+def test_chunked_tabpfn_reuses_the_prediction_for_repeated_scorer_calls():
+    class Counting:
+        calls = 0
+
+        def predict(self, X):
+            Counting.calls += 1
+            return np.asarray(X)[:, 0]
+
+    X = np.arange(10, dtype=float).reshape(5, 2)
+    reg = runner.ChunkedTabPFNRegressor(None, chunk_rows=8)
+    reg.estimator_ = Counting()
+    for _ in range(5):
+        np.testing.assert_allclose(reg.predict(X.copy()), X[:, 0])  # a new array each time, as a Pipeline passes
+    assert Counting.calls == 1
+    reg.predict(X + 1.0)
+    assert Counting.calls == 2

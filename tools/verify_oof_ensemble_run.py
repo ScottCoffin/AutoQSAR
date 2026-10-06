@@ -22,11 +22,15 @@ RUN = Path("benchmark_results/qsarena_benchmark_oof_ensemble")
 FUSION = ("Ensemble", "CFA")
 # Base models deliberately retrained after the committed state; their metrics are allowed to differ from HEAD.
 # 2026-10-04: these binary datasets are catalogued as "rmse", so the models saved hard 0/1 labels as test predictions;
-# the predict_values_for_metric fix makes them save probabilities (see AGENTS.md). Everything else must still match.
+# the predict_values_for_metric fix makes them save probabilities (see AGENTS.md). TabPFN followed on 2026-10-05 with the
+# local tabpfn backend. Everything else must still match.
 _PROBA_FIX_MODELS = {"AdaBoost", "CatBoost", "Extra trees", "HistGradientBoosting", "LogisticRegression", "Random forest",
-                     "SVC", "Tabular MLP", "Voting Classifier (KNN, SVM)", "XGBoost"}
+                     "SVC", "Tabular MLP", "Voting Classifier (KNN, SVM)", "XGBoost", "TabPFNClassifier"}
 INTENTIONAL_RETRAINS = {ds: _PROBA_FIX_MODELS for ds in
                         ("tdc_cyp1a2_veith", "tdc_cyp2c19_veith", "tdc_herg_karim", "tdc_pampa_ncats")}
+# Base models deliberately withdrawn (2026-10-05): TabPFN's label-output rows on the three ~10k-row sets could not be
+# rerun with probabilities (local TabPFN does not fit 8 GB; the API rerun was not spent). Their rows carry an error.
+INTENTIONAL_WITHDRAWALS = {ds: {"TabPFNClassifier"} for ds in ("tdc_cyp1a2_veith", "tdc_cyp2c19_veith", "tdc_herg_karim")}
 
 
 def git_csv(path: Path) -> pd.DataFrame | None:
@@ -80,8 +84,9 @@ def main() -> int:
             diff = [k for k in diff if k not in INTENTIONAL_RETRAINS.get(d.name, set())]
             if diff:
                 hard.append(f"{d.name}: base-model metric changed for {diff[:3]}")
-            if len(common) < len(a):
-                hard.append(f"{d.name}: base models missing vs HEAD: {sorted(set(a.index) - set(b.index))[:3]}")
+            missing = sorted(set(a.index) - set(b.index) - INTENTIONAL_WITHDRAWALS.get(d.name, set()))
+            if missing:
+                hard.append(f"{d.name}: base models missing vs HEAD: {missing[:3]}")
         old_sel = git_csv(d / "selected_features.csv")
         if old_sel is not None and (d / "selected_features.csv").exists():
             if not old_sel.equals(pd.read_csv(d / "selected_features.csv")):

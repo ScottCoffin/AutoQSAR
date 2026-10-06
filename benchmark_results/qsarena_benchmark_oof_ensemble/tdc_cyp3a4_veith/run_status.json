@@ -2,10 +2,10 @@
   "status": "completed",
   "dataset": "tdc_cyp3a4_veith",
   "source": "PyTDC ADME benchmark group: cyp3a4_veith (official train_val/test split)",
-  "completed_at": "2026-10-04 23:29:54",
-  "elapsed_seconds": 12.915,
+  "completed_at": "2026-10-06 00:14:04",
+  "elapsed_seconds": 5023.368,
   "n_metrics_rows": 36,
-  "n_stage_records": 5,
+  "n_stage_records": 4,
   "n_rows": 12328,
   "task_type": "classification",
   "primary_metric": "auprc",
@@ -41,14 +41,14 @@
   "applicability_domain": {
     "method": "both",
     "n_test": 2467,
-    "in_domain_fraction": 0.6919335224969598,
+    "in_domain_fraction": 0.7138224564248075,
     "methods": {
       "standardization": 0.9874341305229023,
-      "confidence": 0.7024726388325901
+      "confidence": 0.7247669233887313
     },
-    "selected_model": "XGBoost",
+    "selected_model": "HistGradientBoosting",
     "notes": []
   },
   "stage23_signature": "9d30d6bfcbc5ac768fbcad2bac422c35e8edf5f0d6d6a3a593d7d999a62c6605",
-  "resume_fingerprint": "822d87aa4e5235564e3b0d2c"
+  "resume_fingerprint": "a9b630af1436880d9aaf5c5d"
 }

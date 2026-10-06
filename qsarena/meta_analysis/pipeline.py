@@ -453,6 +453,28 @@ def _cv_leak_macros(c: dict) -> dict:
         "cvleak_n_models": str(c["n_benchmark_models"]),
         "cvleak_top": ", ".join(top[:-1]) + f" and {top[-1]}" if len(top) > 1 else (top[0] if top else "n/a"),
         "cvleak_arm": f"{arm:.1f}%" if arm is not None else "an unmeasured level",
+        **_nested_macros(c),
+    }
+
+
+def _nested_macros(c: dict) -> dict:
+    ct = c.get("controlled_test") or {}
+    labels = {"Random forest": "random forest"}
+    per_model = [f"{v['median_points']:.1f} percentage points for {labels.get(m, m)}" if i == 0
+                 else f"{v['median_points']:.1f} for {labels.get(m, m)}"
+                 for i, (m, v) in enumerate((ct.get("per_model") or {}).items())]
+    p = ct.get("sign_test_p")
+    return {
+        "nested_ct_datasets": str(ct.get("n_datasets", "n/a")),
+        "nested_ct_pairs": str(ct.get("n_pairs", "n/a")),
+        "nested_ct_positive": str(ct.get("n_positive", "n/a")),
+        "nested_ct_p": ("p < 0.001" if p < 0.001 else f"p = {p:.3f}") if p is not None else "n/a",
+        "nested_ct_per_model": (", ".join(per_model[:-1]) + f" and {per_model[-1]}") if len(per_model) > 1
+        else (per_model[0] if per_model else "n/a"),
+        "nested_outer": f"{c['paired_median_outer_pct']:.1f}%" if c.get("paired_median_outer_pct") is not None else "n/a",
+        "nested_nested": f"{c['paired_median_nested_pct']:.1f}%" if c.get("paired_median_nested_pct") is not None else "n/a",
+        "nested_pairs": str(c.get("n_paired_rows", "n/a")),
+        "nested_share": f"{c['paired_share_lower_nested_pct']:.0f}%" if c.get("paired_share_lower_nested_pct") is not None else "n/a",
     }
 
 

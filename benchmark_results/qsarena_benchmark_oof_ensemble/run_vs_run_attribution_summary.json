@@ -1,12 +1,12 @@
 {
-  "generated_at": "2026-10-04 23:32:20 Pacific Daylight Time",
+  "generated_at": "2026-10-06 08:44:07 Pacific Daylight Time",
   "current_run_dir": "benchmark_results\\qsarena_benchmark_oof_ensemble",
-  "reference_run_dir": "C:\\Users\\scott\\AutoQSAR\\benchmark_results\\_cfa_rebuild_backup_20261005",
+  "reference_run_dir": "C:\\Users\\scott\\AutoQSAR\\benchmark_results\\_nested_pilot_backup_20261005",
   "has_reference_run": true,
   "split_datasets_compared": 44,
-  "split_all_match_count": 44,
-  "config_diff_count": 197,
-  "new_error_count": 204,
+  "split_all_match_count": 0,
+  "config_diff_count": 199,
+  "new_error_count": 266,
   "resolved_error_count": 0,
-  "leaderboard_comparable_dataset_count": 8
+  "leaderboard_comparable_dataset_count": 4
 }

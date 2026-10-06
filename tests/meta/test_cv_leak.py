@@ -22,8 +22,8 @@ def test_overstatement_sign_follows_metric_direction():
     assert out["c"] == pytest.approx(0.5)  # mse compared against test_rmse squared
 
 
-def test_summary_on_deposited_run_shows_benchmark_more_optimistic_than_arm():
+def test_summary_on_deposited_run_shows_nesting_reduces_cv_optimism():
     summary = cv_leak.summarize()
     assert summary["n_benchmark_models"] >= 10
-    if summary["arm_median_overstatement_pct"] is not None:
-        assert summary["median_overstatement_all_benchmark_pct"] > summary["arm_median_overstatement_pct"]
+    if summary["paired_median_outer_pct"] is not None:  # nesting selection removes most of the optimism
+        assert summary["paired_median_outer_pct"] > summary["paired_median_nested_pct"]

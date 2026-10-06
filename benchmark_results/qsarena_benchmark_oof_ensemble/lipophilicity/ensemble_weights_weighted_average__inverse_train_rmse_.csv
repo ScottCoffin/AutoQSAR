@@ -1,24 +1,23 @@
 Model,Weight,Workflow
-ElasticNetCV,0.053325772586607624,conventional
-SVR,0.04680576486242442,conventional
-Random forest,0.040707129154290894,conventional
-Extra trees,0.040704473322575346,conventional
-HistGradientBoosting,0.04623492114917425,conventional
-"Voting Regressor (KNN, SVM)",0.04002018716648957,conventional
-AdaBoost,0.031937767584776726,conventional
-Tabular MLP,0.04513141351978134,conventional
-Tabular CNN,0.02729445991560457,conventional
-XGBoost,0.04590298399244179,conventional
-CatBoost,0.04383484761789849,conventional
-MapLight CatBoost (Strict Parity),0.040668275097579955,conventional
-ChemML MLP (PyTorch),0.05085017865532728,ChemML deep learning
-ChemML MLP (TensorFlow),0.04462707893140093,ChemML deep learning
-Uni-Mol V1,0.04413187896443867,Uni-Mol
-"MapLight + GNN (CatBoost, Strict Parity)",0.041602629060746014,MapLight + GNN
-"Chemprop v2 (D-MPNN, ensemble=3)",0.046301040996650375,Chemprop v2
-"Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",0.04008881331493791,Chemprop v2
-"Chemprop v2 (CMPNN, ensemble=3)",0.042795469681247304,Chemprop v2
-"Chemprop v2 (AttentiveFP, ensemble=3)",0.040938625810553214,Chemprop v2
-"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",0.051339154407111474,Chemprop v2
-TabPFNRegressor,0.052577940944923574,conventional
-XGBoost (ADMETboost features),0.042179193263018167,conventional
+ElasticNetCV,0.04287598864647878,conventional
+SVR,0.045206927217710656,conventional
+Random forest,0.045697185522793955,conventional
+Extra trees,0.04572755207531844,conventional
+HistGradientBoosting,0.0484856799357894,conventional
+"Voting Regressor (KNN, SVM)",0.04209534674516617,conventional
+AdaBoost,0.03679002235256984,conventional
+Tabular MLP,0.04204649744293723,conventional
+Tabular CNN,0.031267233444155294,conventional
+XGBoost,0.0487672478870324,conventional
+CatBoost,0.04753609058996063,conventional
+MapLight CatBoost (Strict Parity),0.047117904172296624,conventional
+ChemML MLP (PyTorch),0.04499086782627128,ChemML deep learning
+ChemML MLP (TensorFlow),0.04217829083027873,ChemML deep learning
+Uni-Mol V1,0.051130805007108676,Uni-Mol
+"MapLight + GNN (CatBoost, Strict Parity)",0.048200438417819215,MapLight + GNN
+"Chemprop v2 (D-MPNN, ensemble=3)",0.05364397697033309,Chemprop v2
+"Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",0.0464465448712069,Chemprop v2
+"Chemprop v2 (CMPNN, ensemble=3)",0.04958245302047314,Chemprop v2
+"Chemprop v2 (AttentiveFP, ensemble=3)",0.04743113011945621,Chemprop v2
+"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",0.04391337629694699,Chemprop v2
+XGBoost (ADMETboost features),0.04886844060789618,conventional

@@ -2,10 +2,10 @@
   "status": "completed",
   "dataset": "tdc_hia_hou",
   "source": "PyTDC ADME benchmark group: hia_hou (official train_val/test split)",
-  "completed_at": "2026-10-04 23:00:24",
-  "elapsed_seconds": 1.891,
+  "completed_at": "2026-10-05 22:35:47",
+  "elapsed_seconds": 1.654,
   "n_metrics_rows": 29,
-  "n_stage_records": 5,
+  "n_stage_records": 4,
   "n_rows": 578,
   "task_type": "classification",
   "primary_metric": "roc_auc",
@@ -34,14 +34,14 @@
   "applicability_domain": {
     "method": "both",
     "n_test": 117,
-    "in_domain_fraction": 0.8205128205128205,
+    "in_domain_fraction": 0.811965811965812,
     "methods": {
       "standardization": 0.8205128205128205,
-      "confidence": 0.9829059829059829
+      "confidence": 0.9487179487179487
     },
-    "selected_model": "LogisticRegression",
+    "selected_model": "XGBoost (ADMETboost features)",
     "notes": []
   },
   "stage23_signature": "e5e9996a10fe00fbfa1a1230e0c43f547950bad2d8c6d848222f03efa1071a53",
-  "resume_fingerprint": "6943ffee338491f60039bb9a"
+  "resume_fingerprint": "d2af0435c9307feff081d5e1"
 }

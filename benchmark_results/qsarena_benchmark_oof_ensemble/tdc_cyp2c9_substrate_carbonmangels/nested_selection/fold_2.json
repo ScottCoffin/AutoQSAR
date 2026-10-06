@@ -1,0 +1,18 @@
+{
+  "signature": "0224c79f2cd4aca7e9e5d7b3b555aac868d0cae24074a5b676f7a759ecde2a8e|9ae7fc7b005a4398",
+  "method": "elasticnet_cv",
+  "fold": 2,
+  "selected": [
+    "fcfp6_bit_0829",
+    "layered_bit_0193",
+    "layered_bit_0598",
+    "layered_bit_0830",
+    "atom_pair_bit_0565",
+    "topological_torsion_bit_0793",
+    "maccs_bit_129",
+    "avalon_count_0496"
+  ],
+  "selector_method_used": "elasticnet_cv",
+  "selector_timed_out": false,
+  "seconds": 5.2
+}

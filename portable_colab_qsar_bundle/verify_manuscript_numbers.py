@@ -42,7 +42,7 @@ chk("run is OOF rebuild", d["run_dir"] == "qsarena_benchmark_oof_ensemble" and d
 chk("coverage 44/44/44", (d["datasets_with_run_status"], d["datasets_completed"], d["datasets_analyzed"]) == (44, 44, 44))
 chk("tasks 22/22", d["datasets_by_task"] == {"regression": 22, "classification": 22})
 chk("suites", d["datasets_by_suite"] == {"TDC": 32, "Polaris": 5, "MoleculeNet": 3, "ChemML": 2, "PODUAM": 2})
-chk("models 31 rows 1097", (d["models_with_valid_results"], d["valid_model_dataset_rows"]) == (31, 1097))
+chk("models 31 rows 1094", (d["models_with_valid_results"], d["valid_model_dataset_rows"]) == (31, 1094))
 chk("size 280/1605/13445/156052",
     (d["dataset_size"]["min"], round(d["dataset_size"]["median"]), d["dataset_size"]["max"], d["dataset_size"]["total"]) == (280, 1604, 13445, 156052))
 chk("splits", d["split_counts"] == {"predefined": 27, "scaffold": 12, "target_quartiles": 4, "random": 1})
@@ -51,30 +51,31 @@ chk("no multiseed", d["multiseed_artifacts_present"] is False)
 
 # ---- wins -----------------------------------------------------------------------------------
 for fam, tot, r, c in [
-    ("Ensemble (stacking / averaging)", 12, 6, 6),
-    ("Chemprop v2 GNN", 8, 3, 5),
-    ("Uni-Mol (3D pretrained)", 6, 4, 2),
-    ("Conventional ML", 8, 1, 7),
+    ("Ensemble (stacking / averaging)", 22, 14, 8),
+    ("Chemprop v2 GNN", 5, 0, 5),
+    ("Uni-Mol (3D pretrained)", 5, 3, 2),
+    ("Conventional ML", 6, 0, 6),
     ("TabPFN (tabular foundation)", 3, 3, 0),
-    ("MapLight + GNN", 4, 4, 0),
-    ("CFA combinatorial fusion", 3, 1, 2),
+    ("MapLight + GNN", 2, 2, 0),
+    ("CFA combinatorial fusion", 1, 0, 1),
     ("Deep tabular NN (ChemML MLP)", 0, 0, 0),
 ]:
     chk(f"wins {fam}", (W[fam]["total"], W[fam]["regression"], W[fam]["classification"]) == (tot, r, c), str(W.get(fam)))
 chk("wins sum to 44", sum(v["total"] for v in W.values()) == 44)
-chk("largest share 27%", round(100 * max(v["total"] for v in W.values()) / 44) == 27)
+chk("largest share 50% (ensembles)", round(100 * max(v["total"] for v in W.values()) / 44) == 50)
+chk("largest single family 6", max(v["total"] for k, v in W.items() if not k.startswith(("Ensemble", "CFA"))) == 6)
 chk("3D wins 2 classification", W["Uni-Mol (3D pretrained)"]["classification"] == 2)
 
 # ---- consistency ----------------------------------------------------------------------------
 for fam, pct, rank in [
-    ("Ensemble (stacking / averaging)", 61, 3.0),
-    ("Uni-Mol (3D pretrained)", 57, 6.0),
-    ("Conventional ML", 77, 3.0),
-    ("Chemprop v2 GNN", 55, 6.5),
-    ("CFA combinatorial fusion", 57, 5.0),
-    ("TabPFN (tabular foundation)", 30, 11.0),
-    ("MapLight + GNN", 23, 16.5),
-    ("Deep tabular NN (ChemML MLP)", 18, 17.0),
+    ("Ensemble (stacking / averaging)", 84, 1.5),
+    ("Uni-Mol (3D pretrained)", 48, 6.5),
+    ("Conventional ML", 66, 3.5),
+    ("Chemprop v2 GNN", 48, 7.0),
+    ("CFA combinatorial fusion", 50, 5.5),
+    ("TabPFN (tabular foundation)", 22, 11.0),
+    ("MapLight + GNN", 11, 16.5),
+    ("Deep tabular NN (ChemML MLP)", 18, 17.5),
 ]:
     v = F[fam]
     chk(f"consistency {fam}",
@@ -83,8 +84,8 @@ for fam, pct, rank in [
 chk("chemprop 42 datasets", F["Chemprop v2 GNN"]["Datasets with valid results"] == 42)
 
 # ---- leaderboard ----------------------------------------------------------------------------
-chk("lb 37/430/35/5/med3",
-    (L["datasets_compared"], L["reference_rows"], L["top10_test_selected"], L["rank1_test_selected"], L["median_rank_test_selected"]) == (37, 430, 35, 5, 3.0))
+chk("lb 37/430/35/6/med3",
+    (L["datasets_compared"], L["reference_rows"], L["top10_test_selected"], L["rank1_test_selected"], L["median_rank_test_selected"]) == (37, 430, 35, 6, 3.0))
 chk("cv 27/1/med7", (L["top10_cv_selected"], L["rank1_cv_selected"], L["median_rank_cv_selected"]) == (27, 1, 7.0))
 # Matched-candidate-set control: holds the pool at the CV-eligible models and selects on test.
 # It decomposes the 35->27 drop into library breadth (35->28) and honest selection (28->27).
@@ -93,23 +94,23 @@ chk("gap decomposition 7+1", (L["top10_test_selected"] - L["top10_matched_pool"]
                              L["top10_matched_pool"] - L["top10_cv_selected"]) == (7, 1))
 chk("below top10", set(L["below_top10_datasets"]) == {"tdc_skin_reaction", "tdc_tox21"})
 chk("rank1 names", set(L["rank1_datasets"]) == {
-    "lipophilicity", "tdc_bioavailability_ma", "tdc_carcinogens_lagunin", "tdc_clearance_microsome_az",
+    "lipophilicity", "polaris_adme_fang_rppb_1", "tdc_bioavailability_ma", "tdc_carcinogens_lagunin", "tdc_clearance_microsome_az",
     "tdc_toxcast"})
 chk("95% top-10", round(100 * L["top10_test_selected"] / L["datasets_compared"]) == 95)
 B = d["leaderboard_by_comparability"]
 o = B["tdc_admet_group_official"]
-chk("tdc official 22/22, 2 firsts, cv 16",
-    (o["datasets"], o["top10_test_selected"], o["median_rank_test_selected"], len(o["rank1_test_selected"]), o["top10_cv_selected"], o["median_rank_cv_selected"]) == (22, 22, 3.0, 2, 16, 7.0))
+chk("tdc official 22/22, med 2.5, 2 firsts, cv 16",
+    (o["datasets"], o["top10_test_selected"], o["median_rank_test_selected"], len(o["rank1_test_selected"]), o["top10_cv_selected"], o["median_rank_cv_selected"]) == (22, 22, 2.5, 2, 16, 7.0))
 chk("polaris 5/5", (B["polaris_official"]["datasets"], B["polaris_official"]["top10_test_selected"]) == (5, 5))
 chk("local 10, 8 top10", (B["local_split"]["datasets"], B["local_split"]["top10_test_selected"]) == (10, 8))
-chk("cv all: 3 winners, 7.5%",
-    (d["cv_selected_all_datasets"]["is_overall_winner"], round(d["cv_selected_all_datasets"]["median_relative_gap_to_test_best_pct"], 1)) == (3, 7.5))
+chk("cv all: 4 winners, 7.7%",
+    (d["cv_selected_all_datasets"]["is_overall_winner"], round(d["cv_selected_all_datasets"]["median_relative_gap_to_test_best_pct"], 1)) == (4, 7.7))
 
 # ---- fusion / ablation ----------------------------------------------------------------------
 fv = d["fusion_vs_best_single"]
-chk("fusion cls 8/22 +1.5", (fv["classification"]["datasets"], fv["classification"]["fusion_better"], round(fv["classification"]["median_rel_improvement_when_better_pct"], 1)) == (22, 8, 1.5))
-chk("fusion reg 7/22 +1.7/-2.5", (fv["regression"]["datasets"], fv["regression"]["fusion_better"], round(fv["regression"]["median_rel_improvement_when_better_pct"], 1), round(fv["regression"]["median_rel_improvement_all_pct"], 1)) == (22, 7, 1.7, -2.5))
-chk("ablation 9/26/6/12", [r["datasets_improved_vs_previous"] for r in d["component_ablation"]] == [0, 9, 26, 6, 12])
+chk("fusion cls 9/22 +1.4", (fv["classification"]["datasets"], fv["classification"]["fusion_better"], round(fv["classification"]["median_rel_improvement_when_better_pct"], 1)) == (22, 9, 1.4))
+chk("fusion reg 14/22 +4.1/+3.2", (fv["regression"]["datasets"], fv["regression"]["fusion_better"], round(fv["regression"]["median_rel_improvement_when_better_pct"], 1), round(fv["regression"]["median_rel_improvement_all_pct"], 1)) == (22, 14, 4.1, 3.2))
+chk("ablation 9/26/6/22", [r["datasets_improved_vs_previous"] for r in d["component_ablation"]] == [0, 9, 26, 6, 22])
 
 # ---- features --------------------------------------------------------------------------------
 chk("features 12137/46.2/22.9", (FF["selected_features_total"], round(FF["maplight_classic_share_selected_pct"], 1), round(FF["maplight_classic_share_available_pct"], 1)) == (12137, 46.2, 22.9))
@@ -132,8 +133,8 @@ chk("selector 0.77/0.58/295/1003", (round(S["log10_slope"], 2), round(S["pearson
 # ---- hardware comparison ---------------------------------------------------------------------
 R = d["run_comparison_vs_rtx"]
 chk("run comparison 44/37", (R["datasets_compared"], R["datasets_same_split"]) == (44, 37))
-chk("run comparison median 0.42", round(R["median_change_pct_same_split"], 2) == 0.42)
-chk("run comparison 22 vs 14", (R["a100_better_same_split"], R["rtx_better_same_split"]) == (22, 14))
+chk("run comparison (single models) median 0.50", round(R["median_change_pct_same_split"], 2) == 0.50)
+chk("run comparison 22 vs 13", (R["a100_better_same_split"], R["rtx_better_same_split"]) == (22, 13))
 chk("7 datasets re-split", len(R["datasets_respilt_to_scaffold"]) == 7)
 
 # ---- provenance --------------------------------------------------------------------------------
@@ -224,10 +225,32 @@ def _ensemble_wins(run: str) -> tuple[int, int]:
 
 chk("lineage canonical ensembles 7+9 (test-selected)", _ensemble_wins("autoqsar_benchmark_20260623_153839") == (7, 9))
 chk("lineage in-sample ensembles: regression 1", _ensemble_wins("qsarena_benchmark_chemprop_fixed")[0] == 1)
-chk("lineage OOF regression ensembles 6", _ensemble_wins("qsarena_benchmark_oof_ensemble")[0] == W["Ensemble (stacking / averaging)"]["regression"] == 6)
+chk("lineage OOF regression ensembles 14", _ensemble_wins("qsarena_benchmark_oof_ensemble")[0] == W["Ensemble (stacking / averaging)"]["regression"] == 14)
+# Outer-selection ensembles (the previous revision, commit 980e3c4) vs nested: ensemble_outer_selection_snapshot.csv
+# holds each dataset's best ensemble under both and the outer-revision winner family.
+import pandas as _pd  # noqa: E402
+
+_snap = _pd.read_csv("benchmark_results/qsarena_benchmark_oof_ensemble/ensemble_outer_selection_snapshot.csv")
+_ens_outer = _snap[_snap["winner_family_outer"].str.startswith("Ensemble")]
+chk("outer-selection ensemble wins 12 (6+6)", (len(_ens_outer), int((_ens_outer["task"] == "regression").sum())) == (12, 6))
+_cls = _snap["task"] == "classification"
+_gain = (100 * (_snap["best_ensemble_nested"] - _snap["best_ensemble_outer"]) / _snap["best_ensemble_outer"]).where(
+    _cls, 100 * (_snap["best_ensemble_outer"] - _snap["best_ensemble_nested"]) / _snap["best_ensemble_outer"])
+chk("nested OOF improved best ensemble on 39/44, median +4.9% reg / +0.7% cls",
+    (int((_gain > 0).sum()), round(float(_gain[~_cls].median()), 1), round(float(_gain[_cls].median()), 1)) == (39, 4.9, 0.7))
+_mm = json.loads(pathlib.Path("manuscript_assets/meta_numbers.json").read_text(encoding="utf-8"))["macros"]
+_abstract_tex = pathlib.Path("submission/abstract.tex").read_text(encoding="utf-8")
+chk("abstract nested CV optimism matches meta_numbers",
+    f"from {_mm['nested_outer']} to {_mm['nested_nested']}" in t
+    and f"from {_mm['nested_outer']} to {_mm['nested_nested']}".replace("%", r"\%") in _abstract_tex,
+    f"{_mm['nested_outer']} -> {_mm['nested_nested']}")
+chk("abstract hardware +0.5% single-model", "best single-model score by a median +0.5%" in t
+    and round(R["median_change_pct_same_split"], 1) == 0.5)
 for label, text in (("md", t), ("tex", body)):
+    chk(f"nested ensemble prose {label}", "improved the best ensemble on 39 of the 44 datasets" in text)
     chk(f"lineage prose {label}", "regression ensemble wins fell from 7 to 1" in text
-        and "ensembles won 12 datasets (6 regression, 6 classification), against 16 (7 and 9)" in text)
+        and "ensembles won 22 datasets (14 regression, 8 classification), against 16 (7 and 9)" in text
+        and "12 (6 and 6) when their out-of-fold predictions came from the outer feature selection" in text)
     chk(f"tdc official cv median 7 prose {label}", "falls to a median rank of 7 under cross-validation-only selection" in text)
 
 # ---- post-hoc feature-expansion note (Section 3.12) --------------------------------------------------
@@ -253,14 +276,14 @@ chk("descriptor member vs NIST 13-9", h2h.get("Meta-model (NIST)") == (13, 9), s
 chk("descriptor member vs MaxQsaring 5-17", h2h.get("MaxQsaring") == (5, 17), str(h2h.get("MaxQsaring")))
 _wins = [r for r in csv.DictReader(io.StringIO(pathlib.Path("manuscript_assets/tables/tableS1_dataset_winners.csv").read_text(encoding="utf-8")))
          if r["model"] == "XGBoost (ADMETboost features)"]
-chk("descriptor member wins 4", len(_wins) == 4, str([r["dataset"] for r in _wins]))
+chk("descriptor member wins 3", len(_wins) == 3, str([r["dataset"] for r in _wins]))
 pv = json.loads((fe_dir / "evaluation_summary.json").read_text(encoding="utf-8"))["paired_vs_admetboost_xgboost"]
 chk("arm +emb median -0.04 p0.30 n35", (pv["admetboost+emb"]["n"], round(pv["admetboost+emb"]["median_pct"], 2),
                                         round(pv["admetboost+emb"]["wilcoxon_p"], 2)) == (35, -0.04, 0.30))
 chk("arm emb alone -2.42 p<0.001", round(pv["emb"]["median_pct"], 2) == -2.42 and pv["emb"]["wilcoxon_p"] < 0.001)
 for label, text, minus in (("md", t, "-0.04%"), ("tex", body, "$-0.04$\\%")):
     chk(f"arm prose {label}", "results on 12 of the 22 datasets and the NIST meta-model on 13, but lost to MaxQsaring on 17" in text
-        and "won 4 of the 44 datasets outright" in text and minus in text)
+        and "won 3 of the 44 datasets outright" in text and minus in text)
 
 # ---- tables agree with the JSON ----------------------------------------------------------------
 t2 = list(csv.DictReader(io.StringIO(pathlib.Path("manuscript_assets/tables/table2_dataset_catalog.csv").read_text(encoding="utf-8"))))

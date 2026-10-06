@@ -1,6 +1,6 @@
 \begin{landscape}
 \begingroup\scriptsize
-\begin{xltabular}{\linewidth}{@{}>{\raggedright\arraybackslash\hsize=1.106\hsize}X>{\raggedright\arraybackslash\hsize=0.456\hsize}X>{\raggedright\arraybackslash\hsize=0.348\hsize}X>{\raggedright\arraybackslash\hsize=1.529\hsize}Xr>{\raggedright\arraybackslash\hsize=1.562\hsize}Xrr@{}}
+\begin{xltabular}{\linewidth}{@{}>{\raggedright\arraybackslash\hsize=1.214\hsize}X>{\raggedright\arraybackslash\hsize=0.500\hsize}X>{\raggedright\arraybackslash\hsize=0.357\hsize}X>{\raggedright\arraybackslash\hsize=1.500\hsize}Xr>{\raggedright\arraybackslash\hsize=1.429\hsize}Xrr@{}}
 \caption{Run-to-run comparison: the canonical NSF ACCESS Jetstream2 A100 benchmark against the earlier consumer-GPU (RTX 4060) run, analysed identically. ``Same split'' marks datasets where both runs used the identical held-out partition; the remainder were re-split to scaffold splits in the A100 run and are therefore not directly comparable. Change is relative and metric-direction aware (positive favours the A100 run).}\label{tab:s5}\\
 \toprule
 \textbf{Dataset} & \textbf{Task} & \textbf{Same split} & \textbf{A100 best model} & \textbf{A100 value} & \textbf{RTX 4060 best model} & \textbf{RTX 4060 value} & \textbf{Change (\%)} \\
@@ -15,50 +15,50 @@
 \endfoot
 \bottomrule
 \endlastfoot
-tdc\_\allowbreak{}ames & classification & True & CFA (Combinatorial Fusion) & 0.877 & XGBoost & 0.875 & 0.300 \\
+tdc\_\allowbreak{}ames & classification & True & TabPFNClassifier & 0.876 & XGBoost & 0.875 & 0.166 \\
 tdc\_\allowbreak{}bbb\_\allowbreak{}martins & classification & True & Random forest & 0.925 & Random forest & 0.932 & -\allowbreak{}0.788 \\
 tdc\_\allowbreak{}bioavailability\_\allowbreak{}ma & classification & True & Cat\allowbreak{}Boost & 0.777 & Cat\allowbreak{}Boost & 0.777 & 0.000 \\
-tdc\_\allowbreak{}cyp1a2\_\allowbreak{}veith & classification & True & Ensemble (OOF Stacking (RidgeCV, 5-\allowbreak{}fold)) & 0.974 & Ensemble (Weighted average (inverse train RMSE)) & 0.970 & 0.467 \\
-tdc\_\allowbreak{}cyp2c19\_\allowbreak{}veith & classification & True & Ensemble (OOF Stacking (RidgeCV, 5-\allowbreak{}fold)) & 0.937 & Ensemble (Weighted average (inverse train RMSE)) & 0.921 & 1.744 \\
-tdc\_\allowbreak{}cyp2c9\_\allowbreak{}substrate\_\allowbreak{}carbonmangels & classification & True & Chemprop v2 (AttentiveFP, ensemble=3) & 0.438 & Ensemble (OOF Stacking (RidgeCV, 5-\allowbreak{}fold)) & 0.482 & -\allowbreak{}8.990 \\
-tdc\_\allowbreak{}cyp2c9\_\allowbreak{}veith & classification & True & Ensemble (OOF Stacking (RidgeCV, 5-\allowbreak{}fold)) & 0.827 & Ensemble (OOF Stacking (RidgeCV, 5-\allowbreak{}fold)) & 0.810 & 2.157 \\
-tdc\_\allowbreak{}cyp2d6\_\allowbreak{}substrate\_\allowbreak{}carbonmangels & classification & True & Chemprop v2 (D-\allowbreak{}MPNN + RDKit2D, ensemble=3) & 0.693 & Ensemble (Weighted average (inverse train RMSE)) & 0.673 & 2.919 \\
-tdc\_\allowbreak{}cyp2d6\_\allowbreak{}veith & classification & True & Ensemble (OOF Stacking (RidgeCV, 5-\allowbreak{}fold)) & 0.759 & XGBoost & 0.722 & 5.106 \\
+tdc\_\allowbreak{}cyp1a2\_\allowbreak{}veith & classification & True & XGBoost & 0.969 & Uni-\allowbreak{}Mol V1 & 0.969 & -\allowbreak{}0.049 \\
+tdc\_\allowbreak{}cyp2c19\_\allowbreak{}veith & classification & True & XGBoost & 0.926 & Uni-\allowbreak{}Mol V1 & 0.921 & 0.551 \\
+tdc\_\allowbreak{}cyp2c9\_\allowbreak{}substrate\_\allowbreak{}carbonmangels & classification & True & Chemprop v2 (AttentiveFP, ensemble=3) & 0.438 & Uni-\allowbreak{}Mol V1 & 0.454 & -\allowbreak{}3.439 \\
+tdc\_\allowbreak{}cyp2c9\_\allowbreak{}veith & classification & True & XGBoost & 0.796 & Hist\allowbreak{}Gradient\allowbreak{}Boosting & 0.792 & 0.541 \\
+tdc\_\allowbreak{}cyp2d6\_\allowbreak{}substrate\_\allowbreak{}carbonmangels & classification & True & Chemprop v2 (D-\allowbreak{}MPNN + RDKit2D, ensemble=3) & 0.693 & Random forest & 0.665 & 4.143 \\
+tdc\_\allowbreak{}cyp2d6\_\allowbreak{}veith & classification & True & XGBoost & 0.729 & XGBoost & 0.722 & 0.904 \\
 tdc\_\allowbreak{}cyp3a4\_\allowbreak{}substrate\_\allowbreak{}carbonmangels & classification & True & XGBoost (ADMETboost features) & 0.729 & Logistic\allowbreak{}Regression & 0.717 & 1.759 \\
-tdc\_\allowbreak{}cyp3a4\_\allowbreak{}veith & classification & True & Ensemble (OOF Stacking (RidgeCV, 5-\allowbreak{}fold)) & 0.902 & Ensemble (OOF Stacking (RidgeCV, 5-\allowbreak{}fold)) & 0.890 & 1.411 \\
-tdc\_\allowbreak{}dili & classification & True & XGBoost (ADMETboost features) & 0.923 & Ensemble (OOF Stacking (RidgeCV, 5-\allowbreak{}fold)) & 0.915 & 0.856 \\
+tdc\_\allowbreak{}cyp3a4\_\allowbreak{}veith & classification & True & XGBoost (ADMETboost features) & 0.883 & XGBoost & 0.883 & 0.002 \\
+tdc\_\allowbreak{}dili & classification & True & XGBoost (ADMETboost features) & 0.923 & Uni-\allowbreak{}Mol V1 & 0.914 & 0.903 \\
 tdc\_\allowbreak{}herg & classification & True & Chemprop v2 (AttentiveFP, ensemble=3) & 0.857 & Ada\allowbreak{}Boost & 0.861 & -\allowbreak{}0.411 \\
-tdc\_\allowbreak{}herg\_\allowbreak{}karim & classification & True & Ensemble (Weighted average (inverse OOF error)) & 0.907 & Ensemble (Weighted average (inverse train RMSE)) & 0.902 & 0.522 \\
-tdc\_\allowbreak{}hia\_\allowbreak{}hou & classification & True & XGBoost (ADMETboost features) & 0.994 & CFA (Combinatorial Fusion) & 0.990 & 0.395 \\
-tdc\_\allowbreak{}pgp\_\allowbreak{}broccatelli & classification & True & Uni-\allowbreak{}Mol V2 (84m) & 0.933 & Ensemble (Weighted average (inverse train RMSE)) & 0.929 & 0.423 \\
-chemml\_\allowbreak{}cep\_\allowbreak{}homo & regression & True & Ensemble (OOF Stacking (RidgeCV, 5-\allowbreak{}fold)) & 0.094 & TabPFNRegressor & 0.086 & -\allowbreak{}9.571 \\
+tdc\_\allowbreak{}herg\_\allowbreak{}karim & classification & True & XGBoost & 0.902 & Uni-\allowbreak{}Mol V1 & 0.893 & 1.055 \\
+tdc\_\allowbreak{}hia\_\allowbreak{}hou & classification & True & XGBoost (ADMETboost features) & 0.994 & Cat\allowbreak{}Boost & 0.989 & 0.499 \\
+tdc\_\allowbreak{}pgp\_\allowbreak{}broccatelli & classification & True & Uni-\allowbreak{}Mol V2 (84m) & 0.933 & TabPFNClassifier & 0.927 & 0.625 \\
+chemml\_\allowbreak{}cep\_\allowbreak{}homo & regression & True & TabPFNRegressor & 0.102 & TabPFNRegressor & 0.086 & -\allowbreak{}19.231 \\
 chemml\_\allowbreak{}organic\_\allowbreak{}density & regression & True & TabPFNRegressor & 0.005 & TabPFNRegressor & 0.005 & 5.907 \\
-esol\_\allowbreak{}delaney & regression & True & Ensemble (Weighted average (inverse OOF error)) & 0.624 & Ensemble (Weighted average (inverse train RMSE)) & 0.592 & -\allowbreak{}5.423 \\
+esol\_\allowbreak{}delaney & regression & True & Map\allowbreak{}Light Cat\allowbreak{}Boost (Strict Parity) & 0.645 & TabPFNRegressor & 0.612 & -\allowbreak{}5.269 \\
 freesolv\_\allowbreak{}sampl & regression & True & TabPFNRegressor & 0.933 & Chemprop v2 (AttentiveFP, ensemble=1) & 1.080 & 13.562 \\
-lipophilicity & regression & True & Ensemble (OOF Stacking (RidgeCV, 5-\allowbreak{}fold)) & 0.548 & Ensemble (Weighted average (inverse train RMSE)) & 0.582 & 5.905 \\
-poduam\_\allowbreak{}pod\_\allowbreak{}nc\_\allowbreak{}std & regression & True & Random forest & 0.720 & Ensemble (Weighted average (inverse train RMSE)) & 0.699 & -\allowbreak{}3.062 \\
-poduam\_\allowbreak{}pod\_\allowbreak{}rd\_\allowbreak{}std & regression & True & CFA (Combinatorial Fusion) & 0.564 & XGBoost & 0.551 & -\allowbreak{}2.320 \\
+lipophilicity & regression & True & Chemprop v2 (D-\allowbreak{}MPNN, ensemble=3) & 0.551 & Uni-\allowbreak{}Mol V1 & 0.592 & 6.932 \\
+poduam\_\allowbreak{}pod\_\allowbreak{}nc\_\allowbreak{}std & regression & True & Random forest & 0.720 & Extra trees & 0.701 & -\allowbreak{}2.720 \\
+poduam\_\allowbreak{}pod\_\allowbreak{}rd\_\allowbreak{}std & regression & True & XGBoost (ADMETboost features) & 0.567 & XGBoost & 0.551 & -\allowbreak{}2.872 \\
 polaris\_\allowbreak{}adme\_\allowbreak{}fang\_\allowbreak{}hppb\_\allowbreak{}1 & regression & True & Chemprop v2 (D-\allowbreak{}MPNN, ensemble=3) & 0.444 & Map\allowbreak{}Light + GNN (Cat\allowbreak{}Boost, Strict Parity) & 0.449 & 1.072 \\
 polaris\_\allowbreak{}adme\_\allowbreak{}fang\_\allowbreak{}perm\_\allowbreak{}1 & regression & True & Uni-\allowbreak{}Mol V1 & 0.399 & Uni-\allowbreak{}Mol V1 & 0.399 & -\allowbreak{}0.040 \\
 polaris\_\allowbreak{}adme\_\allowbreak{}fang\_\allowbreak{}rclint\_\allowbreak{}1 & regression & True & Chemprop v2 (D-\allowbreak{}MPNN, ensemble=3) & 0.517 & Uni-\allowbreak{}Mol V1 & 0.512 & -\allowbreak{}0.968 \\
 polaris\_\allowbreak{}adme\_\allowbreak{}fang\_\allowbreak{}rppb\_\allowbreak{}1 & regression & True & Map\allowbreak{}Light + GNN (Cat\allowbreak{}Boost, Strict Parity) & 0.493 & Map\allowbreak{}Light + GNN (Cat\allowbreak{}Boost, Strict Parity) & 0.494 & 0.170 \\
 polaris\_\allowbreak{}adme\_\allowbreak{}fang\_\allowbreak{}solu\_\allowbreak{}1 & regression & True & Uni-\allowbreak{}Mol V2 (84m) & 0.551 & Uni-\allowbreak{}Mol V1 & 0.575 & 4.202 \\
-tdc\_\allowbreak{}caco2\_\allowbreak{}wang & regression & True & Ensemble (Weighted average (inverse OOF error)) & 0.344 & Ensemble (Weighted average (inverse train RMSE)) & 0.336 & -\allowbreak{}2.134 \\
+tdc\_\allowbreak{}caco2\_\allowbreak{}wang & regression & True & Map\allowbreak{}Light Cat\allowbreak{}Boost (Strict Parity) & 0.350 & Map\allowbreak{}Light Cat\allowbreak{}Boost (Strict Parity) & 0.350 & 0.000 \\
 tdc\_\allowbreak{}clearance\_\allowbreak{}hepatocyte\_\allowbreak{}az & regression & True & Map\allowbreak{}Light + GNN (Cat\allowbreak{}Boost, Strict Parity) & 44.113 & Map\allowbreak{}Light + GNN (Cat\allowbreak{}Boost, Strict Parity) & 43.976 & -\allowbreak{}0.311 \\
 tdc\_\allowbreak{}clearance\_\allowbreak{}microsome\_\allowbreak{}az & regression & True & Uni-\allowbreak{}Mol V2 (84m) & 33.507 & Uni-\allowbreak{}Mol V1 & 35.888 & 6.634 \\
 tdc\_\allowbreak{}half\_\allowbreak{}life\_\allowbreak{}obach & regression & True & Uni-\allowbreak{}Mol V1 & 19.128 & Uni-\allowbreak{}Mol V1 & 17.222 & -\allowbreak{}11.067 \\
-tdc\_\allowbreak{}ld50\_\allowbreak{}zhu & regression & True & TabPFNRegressor & 0.806 & CFA (Combinatorial Fusion) & 0.834 & 3.290 \\
+tdc\_\allowbreak{}ld50\_\allowbreak{}zhu & regression & True & TabPFNRegressor & 0.806 & Hist\allowbreak{}Gradient\allowbreak{}Boosting & 0.839 & 3.931 \\
 tdc\_\allowbreak{}lipophilicity\_\allowbreak{}astrazeneca & regression & True & Chemprop v2 (D-\allowbreak{}MPNN, ensemble=3) & 0.577 & Uni-\allowbreak{}Mol V1 & 0.587 & 1.698 \\
-tdc\_\allowbreak{}ppbr\_\allowbreak{}az & regression & True & Map\allowbreak{}Light + GNN (Cat\allowbreak{}Boost, Strict Parity) & 11.356 & Ensemble (Weighted average (inverse train RMSE)) & 11.014 & -\allowbreak{}3.108 \\
-tdc\_\allowbreak{}solubility\_\allowbreak{}aqsoldb & regression & True & Ensemble (OOF Stacking (RidgeCV, 5-\allowbreak{}fold)) & 0.956 & Uni-\allowbreak{}Mol V1 & 0.989 & 3.310 \\
+tdc\_\allowbreak{}ppbr\_\allowbreak{}az & regression & True & Map\allowbreak{}Light + GNN (Cat\allowbreak{}Boost, Strict Parity) & 11.356 & Map\allowbreak{}Light + GNN (Cat\allowbreak{}Boost, Strict Parity) & 11.444 & 0.762 \\
+tdc\_\allowbreak{}solubility\_\allowbreak{}aqsoldb & regression & True & TabPFNRegressor & 0.961 & Uni-\allowbreak{}Mol V1 & 0.989 & 2.807 \\
 tdc\_\allowbreak{}vdss\_\allowbreak{}lombardo & regression & True & Map\allowbreak{}Light + GNN (Cat\allowbreak{}Boost, Strict Parity) & 4.670 & Map\allowbreak{}Light + GNN (Cat\allowbreak{}Boost, Strict Parity) & 4.668 & -\allowbreak{}0.035 \\
 tdc\_\allowbreak{}carcinogens\_\allowbreak{}lagunin & classification & False & Chemprop v2 (AttentiveFP, ensemble=3) & 0.929 & Ada\allowbreak{}Boost & 0.863 & 7.656 \\
-tdc\_\allowbreak{}clintox & classification & False & CFA (Combinatorial Fusion) & 0.974 & Cat\allowbreak{}Boost & 0.949 & 2.644 \\
-tdc\_\allowbreak{}pampa\_\allowbreak{}ncats & classification & False & Uni-\allowbreak{}Mol V1 & 0.763 & Ensemble (Weighted average (inverse train RMSE)) & 0.806 & -\allowbreak{}5.258 \\
-tdc\_\allowbreak{}skin\_\allowbreak{}reaction & classification & False & XGBoost (ADMETboost features) & 0.667 & CFA (Combinatorial Fusion) & 0.769 & -\allowbreak{}13.246 \\
+tdc\_\allowbreak{}clintox & classification & False & Random forest & 0.956 & Cat\allowbreak{}Boost & 0.949 & 0.788 \\
+tdc\_\allowbreak{}pampa\_\allowbreak{}ncats & classification & False & Uni-\allowbreak{}Mol V1 & 0.763 & Extra trees & 0.805 & -\allowbreak{}5.206 \\
+tdc\_\allowbreak{}skin\_\allowbreak{}reaction & classification & False & XGBoost (ADMETboost features) & 0.667 & TabPFNClassifier & 0.747 & -\allowbreak{}10.737 \\
 tdc\_\allowbreak{}tox21 & classification & False & Chemprop v2 (AttentiveFP, ensemble=3) & 0.597 & XGBoost & 0.812 & -\allowbreak{}26.451 \\
 tdc\_\allowbreak{}toxcast & classification & False & Hist\allowbreak{}Gradient\allowbreak{}Boosting & 0.716 & Cat\allowbreak{}Boost & 0.791 & -\allowbreak{}9.562 \\
-tdc\_\allowbreak{}hydrationfreeenergy\_\allowbreak{}freesolv & regression & False & Ensemble (Weighted average (inverse OOF error)) & 1.085 & CFA (Combinatorial Fusion) & 0.556 & -\allowbreak{}95.052 \\
+tdc\_\allowbreak{}hydrationfreeenergy\_\allowbreak{}freesolv & regression & False & TabPFNRegressor & 1.116 & TabPFNRegressor & 0.592 & -\allowbreak{}88.600 \\
 \end{xltabular}
 \endgroup
 \end{landscape}

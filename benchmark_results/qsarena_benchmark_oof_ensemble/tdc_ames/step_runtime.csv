@@ -1,6 +1,5 @@
 dataset,stage_index,total_stages,stage_label,step_type,model,workflow,started_at,started_epoch,status,ended_at,ended_epoch,duration_seconds
-tdc_ames,1,5,loading PyTDC Tox benchmark group: ames (official train_val/test split),load_dataset,,,2026-10-04 23:15:14 Pacific Daylight Time,1791180914.2192519,completed,2026-10-04 23:15:15 Pacific Daylight Time,1791180915.2422464,1.023
-tdc_ames,2,5,building molecular features (cached),feature_generation,,,2026-10-04 23:15:15 Pacific Daylight Time,1791180915.2422464,resumed_cache,2026-10-04 23:15:15 Pacific Daylight Time,1791180915.2945962,0.052
-tdc_ames,3,5,splitting data and selecting features (cached),feature_selection,,,2026-10-04 23:15:15 Pacific Daylight Time,1791180915.2945962,resumed_cache,2026-10-04 23:15:15 Pacific Daylight Time,1791180915.3138795,0.019
-tdc_ames,4,5,CFA combinatorial fusion,model,CFA (Combinatorial Fusion),cfa,2026-10-04 23:15:15 Pacific Daylight Time,1791180915.3138795,completed,2026-10-04 23:15:16 Pacific Daylight Time,1791180916.4376495,1.124
-tdc_ames,5,5,ensemble (2 method(s)),model,Ensemble,ensemble,2026-10-04 23:15:16 Pacific Daylight Time,1791180916.4376495,completed,2026-10-04 23:15:21 Pacific Daylight Time,1791180921.62089,5.183
+tdc_ames,1,4,loading PyTDC Tox benchmark group: ames (official train_val/test split),load_dataset,,,2026-10-05 14:43:21 Pacific Daylight Time,1791236601.1520538,completed,2026-10-05 14:43:22 Pacific Daylight Time,1791236602.6088371,1.457
+tdc_ames,2,4,building molecular features (cached),feature_generation,,,2026-10-05 14:43:22 Pacific Daylight Time,1791236602.6088371,resumed_cache,2026-10-05 14:43:22 Pacific Daylight Time,1791236602.6618135,0.053
+tdc_ames,3,4,splitting data and selecting features (cached),feature_selection,,,2026-10-05 14:43:22 Pacific Daylight Time,1791236602.6618135,resumed_cache,2026-10-05 14:43:22 Pacific Daylight Time,1791236602.8801787,0.218
+tdc_ames,4,4,ensemble (2 method(s)),model,Ensemble,ensemble,2026-10-05 14:43:22 Pacific Daylight Time,1791236602.881176,completed,2026-10-05 15:30:20 Pacific Daylight Time,1791239420.254031,2817.373

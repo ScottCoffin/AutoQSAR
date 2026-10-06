@@ -2,10 +2,10 @@
   "status": "completed",
   "dataset": "tdc_pampa_ncats",
   "source": "PyTDC ADME benchmark: pampa_ncats",
-  "completed_at": "2026-10-04 23:02:31",
-  "elapsed_seconds": 3.914,
+  "completed_at": "2026-10-05 22:38:20",
+  "elapsed_seconds": 5.613,
   "n_metrics_rows": 45,
-  "n_stage_records": 5,
+  "n_stage_records": 4,
   "n_rows": 2034,
   "task_type": "classification",
   "primary_metric": "roc_auc",
@@ -49,14 +49,14 @@
   "applicability_domain": {
     "method": "both",
     "n_test": 408,
-    "in_domain_fraction": 0.9754901960784313,
+    "in_domain_fraction": 0.8995098039215687,
     "methods": {
       "standardization": 0.9754901960784313,
-      "confidence": 1.0
+      "confidence": 0.9166666666666666
     },
-    "selected_model": "TabPFNClassifier",
+    "selected_model": "XGBoost (ADMETboost features)",
     "notes": []
   },
   "stage23_signature": "0381d0b432eaa8bb069b65a3eca58686aa087a81a5d1a14bfba399bf14ee1326",
-  "resume_fingerprint": "c0f92bef790a592cbbf27f50"
+  "resume_fingerprint": "90ceb40874686f7fd38ebdc4"
 }

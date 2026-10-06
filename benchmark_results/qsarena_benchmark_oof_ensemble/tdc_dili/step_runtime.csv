@@ -1,6 +1,5 @@
 dataset,stage_index,total_stages,stage_label,step_type,model,workflow,started_at,started_epoch,status,ended_at,ended_epoch,duration_seconds
-tdc_dili,1,5,loading PyTDC Tox benchmark group: dili (official train_val/test split),load_dataset,,,2026-10-04 23:00:10 Pacific Daylight Time,1791180010.3572495,completed,2026-10-04 23:00:10 Pacific Daylight Time,1791180010.4508615,0.094
-tdc_dili,2,5,building molecular features (cached),feature_generation,,,2026-10-04 23:00:10 Pacific Daylight Time,1791180010.4508615,resumed_cache,2026-10-04 23:00:10 Pacific Daylight Time,1791180010.4558895,0.005
-tdc_dili,3,5,splitting data and selecting features (cached),feature_selection,,,2026-10-04 23:00:10 Pacific Daylight Time,1791180010.4558895,resumed_cache,2026-10-04 23:00:10 Pacific Daylight Time,1791180010.4718888,0.016
-tdc_dili,4,5,CFA combinatorial fusion,model,CFA (Combinatorial Fusion),cfa,2026-10-04 23:00:10 Pacific Daylight Time,1791180010.4718888,completed,2026-10-04 23:00:10 Pacific Daylight Time,1791180010.7473729,0.275
-tdc_dili,5,5,ensemble (2 method(s)),model,Ensemble,ensemble,2026-10-04 23:00:10 Pacific Daylight Time,1791180010.7483726,completed,2026-10-04 23:00:11 Pacific Daylight Time,1791180011.9863465,1.238
+tdc_dili,1,4,loading PyTDC Tox benchmark group: dili (official train_val/test split),load_dataset,,,2026-10-05 22:35:33 Pacific Daylight Time,1791264933.6178257,completed,2026-10-05 22:35:33 Pacific Daylight Time,1791264933.744921,0.127
+tdc_dili,2,4,building molecular features (cached),feature_generation,,,2026-10-05 22:35:33 Pacific Daylight Time,1791264933.744921,resumed_cache,2026-10-05 22:35:33 Pacific Daylight Time,1791264933.7499208,0.005
+tdc_dili,3,4,splitting data and selecting features (cached),feature_selection,,,2026-10-05 22:35:33 Pacific Daylight Time,1791264933.7499208,resumed_cache,2026-10-05 22:35:33 Pacific Daylight Time,1791264933.7679055,0.018
+tdc_dili,4,4,ensemble (2 method(s)),model,Ensemble,ensemble,2026-10-05 22:35:33 Pacific Daylight Time,1791264933.7679055,completed,2026-10-05 22:35:34 Pacific Daylight Time,1791264934.954267,1.186

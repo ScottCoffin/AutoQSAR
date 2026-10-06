@@ -1,19 +1,18 @@
 Model,Weight,Workflow
-Random forest,0.04320286747635375,conventional
-Extra trees,0.05291222751207023,conventional
-HistGradientBoosting,0.06029668246663655,conventional
-"Voting Regressor (KNN, SVM)",0.018438173374936036,conventional
-AdaBoost,0.03521634668442422,conventional
-XGBoost,0.049541234089439515,conventional
-CatBoost,0.06196181649236984,conventional
-MapLight CatBoost (Strict Parity),0.05221003752107353,conventional
-ChemML MLP (PyTorch),0.08003857677204254,ChemML deep learning
-ChemML MLP (TensorFlow),0.07013774189397173,ChemML deep learning
-Uni-Mol V1,0.046836029354469774,Uni-Mol
-Uni-Mol V2 (84m),0.020403370184266918,Uni-Mol
-"Chemprop v2 (D-MPNN, ensemble=3)",0.05219664432883733,Chemprop v2
-"Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",0.07502940029708652,Chemprop v2
-"Chemprop v2 (CMPNN, ensemble=3)",0.04653248412033787,Chemprop v2
-"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",0.07295939833553447,Chemprop v2
-TabPFNRegressor,0.10389266967404952,conventional
-XGBoost (ADMETboost features),0.05819429942209943,conventional
+ElasticNetCV,0.07412829015739718,conventional
+Random forest,0.05080266238435259,conventional
+Extra trees,0.05799112143769797,conventional
+HistGradientBoosting,0.06624878267141496,conventional
+"Voting Regressor (KNN, SVM)",0.021822590524926074,conventional
+AdaBoost,0.041353400326182274,conventional
+XGBoost,0.058103413806387616,conventional
+CatBoost,0.06545022652303241,conventional
+MapLight CatBoost (Strict Parity),0.06220674826505098,conventional
+ChemML MLP (PyTorch),0.07494284137240491,ChemML deep learning
+ChemML MLP (TensorFlow),0.07047104460805305,ChemML deep learning
+Uni-Mol V1,0.05580377310803611,Uni-Mol
+Uni-Mol V2 (84m),0.024310024912336848,Uni-Mol
+"Chemprop v2 (D-MPNN, ensemble=3)",0.06219079066422439,Chemprop v2
+"Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",0.0893953584092853,Chemprop v2
+"Chemprop v2 (CMPNN, ensemble=3)",0.055442107748974116,Chemprop v2
+XGBoost (ADMETboost features),0.06933682308024332,conventional

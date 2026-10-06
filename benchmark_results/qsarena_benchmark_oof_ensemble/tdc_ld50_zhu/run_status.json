@@ -2,10 +2,10 @@
   "status": "completed",
   "dataset": "tdc_ld50_zhu",
   "source": "PyTDC Tox benchmark group: ld50_zhu (official train_val/test split)",
-  "completed_at": "2026-10-04 23:16:01",
-  "elapsed_seconds": 40.279,
+  "completed_at": "2026-10-05 16:29:12",
+  "elapsed_seconds": 3532.064,
   "n_metrics_rows": 45,
-  "n_stage_records": 5,
+  "n_stage_records": 4,
   "n_rows": 7385,
   "task_type": "regression",
   "primary_metric": "mae",
@@ -53,11 +53,11 @@
       "standardization": 0.9546684709066305,
       "knn_similarity": 0.7949932341001353
     },
-    "selected_model": "TabPFNRegressor",
+    "selected_model": "XGBoost",
     "notes": [],
-    "mae_in_domain": 0.5136009754865468,
-    "mae_out_of_domain": 0.6782665164914242
+    "mae_in_domain": 0.5538776794110656,
+    "mae_out_of_domain": 0.7022644376144853
   },
   "stage23_signature": "659ebb9f5cb78aecde072f45fb9630b8c3f8929e3f807a1dfac69cac29929372",
-  "resume_fingerprint": "6eca13d58f0102f19868d105"
+  "resume_fingerprint": "8f4796acdddf0410d75f5d26"
 }

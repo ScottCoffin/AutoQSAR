@@ -1,8 +1,8 @@
 {
-  "input_sha256": "0eafea250c243d30bdc61233ae24355924187e32354d257cc09d2d2a52a53c17",
+  "input_sha256": "358d9dc43c617447d5551314286628bf00d5c30b1ca68f9b268999be9ca30d68",
   "result": {
-    "null_mean_regret_pct": 6.631258306763122,
-    "p_value": 0.297029702970297,
+    "null_mean_regret_pct": 3.7316799253378807,
+    "p_value": 0.09900990099009901,
     "n_perm": 100
   }
 }

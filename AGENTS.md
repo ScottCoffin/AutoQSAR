@@ -11,64 +11,93 @@ QSARena: SMILES → molecular property QSAR/AutoML workspace plus a 45-dataset b
 (`manuscript.md`, target: *Journal of Cheminformatics*). Windows + OneDrive checkout (paths contain spaces:
 always quote). Bash (Git Bash) and PowerShell are both available.
 
-## Current status and next steps (updated 2026-10-02) - read this first
+## Current status and next steps (updated 2026-10-05) - read this first
 
 **Done**
-- **OOF-ensemble run complete:** `benchmark_results/qsarena_benchmark_oof_ensemble`, 44/44 datasets, with
-  Chemprop OOF (`--ensemble-oof-scope all`, run on the RTX 4060 workstation) and both 2026-09-29 ensemble
-  fixes applied. `python tools/verify_oof_ensemble_run.py` passes: 0 hard failures and 5 soft warnings, all
-  weak ensembles on small or heavy-tailed sets where the best models are members, so not a bug.
-- **Manuscript regenerated from that run:**
-  - `render_manuscript_assets.py --run-dir benchmark_results/qsarena_benchmark_oof_ensemble`; the verifier passes 96/96;
-  - prose synced in `manuscript.md`, `submission/body.tex` and `submission/abstract.tex`. The abstract is at exactly
-    **350 words, the cap**, so any addition needs a cut;
-  - PDFs build with no errors or undefined references (TeX Live 2026 at `C:/texlive/2026/bin/windows`; commands
-    in `submission/README.md`).
-- **Current headline numbers:**
-  - wins: Ensemble 13, Chemprop 8, Uni-Mol 8, TabPFN 5, Conventional 4, MapLight+GNN 4, CFA 2;
-  - top-10 placement: 35 -> 28 -> 27 (7 placements from library breadth, 1 from honest selection);
-  - first places: 5 -> 3 -> 1;
-  - CV-pick median gap to the best model: 7.9%.
-- **Meta-analysis** (§3.14, Figs 7-9, Tables S9-S11), including selector v2 and the auto-rendered CV-leak caveat.
-- **PODUAM attribution** fixed (see traps).
-- **Graphical abstract** PNG/PDF render through headless Edge/Chrome when `cairosvg` has no libcairo (the case on Windows).
+- **Manuscript run:** `benchmark_results/qsarena_benchmark_oof_ensemble`, 44/44 datasets, **31 models**. Ensembles
+  are built from out-of-fold predictions (Chemprop OOF included, `--ensemble-oof-scope all`), with both 2026-09-29
+  ensemble fixes. `python tools/verify_oof_ensemble_run.py` passes (its `INTENTIONAL_RETRAINS` lists the
+  probability-fix retrains).
+- **`XGBoost (ADMETboost features)` folded in** (2026-10-04, author-approved): base model on all 44 datasets with
+  nothing else retrained; ensembles and CFA rebuilt once (outer selection); a member of 43 ensembles. Features come
+  from the arm's cache (`featurize.find_cached_matrix`, matched by SMILES hash), so the benchmark env needs no
+  skfp/mordred.
+- **Hard-label bug fixed** (2026-10-04/05): binary datasets catalogued as `rmse` (cyp1a2, cyp2c19, herg_karim, pampa)
+  were scored on `.predict()` labels. `predict_values_for_metric` now returns probabilities for classification tasks.
+  10 models plus the new one were retrained on those 4 datasets. TabPFN (2026-10-05): pampa retrained with the
+  **local** `tabpfn` package (v2.6 weights; `logs/run_tabpfn_proba_fix.ps1` clears the API-key variables; AUROC
+  0.578 -> 0.715). On cyp1a2, cyp2c19 and herg_karim its rows are **withdrawn** (status
+  `skipped_tabpfn_withdrawn_label_outputs`, metrics blanked): local TabPFN does not fit the 8 GB RTX 4060 at ~10k
+  rows x ~1,000 features (OOM, then stalls even at 128-row chunks), and an API rerun is ~110M estimated tokens per
+  dataset, not spent without the author. Backups: `benchmark_results/_proba_fix_backup_*`.
+- **Manuscript regenerated from the nested-selection run** (2026-10-06): verifier 119/119, abstract at exactly
+  **350 words (the cap)**, PDFs build with no errors or undefined references (TeX Live 2026 at
+  `C:/texlive/2026/bin/windows`). The render needs the benchmark env
+  (`C:/Users/scott/.conda/envs/autoqsar-py311/python.exe`), not system Python (no nbformat). Abstract and graphical
+  abstract caption: edit `manuscript.md`, then `python submission/abstract_sync.py` (writes `abstract.tex` and the
+  `manuscript.tex` caption, prints the word count). Nested selection is a Methods paragraph (META block
+  `methods_nested_selection` in §2.6, from `cv_leak.py` + `selection_leak.csv`); the limitation is now "Residual
+  cross-validation optimism".
+- **Headline numbers (nested selection):** wins Ensemble 22 (14 reg / 8 cls), Conventional 6, Chemprop 5, Uni-Mol 5,
+  TabPFN 3, MapLight+GNN 2, CFA 1; ensembles most consistent (84% within 5%); top-10 35 -> 28 -> 27 (7 + 1);
+  test-selected firsts 6; CV pick winner on 4/44, median gap 7.7%; CV-vs-test overstatement 15.9% -> 3.4% (= the
+  no-selection arm, 3.4%); hardware comparison now single models only (+0.50%, 22 vs 13). Under outer selection the
+  ensembles won 12: the leaky OOF predictions over-weighted selected-feature members. Snapshot of the outer ensembles:
+  `ensemble_outer_selection_snapshot.csv` in the run dir (verifier-checked). **The title ("Ensembles and Conventional
+  ML Perform Comparably to Pretrained Models") may need revising now that ensembles win half: author item.**
+- **Feature-selection CV leak confirmed causally** (`qsarena/feature_expansion/selection_leak.py`; positive in 26/27
+  dataset-model pairs). `--cv-selection nested` is implemented (default for the `full` and `cost_optimized`
+  profiles; see `docs/NESTED_SELECTION_CV_PLAN.md`). The notebook path has only been syntax-checked.
 
-**Decisions of 2026-10-03 (author) and work in flight:**
-- **`XGBoost (ADMETboost features)` joins the benchmark** (31 models). Its base model is being trained into
-  `qsarena_benchmark_oof_ensemble` by `logs/run_foldin_admetboost.ps1` (detached; it waits for the leak test, logs
-  `logs/foldin_admetboost_20261003.log`, ends with `LAUNCHER_DONE`). It uses the OOF run's exact flags plus
-  `--run-admetboost-xgboost --only-model-names "XGBoost (ADMETboost features)" --no-run-ensemble`. The pilot on
-  carcinogens passed: stage 2/3 cache hit, nothing else retrained, ensembles untouched. Features come from the arm's
-  cache (`featurize.find_cached_matrix`, matched by SMILES hash), so the benchmark env needs no skfp/mordred.
-  **Ensembles are deliberately NOT rebuilt yet**; rebuild them once, after the nested-selection decision.
-  **PAUSED by the author on 2026-10-03 at dataset 34/44** (process stopped). Completed datasets keep their new row;
-  resume by relaunching `logs/run_foldin_admetboost.ps1` (detached via WMI). `--resume` skips finished datasets.
-- **The feature-selection CV leak is to be fixed throughout** (reopened). The causal test
-  `qsarena/feature_expansion/selection_leak.py` finished: the leak is positive in 26 of 27 dataset-model pairs
-  (results in `benchmark_results/qsarena_feature_expansion/selection_leak.csv`). Plan, scope and cost (~50-55 h on the RTX, so it needs the
-  author's go-ahead) are in `docs/NESTED_SELECTION_CV_PLAN.md`. **The code is implemented** (2026-10-04): runner
-  `--cv-selection nested` (default for the full and cost_optimized profiles) and notebook option `nested_selection_cv`;
-  see the plan's "Implementation status". The notebook path has only been syntax-checked.
-- **Opt-in models from the arm:** `--run-admetboost-xgboost` (now also a benchmark member) and
-  `--run-chemprop-chemeleon`. A full CheMeleon run (~116 GPU-h) was **declined by the author**; don't propose it
-  again without new evidence.
+**Nested-selection run: COMPLETE (2026-10-06 08:52 PDT).** `tools/verify_oof_ensemble_run.py` passes (0 hard, 4 soft
+warnings; it now also knows the 3 intentional TabPFN withdrawals). 44/44 datasets have both ensembles; no leaky CV row
+remains. Median CV-vs-test overstatement over 344 model-dataset pairs: regression +11.6% -> -1.6%, classification AUROC
++14.1% -> +5.5% (lower in 95.3% of pairs). Repairs on 10-06: Tox21's ensembles were lost when an accidental full relaunch
+was stopped mid-rebuild (rebuilt, `-Tag tox21`); tdc_herg and tdc_bioavailability_ma have no saved predictions for
+their 12 conventional/ChemML models (pre-existing; never ensemble members), so the nested stage now gives such models
+nested CV metrics only (`cv_selection_note`; `-Tag followup`). Rendered and written into the paper 2026-10-06.
+Trap: restricted runs (`-Datasets`) rewrite the run-level `leaderboard_top10_reference.csv/.json` with only their
+datasets (here: empty, which silently dropped Polaris from the leaderboard analysis) and `dataset_summary.csv`,
+`run_config.*` and the report with only theirs. Restore the leaderboard cache from git and regenerate the summary
+and report for all datasets before rendering.
+
+**Nested-selection run details (author's go-ahead 2026-10-05)**
+- Launcher `logs/run_nested_selection.ps1` (`-Datasets <names> -Tag pilot` for a pilot; no arguments = all 44),
+  detached via WMI, log `logs/nested_selection_<tag>_20261005.log`, ends with `LAUNCHER_DONE`. Flags: the OOF run's
+  plus `--cv-selection nested --run-admetboost-xgboost --only-model-names Ensemble --rebuild-ensemble
+  --ensemble-exclude-model TabPFNRegressor --ensemble-exclude-model TabPFNClassifier`. No base model is retrained.
+- TabPFN: the launcher clears the API-key variables, so TabPFN's nested fold refits run locally (no credits). TabPFN
+  gets nested CV metrics but stays out of the ensembles, because most of its full-fit predictions came from the
+  Prior Labs API, a different backend from the local fold refits. Above `--tabpfn-local-max-cells` (1.5M training
+  rows x selected features: tox21, ames, ld50, aqsoldb and the 10k-row CYP/hERG sets) its fold refits are skipped
+  and its CV metrics are **withdrawn** (`cv_selection=outer_withdrawn`, old value in `cv_primary_outer`), so it is
+  not CV-eligible there. Local TabPFN predicts through `ChunkedTabPFN*` (adaptive chunks, a content-keyed
+  prediction cache because the five CV scorers each call predict, and a 0.9 GPU-memory cap so the Windows driver
+  cannot silently spill VRAM into system RAM, which made it crawl).
+- Pilot (tdc_caco2_wang, 18 min) passed: test metrics unchanged, 15 members nested, outer CV overstatement of
+  +3% to +28% became -15% to +1%, ensembles rebuilt (22 members, TabPFN excluded). Full run launched 03:16 PDT
+  2026-10-05. **PAUSED by the author at 20:00 PDT 2026-10-05 with 39/44 done** (stopped during `tdc_cyp3a4_veith`;
+  CYP1A2, CYP2C19, CYP2D6, hERG-Karim and CYP3A4 remain). **Resumed 22:50 PDT** on only those five
+  (`-Datasets tdc_cyp3a4_veith,... -Tag rest`, log `logs/nested_selection_rest_20261005.log`; part-1 log saved as
+  `nested_selection_full_20261005_part1.log`). Don't resume with no `-Datasets`: `--rebuild-ensemble` re-passes every
+  finished dataset (cheap, cached) but on Tox21 it retrains the two Chemprop variants whose fold refits always drop
+  one row (~10 GPU fold trainings, same failed result).
+- Checks: no `config signature changed for` except the ensemble family; base rows keep `primary_metric_value`
+  and test metrics unchanged; selected-feature members get `cv_selection=nested` and keep `cv_primary_outer`;
+  ensembles rebuilt on all 44.
 
 **Next steps**
-1. When the fold-in finishes: check `logs/foldin_admetboost_20261003.log` (no `config signature changed`; every
-   stage `(cached)` except the new model), `tools/verify_oof_ensemble_run.py`, and the new row on all 44 datasets.
-2. Nested selection: implement per `docs/NESTED_SELECTION_CV_PLAN.md` (code needs no approval); run it only with
-   the author's go-ahead. Then rebuild every ensemble ONCE (the new member plus nested OOF), render, and update the
-   paper: 31 models, Table 1, §2.13 (fold-in, nested CV), §3.12 (the descriptor model is now a member, no longer
-   post-hoc), and the CV-leak caveat (it becomes a Methods statement). If nested selection is declined, rebuild the
-   ensembles right after the fold-in instead.
+1. When the nested run finishes: run the checks above and `tools/verify_oof_ensemble_run.py`, then render,
+   update the verifier's expected values (never loosen a check), and update the paper: §2.13 (nested CV; remove the
+   "TabPFN ... still carries label outputs" sentence), the CV-leak caveat becomes a Methods statement (the
+   controlled test is its evidence), and every CV-dependent number (CV pick, gap, decomposition's CV leg, wins).
+2. CFA ranks fusion candidates by in-sample training error (related to, but not, the selection leak; TODO.md).
 3. Author items: title (options in TODO.md), the `[AUTHOR]` flags (other LLM tools in §2.14, OEHHA disclaimer,
-   reviewers, preprint), the Zenodo deposit (rename the repo first; bundles in `dist/zenodo/`).
-2. Anything from the arm that enters the paper is supplementary. New numbers go through the render and the
-   verifier, never hand-typed.
-3. Zenodo deposit: the last blocking submission item (`ZENODO.md`).
-4. Optional, each needing approval: Phase 7 learning curve (~18 GPU-h, `docs/HANDOFF_RTX_GPU_WORK.md`), CheMeleon
-   fine-tuning as a Chemprop variant (unscoped), and a 5-seed TDC-22 replication.
-5. **Declined (2026-10-02): nested-selection CV** (`docs/NESTED_SELECTION_CV_PLAN.md`). The caveat stays.
+   reviewers, preprint), and the Zenodo deposit (rename the repo first; bundles in `dist/zenodo/`).
+4. Anything from the feature-expansion arm that enters the paper is supplementary. New numbers go through the
+   render and the verifier, never hand-typed.
+5. Optional, each needing approval: Phase 7 learning curve (~18 GPU-h, `docs/HANDOFF_RTX_GPU_WORK.md`) and a 5-seed
+   TDC-22 replication. **Declined:** the full CheMeleon run (~116 GPU-h; don't propose it again without new evidence).
 
 **CI** (`.github/workflows/ci.yml`): ruff on `qsarena tests`, then `pytest -m "not gpu and not slow"` on
 Python 3.10-3.12 with only `.[dev]` installed and the newest pandas, plus a LaTeX build of `proof.tex`.
@@ -344,14 +373,14 @@ Notebook generation notes:
      (`--ensemble-oof-scope all`, run on the RTX 4060), no full model retrained, and both
      2026-09-29 ensemble fixes applied. Post-run checks: `python tools/verify_oof_ensemble_run.py`.
    - Regenerate with `render_manuscript_assets.py --run-dir benchmark_results/qsarena_benchmark_oof_ensemble`.
-     `verify_manuscript_numbers.py` is pinned to this run (110 checks, including the §2.13 run-history numbers,
+     `verify_manuscript_numbers.py` is pinned to this run (119 checks, including the §2.13 run-history numbers,
      which it recomputes from the committed metrics of all three runs, and the §3.12 post-hoc arm numbers). If the run changes, update
      each expected value; never loosen a check.
 2. Regenerate every figure, table and number (~1.5 min; system Python suffices):
    ```bash
    python portable_colab_qsar_bundle/render_manuscript_assets.py   # notebook + figures + tables + numbers JSON + LaTeX tables
    python portable_colab_qsar_bundle/render_graphical_abstract.py  # 920x300 J.Cheminform graphical abstract (SVG+PNG+PDF)
-   python portable_colab_qsar_bundle/verify_manuscript_numbers.py  # 110 checks; non-zero exit on drift
+   python portable_colab_qsar_bundle/verify_manuscript_numbers.py  # 119 checks; non-zero exit on drift
    ```
    The first also rewrites the `<!-- TABLE:stem -->` blocks in `manuscript.md` and
    `submission/tables/*.tex`. **Never hand-edit inside those blocks or those .tex files.**
@@ -363,7 +392,7 @@ Notebook generation notes:
    `manuscript_assets/tables/*.csv`. Never from old notebook outputs, `Manuscript Outline.md` or
    `publication_recommendations.md` (all predate the A100 run).
    Update after the OECD reliability work: `verify_manuscript_numbers.py` now also checks the 3.13
-   reliability numbers in `submission/body.tex`, and the verifier currently runs 110 checks. Still
+   reliability numbers in `submission/body.tex`, and the verifier currently runs 119 checks. Still
    grep both manuscript formats after other numeric prose edits.
 5. Table S8 / 3.13 comes from the separate reliability study, not the manuscript-assets notebook:
    ```bash
@@ -382,7 +411,7 @@ The paper makes three load-bearing claims. Keep them straight when editing:
    **Since the focused review of 2026-09-25 this is a provisional, secondary result**: the
    reference set contains leaked and self-reported entries (see traps below). The abstract,
    conclusions and graphical abstract lead with claim 2 and with the internal CV-vs-test gap
-   (OOF run: CV selection picks the winner on 5/44, median relative gap 7.9%). Don't move the ranks back
+   (nested-selection run: CV selection picks the winner on 4/44, median relative gap 7.7%). Don't move the ranks back
    into the headline. The novelty claim is the uniform cross-suite benchmark plus the
    decomposition; code-free access is described as a usability feature (OCHEM/ChemSAR already
    offer it).
@@ -461,7 +490,7 @@ Open work is tracked in [TODO.md](TODO.md); the Zenodo deposit is the last block
 - **Leakage-free CV selection is no longer model-starved.** TabPFN emits CV metrics. In the
   chemprop_fixed run, the CV-selected model picked the per-dataset winner on 3 datasets (it was 0),
   sat a median 8.7% from the best (it was 16.1%), and reached **one** estimated first place (it was
-  0). In the OOF run: winner on 5/44, median gap 7.9%, one first place, top-10 35 → 28 → 27. The
+  0). In the nested-selection run: winner on 4/44, median gap 7.7%, one first place, top-10 35 → 28 → 27. The
   "every first place" and "CV never picks the winner" wording is retired; don't reintroduce it.
 - **Two OOF-ensemble bugs found 2026-09-29, fixed in `qsar_workflow_core.py`; every ensemble built
   before the fix needs rebuilding (folds are cached, so the rebuild is CPU-only). The OOF run was rebuilt
@@ -496,7 +525,7 @@ Open work is tracked in [TODO.md](TODO.md); the Zenodo deposit is the last block
   (`qsarena/feature_expansion/selection_leak.py`: the same features, models and folds, with selection fitted outside
   vs inside the folds; on 9 datasets, the leak is 22.7 points of CV overstatement for ElasticNetCV (9/9 datasets),
   6.1 for random forest (9/9) and 2.5 for SVR (8/9); positive in 26 of 27 pairs, p < 0.001).
-  Fixing it throughout was REOPENED by the author; the plan and cost are in `docs/NESTED_SELECTION_CV_PLAN.md`. Data:
+  The fix, `--cv-selection nested`, is implemented and its run on the manuscript run started 2026-10-05 (see the status section and `docs/NESTED_SELECTION_CV_PLAN.md`). Data:
   `benchmark_results/qsarena_feature_expansion/admetboost__scaffoldcv/cv_geometry_*.csv`; benchmark
   optimism recomputable from `metrics.csv` (`cv_primary` vs `test_<primary>`).
 - **Feature selection is NOT reproducible across machines. Transfer `stage23_resume_cache.pkl`; never let

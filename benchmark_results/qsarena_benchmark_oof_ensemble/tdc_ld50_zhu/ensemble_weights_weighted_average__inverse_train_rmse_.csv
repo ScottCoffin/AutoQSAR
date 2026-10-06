@@ -1,23 +1,22 @@
 Model,Weight,Workflow
-SVR,0.04844237748136989,conventional
-Random forest,0.04875498892827188,conventional
-Extra trees,0.04799391769674,conventional
-HistGradientBoosting,0.04922396702029432,conventional
-"Voting Regressor (KNN, SVM)",0.04909711009498362,conventional
-AdaBoost,0.03729373178297108,conventional
-Tabular MLP,0.0450779477556331,conventional
-Tabular CNN,0.03926024437531807,conventional
-XGBoost,0.04955835941645951,conventional
-CatBoost,0.04710754115407527,conventional
-MapLight CatBoost (Strict Parity),0.0456556739926389,conventional
-ChemML MLP (PyTorch),0.0472182194458287,ChemML deep learning
-ChemML MLP (TensorFlow),0.04557812550291683,ChemML deep learning
-Uni-Mol V1,0.04605256110286471,Uni-Mol
-"MapLight + GNN (CatBoost, Strict Parity)",0.045011041069425856,MapLight + GNN
-"Chemprop v2 (D-MPNN, ensemble=3)",0.044089609907425,Chemprop v2
-"Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",0.04366566212203697,Chemprop v2
-"Chemprop v2 (CMPNN, ensemble=3)",0.0440844318601512,Chemprop v2
-"Chemprop v2 (AttentiveFP, ensemble=3)",0.0438549467429682,Chemprop v2
-"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",0.04784676944997964,Chemprop v2
-TabPFNRegressor,0.03660271305843333,conventional
-XGBoost (ADMETboost features),0.04853006003921388,conventional
+SVR,0.04980542545142606,conventional
+Random forest,0.05048848066476993,conventional
+Extra trees,0.049342569498234616,conventional
+HistGradientBoosting,0.05087500533608816,conventional
+"Voting Regressor (KNN, SVM)",0.05052155692678336,conventional
+AdaBoost,0.03894119669013118,conventional
+Tabular MLP,0.04729260895314115,conventional
+Tabular CNN,0.04003867019980834,conventional
+XGBoost,0.05115492100819504,conventional
+CatBoost,0.048397893641487694,conventional
+MapLight CatBoost (Strict Parity),0.04784683664634507,conventional
+ChemML MLP (PyTorch),0.04869327689506354,ChemML deep learning
+ChemML MLP (TensorFlow),0.046956887632821166,ChemML deep learning
+Uni-Mol V1,0.048262771645641675,Uni-Mol
+"MapLight + GNN (CatBoost, Strict Parity)",0.04717126571558183,MapLight + GNN
+"Chemprop v2 (D-MPNN, ensemble=3)",0.04620561210818539,Chemprop v2
+"Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",0.04576131770488053,Chemprop v2
+"Chemprop v2 (CMPNN, ensemble=3)",0.04620018554976691,Chemprop v2
+"Chemprop v2 (AttentiveFP, ensemble=3)",0.0459596867036346,Chemprop v2
+"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",0.04922465730279471,Chemprop v2
+XGBoost (ADMETboost features),0.050859173725219003,conventional

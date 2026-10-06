@@ -117,10 +117,14 @@ the sign of {{sens_same_sign}} of the fingerprint-dependent correlations). How i
 domain metrics are itself varies with training-set diversity {{cite:sheridan2015relative}}.
 """
 
-CVLEAK = """**Model-selection cross-validation is optimistic.** The runner fits the feature selector once on the full training split and then cross-validates each model on the selected features, so every held-out CV fold has already influenced which features were kept. On datasets with predefined or scaffold test splits, CV scores overstate the corresponding test scores by a median of {{cvleak_median}} across {{cvleak_n_models}} CV-scored models (per-model medians {{cvleak_range}}; largest for {{cvleak_top}}), against {{cvleak_arm}} for fixed-configuration XGBoost and random-forest models trained on the unselected ADMETboost features with the same folds (the descriptor analysis in §3.12). Test-set results and leaderboard placements are unaffected, because selection never sees test data, but the cross-validation-selected model and the CV-to-test gap in §3.4 rest on these optimistic scores. Nesting feature selection inside each CV fold would remove the bias; the descriptor model added to the library (§2.7) avoids it by not selecting features at all.
+NESTED = """**Feature selection inside cross-validation.** Selecting features on the whole training split and then cross-validating models on the selected columns lets every held-out fold influence the selection, which inflates cross-validated scores. Selection was therefore refitted inside every cross-validation fold, on that fold's training rows only and with the method pinned to the one recorded for the full training split. These fold-specific selections produce both the cross-validated metrics of every model that uses the selected features and their out-of-fold ensemble predictions (§2.13). A controlled comparison on {{nested_ct_datasets}} datasets, with identical features, models and folds and selection fitted either outside or inside the folds, measured the bias this removes: fitting selection outside the folds raised the overstatement of cross-validated over test RMSE by a median of {{nested_ct_per_model}}, and raised it in {{nested_ct_positive}} of {{nested_ct_pairs}} dataset-model pairs (sign test, {{nested_ct_p}}). In the benchmark, on datasets with predefined or scaffold test splits, the median overstatement of cross-validated over test scores fell from {{nested_outer}} to {{nested_nested}} across {{nested_pairs}} model-dataset pairs (lower in {{nested_share}} of them), the level of fixed-configuration models trained without feature selection on the same folds ({{cvleak_arm}}). Where TabPFN's local fold refits did not fit the GPU, its cross-validated scores are withdrawn rather than reported from the leaky protocol.
 """
 
-BLOCKS = {"section_3_14": SECTION, "limitation_meta": LIMITATION, "limitation_cvleak": CVLEAK}
+CVLEAK = """**Residual cross-validation optimism.** With feature selection nested inside the folds (§2.6), cross-validated scores still exceed the corresponding test scores by a median of {{nested_nested}} on datasets with predefined or scaffold test splits (per-model medians {{cvleak_range}} across {{cvleak_n_models}} CV-scored models). Fixed-configuration models that select no features show {{cvleak_arm}} on the same folds, so the remainder reflects the gap between training-set folds and harder held-out splits rather than leakage. The cross-validation-selected protocol in §3.4 should be read with that margin in mind.
+"""
+
+BLOCKS = {"section_3_14": SECTION, "limitation_meta": LIMITATION, "limitation_cvleak": CVLEAK,
+          "methods_nested_selection": NESTED}
 
 MD_MARKERS = ("<!-- META:{name} -->\n", "<!-- /META -->")
 TEX_MARKERS = ("% META:{name}\n", "% /META")
@@ -162,7 +166,7 @@ _TEX_REPLACEMENTS = [
     ("§", r"\S"),
 ]
 _SECTION_LABELS = {
-    "3.2": "sec:nowinner", "3.4": "sec:leaderboard", "3.10": "sec:hardware", "3.12": "sec:platforms", "3.14": "sec:meta",
+    "2.6": "sec:selection", "2.13": "sec:lineage", "3.2": "sec:nowinner", "3.4": "sec:leaderboard", "3.10": "sec:hardware", "3.12": "sec:platforms", "3.14": "sec:meta",
 }
 _FIG_LABELS = {
     "figureM1_size_crossover": "fig:meta_size",

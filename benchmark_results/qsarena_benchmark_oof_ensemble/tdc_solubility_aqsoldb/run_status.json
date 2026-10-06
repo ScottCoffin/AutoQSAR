@@ -2,10 +2,10 @@
   "status": "completed",
   "dataset": "tdc_solubility_aqsoldb",
   "source": "PyTDC ADME benchmark group: solubility_aqsoldb (official train_val/test split)",
-  "completed_at": "2026-10-04 23:29:28",
-  "elapsed_seconds": 806.623,
+  "completed_at": "2026-10-05 18:11:34",
+  "elapsed_seconds": 6141.956,
   "n_metrics_rows": 45,
-  "n_stage_records": 5,
+  "n_stage_records": 4,
   "n_rows": 9980,
   "task_type": "regression",
   "primary_metric": "mae",
@@ -53,11 +53,11 @@
       "standardization": 0.9553884711779449,
       "knn_similarity": 0.8551378446115289
     },
-    "selected_model": "TabPFNRegressor",
+    "selected_model": "XGBoost (ADMETboost features)",
     "notes": [],
-    "mae_in_domain": 0.660753099590199,
-    "mae_out_of_domain": 0.8030670897583027
+    "mae_in_domain": 0.6966347674937702,
+    "mae_out_of_domain": 0.8249440956080291
   },
   "stage23_signature": "384ddfff1ca9b535e23ed973d0eba71416aa6e2bbd4c550af4b13971ee75e524",
-  "resume_fingerprint": "a0ccad657ee09b8339223f77"
+  "resume_fingerprint": "f73e1e0b774d4eddf4a26d13"
 }

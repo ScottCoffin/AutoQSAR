@@ -1,11 +1,10 @@
 Model,Weight,Workflow
-Uni-Mol V1,0.09738835011878856,Uni-Mol
-Uni-Mol V2 (84m),0.09145116100657177,Uni-Mol
-"MapLight + GNN (CatBoost, Strict Parity)",0.08383586919205342,MapLight + GNN
-"Chemprop v2 (D-MPNN, ensemble=3)",0.09032161121652872,Chemprop v2
-"Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",0.09482486951737991,Chemprop v2
-"Chemprop v2 (CMPNN, ensemble=3)",0.08817418158774223,Chemprop v2
-"Chemprop v2 (AttentiveFP, ensemble=3)",0.0939517198836752,Chemprop v2
-"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",0.13661927476016017,Chemprop v2
-TabPFNClassifier,0.12662272029771665,conventional
-XGBoost (ADMETboost features),0.09681024241938335,conventional
+Uni-Mol V1,0.11808897362930226,Uni-Mol
+Uni-Mol V2 (84m),0.11088979048625108,Uni-Mol
+"MapLight + GNN (CatBoost, Strict Parity)",0.10165581133815783,MapLight + GNN
+"Chemprop v2 (D-MPNN, ensemble=3)",0.1095201464250602,Chemprop v2
+"Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",0.11498060601890805,Chemprop v2
+"Chemprop v2 (CMPNN, ensemble=3)",0.10691626453882598,Chemprop v2
+"Chemprop v2 (AttentiveFP, ensemble=3)",0.11392186188839118,Chemprop v2
+"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",0.10663856086824934,Chemprop v2
+XGBoost (ADMETboost features),0.11738798480685392,conventional

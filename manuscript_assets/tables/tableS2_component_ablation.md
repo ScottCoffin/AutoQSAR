@@ -4,4 +4,4 @@
 | 2 | + MapLight classic features | 44 | 9 | 0.205 |
 | 3 | + neural/deep backends | 44 | 26 | 0.591 |
 | 4 | + CFA fusion | 44 | 6 | 0.136 |
-| 5 | Full pipeline incl. ensembles | 44 | 12 | 0.273 |
+| 5 | Full pipeline incl. ensembles | 44 | 22 | 0.500 |

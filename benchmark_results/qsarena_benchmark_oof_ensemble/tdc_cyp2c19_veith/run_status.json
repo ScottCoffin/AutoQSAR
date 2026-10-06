@@ -2,10 +2,10 @@
   "status": "completed",
   "dataset": "tdc_cyp2c19_veith",
   "source": "PyTDC ADME benchmark: cyp2c19_veith",
-  "completed_at": "2026-10-04 23:31:05",
-  "elapsed_seconds": 35.254,
+  "completed_at": "2026-10-06 02:15:43",
+  "elapsed_seconds": 3898.523,
   "n_metrics_rows": 36,
-  "n_stage_records": 5,
+  "n_stage_records": 4,
   "n_rows": 12665,
   "task_type": "classification",
   "primary_metric": "roc_auc",
@@ -55,5 +55,5 @@
     "notes": []
   },
   "stage23_signature": "33a1a1aec7b9fb1ae68c7bcbda9d0bceefec0f2c01cecd5dc828c4b00bbcbae6",
-  "resume_fingerprint": "e3e1543fead712c0e39e316b"
+  "resume_fingerprint": "7679d81469589a9c2431f4f7"
 }

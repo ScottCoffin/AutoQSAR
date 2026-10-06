@@ -1,6 +1,5 @@
 dataset,stage_index,total_stages,stage_label,step_type,model,workflow,started_at,started_epoch,status,ended_at,ended_epoch,duration_seconds
-tdc_caco2_wang,1,5,loading PyTDC ADME benchmark group: caco2_wang (official train_val/test split),load_dataset,,,2026-10-04 23:00:57 Pacific Daylight Time,1791180057.2203104,completed,2026-10-04 23:00:57 Pacific Daylight Time,1791180057.446346,0.226
-tdc_caco2_wang,2,5,building molecular features (cached),feature_generation,,,2026-10-04 23:00:57 Pacific Daylight Time,1791180057.446346,resumed_cache,2026-10-04 23:00:57 Pacific Daylight Time,1791180057.4559066,0.01
-tdc_caco2_wang,3,5,splitting data and selecting features (cached),feature_selection,,,2026-10-04 23:00:57 Pacific Daylight Time,1791180057.4559066,resumed_cache,2026-10-04 23:00:57 Pacific Daylight Time,1791180057.4728835,0.017
-tdc_caco2_wang,4,5,CFA combinatorial fusion,model,CFA (Combinatorial Fusion),cfa,2026-10-04 23:00:57 Pacific Daylight Time,1791180057.4728835,completed,2026-10-04 23:00:57 Pacific Daylight Time,1791180057.66479,0.192
-tdc_caco2_wang,5,5,ensemble (2 method(s)),model,Ensemble,ensemble,2026-10-04 23:00:57 Pacific Daylight Time,1791180057.66479,completed,2026-10-04 23:01:06 Pacific Daylight Time,1791180066.126283,8.461
+tdc_caco2_wang,1,4,loading PyTDC ADME benchmark group: caco2_wang (official train_val/test split),load_dataset,,,2026-10-05 22:36:18 Pacific Daylight Time,1791264978.833535,completed,2026-10-05 22:36:19 Pacific Daylight Time,1791264979.07623,0.243
+tdc_caco2_wang,2,4,building molecular features (cached),feature_generation,,,2026-10-05 22:36:19 Pacific Daylight Time,1791264979.07623,resumed_cache,2026-10-05 22:36:19 Pacific Daylight Time,1791264979.08527,0.009
+tdc_caco2_wang,3,4,splitting data and selecting features (cached),feature_selection,,,2026-10-05 22:36:19 Pacific Daylight Time,1791264979.08527,resumed_cache,2026-10-05 22:36:19 Pacific Daylight Time,1791264979.103429,0.018
+tdc_caco2_wang,4,4,ensemble (2 method(s)),model,Ensemble,ensemble,2026-10-05 22:36:19 Pacific Daylight Time,1791264979.103429,completed,2026-10-05 22:36:27 Pacific Daylight Time,1791264987.6698432,8.566

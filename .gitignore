@@ -233,6 +233,8 @@ data/*.zip
 **/benchmark_results/**/conventional_ml/
 **/benchmark_results/**/tuned_conventional_ml/
 **/benchmark_results/**/ensemble_oof/
+**/benchmark_results/**/nested_selection/oof_folds/
+**/benchmark_results/**/nested_selection/metrics_only/
 benchmark_results/abandoned_*/
 benchmark_results/qsarena_benchmark_a100_probe*/
 benchmark_results/qsarena_meta_phase7_gpu/
@@ -302,3 +304,4 @@ logs/.*_done_seen
 
 benchmark_results/_proba_fix_backup_*/
 benchmark_results/_cfa_rebuild_backup_*/
+benchmark_results/_nested_pilot_backup_*/

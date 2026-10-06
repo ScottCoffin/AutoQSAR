@@ -1,45 +1,31 @@
 dataset,family,gap_low_shift_pct,gap_scaffold_pct,delta_pp
 tdc_carcinogens_lagunin,Conventional ML,0,2.237136465,2.237136465
-tdc_carcinogens_lagunin,Ensemble (stacking / averaging),13.1147541,2.908277405,-10.20647669
-tdc_carcinogens_lagunin,CFA combinatorial fusion,19.90632319,6.114839672,-13.79148351
 tdc_carcinogens_lagunin,Uni-Mol (3D pretrained),6.791569087,7.904548844,1.112979757
 tdc_carcinogens_lagunin,TabPFN (tabular foundation),5.152224824,6.338553318,1.186328494
 tdc_carcinogens_lagunin,Deep tabular NN (ChemML MLP),19.90632319,12.30425056,-7.602072626
 tdc_clintox,Conventional ML,0,1.807617818,1.807617818
-tdc_clintox,Ensemble (stacking / averaging),2.070101153,2.440284054,0.3701829016
-tdc_clintox,CFA combinatorial fusion,2.705245825,0,-2.705245825
 tdc_clintox,Uni-Mol (3D pretrained),11.43260409,13.06649451,1.633890419
 tdc_clintox,MapLight + GNN,25.17054811,41.32989025,16.15934215
 tdc_clintox,Deep tabular NN (ChemML MLP),7.315925665,2.775984506,-4.539941158
-tdc_hydrationfreeenergy_freesolv,Conventional ML,31.0396832,4.830224181,-26.20945902
-tdc_hydrationfreeenergy_freesolv,Ensemble (stacking / averaging),8.276604049,0,-8.276604049
-tdc_hydrationfreeenergy_freesolv,CFA combinatorial fusion,0,4.774520164,4.774520164
-tdc_hydrationfreeenergy_freesolv,Uni-Mol (3D pretrained),76.12290139,36.23709264,-39.88580876
-tdc_hydrationfreeenergy_freesolv,TabPFN (tabular foundation),6.319602102,2.802775815,-3.516826286
-tdc_hydrationfreeenergy_freesolv,Chemprop v2 GNN,43.18122695,18.13030335,-25.05092361
-tdc_hydrationfreeenergy_freesolv,MapLight + GNN,104.1253882,16.8356252,-87.28976304
-tdc_hydrationfreeenergy_freesolv,Deep tabular NN (ChemML MLP),95.31764322,23.12562027,-72.19202296
-tdc_pampa_ncats,Conventional ML,0.05440696409,2.714732537,2.660325573
-tdc_pampa_ncats,Ensemble (stacking / averaging),0,1.980912663,1.980912663
-tdc_pampa_ncats,CFA combinatorial fusion,1.557757288,2.281658513,0.7239012254
-tdc_pampa_ncats,Uni-Mol (3D pretrained),4.455644007,0,-4.455644007
-tdc_pampa_ncats,MapLight + GNN,23.0599622,27.74881707,4.688854865
-tdc_pampa_ncats,Deep tabular NN (ChemML MLP),6.437202909,10.44991579,4.012712882
-tdc_skin_reaction,Conventional ML,3.565436242,0,-3.565436242
-tdc_skin_reaction,Ensemble (stacking / averaging),1.845637584,16.64785553,14.80221795
-tdc_skin_reaction,CFA combinatorial fusion,0,1.410835214,1.410835214
-tdc_skin_reaction,Uni-Mol (3D pretrained),5.201342282,1.410835214,-3.790507067
-tdc_skin_reaction,TabPFN (tabular foundation),2.810402685,21.24717833,18.43677565
-tdc_skin_reaction,Deep tabular NN (ChemML MLP),12.29026846,14.24943567,1.95916721
+tdc_hydrationfreeenergy_freesolv,Conventional ML,23.25072763,5.821441099,-17.42928653
+tdc_hydrationfreeenergy_freesolv,Uni-Mol (3D pretrained),65.65421419,37.52527562,-28.12893857
+tdc_hydrationfreeenergy_freesolv,TabPFN (tabular foundation),0,3.774822297,3.774822297
+tdc_hydrationfreeenergy_freesolv,Chemprop v2 GNN,34.67058202,19.24727849,-15.42330353
+tdc_hydrationfreeenergy_freesolv,MapLight + GNN,91.99224246,17.94035859,-74.05188387
+tdc_hydrationfreeenergy_freesolv,Deep tabular NN (ChemML MLP),83.70802689,24.28982838,-59.41819851
+tdc_pampa_ncats,Conventional ML,0,2.714732537,2.714732537
+tdc_pampa_ncats,Uni-Mol (3D pretrained),4.403632926,0,-4.403632926
+tdc_pampa_ncats,MapLight + GNN,23.01807868,27.74881707,4.730738391
+tdc_pampa_ncats,Deep tabular NN (ChemML MLP),6.386270521,10.44991579,4.06364527
+tdc_skin_reaction,Conventional ML,0.7768666379,0,-0.7768666379
+tdc_skin_reaction,Uni-Mol (3D pretrained),2.460077687,1.410835214,-1.049242472
+tdc_skin_reaction,TabPFN (tabular foundation),0,21.24717833,21.24717833
+tdc_skin_reaction,Deep tabular NN (ChemML MLP),9.753992231,14.24943567,4.495443435
 tdc_tox21,Conventional ML,0,2.501941371,2.501941371
-tdc_tox21,Ensemble (stacking / averaging),0.2207149009,13.77402446,13.55330956
-tdc_tox21,CFA combinatorial fusion,2.444686693,1.827315084,-0.6173716081
 tdc_tox21,Uni-Mol (3D pretrained),1.831664513,8.87449039,7.042825877
 tdc_tox21,MapLight + GNN,10.67371878,16.3075131,5.633794327
 tdc_tox21,Deep tabular NN (ChemML MLP),7.333387166,9.932537371,2.599150205
 tdc_toxcast,Conventional ML,0,0,0
-tdc_toxcast,Ensemble (stacking / averaging),1.52972028,5.780637941,4.250917661
-tdc_toxcast,CFA combinatorial fusion,6.015078671,0.09513150532,-5.919947166
 tdc_toxcast,Uni-Mol (3D pretrained),6.495847902,8.265249021,1.769401119
 tdc_toxcast,MapLight + GNN,13.47792832,16.2311136,2.753185277
 tdc_toxcast,Deep tabular NN (ChemML MLP),12.7076049,14.21936206,1.511757164

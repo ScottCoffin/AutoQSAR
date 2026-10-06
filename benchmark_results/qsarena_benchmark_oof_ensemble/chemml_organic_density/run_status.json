@@ -2,10 +2,10 @@
   "status": "completed",
   "dataset": "chemml_organic_density",
   "source": "ChemML bundled dataset: organic_density",
-  "completed_at": "2026-10-04 23:00:22",
-  "elapsed_seconds": 4.831,
+  "completed_at": "2026-10-05 22:35:46",
+  "elapsed_seconds": 4.7,
   "n_metrics_rows": 56,
-  "n_stage_records": 5,
+  "n_stage_records": 4,
   "n_rows": 500,
   "task_type": "regression",
   "primary_metric": "rmse",
@@ -69,5 +69,5 @@
     "mae_out_of_domain": 0.007239226179296621
   },
   "stage23_signature": "1159ed6b1d85644a5e51633271e8122e2c118bcec0f1bb6ba8fa5aa677199520",
-  "resume_fingerprint": "b4dc76c3b35b1a00a21088d6"
+  "resume_fingerprint": "007d0f162c1ba0b08d100681"
 }

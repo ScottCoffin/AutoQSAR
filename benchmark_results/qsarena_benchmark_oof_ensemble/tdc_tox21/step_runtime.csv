@@ -1,6 +1,5 @@
 dataset,stage_index,total_stages,stage_label,step_type,model,workflow,started_at,started_epoch,status,ended_at,ended_epoch,duration_seconds
-tdc_tox21,1,5,loading PyTDC Tox benchmark: tox21 [label=NR-AR],load_dataset,,,2026-10-04 23:05:21 Pacific Daylight Time,1791180321.082507,completed,2026-10-04 23:05:22 Pacific Daylight Time,1791180322.126278,1.044
-tdc_tox21,2,5,building molecular features (cached),feature_generation,,,2026-10-04 23:05:22 Pacific Daylight Time,1791180322.126278,resumed_cache,2026-10-04 23:05:22 Pacific Daylight Time,1791180322.1890984,0.063
-tdc_tox21,3,5,splitting data and selecting features (cached),feature_selection,,,2026-10-04 23:05:22 Pacific Daylight Time,1791180322.1890984,resumed_cache,2026-10-04 23:05:22 Pacific Daylight Time,1791180322.2092876,0.02
-tdc_tox21,4,5,CFA combinatorial fusion,model,CFA (Combinatorial Fusion),cfa,2026-10-04 23:05:22 Pacific Daylight Time,1791180322.2092876,completed,2026-10-04 23:05:23 Pacific Daylight Time,1791180323.2677555,1.058
-tdc_tox21,5,5,ensemble (2 method(s)),model,Ensemble,ensemble,2026-10-04 23:05:23 Pacific Daylight Time,1791180323.2677555,completed,2026-10-04 23:15:12 Pacific Daylight Time,1791180912.984012,589.716
+tdc_tox21,1,4,loading PyTDC Tox benchmark: tox21 [label=NR-AR],load_dataset,,,2026-10-06 08:15:31 Pacific Daylight Time,1791299731.8114588,completed,2026-10-06 08:15:33 Pacific Daylight Time,1791299733.3729022,1.561
+tdc_tox21,2,4,building molecular features (cached),feature_generation,,,2026-10-06 08:15:33 Pacific Daylight Time,1791299733.3729022,resumed_cache,2026-10-06 08:15:33 Pacific Daylight Time,1791299733.44448,0.072
+tdc_tox21,3,4,splitting data and selecting features (cached),feature_selection,,,2026-10-06 08:15:33 Pacific Daylight Time,1791299733.44448,resumed_cache,2026-10-06 08:15:33 Pacific Daylight Time,1791299733.501783,0.057
+tdc_tox21,4,4,ensemble (2 method(s)),model,Ensemble,ensemble,2026-10-06 08:15:33 Pacific Daylight Time,1791299733.501783,completed,2026-10-06 08:29:37 Pacific Daylight Time,1791300577.4555287,843.954

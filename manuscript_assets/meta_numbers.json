@@ -1,216 +1,243 @@
 {
   "chemprop_valid_datasets": 42,
   "crossover_primary": {
-    "ci_high_n": 10159.8403201321,
-    "ci_low_n": 590.7277028102,
+    "ci_high_n": 10417.6514721178,
+    "ci_low_n": 413.0378962859,
     "crossover_log10_n": null,
     "crossover_n": null,
-    "intercept_a": 2.369538918,
-    "intercept_b": 8.4913059322,
+    "intercept_a": 2.9369364933,
+    "intercept_b": 9.6174577716,
     "log10_n_range": [
       2.348304863,
       4.0316104147
     ],
-    "p_cross_in_range": 0.5131,
-    "slope_a": 0.0,
-    "slope_b": -1.4785384103
+    "p_cross_in_range": 0.2956,
+    "slope_a": 0.0712611052,
+    "slope_b": -1.3610675271
   },
   "crossover_secondary": {
-    "ci_high_n": 8333.730476883,
-    "ci_low_n": 249.8811501804,
+    "ci_high_n": 10580.3099999945,
+    "ci_low_n": 279.9202639185,
     "crossover_log10_n": null,
     "crossover_n": null,
-    "intercept_a": 11.3248441861,
-    "intercept_b": 8.4913059322,
+    "intercept_a": 0.9732538348,
+    "intercept_b": 9.6174577716,
     "log10_n_range": [
       2.348304863,
       4.0316104147
     ],
-    "p_cross_in_range": 0.5026,
-    "slope_a": -2.8377765572,
-    "slope_b": -1.4785384103
+    "p_cross_in_range": 0.0289,
+    "slope_a": -0.3038524486,
+    "slope_b": -1.3610675271
   },
   "cv_leak": {
     "arm_median_overstatement_pct": 3.4243480425,
-    "median_overstatement_all_benchmark_pct": 14.8591406704,
+    "controlled_test": {
+      "n_datasets": 9,
+      "n_pairs": 27,
+      "n_positive": 26,
+      "per_model": {
+        "ElasticNetCV": {
+          "median_points": 22.693714409,
+          "n": 9,
+          "n_positive": 9
+        },
+        "Random forest": {
+          "median_points": 6.0605431105,
+          "n": 9,
+          "n_positive": 9
+        },
+        "SVR": {
+          "median_points": 2.5200147218,
+          "n": 9,
+          "n_positive": 8
+        }
+      },
+      "sign_test_p": 4.172e-07
+    },
+    "median_overstatement_all_benchmark_pct": 3.3421899467,
     "n_arm_rows": 70,
-    "n_benchmark_model_rows": 504,
+    "n_benchmark_model_rows": 498,
     "n_benchmark_models": 19,
+    "n_paired_rows": 462,
+    "paired_median_nested_pct": 3.4295171519,
+    "paired_median_outer_pct": 15.8805542415,
+    "paired_share_lower_nested_pct": 96.3203463203,
     "per_model_median_pct": {
-      "AdaBoost": 4.7407438952,
-      "CatBoost": 11.5951102096,
-      "ChemML MLP (PyTorch)": 23.3403238582,
-      "ChemML MLP (TensorFlow)": 17.4615350313,
-      "ElasticNetCV": 43.8131258834,
-      "Extra trees": 15.0543942331,
-      "HistGradientBoosting": 14.9812836345,
-      "LogisticRegression": 14.0873167934,
-      "Random forest": 11.5387402781,
-      "SVC": 16.9751051409,
-      "SVR": 25.194562336,
-      "TabPFNClassifier": 11.9578160686,
-      "TabPFNRegressor": 26.8901535136,
-      "Tabular CNN": 7.5950143662,
-      "Tabular MLP": 24.8350013954,
-      "Voting Classifier (KNN, SVM)": 13.4061016885,
-      "Voting Regressor (KNN, SVM)": 21.8565020732,
-      "XGBoost": 14.167476058,
+      "AdaBoost": -0.7331590972,
+      "CatBoost": 1.3062007793,
+      "ChemML MLP (PyTorch)": 3.9262831666,
+      "ChemML MLP (TensorFlow)": 4.5504145086,
+      "ElasticNetCV": -0.438853734,
+      "Extra trees": 4.9124569853,
+      "HistGradientBoosting": 4.0925026148,
+      "LogisticRegression": 5.3748427817,
+      "Random forest": 4.4238204442,
+      "SVC": 4.6785242646,
+      "SVR": 5.4477807231,
+      "TabPFNClassifier": 1.195394642,
+      "TabPFNRegressor": -3.8674600215,
+      "Tabular CNN": 1.9281101622,
+      "Tabular MLP": 4.4058906318,
+      "Voting Classifier (KNN, SVM)": 2.7889419084,
+      "Voting Regressor (KNN, SVM)": 6.4758622239,
+      "XGBoost": 2.4769466688,
       "XGBoost (ADMETboost features)": 3.1757586033
     },
     "per_model_median_range_pct": [
-      3.1757586033,
-      43.8131258834
+      -3.8674600215,
+      6.4758622239
     ],
     "top_models": [
-      "ElasticNetCV",
-      "TabPFNRegressor",
-      "SVR"
+      "Voting Regressor (KNN, SVM)",
+      "SVR",
+      "LogisticRegression"
     ]
   },
   "difficulty": {
     "internal_diversity": {
       "classification": {
         "ci": [
-          -0.7057202184,
-          0.0875044771
+          -0.7010208676,
+          0.0924707668
         ],
         "n": 22,
-        "p": 0.0873912609,
-        "rho": -0.3743647657
+        "p": 0.0922907709,
+        "rho": -0.3675889328
       },
       "pooled": {
         "ci": [
-          -0.3908631978,
-          0.2673293965
+          -0.4067616253,
+          0.243451193
         ],
         "n": 44,
-        "p": 0.6136386361,
-        "rho": -0.0787079721
+        "p": 0.5365463454,
+        "rho": -0.0959165251
       },
       "regression": {
         "ci": [
-          -0.3899159543,
-          0.6195397537
+          -0.4011484932,
+          0.5990970651
         ],
         "n": 22,
-        "p": 0.6291370863,
-        "rho": 0.1067193676
+        "p": 0.700229977,
+        "rho": 0.086391869
       }
     },
     "log10_n_train": {
       "classification": {
         "ci": [
-          -0.295403605,
-          0.542925411
+          -0.3079989373,
+          0.5415309758
         ],
         "n": 22,
-        "p": 0.5806419358,
-        "rho": 0.1247882552
+        "p": 0.6116388361,
+        "rho": 0.1157538114
       },
       "pooled": {
         "ci": [
-          -0.3501769564,
-          0.288910157
+          -0.3484023319,
+          0.2977790888
         ],
         "n": 44,
-        "p": 0.798720128,
-        "rho": -0.039638887
+        "p": 0.8171182882,
+        "rho": -0.0362533593
       },
       "regression": {
         "ci": [
-          -0.7074653449,
-          0.2828765848
+          -0.6836268723,
+          0.3121719533
         ],
         "n": 22,
-        "p": 0.2104789521,
-        "rho": -0.276757989
+        "p": 0.2589741026,
+        "rho": -0.2485173779
       }
     },
     "mean_snn": {
       "classification": {
         "ci": [
-          -0.3678830271,
-          0.543542609
+          -0.3855963838,
+          0.5423103349
         ],
         "n": 22,
-        "p": 0.7188281172,
-        "rho": 0.0830039526
+        "p": 0.7330266973,
+        "rho": 0.0773574252
       },
       "pooled": {
         "ci": [
-          -0.1482446565,
-          0.4644133147
+          -0.1385660149,
+          0.4771878058
         ],
         "n": 44,
-        "p": 0.2878712129,
-        "rho": 0.1641865224
+        "p": 0.2622737726,
+        "rho": 0.1737781749
       },
       "regression": {
         "ci": [
-          -0.1986263144,
-          0.6514855968
+          -0.1851076909,
+          0.6695109103
         ],
         "n": 22,
-        "p": 0.2326767323,
-        "rho": 0.2648221344
+        "p": 0.1857814219,
+        "rho": 0.2919254658
       }
     },
     "ood_fraction": {
       "classification": {
         "ci": [
-          -0.4510278396,
-          0.4486875991
+          -0.4480428284,
+          0.4660714943
         ],
         "n": 22,
-        "p": 0.9416058394,
-        "rho": 0.0175042349
+        "p": 0.9210078992,
+        "rho": 0.0231507623
       },
       "pooled": {
         "ci": [
-          -0.5517949973,
-          0.0751583043
+          -0.5651783375,
+          0.0752711327
         ],
         "n": 44,
-        "p": 0.1095890411,
-        "rho": -0.2482545355
+        "p": 0.097190281,
+        "rho": -0.2561535435
       },
       "regression": {
         "ci": [
-          -0.8204578454,
-          -0.0484332069
+          -0.8413163536,
+          -0.0621064947
         ],
         "n": 22,
-        "p": 0.0154984502,
-        "rho": -0.5166572558
+        "p": 0.0112988701,
+        "rho": -0.5392433653
       }
     },
     "scaffolds_per_molecule": {
       "classification": {
         "ci": [
-          -0.4832720626,
-          0.3996674247
+          -0.473032649,
+          0.3857789135
         ],
         "n": 22,
-        "p": 0.9379062094,
+        "p": 0.9376062394,
         "rho": -0.0175042349
       },
       "pooled": {
         "ci": [
-          -0.1910173604,
-          0.3959584709
+          -0.1859905896,
+          0.392454838
         ],
         "n": 44,
-        "p": 0.4467553245,
-        "rho": 0.1187672267
+        "p": 0.4562543746,
+        "rho": 0.1167924747
       },
       "regression": {
         "ci": [
-          -0.2161597118,
-          0.6478682612
+          -0.21784115,
+          0.6383342841
         ],
         "n": 22,
-        "p": 0.2448755124,
-        "rho": 0.2603049125
+        "p": 0.2647735226,
+        "rho": 0.2501411632
       }
     }
   },
@@ -241,14 +268,14 @@
         "figureM1_size_crossover.png"
       ],
       "slopes_pp_per_decade": {
-        "CFA combinatorial fusion": -1.7760629352,
-        "Chemprop v2 GNN": -0.6648528164,
-        "Conventional ML": 0.0,
-        "Deep tabular NN (ChemML MLP)": -6.9964359017,
-        "Ensemble (stacking / averaging)": -2.8377765572,
-        "MapLight + GNN": -4.15791184,
-        "TabPFN (tabular foundation)": 4.5128663154,
-        "Uni-Mol (3D pretrained)": -1.4785384103
+        "CFA combinatorial fusion": -1.8601587311,
+        "Chemprop v2 GNN": -0.107278404,
+        "Conventional ML": 0.0712611052,
+        "Deep tabular NN (ChemML MLP)": -6.269771354,
+        "Ensemble (stacking / averaging)": -0.3038524486,
+        "MapLight + GNN": -3.3490546373,
+        "TabPFN (tabular foundation)": 2.8296192886,
+        "Uni-Mol (3D pretrained)": -1.3610675271
       }
     },
     "M2": {
@@ -257,24 +284,22 @@
         "figureM2_shift_difficulty.png"
       ],
       "natural_experiment_median_delta_pp": {
-        "CFA combinatorial fusion": -0.6173716081,
         "Conventional ML": 2.2371364653,
-        "Deep tabular NN (ChemML MLP)": 0.0139821029,
-        "Ensemble (stacking / averaging)": 1.062639821,
-        "MapLight + GNN": -6.2243369993,
-        "TabPFN (tabular foundation)": 1.1863284941,
+        "Deep tabular NN (ChemML MLP)": 2.550258328,
+        "MapLight + GNN": -5.077720089,
+        "TabPFN (tabular foundation)": 6.3385533184,
         "Uni-Mol (3D pretrained)": 1.7694011186
       },
-      "rho_snn_classification": 0.0830039526,
-      "rho_snn_regression": 0.2648221344
+      "rho_snn_classification": 0.0773574252,
+      "rho_snn_regression": 0.2919254658
     },
     "M3": {
       "files": [
         "figureM3_recommender.pdf",
         "figureM3_recommender.png"
       ],
-      "lodo_bacc_decision_tree": 0.2166666667,
-      "lodo_bacc_l1_logistic": 0.3333333333,
+      "lodo_bacc_decision_tree": 0.3211462451,
+      "lodo_bacc_l1_logistic": 0.3083003953,
       "majority_bacc": 0.25
     },
     "S1": {
@@ -288,148 +313,155 @@
   },
   "macros": {
     "baseline_bacc": "0.25",
-    "crossover_ci": "590 to 10,000",
+    "crossover_ci": "410 to 10,000",
     "crossover_comparison": "no such crossover is resolved: neither family's fitted gap overtakes the other within the observed sizes",
     "crossover_n": "n/a",
-    "crossover_p_in_range": "51%",
+    "crossover_p_in_range": "30%",
     "crossover_secondary_n": "n/a",
-    "crossover_secondary_p_in_range": "50%",
-    "crossover_statement": "the fitted gap curves do not cross inside the observed size range (a crossing occurred in only 51% of dataset-bootstrap replicates)",
+    "crossover_secondary_p_in_range": "3%",
+    "crossover_statement": "the fitted gap curves do not cross inside the observed size range (a crossing occurred in only 30% of dataset-bootstrap replicates)",
     "cvleak_arm": "3.4%",
-    "cvleak_median": "14.9%",
+    "cvleak_median": "3.3%",
     "cvleak_n_models": "19",
-    "cvleak_range": "3.2% to 43.8%",
-    "cvleak_top": "ElasticNetCV, TabPFNRegressor and SVR",
+    "cvleak_range": "-3.9% to 6.5%",
+    "cvleak_top": "Voting Regressor (KNN, SVM), SVR and LogisticRegression",
     "grid_min_q": "0.06",
     "grid_min_q_cell": "Ensemble (stacking / averaging) vs log10_n_train",
-    "grid_sentence": "one survived at q < 0.10, the strongest being Ensemble (stacking / averaging) versus log10 training-set size (\u03c1 = -0.45, 95% CI -0.70 to -0.13, q = 0.06)",
+    "grid_sentence": "one survived at q < 0.10, the strongest being Ensemble (stacking / averaging) versus log10 training-set size (\u03c1 = -0.47, 95% CI -0.70 to -0.19, q = 0.06)",
     "k": "4",
     "k_words": "four",
-    "lodo_bacc": "0.33",
-    "lodo_bacc_ci": "0.24 to 0.42",
-    "lodo_model": "L1-penalised multinomial logistic model",
-    "lodo_perm_null": "0.22",
-    "lodo_perm_p": "0.078",
+    "lodo_bacc": "0.32",
+    "lodo_bacc_ci": "0.23 to 0.41",
+    "lodo_model": "depth-3 decision tree",
+    "lodo_perm_null": "0.24",
+    "lodo_perm_p": "0.138",
     "n_datasets": "44",
     "n_grid_cells": "48",
     "n_grid_significant": "1",
     "n_resplit": "7",
-    "natural_sentence": "Moving them to scaffold splits changed the median family gap by +1.8 percentage points for conventional ML, +2.0 for ensembles and +1.1 for Uni-Mol. Families valid in both runs on fewer than 3 of them are not summarised: Chemprop (1 of 7). With 7 datasets, and with the two runs also differing in hardware and model settings, this is descriptive only.",
-    "p_snn": "0.288",
-    "q_size_conventional": "0.92",
+    "natural_sentence": "Moving them to scaffold splits changed the median family gap by +1.8 percentage points for conventional ML and +1.1 for Uni-Mol. Families valid in both runs on fewer than 3 of them are not summarised: Chemprop (1 of 7). With 7 datasets, and with the two runs also differing in hardware and model settings, this is descriptive only.",
+    "nested_ct_datasets": "9",
+    "nested_ct_p": "p < 0.001",
+    "nested_ct_pairs": "27",
+    "nested_ct_per_model": "22.7 percentage points for ElasticNetCV, 6.1 for random forest and 2.5 for SVR",
+    "nested_ct_positive": "26",
+    "nested_nested": "3.4%",
+    "nested_outer": "15.9%",
+    "nested_pairs": "462",
+    "nested_share": "96%",
+    "p_snn": "0.262",
+    "q_size_conventional": "0.87",
     "recommender_sentence": "Its interval overlaps the baselines, so dataset meta-features alone do not reliably identify the winning family at this sample size; the per-dataset winner remains an empirical question, which is the case for benchmarking many families on every dataset.",
-    "rho_size_conventional": "0.04",
-    "rho_size_conventional_ci": "-0.29 to 0.36",
-    "rho_snn": "0.16",
-    "rho_snn_ci": "-0.15 to 0.46",
-    "rho_strongest": "-0.25",
-    "rho_strongest_ci": "-0.55 to 0.08",
-    "sens_same_sign": "79%",
+    "rho_size_conventional": "0.03",
+    "rho_size_conventional_ci": "-0.29 to 0.35",
+    "rho_snn": "0.17",
+    "rho_snn_ci": "-0.14 to 0.48",
+    "rho_strongest": "-0.26",
+    "rho_strongest_ci": "-0.57 to 0.08",
+    "sens_same_sign": "92%",
     "sens_sig_agree": "100%",
-    "size_sentence": "The gap of the best conventional-ML model to the per-dataset best showed no clear monotone trend with training-set size (Spearman \u03c1 = 0.04, 95% CI -0.29 to 0.36, BH q = 0.92).",
-    "snn_sentence": "Mean SNN was not clearly associated with the achievable best held-out metric (within-task rank; Spearman \u03c1 = 0.16, 95% CI -0.15 to 0.46, permutation p = 0.288; Fig. 8a).",
+    "size_sentence": "The gap of the best conventional-ML model to the per-dataset best showed no clear monotone trend with training-set size (Spearman \u03c1 = 0.03, 95% CI -0.29 to 0.35, BH q = 0.87).",
+    "snn_sentence": "Mean SNN was not clearly associated with the achievable best held-out metric (within-task rank; Spearman \u03c1 = 0.17, 95% CI -0.14 to 0.48, permutation p = 0.262; Fig. 8a).",
     "strongest_difficulty_feature": "ood fraction",
-    "strongest_sentence": "Of the screened properties, the out-of-domain fraction (test molecules with SNN < 0.40) had the strongest association with achievable performance (\u03c1 = -0.25, 95% CI -0.55 to 0.08), although its interval also includes zero.",
-    "v2_most_picked": "the per-family ridge model on F0+F2",
-    "v2_most_picked_share": "52%",
+    "strongest_sentence": "Of the screened properties, the out-of-domain fraction (test molecules with SNN < 0.40) had the strongest association with achievable performance (\u03c1 = -0.26, 95% CI -0.57 to 0.08), although its interval also includes zero.",
+    "v2_most_picked": "the nearest-datasets model on F0+F3",
+    "v2_most_picked_share": "66%",
     "v2_n_candidates": "12",
-    "v2_nested_regret": "6.0%",
-    "v2_nested_within5": "64%",
-    "v2_perm_p": "0.297",
-    "v2_random_regret": "10.0%",
-    "v2_sbs_regret": "7.1%",
-    "v2_sbs_within5": "57%",
-    "v2_verdict": "Nested selection did not reliably beat the single best family (mean regret 6.0% versus 7.1% for always choosing the family with the best average record (difference 1.1 percentage points, 95% CI -1.3 to 3.6; permutation p = 0.297)). Both lose little: a randomly chosen valid family would cost 10.0% on average."
+    "v2_nested_regret": "3.1%",
+    "v2_nested_within5": "86%",
+    "v2_perm_p": "0.099",
+    "v2_random_regret": "10.7%",
+    "v2_sbs_regret": "3.3%",
+    "v2_sbs_within5": "84%",
+    "v2_verdict": "Nested selection did not reliably beat the single best family (mean regret 3.1% versus 3.3% for always choosing the family with the best average record (difference 0.2 percentage points, 95% CI -0.9 to 1.3; permutation p = 0.099)). Both lose little: a randomly chosen valid family would cost 10.7% on average."
   },
   "n_bootstrap": 10000,
   "n_datasets": 44,
   "n_permutation": 10000,
   "natural_experiment_median_delta_pp": {
-    "CFA combinatorial fusion": -0.6173716081,
-    "Chemprop v2 GNN": -25.0509236069,
+    "Chemprop v2 GNN": -15.4233035272,
     "Conventional ML": 1.8076178179,
     "Deep tabular NN (ChemML MLP)": 1.5117571642,
-    "Ensemble (stacking / averaging)": 1.9809126634,
-    "MapLight + GNN": 4.6888548648,
-    "TabPFN (tabular foundation)": 1.1863284941,
+    "MapLight + GNN": 4.7307383911,
+    "TabPFN (tabular foundation)": 3.7748222971,
     "Uni-Mol (3D pretrained)": 1.1129797575
   },
   "recommender": {
     "classes": {
-      "Chemprop GNN": 8,
-      "Descriptor-based ML": 15,
-      "Fusion (ensemble / CFA)": 15,
-      "Uni-Mol (3D pretrained)": 6
+      "Chemprop GNN": 5,
+      "Descriptor-based ML": 11,
+      "Fusion (ensemble / CFA)": 23,
+      "Uni-Mol (3D pretrained)": 5
     },
-    "majority_accuracy": 0.3409090909,
+    "majority_accuracy": 0.5227272727,
     "majority_balanced_accuracy": 0.25,
     "models": {
       "decision_tree": {
         "feature_importance": {
-          "is_classification": 0.0,
-          "label_asymmetry": 0.3316286641,
-          "log10_n_train": 0.6683713359,
+          "is_classification": 0.2458950145,
+          "label_asymmetry": 0.3222839034,
+          "log10_n_train": 0.4318210822,
           "mean_snn": 0.0
         },
-        "lodo_accuracy": 0.2954545455,
+        "lodo_accuracy": 0.5227272727,
         "lodo_accuracy_ci": [
-          0.1590909091,
-          0.4318181818
+          0.3863636364,
+          0.6590909091
         ],
-        "lodo_balanced_accuracy": 0.2166666667,
+        "lodo_balanced_accuracy": 0.3211462451,
         "lodo_balanced_accuracy_ci": [
-          0.1269826007,
-          0.3105803571
+          0.2306367244,
+          0.4142857143
         ],
-        "permutation_null_balanced_accuracy_mean": 0.2228833333,
-        "permutation_p": 0.5289421158,
-        "rules": "|--- log10_n_train <= 3.84\n|   |--- label_asymmetry <= 0.73\n|   |   |--- label_asymmetry <= 0.54\n|   |   |   |--- class: Descriptor-based ML\n|   |   |--- label_asymmetry >  0.54\n|   |   |   |--- class: Chemprop GNN\n|   |--- label_asymmetry >  0.73\n|   |   |--- log10_n_train <= 3.34\n|   |   |   |--- class: Descriptor-based ML\n|   |   |--- log10_n_train >  3.34\n|   |   |   |--- class: Descriptor-based ML\n|--- log10_n_train >  3.84\n|   |--- class: Fusion (ensemble / CFA)\n"
+        "permutation_null_balanced_accuracy_mean": 0.2355964427,
+        "permutation_p": 0.1377245509,
+        "rules": "|--- log10_n_train <= 3.26\n|   |--- label_asymmetry <= 1.54\n|   |   |--- is_classification <= 0.50\n|   |   |   |--- class: Fusion (ensemble / CFA)\n|   |   |--- is_classification >  0.50\n|   |   |   |--- class: Descriptor-based ML\n|   |--- label_asymmetry >  1.54\n|   |   |--- class: Uni-Mol (3D pretrained)\n|--- log10_n_train >  3.26\n|   |--- label_asymmetry <= 0.84\n|   |   |--- class: Fusion (ensemble / CFA)\n|   |--- label_asymmetry >  0.84\n|   |   |--- class: Fusion (ensemble / CFA)\n"
       },
       "l1_logistic": {
         "coefficients": {
           "Chemprop GNN": {
-            "is_classification": 0.257058244,
+            "is_classification": 1.1240717286,
             "label_asymmetry": 0.0,
             "log10_n_train": 0.0,
             "mean_snn": 0.0
           },
           "Descriptor-based ML": {
             "is_classification": 0.0,
-            "label_asymmetry": 0.1262146615,
-            "log10_n_train": -0.0053552858,
-            "mean_snn": -0.4161571322
+            "label_asymmetry": 0.0,
+            "log10_n_train": 0.0,
+            "mean_snn": -0.3060308026
           },
           "Fusion (ensemble / CFA)": {
-            "is_classification": 0.0,
-            "label_asymmetry": -0.0770999927,
-            "log10_n_train": 0.9639207999,
+            "is_classification": -0.4659381419,
+            "label_asymmetry": -0.6358793394,
+            "log10_n_train": 1.0473768339,
             "mean_snn": 0.0
           },
           "Uni-Mol (3D pretrained)": {
             "is_classification": 0.0,
-            "label_asymmetry": 0.1638858345,
+            "label_asymmetry": 0.030138638,
             "log10_n_train": 0.0,
-            "mean_snn": 0.1013109817
+            "mean_snn": 0.4210938244
           }
         },
         "feature_importance": {
-          "is_classification": 0.064264561,
-          "label_asymmetry": 0.0918001222,
-          "log10_n_train": 0.2423190214,
-          "mean_snn": 0.1293670285
+          "is_classification": 0.3975024676,
+          "label_asymmetry": 0.1665044944,
+          "log10_n_train": 0.2618442085,
+          "mean_snn": 0.1817811568
         },
-        "lodo_accuracy": 0.4545454545,
+        "lodo_accuracy": 0.5454545455,
         "lodo_accuracy_ci": [
-          0.3181818182,
-          0.5909090909
+          0.4085227273,
+          0.6818181818
         ],
-        "lodo_balanced_accuracy": 0.3333333333,
+        "lodo_balanced_accuracy": 0.3083003953,
         "lodo_balanced_accuracy_ci": [
-          0.2420809991,
-          0.4166666667
+          0.2291666667,
+          0.3966666667
         ],
-        "permutation_null_balanced_accuracy_mean": 0.2191791667,
-        "permutation_p": 0.0778443114
+        "permutation_null_balanced_accuracy_mean": 0.242498419,
+        "permutation_p": 0.0678642715
       }
     },
     "n_datasets": 44,
@@ -443,149 +475,144 @@
   "run_dir": "qsarena_benchmark_oof_ensemble",
   "seed": 0,
   "selector_v2": {
-    "best_grid_variant": "rf|F0-F3",
+    "best_grid_variant": "knn|F0+F3",
     "n_candidates": 12,
     "nested": {
-      "gap_closed": 0.1533951217,
-      "mean_regret_pct": 5.9778662864,
-      "median_regret_pct": 2.1537836033,
-      "within5_pct": 63.6363636364
+      "gap_closed": 0.0589239022,
+      "mean_regret_pct": 3.115371211,
+      "median_regret_pct": 0.0,
+      "within5_pct": 86.3636363636
     },
     "nested_pick_counts": {
-      "knn|F0+F2": 3,
-      "knn|F0-F3": 1,
-      "ridge|F0": 6,
-      "ridge|F0+F1": 2,
-      "ridge|F0+F2": 23,
-      "ridge|F0+F3": 3,
-      "ridge|F0-F3": 1,
-      "tree_cls|F0": 5
+      "knn|F0+F3": 29,
+      "ridge|F0": 3,
+      "ridge|F0+F1": 12
     },
     "permutation": {
       "n_perm": 100,
-      "null_mean_regret_pct": 6.6312583068,
-      "p_value": 0.297029703
+      "null_mean_regret_pct": 3.7316799253,
+      "p_value": 0.099009901
     },
-    "random_valid_family_mean_regret_pct": 9.9740019705,
+    "random_valid_family_mean_regret_pct": 10.7174862461,
     "sbs": {
       "gap_closed": 0.0,
-      "mean_regret_pct": 7.0609872909,
-      "median_regret_pct": 3.9404050218,
-      "within5_pct": 56.8181818182
+      "mean_regret_pct": 3.3104349567,
+      "median_regret_pct": 0.0306333714,
+      "within5_pct": 84.0909090909
     },
     "sbs_minus_nested_ci": [
-      -1.3182721959,
-      3.6345873031
+      -0.9208172562,
+      1.3187977199
     ],
-    "sbs_minus_nested_pct": 1.0831210045,
+    "sbs_minus_nested_pct": 0.1950637457,
     "variants": {
       "knn|F0": {
-        "gap_closed": -0.0313180036,
-        "mean_regret_pct": 7.282123316,
-        "median_regret_pct": 1.7482482466,
-        "within5_pct": 65.9090909091
+        "gap_closed": -0.1358505864,
+        "mean_regret_pct": 3.7601594867,
+        "median_regret_pct": 0.1589968539,
+        "within5_pct": 79.5454545455
       },
       "knn|F0+F1": {
-        "gap_closed": 0.1388904942,
-        "mean_regret_pct": 6.0802832765,
-        "median_regret_pct": 1.5834200494,
-        "within5_pct": 77.2727272727
+        "gap_closed": -0.0962050948,
+        "mean_regret_pct": 3.6289156656,
+        "median_regret_pct": 0.0,
+        "within5_pct": 81.8181818182
       },
       "knn|F0+F2": {
-        "gap_closed": 0.2963573136,
-        "mean_regret_pct": 4.9684120658,
-        "median_regret_pct": 1.9569920143,
-        "within5_pct": 70.4545454545
+        "gap_closed": -0.1260167152,
+        "mean_regret_pct": 3.7276050957,
+        "median_regret_pct": 0.1589968539,
+        "within5_pct": 81.8181818182
       },
       "knn|F0+F3": {
-        "gap_closed": 0.1213064105,
-        "mean_regret_pct": 6.2044442683,
-        "median_regret_pct": 1.8174664512,
-        "within5_pct": 68.1818181818
+        "gap_closed": 0.1726042733,
+        "mean_regret_pct": 2.7390397366,
+        "median_regret_pct": 0.0,
+        "within5_pct": 88.6363636364
       },
       "knn|F0-F3": {
-        "gap_closed": 0.3060426736,
-        "mean_regret_pct": 4.9000238621,
-        "median_regret_pct": 1.7452087443,
-        "within5_pct": 75.0
+        "gap_closed": -0.019598986,
+        "mean_regret_pct": 3.3753161251,
+        "median_regret_pct": 0.0,
+        "within5_pct": 81.8181818182
       },
       "nested (headline)": {
-        "gap_closed": 0.1533951217,
-        "mean_regret_pct": 5.9778662864,
-        "median_regret_pct": 2.1537836033,
-        "within5_pct": 63.6363636364
+        "gap_closed": 0.0589239022,
+        "mean_regret_pct": 3.115371211,
+        "median_regret_pct": 0.0,
+        "within5_pct": 86.3636363636
       },
       "rf|F0": {
-        "gap_closed": 0.4385266187,
-        "mean_regret_pct": 3.9645564099,
-        "median_regret_pct": 2.0814718312,
-        "within5_pct": 70.4545454545
+        "gap_closed": -0.2795014726,
+        "mean_regret_pct": 4.2357064021,
+        "median_regret_pct": 0.0816687819,
+        "within5_pct": 77.2727272727
       },
       "rf|F0+F1": {
-        "gap_closed": 0.2284978321,
-        "mean_regret_pct": 5.4475670023,
-        "median_regret_pct": 1.5846669892,
-        "within5_pct": 75.0
+        "gap_closed": -0.1024366185,
+        "mean_regret_pct": 3.6495447194,
+        "median_regret_pct": 1.0862484185,
+        "within5_pct": 81.8181818182
       },
       "rf|F0+F2": {
-        "gap_closed": 0.1241218315,
-        "mean_regret_pct": 6.1845646163,
-        "median_regret_pct": 3.3621877691,
-        "within5_pct": 63.6363636364
+        "gap_closed": -0.2574437022,
+        "mean_regret_pct": 4.162685588,
+        "median_regret_pct": 0.1589968539,
+        "within5_pct": 75.0
       },
       "rf|F0+F3": {
-        "gap_closed": 0.4101120024,
-        "mean_regret_pct": 4.165191654,
-        "median_regret_pct": 2.2713482424,
-        "within5_pct": 65.9090909091
+        "gap_closed": 0.0284297511,
+        "mean_regret_pct": 3.2163201149,
+        "median_regret_pct": 0.0,
+        "within5_pct": 84.0909090909
       },
       "rf|F0-F3": {
-        "gap_closed": 0.4869855425,
-        "mean_regret_pct": 3.6223885648,
-        "median_regret_pct": 1.6503974637,
-        "within5_pct": 72.7272727273
+        "gap_closed": -0.0622377193,
+        "mean_regret_pct": 3.5164688782,
+        "median_regret_pct": 0.0510354105,
+        "within5_pct": 81.8181818182
       },
       "ridge|F0": {
-        "gap_closed": 0.3451731149,
-        "mean_regret_pct": 4.6237243136,
-        "median_regret_pct": 1.4102234188,
-        "within5_pct": 70.4545454545
+        "gap_closed": 0.0992339692,
+        "mean_regret_pct": 2.9819273562,
+        "median_regret_pct": 0.0,
+        "within5_pct": 86.3636363636
       },
       "ridge|F0+F1": {
-        "gap_closed": 0.2691279011,
-        "mean_regret_pct": 5.1606786014,
-        "median_regret_pct": 2.1090245644,
-        "within5_pct": 70.4545454545
+        "gap_closed": -0.0278123903,
+        "mean_regret_pct": 3.4025060656,
+        "median_regret_pct": 0.0,
+        "within5_pct": 81.8181818182
       },
       "ridge|F0+F2": {
-        "gap_closed": 0.3503861223,
-        "mean_regret_pct": 4.5869153348,
-        "median_regret_pct": 1.4102234188,
-        "within5_pct": 70.4545454545
+        "gap_closed": -0.0037954084,
+        "mean_regret_pct": 3.3229994094,
+        "median_regret_pct": 0.0,
+        "within5_pct": 84.0909090909
       },
       "ridge|F0+F3": {
-        "gap_closed": 0.26399495,
-        "mean_regret_pct": 5.196922304,
-        "median_regret_pct": 1.5846669892,
-        "within5_pct": 70.4545454545
+        "gap_closed": 0.0537333622,
+        "mean_regret_pct": 3.1325541561,
+        "median_regret_pct": 0.0,
+        "within5_pct": 84.0909090909
       },
       "ridge|F0-F3": {
-        "gap_closed": 0.2452608589,
-        "mean_regret_pct": 5.3292034831,
-        "median_regret_pct": 1.7418873435,
-        "within5_pct": 70.4545454545
+        "gap_closed": -0.3668426052,
+        "mean_regret_pct": 4.5248435407,
+        "median_regret_pct": 0.0306333714,
+        "within5_pct": 81.8181818182
       },
       "sbs": {
         "gap_closed": 0.0,
-        "mean_regret_pct": 7.0609872909,
-        "median_regret_pct": 3.9404050218,
-        "within5_pct": 56.8181818182
+        "mean_regret_pct": 3.3104349567,
+        "median_regret_pct": 0.0306333714,
+        "within5_pct": 84.0909090909
       },
       "tree_cls|F0": {
-        "gap_closed": 0.1861153124,
-        "mean_regret_pct": 5.7468294351,
-        "median_regret_pct": 2.0595773745,
-        "within5_pct": 75.0
+        "gap_closed": -0.4612826181,
+        "mean_regret_pct": 4.8374810607,
+        "median_regret_pct": 0.0,
+        "within5_pct": 79.5454545455
       }
     }
   },
@@ -604,7 +631,7 @@
       "n_bits": 2048,
       "radius": 2
     },
-    "same_sign_fraction": 0.7916666667,
+    "same_sign_fraction": 0.9166666667,
     "significance_agreement_fraction": 1.0,
     "significant_cells_alternative": 0,
     "significant_cells_default": 0
@@ -620,19 +647,19 @@
     "Deep tabular NN (ChemML MLP)"
   ],
   "winner_groups": {
-    "Chemprop GNN": 8,
-    "Descriptor-based ML": 15,
-    "Fusion (ensemble / CFA)": 15,
-    "Uni-Mol (3D pretrained)": 6
+    "Chemprop GNN": 5,
+    "Descriptor-based ML": 11,
+    "Fusion (ensemble / CFA)": 23,
+    "Uni-Mol (3D pretrained)": 5
   },
   "within5_pct_by_family": {
-    "CFA combinatorial fusion": 56.8181818182,
-    "Chemprop v2 GNN": 54.7619047619,
-    "Conventional ML": 77.2727272727,
+    "CFA combinatorial fusion": 50.0,
+    "Chemprop v2 GNN": 47.619047619,
+    "Conventional ML": 65.9090909091,
     "Deep tabular NN (ChemML MLP)": 18.1818181818,
-    "Ensemble (stacking / averaging)": 61.3636363636,
-    "MapLight + GNN": 22.7272727273,
-    "TabPFN (tabular foundation)": 29.5454545455,
-    "Uni-Mol (3D pretrained)": 56.8181818182
+    "Ensemble (stacking / averaging)": 84.0909090909,
+    "MapLight + GNN": 11.3636363636,
+    "TabPFN (tabular foundation)": 21.9512195122,
+    "Uni-Mol (3D pretrained)": 47.7272727273
   }
 }
