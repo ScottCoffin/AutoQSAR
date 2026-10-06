@@ -45,7 +45,7 @@ TABLE_SPEC = {
         "tab:models", False, 3,
         "Model inventory. ``Valid'' datasets are those on which the model produced a metric without an error; "
         "differences from 44 reflect task-type applicability (regression-only or classification-only estimators), "
-        "dataset-size guardrails, or backend failures (Section~\\ref{sec:coverage}).",
+        "dataset-size guardrails, or backend failures (main-text Section 3.9).",
     ),
     "table2_dataset_catalog": (
         "tab:datasets", True, 3,
@@ -137,6 +137,21 @@ TABLE_SPEC = {
         "asymmetry and task; F1 chemistry; F2 label landscape; F3 training-set CV landmarks); ``sbs'' always picks "
         "the family with the best record on the other datasets. The nested row chooses the variant inside an inner "
         "leave-one-dataset-out loop and is the only unbiased estimate; single variants are exploratory.",
+    ),
+    # Written by reanalysis_coverage_posthoc.py (render_manuscript_assets.py runs it after the meta-analysis).
+    "tableS13_common_subset": (
+        "tab:s13", False, 1,
+        "Common-subset sensitivity of the family comparison: wins, median relative gap of each family's best model "
+        "to the per-dataset best, and share of datasets within 5\\% of the best, on all datasets, on the datasets on "
+        "which all eight families produced a valid result, and on the datasets on which Uni-Mol V2 produced one. "
+        "Winners are chosen over all models on each dataset, so restricting the dataset set changes which datasets "
+        "are counted, not any dataset's winner. Single split and single seed.",
+    ),
+    "tableS14_posthoc_descriptor": (
+        "tab:s14", False, 0,
+        "Datasets won by each family with and without the post-hoc descriptor model (XGBoost on the full, unselected "
+        "ADMETboost feature set) as a candidate. The ensemble rows are unchanged models that still contain it as a "
+        "member; removing it there would need an ensemble rebuild, so the table bounds only its direct effect.",
     ),
 }
 

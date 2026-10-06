@@ -1,0 +1,316 @@
+{
+  "run_dir": "qsarena_benchmark_oof_ensemble",
+  "subsets": {
+    "All datasets": {
+      "n_datasets": 44,
+      "datasets": [
+        "chemml_cep_homo",
+        "chemml_organic_density",
+        "esol_delaney",
+        "freesolv_sampl",
+        "lipophilicity",
+        "poduam_pod_nc_std",
+        "poduam_pod_rd_std",
+        "polaris_adme_fang_hppb_1",
+        "polaris_adme_fang_perm_1",
+        "polaris_adme_fang_rclint_1",
+        "polaris_adme_fang_rppb_1",
+        "polaris_adme_fang_solu_1",
+        "tdc_ames",
+        "tdc_bbb_martins",
+        "tdc_bioavailability_ma",
+        "tdc_caco2_wang",
+        "tdc_carcinogens_lagunin",
+        "tdc_clearance_hepatocyte_az",
+        "tdc_clearance_microsome_az",
+        "tdc_clintox",
+        "tdc_cyp1a2_veith",
+        "tdc_cyp2c19_veith",
+        "tdc_cyp2c9_substrate_carbonmangels",
+        "tdc_cyp2c9_veith",
+        "tdc_cyp2d6_substrate_carbonmangels",
+        "tdc_cyp2d6_veith",
+        "tdc_cyp3a4_substrate_carbonmangels",
+        "tdc_cyp3a4_veith",
+        "tdc_dili",
+        "tdc_half_life_obach",
+        "tdc_herg",
+        "tdc_herg_karim",
+        "tdc_hia_hou",
+        "tdc_hydrationfreeenergy_freesolv",
+        "tdc_ld50_zhu",
+        "tdc_lipophilicity_astrazeneca",
+        "tdc_pampa_ncats",
+        "tdc_pgp_broccatelli",
+        "tdc_ppbr_az",
+        "tdc_skin_reaction",
+        "tdc_solubility_aqsoldb",
+        "tdc_tox21",
+        "tdc_toxcast",
+        "tdc_vdss_lombardo"
+      ],
+      "families": {
+        "Ensemble (stacking / averaging)": {
+          "datasets": 44,
+          "wins": 22,
+          "median_gap_pct": 0.030633371360970735,
+          "within5_pct": 84.0909090909091
+        },
+        "Conventional ML": {
+          "datasets": 44,
+          "wins": 6,
+          "median_gap_pct": 3.158004897769127,
+          "within5_pct": 65.9090909090909
+        },
+        "Chemprop v2 GNN": {
+          "datasets": 42,
+          "wins": 5,
+          "median_gap_pct": 5.614244749727289,
+          "within5_pct": 47.61904761904761
+        },
+        "Uni-Mol (3D pretrained)": {
+          "datasets": 44,
+          "wins": 5,
+          "median_gap_pct": 5.395111994692756,
+          "within5_pct": 47.72727272727273
+        },
+        "TabPFN (tabular foundation)": {
+          "datasets": 41,
+          "wins": 3,
+          "median_gap_pct": 8.398053979908699,
+          "within5_pct": 21.951219512195124
+        },
+        "MapLight + GNN": {
+          "datasets": 44,
+          "wins": 2,
+          "median_gap_pct": 12.485443999171206,
+          "within5_pct": 11.363636363636363
+        },
+        "CFA combinatorial fusion": {
+          "datasets": 44,
+          "wins": 1,
+          "median_gap_pct": 5.225262530462739,
+          "within5_pct": 50.0
+        },
+        "Deep tabular NN (ChemML MLP)": {
+          "datasets": 44,
+          "wins": 0,
+          "median_gap_pct": 16.589414310882937,
+          "within5_pct": 18.181818181818183
+        }
+      }
+    },
+    "All eight families valid": {
+      "n_datasets": 41,
+      "datasets": [
+        "chemml_cep_homo",
+        "chemml_organic_density",
+        "esol_delaney",
+        "freesolv_sampl",
+        "lipophilicity",
+        "poduam_pod_nc_std",
+        "poduam_pod_rd_std",
+        "polaris_adme_fang_hppb_1",
+        "polaris_adme_fang_perm_1",
+        "polaris_adme_fang_rclint_1",
+        "polaris_adme_fang_rppb_1",
+        "polaris_adme_fang_solu_1",
+        "tdc_ames",
+        "tdc_bbb_martins",
+        "tdc_bioavailability_ma",
+        "tdc_caco2_wang",
+        "tdc_carcinogens_lagunin",
+        "tdc_clearance_hepatocyte_az",
+        "tdc_clearance_microsome_az",
+        "tdc_clintox",
+        "tdc_cyp2c9_substrate_carbonmangels",
+        "tdc_cyp2c9_veith",
+        "tdc_cyp2d6_substrate_carbonmangels",
+        "tdc_cyp2d6_veith",
+        "tdc_cyp3a4_substrate_carbonmangels",
+        "tdc_cyp3a4_veith",
+        "tdc_dili",
+        "tdc_half_life_obach",
+        "tdc_herg",
+        "tdc_hia_hou",
+        "tdc_hydrationfreeenergy_freesolv",
+        "tdc_ld50_zhu",
+        "tdc_lipophilicity_astrazeneca",
+        "tdc_pampa_ncats",
+        "tdc_pgp_broccatelli",
+        "tdc_ppbr_az",
+        "tdc_skin_reaction",
+        "tdc_solubility_aqsoldb",
+        "tdc_tox21",
+        "tdc_toxcast",
+        "tdc_vdss_lombardo"
+      ],
+      "families": {
+        "Ensemble (stacking / averaging)": {
+          "datasets": 41,
+          "wins": 19,
+          "median_gap_pct": 0.1020708210973826,
+          "within5_pct": 82.92682926829268
+        },
+        "Conventional ML": {
+          "datasets": 41,
+          "wins": 6,
+          "median_gap_pct": 3.6694227468516467,
+          "within5_pct": 63.41463414634146
+        },
+        "Chemprop v2 GNN": {
+          "datasets": 41,
+          "wins": 5,
+          "median_gap_pct": 5.934103605029479,
+          "within5_pct": 46.34146341463415
+        },
+        "Uni-Mol (3D pretrained)": {
+          "datasets": 41,
+          "wins": 5,
+          "median_gap_pct": 5.807712402482834,
+          "within5_pct": 43.90243902439025
+        },
+        "TabPFN (tabular foundation)": {
+          "datasets": 41,
+          "wins": 3,
+          "median_gap_pct": 8.398053979908699,
+          "within5_pct": 21.951219512195124
+        },
+        "MapLight + GNN": {
+          "datasets": 41,
+          "wins": 2,
+          "median_gap_pct": 12.785850230672644,
+          "within5_pct": 9.75609756097561
+        },
+        "CFA combinatorial fusion": {
+          "datasets": 41,
+          "wins": 1,
+          "median_gap_pct": 5.843490149181037,
+          "within5_pct": 46.34146341463415
+        },
+        "Deep tabular NN (ChemML MLP)": {
+          "datasets": 41,
+          "wins": 0,
+          "median_gap_pct": 17.656576084190892,
+          "within5_pct": 12.195121951219512
+        }
+      }
+    },
+    "Uni-Mol V2 valid": {
+      "n_datasets": 17,
+      "datasets": [
+        "chemml_cep_homo",
+        "chemml_organic_density",
+        "esol_delaney",
+        "freesolv_sampl",
+        "polaris_adme_fang_perm_1",
+        "polaris_adme_fang_rppb_1",
+        "polaris_adme_fang_solu_1",
+        "tdc_ames",
+        "tdc_bioavailability_ma",
+        "tdc_caco2_wang",
+        "tdc_clearance_microsome_az",
+        "tdc_herg",
+        "tdc_herg_karim",
+        "tdc_hydrationfreeenergy_freesolv",
+        "tdc_pampa_ncats",
+        "tdc_pgp_broccatelli",
+        "tdc_skin_reaction"
+      ],
+      "families": {
+        "Ensemble (stacking / averaging)": {
+          "datasets": 17,
+          "wins": 8,
+          "median_gap_pct": 0.21592288666706674,
+          "within5_pct": 76.47058823529412
+        },
+        "Conventional ML": {
+          "datasets": 17,
+          "wins": 2,
+          "median_gap_pct": 3.6716694113014183,
+          "within5_pct": 52.94117647058824
+        },
+        "Chemprop v2 GNN": {
+          "datasets": 17,
+          "wins": 1,
+          "median_gap_pct": 7.552249020851605,
+          "within5_pct": 47.05882352941176
+        },
+        "Uni-Mol (3D pretrained)": {
+          "datasets": 17,
+          "wins": 4,
+          "median_gap_pct": 5.382842196393879,
+          "within5_pct": 47.05882352941176
+        },
+        "TabPFN (tabular foundation)": {
+          "datasets": 16,
+          "wins": 2,
+          "median_gap_pct": 9.523927873642211,
+          "within5_pct": 31.25
+        },
+        "MapLight + GNN": {
+          "datasets": 17,
+          "wins": 0,
+          "median_gap_pct": 13.897955677718606,
+          "within5_pct": 11.76470588235294
+        },
+        "CFA combinatorial fusion": {
+          "datasets": 17,
+          "wins": 0,
+          "median_gap_pct": 5.8869806749608715,
+          "within5_pct": 35.294117647058826
+        },
+        "Deep tabular NN (ChemML MLP)": {
+          "datasets": 17,
+          "wins": 0,
+          "median_gap_pct": 20.10276172125884,
+          "within5_pct": 11.76470588235294
+        }
+      }
+    }
+  },
+  "posthoc": {
+    "model": "XGBoost (ADMETboost features)",
+    "datasets_won": [
+      "tdc_cyp3a4_substrate_carbonmangels",
+      "tdc_hia_hou",
+      "tdc_skin_reaction"
+    ],
+    "wins_with": {
+      "Ensemble (stacking / averaging)": 22,
+      "Conventional ML": 6,
+      "Chemprop v2 GNN": 5,
+      "Uni-Mol (3D pretrained)": 5,
+      "TabPFN (tabular foundation)": 3,
+      "MapLight + GNN": 2,
+      "CFA combinatorial fusion": 1,
+      "Deep tabular NN (ChemML MLP)": 0
+    },
+    "wins_without": {
+      "Ensemble (stacking / averaging)": 24,
+      "Conventional ML": 3,
+      "Chemprop v2 GNN": 5,
+      "Uni-Mol (3D pretrained)": 6,
+      "TabPFN (tabular foundation)": 3,
+      "MapLight + GNN": 2,
+      "CFA combinatorial fusion": 1,
+      "Deep tabular NN (ChemML MLP)": 0
+    },
+    "replacement_winners": {
+      "tdc_cyp3a4_substrate_carbonmangels": {
+        "model": "Ensemble (OOF Stacking (RidgeCV, 5-fold))",
+        "family": "Ensemble (stacking / averaging)"
+      },
+      "tdc_hia_hou": {
+        "model": "Ensemble (OOF Stacking (RidgeCV, 5-fold))",
+        "family": "Ensemble (stacking / averaging)"
+      },
+      "tdc_skin_reaction": {
+        "model": "Uni-Mol V2 (84m)",
+        "family": "Uni-Mol (3D pretrained)"
+      }
+    },
+    "single_family_max_with": 6,
+    "single_family_max_without": 6
+  }
+}
