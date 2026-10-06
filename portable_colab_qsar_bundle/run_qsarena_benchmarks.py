@@ -1573,6 +1573,11 @@ def stage23_args_payload(args: argparse.Namespace, spec: "DatasetSpec") -> dict[
     # behaviour, so caches written before they existed keep matching.
     if not bool(getattr(args, "drop_duplicate_feature_columns", True)):
         payload["drop_duplicate_feature_columns"] = False
+    if bool(getattr(args, "deterministic_selection", False)):
+        payload["deterministic_selection"] = True
+    loaded_selection = deposited_selection_path(args, getattr(spec, "name", ""))
+    if loaded_selection is not None:
+        payload["selected_features_from"] = _file_sha256(loaded_selection)
     standardization = _standardization_options(args)
     if standardization != _standardization_options(None):
         payload["standardization"] = standardization
@@ -1581,6 +1586,61 @@ def stage23_args_payload(args: argparse.Namespace, spec: "DatasetSpec") -> dict[
     if str(getattr(spec, "task_type", "") or "").strip():
         payload["task_type"] = str(spec.task_type)
     return payload
+
+
+def deposited_selection_path(args: argparse.Namespace, dataset_name: str) -> Path | None:
+    """``<--selected-features-from>/<dataset>/selected_features.csv`` when that option is set, else None.
+
+    Raises if the option is set but the file is missing: silently refitting would defeat its purpose."""
+    root = str(getattr(args, "selected_features_from", "") or "").strip()
+    if not root or not str(dataset_name or "").strip():
+        return None
+    path = Path(root).expanduser() / slugify(str(dataset_name)) / "selected_features.csv"
+    if not path.exists():
+        raise FileNotFoundError(
+            f"--selected-features-from {root}: no selected_features.csv for dataset {dataset_name!r} ({path})"
+        )
+    return path
+
+
+def _file_sha256(path: Path) -> str:
+    return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+
+
+def load_deposited_selection(
+    X_train: pd.DataFrame, X_test: pd.DataFrame, path: Path
+) -> tuple[pd.DataFrame, pd.DataFrame, dict[str, Any]]:
+    """Apply a deposited feature selection instead of refitting the selector.
+
+    The recorded selector method (from the deposited dataset's ``metrics.csv``, when present) is kept in the
+    metadata, so nested cross-validation refits the same method inside each fold."""
+    columns = [str(c) for c in pd.read_csv(path)["feature"].astype(str)]
+    missing = [c for c in columns if c not in X_train.columns]
+    if missing:
+        raise ValueError(
+            f"{path}: {len(missing)} deposited feature(s) are absent from this run's feature matrix "
+            f"(first: {missing[:3]}); the feature configuration differs from the deposited run"
+        )
+    method = "elasticnet_cv"
+    metrics_path = path.parent / "metrics.csv"
+    if metrics_path.exists():
+        try:
+            recorded = pd.read_csv(metrics_path, usecols=["selector_method"], low_memory=False)["selector_method"].dropna()
+            if len(recorded):
+                method = str(recorded.iloc[0])
+        except (ValueError, KeyError):
+            pass
+    print(f"[selector] loaded deposited selection: {len(columns):,} features ({method}) from {path}", flush=True)
+    return X_train[columns].copy(), X_test[columns].copy(), {
+        "selector_method": method,
+        "selector_timed_out": False,
+        "selector_auto_rf_large_dataset_triggered": False,
+        "selected_feature_count": int(len(columns)),
+        "original_feature_count": int(X_train.shape[1]),
+        "selected_features": columns,
+        "selector_selection_source": str(path),
+        "selector_selection_sha256": _file_sha256(path),
+    }
 
 
 def stage23_resume_cache_path(dataset_dir: Path) -> Path:
@@ -4615,9 +4675,13 @@ def run_timed_elasticnet_selector_fit(
     cv_splits: list[tuple[np.ndarray, np.ndarray]],
     max_iter: int,
     random_seed: int,
-    timeout_seconds: float,
+    timeout_seconds: float | None,
     n_jobs: int,
+    single_thread: bool = False,
 ) -> dict[str, Any]:
+    """Fit ElasticNetCV in a subprocess. ``timeout_seconds=None`` waits for completion (deterministic selection);
+    ``single_thread`` pins the worker's BLAS/OpenMP pools to one thread so the coefficients do not depend on the
+    machine's core count."""
     payload = {
         "X_scaled": np.asarray(X_scaled, dtype=float),
         "y_train": np.asarray(y_train, dtype=float),
@@ -4631,9 +4695,16 @@ def run_timed_elasticnet_selector_fit(
         "random_seed": int(random_seed),
         "n_jobs": int(max(1, n_jobs)),
     }
-    timeout_seconds = float(timeout_seconds)
-    if timeout_seconds <= 0:
-        timeout_seconds = 1.0
+    if timeout_seconds is not None:
+        timeout_seconds = float(timeout_seconds)
+        if timeout_seconds <= 0:
+            timeout_seconds = 1.0
+    worker_env = None
+    if single_thread:
+        worker_env = dict(os.environ)
+        for name in ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS", "VECLIB_MAXIMUM_THREADS",
+                     "NUMEXPR_NUM_THREADS"):
+            worker_env[name] = "1"
 
     worker_code = """
 import json
@@ -4700,13 +4771,14 @@ if __name__ == "__main__":
                 stderr=subprocess.PIPE,
                 timeout=timeout_seconds,
                 check=False,
+                env=worker_env,
                 **_SUBPROCESS_TEXT_KWARGS,
             )
         except subprocess.TimeoutExpired:
             return {
                 "ok": False,
                 "timed_out": True,
-                "error": f"ElasticNetCV selector exceeded timeout ({timeout_seconds:.1f} seconds)",
+                "error": f"ElasticNetCV selector exceeded timeout ({float(timeout_seconds or 0):.1f} seconds)",
             }
 
         if completed.returncode != 0:
@@ -4752,6 +4824,19 @@ if __name__ == "__main__":
         "l1_ratio": float(message["l1_ratio"]),
         "n_iter": int(message["n_iter"]),
     }
+
+
+def selector_run_limits(args: argparse.Namespace) -> dict[str, Any]:
+    """Wall-clock limit and threading for the ElasticNetCV selector.
+
+    By default the selector falls back to random-forest importance when it exceeds
+    ``--selector-elasticnet-timeout-seconds``, so which datasets fall back depends on the machine's speed.
+    ``--deterministic-selection`` removes the limit (the fit runs to completion) and runs the worker on one thread,
+    so the same data and settings give the same selection on any machine. The dataset-size pre-check
+    (``--selector-auto-rf-by-dataset-size``) depends only on the training-set size and is left as configured."""
+    if bool(getattr(args, "deterministic_selection", False)):
+        return {"timeout_seconds": None, "n_jobs": 1, "single_thread": True}
+    return {"timeout_seconds": float(args.selector_elasticnet_timeout_seconds), "n_jobs": benchmark_n_jobs(args)}
 
 
 def select_features(
@@ -4840,8 +4925,7 @@ def select_features(
                 cv_splits=cv_splits,
                 max_iter=args.selector_max_iter,
                 random_seed=args.random_seed,
-                timeout_seconds=float(args.selector_elasticnet_timeout_seconds),
-                n_jobs=benchmark_n_jobs(args),
+                **selector_run_limits(args),
             )
     else:
         selector_fit = run_timed_elasticnet_selector_fit(
@@ -4852,8 +4936,7 @@ def select_features(
             cv_splits=cv_splits,
             max_iter=args.selector_max_iter,
             random_seed=args.random_seed,
-            timeout_seconds=float(args.selector_elasticnet_timeout_seconds),
-            n_jobs=benchmark_n_jobs(args),
+            **selector_run_limits(args),
         )
 
     if bool(selector_fit.get("ok")):
@@ -9126,14 +9209,18 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
                 flush=True,
             )
         cv_strategy_for_workflows = effective_cv_split_strategy(split["split_strategy_used"])
-        X_train, X_test, selector_meta = select_features(
-            split["X_train"],
-            split["X_test"],
-            split["y_train"],
-            split["smiles_train"],
-            selector_args,
-            split_strategy_for_cv=cv_strategy_for_workflows,
-        )
+        deposited = deposited_selection_path(selector_args, spec.name)
+        if deposited is not None:
+            X_train, X_test, selector_meta = load_deposited_selection(split["X_train"], split["X_test"], deposited)
+        else:
+            X_train, X_test, selector_meta = select_features(
+                split["X_train"],
+                split["X_test"],
+                split["y_train"],
+                split["smiles_train"],
+                selector_args,
+                split_strategy_for_cv=cv_strategy_for_workflows,
+            )
         write_selector_outputs(dataset_dir, selector_meta)
         write_feature_dedup_outputs(dataset_dir, feature_dedup_meta)
         maplight_feature_cols = [
@@ -12158,6 +12245,24 @@ def build_arg_parser() -> argparse.ArgumentParser:
         type=float,
         default=7200.0,
         help="Maximum wall-clock time for ElasticNetCV feature selection. If exceeded, fallback to RF importance.",
+    )
+    parser.add_argument(
+        "--deterministic-selection",
+        action=argparse.BooleanOptionalAction,
+        default=False,
+        help=(
+            "Make feature selection independent of machine speed: no ElasticNetCV wall-clock limit (so no "
+            "timeout-triggered random-forest fallback) and a single-threaded selector. The dataset-size pre-check "
+            "still applies if enabled."
+        ),
+    )
+    parser.add_argument(
+        "--selected-features-from",
+        default=None,
+        help=(
+            "Run directory whose <dataset>/selected_features.csv is used instead of refitting the selector, e.g. "
+            "the deposited benchmark run. Fails if a dataset has no deposited selection."
+        ),
     )
     parser.add_argument(
         "--selector-rf-fallback-n-estimators",

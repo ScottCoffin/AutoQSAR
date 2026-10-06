@@ -53,7 +53,9 @@ def test_verifier_runs_meta_checks():
 
 def test_new_bib_keys_exist_and_are_cited():
     entries = _bib_entries()
-    body = (io.REPO_ROOT / "submission" / "body.tex").read_text(encoding="utf-8")
+    # Since revision R1 the full meta-analysis is Supplementary Note S4 of Additional file 1.
+    body = "\n".join((io.REPO_ROOT / "submission" / name).read_text(encoding="utf-8")
+                     for name in ("body.tex", "additional_file_1.tex"))
     cited = {k.strip() for group in re.findall(r"\\cite[pt]?\{([^}]*)\}", body) for k in group.split(",")}
     for key in NEW_BIB_KEYS:
         assert key in entries, key

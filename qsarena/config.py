@@ -421,6 +421,17 @@ class FeatureSelectionSection:
         dest="selector_elasticnet_timeout_seconds", per_dataset=True,
         help="Wall-clock limit for the ElasticNetCV selector before falling back to random forest.",
     )
+    deterministic: bool = _opt(
+        False, group=5, kind="bool", cli="--deterministic-selection / --no-deterministic-selection",
+        dest="deterministic_selection", per_dataset=True,
+        help="Make the selection independent of machine speed: no ElasticNetCV wall-clock limit (so no "
+        "timeout-triggered random-forest fallback) and a single-threaded selector.",
+    )
+    load_from: str | None = _opt(
+        None, group=5, kind="str", nullable=True, cli="--selected-features-from", dest="selected_features_from",
+        help="Run directory whose <dataset>/selected_features.csv is used instead of refitting the selector "
+        "(for example the deposited benchmark run). A dataset without a deposited selection is an error.",
+    )
     cv_selection: str | None = _opt(
         None, group=5, kind="choice", nullable=True, choices=("outer", "nested"), cli="--cv-selection",
         dest="cv_selection", per_dataset=True, null_means="profile default (nested; quick: outer)",

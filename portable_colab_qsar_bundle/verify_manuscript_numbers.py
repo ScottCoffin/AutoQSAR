@@ -24,6 +24,10 @@ d = json.load(open("manuscript_assets/manuscript_numbers.json"))
 rel = json.loads(pathlib.Path("results/reliability_tdc22/summary.json").read_text(encoding="utf-8"))
 t = pathlib.Path("manuscript.md").read_text(encoding="utf-8")
 body = pathlib.Path("submission/body.tex").read_text(encoding="utf-8")
+# Additional file 1. Since revision R1 the run provenance, platform detail and full meta-analysis live there; checks
+# of text that moved verify it in main text + supplement (the Markdown copy holds both in manuscript.md).
+si_tex = pathlib.Path("submission/additional_file_1.tex").read_text(encoding="utf-8")
+tex_all = body + "\n" + si_tex
 ok, bad = [], []
 
 
@@ -244,7 +248,7 @@ chk("abstract nested CV optimism matches meta_numbers",
     f"from {_mm['nested_outer']} to {_mm['nested_nested']}" in t
     and f"from {_mm['nested_outer']} to {_mm['nested_nested']}".replace("%", r"\%") in _abstract_tex,
     f"{_mm['nested_outer']} -> {_mm['nested_nested']}")
-chk("abstract hardware +0.5% single-model", "best single-model score by a median +0.5%" in t
+chk("abstract hardware +0.5% single-model", "best single-model score by a median of +0.5%" in t
     and round(R["median_change_pct_same_split"], 1) == 0.5)
 # TabPFN API cost on the three withdrawn datasets: the runner's estimate (rows x selected features x (2 x 5 CV + 1) fits)
 _tok = []
@@ -253,14 +257,55 @@ for _ds in ("tdc_cyp1a2_veith", "tdc_cyp2c19_veith", "tdc_herg_karim"):
     _n = int(_pd.read_csv(_dir / "metrics.csv", low_memory=False)["n_train"].dropna().iloc[0])
     _tok.append(_n * len(_pd.read_csv(_dir / "selected_features.csv")) * 11 / 1e6)
 chk("TabPFN API estimate 111-127 M tokens", (round(min(_tok)), round(max(_tok))) == (111, 127), str([round(x) for x in _tok]))
-for label, text in (("md", t), ("tex", body)):
+# Run provenance moved to Additional file 1, Note S1 (revision R1): checked in main text + supplement.
+for label, text in (("md", t), ("tex", tex_all)):
     chk(f"TabPFN API prose {label}", "111 to 127 million tokens each" in text)
+    chk(f"lineage in-sample prose {label}", "regression ensemble wins fell from 7 to 1" in text)
+# The nested-selection ensemble result is a main-text result (Section 3.4).
 for label, text in (("md", t), ("tex", body)):
     chk(f"nested ensemble prose {label}", "improved the best ensemble on 39 of the 44 datasets" in text)
-    chk(f"lineage prose {label}", "regression ensemble wins fell from 7 to 1" in text
-        and "ensembles won 22 datasets (14 regression, 8 classification), against 16 (7 and 9)" in text
+    chk(f"lineage prose {label}", "ensembles won 22 datasets (14 regression, 8 classification), against 16 (7 and 9)" in text
         and "12 (6 and 6) when their out-of-fold predictions came from the outer feature selection" in text)
     chk(f"tdc official cv median 7 prose {label}", "falls to a median rank of 7 under cross-validation-only selection" in text)
+
+# ---- revision R1: coverage, consumer-GPU figure and the no-compute reanalyses -----------------------------------
+for label, text in (("md", t), ("tex", body)):
+    nt = norm_text(text)
+    chk(f"1094 evaluations prose {label}", "1094 valid model" in nt and "1097" not in nt)
+    _local = sum(v for k, v in d["split_counts"].items() if k != "predefined")
+    chk(f"local-split count prose {label}", _local == 17 and "the remaining 17 used locally generated" in nt)
+    # Phase 6.5: one consumer-GPU figure everywhere (signed median change of the best single model, 37 datasets).
+    _n050 = nt.replace("$", "").count("+0.50%")
+    chk(f"hardware +0.50 everywhere {label}", _n050 >= 3 and "0.19%" not in nt, f"+0.50% x{_n050}")
+RN = json.loads(pathlib.Path("manuscript_assets/reanalysis_numbers.json").read_text(encoding="utf-8"))
+_all, _com, _v2 = (RN["subsets"][k] for k in ("All datasets", "All eight families valid", "Uni-Mol V2 valid"))
+_fam = lambda sub, f, k: sub["families"][f][k]  # noqa: E731
+chk("reanalysis reproduces the win tally",
+    all(_fam(_all, f, "wins") == W[f]["total"] for f in W))
+chk("common subset 41 / V2 subset 17", (_com["n_datasets"], _v2["n_datasets"]) == (41, 17))
+chk("common subset single-family wins 6/5/5/3, ensembles 19",
+    tuple(_fam(_com, f, "wins") for f in ("Conventional ML", "Chemprop v2 GNN", "Uni-Mol (3D pretrained)",
+                                         "TabPFN (tabular foundation)", "Ensemble (stacking / averaging)")) == (6, 5, 5, 3, 19))
+chk("common subset median gaps 3.7 / 5.8 / 5.9",
+    tuple(round(_fam(_com, f, "median_gap_pct"), 1) for f in ("Conventional ML", "Uni-Mol (3D pretrained)",
+                                                              "Chemprop v2 GNN")) == (3.7, 5.8, 5.9))
+chk("V2 subset Uni-Mol 4, conventional 2",
+    (_fam(_v2, "Uni-Mol (3D pretrained)", "wins"), _fam(_v2, "Conventional ML", "wins")) == (4, 2))
+P = RN["posthoc"]
+_s1 = _pd.read_csv("manuscript_assets/tables/tableS1_dataset_winners.csv")
+chk("post-hoc model won 3", sorted(P["datasets_won"]) == sorted(_s1.loc[_s1["model"] == P["model"], "dataset"]),
+    str(P["datasets_won"]))
+chk("post-hoc removed: conventional 3, ensembles 24, Uni-Mol 6, max single 6",
+    (P["wins_without"]["Conventional ML"], P["wins_without"]["Ensemble (stacking / averaging)"],
+     P["wins_without"]["Uni-Mol (3D pretrained)"], P["single_family_max_without"]) == (3, 24, 6, 6))
+for label, text in (("md", t), ("tex", body)):
+    nt = norm_text(text)
+    chk(f"common-subset prose {label}",
+        "Restricted to the 41 datasets on which all eight families produced a result" in nt
+        and "the ensembles win 19" in nt and "(3.7%, against 5.8% for Uni-Mol and 5.9% for Chemprop)" in nt
+        and "on the 17 datasets on which Uni-Mol V2 ran, Uni-Mol wins 4 and conventional machine learning 2" in nt)
+    chk(f"post-hoc bound prose {label}",
+        "conventional machine learning wins 3 datasets, the ensembles 24 and Uni-Mol 6, and no single family wins more than 6" in nt)
 
 # ---- post-hoc feature-expansion note (Section 3.12) --------------------------------------------------
 fe_dir = pathlib.Path("benchmark_results/qsarena_feature_expansion")

@@ -114,6 +114,21 @@ def main() -> int:
             print(f"meta-analysis failed: {exc!r}", file=sys.stderr)
             errors.append((-1, type(exc).__name__, str(exc)))
 
+    # No-compute reanalyses (revision R1): common-subset family comparison and the post-hoc descriptor-model bound,
+    # Tables S13-S14 and reanalysis_numbers.json. They read the notebook's Fig 6 export, so they run after it.
+    try:
+        import subprocess
+        subprocess.run(
+            [sys.executable, str(REPO_ROOT / "portable_colab_qsar_bundle" / "reanalysis_coverage_posthoc.py")],
+            cwd=REPO_ROOT, check=True,
+        )
+        still_missing = sync_manuscript_tables()
+        if still_missing:
+            print(f"manuscript.md still references missing tables: {', '.join(still_missing)}", file=sys.stderr)
+    except Exception as exc:
+        print(f"reanalysis failed: {exc!r}", file=sys.stderr)
+        errors.append((-1, type(exc).__name__, str(exc)))
+
     # Keep the LaTeX submission package in step with the Markdown: both are generated from the same CSVs.
     try:
         import subprocess

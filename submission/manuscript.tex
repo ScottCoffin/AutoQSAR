@@ -1,5 +1,5 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% QSARena -- Journal of Cheminformatics (Software article)
+%% QSARena -- Journal of Cheminformatics (Research article)
 %% Springer Nature LaTeX template (sn-jnl.cls), December 2024 release.
 %%
 %% BUILD: sn-jnl.cls is NOT bundled here. Either
@@ -64,6 +64,9 @@
 
 \begin{document}
 
+%% Title chosen by the author (2026-10-06, reconfirmed in revision R1). Alternatives considered in revision R1:
+%%  - QSARena: separating model-library breadth from held-out selection in a leakage-controlled, cross-suite benchmark of molecular property-prediction models
+%%  - QSARena: a leakage-controlled, code-free benchmark of 31 molecular property-prediction models across 44 datasets and five suites
 \title[Ensembles Across Model Families]{Ensembles Across Model Families Outperform Any Single Architecture: A Single-Configuration, Leakage-Controlled Benchmark of 31 Molecular Property Models Across 44 Datasets}
 
 \author*[1]{\fnm{Scott} \sur{Coffin}~\orcidlink{0000-0002-7035-1282}}\email{scott.l.coffin@gmail.com}
@@ -95,7 +98,7 @@ ADMET: absorption, distribution, metabolism, excretion and toxicity; ADME: absor
 
 \section*{Supplementary information}
 
-\textbf{Additional file 1.} Supplementary tables S1--S11: per-dataset winning models with cross-validation-selected comparators (S1), staged component ablation (S2), feature-family selection summary (S3), model coverage (S4), hardware comparison (S5), dataset catalog (S6), leaderboard comparison (S7), applicability-domain/calibration audit (S8), dataset meta-feature catalog (S9), family $\times$ meta-feature associations (S10) and family-selector regret (S11).
+\textbf{Additional file 1.} Supplementary tables S1--S15, notes S1--S6 and figures S1--S3. Tables: per-dataset winning models with cross-validation-selected comparators (S1), staged component ablation (S2), feature-family selection summary (S3), model coverage (S4), hardware comparison (S5), dataset catalog (S6), leaderboard comparison (S7), applicability-domain/calibration audit (S8), dataset meta-feature catalog (S9), family $\times$ meta-feature associations (S10), family-selector regret (S11), model inventory (S12), common-subset family comparison (S13), wins without the post-hoc descriptor model (S14) and positioning against other tools (S15). Notes: benchmark runs, ensemble reconstruction and computing environment (S1); representations, feature store and model configurations (S2); sensitivity of the family comparison (S3); the dataset-property meta-analysis, with Figures S1--S3 (S4); comparison with automated QSAR platforms (S5); and coverage, cost and hardware details (S6).
 
 \textbf{Additional file 2.} Guided installation and usage tutorial: choosing between the notebook and the command-line runner, installation, a single-dataset quickstart, a reference for all fifteen groups of workflow options, batch mode over any number of datasets, resume, the HTML/Markdown run reports, applicability domain, reproducibility, and troubleshooting. Every command in the tutorial is executed on the bundled example data by an automated test.
 

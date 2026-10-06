@@ -11,7 +11,23 @@ QSARena: SMILES → molecular property QSAR/AutoML workspace plus a 45-dataset b
 (`manuscript.md`, target: *Journal of Cheminformatics*). Windows + OneDrive checkout (paths contain spaces:
 always quote). Bash (Git Bash) and PowerShell are both available.
 
-## Current status and next steps (updated 2026-10-05) - read this first
+## Current status and next steps (updated 2026-10-06) - read this first
+
+**Revision R1 (branch `revision/jcheminf-r1`, 2026-10-06; work order `docs/reframe_work_order.md`).** Read
+`REVISION_NOTES.md` first: per-phase commits, deviations from the work order, and every `TODO(author)`. In short:
+the author kept the 2026-10-06 title (the work-order title is a commented alternative), reordered 350-word abstract, Introduction with two research questions
+and four new references, main text compressed from 46 to 29 pages. **Section numbers changed**: Methods 2.1-2.13
+(feature store merged into 2.3), Results 3.1-3.14 with a new 3.4 "Nested feature selection removes most
+cross-validation optimism" (META `results_nested_selection`); the old 3.9 Reproducibility is folded into 2.11.
+**Additional file 1 is now prose too**: Notes S1-S6 (run provenance with run-directory names and commit hash;
+representation and hyperparameter detail + Table S12 model inventory; sensitivity analyses Tables S13-S14; the
+full meta-analysis as META `section_3_14` with Figures S1-S3; platform comparison + Table S15 landscape; coverage,
+cost and hardware detail). Main text carries META `section_meta_summary` (3.14). `text.BLOCK_TARGETS` routes
+each META block to `body.tex` or `additional_file_1.tex`. `manuscript.md` was regenerated from the LaTeX and holds
+the supplement under "## Supplementary notes". New: `reanalysis_coverage_posthoc.py` (Tables S13-S14),
+`--deterministic-selection` / `--selected-features-from`, `REPRODUCIBILITY.md`, catalog metric fix for the four
+binary datasets. Verifier: **141 checks**. The benchmarking collection the work order targets was **closed** on
+2026-10-06; the cover letter is addressed to the journal's editors.
 
 **Done**
 - **Manuscript run:** `benchmark_results/qsarena_benchmark_oof_ensemble`, 44/44 datasets, **31 models**. Ensembles
@@ -320,7 +336,9 @@ stack stopped first). Only matters for step 6.
 | Any user-facing run option (the 15 decision groups) | `qsarena/config.py` (`RunConfig`) | Then `python -m qsarena.config --write-docs` (regenerates `docs/options_reference.md`, `configs/run.example.yaml`, the tutorial's option tables). Tests fail if they are stale. |
 | Batch mode, preflight/dry-run, reports, run.log/events, atomic writes | `qsarena/batch.py`, `preflight.py`, `reporting.py`, `run_events.py`, `artifacts.py` | Wired into the runner's `prepare_args()` / `_run_main()`. |
 | Tutorial = Additional file 2 | `docs/tutorial.md` | Every command runs in `tests/docs` (~6 min). PDF: `python submission/build_additional_file_2.py`; never edit the generated `.tex`. Work order: `docs/AGENT_WORK_ORDER_tutorial.md`. |
-| Dataset-property meta-analysis (§3.14, Figs 7-9, Tables S9-S10) | `qsarena/meta_analysis/` | Spec `docs/QSARena_spec.md`; methods `docs/meta_analysis/METHODS.md`; inventory `docs/meta_analysis/INVENTORY.md`. Run by `render_manuscript_assets.py` after the notebook (~4 min CPU; `--no-meta-analysis` skips it). Reads the notebook's Fig 6 export (`manuscript_assets/tables/figure6_family_best_models*.csv`) and the committed partitions `data/meta_analysis/dataset_partitions.csv.gz`, which are hash-verified against `split_*_hash`. §3.14 prose lives between `META` markers in `manuscript.md` / `body.tex`, rendered from `meta_numbers.json`; never hand-edit it. Edit the templates in `text.py`. Blocks: `section_3_14`, `limitation_meta`, and `limitation_cvleak` (the selection-leak caveat; numbers from `cv_leak.py`, which measures CV-vs-test overstatement from `metrics.csv` with the feature-expansion arm as the reference). Selector v2: `selection.py` / `selector_features.py`, pre-registered in `docs/meta_analysis/SELECTOR_V2_PLAN.md`; the nested permutation test is cached in `manuscript_assets/tables/meta_selector_v2_permutation.json` by input hash (~1 h when recomputed). Tests: `tests/meta` (the pipeline tests are `slow`). |
+| Dataset-property meta-analysis (main-text summary §3.14; full text Additional file 1 Note S4, Figs S1-S3, Tables S9-S11) | `qsarena/meta_analysis/` | Spec `docs/QSARena_spec.md`; methods `docs/meta_analysis/METHODS.md`; inventory `docs/meta_analysis/INVENTORY.md`. Run by `render_manuscript_assets.py` after the notebook (~4 min CPU; `--no-meta-analysis` skips it). Reads the notebook's Fig 6 export (`manuscript_assets/tables/figure6_family_best_models*.csv`) and the committed partitions `data/meta_analysis/dataset_partitions.csv.gz`, which are hash-verified against `split_*_hash`. §3.14 prose lives between `META` markers in `manuscript.md` / `body.tex`, rendered from `meta_numbers.json`; never hand-edit it. Edit the templates in `text.py`. Blocks: `section_3_14`, `limitation_meta`, and `limitation_cvleak` (the selection-leak caveat; numbers from `cv_leak.py`, which measures CV-vs-test overstatement from `metrics.csv` with the feature-expansion arm as the reference). Selector v2: `selection.py` / `selector_features.py`, pre-registered in `docs/meta_analysis/SELECTOR_V2_PLAN.md`; the nested permutation test is cached in `manuscript_assets/tables/meta_selector_v2_permutation.json` by input hash (~1 h when recomputed). Tests: `tests/meta` (the pipeline tests are `slow`). |
+| Revision R1 reanalyses (common-subset family comparison, post-hoc descriptor-model bound; Tables S13-S14) | `portable_colab_qsar_bundle/reanalysis_coverage_posthoc.py` | Reads committed `metrics.csv` only; first reproduces the notebook's `figure6_family_best_models.csv`, then writes `manuscript_assets/reanalysis_numbers.json`. Run by `render_manuscript_assets.py`; checked by the verifier. |
+| Additional file 1 prose (Supplementary Notes S1-S3, S5-S6) | `submission/additional_file_1.tex` and the "## Supplementary notes" section of `manuscript.md` | Hand-maintained in both formats (Note S4 is a META block). It has its own bibliography (`unsrt`); refer to main-text sections as literal numbers ("main-text Section 3.10"), never `\ref`. |
 | Feature-expansion arm (ADMETboost features, pretrained embeddings, full-feature trees) | `qsarena/feature_expansion/` | **Read `docs/FEATURE_EXPANSION_PLAN.md` first; its checklist is the status tracker, so tick items as you go.** Experimental and separate from the canonical run: it uses the committed partitions and writes `benchmark_results/qsarena_feature_expansion/<feature_set>/metrics.csv`. Feature cache: `.model_cache/feature_expansion/<family>/<dataset>.npy` (gitignored, hash-checked, resumable). CPU featurization runs in **system Python** (scikit-fingerprints, mordredcommunity and gensim are installed there, not in the benchmark env). Mol2Vec model: `.model_cache/mol2vec/model_300dim.pkl` (download URL and sha256 in `featurize.py`). Motivation: honest CV-selected QSARena loses 3-19 to MaxQsaring on the 22 official TDC splits, and ADMETboost, the NIST meta-model and MaxQsaring all feed Mordred-rich, unselected features to XGBoost. Tests: `tests/feature_expansion`. |
 | Tutorial example data | `tests/fixtures/tutorial/make_tutorial_data.py` -> `qsarena/examples/data/` | Synthetic targets; shipped in the wheel; `qsarena-examples DIR` copies them out. |
 
@@ -375,14 +393,14 @@ Notebook generation notes:
      (`--ensemble-oof-scope all`, run on the RTX 4060), no full model retrained, and both
      2026-09-29 ensemble fixes applied. Post-run checks: `python tools/verify_oof_ensemble_run.py`.
    - Regenerate with `render_manuscript_assets.py --run-dir benchmark_results/qsarena_benchmark_oof_ensemble`.
-     `verify_manuscript_numbers.py` is pinned to this run (119 checks, including the §2.13 run-history numbers,
+     `verify_manuscript_numbers.py` is pinned to this run (141 checks, including the §2.13 run-history numbers,
      which it recomputes from the committed metrics of all three runs, and the §3.12 post-hoc arm numbers). If the run changes, update
      each expected value; never loosen a check.
 2. Regenerate every figure, table and number (~1.5 min; system Python suffices):
    ```bash
    python portable_colab_qsar_bundle/render_manuscript_assets.py   # notebook + figures + tables + numbers JSON + LaTeX tables
    python portable_colab_qsar_bundle/render_graphical_abstract.py  # 920x300 J.Cheminform graphical abstract (SVG+PNG+PDF)
-   python portable_colab_qsar_bundle/verify_manuscript_numbers.py  # 119 checks; non-zero exit on drift
+   python portable_colab_qsar_bundle/verify_manuscript_numbers.py  # 141 checks; non-zero exit on drift
    ```
    The first also rewrites the `<!-- TABLE:stem -->` blocks in `manuscript.md` and
    `submission/tables/*.tex`. **Never hand-edit inside those blocks or those .tex files.**
@@ -394,7 +412,7 @@ Notebook generation notes:
    `manuscript_assets/tables/*.csv`. Never from old notebook outputs, `Manuscript Outline.md` or
    `publication_recommendations.md` (all predate the A100 run).
    Update after the OECD reliability work: `verify_manuscript_numbers.py` now also checks the 3.13
-   reliability numbers in `submission/body.tex`, and the verifier currently runs 119 checks. Still
+   reliability numbers in `submission/body.tex`, and the verifier currently runs 141 checks. Still
    grep both manuscript formats after other numeric prose edits.
 5. Table S8 / 3.13 comes from the separate reliability study, not the manuscript-assets notebook:
    ```bash
@@ -700,6 +718,10 @@ Open work is tracked in [TODO.md](TODO.md); the Zenodo deposit is the last block
 - Test cost: `tests/integration` ~10 min and `tests/docs` ~6 min of CLI runs on the example data.
 
 ## Don'ts (cost savers)
+
+- Don't edit LaTeX through Python in a Bash heredoc: the agent's Bash tool collapsed doubled backslashes to single
+  ones, so a Python string meant to hold `\textbf` held a TAB followed by `extbf`. Write edit scripts to a file
+  with the Write tool and run them.
 
 - Don't rerun benchmarks locally to "check" numbers: the canonical run recorded ≈155 h of wall-clock on a GPU box.
   Everything the manuscript needs is recomputable from committed `metrics.csv` / selector / runtime artifacts.
