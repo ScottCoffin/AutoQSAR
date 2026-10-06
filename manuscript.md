@@ -1,10 +1,6 @@
-<!-- Title chosen by the author (2026-10-06, reconfirmed in revision R1). Alternatives considered in revision R1:
-  - QSARena: separating model-library breadth from held-out selection in a leakage-controlled, cross-suite benchmark of molecular property-prediction models
-  - QSARena: a leakage-controlled, code-free benchmark of 31 molecular property-prediction models across 44 datasets and five suites
--->
-# Ensembles Across Model Families Outperform Any Single Architecture: A Single-Configuration, Leakage-Controlled Benchmark of 31 Molecular Property Models Across 44 Datasets
+# Ensembles Across Model Families Outperform Any Single Family: A Single-Configuration, Leakage-Controlled Benchmark of 31 Molecular Property Models Across 44 Datasets
 
-**Running title:** QSARena: an accessible, leakage-controlled AutoML workspace for molecular property prediction
+**Running title:** Ensembles Across Model Families
 
 **Author:** Scott Coffin<sup>1</sup> (ORCID [0000-0002-7035-1282](https://orcid.org/0000-0002-7035-1282))
 

@@ -59,15 +59,14 @@
 % sn-jnl loads hyperref itself. Suppress the coloured link borders so the submitted PDF does not
 % look like a working draft; guarded because the class may be built without hyperref.
 \makeatletter
-\@ifpackageloaded{hyperref}{\hypersetup{hidelinks}}{}
+\@ifpackageloaded{hyperref}{\hypersetup{hidelinks,
+  pdftitle={Ensembles Across Model Families Outperform Any Single Family: A Single-Configuration, Leakage-Controlled Benchmark of 31 Molecular Property Models Across 44 Datasets},
+  pdfauthor={Scott Coffin}}}{}
 \makeatother
 
 \begin{document}
 
-%% Title chosen by the author (2026-10-06, reconfirmed in revision R1). Alternatives considered in revision R1:
-%%  - QSARena: separating model-library breadth from held-out selection in a leakage-controlled, cross-suite benchmark of molecular property-prediction models
-%%  - QSARena: a leakage-controlled, code-free benchmark of 31 molecular property-prediction models across 44 datasets and five suites
-\title[Ensembles Across Model Families]{Ensembles Across Model Families Outperform Any Single Architecture: A Single-Configuration, Leakage-Controlled Benchmark of 31 Molecular Property Models Across 44 Datasets}
+\title[Ensembles Across Model Families]{Ensembles Across Model Families Outperform Any Single Family: A Single-Configuration, Leakage-Controlled Benchmark of 31 Molecular Property Models Across 44 Datasets}
 
 \author*[1]{\fnm{Scott} \sur{Coffin}~\orcidlink{0000-0002-7035-1282}}\email{scott.l.coffin@gmail.com}
 

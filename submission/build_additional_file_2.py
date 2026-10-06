@@ -33,7 +33,7 @@ TITLE = (
     "Additional file 2: Guided installation and usage tutorial for QSARena"
 )
 SUBTITLE = (
-    "Ensembles Across Model Families Outperform Any Single Architecture: A Single-Configuration, "
+    "Ensembles Across Model Families Outperform Any Single Family: A Single-Configuration, "
     "Leakage-Controlled Benchmark of 31 Molecular Property Models Across 44 Datasets"
 )
 
