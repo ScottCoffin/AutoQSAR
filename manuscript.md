@@ -1,4 +1,9 @@
-# Ensembles Across Model Families Outperform Any Single Architecture: A Single-Configuration, Leakage-Controlled Benchmark of 31 Molecular Property Models Across 44 Datasets
+<!-- TITLE ALTERNATIVES (author to choose; revision R1, 2026-10):
+  - QSARena: a leakage-controlled, code-free benchmark of 31 molecular property-prediction models across 44 datasets and five suites
+  - No model family dominates — and how much of a leaderboard rank is library breadth versus test-selection: a unified benchmark (QSARena)
+  - (author's title of 2026-10-06) Ensembles Across Model Families Outperform Any Single Architecture: A Single-Configuration, Leakage-Controlled Benchmark of 31 Molecular Property Models Across 44 Datasets
+-->
+# QSARena: separating model-library breadth from held-out selection in a leakage-controlled, cross-suite benchmark of molecular property-prediction models
 
 **Running title:** QSARena: an accessible, leakage-controlled AutoML workspace for molecular property prediction
 
@@ -20,13 +25,13 @@
 
 ## Abstract
 
-**Background.** ADMET prediction is dominated by ever-larger pretrained models, whose compute cost and reproducibility limit adoption in academic, regulatory and small laboratories. Whether that scale is warranted has not been tested across suites under one pipeline.
+**Background.** ADMET prediction is dominated by ever-larger pretrained models, whose compute cost and reproducibility limit adoption in academic, regulatory and small laboratories. Recent benchmarks report that added scale rarely translates into accuracy but rarely ask how much of a model's leaderboard standing comes from library breadth and from selecting among candidates on held-out data. Neither has been tested across benchmark suites under one fixed, leakage-controlled pipeline.
 
-**Methods.** QSARena predicts molecular properties from SMILES in one reproducible workflow: RDKit standardization, ten fingerprint and descriptor families, ElasticNetCV selection nested in cross-validation, and a 31-model library spanning conventional machine learning, gradient boosting, tabular foundation models, deep tabular and graph networks, 3D pretrained Uni-Mol, and ensembles. It runs as a **code-free Google Colab notebook needing no installation or local hardware** and as a command-line runner sharing the same core.
+**Methods.** QSARena, a code-free notebook and command-line runner, evaluated 31 models on 44 datasets from five suites (22 regression, 22 classification; 1094 model-dataset evaluations) under one fixed configuration without per-dataset tuning, with feature selection nested inside cross-validation.
 
-**Results.** Across 44 datasets (22 regression, 22 classification; 1094 model-dataset evaluations) under a **single fixed configuration with no per-dataset tuning**, no single family dominated: conventional machine learning won 6 datasets, Chemprop and 3D pretrained models 5 each and TabPFN 3, while ensembles of these families won 22 and were most consistent (within 5% of best on 84% of datasets). Nested feature selection cut median cross-validation optimism from 15.9% to 3.4%; cross-validation selection then picked the per-dataset winner on 4 datasets and sat a median 7.7% from the test-selected best. Against published values, estimated top-ten placement fell from 35 to 27 of 37 comparable datasets under cross-validation selection; a matched-candidate-set control attributes 7 of those 8 placements to library breadth and 1 to held-out selection. These ranks are provisional: some references have documented leakage. A consumer GPU changed the best single-model score by a median +0.5%.
+**Results.** Nested feature selection cut median cross-validation optimism from 15.9% to 3.4%; cross-validation selection then picked the per-dataset winner on 4 datasets and sat a median 7.7% from the test-selected best. Against published values, estimated top-ten placement fell from 35 to 27 of 37 comparable datasets under cross-validation selection; a matched-candidate-set control attributes 7 of those 8 lost placements to library breadth and 1 to held-out selection. As recently reported, no single family dominated: conventional machine learning won 6 datasets, Chemprop and 3D pretrained models 5 each and TabPFN 3, while out-of-fold ensembles of these families won 22 and were most consistent (within 5% of best on 84% of datasets). Ranks are provisional, as some references have documented leakage; a consumer-laptop GPU changed the best single-model score by a median of +0.5%.
 
-**Conclusions.** Library breadth drives most leaderboard standing; held-out selection still contributes measurable optimism. No tuning, installation or specialized hardware is needed. Results are single-split, so close margins are provisional.
+**Conclusions.** Library breadth drives most leaderboard standing; held-out selection still contributes measurable optimism. Added model scale was not required for competitive accuracy, and no tuning, installation or specialized hardware is needed. Results derive from a single split and seed, so close margins are provisional.
 
 **Scientific Contribution.** We report a uniform, leakage-controlled benchmark across five suites (44 datasets, 31 models) under one fixed configuration. We decompose the gap between test-selected and cross-validation-selected standing into library breadth (7 of 37 placements) and held-out selection (1 of 37), an inflation affecting any comparably selected entry but rarely reported. Both protocols share one run and reference set, so the decomposition is less sensitive to reference quality than absolute ranks.
 

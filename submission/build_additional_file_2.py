@@ -33,8 +33,8 @@ TITLE = (
     "Additional file 2: Guided installation and usage tutorial for QSARena"
 )
 SUBTITLE = (
-    "Ensembles Across Model Families Outperform Any Single Architecture: A Single-Configuration, "
-    "Leakage-Controlled Benchmark of 31 Molecular Property Models Across 44 Datasets"
+    "QSARena: separating model-library breadth from held-out selection in a leakage-controlled, "
+    "cross-suite benchmark of molecular property-prediction models"
 )
 
 HEADER = r"""

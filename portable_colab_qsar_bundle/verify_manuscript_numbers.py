@@ -244,7 +244,7 @@ chk("abstract nested CV optimism matches meta_numbers",
     f"from {_mm['nested_outer']} to {_mm['nested_nested']}" in t
     and f"from {_mm['nested_outer']} to {_mm['nested_nested']}".replace("%", r"\%") in _abstract_tex,
     f"{_mm['nested_outer']} -> {_mm['nested_nested']}")
-chk("abstract hardware +0.5% single-model", "best single-model score by a median +0.5%" in t
+chk("abstract hardware +0.5% single-model", "best single-model score by a median of +0.5%" in t
     and round(R["median_change_pct_same_split"], 1) == 0.5)
 # TabPFN API cost on the three withdrawn datasets: the runner's estimate (rows x selected features x (2 x 5 CV + 1) fits)
 _tok = []
