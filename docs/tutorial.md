@@ -452,6 +452,8 @@ for models that do their own selection, but slower and noisier).
 | `feature_selection.max_selected_features` | `0` | int (>= 0) | `--max-selected-features` | CLI / run.yaml only |
 | `feature_selection.auto_rf_by_dataset_size` | `null` (profile default (on for cost_optimized/quick, off for full)) | true / false | `--selector-auto-rf-by-dataset-size / --no-selector-auto-rf-by-dataset-size` | CLI / run.yaml only |
 | `feature_selection.elasticnet_timeout_seconds` | `7200.0` | float (>= 1.0) | `--selector-elasticnet-timeout-seconds` | CLI / run.yaml only |
+| `feature_selection.deterministic` | `false` | true / false | `--deterministic-selection / --no-deterministic-selection` | CLI / run.yaml only |
+| `feature_selection.load_from` | `null` | text | `--selected-features-from` | CLI / run.yaml only |
 | `feature_selection.cv_selection` | `null` (profile default (nested; quick: outer)) | `outer`, `nested` | `--cv-selection` | CLI / run.yaml only |
 <!-- END GENERATED -->
 
@@ -836,6 +838,14 @@ feature_selection:
   # Wall-clock limit for the ElasticNetCV selector before falling back to random forest.
   # CLI: --selector-elasticnet-timeout-seconds.
   elasticnet_timeout_seconds: 7200.0
+  # Make the selection independent of machine speed: no ElasticNetCV wall-clock limit (so
+  # no timeout-triggered random-forest fallback) and a single-threaded selector. CLI:
+  # --deterministic-selection / --no-deterministic-selection.
+  deterministic: false
+  # Run directory whose <dataset>/selected_features.csv is used instead of refitting the
+  # selector (for example the deposited benchmark run). A dataset without a deposited
+  # selection is an error. CLI: --selected-features-from.
+  load_from: null
   # Where feature selection happens for cross-validation and the out-of-fold predictions
   # that ensembles use. nested refits the selector inside every CV fold, so CV scores are
   # not optimistic; outer reuses the selection fitted on all training rows (faster, but

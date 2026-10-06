@@ -13,7 +13,7 @@
 
 **Corresponding author:** Scott Coffin (scott.l.coffin@gmail.com)
 
-> **Author checklist before submission.** Items still requiring author action are flagged inline with **[AUTHOR]**. They are: the Zenodo DOI for the artifact archive; the repository release tag; and the small number of literature references flagged for final verification.
+<!-- Author checklist before submission: open items are marked TODO(author) in comments here and in submission/*.tex, and listed in REVISION_NOTES.md (Zenodo DOI and release tag, other AI assistants, agency disclaimer wording, remaining acknowledgements, suggested reviewers). -->
 
 ---
 
@@ -152,12 +152,13 @@ The reported results combine three runs that share one data, split, feature and 
 ### 2.13 Use of large language models
 
 Large language model (LLM) assistants were used during software development, analysis and manuscript preparation; as the journal requires, that use is documented here. Anthropic's Claude models (Claude Sonnet 4.6, Claude Opus 5 and Claude Opus 5.5), accessed through the Claude Code coding assistant, were used to (i) write, refactor, test and debug parts of the QSARena code base and its test suite; (ii) write and run analysis scripts, monitor long-running benchmark jobs and diagnose their failures; and (iii) draft and edit manuscript text and supplementary documentation. The author specified the study design, the benchmark protocol and every analytical decision, reviewed and validated all AI-assisted code and text, and takes full responsibility for the content. No LLM is an author. LLMs did not generate data or results: every reported number is computed by scripted pipelines from the benchmark artifacts and checked against them automatically, and the code is covered by unit, integration and tutorial tests. All figures, including the graphical abstract, are rendered by code directly from benchmark outputs; no AI image-generation tools were used.
+<!-- TODO(author): add any other assistants used (for example ChatGPT or GitHub Copilot), or confirm that Claude was the only one. -->
 
 ## 3. Results and discussion
 
 ### 3.1 Benchmark coverage
 
-We executed QSARena across 44 datasets[^1] under a single fixed configuration (`full` profile, random seed 13, Chemprop seed 42). They comprise 22 regression and 22 classification tasks drawn from five collections: TDC (32), Polaris ADME (5), MoleculeNet (3), ChemML (2) and PODUAM (2). They span 280 to 13,445 molecules (median 1,605; 156,052 in total) and four split protocols (27 predefined, 12 scaffold, 4 target-quartile, 1 random). Thirty-one models produced at least one valid result, yielding 1094 valid model–dataset evaluations. The dataset catalog, with each dataset's estimated leaderboard rank and the best published value it is measured against, is given in Additional file 1, Table S6.
+We executed QSARena across 44 datasets[^1] under a single fixed configuration (full model profile, random seed 13, Chemprop seed 42). They comprise 22 regression and 22 classification tasks drawn from five collections: TDC (32), Polaris ADME (5), MoleculeNet (3), ChemML (2) and PODUAM (2). They span 280 to 13,445 molecules (median 1,605; 156,052 in total) and four split protocols (27 predefined, 12 scaffold, 4 target-quartile, 1 random). Thirty-one models produced at least one valid result, yielding 1094 valid model–dataset evaluations. The dataset catalog, with each dataset's estimated leaderboard rank and the best published value it is measured against, is given in Additional file 1, Table S6.
 
 ### 3.2 No single model family dominates
 
@@ -398,7 +399,8 @@ The datasets analysed during the current study are available in the following pu
 
 No registration or login is needed to download, install or run QSARena, so reviewers can test it anonymously. The optional Google Colab path requires a Google account; the same notebook also runs in any local Jupyter installation, and Additional file 2 covers local installation step by step.
 
-**[AUTHOR]** A Zenodo archive of the benchmark artifacts, including the per-molecule prediction files excluded from the repository for size, will be deposited and its DOI cited here. A tagged release from a clean working tree should be created and cited alongside it.
+A versioned release archived on Zenodo, including the per-molecule prediction files excluded from the repository for size, will be deposited before publication and its DOI cited here.
+<!-- TODO(author): insert the minted Zenodo version DOI and the release tag (ZENODO.md; archives staged in dist/zenodo/). -->
 
 ## Declarations
 
@@ -410,9 +412,11 @@ No registration or login is needed to download, install or run QSARena, so revie
 
 **Authors' contributions:** SC conceived the study, developed the software, designed and executed the benchmark, analysed the results and wrote the manuscript. The author read and approved the final manuscript.
 
-**Acknowledgements:** This work used Jetstream2 GPU at Indiana University through allocation CIS261142 from the Advanced Cyberinfrastructure Coordination Ecosystem: Services & Support (ACCESS) program, which is supported by U.S. National Science Foundation grants #2138259, #2138286, #2138307, #2137603, and #2138296 [75, 76]. Jetstream2 is supported by the National Science Foundation under Grant 2005506. Any opinions, findings, and conclusions or recommendations expressed in this material are those of the authors and do not necessarily reflect the views of the National Science Foundation. **[AUTHOR]** Remaining acknowledgements to be completed.
+**Acknowledgements:** This work used Jetstream2 GPU at Indiana University through allocation CIS261142 from the Advanced Cyberinfrastructure Coordination Ecosystem: Services & Support (ACCESS) program, which is supported by U.S. National Science Foundation grants #2138259, #2138286, #2138307, #2137603, and #2138296 [75, 76]. Jetstream2 is supported by the National Science Foundation under Grant 2005506. Any opinions, findings, and conclusions or recommendations expressed in this material are those of the authors and do not necessarily reflect the views of the National Science Foundation.
+<!-- TODO(author): complete the remaining acknowledgements. -->
 
 **Disclaimer:** The views expressed are those of the authors and do not necessarily represent those of the California Environmental Protection Agency or the Office of Environmental Health Hazard Assessment.
+<!-- TODO(author): confirm the required OEHHA/CalEPA disclaimer wording. -->
 
 ---
 
