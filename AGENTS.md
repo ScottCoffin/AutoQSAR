@@ -47,7 +47,9 @@ always quote). Bash (Git Bash) and PowerShell are both available.
   ML Perform Comparably to Pretrained Models") may need revising now that ensembles win half: author item.**
 - **Feature-selection CV leak confirmed causally** (`qsarena/feature_expansion/selection_leak.py`; positive in 26/27
   dataset-model pairs). `--cv-selection nested` is implemented (default for the `full` and `cost_optimized`
-  profiles; see `docs/NESTED_SELECTION_CV_PLAN.md`). The notebook path has only been syntax-checked.
+  profiles; see `docs/NESTED_SELECTION_CV_PLAN.md`). The notebook path was executed end to end on FreeSolv and Caco-2 on 2026-10-06 (`tools/notebook_nested_check.py`;
+  binary classification was added to the notebooks the same day and checked on HIA and BBB-Martins). Title changed
+  2026-10-06 (author): "Ensembles Across Model Families Outperform Any Single Architecture: ...".
 
 **Nested-selection run: COMPLETE (2026-10-06 08:52 PDT).** `tools/verify_oof_ensemble_run.py` passes (0 hard, 4 soft
 warnings; it now also knows the 3 intentional TabPFN withdrawals). 44/44 datasets have both ensembles; no leaky CV row
@@ -583,6 +585,13 @@ Open work is tracked in [TODO.md](TODO.md); the Zenodo deposit is the last block
   run was stopped before CYP2C9 was saved. Such rows are now kept, with a `[resume] keeping N row(s)` notice.
   **An UNFILTERED resume would still recompute them**, which would retrain TabPFN on CYP2C9; check before running
   one. Test: `test_filtered_run_keeps_stale_rows_it_will_not_recompute`.
+- **Notebook facts that bite headless tests (2026-10-06).** (1) Widget form ids are `uuid4` per build, so every
+  regeneration changes them; look them up from the widget-control cells by block label (`tools/notebook_nested_check.py`
+  does) and assert the values took: `set_local_form_values` silently ignores an unknown id, and the cell then runs its
+  defaults (a "classification" test once ran on the FreeSolv example). (2) Step 0 imports `qsar_workflow_core.py` from
+  `./portable_colab_qsar_bundle` or its parent and otherwise DOWNLOADS the published copy from GitHub, so core changes
+  reach Colab users only after a push, and a local test must place the checkout's core in its working directory.
+  (3) The python3 kernelspec runs `python` from PATH: put the benchmark env first.
 - **Targeted model filters are repeatable exact labels.** Use one `--only-model-names` argument per
   model. Model labels contain commas, so comma-joining labels silently breaks selection. Internal
   TDC multi-seed code stores these filters as a list for the same reason.

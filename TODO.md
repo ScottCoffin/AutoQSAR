@@ -102,17 +102,28 @@ Source: `Peer_Review_Report_QSARena_No_Single_Model_Family_Dominates.docx`; item
       TDC-22 subset, rather than only estimated ranks. The positioning review asks for this to
       substantiate "match pretrained models" in the title. It needs competitor per-dataset values,
       which are available for MapLight and MaxQsaring but not for DeepAutoQSAR.
-- [ ] **Reconsider the title** (options drafted 2026-10-02; the author picks). The journal asks for a title that names
-      the research design where appropriate. The current title's "Ensembles and Conventional Machine Learning Perform
-      Comparably" is now shaky: conventional ML wins 4 of 44 datasets, and the ensembles are built from the other families.
-      1. (recommended) No Single Model Family Dominates: A Leakage-Controlled Benchmark of 30 Molecular Property Models
-         Across 44 Datasets
-      2. Library Breadth, Not Honest Selection, Drives Leaderboard Standing: A Single-Configuration Benchmark of 30 Models
-         on 44 Molecular Property Datasets
-      3. How Much of a Leaderboard Rank Is Model Selection? Test- Versus Cross-Validation-Selected Performance Across 44
-         Molecular Property Benchmarks
-      4. QSARena: An Open, Leakage-Controlled Benchmark of 30 Molecular Property Models Across Five Suites Under One Fixed
+- [x] **Title chosen by the author (2026-10-06): option 2, "Ensembles Across Model Families Outperform Any Single
+      Architecture: A Single-Configuration, Leakage-Controlled Benchmark of 31 Molecular Property Models Across 44 Datasets".**
+      Applied to manuscript.md, manuscript.tex (short title "Ensembles Across Model Families"), proof.tex, Additional files 1
+      and 2, the cover letter and CITATION.cff. Options considered (2026-10-06): The
+      journal asks for a title that names the research design where appropriate. The current title says ensembles and
+      conventional ML "perform comparably" to pretrained models; now ensembles win 22 of 44 datasets and are the most
+      consistent, while no single family wins more than 6 (conventional ML 6, Chemprop 5, Uni-Mol 5).
+      1. (recommended) No Single Model Family Dominates, but Ensembles Across Families Win Half: A Leakage-Controlled
+         Benchmark of 31 Molecular Property Models on 44 Datasets
+         - Leads with the two strongest results (max 6/44 for any family; ensembles 22/44, most consistent).
+      2. Ensembles Across Model Families Outperform Any Single Architecture: A Single-Configuration, Leakage-Controlled
+         Benchmark of 31 Molecular Property Models Across 44 Datasets
+         - Most direct; "outperform" rests on win counts and consistency, not on significance tests (single seed).
+      3. Feature-Selection Leakage Distorts Both Model Choice and Ensembles: A Nested Cross-Validation Benchmark of 31
+         Molecular Property Models Across 44 Datasets
+         - Leads with the methodological finding (CV optimism 15.9% -> 3.4%; ensemble wins 12 -> 22 once honest).
+      4. How Much of a Leaderboard Rank Is Model Selection? Test- Versus Cross-Validation-Selected Performance of 31
+         Models Across 44 Molecular Property Benchmarks
+         - Leads with the decomposition (7 placements from library breadth, 1 from held-out selection).
+      5. QSARena: An Open, Leakage-Controlled Benchmark of 31 Molecular Property Models Across Five Suites Under One Fixed
          Configuration
+         - Software-forward; safest, least informative.
       If it changes: update `manuscript.md` line 1, `submission/manuscript.tex` (`\title[...]` short title too) and the cover
       letter.
 
@@ -202,22 +213,33 @@ Source: `Peer_Review_Report_QSARena_No_Single_Model_Family_Dominates.docx`; item
       updated (31 models, Table 1, §2.7, §2.13, §3.12 as a member); verifier 112/112; pushed 980e3c4.
 - [x] **Fix the feature-selection CV leak throughout (go-ahead 2026-10-05; DONE 2026-10-06, paper updated).** Confirmed causally:
       `qsarena/feature_expansion/selection_leak.py`. Code done 2026-10-04 (`--cv-selection nested`, runner and
-      notebooks; notebook not yet executed end to end). Run: `logs/run_nested_selection.ps1`; the pilot on
+      notebooks; notebook executed end to end on 2026-10-06). Run: `logs/run_nested_selection.ps1`; the pilot on
       `tdc_caco2_wang` passed; the full run started 2026-10-05 03:16 PDT; PAUSED by the author at 20:00 PDT with 39/44 done (CYP3A4,
       CYP1A2, CYP2C19, CYP2D6, hERG-Karim remain, ~9 h); resumed 22:50 PDT on the five remaining datasets (`-Tag rest`). TabPFN gets nested CV from local fold refits but is kept out of
       the ensembles (`--ensemble-exclude-model`). After it: checks, render, verifier values, paper (§2.13, the CV-leak
       caveat becomes a Methods statement, all CV-dependent numbers) -- all done 2026-10-06. Details:
       `docs/NESTED_SELECTION_CV_PLAN.md`.
-- [ ] **Author: revisit the title.** Ensembles now win 22 of 44 (single families at most 6); the current title says
-      ensembles and conventional ML "perform comparably" to pretrained models. Options are in the title item above.
-- [ ] Notebook nested-selection path (`nested_selection_cv`) is still only syntax-checked; execute it end to end.
+- [x] Notebook nested-selection path executed end to end (2026-10-06, `tools/notebook_nested_check.py`, headless, local
+      notebook blocks 4A.5/4B/4C/7A): FreeSolv and Caco-2 pass. The selector is refitted on 5 folds; test metrics are
+      identical to the outer run; CV RMSE rises for the 9 selected-feature models and is unchanged for MapLight CatBoost
+      (Caco-2 ElasticNetCV: outer CV 0.321 vs test 0.390 -> nested 0.460); 7A's OOF predictions use the nested folds.
+- [x] **Binary classification in the notebooks** (2026-10-06). The notebook only mentioned classification in its
+      guidance text; the code was regression-only. Now 1C detects the task (`task_type` AUTO/regression/classification;
+      a target with two distinct values is binary, as in the runner), 4A stratifies by class, 4C runs the runner's
+      classifier set with AUROC/AUPRC/balanced-accuracy/MCC CV (class-stratified, nested selection), 4D/7B draw ROC
+      curves, 7A builds OOF ensembles chosen by OOF AUROC (CFA skipped: regression-only), 9A reports class-1 probabilities
+      plus a predicted class, and 9F writes the report. GA (4E-4G), ChemML/Uni-Mol/Chemprop (5B-6H), explanations (8A-8C)
+      and AD (9D) are skipped with a message for classification (IPython input transformer set up in step 0). Tested
+      headless with `tools/notebook_nested_check.py` on HIA (578) and BBB-Martins (2,030); FreeSolv rerun for regression.
+- [ ] Classification for the notebook's Uni-Mol, Chemprop, ChemML, GA, explanation and AD blocks (the runner has it).
 - [x] **Hard-label predictions on 4 binary datasets catalogued as rmse** (fixed 2026-10-04). 11 models retrained and
       validated (§2.13 discloses it). TabPFN (2026-10-05): pampa retrained with the local `tabpfn` package; on
       cyp1a2/cyp2c19/herg_karim its rows are withdrawn (local TabPFN does not fit 8 GB at 10k x 1,000; the API rerun
       is ~110M tokens per dataset). Enters the paper with the nested-run render: replace the §2.13 "TabPFN ... still
       carries label outputs" sentence with the withdrawal, and say pampa's TabPFN is the local v2.6 model.
-- [ ] **Author decision (optional): TabPFN on cyp1a2/cyp2c19/herg_karim via the Prior Labs API** (~110M estimated
-      tokens each, vs the runner's 5M/day guard) to restore those three results. Not run.
+- [x] ~~**Author decision (optional): TabPFN on cyp1a2/cyp2c19/herg_karim via the Prior Labs API** (~110M estimated
+      tokens each, vs the runner's 5M/day guard) to restore those three results.~~ Not pursued; the paper explains the
+      API limitation in §2.13 (111-127 M estimated tokens each vs a 5 M daily allowance; verifier-checked), 2026-10-06.
 - [ ] CFA ranks fusion candidates by in-sample training error; move it to OOF predictions (needs the CFA stage
       after the OOF stage).
 

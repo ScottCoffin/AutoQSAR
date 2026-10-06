@@ -246,6 +246,15 @@ chk("abstract nested CV optimism matches meta_numbers",
     f"{_mm['nested_outer']} -> {_mm['nested_nested']}")
 chk("abstract hardware +0.5% single-model", "best single-model score by a median +0.5%" in t
     and round(R["median_change_pct_same_split"], 1) == 0.5)
+# TabPFN API cost on the three withdrawn datasets: the runner's estimate (rows x selected features x (2 x 5 CV + 1) fits)
+_tok = []
+for _ds in ("tdc_cyp1a2_veith", "tdc_cyp2c19_veith", "tdc_herg_karim"):
+    _dir = pathlib.Path("benchmark_results/qsarena_benchmark_oof_ensemble") / _ds
+    _n = int(_pd.read_csv(_dir / "metrics.csv", low_memory=False)["n_train"].dropna().iloc[0])
+    _tok.append(_n * len(_pd.read_csv(_dir / "selected_features.csv")) * 11 / 1e6)
+chk("TabPFN API estimate 111-127 M tokens", (round(min(_tok)), round(max(_tok))) == (111, 127), str([round(x) for x in _tok]))
+for label, text in (("md", t), ("tex", body)):
+    chk(f"TabPFN API prose {label}", "111 to 127 million tokens each" in text)
 for label, text in (("md", t), ("tex", body)):
     chk(f"nested ensemble prose {label}", "improved the best ensemble on 39 of the 44 datasets" in text)
     chk(f"lineage prose {label}", "regression ensemble wins fell from 7 to 1" in text

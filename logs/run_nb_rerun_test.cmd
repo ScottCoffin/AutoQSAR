@@ -1,0 +1,8 @@
+@echo off
+set PATH=C:\Users\scott\.conda\envs\autoqsar-py311;C:\Users\scott\.conda\envs\autoqsar-py311\Scripts;C:\Users\scott\.conda\envs\autoqsar-py311\Library\bin;%PATH%
+set PYTHONIOENCODING=utf-8
+set OMP_NUM_THREADS=6
+cd /d C:\Users\scott\AppData\Local\Temp\claude\c--Users-scott-AutoQSAR\38c1a67d-2ccf-492f-9c39-630f7a300f36\scratchpad\nbtest
+python C:\Users\scott\AutoQSAR\tools\notebook_nested_check.py freesolv_sampl.csv freesolv freesolv3 > freesolv3_driver.log 2>&1
+python C:\Users\scott\AutoQSAR\tools\notebook_nested_check.py tdc_hia_hou.csv hia hia2 > hia2_driver.log 2>&1
+echo DONE > rerun_done.txt

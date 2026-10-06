@@ -926,7 +926,10 @@ class TargetQuartileStratifiedKFold:
             yield from fallback.split(X_frame, y_series)
 
 
-def make_qsar_cv_splitter(X, y, smiles, split_strategy="random", cv_folds=5, random_seed=42):
+def make_qsar_cv_splitter(X, y, smiles, split_strategy="random", cv_folds=5, random_seed=42, task_type="regression"):
+    """CV folds with the QSAR split geometry. ``task_type="classification"`` stratifies random and target-quartile
+    folds on the class labels (a binary target has no quartiles); scaffold folds keep their scaffold groups. The
+    default reproduces the benchmark runner's folds exactly."""
     X_frame = pd.DataFrame(X).reset_index(drop=True)
     y_series = pd.Series(y, dtype=float).reset_index(drop=True)
     smiles_series = pd.Series(smiles, dtype=str).reset_index(drop=True)
@@ -935,6 +938,13 @@ def make_qsar_cv_splitter(X, y, smiles, split_strategy="random", cv_folds=5, ran
         raise ValueError("At least 2 CV folds are required.")
 
     split_strategy = str(split_strategy).strip().lower()
+    if str(task_type).strip().lower() == "classification" and split_strategy in {"random", "target_quartiles"}:
+        labels = y_series.round().astype(int)
+        effective_folds = min(requested_folds, int(labels.value_counts().min()))
+        if effective_folds < 2:
+            raise ValueError("Class-stratified CV needs at least two training molecules in each class.")
+        splitter = StratifiedKFold(n_splits=int(effective_folds), shuffle=True, random_state=int(random_seed))
+        return list(splitter.split(X_frame, labels)), int(effective_folds), "class_stratified"
     if split_strategy == "random":
         splitter = KFold(n_splits=requested_folds, shuffle=True, random_state=int(random_seed))
         return splitter, int(requested_folds), "random"
@@ -1128,6 +1138,7 @@ def make_oof_folds(
     split_strategy: str,
     n_folds: int,
     random_seed: int,
+    task_type: str = "regression",
 ) -> list[tuple[np.ndarray, np.ndarray]]:
     """Materialise K training-split folds with the shared QSAR CV geometry."""
     cv, _n_folds, _strategy = make_qsar_cv_splitter(
@@ -1137,6 +1148,7 @@ def make_oof_folds(
         split_strategy=split_strategy,
         cv_folds=int(n_folds),
         random_seed=int(random_seed),
+        task_type=task_type,
     )
     y_arr = pd.Series(y, dtype=float).to_numpy()
     raw = list(cv) if isinstance(cv, list) else list(cv.split(pd.DataFrame(X).reset_index(drop=True), y_arr))

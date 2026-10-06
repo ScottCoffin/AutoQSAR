@@ -72,6 +72,12 @@ then runs a complete modeling workflow:
 13. Predict new molecules and optionally apply UMAP and applicability-domain
     diagnostics in the notebook.
 
+Both the notebooks and the runner handle regression and binary classification: a target with exactly two
+distinct values is treated as classification (probability outputs; AUROC, AUPRC, balanced accuracy, MCC). In the
+notebooks, classification covers data preparation, conventional models with nested-selection CV, ensembles,
+prediction and the report; the GA, ChemML, Uni-Mol, Chemprop, explanation and applicability-domain blocks are
+regression-only there and are skipped with a message (the runner covers those models for classification).
+
 ## Models This Repo Runs
 
 QSARena runs different model sets depending on whether the active dataset is a

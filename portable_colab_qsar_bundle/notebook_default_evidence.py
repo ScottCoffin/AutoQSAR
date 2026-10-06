@@ -88,6 +88,7 @@ EVIDENCE: dict[str, dict[str, tuple[str, str, str]]] = {
     "1C. Assess missingness and preprocess the selected columns": {
         "missing_value_strategy": (NA, UNTESTED, "No default on purpose: you must choose. `ignore_row` is the safe choice for a missing target, because `zero` and `interpolate` invent measurements."),
         "custom_missing_tokens": (NA, UNTESTED, "Common spreadsheet spellings of a missing value. Add your lab's own codes."),
+        "task_type": ("auto", BENCH, "Same rule as the benchmark runner: a target with exactly two distinct values is a binary classification task."),
         "target_transform_strategy": ("auto", BENCH, "Same rule as the benchmark: log-transform only clearly skewed, positive targets."),
         "shifted_log10_epsilon": (NA, UNTESTED, "Used only by `shifted_log10`."),
         "collapse_duplicate_canonical_smiles": (NA, UNTESTED, "Not varied in the benchmark (which used curated sets). Keep it on: a molecule repeated in train and test inflates the test score."),

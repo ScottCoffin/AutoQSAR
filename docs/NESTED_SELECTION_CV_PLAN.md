@@ -63,8 +63,8 @@ selection).
 - **Notebooks:** block 4C option `nested_selection_cv` (default on; evidence entry in `notebook_default_evidence.py`).
   4B keeps `STATE["train_only_selector_refit"]` (all four selector methods). 4C cross-validates selected-matrix
   models with per-fold selection, and 7A refits conventional and tuned members on per-fold selections (OOF cache
-  key `<fold signature>|nested`). Verified only by a syntax check of both generated notebooks; **not yet executed end
-  to end**.
+  key `<fold signature>|nested`). Executed end to end on 2026-10-06 (`tools/notebook_nested_check.py`, FreeSolv and Caco-2): nested CV engages, test
+  metrics are unchanged, and 7A uses the nested folds. Binary classification was added to the notebook the same day and passes the same check (HIA, BBB-Martins).
 - **Applying it to the manuscript run:** re-run the OOF launcher (`tools/run_oof_ensemble_rtx.ps1` flags:
   `--only-model-names Ensemble --rebuild-ensemble`, scope `all`) with `--cv-selection nested` and
   `--run-admetboost-xgboost`. Base models are not retrained. The nested stage patches CV metrics and OOF, then the

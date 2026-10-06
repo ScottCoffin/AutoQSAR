@@ -33,8 +33,8 @@ TITLE = (
     "Additional file 2: Guided installation and usage tutorial for QSARena"
 )
 SUBTITLE = (
-    "No Single Model Family Dominates: Ensembles and Conventional Machine Learning Perform Comparably "
-    "to Pretrained Molecular Models Across 44 Property-Prediction Benchmarks"
+    "Ensembles Across Model Families Outperform Any Single Architecture: A Single-Configuration, "
+    "Leakage-Controlled Benchmark of 31 Molecular Property Models Across 44 Datasets"
 )
 
 HEADER = r"""

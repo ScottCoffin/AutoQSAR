@@ -711,6 +711,8 @@ BLOCK_GUIDANCE = {
 
         **Main choices.** Use `ignore_row` for missing targets unless there is a scientific reason to impute. Use `AUTO` target transform for most datasets; it will not log-transform zero or negative values. Collapse duplicate canonical SMILES when repeated structures should count once.
 
+        **Classification.** `task_type = AUTO` treats a target with exactly two distinct values (for example 0/1, active/inactive coded as numbers) as a binary classification task: models then predict the probability of class 1 and are scored by AUROC, AUPRC, balanced accuracy and MCC. Class labels are never transformed, and duplicate structures with conflicting labels take the majority class (ties are dropped). Blocks 1-4D, 7A-7B, 9A-9C and 9E-9F support classification; GA tuning (4E-4G), the ChemML, Uni-Mol and Chemprop blocks (5B-6H), explanations (8A-8C) and the applicability-domain workflow (9D) are skipped with a message, and the command-line runner covers those models for classification.
+
         **Time cost.** Seconds for a few hundred molecules; a few minutes for tens of thousands or difficult SMILES.
 
         **What to expect.** Missingness, target-value, and curation summaries, followed by a dataset-size runtime estimate for later modeling blocks.
@@ -801,7 +803,7 @@ BLOCK_GUIDANCE = {
 
         **Time cost.** Often 2-30 minutes for normal tutorial datasets; much longer for large datasets, many models, or many CV folds.
 
-        **What to expect.** A metrics table. For regression, lower RMSE/MAE and higher R2 are better. For classification, higher AUROC/AUPRC is better.
+        **What to expect.** A metrics table. For regression, lower RMSE/MAE and higher R2 are better. For classification (set in 1C), the classifier counterparts run (ElasticNetCV becomes logistic regression, SVR becomes SVC) and higher AUROC/AUPRC is better; cross-validation folds are stratified by class.
     """,
     "4D. Plot observed vs predicted values for all conventional models": """
         ### Before You Run: 4D. Plot Conventional Predictions
@@ -812,7 +814,7 @@ BLOCK_GUIDANCE = {
 
         **Time cost.** Usually seconds.
 
-        **What to expect.** Observed-vs-predicted plots for regression or probability-style plots for classification.
+        **What to expect.** Observed-vs-predicted plots for regression, or held-out ROC curves for classification.
     """,
     "4E. Run genetic-algorithm tuning for selected conventional models": """
         ### Before You Run: 4E. Optional GA Tuning
@@ -1809,7 +1811,26 @@ cells += [
         from sklearn.inspection import permutation_importance
         from sklearn.linear_model import ElasticNet, ElasticNetCV, Lasso, LassoCV
         from sklearn.manifold import TSNE
-        from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
+        from sklearn.metrics import (
+            accuracy_score,
+            average_precision_score,
+            balanced_accuracy_score,
+            matthews_corrcoef,
+            mean_absolute_error,
+            mean_squared_error,
+            r2_score,
+            roc_auc_score,
+        )
+        from sklearn.ensemble import (
+            AdaBoostClassifier,
+            ExtraTreesClassifier,
+            HistGradientBoostingClassifier,
+            RandomForestClassifier,
+            VotingClassifier,
+        )
+        from sklearn.linear_model import LogisticRegression
+        from sklearn.neighbors import KNeighborsClassifier
+        from sklearn.svm import SVC
         from sklearn.model_selection import GroupKFold, KFold, StratifiedKFold, cross_validate, train_test_split
         from sklearn.neighbors import KNeighborsRegressor
         from sklearn.pipeline import Pipeline
@@ -1818,11 +1839,12 @@ cells += [
         setup_done("scikit-learn components")
 
         setup_start("gradient boosting packages")
-        from xgboost import XGBRegressor
-        from catboost import CatBoostRegressor
+        from xgboost import XGBClassifier, XGBRegressor
+        from catboost import CatBoostClassifier, CatBoostRegressor
         try:
-            from lightgbm import LGBMRegressor
+            from lightgbm import LGBMClassifier, LGBMRegressor
         except Exception:
+            LGBMClassifier = None
             LGBMRegressor = None
         setup_done("gradient boosting packages")
 
@@ -2492,7 +2514,12 @@ cells += [
             elif split_strategy in {"random", "target_quartiles"}:
                 stratify_labels = None
                 if split_strategy == "target_quartiles":
-                    stratify_labels = target_quartile_labels(y, q=4)
+                    # A binary target has no quartiles: stratify on the class labels instead.
+                    stratify_labels = (
+                        pd.Series(y, dtype=float).round().astype(int).astype(str)
+                        if task_is_classification()
+                        else target_quartile_labels(y, q=4)
+                    )
                 X_train, X_test, y_train, y_test, smiles_train, smiles_test = train_test_split(
                     X,
                     y,
@@ -4117,6 +4144,92 @@ cells += [
             }
         setup_done("regression summary helper")
 
+        setup_start("classification helpers")
+        def task_is_classification():
+            # Set by block 1C: a binary target (two distinct values) is a classification task.
+            return str(STATE.get("task_type", "regression")).strip().lower() == "classification"
+
+        def positive_class_scores(model, X):
+            # Probability of class 1; a decision score is mapped through a sigmoid when there is no predict_proba.
+            if hasattr(model, "predict_proba"):
+                proba = np.asarray(model.predict_proba(X), dtype=float)
+                if proba.ndim == 2 and proba.shape[1] >= 2:
+                    return proba[:, 1]
+                return proba.reshape(-1)
+            if hasattr(model, "decision_function"):
+                return 1.0 / (1.0 + np.exp(-np.asarray(model.decision_function(X), dtype=float).reshape(-1)))
+            return np.asarray(model.predict(X), dtype=float).reshape(-1)
+
+        def model_scores(model, X):
+            # What every block stores as a model's prediction: class-1 probability or the regression value.
+            if task_is_classification():
+                return positive_class_scores(model, X)
+            return np.asarray(model.predict(X), dtype=float).reshape(-1)
+
+        def summarize_classification(y_true, scores, prefix, threshold=0.5):
+            y_int = np.asarray(y_true, dtype=float).round().astype(int)
+            score_values = np.asarray(scores, dtype=float).reshape(-1)
+            predicted = (score_values >= float(threshold)).astype(int)
+
+            def _safe(metric):
+                try:
+                    return float(metric())
+                except Exception:
+                    return np.nan
+
+            return {
+                f"{prefix} AUROC": _safe(lambda: roc_auc_score(y_int, score_values)),
+                f"{prefix} AUPRC": _safe(lambda: average_precision_score(y_int, score_values)),
+                f"{prefix} balanced accuracy": _safe(lambda: balanced_accuracy_score(y_int, predicted)),
+                f"{prefix} MCC": _safe(lambda: matthews_corrcoef(y_int, predicted)),
+                f"{prefix} accuracy": _safe(lambda: accuracy_score(y_int, predicted)),
+            }
+
+        def summarize_task(y_true, predictions_or_scores, prefix):
+            if task_is_classification():
+                return summarize_classification(y_true, predictions_or_scores, prefix)
+            return summarize_regression(y_true, predictions_or_scores, prefix)
+
+        def primary_test_metric():
+            # (results column, ascending) used to rank models: AUROC for classification, RMSE for regression.
+            return ("Test AUROC", False) if task_is_classification() else ("Test RMSE", True)
+
+        # Blocks with no classification path yet. For a classification task they are skipped with a message
+        # (an IPython input transformer swaps the cell body for the message) instead of failing on class labels.
+        CLASSIFICATION_UNSUPPORTED_BLOCKS = {
+            "4E": "genetic-algorithm tuning", "4F": "tuned-model plots", "4G": "GA convergence plots",
+            "5B": "ChemML deep-learning models", "5C": "deep-learning comparison",
+            "6B": "Uni-Mol file preparation", "6C": "Uni-Mol V1", "6D": "Uni-Mol V2", "6F": "Chemprop v2",
+            "6G": "Uni-Mol plots", "6H": "family comparison including Uni-Mol and Chemprop",
+            "8A": "model explanation settings", "8B": "conventional-model explanation", "8C": "ChemML explanation",
+            "9D": "the MAST-ML / MADML applicability-domain workflow",
+        }
+
+        def _classification_block_guard(lines):
+            if not task_is_classification():
+                return lines
+            head = "".join(lines[:3])
+            match = re.search(r"#\\s*(?:@title\\s+)?([0-9][A-Z])\\.\\s", head)
+            if match and match.group(1) in CLASSIFICATION_UNSUPPORTED_BLOCKS:
+                block = match.group(1)
+                message = (
+                    f"{block} skipped: {CLASSIFICATION_UNSUPPORTED_BLOCKS[block]} supports regression only, and this "
+                    "dataset is a binary classification task (block 1C). Use the command-line runner "
+                    "(qsarena-benchmark) for Uni-Mol, Chemprop and ChemML classification models."
+                )
+                return [f"print({message!r})\\n"]
+            return lines
+
+        try:
+            _ipython_shell = get_ipython()
+            _ipython_shell.input_transformers_cleanup[:] = [
+                fn for fn in _ipython_shell.input_transformers_cleanup
+                if getattr(fn, "__name__", "") != "_classification_block_guard"
+            ] + [_classification_block_guard]
+        except Exception:
+            pass
+        setup_done("classification helpers")
+
         setup_start("target-scale helper")
         def inverse_target_transform(values):
             values_array = np.asarray(values, dtype=float)
@@ -4513,6 +4626,7 @@ cells += [
         # @title 1C. Assess missingness and preprocess the selected columns { display-mode: "form" }
         missing_value_strategy = "Please choose if missing values are present" # @param ["Please choose if missing values are present", "ignore_row", "zero", "interpolate"]
         custom_missing_tokens = "missing, nan, NA, N/A, null, None" # @param {type:"string"}
+        task_type = "AUTO" # @param ["AUTO", "regression", "classification"]
         target_transform_strategy = "AUTO" # @param ["AUTO", "none", "log10_positive_only", "signed_log10", "shifted_log10"]
         shifted_log10_epsilon = 1e-6 # @param {type:"number"}
         collapse_duplicate_canonical_smiles = True # @param {type:"boolean"}
@@ -4678,6 +4792,41 @@ cells += [
             f"max={float(target_values.max()):.6g}"
         )
 
+        # Task type. AUTO calls a target with exactly two distinct values (0/1 or any other pair) a binary
+        # classification task, like the command-line runner. Classification targets are never transformed.
+        distinct_target_values = sorted(pd.unique(target_values.dropna()))
+        requested_task_type = str(task_type).strip().lower()
+        if requested_task_type == "auto":
+            resolved_task_type = "classification" if len(distinct_target_values) == 2 else "regression"
+        elif requested_task_type in {"regression", "classification"}:
+            resolved_task_type = requested_task_type
+        else:
+            raise ValueError(f"Unsupported task_type: {task_type}")
+        class_label_map = None
+        if resolved_task_type == "classification":
+            if len(distinct_target_values) != 2:
+                raise ValueError(
+                    "Classification needs a binary target with exactly two distinct values; "
+                    f"found {len(distinct_target_values)}. Choose task_type = regression for a continuous target."
+                )
+            negative_value, positive_value = float(distinct_target_values[0]), float(distinct_target_values[1])
+            class_label_map = {negative_value: 0, positive_value: 1}
+            target_values = target_values.map(class_label_map).astype(float)
+            working_df[target_col] = target_values.to_numpy(dtype=float)
+            positive_count = int((target_values == 1).sum())
+            print(
+                f"Task type: binary classification ({'auto-detected' if requested_task_type == 'auto' else 'selected'}). "
+                f"Class 1 = original value {positive_value:g} ({positive_count:,} rows), class 0 = {negative_value:g} "
+                f"({len(target_values) - positive_count:,} rows). Models predict the probability of class 1."
+            )
+            if str(target_transform_strategy).strip().lower() not in {"auto", "none"}:
+                print(f"Target transform `{target_transform_strategy}` ignored: class labels are never transformed.")
+            target_transform_strategy = "none"
+        else:
+            print(f"Task type: regression ({'auto-detected' if requested_task_type == 'auto' else 'selected'}).")
+        STATE["task_type"] = resolved_task_type
+        STATE["class_label_map"] = class_label_map
+
         requested_target_transform = str(target_transform_strategy).strip()
         if requested_target_transform.upper() == "AUTO":
             requested_target_transform = str(STATE.get("default_target_transform", "AUTO")).strip()
@@ -4741,6 +4890,17 @@ cells += [
         )
         if curated_df.empty:
             raise ValueError("No valid rows remain after preprocessing and SMILES curation.")
+        if resolved_task_type == "classification":
+            # Collapsing duplicate structures averages their labels; keep the majority class and drop ties.
+            averaged = pd.to_numeric(curated_df["target"], errors="coerce").astype(float)
+            tie_mask = np.isclose(averaged, 0.5)
+            if bool(tie_mask.any()):
+                print(f"Duplicate structures with conflicting labels (tied): dropped {int(tie_mask.sum()):,} row(s).")
+                curated_df = curated_df.loc[~tie_mask].reset_index(drop=True)
+                averaged = averaged.loc[~tie_mask].reset_index(drop=True)
+            curated_df["target"] = (averaged > 0.5).astype(float).to_numpy()
+            if curated_df["target"].nunique() < 2:
+                raise ValueError("Only one class remains after curation; a classification model cannot be trained.")
 
         if benchmark_split_column and benchmark_split_column in curated_df.columns:
             split_labels = (
@@ -4779,7 +4939,7 @@ cells += [
 
         print(f"Applied missing-value strategy: {applied_strategy}")
         print(f"Target transform: {target_transform_label}")
-        if target_transform_label == "none" and nonpositive_target_count > 0:
+        if target_transform_label == "none" and nonpositive_target_count > 0 and resolved_task_type != "classification":
             print(
                 "Target transform note: non-positive target values were retained on the raw scale. "
                 "Downstream model metrics are therefore reported in the original target units."
@@ -4816,7 +4976,12 @@ cells += [
                 "No missing values were detected in the selected SMILES and target columns, so the notebook proceeded directly to SMILES curation."
             )
 
-        if target_transform_label == "none":
+        if resolved_task_type == "classification":
+            display_note(
+                "This is a **binary classification** task: the two class labels are used as-is (no target transform), and "
+                "models predict the probability of class 1. Metrics are AUROC, AUPRC, balanced accuracy and MCC."
+            )
+        elif target_transform_label == "none":
             if nonpositive_target_count > 0:
                 display_note(
                     "Target values were kept on the **raw scale**. This is the default `AUTO` behavior when zeros or negative values are present."
@@ -6435,6 +6600,7 @@ cells += [
                 cnn_batch_size = _new_cnn_batch
                 cnn_training_epochs = _new_cnn_epochs
         training_cv_split_strategy = current_cv_split_strategy(default_strategy="random", fallback="random")
+        is_classification = task_is_classification()
         effective_cv_folds = None
         if use_cross_validation:
             cv, effective_cv_folds, effective_cv_split_strategy = make_qsar_cv_splitter(
@@ -6444,6 +6610,7 @@ cells += [
                 split_strategy=training_cv_split_strategy,
                 cv_folds=cv_folds,
                 random_seed=int(model_random_seed),
+                task_type="classification" if is_classification else "regression",
             )
         else:
             cv = None
@@ -6489,6 +6656,9 @@ cells += [
             kw_args={"nan": np.nan, "posinf": np.nan, "neginf": np.nan},
             validate=False,
         )
+        if run_tabular_cnn and is_classification:
+            print("Tabular CNN skipped: it is a regression model, and this dataset is a classification task.", flush=True)
+            run_tabular_cnn = False
         if run_tabular_cnn and tf is None:
             print(
                 "Tabular CNN was requested, but TensorFlow is unavailable in this environment. "
@@ -6627,11 +6797,110 @@ cells += [
                 ]
             )
 
+        if is_classification:
+            # The command-line runner's classifier set. Each regression toggle runs its classification counterpart.
+            classifier_svc = lambda: Pipeline(
+                [
+                    ("imputer", SimpleImputer(strategy="median")),
+                    ("scaler", StandardScaler()),
+                    ("model", SVC(C=10.0, gamma="scale", probability=True, random_state=int(model_random_seed))),
+                ]
+            )
+            available_models = {
+                "LogisticRegression": Pipeline(
+                    [
+                        ("imputer", SimpleImputer(strategy="median")),
+                        ("scaler", StandardScaler()),
+                        ("model", LogisticRegression(max_iter=1000, random_state=int(model_random_seed))),
+                    ]
+                ),
+                "SVC": classifier_svc(),
+                "Random forest": RandomForestClassifier(
+                    n_estimators=400, random_state=int(model_random_seed), n_jobs=resource_n_jobs
+                ),
+                "Extra trees": ExtraTreesClassifier(
+                    n_estimators=500, random_state=int(model_random_seed), n_jobs=resource_n_jobs
+                ),
+                "HistGradientBoosting": Pipeline(
+                    [
+                        ("finite", finite_numeric_transform),
+                        ("imputer", SimpleImputer(strategy="median")),
+                        (
+                            "model",
+                            HistGradientBoostingClassifier(
+                                learning_rate=0.05, max_iter=500, max_depth=8, random_state=int(model_random_seed)
+                            ),
+                        ),
+                    ]
+                ),
+                "Voting Classifier (KNN, SVM)": VotingClassifier(
+                    estimators=[
+                        (
+                            "knn",
+                            Pipeline(
+                                [
+                                    ("imputer", SimpleImputer(strategy="median")),
+                                    ("scaler", StandardScaler()),
+                                    ("model", KNeighborsClassifier(n_neighbors=15, weights="distance")),
+                                ]
+                            ),
+                        ),
+                        ("svc", classifier_svc()),
+                    ],
+                    voting="soft",
+                ),
+                "AdaBoost": AdaBoostClassifier(n_estimators=500, learning_rate=0.05, random_state=int(model_random_seed)),
+                "XGBoost": XGBClassifier(
+                    n_estimators=400,
+                    max_depth=6,
+                    learning_rate=0.05,
+                    subsample=0.9,
+                    colsample_bytree=0.9,
+                    objective="binary:logistic",
+                    eval_metric="auc",
+                    random_state=int(model_random_seed),
+                    n_jobs=resource_n_jobs,
+                ),
+                "CatBoost": CatBoostClassifier(
+                    iterations=400,
+                    depth=6,
+                    learning_rate=0.05,
+                    loss_function="Logloss",
+                    random_seed=int(model_random_seed),
+                    thread_count=resource_n_jobs,
+                    verbose=False,
+                ),
+            }
+            if LGBMClassifier is not None:
+                available_models["LightGBM"] = LGBMClassifier(
+                    n_estimators=500,
+                    learning_rate=0.05,
+                    num_leaves=63,
+                    subsample=0.9,
+                    colsample_bytree=0.9,
+                    random_state=int(model_random_seed),
+                    n_jobs=resource_n_jobs,
+                    verbose=-1,
+                )
+            available_models["MapLight CatBoost"] = CatBoostClassifier(
+                iterations=400,
+                depth=6,
+                learning_rate=0.05,
+                loss_function="Logloss",
+                random_seed=int(model_random_seed),
+                thread_count=resource_n_jobs,
+                verbose=False,
+            )
+            model_specific_cache_metadata = {}
+        linear_model_name = "LogisticRegression" if is_classification else "ElasticNetCV"
+        svm_model_name = "SVC" if is_classification else "SVR"
+        voting_model_name = "Voting Classifier (KNN, SVM)" if is_classification else "Voting Regressor (KNN, SVM)"
+
         selected_models = {}
         if run_elasticnet_cv:
-            selected_models["ElasticNetCV"] = available_models["ElasticNetCV"]
+            selected_models[linear_model_name] = available_models[linear_model_name]
         if run_svr:
-            selected_models["SVR"] = available_models["SVR"]
+            selected_models[svm_model_name] = available_models[svm_model_name]
         if run_random_forest:
             selected_models["Random forest"] = available_models["Random forest"]
         if run_extra_trees:
@@ -6639,7 +6908,7 @@ cells += [
         if run_hist_gradient_boosting:
             selected_models["HistGradientBoosting"] = available_models["HistGradientBoosting"]
         if run_voting_knn_svr:
-            selected_models["Voting Regressor (KNN, SVM)"] = available_models["Voting Regressor (KNN, SVM)"]
+            selected_models[voting_model_name] = available_models[voting_model_name]
         if run_adaboost:
             selected_models["AdaBoost"] = available_models["AdaBoost"]
         if run_tabular_cnn and "Tabular CNN" in available_models:
@@ -6668,7 +6937,7 @@ cells += [
         if not selected_models:
             raise ValueError("Please select at least one conventional model to run.")
 
-        if run_elasticnet_cv:
+        if run_elasticnet_cv and not is_classification:
             estimated_elasticnet_fits = len(elasticnet_alpha_grid) * len(elasticnet_l1_ratio_values) * int(elasticnet_internal_cv_folds)
             elasticnet_note = (
                 f"ElasticNetCV tunes {len(elasticnet_alpha_grid)} alphas x {len(elasticnet_l1_ratio_values)} l1 ratios x "
@@ -6680,7 +6949,16 @@ cells += [
             conventional_setting_notes.append(elasticnet_note + ")")
         print("4C settings: " + "; ".join(conventional_setting_notes) + ".")
         scoring = None
-        if use_cross_validation:
+        if use_cross_validation and is_classification:
+            from sklearn.metrics import make_scorer
+
+            scoring = {
+                "roc_auc": "roc_auc",
+                "auprc": "average_precision",
+                "balanced_accuracy": "balanced_accuracy",
+                "mcc": make_scorer(matthews_corrcoef),
+            }
+        elif use_cross_validation:
             scoring = {
                 "r2": "r2",
                 "mae": "neg_mean_absolute_error",
@@ -6712,9 +6990,20 @@ cells += [
             y_values = np.asarray(y_train, dtype=float)
             fold_splits = list(cv_splitter) if isinstance(cv_splitter, list) else list(cv_splitter.split(X_frame, y_values))
             fold_columns = nested_fold_columns(fold_splits)
-            out = {"test_r2": [], "test_mse": [], "test_mae": []}
+            if is_classification:
+                out = {"test_roc_auc": [], "test_auprc": [], "test_balanced_accuracy": [], "test_mcc": []}
+            else:
+                out = {"test_r2": [], "test_mse": [], "test_mae": []}
             for (fit_idx, val_idx), columns in zip(fold_splits, fold_columns):
                 fold_model = clone(estimator).fit(X_frame.iloc[fit_idx][columns], y_values[fit_idx])
+                if is_classification:
+                    fold_scores = positive_class_scores(fold_model, X_frame.iloc[val_idx][columns])
+                    fold_metrics = summarize_classification(y_values[val_idx], fold_scores, "Fold")
+                    out["test_roc_auc"].append(fold_metrics["Fold AUROC"])
+                    out["test_auprc"].append(fold_metrics["Fold AUPRC"])
+                    out["test_balanced_accuracy"].append(fold_metrics["Fold balanced accuracy"])
+                    out["test_mcc"].append(fold_metrics["Fold MCC"])
+                    continue
                 fold_pred = np.asarray(fold_model.predict(X_frame.iloc[val_idx][columns]), dtype=float).reshape(-1)
                 out["test_r2"].append(r2_score(y_values[val_idx], fold_pred))
                 out["test_mse"].append(-mean_squared_error(y_values[val_idx], fold_pred))
@@ -6770,6 +7059,7 @@ cells += [
                             "test_fraction": float(test_fraction),
                             "cross_validation_enabled": bool(use_cross_validation),
                             "nested_selection_cv": bool(nested_selection_cv),
+                            "task_type": "classification" if is_classification else "regression",
                             "cv_folds": int(effective_cv_folds) if effective_cv_folds is not None else None,
                             "cv_split_strategy": effective_cv_split_strategy if effective_cv_split_strategy is not None else None,
                             "random_seed": int(model_random_seed),
@@ -6829,52 +7119,71 @@ cells += [
                         scores = cross_validate(clone(estimator), model_X_train, y_train, cv=cv, scoring=scoring, n_jobs=1)
                 fitted = clone(estimator)
                 fitted.fit(model_X_train, y_train)
-                pred_train = np.asarray(fitted.predict(model_X_train)).reshape(-1)
-                pred_test = np.asarray(fitted.predict(model_X_test)).reshape(-1)
+                pred_train = model_scores(fitted, model_X_train)
+                pred_test = model_scores(fitted, model_X_test)
 
-            row = {
-                "Model": name,
-                "Benchmark n_jobs": int(resource_n_jobs),
-                "CV R2": (
-                    float(np.mean(scores["test_r2"]))
-                    if scores is not None
-                    else float(cached_metadata.get("cv_r2"))
-                    if cached_model_loaded and cached_metadata is not None and cached_metadata.get("cv_r2") not in [None, "None", ""]
-                    else np.nan
-                ),
-                "CV RMSE": (
-                    float(np.mean(np.sqrt(-scores["test_mse"])))
-                    if scores is not None
-                    else float(cached_metadata.get("cv_rmse"))
-                    if cached_model_loaded and cached_metadata is not None and cached_metadata.get("cv_rmse") not in [None, "None", ""]
-                    else np.nan
-                ),
-                "CV MAE": (
-                    float(np.mean(-scores["test_mae"]))
-                    if scores is not None
-                    else float(cached_metadata.get("cv_mae"))
-                    if cached_model_loaded and cached_metadata is not None and cached_metadata.get("cv_mae") not in [None, "None", ""]
-                    else np.nan
-                ),
-            }
-            row.update(summarize_regression(y_train, pred_train, "Train"))
-            row.update(summarize_regression(y_test, pred_test, "Test"))
-            if name == "ElasticNetCV":
-                elasticnet_step = fitted.named_steps.get("model") if hasattr(fitted, "named_steps") else fitted
-                row["Model alpha"] = (
-                    float(getattr(elasticnet_step, "alpha_", getattr(elasticnet_step, "alpha", np.nan)))
-                    if not cached_model_loaded
-                    else float(cached_metadata.get("model_alpha", np.nan))
-                    if cached_metadata is not None and cached_metadata.get("model_alpha") not in [None, "None", ""]
-                    else np.nan
-                )
-                row["Model l1_ratio"] = (
-                    float(getattr(elasticnet_step, "l1_ratio_", getattr(elasticnet_step, "l1_ratio", np.nan)))
-                    if not cached_model_loaded
-                    else float(cached_metadata.get("model_l1_ratio", np.nan))
-                    if cached_metadata is not None and cached_metadata.get("model_l1_ratio") not in [None, "None", ""]
-                    else np.nan
-                )
+            if is_classification:
+                cached_cv = dict(cached_metadata.get("cv_metrics") or {}) if cached_model_loaded and cached_metadata else {}
+
+                def _cv_mean(key, label):
+                    if scores is not None and f"test_{key}" in scores:
+                        return float(np.nanmean(scores[f"test_{key}"]))
+                    return float(cached_cv.get(label, np.nan)) if cached_cv.get(label) is not None else np.nan
+
+                row = {
+                    "Model": name,
+                    "Benchmark n_jobs": int(resource_n_jobs),
+                    "CV AUROC": _cv_mean("roc_auc", "CV AUROC"),
+                    "CV AUPRC": _cv_mean("auprc", "CV AUPRC"),
+                    "CV balanced accuracy": _cv_mean("balanced_accuracy", "CV balanced accuracy"),
+                    "CV MCC": _cv_mean("mcc", "CV MCC"),
+                }
+                row.update(summarize_classification(y_train, pred_train, "Train"))
+                row.update(summarize_classification(y_test, pred_test, "Test"))
+            else:
+                row = {
+                    "Model": name,
+                    "Benchmark n_jobs": int(resource_n_jobs),
+                    "CV R2": (
+                        float(np.mean(scores["test_r2"]))
+                        if scores is not None
+                        else float(cached_metadata.get("cv_r2"))
+                        if cached_model_loaded and cached_metadata is not None and cached_metadata.get("cv_r2") not in [None, "None", ""]
+                        else np.nan
+                    ),
+                    "CV RMSE": (
+                        float(np.mean(np.sqrt(-scores["test_mse"])))
+                        if scores is not None
+                        else float(cached_metadata.get("cv_rmse"))
+                        if cached_model_loaded and cached_metadata is not None and cached_metadata.get("cv_rmse") not in [None, "None", ""]
+                        else np.nan
+                    ),
+                    "CV MAE": (
+                        float(np.mean(-scores["test_mae"]))
+                        if scores is not None
+                        else float(cached_metadata.get("cv_mae"))
+                        if cached_model_loaded and cached_metadata is not None and cached_metadata.get("cv_mae") not in [None, "None", ""]
+                        else np.nan
+                    ),
+                }
+                row.update(summarize_regression(y_train, pred_train, "Train"))
+                row.update(summarize_regression(y_test, pred_test, "Test"))
+                if name == "ElasticNetCV":
+                    elasticnet_step = fitted.named_steps.get("model") if hasattr(fitted, "named_steps") else fitted
+                    row["Model alpha"] = (
+                        float(getattr(elasticnet_step, "alpha_", getattr(elasticnet_step, "alpha", np.nan)))
+                        if not cached_model_loaded
+                        else float(cached_metadata.get("model_alpha", np.nan))
+                        if cached_metadata is not None and cached_metadata.get("model_alpha") not in [None, "None", ""]
+                        else np.nan
+                    )
+                    row["Model l1_ratio"] = (
+                        float(getattr(elasticnet_step, "l1_ratio_", getattr(elasticnet_step, "l1_ratio", np.nan)))
+                        if not cached_model_loaded
+                        else float(cached_metadata.get("model_l1_ratio", np.nan))
+                        if cached_metadata is not None and cached_metadata.get("model_l1_ratio") not in [None, "None", ""]
+                        else np.nan
+                    )
             metrics_rows.append(row)
             fitted_models[name] = fitted
             predictions[name] = {"train": pred_train, "test": pred_test}
@@ -6929,11 +7238,13 @@ cells += [
                         "test_fraction": float(test_fraction),
                         "cross_validation_enabled": bool(use_cross_validation),
                         "nested_selection_cv": bool(nested_selection_cv),
+                        "task_type": "classification" if is_classification else "regression",
                         "cv_folds": int(effective_cv_folds) if effective_cv_folds is not None else None,
                         "cv_split_strategy": effective_cv_split_strategy if effective_cv_split_strategy is not None else None,
-                        "cv_r2": row["CV R2"],
-                        "cv_rmse": row["CV RMSE"],
-                        "cv_mae": row["CV MAE"],
+                        "cv_metrics": {key: row[key] for key in row if str(key).startswith("CV ")},
+                        "cv_r2": row.get("CV R2"),
+                        "cv_rmse": row.get("CV RMSE"),
+                        "cv_mae": row.get("CV MAE"),
                         "random_seed": int(model_random_seed),
                         "benchmark_n_jobs": int(resource_n_jobs),
                         "model_alpha": row.get("Model alpha"),
@@ -6948,7 +7259,10 @@ cells += [
                 }
         model_progress.close()
 
-        results_df = pd.DataFrame(metrics_rows).sort_values(["Test RMSE", "Test MAE"], ascending=True).reset_index(drop=True)
+        if is_classification:
+            results_df = pd.DataFrame(metrics_rows).sort_values(["Test AUROC", "Test AUPRC"], ascending=False).reset_index(drop=True)
+        else:
+            results_df = pd.DataFrame(metrics_rows).sort_values(["Test RMSE", "Test MAE"], ascending=True).reset_index(drop=True)
         best_model_name = results_df.loc[0, "Model"]
 
         STATE["X_train"] = X_train.copy()
@@ -7004,183 +7318,212 @@ cells += [
         import plotly.graph_objects as go
         from plotly.subplots import make_subplots
 
-        available_predictions = STATE["traditional_predictions"]
-        available_results = STATE["traditional_results"].set_index("Model")
-        requested_models = list(available_predictions.keys())
-        plotted_models = []
-        panel_frames = []
+        if task_is_classification():
+            # Binary classification: test-set ROC curves (the scatter of 0/1 labels against probabilities says little).
+            from sklearn.metrics import roc_curve
 
-        for model_name in requested_models:
-            if model_name not in available_predictions:
-                print(f"Skipping {model_name}: it was not trained in block 4C.")
-                continue
-
-            pred_train = available_predictions[model_name]["train"]
-            pred_test = available_predictions[model_name]["test"]
-
-            scatter_df = pd.concat(
-                [
-                    pd.DataFrame(
-                        {
-                            "Observed": STATE["y_train"],
-                            "Predicted": pred_train,
-                            "Split": "Train",
-                            "SMILES": STATE["smiles_train"],
-                            "Model": model_name,
-                        }
-                    ),
-                    pd.DataFrame(
-                        {
-                            "Observed": STATE["y_test"],
-                            "Predicted": pred_test,
-                            "Split": "Test",
-                            "SMILES": STATE["smiles_test"],
-                            "Model": model_name,
-                        }
-                    ),
-                ],
-                axis=0,
-                ignore_index=True,
+            roc_results = STATE["traditional_results"].set_index("Model")
+            y_test_labels = np.asarray(STATE["y_test"], dtype=float).round().astype(int)
+            roc_fig = go.Figure()
+            for model_name, model_predictions in STATE["traditional_predictions"].items():
+                fpr, tpr, _thresholds = roc_curve(y_test_labels, np.asarray(model_predictions["test"], dtype=float))
+                test_auroc = float(roc_results.loc[model_name, "Test AUROC"]) if model_name in roc_results.index else float("nan")
+                roc_fig.add_trace(go.Scatter(x=fpr, y=tpr, mode="lines", name=f"{model_name} (AUROC {test_auroc:.3f})"))
+            roc_fig.add_trace(
+                go.Scatter(x=[0, 1], y=[0, 1], mode="lines", name="chance", line={"color": "#444444", "dash": "dash"})
             )
-            panel_frames.append(scatter_df)
-            row = available_results.loc[model_name]
+            roc_fig.update_layout(
+                title="Held-out ROC curves for all conventional models that ran",
+                xaxis_title="False positive rate",
+                yaxis_title="True positive rate",
+                height=560,
+                width=820,
+            )
+            show_plotly(roc_fig)
             display_note(
-                f"**{model_name}:** Points close to the dashed diagonal are predicted well. "
-                f"On the held-out test set, this model achieved **R2 = {row['Test R2']:.3f}**, "
-                f"**RMSE = {row['Test RMSE']:.3f}**, and **MAE = {row['Test MAE']:.3f}**."
+                "Each curve traces the true- and false-positive rates over every probability threshold on the held-out test set. "
+                "The area under it (AUROC) is 0.5 for a random ranking and 1.0 for a perfect one. Balanced accuracy and MCC in "
+                "the 4C table use a 0.5 probability threshold."
             )
-            plotted_models.append(model_name)
-
-        if not plotted_models:
-            raise ValueError("None of the selected models were trained in block 4C.")
-
-        combined_df = pd.concat(panel_frames, axis=0, ignore_index=True)
-        low = float(combined_df["Observed"].min())
-        high = float(combined_df["Observed"].max())
-        use_log_axes = bool((combined_df["Observed"] > 0).all() and (combined_df["Predicted"] > 0).all())
-        if low == high:
-            if use_log_axes:
-                low = low / 1.1
-                high = high * 1.1
-            else:
-                low -= 1.0
-                high += 1.0
-        if use_log_axes:
-            log_low = math.log10(low)
-            log_high = math.log10(high)
-            log_span = max(log_high - log_low, 0.05)
-            plot_low = 10 ** (log_low - 0.05 * log_span)
-            plot_high = 10 ** (log_high + 0.05 * log_span)
         else:
-            plot_span = high - low
-            plot_low = low - 0.05 * plot_span
-            plot_high = high + 0.05 * plot_span
 
-        n_panels = len(plotted_models)
-        n_cols = 2 if n_panels > 1 else 1
-        n_rows = int(math.ceil(n_panels / n_cols))
-        fig = make_subplots(
-            rows=n_rows,
-            cols=n_cols,
-            subplot_titles=plotted_models,
-            shared_xaxes=True,
-            shared_yaxes=True,
-            horizontal_spacing=0.08,
-            vertical_spacing=0.14,
-        )
+            available_predictions = STATE["traditional_predictions"]
+            available_results = STATE["traditional_results"].set_index("Model")
+            requested_models = list(available_predictions.keys())
+            plotted_models = []
+            panel_frames = []
 
-        split_colors = {"Train": "#1f77b4", "Test": "#d62728"}
-        split_order = ["Train", "Test"]
-
-        for panel_index, model_name in enumerate(plotted_models, start=1):
-            row_num = int(math.ceil(panel_index / n_cols))
-            col_num = ((panel_index - 1) % n_cols) + 1
-            model_df = combined_df.loc[combined_df["Model"] == model_name].copy()
-
-            for split_name in split_order:
-                split_df = model_df.loc[model_df["Split"] == split_name].copy()
-                if split_df.empty:
+            for model_name in requested_models:
+                if model_name not in available_predictions:
+                    print(f"Skipping {model_name}: it was not trained in block 4C.")
                     continue
+
+                pred_train = available_predictions[model_name]["train"]
+                pred_test = available_predictions[model_name]["test"]
+
+                scatter_df = pd.concat(
+                    [
+                        pd.DataFrame(
+                            {
+                                "Observed": STATE["y_train"],
+                                "Predicted": pred_train,
+                                "Split": "Train",
+                                "SMILES": STATE["smiles_train"],
+                                "Model": model_name,
+                            }
+                        ),
+                        pd.DataFrame(
+                            {
+                                "Observed": STATE["y_test"],
+                                "Predicted": pred_test,
+                                "Split": "Test",
+                                "SMILES": STATE["smiles_test"],
+                                "Model": model_name,
+                            }
+                        ),
+                    ],
+                    axis=0,
+                    ignore_index=True,
+                )
+                panel_frames.append(scatter_df)
+                row = available_results.loc[model_name]
+                display_note(
+                    f"**{model_name}:** Points close to the dashed diagonal are predicted well. "
+                    f"On the held-out test set, this model achieved **R2 = {row['Test R2']:.3f}**, "
+                    f"**RMSE = {row['Test RMSE']:.3f}**, and **MAE = {row['Test MAE']:.3f}**."
+                )
+                plotted_models.append(model_name)
+
+            if not plotted_models:
+                raise ValueError("None of the selected models were trained in block 4C.")
+
+            combined_df = pd.concat(panel_frames, axis=0, ignore_index=True)
+            low = float(combined_df["Observed"].min())
+            high = float(combined_df["Observed"].max())
+            use_log_axes = bool((combined_df["Observed"] > 0).all() and (combined_df["Predicted"] > 0).all())
+            if low == high:
+                if use_log_axes:
+                    low = low / 1.1
+                    high = high * 1.1
+                else:
+                    low -= 1.0
+                    high += 1.0
+            if use_log_axes:
+                log_low = math.log10(low)
+                log_high = math.log10(high)
+                log_span = max(log_high - log_low, 0.05)
+                plot_low = 10 ** (log_low - 0.05 * log_span)
+                plot_high = 10 ** (log_high + 0.05 * log_span)
+            else:
+                plot_span = high - low
+                plot_low = low - 0.05 * plot_span
+                plot_high = high + 0.05 * plot_span
+
+            n_panels = len(plotted_models)
+            n_cols = 2 if n_panels > 1 else 1
+            n_rows = int(math.ceil(n_panels / n_cols))
+            fig = make_subplots(
+                rows=n_rows,
+                cols=n_cols,
+                subplot_titles=plotted_models,
+                shared_xaxes=True,
+                shared_yaxes=True,
+                horizontal_spacing=0.08,
+                vertical_spacing=0.14,
+            )
+
+            split_colors = {"Train": "#1f77b4", "Test": "#d62728"}
+            split_order = ["Train", "Test"]
+
+            for panel_index, model_name in enumerate(plotted_models, start=1):
+                row_num = int(math.ceil(panel_index / n_cols))
+                col_num = ((panel_index - 1) % n_cols) + 1
+                model_df = combined_df.loc[combined_df["Model"] == model_name].copy()
+
+                for split_name in split_order:
+                    split_df = model_df.loc[model_df["Split"] == split_name].copy()
+                    if split_df.empty:
+                        continue
+                    fig.add_trace(
+                        go.Scatter(
+                            x=split_df["Observed"],
+                            y=split_df["Predicted"],
+                            mode="markers",
+                            name=split_name,
+                            legendgroup=split_name,
+                            showlegend=(panel_index == 1),
+                            marker={
+                                "size": int(point_size),
+                                "color": split_colors[split_name],
+                                "opacity": 0.8,
+                            },
+                            customdata=np.column_stack(
+                                [
+                                    split_df["SMILES"].astype(str).to_numpy(),
+                                    split_df["Observed"].to_numpy(dtype=float),
+                                    split_df["Predicted"].to_numpy(dtype=float),
+                                ]
+                            ),
+                            hovertemplate=(
+                                "SMILES: %{customdata[0]}<br>"
+                                "Observed: %{customdata[1]:.4f}<br>"
+                                "Predicted: %{customdata[2]:.4f}<br>"
+                                f"Split: {split_name}<extra>{model_name}</extra>"
+                            ),
+                        ),
+                        row=row_num,
+                        col=col_num,
+                    )
+
                 fig.add_trace(
                     go.Scatter(
-                        x=split_df["Observed"],
-                        y=split_df["Predicted"],
-                        mode="markers",
-                        name=split_name,
-                        legendgroup=split_name,
+                        x=[plot_low, plot_high],
+                        y=[plot_low, plot_high],
+                        mode="lines",
+                        name="1x line",
+                        legendgroup="guide-lines",
                         showlegend=(panel_index == 1),
-                        marker={
-                            "size": int(point_size),
-                            "color": split_colors[split_name],
-                            "opacity": 0.8,
-                        },
-                        customdata=np.column_stack(
-                            [
-                                split_df["SMILES"].astype(str).to_numpy(),
-                                split_df["Observed"].to_numpy(dtype=float),
-                                split_df["Predicted"].to_numpy(dtype=float),
-                            ]
-                        ),
-                        hovertemplate=(
-                            "SMILES: %{customdata[0]}<br>"
-                            "Observed: %{customdata[1]:.4f}<br>"
-                            "Predicted: %{customdata[2]:.4f}<br>"
-                            f"Split: {split_name}<extra>{model_name}</extra>"
-                        ),
+                        line={"color": "#444444", "dash": "dash"},
+                        hoverinfo="skip",
                     ),
                     row=row_num,
                     col=col_num,
                 )
+                if use_log_axes:
+                    fig.update_xaxes(
+                        title_text="Observed (log10 scale)",
+                        type="log",
+                        range=[math.log10(plot_low), math.log10(plot_high)],
+                        row=row_num,
+                        col=col_num,
+                    )
+                    fig.update_yaxes(
+                        title_text="Predicted (log10 scale)",
+                        type="log",
+                        range=[math.log10(plot_low), math.log10(plot_high)],
+                        row=row_num,
+                        col=col_num,
+                    )
+                else:
+                    fig.update_xaxes(title_text="Observed", range=[plot_low, plot_high], row=row_num, col=col_num)
+                    fig.update_yaxes(title_text="Predicted", range=[plot_low, plot_high], row=row_num, col=col_num)
 
-            fig.add_trace(
-                go.Scatter(
-                    x=[plot_low, plot_high],
-                    y=[plot_low, plot_high],
-                    mode="lines",
-                    name="1x line",
-                    legendgroup="guide-lines",
-                    showlegend=(panel_index == 1),
-                    line={"color": "#444444", "dash": "dash"},
-                    hoverinfo="skip",
-                ),
-                row=row_num,
-                col=col_num,
+            fig.update_layout(
+                title="Observed vs predicted values for all conventional models that ran",
+                height=max(520, 420 * n_rows),
+                width=1100 if n_cols == 2 else 700,
             )
+            show_plotly(fig)
             if use_log_axes:
-                fig.update_xaxes(
-                    title_text="Observed (log10 scale)",
-                    type="log",
-                    range=[math.log10(plot_low), math.log10(plot_high)],
-                    row=row_num,
-                    col=col_num,
-                )
-                fig.update_yaxes(
-                    title_text="Predicted (log10 scale)",
-                    type="log",
-                    range=[math.log10(plot_low), math.log10(plot_high)],
-                    row=row_num,
-                    col=col_num,
+                display_note(
+                    "These observed/predicted panels use **log10 axes**. The dashed line is the ideal **1:1** agreement line. "
+                    "Hover over any point to see the SMILES string and its observed and predicted values."
                 )
             else:
-                fig.update_xaxes(title_text="Observed", range=[plot_low, plot_high], row=row_num, col=col_num)
-                fig.update_yaxes(title_text="Predicted", range=[plot_low, plot_high], row=row_num, col=col_num)
-
-        fig.update_layout(
-            title="Observed vs predicted values for all conventional models that ran",
-            height=max(520, 420 * n_rows),
-            width=1100 if n_cols == 2 else 700,
-        )
-        show_plotly(fig)
-        if use_log_axes:
-            display_note(
-                "These observed/predicted panels use **log10 axes**. The dashed line is the ideal **1:1** agreement line. "
-                "Hover over any point to see the SMILES string and its observed and predicted values."
-            )
-        else:
-            display_note(
-                "These observed/predicted panels use **linear axes** because at least one observed or predicted value is non-positive. "
-                "The dashed line is the ideal **1:1** agreement line. Hover over any point to see the SMILES string and its observed and predicted values."
-            )
+                display_note(
+                    "These observed/predicted panels use **linear axes** because at least one observed or predicted value is non-positive. "
+                    "The dashed line is the ideal **1:1** agreement line. Hover over any point to see the SMILES string and its observed and predicted values."
+                )
         """
     ),
     md(
@@ -12248,6 +12591,17 @@ cells += [
             # whichever model memorises the training set.
             from sklearn.base import clone as _clone
 
+            # Task-aware ranking: lower is better. Classification ranks on out-of-fold AUROC (then AUPRC),
+            # regression on out-of-fold RMSE (then MAE).
+            _is_cls = task_is_classification()
+            _task_label = "classification" if _is_cls else "regression"
+            _rank_metric = "AUROC" if _is_cls else "RMSE"
+
+            def _rank_key(metrics, prefix):
+                if _is_cls:
+                    return (1.0 - float(metrics[f"{prefix} AUROC"]), 1.0 - float(metrics[f"{prefix} AUPRC"]))
+                return (float(metrics[f"{prefix} RMSE"]), float(metrics[f"{prefix} MAE"]))
+
             y_train_state = np.asarray(STATE["y_train"], dtype=float)
             smiles_train_state = STATE["smiles_train"].astype(str).reset_index(drop=True)
             smiles_test_state = STATE["smiles_test"].astype(str).reset_index(drop=True)
@@ -12260,6 +12614,7 @@ cells += [
                 split_strategy=ensemble_cv_strategy,
                 n_folds=int(ensemble_oof_folds),
                 random_seed=ensemble_cv_seed,
+                task_type=_task_label,
             )
             n_oof_folds = int(len(oof_splits))
             fold_signature = oof_fold_signature(oof_splits)
@@ -12288,7 +12643,7 @@ cells += [
                 def _nested_refit(fitted_model, fit_idx, val_idx):
                     columns = _nested_columns_for(val_idx)
                     model = _clone(fitted_model).fit(_unsel.iloc[fit_idx][columns], y_train_state[fit_idx])
-                    return np.asarray(model.predict(_unsel.iloc[val_idx][columns]), dtype=float).reshape(-1)
+                    return model_scores(model, _unsel.iloc[val_idx][columns])
 
             def _feature_matrix_for(model_name):
                 columns = list(STATE.get("traditional_model_feature_columns", {}).get(model_name, []) or [])
@@ -12329,7 +12684,7 @@ cells += [
                     else:
                         refitters[member_name] = (
                             lambda fit_idx, val_idx, _fold_dir, fitted_model=fitted_model, X_frame=X_frame:
-                            np.asarray(_clone(fitted_model).fit(X_frame.iloc[fit_idx], y_train_state[fit_idx]).predict(X_frame.iloc[val_idx]), dtype=float).reshape(-1)
+                            model_scores(_clone(fitted_model).fit(X_frame.iloc[fit_idx], y_train_state[fit_idx]), X_frame.iloc[val_idx])
                         )
             if include_tuned_conventional and "tuned_traditional_models" in STATE:
                 for model_name, fitted_model in STATE["tuned_traditional_models"].items():
@@ -12347,7 +12702,7 @@ cells += [
                     else:
                         refitters[member_name] = (
                             lambda fit_idx, val_idx, _fold_dir, fitted_model=fitted_model, X_frame=X_frame:
-                            np.asarray(_clone(fitted_model).fit(X_frame.iloc[fit_idx], y_train_state[fit_idx]).predict(X_frame.iloc[val_idx]), dtype=float).reshape(-1)
+                            model_scores(_clone(fitted_model).fit(X_frame.iloc[fit_idx], y_train_state[fit_idx]), X_frame.iloc[val_idx])
                         )
             if include_unimol and "unimol_predictions" in STATE:
                 unimol_dirs = dict(STATE.get("unimol_model_dirs", {}) or {})
@@ -12554,14 +12909,14 @@ cells += [
             member_metrics = {}
             for model_name in prediction_columns:
                 split_metrics = {}
-                split_metrics.update(summarize_regression(aligned_train["Observed"], aligned_train[model_name], "Train"))
-                split_metrics.update(summarize_regression(aligned_oof["Observed"], aligned_oof[model_name], "OOF"))
-                split_metrics.update(summarize_regression(aligned_test["Observed"], aligned_test[model_name], "Test"))
+                split_metrics.update(summarize_task(aligned_train["Observed"], aligned_train[model_name], "Train"))
+                split_metrics.update(summarize_task(aligned_oof["Observed"], aligned_oof[model_name], "OOF"))
+                split_metrics.update(summarize_task(aligned_test["Observed"], aligned_test[model_name], "Test"))
                 member_metrics[model_name] = split_metrics
 
             active_columns = list(prediction_columns)
 
-            if bool(exclude_negative_oof_r2_members):
+            if bool(exclude_negative_oof_r2_members) and not _is_cls:
                 positive_test_columns = [
                     model_name
                     for model_name in active_columns
@@ -12599,16 +12954,9 @@ cells += [
                     max_idx = np.unravel_index(np.argmax(corr_values), corr_values.shape)
                     model_a = str(corr_matrix.index[max_idx[0]])
                     model_b = str(corr_matrix.columns[max_idx[1]])
-                    rmse_a = float(member_metrics[model_a]["OOF RMSE"])
-                    rmse_b = float(member_metrics[model_b]["OOF RMSE"])
-                    r2_a = float(member_metrics[model_a]["OOF R2"])
-                    r2_b = float(member_metrics[model_b]["OOF R2"])
-                    if rmse_a > rmse_b:
-                        drop_model = model_a
-                    elif rmse_b > rmse_a:
-                        drop_model = model_b
-                    else:
-                        drop_model = model_a if r2_a < r2_b else model_b
+                    key_a = _rank_key(member_metrics[model_a], "OOF")
+                    key_b = _rank_key(member_metrics[model_b], "OOF")
+                    drop_model = model_a if key_a > key_b else model_b
                     removed_correlated.append((model_a, model_b, drop_model, max_corr))
                     active_columns = [name for name in active_columns if name != drop_model]
 
@@ -12618,7 +12966,8 @@ cells += [
                         for a, b, drop, corr_value in removed_correlated
                     ]
                     member_filter_notes.append(
-                        "Dropped highly correlated members (out-of-fold predictions; tie-break on out-of-fold RMSE): " + "; ".join(detail_parts)
+                        f"Dropped highly correlated members (out-of-fold predictions; tie-break on out-of-fold {_rank_metric}): "
+                        + "; ".join(detail_parts)
                     )
 
             if len(active_columns) < 2:
@@ -12638,7 +12987,9 @@ cells += [
                 methods_to_run.append("OOF Stacking (RidgeCV)")
             if bool(run_weighted_inverse_rmse_ensemble):
                 methods_to_run.append("Weighted average (inverse OOF RMSE)")
-            if bool(run_cfa_ensemble):
+            if bool(run_cfa_ensemble) and _is_cls:
+                print("CFA skipped: combinatorial fusion is implemented for regression only.", flush=True)
+            elif bool(run_cfa_ensemble):
                 methods_to_run.append("CFA Fusion (Score+Rank, diversity-aware)")
             if not methods_to_run:
                 raise ValueError("Please enable at least one ensemble strategy (OOF, weighted, or CFA).")
@@ -12808,9 +13159,9 @@ cells += [
                     shared_build = build_shared_ensemble(
                         payloads,
                         method="OOF Stacking (RidgeCV)",
-                        task_type="regression",
-                        primary_metric="rmse",
-                        lower_is_better=True,
+                        task_type=_task_label,
+                        primary_metric="roc_auc" if _is_cls else "rmse",
+                        lower_is_better=not _is_cls,
                         selection_split="oof",
                         stacking_cv_folds=int(stacking_cv_folds),
                         random_seed=int(stacking_random_seed),
@@ -12832,9 +13183,9 @@ cells += [
                     shared_build = build_shared_ensemble(
                         payloads,
                         method="Weighted average (inverse train RMSE)",
-                        task_type="regression",
-                        primary_metric="rmse",
-                        lower_is_better=True,
+                        task_type=_task_label,
+                        primary_metric="roc_auc" if _is_cls else "rmse",
+                        lower_is_better=not _is_cls,
                         selection_split="oof",
                         stacking_cv_folds=int(stacking_cv_folds),
                         random_seed=int(stacking_random_seed),
@@ -12853,9 +13204,9 @@ cells += [
 
                 ensemble_row = {"Model": f"Ensemble ({ensemble_method_label})", "Workflow": "Ensemble"}
                 # For ensembles the training-side prediction is itself out-of-fold, so "Train" = "OOF".
-                ensemble_row.update(summarize_regression(y_meta_train_current, ensemble_train_pred, "Train"))
-                ensemble_row.update(summarize_regression(y_meta_train_current, ensemble_train_pred, "OOF"))
-                ensemble_row.update(summarize_regression(y_meta_test_current, ensemble_test_pred, "Test"))
+                ensemble_row.update(summarize_task(y_meta_train_current, ensemble_train_pred, "Train"))
+                ensemble_row.update(summarize_task(y_meta_train_current, ensemble_train_pred, "OOF"))
+                ensemble_row.update(summarize_task(y_meta_test_current, ensemble_test_pred, "Test"))
                 ensemble_rows.append(ensemble_row)
                 ensemble_method_runs.append(
                     {
@@ -12878,14 +13229,8 @@ cells += [
                     "turn on OOF stacking or the weighted average."
                 )
 
-            # Choosing the downstream strategy on test RMSE would leak the test set; use OOF RMSE.
-            best_run = sorted(
-                ensemble_method_runs,
-                key=lambda item: (
-                    float(item["result_row"]["OOF RMSE"]),
-                    float(item["result_row"]["OOF MAE"]),
-                ),
-            )[0]
+            # Choosing the downstream strategy on test metrics would leak the test set; use OOF metrics.
+            best_run = sorted(ensemble_method_runs, key=lambda item: _rank_key(item["result_row"], "OOF"))[0]
             ensemble_method_label = str(best_run["method_label"])
             ensemble_model_label = str(best_run["result_row"]["Model"])
             prediction_columns_for_best = list(best_run["prediction_columns"])
@@ -12895,7 +13240,8 @@ cells += [
             aligned_train["Ensemble prediction"] = np.asarray(best_run["train_pred"], dtype=float)
             aligned_test["Ensemble prediction"] = np.asarray(best_run["test_pred"], dtype=float)
 
-            ensemble_results = pd.DataFrame(ensemble_rows).sort_values(["Test RMSE", "Test MAE"], ascending=True).reset_index(drop=True)
+            _test_metric, _ascending = primary_test_metric()
+            ensemble_results = pd.DataFrame(ensemble_rows).sort_values([_test_metric], ascending=_ascending).reset_index(drop=True)
 
             STATE["ensemble_results"] = ensemble_results.copy()
             STATE["ensemble_weight_table"] = weight_df.copy()
@@ -12914,16 +13260,19 @@ cells += [
                 [
                     {
                         "Method": run_payload["method_label"],
-                        "OOF RMSE": float(run_payload["result_row"]["OOF RMSE"]),
-                        "Train RMSE": float(run_payload["result_row"]["Train RMSE"]),
-                        "Test RMSE": float(run_payload["result_row"]["Test RMSE"]),
-                        "Train R2": float(run_payload["result_row"]["Train R2"]),
-                        "Test R2": float(run_payload["result_row"]["Test R2"]),
+                        **{
+                            f"{split} {metric}": float(run_payload["result_row"][f"{split} {metric}"])
+                            for split, metric in (
+                                [("OOF", "AUROC"), ("OOF", "AUPRC"), ("Test", "AUROC"), ("Test", "AUPRC")]
+                                if _is_cls
+                                else [("OOF", "RMSE"), ("Train", "RMSE"), ("Test", "RMSE"), ("Train", "R2"), ("Test", "R2")]
+                            )
+                        },
                         "Member count": int(len(run_payload["prediction_columns"])),
                     }
                     for run_payload in ensemble_method_runs
                 ]
-            ).sort_values(["OOF RMSE", "Test RMSE"], ascending=True).reset_index(drop=True)
+            ).sort_values([f"OOF {_rank_metric}"], ascending=not _is_cls).reset_index(drop=True)
             STATE["ensemble_cfa_summaries"] = dict(cfa_run_summaries)
             STATE["ensemble_cfa_candidate_tables"] = dict(cfa_candidate_tables)
             if ensemble_method_label in cfa_run_summaries:
@@ -12949,15 +13298,16 @@ cells += [
             print(f"Train overlap used: {len(aligned_train)} molecules")
             print(f"Test overlap used: {len(aligned_test)} molecules")
             print("Ensemble strategies run:")
-            for run_payload in sorted(
-                ensemble_method_runs,
-                key=lambda item: float(item["result_row"]["Test RMSE"]),
-            ):
+            for run_payload in sorted(ensemble_method_runs, key=lambda item: _rank_key(item["result_row"], "Test")):
                 print(
-                    f"  - {run_payload['method_label']}: Test RMSE={float(run_payload['result_row']['Test RMSE']):.4f}, "
+                    f"  - {run_payload['method_label']}: Test {_rank_metric}="
+                    f"{float(run_payload['result_row'][f'Test {_rank_metric}']):.4f}, "
                     f"members={len(run_payload['prediction_columns'])}"
                 )
-            print(f"Selected ensemble strategy for downstream use (lowest out-of-fold RMSE): {ensemble_method_label}")
+            print(
+                "Selected ensemble strategy for downstream use "
+                f"({'highest' if _is_cls else 'lowest'} out-of-fold {_rank_metric}): {ensemble_method_label}"
+            )
             if "OOF Stacking (RidgeCV" in ensemble_method_label:
                 print(f"Meta-model intercept: {ensemble_intercept:.6f}")
             if ensemble_method_label in cfa_run_summaries:
@@ -12989,8 +13339,9 @@ cells += [
             ensemble_note += (
                 " Every member choice, filter, weight and meta-model here used out-of-fold predictions only, "
                 "so the test metrics are an honest estimate. This run evaluated OOF stacking, weighted "
-                "inverse-OOF-RMSE averaging and CFA fusion, then selected "
-                f"**{ensemble_method_label}** (lowest out-of-fold RMSE) for downstream plots/predictions. "
+                "inverse-OOF-error averaging and (for regression) CFA fusion, then selected "
+                f"**{ensemble_method_label}** ({'highest' if _is_cls else 'lowest'} out-of-fold {_rank_metric}) "
+                "for downstream plots/predictions. "
                 "For ensembles the Train columns are out-of-fold values."
             )
             if fallback_used:
@@ -13018,62 +13369,104 @@ cells += [
         ensemble_model_label = STATE["ensemble_model_label"]
         plot_models = base_plot_models + [ensemble_model_label]
 
-        n_panels = len(plot_models)
-        n_cols = 2 if n_panels > 1 else 1
-        n_rows = int(math.ceil(n_panels / n_cols))
-        fig, axes = plt.subplots(n_rows, n_cols, figsize=(7 * n_cols, 5 * n_rows), dpi=140)
-        axes = np.atleast_1d(axes).ravel()
+        if task_is_classification():
+            # Binary classification: held-out ROC curves for the members and the selected ensemble.
+            import plotly.graph_objects as go
+            from sklearn.metrics import roc_curve
 
-        for ax, model_name in zip(axes, plot_models):
-            train_obs = aligned_train["Observed"].to_numpy(dtype=float)
-            test_obs = aligned_test["Observed"].to_numpy(dtype=float)
-            prediction_col = "Ensemble prediction" if model_name == ensemble_model_label else model_name
-            train_pred = aligned_train[prediction_col].to_numpy(dtype=float)
-            test_pred = aligned_test[prediction_col].to_numpy(dtype=float)
-            combined_obs = np.concatenate([train_obs, test_obs])
-            combined_pred = np.concatenate([train_pred, test_pred])
-            low = float(min(combined_obs.min(), combined_pred.min()))
-            high = float(max(combined_obs.max(), combined_pred.max()))
-            use_log_axes = bool(np.all(combined_obs > 0) and np.all(combined_pred > 0))
-            if low == high:
-                low -= 1.0
-                high += 1.0
-
-            ax.scatter(train_obs, train_pred, alpha=0.55, label="Train", color="#1f77b4")
-            ax.scatter(test_obs, test_pred, alpha=0.70, label="Test", color="#d62728")
-            ax.plot([low, high], [low, high], linestyle="--", color="#444444", linewidth=1.0)
-            ax.set_title(model_name)
-            if use_log_axes:
-                ax.set_xscale("log")
-                ax.set_yscale("log")
-                ax.set_xlim(low, high)
-                ax.set_ylim(low, high)
-                ax.set_xlabel("Observed (log10 scale)")
-                ax.set_ylabel("Predicted (log10 scale)")
-            else:
-                ax.set_xlabel("Observed")
-                ax.set_ylabel("Predicted")
-            ax.grid(True, linestyle=":", alpha=0.5)
-            metrics_row = ensemble_results.loc[model_name]
-            ax.text(
-                0.03,
-                0.97,
-                f"R2 = {metrics_row['Test R2']:.3f}\\nRMSE = {metrics_row['Test RMSE']:.3f}",
-                transform=ax.transAxes,
-                verticalalignment="top",
-                bbox=dict(boxstyle="round", facecolor="white", alpha=0.85),
+            y_test_labels = aligned_test["Observed"].to_numpy(dtype=float).round().astype(int)
+            roc_fig = go.Figure()
+            for model_name in plot_models:
+                prediction_col = "Ensemble prediction" if model_name == ensemble_model_label else model_name
+                fpr, tpr, _thresholds = roc_curve(y_test_labels, aligned_test[prediction_col].to_numpy(dtype=float))
+                auroc = float(ensemble_results.loc[model_name, "Test AUROC"]) if model_name in ensemble_results.index else float("nan")
+                roc_fig.add_trace(
+                    go.Scatter(
+                        x=fpr,
+                        y=tpr,
+                        mode="lines",
+                        name=f"{model_name} (AUROC {auroc:.3f})",
+                        line={"width": 4 if model_name == ensemble_model_label else 2},
+                    )
+                )
+            roc_fig.add_trace(
+                go.Scatter(x=[0, 1], y=[0, 1], mode="lines", name="chance", line={"color": "#444444", "dash": "dash"})
             )
-            ax.legend()
+            roc_fig.update_layout(
+                title="Held-out ROC curves: ensemble members and the selected ensemble (thick line)",
+                xaxis_title="False positive rate",
+                yaxis_title="True positive rate",
+                height=560,
+                width=860,
+            )
+            show_plotly(roc_fig)
+            display_note(
+                "The thick line is the selected ensemble; the thin lines are its members, all on the same shared test molecules."
+            )
+        else:
 
-        for ax in axes[len(plot_models):]:
-            ax.axis("off")
+            n_panels = len(plot_models)
+            n_cols = 2 if n_panels > 1 else 1
+            n_rows = int(math.ceil(n_panels / n_cols))
+            fig, axes = plt.subplots(n_rows, n_cols, figsize=(7 * n_cols, 5 * n_rows), dpi=140)
+            axes = np.atleast_1d(axes).ravel()
 
-        plt.tight_layout()
-        plt.show()
-        display_note(
-            "These panels let you compare the selected member models directly against the final ensemble on the same shared molecules. "
-            "Axes are shown on a **log10 scale** when all observed and predicted values in a panel are positive; otherwise that panel uses linear axes."
-        )
+            for ax, model_name in zip(axes, plot_models):
+                train_obs = aligned_train["Observed"].to_numpy(dtype=float)
+                test_obs = aligned_test["Observed"].to_numpy(dtype=float)
+                prediction_col = "Ensemble prediction" if model_name == ensemble_model_label else model_name
+                train_pred = aligned_train[prediction_col].to_numpy(dtype=float)
+                test_pred = aligned_test[prediction_col].to_numpy(dtype=float)
+                combined_obs = np.concatenate([train_obs, test_obs])
+                combined_pred = np.concatenate([train_pred, test_pred])
+                low = float(min(combined_obs.min(), combined_pred.min()))
+                high = float(max(combined_obs.max(), combined_pred.max()))
+                use_log_axes = bool(np.all(combined_obs > 0) and np.all(combined_pred > 0))
+                if low == high:
+                    low -= 1.0
+                    high += 1.0
+
+                ax.scatter(train_obs, train_pred, alpha=0.55, label="Train", color="#1f77b4")
+                ax.scatter(test_obs, test_pred, alpha=0.70, label="Test", color="#d62728")
+                ax.plot([low, high], [low, high], linestyle="--", color="#444444", linewidth=1.0)
+                ax.set_title(model_name)
+                if use_log_axes:
+                    ax.set_xscale("log")
+                    ax.set_yscale("log")
+                    ax.set_xlim(low, high)
+                    ax.set_ylim(low, high)
+                    ax.set_xlabel("Observed (log10 scale)")
+                    ax.set_ylabel("Predicted (log10 scale)")
+                else:
+                    ax.set_xlabel("Observed")
+                    ax.set_ylabel("Predicted")
+                ax.grid(True, linestyle=":", alpha=0.5)
+                # 7A's results table lists the members left after its own correlation filter; the shared builder
+                # filters separately and can keep a member the table lacks, so score that one here.
+                metrics_row = (
+                    ensemble_results.loc[model_name]
+                    if model_name in ensemble_results.index
+                    else pd.Series(summarize_regression(test_obs, test_pred, "Test"))
+                )
+                ax.text(
+                    0.03,
+                    0.97,
+                    f"R2 = {metrics_row['Test R2']:.3f}\\nRMSE = {metrics_row['Test RMSE']:.3f}",
+                    transform=ax.transAxes,
+                    verticalalignment="top",
+                    bbox=dict(boxstyle="round", facecolor="white", alpha=0.85),
+                )
+                ax.legend()
+
+            for ax in axes[len(plot_models):]:
+                ax.axis("off")
+
+            plt.tight_layout()
+            plt.show()
+            display_note(
+                "These panels let you compare the selected member models directly against the final ensemble on the same shared molecules. "
+                "Axes are shown on a **log10 scale** when all observed and predicted values in a panel are positive; otherwise that panel uses linear axes."
+            )
         """
     ),
     md(
@@ -13581,17 +13974,22 @@ cells += [
                 # never on the test set when a validation score exists: choosing by test RMSE makes the
                 # chosen model's test score optimistic. Test RMSE is the fallback only when no model has one.
                 candidates = []
+                _cls_choice = task_is_classification()
+                _choice_metric = "AUROC" if _cls_choice else "RMSE"
+                # Stored as "lower is better": 1 - AUROC for classification.
+                _to_loss = (lambda value: 1.0 - float(value)) if _cls_choice else (lambda value: float(value))
                 for workflow_name, frame in workflow_frames.items():
                     if frame is None or frame.empty or "Model" not in frame.columns:
                         continue
                     for _, row in frame.iterrows():
                         validation_rmse, validation_label = np.nan, ""
-                        for column in ("CV RMSE", "OOF RMSE"):
+                        for column in (f"CV {_choice_metric}", f"OOF {_choice_metric}"):
                             value = pd.to_numeric(pd.Series([row.get(column)]), errors="coerce").iloc[0]
                             if np.isfinite(value):
-                                validation_rmse, validation_label = float(value), column
+                                validation_rmse, validation_label = _to_loss(value), column
                                 break
-                        test_rmse = pd.to_numeric(pd.Series([row.get("Test RMSE")]), errors="coerce").iloc[0]
+                        test_rmse = pd.to_numeric(pd.Series([row.get(f"Test {_choice_metric}")]), errors="coerce").iloc[0]
+                        test_rmse = _to_loss(test_rmse) if np.isfinite(test_rmse) else np.nan
                         candidates.append(
                             {
                                 "workflow": workflow_name,
@@ -13608,10 +14006,11 @@ cells += [
                 if not validated.empty:
                     best = validated.sort_values("validation_rmse").iloc[0]
                     skipped = sorted(set(candidate_df.loc[~np.isfinite(candidate_df["validation_rmse"]), "model"]))
+                    _shown = (lambda loss: 1.0 - loss) if _cls_choice else (lambda loss: loss)
                     print(
                         f"Best available: {best['model']} ({best['workflow']}), chosen by {best['validation_label']} = "
-                        f"{best['validation_rmse']:.4f} on the training split. Its test RMSE ({best['test_rmse']:.4f}) "
-                        "was not used to choose it, so it is an honest estimate."
+                        f"{_shown(best['validation_rmse']):.4f} on the training split. Its test {_choice_metric} "
+                        f"({_shown(best['test_rmse']):.4f}) was not used to choose it, so it is an honest estimate."
                     )
                     if skipped:
                         print(
@@ -13621,7 +14020,8 @@ cells += [
                 else:
                     best = candidate_df.sort_values("test_rmse").iloc[0]
                     print(
-                        f"Best available: {best['model']} ({best['workflow']}), chosen by test RMSE = {best['test_rmse']:.4f} "
+                        f"Best available: {best['model']} ({best['workflow']}), chosen by test {_choice_metric} "
+                        f"(loss {best['test_rmse']:.4f}) "
                         "because no model has a CV or OOF score. That test score is optimistic: turn on cross-validation "
                         "in 4C for an honest choice."
                     )
@@ -13732,7 +14132,7 @@ cells += [
                     or [str(col) for col in STATE["feature_names"]]
                 )
                 feature_df = align_feature_matrix_to_training_columns(feature_df, expected_columns)
-                predictions = np.asarray(model.predict(feature_df)).reshape(-1)
+                predictions = model_scores(model, feature_df)
             elif workflow_name == "Tuned conventional ML":
                 if "tuned_traditional_models" not in STATE or model_name not in STATE["tuned_traditional_models"]:
                     raise RuntimeError(f"Tuned model '{model_name}' is not loaded in this session.")
@@ -13749,7 +14149,7 @@ cells += [
                     or [str(col) for col in STATE["feature_names"]]
                 )
                 feature_df = align_feature_matrix_to_training_columns(feature_df, expected_columns)
-                predictions = np.asarray(model.predict(feature_df)).reshape(-1)
+                predictions = model_scores(model, feature_df)
             elif workflow_name == "ChemML deep learning":
                 if "deep_models" not in STATE or model_name not in STATE["deep_models"]:
                     raise RuntimeError(f"ChemML model '{model_name}' is not loaded in this session.")
@@ -14106,7 +14506,7 @@ cells += [
                 member_matrix = np.column_stack(member_predictions)
                 ensemble_meta_model = STATE.get("ensemble_meta_model")
                 if ensemble_meta_model is not None:
-                    predictions = np.asarray(ensemble_meta_model.predict(member_matrix)).reshape(-1)
+                    predictions = model_scores(ensemble_meta_model, member_matrix)
                 else:
                     ensemble_method_label = str(STATE.get("ensemble_method", ""))
                     if ensemble_method_label.startswith("CFA ("):
@@ -14163,6 +14563,15 @@ cells += [
             input_df,
         )
         prediction_df = add_prediction_scale_columns(prediction_df, prediction_column="prediction")
+        if task_is_classification():
+            # `prediction` is the probability of class 1; report the class at a 0.5 threshold in the original labels.
+            label_map = dict(STATE.get("class_label_map") or {0.0: 0, 1.0: 1})
+            original_of = {int(code): original for original, code in label_map.items()}
+            probability = pd.to_numeric(prediction_df["prediction"], errors="coerce")
+            prediction_df["predicted_class"] = np.where(
+                probability.notna(), np.where(probability >= 0.5, original_of.get(1, 1), original_of.get(0, 0)), np.nan
+            )
+            print("Classification: `prediction` is the probability of class 1; `predicted_class` uses a 0.5 threshold.")
         prediction_df.insert(0, "row_id", np.arange(len(prediction_df)))
         prediction_df["workflow"] = selected_workflow
         prediction_df["model_name"] = selected_model_name
