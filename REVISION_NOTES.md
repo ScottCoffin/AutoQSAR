@@ -137,3 +137,67 @@ rather than the work order's suggested keys (mapping below).
    Limitations consistency group "Uni-Mol 61%, conventional 59%, ensembles and Chemprop near 55%"
    (84/66/48/48); "TabPFN is present ... on all 44" (41; withdrawn on 3); multi-seed stage "enabled in this
    run's configuration" (true of the base run only; it was never executed).
+
+## Changelog by phase
+
+| Phase | Commit | What changed |
+|---|---|---|
+| 0 | `8445e59` | This file: inventory, maps, findings. |
+| 1 | `dc8065d` | New title (work-order primary); the two work-order alternatives and the author's 2026-10-06 title kept as comments above the title in `manuscript.md` and `manuscript.tex`; title also updated in `proof.tex`, Additional files 1-2 and `CITATION.cff`. Abstract reordered as the drop-in specifies (Results lead with nested-selection optimism and the decomposition; "no family dominated" is confirmatory), trimmed from 391 to 350 words, Methods heading kept, repository URL left to the Availability section (it would exceed the cap and the journal does not ask for it in the abstract). No number changed. |
+| 2 | `4ca99e0` | Introduction: convergent-literature sentence, significance-testing / out-of-distribution sentence, two-research-question final paragraph; the paragraphs the drop-in omitted are kept. Four new references (Zhao 2026, Green 2023, Li 2026, Fooladi 2025) verified against Crossref/arXiv/PubMed; [NEW-hypothesis] maps to the existing Kamuntavicius 2025 citation. Conclusions replaced by the drop-in, with the consumer-GPU figure reconciled (+0.50%), "most of it" clarified as most of the test-vs-CV gap, and the existing recommendation that leaderboard entries report both protocols kept. |
+| 4 | `a46a1bb` | `reanalysis_coverage_posthoc.py` (Tables S13-S14, `reanalysis_numbers.json`), run by `render_manuscript_assets.py`. It reproduces the notebook's family-best export exactly before computing anything. |
+| 3 | `f3bb5c0` | Main text compressed (Springer layout pp. 3-48 -> 3-31; 46 -> 29 pages including 6 figures and 5 tables; `body.tex` 15,446 -> 10,189 words). Additional file 1 now holds Notes S1-S6, Figures S1-S3 and Tables S12-S15. Nested selection is its own Results subsection (3.4). META blocks can target Additional file 1. Markdown regenerated from the LaTeX. |
+| 5 | `1bb5832` | `--deterministic-selection`, `--selected-features-from`; `REPRODUCIBILITY.md`; Zenodo prediction archives rebuilt (44/44 match `artifact_manifest.csv`); `[AUTHOR]` placeholders -> `TODO(author)` comments; run names, commit hash and CLI flags only in Additional file 1. |
+| 6 | `599c5d9` | Catalog metric of the four binary datasets corrected (`roc_auc`), with a test. n = 44 stated once with one footnote (the 45th dataset abandoned; hPPB completed by the repair run); one GA statement in Methods (the Conclusions drop-in keeps its own GA sentence); provisional-rank and no-head-to-head statements kept; ADMET-AI row kept in Table S15 (it is the natural accuracy comparator and the row already says parity is untested). |
+| 7 | (in phase 3) | The OECD subsection (3.13) already existed; it now maps each of the five principles to the artifact QSARena records and fits on about one page. |
+| 8 | this commit | PDFs rebuilt (no errors, no undefined references or citations), verifier 141 checks pass, unit/meta tests pass (315 passed), ruff clean, Additional file 2 rebuilt (options table). |
+| 9 | `871c9e6` | `submission/cover_letter.md` (+ PDF) from the drop-in, placeholders resolved. |
+
+## Numbers added in this revision (all harness-checked)
+
+- Common subset (Table S13): 41 datasets with all eight families valid; single-family wins unchanged
+  (conventional ML 6, Chemprop 5, Uni-Mol 5, TabPFN 3), ensembles 19; median gap to best: conventional ML 3.7%,
+  Uni-Mol 5.8%, Chemprop 5.9%. On the 17 Uni-Mol V2 datasets: Uni-Mol 4 wins, conventional ML 2.
+  The "pretrained comparable" conclusion holds.
+- Post-hoc descriptor model (Table S14): it won 3 datasets (CYP3A4 substrate, HIA, skin reaction); without it,
+  conventional ML wins 3 (from 6), ensembles 24, Uni-Mol 6; no single family wins more than 6. Ensemble rows still
+  contain it as a member, so this bounds its direct effect only.
+- Consumer-GPU figure: +0.50% everywhere (abstract +0.5%, Section 3.10, Limitations, Conclusions); `0.19%` no
+  longer appears.
+- Corrections found while condensing: 1094 (not 1097) evaluations; 17 (not 18) datasets on local splits;
+  Uni-Mol 5 wins / family median rank 6.5 (not "11 wins, rank 4"); Limitations consistency figures now match
+  Table 1 (84/66/50/48/48); TabPFN valid on 41 (not "all 44"); the stale "1000-row TabPFN guardrail" sentence
+  removed (TabPFN ran on datasets of about 10,000 rows).
+
+## Deviations from the work order, and why
+
+1. Abstract not verbatim: 391 words exceeds the 350-word cap (see Findings 1).
+2. Introduction drop-in applied as edits, not pasted, so that references 5-10, 19 and 20 and five paragraphs are
+   not lost (Findings 2).
+3. Citing sentences adjusted to what the cited abstracts state. The Li 2026 survey does not report that "model
+   rankings are unstable across evaluation protocols"; it reports reproducibility limits of current splitting and
+   evaluation protocols. Zhao 2026 reports that TabPFNv2 often outperformed customized molecular foundation models
+   in few-shot and out-of-distribution settings. Fooladi 2025 reports that classical and graph models behave alike
+   out of distribution (both cope with scaffold splits, both degrade on cluster splits); it does not rank RDKit
+   descriptors, so that clause cites Kamuntavicius 2025 only.
+4. Main text is 29 pages, not 20-25. Further cuts would remove results the work order asks to keep (Figures 1-6,
+   Table 1 families, the cost table, the decomposition, the OECD mapping) or the Introduction it supplied.
+5. The work order's Phase 3 numbering (Figs 8-10) refers to the meta-analysis figures M1-M3 (Phase 0 figure map).
+6. The cover letter is not addressed to the collection's guest editors: the collection was closed for submissions
+   on 2026-10-06 (its page; deadline 16 January 2026). The verified names are kept in a comment.
+7. Article type: kept as Research article (the manuscript's current type, AGENTS.md); the work order mentions
+   Software or Methodology. Changing type would change the required structure.
+8. One TabPFN statement in the old §3.8 ("present ... on all 44") and the Chemprop "eight outright wins" were
+   factual errors against the artifacts and were corrected rather than moved.
+
+## Open items for the author (`TODO(author)`)
+
+- Title: choose among the primary title and the three commented alternatives (`manuscript.md`, `manuscript.tex`).
+- Other AI assistants used, if any (`body.tex` Section 2.13, `manuscript.md`).
+- Zenodo: rename the GitHub repository, mint the release DOI, upload `dist/zenodo/*` (rebuilt 2026-10-06), and
+  insert the DOI (`declarations.tex`, `manuscript.md`, `REPRODUCIBILITY.md`, `cover_letter.md`, `CITATION.cff`).
+- Agency disclaimer wording (`declarations.tex`, `manuscript.md`); remaining acknowledgements (`manuscript.md`).
+- Cover letter: submission date, suggested reviewers, preprint DOI if any, and whether to approach the closed
+  collection's guest editors.
+- Additional file 2 command tests (`tests/docs`, about 6 minutes) were not rerun; only its generated options table
+  changed.
