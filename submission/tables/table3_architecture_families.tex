@@ -1,12 +1,12 @@
-\begin{landscape}
 \begin{table}[htbp]
 \centering
 \scriptsize
+\setlength{\tabcolsep}{3pt}
 \caption{Model-family coverage and consistency. Gaps are relative to the per-dataset best primary metric. ``Within 5\% of best'' counts datasets where the family's best member fell within 5\% of the dataset winner. Families evaluated on fewer than 44 datasets were limited by task applicability, size guardrails or backend failures (Additional file~1, Table~S4); their percentages are computed over the datasets on which they ran. All values derive from a single split and seed, so adjacent rows are not separated (see Limitations).}
 \label{tab:families}
-\begin{tabularx}{\linewidth}{@{}>{\raggedright\arraybackslash}Xrrrrrrrr@{}}
+\begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}Xrrrrrrrr@{}}
 \toprule
-\textbf{Model family} & \textbf{Models} & \makecell[r]{\textbf{Datasets}\\\textbf{with}\\\textbf{valid}\\\textbf{results}} & \makecell[r]{\textbf{Wins}\\\textbf{(regression)}} & \makecell[r]{\textbf{Wins}\\\textbf{(classification)}} & \makecell[r]{\textbf{Median}\\\textbf{gap to}\\\textbf{best,}\\\textbf{regression}\\\textbf{(\%)}} & \makecell[r]{\textbf{Median}\\\textbf{gap to}\\\textbf{best,}\\\textbf{classification}\\\textbf{(\%)}} & \makecell[r]{\textbf{Within}\\\textbf{5\% of}\\\textbf{best (\%}\\\textbf{of}\\\textbf{datasets)}} & \makecell[r]{\textbf{Median}\\\textbf{rank of}\\\textbf{family-best}\\\textbf{model}} \\
+\textbf{Model family} & \textbf{Models} & \makecell[r]{\textbf{Valid}\\\textbf{data}\\\textbf{sets}} & \makecell[r]{\textbf{Wins,}\\\textbf{reg.}} & \makecell[r]{\textbf{Wins,}\\\textbf{cls.}} & \makecell[r]{\textbf{Median}\\\textbf{gap,}\\\textbf{reg.}\\\textbf{(\%)}} & \makecell[r]{\textbf{Median}\\\textbf{gap,}\\\textbf{cls.}\\\textbf{(\%)}} & \makecell[r]{\textbf{Within}\\\textbf{5\% of}\\\textbf{best}\\\textbf{(\%)}} & \makecell[r]{\textbf{Median}\\\textbf{rank of}\\\textbf{family}\\\textbf{best}} \\
 \midrule
 Ensemble (stacking /\allowbreak{} averaging) & 2 & 44 & 14 & 8 & 0.0 & 0.8 & 84.1 & 1.5 \\
 Conventional ML & 16 & 44 & 0 & 6 & 7.0 & 1.3 & 65.9 & 3.5 \\
@@ -19,4 +19,3 @@ Deep tabular NN (ChemML MLP) & 2 & 44 & 0 & 0 & 23.5 & 9.8 & 18.2 & 17.5 \\
 \bottomrule
 \end{tabularx}
 \end{table}
-\end{landscape}

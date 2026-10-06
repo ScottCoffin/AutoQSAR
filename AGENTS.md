@@ -13,6 +13,16 @@ always quote). Bash (Git Bash) and PowerShell are both available.
 
 ## Current status and next steps (updated 2026-10-06) - read this first
 
+**Revision R2 (branch `revision/jcheminf-r2-length`, merged 2026-10-06; work order `docs/remaining_work.md`).** Read
+`REVISION_NOTES_R2.md`. Title is now "Ensembles Across Model Families Outperform Any Single Family: ..." (no
+commented alternatives). Main text 29 -> 22 Springer pages (goal < 20 not reached; options listed in the notes);
+**section numbers unchanged**. Moved to Additional file 1: the per-dataset rank strip (**Figure S4**, Note S5; the
+notebook now writes `figure3_leaderboard_rank` = distribution only and `figureS4_leaderboard_rank_per_dataset`), the
+family-gap heatmap (**Figure S5**, Note S6), the full cost table with published comparators (**Table S16** =
+`table6_cost`; main-text Table 4 is `table6_cost_core`), the descriptor-model exploratory paragraph (Note S3) and
+Methods detail (Note S2, Additional file 2 Sections 4.x). Tables 1 and 3 are portrait via `PORTRAIT_HEADERS` in
+`render_latex_tables.py`. The graphical abstract no longer takes "Figure 1". Verifier: **144 checks**.
+
 **Revision R1 (branch `revision/jcheminf-r1`, 2026-10-06; work order `docs/reframe_work_order.md`).** Read
 `REVISION_NOTES.md` first: per-phase commits, deviations from the work order, and every `TODO(author)`. In short:
 the author kept the 2026-10-06 title (the work-order title is a commented alternative), reordered 350-word abstract, Introduction with two research questions
@@ -393,14 +403,14 @@ Notebook generation notes:
      (`--ensemble-oof-scope all`, run on the RTX 4060), no full model retrained, and both
      2026-09-29 ensemble fixes applied. Post-run checks: `python tools/verify_oof_ensemble_run.py`.
    - Regenerate with `render_manuscript_assets.py --run-dir benchmark_results/qsarena_benchmark_oof_ensemble`.
-     `verify_manuscript_numbers.py` is pinned to this run (141 checks, including the §2.13 run-history numbers,
+     `verify_manuscript_numbers.py` is pinned to this run (144 checks, including the §2.13 run-history numbers,
      which it recomputes from the committed metrics of all three runs, and the §3.12 post-hoc arm numbers). If the run changes, update
      each expected value; never loosen a check.
 2. Regenerate every figure, table and number (~1.5 min; system Python suffices):
    ```bash
    python portable_colab_qsar_bundle/render_manuscript_assets.py   # notebook + figures + tables + numbers JSON + LaTeX tables
    python portable_colab_qsar_bundle/render_graphical_abstract.py  # 920x300 J.Cheminform graphical abstract (SVG+PNG+PDF)
-   python portable_colab_qsar_bundle/verify_manuscript_numbers.py  # 141 checks; non-zero exit on drift
+   python portable_colab_qsar_bundle/verify_manuscript_numbers.py  # 144 checks; non-zero exit on drift
    ```
    The first also rewrites the `<!-- TABLE:stem -->` blocks in `manuscript.md` and
    `submission/tables/*.tex`. **Never hand-edit inside those blocks or those .tex files.**
@@ -412,7 +422,7 @@ Notebook generation notes:
    `manuscript_assets/tables/*.csv`. Never from old notebook outputs, `Manuscript Outline.md` or
    `publication_recommendations.md` (all predate the A100 run).
    Update after the OECD reliability work: `verify_manuscript_numbers.py` now also checks the 3.13
-   reliability numbers in `submission/body.tex`, and the verifier currently runs 141 checks. Still
+   reliability numbers in `submission/body.tex`, and the verifier currently runs 144 checks. Still
    grep both manuscript formats after other numeric prose edits.
 5. Table S8 / 3.13 comes from the separate reliability study, not the manuscript-assets notebook:
    ```bash

@@ -55,7 +55,7 @@ exact train/test partition used in the benchmark, verified against the recorded 
 training-set size, label imbalance or skew, Bemis–Murcko scaffold diversity, internal fingerprint diversity, and \
 train-to-test similarity. Similarity is summarised by SNN, the Tanimoto similarity of each test molecule to its \
 nearest training molecule, which is known to track prediction error {{cite:sheridan2004similarity}}. Winners are \
-single-split, single-seed outcomes, so the outcome modelled is the continuous relative gap of main-text Figure 6, \
+single-split, single-seed outcomes, so the outcome modelled is the continuous relative gap of Figure S5 (Note S6), \
 never the identity of the winner. Every interval is a 95% percentile bootstrap over datasets.
 
 **Training-set size.** {{size_sentence}} For the pre-registered contrast between conventional ML and the \
@@ -120,19 +120,15 @@ majority-class baseline (grey), the label-permutation null (dotted) and chance (
 SUMMARY = """\
 ### 3.14 When does each family win?
 
-Section 3.2 found that no model family dominates. A dataset-property meta-analysis, a form of per-dataset \
-algorithm selection from dataset meta-features {{cite:olier2018metaqsar}}, asked whether properties of the dataset \
-alone predict which family comes close to the best (Additional file 1, Note S4, Figures S1–S3 and Tables S9–S11). \
-At n = {{n_datasets}} they do not do so reliably. For the pre-registered contrast between conventional ML and the \
-3D-pretrained Uni-Mol family, {{crossover_statement}}; {{n_grid_significant}} of {{n_grid_cells}} family × \
-meta-feature correlations survived Benjamini–Hochberg control; a leave-one-dataset-out {{lodo_model}} predicted the \
-best family group with balanced accuracy {{lodo_bacc}} (95% CI {{lodo_bacc_ci}}), against {{baseline_bacc}} for \
-the majority class and {{lodo_perm_null}} under label permutation (permutation p = {{lodo_perm_p}}); and a \
-pre-registered regret-based selector picked a family within 5% of the best on {{v2_nested_within5}} of datasets, \
-against {{v2_sbs_within5}} for always choosing the family with the best average record (permutation \
-p = {{v2_perm_p}}). The per-dataset winner therefore remains an empirical question, which is the case for \
-benchmarking many families on every dataset. These analyses are exploratory and rest on one split and one seed \
-per dataset.
+A dataset-property meta-analysis, a form of per-dataset algorithm selection from dataset meta-features \
+{{cite:olier2018metaqsar}}, asked whether properties of the dataset alone predict which family comes close to the \
+best. It was exploratory and, at n = {{n_datasets}}, inconclusive: {{n_grid_significant}} of {{n_grid_cells}} \
+family × meta-feature correlations survived Benjamini–Hochberg control, a leave-one-dataset-out {{lodo_model}} \
+predicted the best family group with balanced accuracy {{lodo_bacc}} against {{baseline_bacc}} for the majority \
+class (permutation p = {{lodo_perm_p}}), and a pre-registered regret-based selector did not reliably beat always \
+choosing the family with the best average record (permutation p = {{v2_perm_p}}). The per-dataset winner therefore \
+remains an empirical question, which is the case for benchmarking many families on every dataset (Additional file 1, \
+Note S4, Figures S1–S3 and Tables S9–S11).
 """
 
 LIMITATION = """\

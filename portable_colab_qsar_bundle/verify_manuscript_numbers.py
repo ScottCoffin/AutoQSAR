@@ -335,7 +335,8 @@ pv = json.loads((fe_dir / "evaluation_summary.json").read_text(encoding="utf-8")
 chk("arm +emb median -0.04 p0.30 n35", (pv["admetboost+emb"]["n"], round(pv["admetboost+emb"]["median_pct"], 2),
                                         round(pv["admetboost+emb"]["wilcoxon_p"], 2)) == (35, -0.04, 0.30))
 chk("arm emb alone -2.42 p<0.001", round(pv["emb"]["median_pct"], 2) == -2.42 and pv["emb"]["wilcoxon_p"] < 0.001)
-for label, text, minus in (("md", t, "-0.04%"), ("tex", body, "$-0.04$\\%")):
+# Revision R2 moved this paragraph to Additional file 1, Note S3: checked in main text + supplement.
+for label, text, minus in (("md", t, "-0.04%"), ("tex", tex_all, "$-0.04$\\%")):
     chk(f"arm prose {label}", "results on 12 of the 22 datasets and the NIST meta-model on 13, but lost to MaxQsaring on 17" in text
         and "won 3 of the 44 datasets outright" in text and minus in text)
 
@@ -346,6 +347,22 @@ chk("table2 rows == datasets", len(t2) == d["datasets_analyzed"])
 chk("table2 ranks populated", sum(1 for r in t2 if str(r["Est. rank"]).strip()) == L["datasets_compared"])
 t6 = {r["Model family"]: r for r in csv.DictReader(io.StringIO(pathlib.Path("manuscript_assets/tables/table6_cost.csv").read_text(encoding="utf-8")))}
 chk("table6 has published comparators", any("published" in k for k in t6))
+t6c = list(csv.DictReader(io.StringIO(pathlib.Path("manuscript_assets/tables/table6_cost_core.csv").read_text(encoding="utf-8"))))
+chk("main-text cost table = table6 minus published rows and notes",
+    [r["Model family"] for r in t6c] == [k for k in t6 if not k.endswith("(published)")] and "Notes" not in t6c[0]
+    and all(r[c] == t6[r["Model family"]][c] for r in t6c for c in r))
+
+# ---- revision R2: title, relocated figures and tables ---------------------------------------------------------------
+TITLE = ("Ensembles Across Model Families Outperform Any Single Family: A Single-Configuration, Leakage-Controlled "
+         "Benchmark of 31 Molecular Property Models Across 44 Datasets")
+_mtex = pathlib.Path("submission/manuscript.tex").read_text(encoding="utf-8")
+chk("title in md, manuscript.tex, proof.tex, CITATION.cff",
+    TITLE in t and TITLE in _mtex and TITLE in pathlib.Path("submission/proof.tex").read_text(encoding="utf-8")
+    and TITLE in pathlib.Path("CITATION.cff").read_text(encoding="utf-8") and "Any Single Architecture" not in _mtex + t)
+chk("heatmap and per-dataset ranks moved to Additional file 1",
+    "figure6_family_gap_heatmap" not in body and "figure6_family_gap_heatmap" in si_tex
+    and "figureS4_leaderboard_rank_per_dataset" in si_tex and "table6_cost_core" in body
+    and "tables/table6_cost}" in si_tex)
 
 print(f"PASS {len(ok)} checks")
 for b in bad:
