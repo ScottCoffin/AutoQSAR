@@ -383,12 +383,14 @@ Two backends need extra care and are therefore not part of `all`:
   platform, for example:
   `pip install dgl dgllife -f https://data.dgl.ai/wheels/repo.html`.
 
-Installing the package provides two console scripts, which are thin wrappers
+Installing the package provides four console scripts, which are thin wrappers
 around the same `main()` functions the scripts have always used:
 
 ```powershell
 qsarena-benchmark --help
 qsarena-applicability-domain --help
+qsarena-examples --help
+qsarena-notebooks --help
 ```
 
 The pip install does **not** bundle the `data/` tree (benchmark dataset caches,
@@ -433,6 +435,17 @@ same workflow but expose different controls:
 - Use `portable_colab_qsar_bundle/local_qsar_tutorial.ipynb` in local Jupyter.
   This notebook uses separate `ipywidgets` controls cells and avoids Colab-only
   upload and Google Drive controls.
+
+After `pip install qsarena[notebook]`, copy the generated notebook files out of
+the installed wheel with:
+
+```powershell
+qsarena-notebooks qsarena_notebooks
+```
+
+That writes `colab_qsar_tutorial.ipynb`, `local_qsar_tutorial.ipynb`, the Molab
+launcher/runtime pair, and the embedded workflow-map image into the target
+directory. In a source checkout, the files remain in `portable_colab_qsar_bundle/`.
 
 Both notebooks include step `9F`, which writes a self-contained HTML report
 summarizing the dataset, run settings, model-result tables, prediction outputs,

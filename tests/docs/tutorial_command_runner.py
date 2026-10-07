@@ -45,6 +45,7 @@ ENTRY_POINTS = {
     "qsarena-benchmark": "portable_colab_qsar_bundle.run_qsarena_benchmarks",
     "qsarena-applicability-domain": "portable_colab_qsar_bundle.simple_applicability_domain",
     "qsarena-examples": "qsarena.examples",
+    "qsarena-notebooks": "qsarena.notebooks",
 }
 
 

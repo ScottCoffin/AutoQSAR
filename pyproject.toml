@@ -152,6 +152,7 @@ Issues = "https://github.com/ScottCoffin/QSARena/issues"
 qsarena-benchmark = "portable_colab_qsar_bundle.run_qsarena_benchmarks:main"
 qsarena-applicability-domain = "portable_colab_qsar_bundle.simple_applicability_domain:main"
 qsarena-examples = "qsarena.examples:main"
+qsarena-notebooks = "qsarena.notebooks:main"
 
 [tool.setuptools]
 # Explicit list: auto-discovery would otherwise try to package data/, hpc/,
@@ -160,7 +161,14 @@ packages = ["qsarena", "qsarena.examples", "qsarena.meta_analysis", "qsarena.fea
 include-package-data = false
 
 [tool.setuptools.package-data]
-portable_colab_qsar_bundle = ["example_prediction_smiles.csv"]
+portable_colab_qsar_bundle = [
+    "example_prediction_smiles.csv",
+    "colab_qsar_tutorial.ipynb",
+    "local_qsar_tutorial.ipynb",
+    "molab_qsar_tutorial.py",
+    "molab_qsar_runtime.py",
+    "colab_qsar_workflow_map.png",
+]
 # Tutorial example data (synthetic targets), copied out by `qsarena-examples DIR`.
 "qsarena.examples" = ["data/*.csv", "data/*.yaml", "data/batch_dir/*.csv"]
 

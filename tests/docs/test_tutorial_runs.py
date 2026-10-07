@@ -87,7 +87,7 @@ def test_tutorial_expected_output_excerpts_match_fixture_run(tutorial_run):
     assert not failures, "\n".join(failures)
 
 
-@pytest.mark.parametrize("command", ["qsarena-benchmark", "qsarena-applicability-domain", "qsarena-examples"])
+@pytest.mark.parametrize("command", ["qsarena-benchmark", "qsarena-applicability-domain", "qsarena-examples", "qsarena-notebooks"])
 def test_documented_flags_exist_in_help(command):
     documented = runner.documented_flags(TUTORIAL)[command]
     available = runner.help_flags(command, env=runner.default_env(REPO))
@@ -104,6 +104,8 @@ def test_flags_mentioned_in_prose_exist_in_help():
     available = (
         runner.help_flags("qsarena-benchmark", env=runner.default_env(REPO))
         | runner.help_flags("qsarena-applicability-domain", env=runner.default_env(REPO))
+        | runner.help_flags("qsarena-examples", env=runner.default_env(REPO))
+        | runner.help_flags("qsarena-notebooks", env=runner.default_env(REPO))
     )
     assert not sorted(mentioned - available)
 

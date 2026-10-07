@@ -91,6 +91,24 @@ cd QSARena
 python -m pip install -e ".[boosting]"
 ```
 
+The pip package also carries the generated tutorial notebooks. Copy them out of the installed package
+when you want local files rather than the GitHub/Colab copy:
+
+<!-- doctest: run id=notebooks -->
+```bash
+qsarena-notebooks qsarena_notebooks
+```
+
+<!-- expect: notebooks -->
+```text
+Wrote 5 file(s) to ...qsarena_notebooks
+colab_qsar_tutorial.ipynb
+local_qsar_tutorial.ipynb
+molab_qsar_tutorial.py
+molab_qsar_runtime.py
+colab_qsar_workflow_map.png
+```
+
 ### 2c. Exact reproduction of the published environment
 
 The repository pins the environment used for the paper: `requirements-cpu.txt` / `requirements-cuda.txt`
