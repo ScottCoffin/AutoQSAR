@@ -1,16 +1,24 @@
 Model,Weight,Workflow
-ElasticNetCV,0.0734335598695537,conventional
-SVR,0.07009067174019463,conventional
-Random forest,0.06462101832231536,conventional
-Extra trees,0.06183473492573457,conventional
-HistGradientBoosting,0.06634823484710337,conventional
-"Voting Regressor (KNN, SVM)",0.06841567165036222,conventional
-AdaBoost,0.057235961844966654,conventional
-Tabular MLP,0.06914678001258492,conventional
-Tabular CNN,0.05669767886050437,conventional
-XGBoost,0.06703692526203425,conventional
-CatBoost,0.06775555478768214,conventional
-MapLight CatBoost (Strict Parity),0.06125318245196726,conventional
-ChemML MLP (PyTorch),0.07721108609558729,ChemML deep learning
-ChemML MLP (TensorFlow),0.07547734051868495,ChemML deep learning
-"MapLight + GNN (CatBoost, Strict Parity)",0.06344159881072409,MapLight + GNN
+ElasticNetCV,0.04150026245141483,conventional
+SVR,0.043264043584407025,conventional
+Random forest,0.04460970896197802,conventional
+Extra trees,0.040522689819429566,conventional
+HistGradientBoosting,0.043840555359573305,conventional
+"Voting Regressor (KNN, SVM)",0.043555999517948696,conventional
+AdaBoost,0.04101027910699135,conventional
+Tabular MLP,0.04128994817383279,conventional
+Tabular CNN,0.03867139310531275,conventional
+XGBoost,0.04431010877231466,conventional
+CatBoost,0.04421117379129847,conventional
+MapLight CatBoost (Strict Parity),0.04490787053325522,conventional
+ChemML MLP (PyTorch),0.042175056303084386,ChemML deep learning
+ChemML MLP (TensorFlow),0.042595037939098766,ChemML deep learning
+Uni-Mol V1,0.044383045969258905,Uni-Mol
+Uni-Mol V2 (84m),0.04536140576741815,Uni-Mol
+"MapLight + GNN (CatBoost, Strict Parity)",0.04651231155293571,MapLight + GNN
+"Chemprop v2 (D-MPNN, ensemble=3)",0.045160129670094085,Chemprop v2
+"Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",0.044918235474078444,Chemprop v2
+"Chemprop v2 (CMPNN, ensemble=3)",0.04454362393781429,Chemprop v2
+"Chemprop v2 (AttentiveFP, ensemble=3)",0.044787893847111,Chemprop v2
+"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",0.042513400200805095,Chemprop v2
+XGBoost (ADMETboost features),0.045355826160544545,conventional

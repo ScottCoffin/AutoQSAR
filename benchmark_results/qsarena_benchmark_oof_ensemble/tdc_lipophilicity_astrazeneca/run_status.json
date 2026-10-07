@@ -2,9 +2,9 @@
   "status": "completed",
   "dataset": "tdc_lipophilicity_astrazeneca",
   "source": "PyTDC ADME benchmark group: lipophilicity_astrazeneca (official train_val/test split)",
-  "completed_at": "2026-09-28 08:35:48",
-  "elapsed_seconds": 40.76,
-  "n_metrics_rows": 42,
+  "completed_at": "2026-10-05 22:42:37",
+  "elapsed_seconds": 55.29,
+  "n_metrics_rows": 45,
   "n_stage_records": 4,
   "n_rows": 4200,
   "task_type": "regression",
@@ -58,6 +58,6 @@
     "mae_in_domain": 0.416035847924981,
     "mae_out_of_domain": 0.7861023633884935
   },
-  "stage23_signature": "010c52b16d71551ed278d14b5a6f2fdd5343cca3ea6bb13ff8dcfb090be8e633",
-  "resume_fingerprint": "d5623b2edcc2c007c36cf0ee"
+  "stage23_signature": "8f98eb8ac513c2ed7f29c404af5a0a5397d4f5893d33a22f882a3b2935b62988",
+  "resume_fingerprint": "8a407fae2d14018dacec01f5"
 }

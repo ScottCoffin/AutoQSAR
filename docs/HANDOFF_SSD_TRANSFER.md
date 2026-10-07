@@ -53,7 +53,7 @@ datasets, which the RTX already has.
    stays clean:
    ```powershell
    git pull origin main
-   robocopy E:\qsarena_transfer\benchmark_results benchmark_results /S
+   robocopy D:\qsarena_transfer\benchmark_results benchmark_results /S
    ```
 2. Verify the transfer. **Do not start any ensemble work until this prints `45/45` and exits 0:**
    ```powershell

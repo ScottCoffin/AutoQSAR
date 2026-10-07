@@ -24,6 +24,10 @@ d = json.load(open("manuscript_assets/manuscript_numbers.json"))
 rel = json.loads(pathlib.Path("results/reliability_tdc22/summary.json").read_text(encoding="utf-8"))
 t = pathlib.Path("manuscript.md").read_text(encoding="utf-8")
 body = pathlib.Path("submission/body.tex").read_text(encoding="utf-8")
+# Additional file 1. Since revision R1 the run provenance, platform detail and full meta-analysis live there; checks
+# of text that moved verify it in main text + supplement (the Markdown copy holds both in manuscript.md).
+si_tex = pathlib.Path("submission/additional_file_1.tex").read_text(encoding="utf-8")
+tex_all = body + "\n" + si_tex
 ok, bad = [], []
 
 
@@ -42,7 +46,7 @@ chk("run is OOF rebuild", d["run_dir"] == "qsarena_benchmark_oof_ensemble" and d
 chk("coverage 44/44/44", (d["datasets_with_run_status"], d["datasets_completed"], d["datasets_analyzed"]) == (44, 44, 44))
 chk("tasks 22/22", d["datasets_by_task"] == {"regression": 22, "classification": 22})
 chk("suites", d["datasets_by_suite"] == {"TDC": 32, "Polaris": 5, "MoleculeNet": 3, "ChemML": 2, "PODUAM": 2})
-chk("models 30 rows 1047", (d["models_with_valid_results"], d["valid_model_dataset_rows"]) == (30, 1047))
+chk("models 31 rows 1094", (d["models_with_valid_results"], d["valid_model_dataset_rows"]) == (31, 1094))
 chk("size 280/1605/13445/156052",
     (d["dataset_size"]["min"], round(d["dataset_size"]["median"]), d["dataset_size"]["max"], d["dataset_size"]["total"]) == (280, 1604, 13445, 156052))
 chk("splits", d["split_counts"] == {"predefined": 27, "scaffold": 12, "target_quartiles": 4, "random": 1})
@@ -51,30 +55,31 @@ chk("no multiseed", d["multiseed_artifacts_present"] is False)
 
 # ---- wins -----------------------------------------------------------------------------------
 for fam, tot, r, c in [
-    ("Ensemble (stacking / averaging)", 9, 1, 8),
-    ("Chemprop v2 GNN", 9, 4, 5),
-    ("Uni-Mol (3D pretrained)", 8, 4, 4),
-    ("Conventional ML", 7, 4, 3),
-    ("TabPFN (tabular foundation)", 5, 5, 0),
-    ("MapLight + GNN", 4, 4, 0),
-    ("CFA combinatorial fusion", 2, 0, 2),
+    ("Ensemble (stacking / averaging)", 22, 14, 8),
+    ("Chemprop v2 GNN", 5, 0, 5),
+    ("Uni-Mol (3D pretrained)", 5, 3, 2),
+    ("Conventional ML", 6, 0, 6),
+    ("TabPFN (tabular foundation)", 3, 3, 0),
+    ("MapLight + GNN", 2, 2, 0),
+    ("CFA combinatorial fusion", 1, 0, 1),
     ("Deep tabular NN (ChemML MLP)", 0, 0, 0),
 ]:
     chk(f"wins {fam}", (W[fam]["total"], W[fam]["regression"], W[fam]["classification"]) == (tot, r, c), str(W.get(fam)))
 chk("wins sum to 44", sum(v["total"] for v in W.values()) == 44)
-chk("largest share 20%", round(100 * max(v["total"] for v in W.values()) / 44) == 20)
-chk("3D wins 4 classification", W["Uni-Mol (3D pretrained)"]["classification"] == 4)
+chk("largest share 50% (ensembles)", round(100 * max(v["total"] for v in W.values()) / 44) == 50)
+chk("largest single family 6", max(v["total"] for k, v in W.items() if not k.startswith(("Ensemble", "CFA"))) == 6)
+chk("3D wins 2 classification", W["Uni-Mol (3D pretrained)"]["classification"] == 2)
 
 # ---- consistency ----------------------------------------------------------------------------
 for fam, pct, rank in [
-    ("Uni-Mol (3D pretrained)", 61, 4.0),
-    ("Conventional ML", 59, 4.0),
-    ("Chemprop v2 GNN", 55, 5.5),
-    ("Ensemble (stacking / averaging)", 55, 5.0),
-    ("CFA combinatorial fusion", 47, 6.5),
-    ("TabPFN (tabular foundation)", 36, 10.0),
-    ("MapLight + GNN", 25, 12.5),
-    ("Deep tabular NN (ChemML MLP)", 20, 16.0),
+    ("Ensemble (stacking / averaging)", 84, 1.5),
+    ("Uni-Mol (3D pretrained)", 48, 6.5),
+    ("Conventional ML", 66, 3.5),
+    ("Chemprop v2 GNN", 48, 7.0),
+    ("CFA combinatorial fusion", 50, 5.5),
+    ("TabPFN (tabular foundation)", 22, 11.0),
+    ("MapLight + GNN", 11, 16.5),
+    ("Deep tabular NN (ChemML MLP)", 18, 17.5),
 ]:
     v = F[fam]
     chk(f"consistency {fam}",
@@ -83,33 +88,33 @@ for fam, pct, rank in [
 chk("chemprop 42 datasets", F["Chemprop v2 GNN"]["Datasets with valid results"] == 42)
 
 # ---- leaderboard ----------------------------------------------------------------------------
-chk("lb 37/430/35/4/med3",
-    (L["datasets_compared"], L["reference_rows"], L["top10_test_selected"], L["rank1_test_selected"], L["median_rank_test_selected"]) == (37, 430, 35, 4, 3.0))
+chk("lb 37/430/35/6/med3",
+    (L["datasets_compared"], L["reference_rows"], L["top10_test_selected"], L["rank1_test_selected"], L["median_rank_test_selected"]) == (37, 430, 35, 6, 3.0))
 chk("cv 27/1/med7", (L["top10_cv_selected"], L["rank1_cv_selected"], L["median_rank_cv_selected"]) == (27, 1, 7.0))
 # Matched-candidate-set control: holds the pool at the CV-eligible models and selects on test.
 # It decomposes the 35->27 drop into library breadth (35->28) and honest selection (28->27).
-chk("matched pool 28/3/med6", (L["top10_matched_pool"], L["rank1_matched_pool"], L["median_rank_matched_pool"]) == (28, 3, 6.0))
+chk("matched pool 28/3/med5", (L["top10_matched_pool"], L["rank1_matched_pool"], L["median_rank_matched_pool"]) == (28, 3, 5.0))
 chk("gap decomposition 7+1", (L["top10_test_selected"] - L["top10_matched_pool"],
                              L["top10_matched_pool"] - L["top10_cv_selected"]) == (7, 1))
 chk("below top10", set(L["below_top10_datasets"]) == {"tdc_skin_reaction", "tdc_tox21"})
 chk("rank1 names", set(L["rank1_datasets"]) == {
-    "tdc_bioavailability_ma", "tdc_carcinogens_lagunin", "tdc_clearance_microsome_az",
+    "lipophilicity", "polaris_adme_fang_rppb_1", "tdc_bioavailability_ma", "tdc_carcinogens_lagunin", "tdc_clearance_microsome_az",
     "tdc_toxcast"})
 chk("95% top-10", round(100 * L["top10_test_selected"] / L["datasets_compared"]) == 95)
 B = d["leaderboard_by_comparability"]
 o = B["tdc_admet_group_official"]
-chk("tdc official 22/22, 2 firsts, cv 16",
-    (o["datasets"], o["top10_test_selected"], o["median_rank_test_selected"], len(o["rank1_test_selected"]), o["top10_cv_selected"], o["median_rank_cv_selected"]) == (22, 22, 3.0, 2, 16, 7.0))
+chk("tdc official 22/22, med 2.5, 2 firsts, cv 16",
+    (o["datasets"], o["top10_test_selected"], o["median_rank_test_selected"], len(o["rank1_test_selected"]), o["top10_cv_selected"], o["median_rank_cv_selected"]) == (22, 22, 2.5, 2, 16, 7.0))
 chk("polaris 5/5", (B["polaris_official"]["datasets"], B["polaris_official"]["top10_test_selected"]) == (5, 5))
 chk("local 10, 8 top10", (B["local_split"]["datasets"], B["local_split"]["top10_test_selected"]) == (10, 8))
-chk("cv all: 5 winners, 6.7%",
-    (d["cv_selected_all_datasets"]["is_overall_winner"], round(d["cv_selected_all_datasets"]["median_relative_gap_to_test_best_pct"], 1)) == (5, 6.7))
+chk("cv all: 4 winners, 7.7%",
+    (d["cv_selected_all_datasets"]["is_overall_winner"], round(d["cv_selected_all_datasets"]["median_relative_gap_to_test_best_pct"], 1)) == (4, 7.7))
 
 # ---- fusion / ablation ----------------------------------------------------------------------
 fv = d["fusion_vs_best_single"]
-chk("fusion cls 10/22 +1.8", (fv["classification"]["datasets"], fv["classification"]["fusion_better"], round(fv["classification"]["median_rel_improvement_when_better_pct"], 1)) == (22, 10, 1.8))
-chk("fusion reg 1/22 +3.2/-4.5", (fv["regression"]["datasets"], fv["regression"]["fusion_better"], round(fv["regression"]["median_rel_improvement_when_better_pct"], 1), round(fv["regression"]["median_rel_improvement_all_pct"], 1)) == (22, 1, 3.2, -4.5))
-chk("ablation 10/31/3/9", [r["datasets_improved_vs_previous"] for r in d["component_ablation"]] == [0, 10, 31, 3, 9])
+chk("fusion cls 9/22 +1.4", (fv["classification"]["datasets"], fv["classification"]["fusion_better"], round(fv["classification"]["median_rel_improvement_when_better_pct"], 1)) == (22, 9, 1.4))
+chk("fusion reg 14/22 +4.1/+3.2", (fv["regression"]["datasets"], fv["regression"]["fusion_better"], round(fv["regression"]["median_rel_improvement_when_better_pct"], 1), round(fv["regression"]["median_rel_improvement_all_pct"], 1)) == (22, 14, 4.1, 3.2))
+chk("ablation 9/26/6/22", [r["datasets_improved_vs_previous"] for r in d["component_ablation"]] == [0, 9, 26, 6, 22])
 
 # ---- features --------------------------------------------------------------------------------
 chk("features 12137/46.2/22.9", (FF["selected_features_total"], round(FF["maplight_classic_share_selected_pct"], 1), round(FF["maplight_classic_share_available_pct"], 1)) == (12137, 46.2, 22.9))
@@ -132,8 +137,8 @@ chk("selector 0.77/0.58/295/1003", (round(S["log10_slope"], 2), round(S["pearson
 # ---- hardware comparison ---------------------------------------------------------------------
 R = d["run_comparison_vs_rtx"]
 chk("run comparison 44/37", (R["datasets_compared"], R["datasets_same_split"]) == (44, 37))
-chk("run comparison median 0.17", round(R["median_change_pct_same_split"], 2) == 0.17)
-chk("run comparison 20 vs 16", (R["a100_better_same_split"], R["rtx_better_same_split"]) == (20, 16))
+chk("run comparison (single models) median 0.50", round(R["median_change_pct_same_split"], 2) == 0.50)
+chk("run comparison 22 vs 13", (R["a100_better_same_split"], R["rtx_better_same_split"]) == (22, 13))
 chk("7 datasets re-split", len(R["datasets_respilt_to_scaffold"]) == 7)
 
 # ---- provenance --------------------------------------------------------------------------------
@@ -172,6 +177,169 @@ for label, text in [("md", t), ("body", body)]:
                               "51.2%", "230.3%", "93.2%", "90.9%", "0.065", "0.137"]))
     chk(f"reference model caveat {label}", "not the per-dataset selected QSARena model" in nt)
 
+# ---- dataset-property meta-analysis (qsarena.meta_analysis; section 3.14) ---------------------
+# The 3.14 prose and the meta limitation paragraph are rendered from meta_numbers.json into
+# META blocks in both formats; re-render them and fail on any drift in either direction.
+meta_path = pathlib.Path("manuscript_assets/meta_numbers.json")
+chk("meta_numbers.json present", meta_path.exists())
+if meta_path.exists():
+    sys.path.insert(0, str(pathlib.Path(".").resolve()))
+    from qsarena.meta_analysis.text import BLOCKS, check_manuscript, unresolved
+
+    M = json.loads(meta_path.read_text(encoding="utf-8"))
+    chk("meta run matches manuscript run", M["run_dir"] == d["run_dir"])
+    chk("meta 44 datasets", M["n_datasets"] == 44 == d["datasets_analyzed"])
+    chk("meta macros resolve", all(not unresolved(tpl, M["macros"]) for tpl in BLOCKS.values()))
+    for problem in check_manuscript(M):
+        chk("meta block", False, problem)
+    # Cross-check the meta-analysis against the notebook's own family statistics (Table 3, Fig 2).
+    for fam, pct in M["within5_pct_by_family"].items():
+        if fam in F:
+            chk(f"meta within-5% {fam}", abs(pct - F[fam]["Within 5% of best (% of datasets)"]) < 0.05, f"{pct:.1f}")
+    chk("meta chemprop valid == table3",
+        M["chemprop_valid_datasets"] == F["Chemprop v2 GNN"]["Datasets with valid results"])
+    chk("meta winner groups sum to 44", sum(M["winner_groups"].values()) == 44)
+    chk("meta figures 7-9 referenced",
+        all(f"manuscript_assets/figures/{s}.png" in t
+            for s in ("figureM1_size_crossover", "figureM2_shift_difficulty", "figureM3_recommender")))
+
+# ---- run lineage (Methods 2.13) -------------------------------------------------------------------
+# Ensemble wins per run, recomputed from committed metrics with the plain best-model rule (lowest test RMSE for
+# regression, highest primary metric for classification). It reproduces the notebook's canonical-run counts exactly
+# (7 + 9); only regression counts are quoted for the rejected in-sample run, which was never rendered.
+def _ensemble_wins(run: str) -> tuple[int, int]:
+    import pandas as pd
+
+    reg = cls = 0
+    for f in sorted(pathlib.Path("benchmark_results", run).glob("*/metrics.csv")):
+        m = pd.read_csv(f, low_memory=False)
+        m = m[m["error"].isna()] if "error" in m else m
+        m = m.drop_duplicates("model", keep="last")
+        has_rmse = "test_rmse" in m and m["test_rmse"].notna().any()
+        if has_rmse:
+            best = m.loc[m["test_rmse"].idxmin(), "model"]
+            reg += str(best).startswith("Ensemble")
+        elif "test_roc_auc" in m and m["test_roc_auc"].notna().any():
+            pm = str(m["primary_metric"].dropna().iloc[0]) if m["primary_metric"].notna().any() else "roc_auc"
+            col = f"test_{pm}" if pm in ("roc_auc", "auprc") and f"test_{pm}" in m else "test_roc_auc"
+            best = m.loc[m[col].idxmax(), "model"]
+            cls += str(best).startswith("Ensemble")
+    return reg, cls
+
+
+chk("lineage canonical ensembles 7+9 (test-selected)", _ensemble_wins("autoqsar_benchmark_20260623_153839") == (7, 9))
+chk("lineage in-sample ensembles: regression 1", _ensemble_wins("qsarena_benchmark_chemprop_fixed")[0] == 1)
+chk("lineage OOF regression ensembles 14", _ensemble_wins("qsarena_benchmark_oof_ensemble")[0] == W["Ensemble (stacking / averaging)"]["regression"] == 14)
+# Outer-selection ensembles (the previous revision, commit 980e3c4) vs nested: ensemble_outer_selection_snapshot.csv
+# holds each dataset's best ensemble under both and the outer-revision winner family.
+import pandas as _pd  # noqa: E402
+
+_snap = _pd.read_csv("benchmark_results/qsarena_benchmark_oof_ensemble/ensemble_outer_selection_snapshot.csv")
+_ens_outer = _snap[_snap["winner_family_outer"].str.startswith("Ensemble")]
+chk("outer-selection ensemble wins 12 (6+6)", (len(_ens_outer), int((_ens_outer["task"] == "regression").sum())) == (12, 6))
+_cls = _snap["task"] == "classification"
+_gain = (100 * (_snap["best_ensemble_nested"] - _snap["best_ensemble_outer"]) / _snap["best_ensemble_outer"]).where(
+    _cls, 100 * (_snap["best_ensemble_outer"] - _snap["best_ensemble_nested"]) / _snap["best_ensemble_outer"])
+chk("nested OOF improved best ensemble on 39/44, median +4.9% reg / +0.7% cls",
+    (int((_gain > 0).sum()), round(float(_gain[~_cls].median()), 1), round(float(_gain[_cls].median()), 1)) == (39, 4.9, 0.7))
+_mm = json.loads(pathlib.Path("manuscript_assets/meta_numbers.json").read_text(encoding="utf-8"))["macros"]
+_abstract_tex = pathlib.Path("submission/abstract.tex").read_text(encoding="utf-8")
+chk("abstract nested CV optimism matches meta_numbers",
+    f"from {_mm['nested_outer']} to {_mm['nested_nested']}" in t
+    and f"from {_mm['nested_outer']} to {_mm['nested_nested']}".replace("%", r"\%") in _abstract_tex,
+    f"{_mm['nested_outer']} -> {_mm['nested_nested']}")
+chk("abstract hardware +0.5% single-model", "best single-model score by a median of +0.5%" in t
+    and round(R["median_change_pct_same_split"], 1) == 0.5)
+# TabPFN API cost on the three withdrawn datasets: the runner's estimate (rows x selected features x (2 x 5 CV + 1) fits)
+_tok = []
+for _ds in ("tdc_cyp1a2_veith", "tdc_cyp2c19_veith", "tdc_herg_karim"):
+    _dir = pathlib.Path("benchmark_results/qsarena_benchmark_oof_ensemble") / _ds
+    _n = int(_pd.read_csv(_dir / "metrics.csv", low_memory=False)["n_train"].dropna().iloc[0])
+    _tok.append(_n * len(_pd.read_csv(_dir / "selected_features.csv")) * 11 / 1e6)
+chk("TabPFN API estimate 111-127 M tokens", (round(min(_tok)), round(max(_tok))) == (111, 127), str([round(x) for x in _tok]))
+# Run provenance moved to Additional file 1, Note S1 (revision R1): checked in main text + supplement.
+for label, text in (("md", t), ("tex", tex_all)):
+    chk(f"TabPFN API prose {label}", "111 to 127 million tokens each" in text)
+    chk(f"lineage in-sample prose {label}", "regression ensemble wins fell from 7 to 1" in text)
+# The nested-selection ensemble result is a main-text result (Section 3.4).
+for label, text in (("md", t), ("tex", body)):
+    chk(f"nested ensemble prose {label}", "improved the best ensemble on 39 of the 44 datasets" in text)
+    chk(f"lineage prose {label}", "ensembles won 22 datasets (14 regression, 8 classification), against 16 (7 and 9)" in text
+        and "12 (6 and 6) when their out-of-fold predictions came from the outer feature selection" in text)
+    chk(f"tdc official cv median 7 prose {label}", "falls to a median rank of 7 under cross-validation-only selection" in text)
+
+# ---- revision R1: coverage, consumer-GPU figure and the no-compute reanalyses -----------------------------------
+for label, text in (("md", t), ("tex", body)):
+    nt = norm_text(text)
+    chk(f"1094 evaluations prose {label}", "1094 valid model" in nt and "1097" not in nt)
+    _local = sum(v for k, v in d["split_counts"].items() if k != "predefined")
+    chk(f"local-split count prose {label}", _local == 17 and "the remaining 17 used locally generated" in nt)
+    # Phase 6.5: one consumer-GPU figure everywhere (signed median change of the best single model, 37 datasets).
+    _n050 = nt.replace("$", "").count("+0.50%")
+    chk(f"hardware +0.50 everywhere {label}", _n050 >= 3 and "0.19%" not in nt, f"+0.50% x{_n050}")
+RN = json.loads(pathlib.Path("manuscript_assets/reanalysis_numbers.json").read_text(encoding="utf-8"))
+_all, _com, _v2 = (RN["subsets"][k] for k in ("All datasets", "All eight families valid", "Uni-Mol V2 valid"))
+_fam = lambda sub, f, k: sub["families"][f][k]  # noqa: E731
+chk("reanalysis reproduces the win tally",
+    all(_fam(_all, f, "wins") == W[f]["total"] for f in W))
+chk("common subset 41 / V2 subset 17", (_com["n_datasets"], _v2["n_datasets"]) == (41, 17))
+chk("common subset single-family wins 6/5/5/3, ensembles 19",
+    tuple(_fam(_com, f, "wins") for f in ("Conventional ML", "Chemprop v2 GNN", "Uni-Mol (3D pretrained)",
+                                         "TabPFN (tabular foundation)", "Ensemble (stacking / averaging)")) == (6, 5, 5, 3, 19))
+chk("common subset median gaps 3.7 / 5.8 / 5.9",
+    tuple(round(_fam(_com, f, "median_gap_pct"), 1) for f in ("Conventional ML", "Uni-Mol (3D pretrained)",
+                                                              "Chemprop v2 GNN")) == (3.7, 5.8, 5.9))
+chk("V2 subset Uni-Mol 4, conventional 2",
+    (_fam(_v2, "Uni-Mol (3D pretrained)", "wins"), _fam(_v2, "Conventional ML", "wins")) == (4, 2))
+P = RN["posthoc"]
+_s1 = _pd.read_csv("manuscript_assets/tables/tableS1_dataset_winners.csv")
+chk("post-hoc model won 3", sorted(P["datasets_won"]) == sorted(_s1.loc[_s1["model"] == P["model"], "dataset"]),
+    str(P["datasets_won"]))
+chk("post-hoc removed: conventional 3, ensembles 24, Uni-Mol 6, max single 6",
+    (P["wins_without"]["Conventional ML"], P["wins_without"]["Ensemble (stacking / averaging)"],
+     P["wins_without"]["Uni-Mol (3D pretrained)"], P["single_family_max_without"]) == (3, 24, 6, 6))
+for label, text in (("md", t), ("tex", body)):
+    nt = norm_text(text)
+    chk(f"common-subset prose {label}",
+        "Restricted to the 41 datasets on which all eight families produced a result" in nt
+        and "the ensembles win 19" in nt and "(3.7%, against 5.8% for Uni-Mol and 5.9% for Chemprop)" in nt
+        and "on the 17 datasets on which Uni-Mol V2 ran, Uni-Mol wins 4 and conventional machine learning 2" in nt)
+    chk(f"post-hoc bound prose {label}",
+        "conventional machine learning wins 3 datasets, the ensembles 24 and Uni-Mol 6, and no single family wins more than 6" in nt)
+
+# ---- post-hoc feature-expansion note (Section 3.12) --------------------------------------------------
+fe_dir = pathlib.Path("benchmark_results/qsarena_feature_expansion")
+sys.path.insert(0, str(pathlib.Path(".").resolve()))
+import pandas as pd  # noqa: E402
+
+from qsarena.feature_expansion import evaluate as fe_eval  # noqa: E402
+
+_kinds = fe_eval.leaderboard_kinds()
+_member = {}
+for _f in pathlib.Path("benchmark_results/qsarena_benchmark_oof_ensemble").glob("*/metrics.csv"):
+    _ds = _f.parent.name.replace("tdc_", "", 1)
+    if _ds in fe_eval.OFFICIAL_TDC:
+        _m = pd.read_csv(_f, low_memory=False)
+        _row = _m[_m["model"] == "XGBoost (ADMETboost features)"].iloc[-1]
+        _member[_ds] = float(_row[fe_eval.TEST_COLUMN[_kinds[_ds]]])
+_h2h, _ = fe_eval.tdc_table({"member": pd.Series(_member)}, fe_eval.load_references(_kinds), _kinds)
+h2h = {r["method"]: (int(r["qsarena_wins"]), int(r["qsarena_losses"])) for r in _h2h.to_dict("records")}
+chk("descriptor member covers 22 TDC splits", len(_member) == 22)
+chk("descriptor member vs ADMETboost 12-10", h2h.get("ADMETboost (XGBoost)") == (12, 10), str(h2h.get("ADMETboost (XGBoost)")))
+chk("descriptor member vs NIST 13-9", h2h.get("Meta-model (NIST)") == (13, 9), str(h2h.get("Meta-model (NIST)")))
+chk("descriptor member vs MaxQsaring 5-17", h2h.get("MaxQsaring") == (5, 17), str(h2h.get("MaxQsaring")))
+_wins = [r for r in csv.DictReader(io.StringIO(pathlib.Path("manuscript_assets/tables/tableS1_dataset_winners.csv").read_text(encoding="utf-8")))
+         if r["model"] == "XGBoost (ADMETboost features)"]
+chk("descriptor member wins 3", len(_wins) == 3, str([r["dataset"] for r in _wins]))
+pv = json.loads((fe_dir / "evaluation_summary.json").read_text(encoding="utf-8"))["paired_vs_admetboost_xgboost"]
+chk("arm +emb median -0.04 p0.30 n35", (pv["admetboost+emb"]["n"], round(pv["admetboost+emb"]["median_pct"], 2),
+                                        round(pv["admetboost+emb"]["wilcoxon_p"], 2)) == (35, -0.04, 0.30))
+chk("arm emb alone -2.42 p<0.001", round(pv["emb"]["median_pct"], 2) == -2.42 and pv["emb"]["wilcoxon_p"] < 0.001)
+# Revision R2 moved this paragraph to Additional file 1, Note S3: checked in main text + supplement.
+for label, text, minus in (("md", t, "-0.04%"), ("tex", tex_all, "$-0.04$\\%")):
+    chk(f"arm prose {label}", "results on 12 of the 22 datasets and the NIST meta-model on 13, but lost to MaxQsaring on 17" in text
+        and "won 3 of the 44 datasets outright" in text and minus in text)
+
 # ---- tables agree with the JSON ----------------------------------------------------------------
 t2 = list(csv.DictReader(io.StringIO(pathlib.Path("manuscript_assets/tables/table2_dataset_catalog.csv").read_text(encoding="utf-8"))))
 chk("table2 has leaderboard columns", {"Est. rank", "Best published", "Leaderboard metric", "Best published model"} <= set(t2[0].keys()))
@@ -179,6 +347,22 @@ chk("table2 rows == datasets", len(t2) == d["datasets_analyzed"])
 chk("table2 ranks populated", sum(1 for r in t2 if str(r["Est. rank"]).strip()) == L["datasets_compared"])
 t6 = {r["Model family"]: r for r in csv.DictReader(io.StringIO(pathlib.Path("manuscript_assets/tables/table6_cost.csv").read_text(encoding="utf-8")))}
 chk("table6 has published comparators", any("published" in k for k in t6))
+t6c = list(csv.DictReader(io.StringIO(pathlib.Path("manuscript_assets/tables/table6_cost_core.csv").read_text(encoding="utf-8"))))
+chk("main-text cost table = table6 minus published rows and notes",
+    [r["Model family"] for r in t6c] == [k for k in t6 if not k.endswith("(published)")] and "Notes" not in t6c[0]
+    and all(r[c] == t6[r["Model family"]][c] for r in t6c for c in r))
+
+# ---- revision R2: title, relocated figures and tables ---------------------------------------------------------------
+TITLE = ("Ensembles Across Model Families Outperform Any Single Family: A Single-Configuration, Leakage-Controlled "
+         "Benchmark of 31 Molecular Property Models Across 44 Datasets")
+_mtex = pathlib.Path("submission/manuscript.tex").read_text(encoding="utf-8")
+chk("title in md, manuscript.tex, proof.tex, CITATION.cff",
+    TITLE in t and TITLE in _mtex and TITLE in pathlib.Path("submission/proof.tex").read_text(encoding="utf-8")
+    and TITLE in pathlib.Path("CITATION.cff").read_text(encoding="utf-8") and "Any Single Architecture" not in _mtex + t)
+chk("heatmap and per-dataset ranks moved to Additional file 1",
+    "figure6_family_gap_heatmap" not in body and "figure6_family_gap_heatmap" in si_tex
+    and "figureS4_leaderboard_rank_per_dataset" in si_tex and "table6_cost_core" in body
+    and "tables/table6_cost}" in si_tex)
 
 print(f"PASS {len(ok)} checks")
 for b in bad:

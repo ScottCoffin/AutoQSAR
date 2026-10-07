@@ -2,9 +2,9 @@
   "status": "completed",
   "dataset": "tdc_ames",
   "source": "PyTDC Tox benchmark group: ames (official train_val/test split)",
-  "completed_at": "2026-09-28 08:37:11",
-  "elapsed_seconds": 39.994,
-  "n_metrics_rows": 38,
+  "completed_at": "2026-10-05 15:30:20",
+  "elapsed_seconds": 2821.192,
+  "n_metrics_rows": 41,
   "n_stage_records": 4,
   "n_rows": 7278,
   "task_type": "classification",
@@ -45,14 +45,14 @@
   "applicability_domain": {
     "method": "both",
     "n_test": 1457,
-    "in_domain_fraction": 0.609471516815374,
+    "in_domain_fraction": 0.4722031571722718,
     "methods": {
       "standardization": 0.9471516815374056,
-      "confidence": 0.641729581331503
+      "confidence": 0.4907343857240906
     },
-    "selected_model": "TabPFNClassifier",
+    "selected_model": "Extra trees",
     "notes": []
   },
-  "stage23_signature": "4a771e6a9756abaebeb54c2180bd12d99f896e2e8afb249d4d1a641a6709f5d8",
-  "resume_fingerprint": "935f1ca4b292ad7e89bc5da8"
+  "stage23_signature": "fe255e94df62162c76987b18d4ee189e128df7a7db9ba46a923912f020350ea0",
+  "resume_fingerprint": "e1d1b03ed219904ce989f306"
 }

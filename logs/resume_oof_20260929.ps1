@@ -1,0 +1,3 @@
+﻿Set-Location "C:\Users\scott\AutoQSAR"
+$ds = @("chemml_cep_homo","esol_delaney","freesolv_sampl","lipophilicity","poduam_pod_nc_std","polaris_adme_fang_perm_1","polaris_adme_fang_rclint_1","polaris_adme_fang_rppb_1","polaris_adme_fang_solu_1","tdc_ames","tdc_cyp1a2_veith","tdc_cyp2c19_veith","tdc_cyp2c9_substrate_carbonmangels","tdc_cyp2c9_veith","tdc_cyp2d6_veith","tdc_cyp3a4_substrate_carbonmangels","tdc_cyp3a4_veith","tdc_herg_karim","tdc_hia_hou","tdc_hydrationfreeenergy_freesolv","tdc_ld50_zhu","tdc_lipophilicity_astrazeneca","tdc_ppbr_az","tdc_solubility_aqsoldb","tdc_tox21")
+& .\tools\run_oof_ensemble_rtx.ps1 -Python "C:\Users\scott\.conda\envs\autoqsar-py311\python.exe" -Datasets $ds *>&1 | Out-File -Encoding utf8 logs/oof_ensemble_rtx_resume_wrapper.log

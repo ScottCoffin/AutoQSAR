@@ -2,9 +2,9 @@
   "status": "completed",
   "dataset": "tdc_cyp2c19_veith",
   "source": "PyTDC ADME benchmark: cyp2c19_veith",
-  "completed_at": "2026-09-27 20:28:14",
-  "elapsed_seconds": 14.075,
-  "n_metrics_rows": 34,
+  "completed_at": "2026-10-06 02:15:43",
+  "elapsed_seconds": 3898.523,
+  "n_metrics_rows": 36,
   "n_stage_records": 4,
   "n_rows": 12665,
   "task_type": "classification",
@@ -46,14 +46,14 @@
   "applicability_domain": {
     "method": "both",
     "n_test": 2534,
-    "in_domain_fraction": 0.9968429360694554,
+    "in_domain_fraction": 0.8026835043409629,
     "methods": {
       "standardization": 0.9968429360694554,
-      "confidence": 1.0
+      "confidence": 0.8054459352801894
     },
     "selected_model": "XGBoost",
     "notes": []
   },
-  "stage23_signature": "e368e31da25d42173226cfa1e7311673c2c75cd33e0e16d0440bf3a888cfd498",
-  "resume_fingerprint": "e357d50101725865d7ee4b55"
+  "stage23_signature": "33a1a1aec7b9fb1ae68c7bcbda9d0bceefec0f2c01cecd5dc828c4b00bbcbae6",
+  "resume_fingerprint": "7679d81469589a9c2431f4f7"
 }

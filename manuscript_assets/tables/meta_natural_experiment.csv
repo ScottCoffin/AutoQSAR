@@ -1,0 +1,31 @@
+dataset,family,gap_low_shift_pct,gap_scaffold_pct,delta_pp
+tdc_carcinogens_lagunin,Conventional ML,0,2.237136465,2.237136465
+tdc_carcinogens_lagunin,Uni-Mol (3D pretrained),6.791569087,7.904548844,1.112979757
+tdc_carcinogens_lagunin,TabPFN (tabular foundation),5.152224824,6.338553318,1.186328494
+tdc_carcinogens_lagunin,Deep tabular NN (ChemML MLP),19.90632319,12.30425056,-7.602072626
+tdc_clintox,Conventional ML,0,1.807617818,1.807617818
+tdc_clintox,Uni-Mol (3D pretrained),11.43260409,13.06649451,1.633890419
+tdc_clintox,MapLight + GNN,25.17054811,41.32989025,16.15934215
+tdc_clintox,Deep tabular NN (ChemML MLP),7.315925665,2.775984506,-4.539941158
+tdc_hydrationfreeenergy_freesolv,Conventional ML,23.25072763,5.821441099,-17.42928653
+tdc_hydrationfreeenergy_freesolv,Uni-Mol (3D pretrained),65.65421419,37.52527562,-28.12893857
+tdc_hydrationfreeenergy_freesolv,TabPFN (tabular foundation),0,3.774822297,3.774822297
+tdc_hydrationfreeenergy_freesolv,Chemprop v2 GNN,34.67058202,19.24727849,-15.42330353
+tdc_hydrationfreeenergy_freesolv,MapLight + GNN,91.99224246,17.94035859,-74.05188387
+tdc_hydrationfreeenergy_freesolv,Deep tabular NN (ChemML MLP),83.70802689,24.28982838,-59.41819851
+tdc_pampa_ncats,Conventional ML,0,2.714732537,2.714732537
+tdc_pampa_ncats,Uni-Mol (3D pretrained),4.403632926,0,-4.403632926
+tdc_pampa_ncats,MapLight + GNN,23.01807868,27.74881707,4.730738391
+tdc_pampa_ncats,Deep tabular NN (ChemML MLP),6.386270521,10.44991579,4.06364527
+tdc_skin_reaction,Conventional ML,0.7768666379,0,-0.7768666379
+tdc_skin_reaction,Uni-Mol (3D pretrained),2.460077687,1.410835214,-1.049242472
+tdc_skin_reaction,TabPFN (tabular foundation),0,21.24717833,21.24717833
+tdc_skin_reaction,Deep tabular NN (ChemML MLP),9.753992231,14.24943567,4.495443435
+tdc_tox21,Conventional ML,0,2.501941371,2.501941371
+tdc_tox21,Uni-Mol (3D pretrained),1.831664513,8.87449039,7.042825877
+tdc_tox21,MapLight + GNN,10.67371878,16.3075131,5.633794327
+tdc_tox21,Deep tabular NN (ChemML MLP),7.333387166,9.932537371,2.599150205
+tdc_toxcast,Conventional ML,0,0,0
+tdc_toxcast,Uni-Mol (3D pretrained),6.495847902,8.265249021,1.769401119
+tdc_toxcast,MapLight + GNN,13.47792832,16.2311136,2.753185277
+tdc_toxcast,Deep tabular NN (ChemML MLP),12.7076049,14.21936206,1.511757164

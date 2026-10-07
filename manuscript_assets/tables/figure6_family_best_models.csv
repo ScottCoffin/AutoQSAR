@@ -1,0 +1,348 @@
+dataset,family,model,workflow,task_kind,suite,analysis_metric,analysis_metric_direction,analysis_metric_value,comparison_score,relative_gap_to_best,rank_within_dataset
+chemml_cep_homo,CFA combinatorial fusion,CFA (Combinatorial Fusion),CFA fusion,regression,ChemML,test_rmse,lower,0.1005906099913264,0.1005906099913264,0.12126427996192876,3.0
+chemml_cep_homo,Chemprop v2 GNN,"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",Chemprop v2,regression,ChemML,test_rmse,lower,0.1191055246466867,0.1191055246466867,0.3276464905021493,9.0
+chemml_cep_homo,Conventional ML,HistGradientBoosting,conventional,regression,ChemML,test_rmse,lower,0.1068609551064442,0.1068609551064442,0.19115861702998704,5.0
+chemml_cep_homo,Deep tabular NN (ChemML MLP),ChemML MLP (PyTorch),ChemML deep learning,regression,ChemML,test_rmse,lower,0.1205251700573253,0.1205251700573253,0.3434710062228334,11.0
+chemml_cep_homo,Ensemble (stacking / averaging),"Ensemble (OOF Stacking (RidgeCV, 5-fold))",ensemble,regression,ChemML,test_rmse,lower,0.0897117760629473,0.0897117760629473,0.0,1.0
+chemml_cep_homo,MapLight + GNN,"MapLight + GNN (CatBoost, Strict Parity)",MapLight + GNN,regression,ChemML,test_rmse,lower,0.114709017084986,0.114709017084986,0.2786394620534444,8.0
+chemml_cep_homo,TabPFN (tabular foundation),TabPFNRegressor,TabPFN deep learning,regression,ChemML,test_rmse,lower,0.1021712069884347,0.1021712069884347,0.1388828922163474,4.0
+chemml_cep_homo,Uni-Mol (3D pretrained),Uni-Mol V1,Uni-Mol,regression,ChemML,test_rmse,lower,0.144911297605629,0.144911297605629,0.6152985033308264,17.0
+chemml_organic_density,CFA combinatorial fusion,CFA (Combinatorial Fusion),CFA fusion,regression,ChemML,test_rmse,lower,0.0073856845166288,0.0073856845166288,0.5354306666707076,12.0
+chemml_organic_density,Chemprop v2 GNN,"Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",Chemprop v2,regression,ChemML,test_rmse,lower,0.0051734474083698,0.0051734474083698,0.07552249020851604,2.0
+chemml_organic_density,Conventional ML,ElasticNetCV,conventional,regression,ChemML,test_rmse,lower,0.0069595894693306,0.0069595894693306,0.4468485723414484,7.0
+chemml_organic_density,Deep tabular NN (ChemML MLP),ChemML MLP (PyTorch),ChemML deep learning,regression,ChemML,test_rmse,lower,0.007103837183841,0.007103837183841,0.4768366342411631,8.0
+chemml_organic_density,Ensemble (stacking / averaging),"Ensemble (OOF Stacking (RidgeCV, 5-fold))",ensemble,regression,ChemML,test_rmse,lower,0.0053456899795103,0.0053456899795103,0.11133048136219863,4.0
+chemml_organic_density,MapLight + GNN,"MapLight + GNN (CatBoost, Strict Parity)",MapLight + GNN,regression,ChemML,test_rmse,lower,0.0091173124935863,0.0091173124935863,0.8954236630001948,20.0
+chemml_organic_density,TabPFN (tabular foundation),TabPFNRegressor,TabPFN deep learning,regression,ChemML,test_rmse,lower,0.0048101712939232,0.0048101712939232,0.0,1.0
+chemml_organic_density,Uni-Mol (3D pretrained),Uni-Mol V1,Uni-Mol,regression,ChemML,test_rmse,lower,0.0073495789074448,0.0073495789074448,0.5279245703224106,11.0
+esol_delaney,CFA combinatorial fusion,CFA (Combinatorial Fusion),CFA fusion,regression,MoleculeNet,test_rmse,lower,0.6812614159605004,0.6812614159605004,0.09551484448617004,6.0
+esol_delaney,Chemprop v2 GNN,"Chemprop v2 (AttentiveFP, ensemble=3)",Chemprop v2,regression,MoleculeNet,test_rmse,lower,0.6852492927655516,0.6852492927655516,0.10192762251170402,7.0
+esol_delaney,Conventional ML,MapLight CatBoost (Strict Parity),conventional,regression,MoleculeNet,test_rmse,lower,0.6446969537072641,0.6446969537072641,0.03671669411301418,3.0
+esol_delaney,Deep tabular NN (ChemML MLP),ChemML MLP (PyTorch),ChemML deep learning,regression,MoleculeNet,test_rmse,lower,0.7634701945539956,0.7634701945539956,0.22771217019156798,20.0
+esol_delaney,Ensemble (stacking / averaging),Ensemble (Weighted average (inverse OOF error)),ensemble,regression,MoleculeNet,test_rmse,lower,0.621864157650947,0.621864157650947,0.0,1.0
+esol_delaney,MapLight + GNN,"MapLight + GNN (CatBoost, Strict Parity)",MapLight + GNN,regression,MoleculeNet,test_rmse,lower,0.705013721495598,0.705013721495598,0.13371017258615334,11.0
+esol_delaney,TabPFN (tabular foundation),TabPFNRegressor,TabPFN deep learning,regression,MoleculeNet,test_rmse,lower,0.6729227120806768,0.6729227120806768,0.08210563963454692,5.0
+esol_delaney,Uni-Mol (3D pretrained),Uni-Mol V2 (84m),Uni-Mol,regression,MoleculeNet,test_rmse,lower,0.6720718233896475,0.6720718233896475,0.08073735255679765,4.0
+freesolv_sampl,CFA combinatorial fusion,CFA (Combinatorial Fusion),CFA fusion,regression,MoleculeNet,test_rmse,lower,1.72734611380112,1.72734611380112,0.8505701922065776,12.0
+freesolv_sampl,Chemprop v2 GNN,"Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",Chemprop v2,regression,MoleculeNet,test_rmse,lower,1.0211243446933318,1.0211243446933318,0.0939685218428223,3.0
+freesolv_sampl,Conventional ML,ElasticNetCV,conventional,regression,MoleculeNet,test_rmse,lower,1.2827608213011168,1.2827608213011168,0.3742694186554843,6.0
+freesolv_sampl,Deep tabular NN (ChemML MLP),ChemML MLP (PyTorch),ChemML deep learning,regression,MoleculeNet,test_rmse,lower,0.9933109228913308,0.9933109228913308,0.06417096771119116,2.0
+freesolv_sampl,Ensemble (stacking / averaging),"Ensemble (OOF Stacking (RidgeCV, 5-fold))",ensemble,regression,MoleculeNet,test_rmse,lower,1.3763000122468465,1.3763000122468465,0.4744814359137794,8.0
+freesolv_sampl,MapLight + GNN,"MapLight + GNN (CatBoost, Strict Parity)",MapLight + GNN,regression,MoleculeNet,test_rmse,lower,2.477694731414594,2.477694731414594,1.6544465979972365,25.0
+freesolv_sampl,TabPFN (tabular foundation),TabPFNRegressor,TabPFN deep learning,regression,MoleculeNet,test_rmse,lower,0.933412912990602,0.933412912990602,0.0,1.0
+freesolv_sampl,Uni-Mol (3D pretrained),Uni-Mol V1,Uni-Mol,regression,MoleculeNet,test_rmse,lower,1.910087381437768,1.910087381437768,1.046347714772829,13.0
+lipophilicity,CFA combinatorial fusion,CFA (Combinatorial Fusion),CFA fusion,regression,MoleculeNet,test_rmse,lower,0.6010458880061438,0.6010458880061438,0.1845906292985004,6.0
+lipophilicity,Chemprop v2 GNN,"Chemprop v2 (D-MPNN, ensemble=3)",Chemprop v2,regression,MoleculeNet,test_rmse,lower,0.5506893871153222,0.5506893871153222,0.08534389910721248,2.0
+lipophilicity,Conventional ML,HistGradientBoosting,conventional,regression,MoleculeNet,test_rmse,lower,0.6032579822396313,0.6032579822396313,0.18895040640105637,8.0
+lipophilicity,Deep tabular NN (ChemML MLP),ChemML MLP (PyTorch),ChemML deep learning,regression,MoleculeNet,test_rmse,lower,0.6730744206261388,0.6730744206261388,0.3265503806027057,16.0
+lipophilicity,Ensemble (stacking / averaging),"Ensemble (OOF Stacking (RidgeCV, 5-fold))",ensemble,regression,MoleculeNet,test_rmse,lower,0.5073870020076687,0.5073870020076687,0.0,1.0
+lipophilicity,MapLight + GNN,"MapLight + GNN (CatBoost, Strict Parity)",MapLight + GNN,regression,MoleculeNet,test_rmse,lower,0.6297883281889615,0.6297883281889615,0.24123859242937945,12.0
+lipophilicity,TabPFN (tabular foundation),TabPFNRegressor,TabPFN deep learning,regression,MoleculeNet,test_rmse,lower,0.5954259291329118,0.5954259291329118,0.1735143525097879,4.0
+lipophilicity,Uni-Mol (3D pretrained),Uni-Mol V1,Uni-Mol,regression,MoleculeNet,test_rmse,lower,0.5972147274665879,0.5972147274665879,0.177039863267056,5.0
+poduam_pod_nc_std,CFA combinatorial fusion,CFA (Combinatorial Fusion),CFA fusion,regression,PODUAM,test_rmse,lower,0.726122316884092,0.726122316884092,0.04606196432684392,3.0
+poduam_pod_nc_std,Chemprop v2 GNN,"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",Chemprop v2,regression,PODUAM,test_rmse,lower,0.7793268421883268,0.7793268421883268,0.12270914753097777,14.0
+poduam_pod_nc_std,Conventional ML,Random forest,conventional,regression,PODUAM,test_rmse,lower,0.7200851779122264,0.7200851779122264,0.037364777496223495,2.0
+poduam_pod_nc_std,Deep tabular NN (ChemML MLP),ChemML MLP (PyTorch),ChemML deep learning,regression,PODUAM,test_rmse,lower,0.8113155386627499,0.8113155386627499,0.16879251102527398,18.0
+poduam_pod_nc_std,Ensemble (stacking / averaging),"Ensemble (OOF Stacking (RidgeCV, 5-fold))",ensemble,regression,PODUAM,test_rmse,lower,0.6941484746091139,0.6941484746091139,0.0,1.0
+poduam_pod_nc_std,MapLight + GNN,"MapLight + GNN (CatBoost, Strict Parity)",MapLight + GNN,regression,PODUAM,test_rmse,lower,0.7322465429249979,0.7322465429249979,0.05488461000701278,7.0
+poduam_pod_nc_std,TabPFN (tabular foundation),TabPFNRegressor,TabPFN deep learning,regression,PODUAM,test_rmse,lower,0.7446792642544764,0.7446792642544764,0.07279536222249455,11.0
+poduam_pod_nc_std,Uni-Mol (3D pretrained),Uni-Mol V1,Uni-Mol,regression,PODUAM,test_rmse,lower,0.7351530533031906,0.7351530533031906,0.059071769504596305,9.0
+poduam_pod_rd_std,CFA combinatorial fusion,CFA (Combinatorial Fusion),CFA fusion,regression,PODUAM,test_rmse,lower,0.5635570721340388,0.5635570721340388,0.012784574672693635,2.0
+poduam_pod_rd_std,Chemprop v2 GNN,"Chemprop v2 (CMPNN, ensemble=3)",Chemprop v2,regression,PODUAM,test_rmse,lower,0.606776573320039,0.606776573320039,0.09045557959944614,12.0
+poduam_pod_rd_std,Conventional ML,XGBoost (ADMETboost features),conventional,regression,PODUAM,test_rmse,lower,0.5665941110927087,0.5665941110927087,0.01824252447425221,4.0
+poduam_pod_rd_std,Deep tabular NN (ChemML MLP),ChemML MLP (PyTorch),ChemML deep learning,regression,PODUAM,test_rmse,lower,0.673864774039852,0.673864774039852,0.21102170890783958,19.0
+poduam_pod_rd_std,Ensemble (stacking / averaging),"Ensemble (OOF Stacking (RidgeCV, 5-fold))",ensemble,regression,PODUAM,test_rmse,lower,0.5564431827135264,0.5564431827135264,0.0,1.0
+poduam_pod_rd_std,MapLight + GNN,"MapLight + GNN (CatBoost, Strict Parity)",MapLight + GNN,regression,PODUAM,test_rmse,lower,0.5882938506887778,0.5882938506887778,0.05723974875553297,10.0
+poduam_pod_rd_std,TabPFN (tabular foundation),TabPFNRegressor,TabPFN deep learning,regression,PODUAM,test_rmse,lower,0.588552120441899,0.588552120441899,0.0577038927349087,11.0
+poduam_pod_rd_std,Uni-Mol (3D pretrained),Uni-Mol V1,Uni-Mol,regression,PODUAM,test_rmse,lower,0.5752251309996881,0.5752251309996881,0.03375357784881183,6.0
+polaris_adme_fang_hppb_1,CFA combinatorial fusion,CFA (Combinatorial Fusion),CFA fusion,regression,Polaris,test_rmse,lower,0.4851696767275421,0.4851696767275421,0.149547280307729,17.0
+polaris_adme_fang_hppb_1,Chemprop v2 GNN,"Chemprop v2 (D-MPNN, ensemble=3)",Chemprop v2,regression,Polaris,test_rmse,lower,0.4443979298698169,0.4443979298698169,0.052943858944250986,2.0
+polaris_adme_fang_hppb_1,Conventional ML,MapLight CatBoost (Strict Parity),conventional,regression,Polaris,test_rmse,lower,0.4564041525243244,0.4564041525243244,0.08139106259545696,5.0
+polaris_adme_fang_hppb_1,Deep tabular NN (ChemML MLP),ChemML MLP (TensorFlow),ChemML deep learning,regression,Polaris,test_rmse,lower,0.5320731222887543,0.5320731222887543,0.26067897478135493,19.0
+polaris_adme_fang_hppb_1,Ensemble (stacking / averaging),"Ensemble (OOF Stacking (RidgeCV, 5-fold))",ensemble,regression,Polaris,test_rmse,lower,0.4220528246542971,0.4220528246542971,0.0,1.0
+polaris_adme_fang_hppb_1,MapLight + GNN,"MapLight + GNN (CatBoost, Strict Parity)",MapLight + GNN,regression,Polaris,test_rmse,lower,0.4483703847085673,0.4483703847085673,0.06235608084326149,3.0
+polaris_adme_fang_hppb_1,TabPFN (tabular foundation),TabPFNRegressor,TabPFN deep learning,regression,Polaris,test_rmse,lower,0.4786665360340255,0.4786665360340255,0.1341389230746189,12.0
+polaris_adme_fang_hppb_1,Uni-Mol (3D pretrained),Uni-Mol V1,Uni-Mol,regression,Polaris,test_rmse,lower,0.4699336591368674,0.4699336591368674,0.11344749208061675,7.0
+polaris_adme_fang_perm_1,CFA combinatorial fusion,CFA (Combinatorial Fusion),CFA fusion,regression,Polaris,test_rmse,lower,0.4302140974055456,0.4302140974055456,0.13564066688397602,7.0
+polaris_adme_fang_perm_1,Chemprop v2 GNN,"Chemprop v2 (D-MPNN, ensemble=3)",Chemprop v2,regression,Polaris,test_rmse,lower,0.437154347591997,0.437154347591997,0.1539609181207773,9.0
+polaris_adme_fang_perm_1,Conventional ML,XGBoost,conventional,regression,Polaris,test_rmse,lower,0.4302138118430503,0.4302138118430503,0.1356399130816609,6.0
+polaris_adme_fang_perm_1,Deep tabular NN (ChemML MLP),ChemML MLP (PyTorch),ChemML deep learning,regression,Polaris,test_rmse,lower,0.4607524476826332,0.4607524476826332,0.21625307052986623,16.0
+polaris_adme_fang_perm_1,Ensemble (stacking / averaging),"Ensemble (OOF Stacking (RidgeCV, 5-fold))",ensemble,regression,Polaris,test_rmse,lower,0.3788294219737544,0.3788294219737544,0.0,1.0
+polaris_adme_fang_perm_1,MapLight + GNN,"MapLight + GNN (CatBoost, Strict Parity)",MapLight + GNN,regression,Polaris,test_rmse,lower,0.4328008950445863,0.4328008950445863,0.142469063753372,8.0
+polaris_adme_fang_perm_1,TabPFN (tabular foundation),TabPFNRegressor,TabPFN deep learning,regression,Polaris,test_rmse,lower,0.4300580640924643,0.4300580640924643,0.135228784110277,5.0
+polaris_adme_fang_perm_1,Uni-Mol (3D pretrained),Uni-Mol V1,Uni-Mol,regression,Polaris,test_rmse,lower,0.3992212119521127,0.3992212119521127,0.053828421963938784,2.0
+polaris_adme_fang_rclint_1,CFA combinatorial fusion,CFA (Combinatorial Fusion),CFA fusion,regression,Polaris,test_rmse,lower,0.5589404630062622,0.5589404630062622,0.15499696396166612,14.0
+polaris_adme_fang_rclint_1,Chemprop v2 GNN,"Chemprop v2 (D-MPNN, ensemble=3)",Chemprop v2,regression,Polaris,test_rmse,lower,0.5172546095669546,0.5172546095669546,0.06885713807825736,2.0
+polaris_adme_fang_rclint_1,Conventional ML,MapLight CatBoost (Strict Parity),conventional,regression,Polaris,test_rmse,lower,0.5362092205696821,0.5362092205696821,0.10802502734409396,7.0
+polaris_adme_fang_rclint_1,Deep tabular NN (ChemML MLP),ChemML MLP (PyTorch),ChemML deep learning,regression,Polaris,test_rmse,lower,0.5894098074368083,0.5894098074368083,0.21795894764397597,21.0
+polaris_adme_fang_rclint_1,Ensemble (stacking / averaging),"Ensemble (OOF Stacking (RidgeCV, 5-fold))",ensemble,regression,Polaris,test_rmse,lower,0.4839324088689234,0.4839324088689234,0.0,1.0
+polaris_adme_fang_rclint_1,MapLight + GNN,"MapLight + GNN (CatBoost, Strict Parity)",MapLight + GNN,regression,Polaris,test_rmse,lower,0.5398192847305988,0.5398192847305988,0.11548487937044274,8.0
+polaris_adme_fang_rclint_1,TabPFN (tabular foundation),TabPFNRegressor,TabPFN deep learning,regression,Polaris,test_rmse,lower,0.5302234544556977,0.5302234544556977,0.09565601463842566,5.0
+polaris_adme_fang_rclint_1,Uni-Mol (3D pretrained),Uni-Mol V1,Uni-Mol,regression,Polaris,test_rmse,lower,0.5224201589480364,0.5224201589480364,0.07953125141808319,3.0
+polaris_adme_fang_rppb_1,CFA combinatorial fusion,CFA (Combinatorial Fusion),CFA fusion,regression,Polaris,test_rmse,lower,0.5059835849395687,0.5059835849395687,0.05886980674960871,4.0
+polaris_adme_fang_rppb_1,Chemprop v2 GNN,"Chemprop v2 (AttentiveFP, ensemble=3)",Chemprop v2,regression,Polaris,test_rmse,lower,0.4983127227979417,0.4983127227979417,0.042817024494868954,3.0
+polaris_adme_fang_rppb_1,Conventional ML,XGBoost (ADMETboost features),conventional,regression,Polaris,test_rmse,lower,0.5071826455019586,0.5071826455019586,0.0613790759507636,5.0
+polaris_adme_fang_rppb_1,Deep tabular NN (ChemML MLP),ChemML MLP (TensorFlow),ChemML deep learning,regression,Polaris,test_rmse,lower,0.5945549901898916,0.5945549901898916,0.24422282916465743,20.0
+polaris_adme_fang_rppb_1,Ensemble (stacking / averaging),"Ensemble (OOF Stacking (RidgeCV, 5-fold))",ensemble,regression,Polaris,test_rmse,lower,0.4778525005758511,0.4778525005758511,0.0,1.0
+polaris_adme_fang_rppb_1,MapLight + GNN,"MapLight + GNN (CatBoost, Strict Parity)",MapLight + GNN,regression,Polaris,test_rmse,lower,0.4927168918367268,0.4927168918367268,0.031106651619407427,2.0
+polaris_adme_fang_rppb_1,TabPFN (tabular foundation),TabPFNRegressor,TabPFN deep learning,regression,Polaris,test_rmse,lower,0.5549874792965301,0.5549874792965301,0.16142005875814214,15.0
+polaris_adme_fang_rppb_1,Uni-Mol (3D pretrained),Uni-Mol V1,Uni-Mol,regression,Polaris,test_rmse,lower,0.5351774522007281,0.5351774522007281,0.11996369498076451,10.0
+polaris_adme_fang_solu_1,CFA combinatorial fusion,CFA (Combinatorial Fusion),CFA fusion,regression,Polaris,test_rmse,lower,0.6093466399602081,0.6093466399602081,0.10602647383441155,12.0
+polaris_adme_fang_solu_1,Chemprop v2 GNN,"Chemprop v2 (D-MPNN, ensemble=3)",Chemprop v2,regression,Polaris,test_rmse,lower,0.60791581510682,0.60791581510682,0.10342938038466215,11.0
+polaris_adme_fang_solu_1,Conventional ML,XGBoost (ADMETboost features),conventional,regression,Polaris,test_rmse,lower,0.5938042759182748,0.5938042759182748,0.07781549346784576,5.0
+polaris_adme_fang_solu_1,Deep tabular NN (ChemML MLP),ChemML MLP (TensorFlow),ChemML deep learning,regression,Polaris,test_rmse,lower,0.6267577563617722,0.6267577563617722,0.13762943086458404,19.0
+polaris_adme_fang_solu_1,Ensemble (stacking / averaging),"Ensemble (OOF Stacking (RidgeCV, 5-fold))",ensemble,regression,Polaris,test_rmse,lower,0.5521227323772397,0.5521227323772397,0.0021592288666706675,2.0
+polaris_adme_fang_solu_1,MapLight + GNN,"MapLight + GNN (CatBoost, Strict Parity)",MapLight + GNN,regression,Polaris,test_rmse,lower,0.5950036946445594,0.5950036946445594,0.07999256112931698,6.0
+polaris_adme_fang_solu_1,TabPFN (tabular foundation),TabPFNRegressor,TabPFN deep learning,regression,Polaris,test_rmse,lower,0.6106393737269377,0.6106393737269377,0.10837291783829732,14.0
+polaris_adme_fang_solu_1,Uni-Mol (3D pretrained),Uni-Mol V2 (84m),Uni-Mol,regression,Polaris,test_rmse,lower,0.5509331416342176,0.5509331416342176,0.0,1.0
+tdc_ames,CFA combinatorial fusion,CFA (Combinatorial Fusion),CFA fusion,classification,TDC,test_roc_auc,higher,0.8772778006226869,-0.8772778006226869,0.006572338967717361,2.0
+tdc_ames,Chemprop v2 GNN,"Chemprop v2 (D-MPNN, ensemble=3)",Chemprop v2,classification,TDC,test_roc_auc,higher,0.8461375785701697,-0.8461375785701697,0.04183546535219921,16.0
+tdc_ames,Conventional ML,Random forest,conventional,classification,TDC,test_roc_auc,higher,0.8717979596232548,-0.8717979596232548,0.012777700169187004,5.0
+tdc_ames,Deep tabular NN (ChemML MLP),ChemML MLP (TensorFlow),ChemML deep learning,classification,TDC,test_roc_auc,higher,0.8481348763437703,-0.8481348763437703,0.03957372927019114,15.0
+tdc_ames,Ensemble (stacking / averaging),"Ensemble (OOF Stacking (RidgeCV, 5-fold))",ensemble,classification,TDC,test_roc_auc,higher,0.8830817129765614,-0.8830817129765614,0.0,1.0
+tdc_ames,MapLight + GNN,"MapLight + GNN (CatBoost, Strict Parity)",MapLight + GNN,classification,TDC,test_roc_auc,higher,0.8222385400144903,-0.8222385400144903,0.06889868974524442,23.0
+tdc_ames,TabPFN (tabular foundation),TabPFNClassifier,TabPFN deep learning,classification,TDC,test_roc_auc,higher,0.876108793984609,-0.876108793984609,0.007896119792186749,4.0
+tdc_ames,Uni-Mol (3D pretrained),Uni-Mol V2 (84m),Uni-Mol,classification,TDC,test_roc_auc,higher,0.8630499911883921,-0.8630499911883921,0.022683882469550058,11.0
+tdc_bbb_martins,CFA combinatorial fusion,CFA (Combinatorial Fusion),CFA fusion,classification,TDC,test_roc_auc,higher,0.922177923702314,-0.922177923702314,0.0031267165251193823,3.0
+tdc_bbb_martins,Chemprop v2 GNN,"Chemprop v2 (CMPNN, ensemble=3)",Chemprop v2,classification,TDC,test_roc_auc,higher,0.90718808630394,-0.90718808630394,0.019330713651920437,10.0
+tdc_bbb_martins,Conventional ML,Random forest,conventional,classification,TDC,test_roc_auc,higher,0.9250703564727956,-0.9250703564727956,0.0,1.0
+tdc_bbb_martins,Deep tabular NN (ChemML MLP),ChemML MLP (TensorFlow),ChemML deep learning,classification,TDC,test_roc_auc,higher,0.89755315822389,-0.89755315822389,0.029746059914649046,14.0
+tdc_bbb_martins,Ensemble (stacking / averaging),"Ensemble (OOF Stacking (RidgeCV, 5-fold))",ensemble,classification,TDC,test_roc_auc,higher,0.9245035959974984,-0.9245035959974984,0.0006126674272194147,2.0
+tdc_bbb_martins,MapLight + GNN,"MapLight + GNN (CatBoost, Strict Parity)",MapLight + GNN,classification,TDC,test_roc_auc,higher,0.8123241088180111,-0.8123241088180111,0.12187856509063277,22.0
+tdc_bbb_martins,TabPFN (tabular foundation),TabPFNClassifier,TabPFN deep learning,classification,TDC,test_roc_auc,higher,0.9092792370231396,-0.9092792370231396,0.017070182110111024,8.0
+tdc_bbb_martins,Uni-Mol (3D pretrained),Uni-Mol V1,Uni-Mol,classification,TDC,test_roc_auc,higher,0.8880941213258287,-0.8880941213258287,0.03997126801030977,18.0
+tdc_bioavailability_ma,CFA combinatorial fusion,CFA (Combinatorial Fusion),CFA fusion,classification,TDC,test_roc_auc,higher,0.7312936481543066,-0.7312936481543066,0.058445728965960175,6.0
+tdc_bioavailability_ma,Chemprop v2 GNN,"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",Chemprop v2,classification,TDC,test_roc_auc,higher,0.7379447954772198,-0.7379447954772198,0.049882252194390964,3.0
+tdc_bioavailability_ma,Conventional ML,CatBoost,conventional,classification,TDC,test_roc_auc,higher,0.7766877286331892,-0.7766877286331892,0.0,1.0
+tdc_bioavailability_ma,Deep tabular NN (ChemML MLP),ChemML MLP (PyTorch),ChemML deep learning,classification,TDC,test_roc_auc,higher,0.6205520452278017,-0.6205520452278017,0.20102761721258844,19.0
+tdc_bioavailability_ma,Ensemble (stacking / averaging),"Ensemble (OOF Stacking (RidgeCV, 5-fold))",ensemble,classification,TDC,test_roc_auc,higher,0.7286331892251413,-0.7286331892251413,0.06187111967458794,7.0
+tdc_bioavailability_ma,MapLight + GNN,"MapLight + GNN (CatBoost, Strict Parity)",MapLight + GNN,classification,TDC,test_roc_auc,higher,0.4704023944130362,-0.4704023944130362,0.39434810533076436,25.0
+tdc_bioavailability_ma,TabPFN (tabular foundation),TabPFNClassifier,TabPFN deep learning,classification,TDC,test_roc_auc,higher,0.7316262055204523,-0.7316262055204523,0.05801755512738169,5.0
+tdc_bioavailability_ma,Uni-Mol (3D pretrained),Uni-Mol V2 (84m),Uni-Mol,classification,TDC,test_roc_auc,higher,0.7090123046225474,-0.7090123046225474,0.08713337615071721,12.0
+tdc_caco2_wang,CFA combinatorial fusion,CFA (Combinatorial Fusion),CFA fusion,regression,TDC,test_rmse,lower,0.3529973170356751,0.3529973170356751,0.04584121983691592,5.0
+tdc_caco2_wang,Chemprop v2 GNN,"Chemprop v2 (CMPNN, ensemble=3)",Chemprop v2,regression,TDC,test_rmse,lower,0.3715520955214367,0.3715520955214367,0.10081430668162839,8.0
+tdc_caco2_wang,Conventional ML,MapLight CatBoost (Strict Parity),conventional,regression,TDC,test_rmse,lower,0.349679972640062,0.349679972640062,0.03601277258847259,3.0
+tdc_caco2_wang,Deep tabular NN (ChemML MLP),ChemML MLP (PyTorch),ChemML deep learning,regression,TDC,test_rmse,lower,0.3971200876534543,0.3971200876534543,0.17656576084190892,18.0
+tdc_caco2_wang,Ensemble (stacking / averaging),"Ensemble (OOF Stacking (RidgeCV, 5-fold))",ensemble,regression,TDC,test_rmse,lower,0.3375247698601132,0.3375247698601132,0.0,1.0
+tdc_caco2_wang,MapLight + GNN,"MapLight + GNN (CatBoost, Strict Parity)",MapLight + GNN,regression,TDC,test_rmse,lower,0.3526780540122978,0.3526780540122978,0.04489532474450646,4.0
+tdc_caco2_wang,TabPFN (tabular foundation),TabPFNRegressor,TabPFN deep learning,regression,TDC,test_rmse,lower,0.3839461581549407,0.3839461581549407,0.13753476023127667,15.0
+tdc_caco2_wang,Uni-Mol (3D pretrained),Uni-Mol V2 (84m),Uni-Mol,regression,TDC,test_rmse,lower,0.3649794224454503,0.3649794224454503,0.08134114896727619,7.0
+tdc_carcinogens_lagunin,CFA combinatorial fusion,CFA (Combinatorial Fusion),CFA fusion,classification,TDC,test_roc_auc,higher,0.8718836565096953,-0.8718836565096953,0.0611483967188663,10.0
+tdc_carcinogens_lagunin,Chemprop v2 GNN,"Chemprop v2 (AttentiveFP, ensemble=3)",Chemprop v2,classification,TDC,test_roc_auc,higher,0.9286703601108032,-0.9286703601108032,0.0,1.0
+tdc_carcinogens_lagunin,Conventional ML,XGBoost (ADMETboost features),conventional,classification,TDC,test_roc_auc,higher,0.9078947368421052,-0.9078947368421052,0.02237136465324376,5.0
+tdc_carcinogens_lagunin,Deep tabular NN (ChemML MLP),ChemML MLP (PyTorch),ChemML deep learning,classification,TDC,test_roc_auc,higher,0.814404432132964,-0.814404432132964,0.12304250559284102,20.0
+tdc_carcinogens_lagunin,Ensemble (stacking / averaging),"Ensemble (OOF Stacking (RidgeCV, 5-fold))",ensemble,classification,TDC,test_roc_auc,higher,0.9141274238227146,-0.9141274238227146,0.015659955257270607,3.0
+tdc_carcinogens_lagunin,MapLight + GNN,"MapLight + GNN (CatBoost, Strict Parity)",MapLight + GNN,classification,TDC,test_roc_auc,higher,0.8282548476454293,-0.8282548476454293,0.10812826249067849,19.0
+tdc_carcinogens_lagunin,TabPFN (tabular foundation),TabPFNClassifier,TabPFN deep learning,classification,TDC,test_roc_auc,higher,0.8698060941828255,-0.8698060941828255,0.06338553318419073,12.0
+tdc_carcinogens_lagunin,Uni-Mol (3D pretrained),Uni-Mol V1,Uni-Mol,classification,TDC,test_roc_auc,higher,0.8552631578947368,-0.8552631578947368,0.07904548844146145,14.0
+tdc_clearance_hepatocyte_az,CFA combinatorial fusion,CFA (Combinatorial Fusion),CFA fusion,regression,TDC,test_rmse,lower,48.18300129839507,48.18300129839507,0.09226041276115057,11.0
+tdc_clearance_hepatocyte_az,Chemprop v2 GNN,"Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",Chemprop v2,regression,TDC,test_rmse,lower,44.8178668731026,44.8178668731026,0.01597618352429026,4.0
+tdc_clearance_hepatocyte_az,Conventional ML,MapLight CatBoost (Strict Parity),conventional,regression,TDC,test_rmse,lower,44.472136454705016,44.472136454705016,0.008138820982998927,3.0
+tdc_clearance_hepatocyte_az,Deep tabular NN (ChemML MLP),ChemML MLP (PyTorch),ChemML deep learning,regression,TDC,test_rmse,lower,55.290539785167965,55.290539785167965,0.25338119627566597,23.0
+tdc_clearance_hepatocyte_az,Ensemble (stacking / averaging),"Ensemble (OOF Stacking (RidgeCV, 5-fold))",ensemble,regression,TDC,test_rmse,lower,44.15813437889088,44.15813437889088,0.001020708210973826,2.0
+tdc_clearance_hepatocyte_az,MapLight + GNN,"MapLight + GNN (CatBoost, Strict Parity)",MapLight + GNN,regression,TDC,test_rmse,lower,44.113107767580935,44.113107767580935,0.0,1.0
+tdc_clearance_hepatocyte_az,TabPFN (tabular foundation),TabPFNRegressor,TabPFN deep learning,regression,TDC,test_rmse,lower,50.58404745967174,50.58404745967174,0.1466897260148682,17.0
+tdc_clearance_hepatocyte_az,Uni-Mol (3D pretrained),Uni-Mol V1,Uni-Mol,regression,TDC,test_rmse,lower,45.63316933933513,45.63316933933513,0.03445827439234066,7.0
+tdc_clearance_microsome_az,CFA combinatorial fusion,CFA (Combinatorial Fusion),CFA fusion,regression,TDC,test_rmse,lower,38.591602270658186,38.591602270658186,0.15174343557297063,10.0
+tdc_clearance_microsome_az,Chemprop v2 GNN,"Chemprop v2 (D-MPNN, ensemble=3)",Chemprop v2,regression,TDC,test_rmse,lower,39.32311115552189,39.32311115552189,0.17357488352105577,12.0
+tdc_clearance_microsome_az,Conventional ML,MapLight CatBoost (Strict Parity),conventional,regression,TDC,test_rmse,lower,37.64045643418609,37.64045643418609,0.1233570533298523,6.0
+tdc_clearance_microsome_az,Deep tabular NN (ChemML MLP),ChemML MLP (PyTorch),ChemML deep learning,regression,TDC,test_rmse,lower,42.2850630164584,42.2850630164584,0.26197257658368656,20.0
+tdc_clearance_microsome_az,Ensemble (stacking / averaging),"Ensemble (OOF Stacking (RidgeCV, 5-fold))",ensemble,regression,TDC,test_rmse,lower,35.01272310435542,35.01272310435542,0.04493391370888213,2.0
+tdc_clearance_microsome_az,MapLight + GNN,"MapLight + GNN (CatBoost, Strict Parity)",MapLight + GNN,regression,TDC,test_rmse,lower,36.18093693470182,36.18093693470182,0.07979856123013858,3.0
+tdc_clearance_microsome_az,TabPFN (tabular foundation),TabPFNRegressor,TabPFN deep learning,regression,TDC,test_rmse,lower,38.29670491233257,38.29670491233257,0.1429423991651723,8.0
+tdc_clearance_microsome_az,Uni-Mol (3D pretrained),Uni-Mol V2 (84m),Uni-Mol,regression,TDC,test_rmse,lower,33.50711719182458,33.50711719182458,0.0,1.0
+tdc_clintox,CFA combinatorial fusion,CFA (Combinatorial Fusion),CFA fusion,classification,TDC,test_roc_auc,higher,0.9739688128772636,-0.9739688128772636,0.0,1.0
+tdc_clintox,Chemprop v2 GNN,"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",Chemprop v2,classification,TDC,test_roc_auc,higher,0.9098340040241448,-0.9098340040241448,0.06584893479664301,12.0
+tdc_clintox,Conventional ML,Random forest,conventional,classification,TDC,test_roc_auc,higher,0.9563631790744468,-0.9563631790744468,0.01807617817947049,3.0
+tdc_clintox,Deep tabular NN (ChemML MLP),ChemML MLP (TensorFlow),ChemML deep learning,classification,TDC,test_roc_auc,higher,0.9469315895372232,-0.9469315895372232,0.02775984506132998,5.0
+tdc_clintox,Ensemble (stacking / averaging),"Ensemble (OOF Stacking (RidgeCV, 5-fold))",ensemble,classification,TDC,test_roc_auc,higher,0.9572434607645876,-0.9572434607645876,0.017172369270497045,2.0
+tdc_clintox,MapLight + GNN,"MapLight + GNN (CatBoost, Strict Parity)",MapLight + GNN,classification,TDC,test_roc_auc,higher,0.5714285714285714,-0.5714285714285714,0.4132989025177534,22.0
+tdc_clintox,TabPFN (tabular foundation),TabPFNClassifier,TabPFN deep learning,classification,TDC,test_roc_auc,higher,0.9234154929577466,-0.9234154929577466,0.0519044544867655,10.0
+tdc_clintox,Uni-Mol (3D pretrained),Uni-Mol V1,Uni-Mol,classification,TDC,test_roc_auc,higher,0.8467052313883301,-0.8467052313883301,0.13066494512588753,18.0
+tdc_cyp1a2_veith,CFA combinatorial fusion,CFA (Combinatorial Fusion),CFA fusion,classification,TDC,test_roc_auc,higher,0.9641911514579176,-0.9641911514579176,0.010195465757333717,11.0
+tdc_cyp1a2_veith,Conventional ML,XGBoost,conventional,classification,TDC,test_roc_auc,higher,0.968956737188958,-0.968956737188958,0.005303283996721614,3.0
+tdc_cyp1a2_veith,Deep tabular NN (ChemML MLP),ChemML MLP (TensorFlow),ChemML deep learning,classification,TDC,test_roc_auc,higher,0.9567568631034884,-0.9567568631034884,0.017827243243525054,14.0
+tdc_cyp1a2_veith,Ensemble (stacking / averaging),Ensemble (Weighted average (inverse OOF error)),ensemble,classification,TDC,test_roc_auc,higher,0.9741227869759695,-0.9741227869759695,0.0,1.0
+tdc_cyp1a2_veith,MapLight + GNN,"MapLight + GNN (CatBoost, Strict Parity)",MapLight + GNN,classification,TDC,test_roc_auc,higher,0.9440683086327613,-0.9440683086327613,0.030852864490018034,17.0
+tdc_cyp1a2_veith,Uni-Mol (3D pretrained),Uni-Mol V1,Uni-Mol,classification,TDC,test_roc_auc,higher,0.9660881198625094,-0.9660881198625094,0.008248105085810226,8.0
+tdc_cyp2c19_veith,CFA combinatorial fusion,CFA (Combinatorial Fusion),CFA fusion,classification,TDC,test_roc_auc,higher,0.9229597611540372,-0.9229597611540372,0.016186045652712523,5.0
+tdc_cyp2c19_veith,Conventional ML,XGBoost,conventional,classification,TDC,test_roc_auc,higher,0.9255923506923992,-0.9255923506923992,0.013379879628019547,3.0
+tdc_cyp2c19_veith,Deep tabular NN (ChemML MLP),ChemML MLP (TensorFlow),ChemML deep learning,classification,TDC,test_roc_auc,higher,0.8942062818336163,-0.8942062818336163,0.04683534953579389,15.0
+tdc_cyp2c19_veith,Ensemble (stacking / averaging),"Ensemble (OOF Stacking (RidgeCV, 5-fold))",ensemble,classification,TDC,test_roc_auc,higher,0.9381446126837832,-0.9381446126837832,0.0,1.0
+tdc_cyp2c19_veith,MapLight + GNN,"MapLight + GNN (CatBoost, Strict Parity)",MapLight + GNN,classification,TDC,test_roc_auc,higher,0.8861081996465818,-0.8861081996465818,0.055467368605719554,17.0
+tdc_cyp2c19_veith,Uni-Mol (3D pretrained),Uni-Mol V1,Uni-Mol,classification,TDC,test_roc_auc,higher,0.9148382188189368,-0.9148382188189368,0.024843071686115676,12.0
+tdc_cyp2c9_substrate_carbonmangels,CFA combinatorial fusion,CFA (Combinatorial Fusion),CFA fusion,classification,TDC,test_auprc,higher,0.4354224247303345,-0.4354224247303345,0.006375589920450206,3.0
+tdc_cyp2c9_substrate_carbonmangels,Chemprop v2 GNN,"Chemprop v2 (AttentiveFP, ensemble=3)",Chemprop v2,classification,TDC,test_auprc,higher,0.4382163122335878,-0.4382163122335878,0.0,1.0
+tdc_cyp2c9_substrate_carbonmangels,Conventional ML,LogisticRegression,conventional,classification,TDC,test_auprc,higher,0.3610148279689718,-0.3610148279689718,0.17617209152055568,10.0
+tdc_cyp2c9_substrate_carbonmangels,Deep tabular NN (ChemML MLP),ChemML MLP (PyTorch),ChemML deep learning,classification,TDC,test_auprc,higher,0.3225859049041014,-0.3225859049041014,0.2638660499425921,17.0
+tdc_cyp2c9_substrate_carbonmangels,Ensemble (stacking / averaging),"Ensemble (OOF Stacking (RidgeCV, 5-fold))",ensemble,classification,TDC,test_auprc,higher,0.4247515718339343,-0.4247515718339343,0.030726241866770657,5.0
+tdc_cyp2c9_substrate_carbonmangels,MapLight + GNN,"MapLight + GNN (CatBoost, Strict Parity)",MapLight + GNN,classification,TDC,test_auprc,higher,0.3192982456140351,-0.3192982456140351,0.27136841623587116,19.0
+tdc_cyp2c9_substrate_carbonmangels,TabPFN (tabular foundation),TabPFNClassifier,TabPFN deep learning,classification,TDC,test_auprc,higher,0.3594736956922924,-0.3594736956922924,0.17968892152814758,11.0
+tdc_cyp2c9_substrate_carbonmangels,Uni-Mol (3D pretrained),Uni-Mol V1,Uni-Mol,classification,TDC,test_auprc,higher,0.43081469063334,-0.43081469063334,0.01689033793042018,4.0
+tdc_cyp2c9_veith,CFA combinatorial fusion,CFA (Combinatorial Fusion),CFA fusion,classification,TDC,test_auprc,higher,0.7922242235384791,-0.7922242235384791,0.0417342566749338,5.0
+tdc_cyp2c9_veith,Chemprop v2 GNN,"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",Chemprop v2,classification,TDC,test_auprc,higher,0.7776682225368582,-0.7776682225368582,0.05934103605029479,12.0
+tdc_cyp2c9_veith,Conventional ML,XGBoost,conventional,classification,TDC,test_auprc,higher,0.7963909520816602,-0.7963909520816602,0.03669422746851647,3.0
+tdc_cyp2c9_veith,Deep tabular NN (ChemML MLP),ChemML MLP (TensorFlow),ChemML deep learning,classification,TDC,test_auprc,higher,0.7700333451057607,-0.7700333451057607,0.06857610016387151,14.0
+tdc_cyp2c9_veith,Ensemble (stacking / averaging),"Ensemble (OOF Stacking (RidgeCV, 5-fold))",ensemble,classification,TDC,test_auprc,higher,0.8267270629852184,-0.8267270629852184,0.0,1.0
+tdc_cyp2c9_veith,MapLight + GNN,"MapLight + GNN (CatBoost, Strict Parity)",MapLight + GNN,classification,TDC,test_auprc,higher,0.7209851453219045,-0.7209851453219045,0.12790426538293267,20.0
+tdc_cyp2c9_veith,TabPFN (tabular foundation),TabPFNClassifier,TabPFN deep learning,classification,TDC,test_auprc,higher,0.5295840995923745,-0.5295840995923745,0.3594208738249043,24.0
+tdc_cyp2c9_veith,Uni-Mol (3D pretrained),Uni-Mol V1,Uni-Mol,classification,TDC,test_auprc,higher,0.7868643693609237,-0.7868643693609237,0.048217477580030976,9.0
+tdc_cyp2d6_substrate_carbonmangels,CFA combinatorial fusion,CFA (Combinatorial Fusion),CFA fusion,classification,TDC,test_auprc,higher,0.6328544328643747,-0.6328544328643747,0.08640249659073844,10.0
+tdc_cyp2d6_substrate_carbonmangels,Chemprop v2 GNN,"Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",Chemprop v2,classification,TDC,test_auprc,higher,0.6927059569479546,-0.6927059569479546,0.0,1.0
+tdc_cyp2d6_substrate_carbonmangels,Conventional ML,Random forest,conventional,classification,TDC,test_auprc,higher,0.644364925109391,-0.644364925109391,0.06978578912696656,6.0
+tdc_cyp2d6_substrate_carbonmangels,Deep tabular NN (ChemML MLP),ChemML MLP (PyTorch),ChemML deep learning,classification,TDC,test_auprc,higher,0.5117104386579135,-0.5117104386579135,0.2612876596117389,20.0
+tdc_cyp2d6_substrate_carbonmangels,Ensemble (stacking / averaging),"Ensemble (OOF Stacking (RidgeCV, 5-fold))",ensemble,classification,TDC,test_auprc,higher,0.689022442614427,-0.689022442614427,0.0053175727689090645,3.0
+tdc_cyp2d6_substrate_carbonmangels,MapLight + GNN,"MapLight + GNN (CatBoost, Strict Parity)",MapLight + GNN,classification,TDC,test_auprc,higher,0.4980090842360289,-0.4980090842360289,0.2810671263312868,22.0
+tdc_cyp2d6_substrate_carbonmangels,TabPFN (tabular foundation),TabPFNClassifier,TabPFN deep learning,classification,TDC,test_auprc,higher,0.5821252937770844,-0.5821252937770844,0.15963579071571118,16.0
+tdc_cyp2d6_substrate_carbonmangels,Uni-Mol (3D pretrained),Uni-Mol V1,Uni-Mol,classification,TDC,test_auprc,higher,0.6522203476485503,-0.6522203476485503,0.05844559137008559,5.0
+tdc_cyp2d6_veith,CFA combinatorial fusion,CFA (Combinatorial Fusion),CFA fusion,classification,TDC,test_auprc,higher,0.7307682699129786,-0.7307682699129786,0.04275085898418623,3.0
+tdc_cyp2d6_veith,Chemprop v2 GNN,"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",Chemprop v2,classification,TDC,test_auprc,higher,0.7115208898591296,-0.7115208898591296,0.06796341785123428,9.0
+tdc_cyp2d6_veith,Conventional ML,XGBoost,conventional,classification,TDC,test_auprc,higher,0.7289237853584564,-0.7289237853584564,0.0451669891421686,4.0
+tdc_cyp2d6_veith,Deep tabular NN (ChemML MLP),ChemML MLP (TensorFlow),ChemML deep learning,classification,TDC,test_auprc,higher,0.6753861317393243,-0.6753861317393243,0.11529711800643798,14.0
+tdc_cyp2d6_veith,Ensemble (stacking / averaging),"Ensemble (OOF Stacking (RidgeCV, 5-fold))",ensemble,classification,TDC,test_auprc,higher,0.7634044666130511,-0.7634044666130511,0.0,1.0
+tdc_cyp2d6_veith,MapLight + GNN,"MapLight + GNN (CatBoost, Strict Parity)",MapLight + GNN,classification,TDC,test_auprc,higher,0.5956934264817698,-0.5956934264817698,0.21968831394890095,23.0
+tdc_cyp2d6_veith,TabPFN (tabular foundation),TabPFNClassifier,TabPFN deep learning,classification,TDC,test_auprc,higher,0.4573834883778609,-0.4573834883778609,0.40086348930193494,24.0
+tdc_cyp2d6_veith,Uni-Mol (3D pretrained),Uni-Mol V1,Uni-Mol,classification,TDC,test_auprc,higher,0.719068130724457,-0.719068130724457,0.05807712402482834,6.0
+tdc_cyp3a4_substrate_carbonmangels,CFA combinatorial fusion,CFA (Combinatorial Fusion),CFA fusion,classification,TDC,test_auprc,higher,0.6851673810639544,-0.6851673810639544,0.060465784669227855,8.0
+tdc_cyp3a4_substrate_carbonmangels,Chemprop v2 GNN,"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",Chemprop v2,classification,TDC,test_auprc,higher,0.6681573925602453,-0.6681573925602453,0.0837906927767929,16.0
+tdc_cyp3a4_substrate_carbonmangels,Conventional ML,XGBoost (ADMETboost features),conventional,classification,TDC,test_auprc,higher,0.7292628303299572,-0.7292628303299572,0.0,1.0
+tdc_cyp3a4_substrate_carbonmangels,Deep tabular NN (ChemML MLP),ChemML MLP (TensorFlow),ChemML deep learning,classification,TDC,test_auprc,higher,0.6746422189401311,-0.6746422189401311,0.07489838932982891,13.0
+tdc_cyp3a4_substrate_carbonmangels,Ensemble (stacking / averaging),"Ensemble (OOF Stacking (RidgeCV, 5-fold))",ensemble,classification,TDC,test_auprc,higher,0.7187736201772975,-0.7187736201772975,0.014383305601786689,2.0
+tdc_cyp3a4_substrate_carbonmangels,MapLight + GNN,"MapLight + GNN (CatBoost, Strict Parity)",MapLight + GNN,classification,TDC,test_auprc,higher,0.6513630981470251,-0.6513630981470251,0.10681983085259691,20.0
+tdc_cyp3a4_substrate_carbonmangels,TabPFN (tabular foundation),TabPFNClassifier,TabPFN deep learning,classification,TDC,test_auprc,higher,0.6765098533983378,-0.6765098533983378,0.07233739982024197,11.0
+tdc_cyp3a4_substrate_carbonmangels,Uni-Mol (3D pretrained),Uni-Mol V1,Uni-Mol,classification,TDC,test_auprc,higher,0.6973743689438838,-0.6973743689438838,0.0437269802598404,5.0
+tdc_cyp3a4_veith,CFA combinatorial fusion,CFA (Combinatorial Fusion),CFA fusion,classification,TDC,test_auprc,higher,0.8928629656052082,-0.8928629656052082,0.013954700966936079,3.0
+tdc_cyp3a4_veith,Chemprop v2 GNN,"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",Chemprop v2,classification,TDC,test_auprc,higher,0.867969478756941,-0.867969478756941,0.04144616004726339,10.0
+tdc_cyp3a4_veith,Conventional ML,XGBoost (ADMETboost features),conventional,classification,TDC,test_auprc,higher,0.8829683653741793,-0.8829683653741793,0.024881936634062445,4.0
+tdc_cyp3a4_veith,Deep tabular NN (ChemML MLP),ChemML MLP (TensorFlow),ChemML deep learning,classification,TDC,test_auprc,higher,0.8178187119377316,-0.8178187119377316,0.09683083806609634,20.0
+tdc_cyp3a4_veith,Ensemble (stacking / averaging),"Ensemble (OOF Stacking (RidgeCV, 5-fold))",ensemble,classification,TDC,test_auprc,higher,0.9054989324331932,-0.9054989324331932,0.0,1.0
+tdc_cyp3a4_veith,MapLight + GNN,"MapLight + GNN (CatBoost, Strict Parity)",MapLight + GNN,classification,TDC,test_auprc,higher,0.7884378556705884,-0.7884378556705884,0.12927798429098805,23.0
+tdc_cyp3a4_veith,TabPFN (tabular foundation),TabPFNClassifier,TabPFN deep learning,classification,TDC,test_auprc,higher,0.740259353154779,-0.740259353154779,0.18248456553603443,24.0
+tdc_cyp3a4_veith,Uni-Mol (3D pretrained),Uni-Mol V1,Uni-Mol,classification,TDC,test_auprc,higher,0.8807178795745999,-0.8807178795745999,0.02736729108228038,6.0
+tdc_dili,CFA combinatorial fusion,CFA (Combinatorial Fusion),CFA fusion,classification,TDC,test_roc_auc,higher,0.8889130434782608,-0.8889130434782608,0.04685314685314695,6.0
+tdc_dili,Chemprop v2 GNN,"Chemprop v2 (D-MPNN, ensemble=3)",Chemprop v2,classification,TDC,test_roc_auc,higher,0.9121739130434784,-0.9121739130434784,0.02191142191142183,4.0
+tdc_dili,Conventional ML,XGBoost (ADMETboost features),conventional,classification,TDC,test_roc_auc,higher,0.922608695652174,-0.922608695652174,0.010722610722610732,2.0
+tdc_dili,Deep tabular NN (ChemML MLP),ChemML MLP (TensorFlow),ChemML deep learning,classification,TDC,test_roc_auc,higher,0.782608695652174,-0.782608695652174,0.16083916083916086,18.0
+tdc_dili,Ensemble (stacking / averaging),"Ensemble (OOF Stacking (RidgeCV, 5-fold))",ensemble,classification,TDC,test_roc_auc,higher,0.932608695652174,-0.932608695652174,0.0,1.0
+tdc_dili,MapLight + GNN,"MapLight + GNN (CatBoost, Strict Parity)",MapLight + GNN,classification,TDC,test_roc_auc,higher,0.8758695652173912,-0.8758695652173912,0.06083916083916097,10.0
+tdc_dili,TabPFN (tabular foundation),TabPFNClassifier,TabPFN deep learning,classification,TDC,test_roc_auc,higher,0.7865217391304349,-0.7865217391304349,0.15664335664335657,17.0
+tdc_dili,Uni-Mol (3D pretrained),Uni-Mol V1,Uni-Mol,classification,TDC,test_roc_auc,higher,0.9217391304347826,-0.9217391304347826,0.011655011655011706,3.0
+tdc_half_life_obach,CFA combinatorial fusion,CFA (Combinatorial Fusion),CFA fusion,regression,TDC,test_rmse,lower,19.361124418283364,19.361124418283364,0.012176992177854059,2.0
+tdc_half_life_obach,Chemprop v2 GNN,"Chemprop v2 (CMPNN, ensemble=3)",Chemprop v2,regression,TDC,test_rmse,lower,27.11505541163264,27.11505541163264,0.4175434564825536,17.0
+tdc_half_life_obach,Conventional ML,MapLight CatBoost (Strict Parity),conventional,regression,TDC,test_rmse,lower,19.52008450608508,19.52008450608508,0.020487240078308114,3.0
+tdc_half_life_obach,Deep tabular NN (ChemML MLP),ChemML MLP (TensorFlow),ChemML deep learning,regression,TDC,test_rmse,lower,22.24601633454352,22.24601633454352,0.16299577519238473,11.0
+tdc_half_life_obach,Ensemble (stacking / averaging),Ensemble (Weighted average (inverse OOF error)),ensemble,regression,TDC,test_rmse,lower,21.246389678768203,21.246389678768203,0.11073646008835128,8.0
+tdc_half_life_obach,MapLight + GNN,"MapLight + GNN (CatBoost, Strict Parity)",MapLight + GNN,regression,TDC,test_rmse,lower,20.46732633437217,20.46732633437217,0.0700079375288794,6.0
+tdc_half_life_obach,TabPFN (tabular foundation),TabPFNRegressor,TabPFN deep learning,regression,TDC,test_rmse,lower,20.341997524119027,20.341997524119027,0.06345589357447647,5.0
+tdc_half_life_obach,Uni-Mol (3D pretrained),Uni-Mol V1,Uni-Mol,regression,TDC,test_rmse,lower,19.12820047077432,19.12820047077432,0.0,1.0
+tdc_herg,CFA combinatorial fusion,CFA (Combinatorial Fusion),CFA fusion,classification,TDC,test_roc_auc,higher,0.7917525773195876,-0.7917525773195876,0.07644734581687007,10.0
+tdc_herg,Chemprop v2 GNN,"Chemprop v2 (AttentiveFP, ensemble=3)",Chemprop v2,classification,TDC,test_roc_auc,higher,0.8572901325478646,-0.8572901325478646,0.0,1.0
+tdc_herg,Conventional ML,AdaBoost,conventional,classification,TDC,test_roc_auc,higher,0.8484536082474227,-0.8484536082474227,0.010307507301151098,3.0
+tdc_herg,Deep tabular NN (ChemML MLP),ChemML MLP (TensorFlow),ChemML deep learning,classification,TDC,test_roc_auc,higher,0.6525773195876289,-0.6525773195876289,0.23879058580999832,24.0
+tdc_herg,Ensemble (stacking / averaging),Ensemble (Weighted average (inverse OOF error)),ensemble,classification,TDC,test_roc_auc,higher,0.8419734904270987,-0.8419734904270987,0.017866345988661807,5.0
+tdc_herg,MapLight + GNN,"MapLight + GNN (CatBoost, Strict Parity)",MapLight + GNN,classification,TDC,test_roc_auc,higher,0.7381443298969073,-0.7381443298969073,0.13897955677718607,14.0
+tdc_herg,TabPFN (tabular foundation),TabPFNClassifier,TabPFN deep learning,classification,TDC,test_roc_auc,higher,0.7315169366715758,-0.7315169366715758,0.1467101872530494,16.0
+tdc_herg,Uni-Mol (3D pretrained),Uni-Mol V2 (84m),Uni-Mol,classification,TDC,test_roc_auc,higher,0.8440353460972018,-0.8440353460972018,0.01546126095172658,4.0
+tdc_herg_karim,CFA combinatorial fusion,CFA (Combinatorial Fusion),CFA fusion,classification,TDC,test_roc_auc,higher,0.8999673311550406,-0.8999673311550406,0.007612681074105379,5.0
+tdc_herg_karim,Chemprop v2 GNN,"Chemprop v2 (AttentiveFP, ensemble=3)",Chemprop v2,classification,TDC,test_roc_auc,higher,0.8714761048753121,-0.8714761048753121,0.039029745540615196,17.0
+tdc_herg_karim,Conventional ML,XGBoost,conventional,classification,TDC,test_roc_auc,higher,0.90239530855419,-0.90239530855419,0.004935368356029052,2.0
+tdc_herg_karim,Deep tabular NN (ChemML MLP),ChemML MLP (TensorFlow),ChemML deep learning,classification,TDC,test_roc_auc,higher,0.8764582423939552,-0.8764582423939552,0.03353597935212391,15.0
+tdc_herg_karim,Ensemble (stacking / averaging),Ensemble (Weighted average (inverse OOF error)),ensemble,classification,TDC,test_roc_auc,higher,0.906871051243496,-0.906871051243496,0.0,1.0
+tdc_herg_karim,MapLight + GNN,"MapLight + GNN (CatBoost, Strict Parity)",MapLight + GNN,classification,TDC,test_roc_auc,higher,0.8361654652037975,-0.8361654652037975,0.07796652671043738,23.0
+tdc_herg_karim,Uni-Mol (3D pretrained),Uni-Mol V1,Uni-Mol,classification,TDC,test_roc_auc,higher,0.8874303152460341,-0.8874303152460341,0.02143715577953984,10.0
+tdc_hia_hou,CFA combinatorial fusion,CFA (Combinatorial Fusion),CFA fusion,classification,TDC,test_roc_auc,higher,0.9876543209876544,-0.9876543209876544,0.00621118012422363,3.0
+tdc_hia_hou,Chemprop v2 GNN,"Chemprop v2 (AttentiveFP, ensemble=3)",Chemprop v2,classification,TDC,test_roc_auc,higher,0.9790123456790124,-0.9790123456790124,0.014906832298136666,12.0
+tdc_hia_hou,Conventional ML,XGBoost (ADMETboost features),conventional,classification,TDC,test_roc_auc,higher,0.9938271604938272,-0.9938271604938272,0.0,1.0
+tdc_hia_hou,Deep tabular NN (ChemML MLP),ChemML MLP (TensorFlow),ChemML deep learning,classification,TDC,test_roc_auc,higher,0.980246913580247,-0.980246913580247,0.013664596273291963,11.0
+tdc_hia_hou,Ensemble (stacking / averaging),"Ensemble (OOF Stacking (RidgeCV, 5-fold))",ensemble,classification,TDC,test_roc_auc,higher,0.9897119341563786,-0.9897119341563786,0.004140786749482494,2.0
+tdc_hia_hou,MapLight + GNN,"MapLight + GNN (CatBoost, Strict Parity)",MapLight + GNN,classification,TDC,test_roc_auc,higher,0.925925925925926,-0.925925925925926,0.06832298136645959,23.0
+tdc_hia_hou,TabPFN (tabular foundation),TabPFNClassifier,TabPFN deep learning,classification,TDC,test_roc_auc,higher,0.9806584362139916,-0.9806584362139916,0.013250517598343914,9.0
+tdc_hia_hou,Uni-Mol (3D pretrained),Uni-Mol V1,Uni-Mol,classification,TDC,test_roc_auc,higher,0.9670781893004116,-0.9670781893004116,0.026915113871635653,20.0
+tdc_hydrationfreeenergy_freesolv,CFA combinatorial fusion,CFA (Combinatorial Fusion),CFA fusion,regression,TDC,test_rmse,lower,1.1371387741114938,1.1371387741114938,0.057652103756107846,4.0
+tdc_hydrationfreeenergy_freesolv,Chemprop v2 GNN,"Chemprop v2 (AttentiveFP, ensemble=3)",Chemprop v2,regression,TDC,test_rmse,lower,1.282091753994841,1.282091753994841,0.19247278493385425,9.0
+tdc_hydrationfreeenergy_freesolv,Conventional ML,XGBoost (ADMETboost features),conventional,regression,TDC,test_rmse,lower,1.1377433409243358,1.1377433409243358,0.058214410992498695,5.0
+tdc_hydrationfreeenergy_freesolv,Deep tabular NN (ChemML MLP),ChemML MLP (TensorFlow),ChemML deep learning,regression,TDC,test_rmse,lower,1.336306925296405,1.336306925296405,0.2428982838158181,17.0
+tdc_hydrationfreeenergy_freesolv,Ensemble (stacking / averaging),Ensemble (Weighted average (inverse OOF error)),ensemble,regression,TDC,test_rmse,lower,1.0751538904646432,1.0751538904646432,0.0,1.0
+tdc_hydrationfreeenergy_freesolv,MapLight + GNN,"MapLight + GNN (CatBoost, Strict Parity)",MapLight + GNN,regression,TDC,test_rmse,lower,1.268040353767612,1.268040353767612,0.1794035858621226,8.0
+tdc_hydrationfreeenergy_freesolv,TabPFN (tabular foundation),TabPFNRegressor,TabPFN deep learning,regression,TDC,test_rmse,lower,1.115739039250064,1.115739039250064,0.03774822297102166,3.0
+tdc_hydrationfreeenergy_freesolv,Uni-Mol (3D pretrained),Uni-Mol V1,Uni-Mol,regression,TDC,test_rmse,lower,1.478608351200644,1.478608351200644,0.3752527561999913,24.0
+tdc_ld50_zhu,CFA combinatorial fusion,CFA (Combinatorial Fusion),CFA fusion,regression,TDC,test_rmse,lower,0.8439605679478983,0.8439605679478983,0.046649149313495626,10.0
+tdc_ld50_zhu,Chemprop v2 GNN,"Chemprop v2 (AttentiveFP, ensemble=3)",Chemprop v2,regression,TDC,test_rmse,lower,0.8114614873627853,0.8114614873627853,0.006344973573878433,2.0
+tdc_ld50_zhu,Conventional ML,HistGradientBoosting,conventional,regression,TDC,test_rmse,lower,0.8377797659980983,0.8377797659980983,0.03898394391348136,8.0
+tdc_ld50_zhu,Deep tabular NN (ChemML MLP),ChemML MLP (TensorFlow),ChemML deep learning,regression,TDC,test_rmse,lower,0.8280459139290118,0.8280459139290118,0.026912375199761855,4.0
+tdc_ld50_zhu,Ensemble (stacking / averaging),"Ensemble (OOF Stacking (RidgeCV, 5-fold))",ensemble,regression,TDC,test_rmse,lower,0.8271911087826693,0.8271911087826693,0.025852276999411554,3.0
+tdc_ld50_zhu,MapLight + GNN,"MapLight + GNN (CatBoost, Strict Parity)",MapLight + GNN,regression,TDC,test_rmse,lower,0.9094206150457376,0.9094206150457376,0.1278303148927914,23.0
+tdc_ld50_zhu,TabPFN (tabular foundation),TabPFNRegressor,TabPFN deep learning,regression,TDC,test_rmse,lower,0.8063452480723439,0.8063452480723439,0.0,1.0
+tdc_ld50_zhu,Uni-Mol (3D pretrained),Uni-Mol V1,Uni-Mol,regression,TDC,test_rmse,lower,0.8918743078984337,0.8918743078984337,0.10607002401335701,18.0
+tdc_lipophilicity_astrazeneca,CFA combinatorial fusion,CFA (Combinatorial Fusion),CFA fusion,regression,TDC,test_rmse,lower,0.596215712256178,0.596215712256178,0.08115363445483549,3.0
+tdc_lipophilicity_astrazeneca,Chemprop v2 GNN,"Chemprop v2 (D-MPNN, ensemble=3)",Chemprop v2,regression,TDC,test_rmse,lower,0.5772469529992958,0.5772469529992958,0.046756448016942495,2.0
+tdc_lipophilicity_astrazeneca,Conventional ML,HistGradientBoosting,conventional,regression,TDC,test_rmse,lower,0.6585172613363537,0.6585172613363537,0.19412876214026042,8.0
+tdc_lipophilicity_astrazeneca,Deep tabular NN (ChemML MLP),ChemML MLP (PyTorch),ChemML deep learning,regression,TDC,test_rmse,lower,0.7259216107816641,0.7259216107816641,0.31635710312961846,19.0
+tdc_lipophilicity_astrazeneca,Ensemble (stacking / averaging),"Ensemble (OOF Stacking (RidgeCV, 5-fold))",ensemble,regression,TDC,test_rmse,lower,0.551462524155335,0.551462524155335,0.0,1.0
+tdc_lipophilicity_astrazeneca,MapLight + GNN,"MapLight + GNN (CatBoost, Strict Parity)",MapLight + GNN,regression,TDC,test_rmse,lower,0.671337855128227,0.671337855128227,0.21737711217367447,10.0
+tdc_lipophilicity_astrazeneca,TabPFN (tabular foundation),TabPFNRegressor,TabPFN deep learning,regression,TDC,test_rmse,lower,0.5977746446128671,0.5977746446128671,0.08398053979908698,4.0
+tdc_lipophilicity_astrazeneca,Uni-Mol (3D pretrained),Uni-Mol V1,Uni-Mol,regression,TDC,test_rmse,lower,0.6173686180094499,0.6173686180094499,0.11951146445547135,5.0
+tdc_pampa_ncats,CFA combinatorial fusion,CFA (Combinatorial Fusion),CFA fusion,classification,TDC,test_roc_auc,higher,0.7459136822773187,-0.7459136822773187,0.022816585131125194,5.0
+tdc_pampa_ncats,Chemprop v2 GNN,"Chemprop v2 (D-MPNN, ensemble=3)",Chemprop v2,classification,TDC,test_roc_auc,higher,0.7505356596265688,-0.7505356596265688,0.016761568690352082,3.0
+tdc_pampa_ncats,Conventional ML,XGBoost (ADMETboost features),conventional,classification,TDC,test_roc_auc,higher,0.7426078971533517,-0.7426078971533517,0.027147325366909954,7.0
+tdc_pampa_ncats,Deep tabular NN (ChemML MLP),ChemML MLP (TensorFlow),ChemML deep learning,classification,TDC,test_roc_auc,higher,0.68356290174472,-0.68356290174472,0.10449915791162077,18.0
+tdc_pampa_ncats,Ensemble (stacking / averaging),Ensemble (Weighted average (inverse OOF error)),ensemble,classification,TDC,test_roc_auc,higher,0.7501071319253138,-0.7501071319253138,0.01732296094313904,4.0
+tdc_pampa_ncats,MapLight + GNN,"MapLight + GNN (CatBoost, Strict Parity)",MapLight + GNN,classification,TDC,test_roc_auc,higher,0.5515151515151516,-0.5515151515151516,0.27748817066324477,25.0
+tdc_pampa_ncats,TabPFN (tabular foundation),TabPFNClassifier,TabPFN deep learning,classification,TDC,test_roc_auc,higher,0.7150290786654423,-0.7150290786654423,0.06327692677841053,13.0
+tdc_pampa_ncats,Uni-Mol (3D pretrained),Uni-Mol V1,Uni-Mol,classification,TDC,test_roc_auc,higher,0.7633302724211816,-0.7633302724211816,0.0,1.0
+tdc_pgp_broccatelli,CFA combinatorial fusion,CFA (Combinatorial Fusion),CFA fusion,classification,TDC,test_roc_auc,higher,0.9017595307917888,-0.9017595307917888,0.03336429234836049,13.0
+tdc_pgp_broccatelli,Chemprop v2 GNN,"Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",Chemprop v2,classification,TDC,test_roc_auc,higher,0.9166222340709144,-0.9166222340709144,0.01743230692291222,5.0
+tdc_pgp_broccatelli,Conventional ML,XGBoost (ADMETboost features),conventional,classification,TDC,test_roc_auc,higher,0.9189549453479072,-0.9189549453479072,0.01493177109380592,3.0
+tdc_pgp_broccatelli,Deep tabular NN (ChemML MLP),ChemML MLP (TensorFlow),ChemML deep learning,classification,TDC,test_roc_auc,higher,0.8619701412956545,-0.8619701412956545,0.07601628920482967,24.0
+tdc_pgp_broccatelli,Ensemble (stacking / averaging),"Ensemble (OOF Stacking (RidgeCV, 5-fold))",ensemble,classification,TDC,test_roc_auc,higher,0.9226206344974672,-0.9226206344974672,0.01100235764806767,2.0
+tdc_pgp_broccatelli,MapLight + GNN,"MapLight + GNN (CatBoost, Strict Parity)",MapLight + GNN,classification,TDC,test_roc_auc,higher,0.8763663023193815,-0.8763663023193815,0.06058441094520264,21.0
+tdc_pgp_broccatelli,TabPFN (tabular foundation),TabPFNClassifier,TabPFN deep learning,classification,TDC,test_roc_auc,higher,0.8941615569181551,-0.8941615569181551,0.04150889476316367,16.0
+tdc_pgp_broccatelli,Uni-Mol (3D pretrained),Uni-Mol V2 (84m),Uni-Mol,classification,TDC,test_roc_auc,higher,0.9328845641162358,-0.9328845641162358,0.0,1.0
+tdc_ppbr_az,CFA combinatorial fusion,CFA (Combinatorial Fusion),CFA fusion,regression,TDC,test_rmse,lower,12.318932925722484,12.318932925722484,0.14401410766163483,8.0
+tdc_ppbr_az,Chemprop v2 GNN,"Chemprop v2 (AttentiveFP, ensemble=3)",Chemprop v2,regression,TDC,test_rmse,lower,12.245067023676942,12.245067023676942,0.1371544523225912,7.0
+tdc_ppbr_az,Conventional ML,MapLight CatBoost (Strict Parity),conventional,regression,TDC,test_rmse,lower,11.711870077269351,11.711870077269351,0.0876384079922651,3.0
+tdc_ppbr_az,Deep tabular NN (ChemML MLP),ChemML MLP (TensorFlow),ChemML deep learning,regression,TDC,test_rmse,lower,14.039248571597644,14.039248571597644,0.30377351055624857,20.0
+tdc_ppbr_az,Ensemble (stacking / averaging),"Ensemble (OOF Stacking (RidgeCV, 5-fold))",ensemble,regression,TDC,test_rmse,lower,10.768165220359377,10.768165220359377,0.0,1.0
+tdc_ppbr_az,MapLight + GNN,"MapLight + GNN (CatBoost, Strict Parity)",MapLight + GNN,regression,TDC,test_rmse,lower,11.35635011770925,11.35635011770925,0.05462257360592788,2.0
+tdc_ppbr_az,TabPFN (tabular foundation),TabPFNRegressor,TabPFN deep learning,regression,TDC,test_rmse,lower,13.037911606752008,13.037911606752008,0.21078302012874212,16.0
+tdc_ppbr_az,Uni-Mol (3D pretrained),Uni-Mol V1,Uni-Mol,regression,TDC,test_rmse,lower,11.789248494187412,11.789248494187412,0.0948242577015323,4.0
+tdc_skin_reaction,CFA combinatorial fusion,CFA (Combinatorial Fusion),CFA fusion,classification,TDC,test_roc_auc,higher,0.6577560240963856,-0.6577560240963856,0.014108352144469616,2.0
+tdc_skin_reaction,Chemprop v2 GNN,"Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",Chemprop v2,classification,TDC,test_roc_auc,higher,0.6340361445783131,-0.6340361445783131,0.04966139954853301,4.0
+tdc_skin_reaction,Conventional ML,XGBoost (ADMETboost features),conventional,classification,TDC,test_roc_auc,higher,0.6671686746987953,-0.6671686746987953,0.0,1.0
+tdc_skin_reaction,Deep tabular NN (ChemML MLP),ChemML MLP (PyTorch),ChemML deep learning,classification,TDC,test_roc_auc,higher,0.5721009036144578,-0.5721009036144578,0.14249435665914242,7.0
+tdc_skin_reaction,Ensemble (stacking / averaging),Ensemble (Weighted average (inverse OOF error)),ensemble,classification,TDC,test_roc_auc,higher,0.557605421686747,-0.557605421686747,0.1642212189616254,8.0
+tdc_skin_reaction,MapLight + GNN,"MapLight + GNN (CatBoost, Strict Parity)",MapLight + GNN,classification,TDC,test_roc_auc,higher,0.5124246987951807,-0.5124246987951807,0.2319413092550791,19.0
+tdc_skin_reaction,TabPFN (tabular foundation),TabPFNClassifier,TabPFN deep learning,classification,TDC,test_roc_auc,higher,0.525414156626506,-0.525414156626506,0.21247178329571115,15.0
+tdc_skin_reaction,Uni-Mol (3D pretrained),Uni-Mol V2 (84m),Uni-Mol,classification,TDC,test_roc_auc,higher,0.6577560240963856,-0.6577560240963856,0.014108352144469616,2.0
+tdc_solubility_aqsoldb,CFA combinatorial fusion,CFA (Combinatorial Fusion),CFA fusion,regression,TDC,test_rmse,lower,1.010753382961631,1.010753382961631,0.058434901491810375,6.0
+tdc_solubility_aqsoldb,Chemprop v2 GNN,"Chemprop v2 (CMPNN, ensemble=3)",Chemprop v2,regression,TDC,test_rmse,lower,1.03513600566192,1.03513600566192,0.0839677557873592,9.0
+tdc_solubility_aqsoldb,Conventional ML,XGBoost (ADMETboost features),conventional,regression,TDC,test_rmse,lower,0.9986142054027723,0.9986142054027723,0.0457230675070905,4.0
+tdc_solubility_aqsoldb,Deep tabular NN (ChemML MLP),ChemML MLP (TensorFlow),ChemML deep learning,regression,TDC,test_rmse,lower,1.156527241380212,1.156527241380212,0.21108553029629368,21.0
+tdc_solubility_aqsoldb,Ensemble (stacking / averaging),"Ensemble (OOF Stacking (RidgeCV, 5-fold))",ensemble,regression,TDC,test_rmse,lower,0.9549509200207074,0.9549509200207074,0.0,1.0
+tdc_solubility_aqsoldb,MapLight + GNN,"MapLight + GNN (CatBoost, Strict Parity)",MapLight + GNN,regression,TDC,test_rmse,lower,1.0770495144309855,1.0770495144309855,0.12785850230672643,16.0
+tdc_solubility_aqsoldb,TabPFN (tabular foundation),TabPFNRegressor,TabPFN deep learning,regression,TDC,test_rmse,lower,0.9610703783026984,0.9610703783026984,0.006408139050599912,2.0
+tdc_solubility_aqsoldb,Uni-Mol (3D pretrained),Uni-Mol V1,Uni-Mol,regression,TDC,test_rmse,lower,1.0065887622019132,1.0065887622019132,0.05407381792991633,5.0
+tdc_tox21,CFA combinatorial fusion,CFA (Combinatorial Fusion),CFA fusion,classification,TDC,test_roc_auc,higher,0.586508350730689,-0.586508350730689,0.01827315084449604,2.0
+tdc_tox21,Chemprop v2 GNN,"Chemprop v2 (AttentiveFP, ensemble=3)",Chemprop v2,classification,TDC,test_roc_auc,higher,0.5974251913709115,-0.5974251913709115,0.0,1.0
+tdc_tox21,Conventional ML,XGBoost (ADMETboost features),conventional,classification,TDC,test_roc_auc,higher,0.5824779633495709,-0.5824779633495709,0.02501941370607628,3.0
+tdc_tox21,Deep tabular NN (ChemML MLP),ChemML MLP (TensorFlow),ChemML deep learning,classification,TDC,test_roc_auc,higher,0.5380857109719324,-0.5380857109719324,0.0993253737138417,8.0
+tdc_tox21,Ensemble (stacking / averaging),Ensemble (Weighted average (inverse OOF error)),ensemble,classification,TDC,test_roc_auc,higher,0.524327302250058,-0.524327302250058,0.12235488254707816,12.0
+tdc_tox21,MapLight + GNN,"MapLight + GNN (CatBoost, Strict Parity)",MapLight + GNN,classification,TDC,test_roc_auc,higher,0.5,-0.5,0.16307513104251592,16.0
+tdc_tox21,TabPFN (tabular foundation),TabPFNClassifier,TabPFN deep learning,classification,TDC,test_roc_auc,higher,0.4678583855254001,-0.4678583855254001,0.2168753640069889,19.0
+tdc_tox21,Uni-Mol (3D pretrained),Uni-Mol V1,Uni-Mol,classification,TDC,test_roc_auc,higher,0.5444067501739736,-0.5444067501739736,0.08874490390215481,7.0
+tdc_toxcast,CFA combinatorial fusion,CFA (Combinatorial Fusion),CFA fusion,classification,TDC,test_roc_auc,higher,0.7150066081941607,-0.7150066081941607,0.0009513150531616998,2.0
+tdc_toxcast,Chemprop v2 GNN,"Chemprop v2 (AttentiveFP, ensemble=3)",Chemprop v2,classification,TDC,test_roc_auc,higher,0.6902559173374985,-0.6902559173374985,0.03553441522104083,5.0
+tdc_toxcast,Conventional ML,HistGradientBoosting,conventional,classification,TDC,test_roc_auc,higher,0.7156874524410268,-0.7156874524410268,0.0,1.0
+tdc_toxcast,Deep tabular NN (ChemML MLP),ChemML MLP (TensorFlow),ChemML deep learning,classification,TDC,test_roc_auc,higher,0.6139212623653331,-0.6139212623653331,0.14219362059317278,19.0
+tdc_toxcast,Ensemble (stacking / averaging),Ensemble (Weighted average (inverse OOF error)),ensemble,classification,TDC,test_roc_auc,higher,0.6829668789298731,-0.6829668789298731,0.04571908226077215,7.0
+tdc_toxcast,MapLight + GNN,"MapLight + GNN (CatBoost, Strict Parity)",MapLight + GNN,classification,TDC,test_roc_auc,higher,0.5995234090271938,-0.5995234090271938,0.1623111359820927,22.0
+tdc_toxcast,TabPFN (tabular foundation),TabPFNClassifier,TabPFN deep learning,classification,TDC,test_roc_auc,higher,0.656013456686291,-0.656013456686291,0.08337996642417458,13.0
+tdc_toxcast,Uni-Mol (3D pretrained),Uni-Mol V1,Uni-Mol,classification,TDC,test_roc_auc,higher,0.6565341022868356,-0.6565341022868356,0.08265249020705094,12.0
+tdc_vdss_lombardo,CFA combinatorial fusion,CFA (Combinatorial Fusion),CFA fusion,regression,TDC,test_rmse,lower,6.747231996810018,6.747231996810018,0.4448976095048181,13.0
+tdc_vdss_lombardo,Chemprop v2 GNN,"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",Chemprop v2,regression,TDC,test_rmse,lower,5.689119892771458,5.689119892771458,0.21830637172964598,8.0
+tdc_vdss_lombardo,Conventional ML,MapLight CatBoost (Strict Parity),conventional,regression,TDC,test_rmse,lower,4.738737328011505,4.738737328011505,0.01478506157076239,2.0
+tdc_vdss_lombardo,Deep tabular NN (ChemML MLP),ChemML MLP (PyTorch),ChemML deep learning,regression,TDC,test_rmse,lower,7.339622915706493,7.339622915706493,0.5717561824737861,16.0
+tdc_vdss_lombardo,Ensemble (stacking / averaging),Ensemble (Weighted average (inverse OOF error)),ensemble,regression,TDC,test_rmse,lower,5.406134645284669,5.406134645284669,0.15770600882347866,7.0
+tdc_vdss_lombardo,MapLight + GNN,"MapLight + GNN (CatBoost, Strict Parity)",MapLight + GNN,regression,TDC,test_rmse,lower,4.669695591179202,4.669695591179202,0.0,1.0
+tdc_vdss_lombardo,TabPFN (tabular foundation),TabPFNRegressor,TabPFN deep learning,regression,TDC,test_rmse,lower,4.952682280518632,4.952682280518632,0.06060067167418269,6.0
+tdc_vdss_lombardo,Uni-Mol (3D pretrained),Uni-Mol V1,Uni-Mol,regression,TDC,test_rmse,lower,4.842876105136803,4.842876105136803,0.037086039245198085,3.0

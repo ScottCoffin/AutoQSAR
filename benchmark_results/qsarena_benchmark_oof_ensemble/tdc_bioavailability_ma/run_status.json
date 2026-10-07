@@ -2,9 +2,9 @@
   "status": "completed",
   "dataset": "tdc_bioavailability_ma",
   "source": "PyTDC ADME benchmark group: bioavailability_ma (official train_val/test split)",
-  "completed_at": "2026-09-28 08:17:55",
-  "elapsed_seconds": 30.399,
-  "n_metrics_rows": 61,
+  "completed_at": "2026-10-06 08:43:24",
+  "elapsed_seconds": 45.473,
+  "n_metrics_rows": 64,
   "n_stage_records": 4,
   "n_rows": 640,
   "task_type": "classification",
@@ -68,14 +68,14 @@
   "applicability_domain": {
     "method": "both",
     "n_test": 128,
-    "in_domain_fraction": 0.6484375,
+    "in_domain_fraction": 0.8125,
     "methods": {
       "standardization": 0.984375,
-      "confidence": 0.65625
+      "confidence": 0.8203125
     },
-    "selected_model": "TabPFNClassifier",
+    "selected_model": "XGBoost (ADMETboost features)",
     "notes": []
   },
-  "stage23_signature": "39deb64bc05de8415f97ea132f336c92da6b96ca52d91752ffec11926b9d1faa",
-  "resume_fingerprint": "43372296be37f823b5e2d023"
+  "stage23_signature": "8b5913b2a6678dc58eea59341f6451a8fa5ef3d175786bed1b72df8a144cb2e0",
+  "resume_fingerprint": "dcbabf51e15cf7d2dcae87dc"
 }

@@ -421,6 +421,25 @@ class FeatureSelectionSection:
         dest="selector_elasticnet_timeout_seconds", per_dataset=True,
         help="Wall-clock limit for the ElasticNetCV selector before falling back to random forest.",
     )
+    deterministic: bool = _opt(
+        False, group=5, kind="bool", cli="--deterministic-selection / --no-deterministic-selection",
+        dest="deterministic_selection", per_dataset=True,
+        help="Make the selection independent of machine speed: no ElasticNetCV wall-clock limit (so no "
+        "timeout-triggered random-forest fallback) and a single-threaded selector.",
+    )
+    load_from: str | None = _opt(
+        None, group=5, kind="str", nullable=True, cli="--selected-features-from", dest="selected_features_from",
+        help="Run directory whose <dataset>/selected_features.csv is used instead of refitting the selector "
+        "(for example the deposited benchmark run). A dataset without a deposited selection is an error.",
+    )
+    cv_selection: str | None = _opt(
+        None, group=5, kind="choice", nullable=True, choices=("outer", "nested"), cli="--cv-selection",
+        dest="cv_selection", per_dataset=True, null_means="profile default (nested; quick: outer)",
+        help="Where feature selection happens for cross-validation and the out-of-fold predictions that ensembles "
+        "use. nested refits the selector inside every CV fold, so CV scores are not optimistic; outer reuses the "
+        "selection fitted on all training rows (faster, but every validation fold helped choose its features). "
+        "Test predictions are identical either way.",
+    )
 
 
 def _enable_families_default() -> dict[str, bool]:
@@ -448,6 +467,12 @@ class ModelsSection:
         group=6, kind="list", cli="--only-model-names", dest="only_model_names", per_dataset=True,
         default_factory=list,
         help="If non-empty, run only these model labels (plus the ensemble when 'Ensemble' is listed).",
+    )
+    admetboost_xgboost: bool = _opt(
+        False, group=6, kind="bool", cli="--run-admetboost-xgboost / --no-run-admetboost-xgboost",
+        dest="run_admetboost_xgboost", per_dataset=True,
+        help="Opt-in model XGBoost (ADMETboost features): fixed XGBoost on the full, unselected ADMETboost feature set "
+        "(MACCS, ECFP4, Mol2Vec, PubChem, Mordred 2D, RDKit 2D). Needs qsarena[features] and the Mol2Vec model.",
     )
 
 
@@ -488,11 +513,12 @@ class GATuningSection:
 class ChempropSection:
     variants: list[str] | None = _opt(
         None, group=8, kind="list", nullable=True,
-        choices=("dmpnn", "dmpnn_rdkit2d", "selected_features", "cmpnn", "attentivefp"),
+        choices=("dmpnn", "dmpnn_rdkit2d", "selected_features", "cmpnn", "attentivefp", "chemeleon"),
         aliases={"dmpnn_selected": "selected_features", "mpnn": "dmpnn"}, cli="--run-chemprop-*", dest=None,
         per_dataset=True,
-        null_means="profile default (cost_optimized: attentivefp + selected_features; full: all five)",
-        help="Chemprop v2 variants. An empty list switches Chemprop off.",
+        null_means="profile default (cost_optimized: attentivefp + selected_features; full: all five except chemeleon)",
+        help="Chemprop v2 variants. An empty list switches Chemprop off. chemeleon (opt-in, never a profile default) "
+        "fine-tunes from the CheMeleon foundation model.",
     )
     epochs: int | None = _opt(
         None, group=8, kind="int", nullable=True, minimum=1, cli="--chemprop-epochs", dest="chemprop_epochs",
@@ -1349,6 +1375,7 @@ _CHEMPROP_VARIANT_DESTS = {
     "selected_features": "run_chemprop_selected_features",
     "cmpnn": "run_chemprop_cmpnn",
     "attentivefp": "run_chemprop_attentivefp",
+    "chemeleon": "run_chemprop_chemeleon",
 }
 
 
@@ -1658,7 +1685,7 @@ def regroup_parser_help(parser: argparse.ArgumentParser) -> None:
     extra = {
         "ga_models": 7, "ensemble_methods": 10, "run_chemprop_mpnn": 8, "run_chemprop_dmpnn": 8,
         "run_chemprop_cmpnn": 8, "run_chemprop_attentivefp": 8, "run_chemprop_selected_features": 8,
-        "run_chemprop_rdkit2d": 8, "run_maplight_gnn": 6, "run_ensemble": 10,
+        "run_chemprop_rdkit2d": 8, "run_chemprop_chemeleon": 8, "run_maplight_gnn": 6, "run_ensemble": 10,
         "enable_shared_feature_matrix_cache": 3, "reuse_shared_feature_matrix_cache": 3,
         "enable_persistent_feature_store": 3, "reuse_persistent_feature_store": 3, "config": 15,
         "include_local_csv": 15, "pfas_aux_workbook": 15, "pfas_aux_sheet": 15, "tdc22_multiseed": 15,

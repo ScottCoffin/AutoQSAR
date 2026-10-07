@@ -1,20 +1,19 @@
-\begin{landscape}
 \begin{table}[htbp]
 \centering
 \scriptsize
+\setlength{\tabcolsep}{3pt}
 \caption{Ensemble and fusion value-add against the best single base model available on the same dataset, under each dataset's primary metric.}
 \label{tab:ensemble}
-\begin{tabularx}{\linewidth}{@{}>{\raggedright\arraybackslash\hsize=1.000\hsize}X>{\raggedright\arraybackslash\hsize=1.000\hsize}Xrrrrrrr@{}}
+\begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash\hsize=1.000\hsize}X>{\raggedright\arraybackslash\hsize=1.000\hsize}Xrrrrrrr@{}}
 \toprule
-\textbf{Fusion method} & \textbf{Task} & \textbf{Datasets} & \textbf{Overall wins} & \textbf{Top-3} & \textbf{Beats best base} & \makecell[r]{\textbf{Loses to}\\\textbf{best base}} & \textbf{Median rank} & \makecell[r]{\textbf{Median}\\\textbf{rel.}\\\textbf{change vs}\\\textbf{best base}} \\
+\textbf{Fusion method} & \textbf{Task} & \textbf{n} & \makecell[r]{\textbf{Overall}\\\textbf{wins}} & \textbf{Top-3} & \makecell[r]{\textbf{Beats}\\\textbf{best}\\\textbf{base}} & \makecell[r]{\textbf{Loses}\\\textbf{to best}\\\textbf{base}} & \makecell[r]{\textbf{Median}\\\textbf{rank}} & \makecell[r]{\textbf{Median}\\\textbf{rel.}\\\textbf{change}\\\textbf{vs best}\\\textbf{base}} \\
 \midrule
-OOF stacking & classification & 22 & 8 & 9 & 8 & 14 & 4.000 & -\allowbreak{}0.016 \\
-Other ensemble & classification & 22 & 0 & 8 & 6 & 16 & 6.000 & -\allowbreak{}0.030 \\
-CFA fusion & classification & 16 & 2 & 6 & 2 & 14 & 4.000 & -\allowbreak{}0.023 \\
-CFA fusion & regression & 22 & 0 & 4 & 1 & 21 & 8.500 & -\allowbreak{}0.075 \\
-OOF stacking & regression & 22 & 1 & 2 & 1 & 21 & 10.500 & -\allowbreak{}0.127 \\
-Other ensemble & regression & 22 & 0 & 2 & 0 & 22 & 8.000 & -\allowbreak{}0.084 \\
+OOF stacking & classification & 22 & 6 & 15 & 8 & 14 & 2.000 & -\allowbreak{}0.005 \\
+CFA fusion & classification & 22 & 1 & 10 & 4 & 18 & 5.000 & -\allowbreak{}0.006 \\
+Other ensemble & classification & 22 & 2 & 7 & 7 & 15 & 4.500 & -\allowbreak{}0.018 \\
+OOF stacking & regression & 22 & 12 & 18 & 14 & 8 & 1.000 & 0.024 \\
+Other ensemble & regression & 22 & 2 & 9 & 5 & 17 & 4.000 & -\allowbreak{}0.040 \\
+CFA fusion & regression & 22 & 0 & 5 & 2 & 20 & 6.500 & -\allowbreak{}0.067 \\
 \bottomrule
 \end{tabularx}
 \end{table}
-\end{landscape}

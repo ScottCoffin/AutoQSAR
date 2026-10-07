@@ -33,8 +33,8 @@ TITLE = (
     "Additional file 2: Guided installation and usage tutorial for QSARena"
 )
 SUBTITLE = (
-    "No Single Model Family Dominates: Ensembles and Conventional Machine Learning Perform Comparably "
-    "to Pretrained Molecular Models Across 44 Property-Prediction Benchmarks"
+    "Ensembles Across Model Families Outperform Any Single Family: A Single-Configuration, "
+    "Leakage-Controlled Benchmark of 31 Molecular Property Models Across 44 Datasets"
 )
 
 HEADER = r"""
@@ -66,13 +66,19 @@ def _highlight_args() -> list[str]:
 
 
 def convert_figures() -> dict[str, str]:
-    import cairosvg
+    try:
+        import cairosvg
+    except (ImportError, OSError):  # OSError: cairosvg installed but libcairo missing (the Windows default)
+        cairosvg = None
 
     FIGURES.mkdir(parents=True, exist_ok=True)
     mapping: dict[str, str] = {}
     for svg in sorted(ASSETS.glob("*.svg")):
         target = FIGURES / f"{svg.stem}.pdf"
-        cairosvg.svg2pdf(url=str(svg), write_to=str(target))
+        if cairosvg is not None:
+            cairosvg.svg2pdf(url=str(svg), write_to=str(target))
+        elif not (target.exists() and target.stat().st_mtime >= svg.stat().st_mtime):
+            raise SystemExit(f"{svg.name} changed but cairosvg/libcairo is unavailable to convert it to PDF")
         mapping[f"tutorial_assets/{svg.name}"] = f"figures/additional_file_2/{target.name}"
     return mapping
 

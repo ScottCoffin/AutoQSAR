@@ -1,0 +1,20 @@
+\begin{table}[htbp]
+\centering
+\footnotesize
+\caption{Datasets won by each family with and without the post-hoc descriptor model (XGBoost on the full, unselected ADMETboost feature set) as a candidate. The ensemble rows are unchanged models that still contain it as a member; removing it there would need an ensemble rebuild, so the table bounds only its direct effect.}
+\label{tab:s14}
+\begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}Xrrr@{}}
+\toprule
+\textbf{Model family} & \makecell[r]{\textbf{Wins with the}\\\textbf{descriptor}\\\textbf{model}} & \textbf{Wins without it} & \textbf{Change} \\
+\midrule
+Ensemble (stacking /\allowbreak{} averaging) & 22 & 24 & 2 \\
+Conventional ML & 6 & 3 & -\allowbreak{}3 \\
+Chemprop v2 GNN & 5 & 5 & 0 \\
+Uni-\allowbreak{}Mol (3D pretrained) & 5 & 6 & 1 \\
+TabPFN (tabular foundation) & 3 & 3 & 0 \\
+Map\allowbreak{}Light + GNN & 2 & 2 & 0 \\
+CFA combinatorial fusion & 1 & 1 & 0 \\
+Deep tabular NN (ChemML MLP) & 0 & 0 & 0 \\
+\bottomrule
+\end{tabularx}
+\end{table}

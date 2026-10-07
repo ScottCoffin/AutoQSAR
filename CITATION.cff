@@ -6,7 +6,7 @@ authors:
   - family-names: Coffin
     given-names: Scott
     affiliation: "California Office of Environmental Health Hazard Assessment"
-    # orcid: "https://orcid.org/0000-0000-0000-0000"   # TODO: add before archiving
+    orcid: "https://orcid.org/0000-0002-7035-1282"
 repository-code: "https://github.com/ScottCoffin/QSARena"
 license: MIT
 keywords:
@@ -20,10 +20,11 @@ keywords:
 # doi: "10.5281/zenodo.XXXXXXX"   # TODO: add the concept DOI after the first Zenodo release
 preferred-citation:
   type: article
-  title: "No Single Model Family Dominates: Ensembles and Conventional Machine Learning Perform Comparably to Pretrained Molecular Models Across 44 Property-Prediction Benchmarks"
+  title: "Ensembles Across Model Families Outperform Any Single Family: A Single-Configuration, Leakage-Controlled Benchmark of 31 Molecular Property Models Across 44 Datasets"
   authors:
     - family-names: Coffin
       given-names: Scott
+      orcid: "https://orcid.org/0000-0002-7035-1282"
       affiliation: "California Office of Environmental Health Hazard Assessment"
   journal: "Journal of Cheminformatics"
   year: 2026

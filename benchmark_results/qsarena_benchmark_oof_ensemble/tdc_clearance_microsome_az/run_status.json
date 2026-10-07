@@ -2,9 +2,9 @@
   "status": "completed",
   "dataset": "tdc_clearance_microsome_az",
   "source": "PyTDC ADME benchmark group: clearance_microsome_az (official train_val/test split)",
-  "completed_at": "2026-09-28 08:23:19",
-  "elapsed_seconds": 32.381,
-  "n_metrics_rows": 44,
+  "completed_at": "2026-10-05 22:36:38",
+  "elapsed_seconds": 10.665,
+  "n_metrics_rows": 47,
   "n_stage_records": 4,
   "n_rows": 1102,
   "task_type": "regression",
@@ -54,11 +54,11 @@
       "standardization": 0.9819004524886877,
       "knn_similarity": 0.9728506787330317
     },
-    "selected_model": "TabPFNRegressor",
+    "selected_model": "XGBoost (ADMETboost features)",
     "notes": [],
-    "mae_in_domain": 27.553340412985605,
-    "mae_out_of_domain": 29.490701285468205
+    "mae_in_domain": 25.747569849741346,
+    "mae_out_of_domain": 21.77347418467204
   },
-  "stage23_signature": "6848ee5ce96012cfedb78d8ae1d0e9a77cd42d4886883e184a37e8ba48904bd7",
-  "resume_fingerprint": "b3be2a4f13f6e2badcece34d"
+  "stage23_signature": "9b2e363f94be99a251d4bf3231444132d0e2441266d1ca56cc973e5fe70a5e67",
+  "resume_fingerprint": "c62f05e580299337bc769668"
 }

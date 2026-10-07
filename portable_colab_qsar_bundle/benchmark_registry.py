@@ -180,7 +180,7 @@ PODUAM_POD_OPTIONS: dict[str, dict[str, Any]] = {
     "poduam_pod_nc_std": {
         "option_label": "PODUAM | POD | nc-std",
         "dataset_name": "poduam_pod_nc_std",
-        "source_label": "PODUAM benchmark: POD non-cancer standardized set (Aurisano et al., Nature Communications 2025)",
+        "source_label": "PODUAM benchmark: POD non-cancer standardized set (von Borries et al., Nature Communications 2026)",
         "source_url": "https://raw.githubusercontent.com/kejbo/PODUAM/main/data/data_pod_nc-std.csv",
         "source_smiles_column": "Canonical_QSARr",
         "source_target_column": "y",
@@ -211,7 +211,7 @@ PODUAM_POD_OPTIONS: dict[str, dict[str, Any]] = {
     "poduam_pod_rd_std": {
         "option_label": "PODUAM | POD | rd-std",
         "dataset_name": "poduam_pod_rd_std",
-        "source_label": "PODUAM benchmark: POD reproductive/developmental standardized set (Aurisano et al., Nature Communications 2025)",
+        "source_label": "PODUAM benchmark: POD reproductive/developmental standardized set (von Borries et al., Nature Communications 2026)",
         "source_url": "https://raw.githubusercontent.com/kejbo/PODUAM/main/data/data_pod_rd-std.csv",
         "source_smiles_column": "Canonical_QSARr",
         "source_target_column": "y",

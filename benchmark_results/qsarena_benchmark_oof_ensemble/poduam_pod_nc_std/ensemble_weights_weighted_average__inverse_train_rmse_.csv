@@ -1,16 +1,23 @@
 Model,Weight,Workflow
-ElasticNetCV,0.07723869198252771,conventional
-SVR,0.06482408742690716,conventional
-Random forest,0.06910790756592647,conventional
-Extra trees,0.06803287381697562,conventional
-HistGradientBoosting,0.06971389095825256,conventional
-"Voting Regressor (KNN, SVM)",0.06556730981449008,conventional
-AdaBoost,0.059963480837329025,conventional
-Tabular MLP,0.04964633144325685,conventional
-Tabular CNN,0.056499903329571846,conventional
-XGBoost,0.07182700726260721,conventional
-CatBoost,0.07325203321876007,conventional
-MapLight CatBoost (Strict Parity),0.06765490386542129,conventional
-ChemML MLP (PyTorch),0.07082715089683479,ChemML deep learning
-ChemML MLP (TensorFlow),0.06972492975876163,ChemML deep learning
-"MapLight + GNN (CatBoost, Strict Parity)",0.06611949782237764,MapLight + GNN
+ElasticNetCV,0.04266527485149716,conventional
+SVR,0.04254010884291341,conventional
+Random forest,0.049320441142857656,conventional
+Extra trees,0.048540902382388756,conventional
+HistGradientBoosting,0.04712564504878773,conventional
+"Voting Regressor (KNN, SVM)",0.044053796864102414,conventional
+AdaBoost,0.04408731657816308,conventional
+Tabular MLP,0.0369631948682688,conventional
+Tabular CNN,0.03923628666483675,conventional
+XGBoost,0.04886674432048917,conventional
+CatBoost,0.049543550200966235,conventional
+MapLight CatBoost (Strict Parity),0.05038315687954542,conventional
+ChemML MLP (PyTorch),0.04284925246659846,ChemML deep learning
+ChemML MLP (TensorFlow),0.042106998630279814,ChemML deep learning
+Uni-Mol V1,0.04804832655756193,Uni-Mol
+"MapLight + GNN (CatBoost, Strict Parity)",0.049239727517878584,MapLight + GNN
+"Chemprop v2 (D-MPNN, ensemble=3)",0.04616139256771311,Chemprop v2
+"Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",0.04403453656589275,Chemprop v2
+"Chemprop v2 (CMPNN, ensemble=3)",0.04482886400811617,Chemprop v2
+"Chemprop v2 (AttentiveFP, ensemble=3)",0.044183033174822264,Chemprop v2
+"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",0.044753370945064326,Chemprop v2
+XGBoost (ADMETboost features),0.050468078921255724,conventional

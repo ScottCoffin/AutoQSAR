@@ -2,9 +2,9 @@
   "status": "completed",
   "dataset": "tdc_cyp2d6_substrate_carbonmangels",
   "source": "PyTDC ADME benchmark group: cyp2d6_substrate_carbonmangels (official train_val/test split)",
-  "completed_at": "2026-09-28 08:20:02",
-  "elapsed_seconds": 28.551,
-  "n_metrics_rows": 45,
+  "completed_at": "2026-10-05 22:35:59",
+  "elapsed_seconds": 1.784,
+  "n_metrics_rows": 48,
   "n_stage_records": 4,
   "n_rows": 667,
   "task_type": "classification",
@@ -53,14 +53,14 @@
   "applicability_domain": {
     "method": "both",
     "n_test": 135,
-    "in_domain_fraction": 0.6444444444444445,
+    "in_domain_fraction": 0.8074074074074075,
     "methods": {
       "standardization": 0.9185185185185185,
-      "confidence": 0.674074074074074
+      "confidence": 0.8666666666666667
     },
-    "selected_model": "TabPFNClassifier",
+    "selected_model": "XGBoost (ADMETboost features)",
     "notes": []
   },
-  "stage23_signature": "897ee73cc8dae7e9917690829ba05ad22a93000b006f0d26dca201977425d095",
-  "resume_fingerprint": "1933de75edbd1a822110414c"
+  "stage23_signature": "f0801520929302cbde7e5b8f6cd896afade5be681c45923024a8c8f86c578a42",
+  "resume_fingerprint": "941d534739f5f69bc93214a7"
 }

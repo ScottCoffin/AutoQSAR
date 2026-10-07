@@ -1,0 +1,36 @@
+\begingroup\footnotesize
+\begin{xltabular}{\textwidth}{@{}>{\raggedright\arraybackslash}Xrrrr@{}}
+\caption{Family selector (v2), leave-one-dataset-out regret: the relative gap (\%) of the recommended family to the per-dataset best. Rows are pre-specified variants (model $|$ feature blocks: F0 size, similarity, label asymmetry and task; F1 chemistry; F2 label landscape; F3 training-set CV landmarks); ``sbs'' always picks the family with the best record on the other datasets. The nested row chooses the variant inside an inner leave-one-dataset-out loop and is the only unbiased estimate; single variants are exploratory.}\label{tab:s11}\\
+\toprule
+\textbf{Selector (model | feature blocks)} & \textbf{Mean regret (\%)} & \makecell[r]{\textbf{Median}\\\textbf{regret}\\\textbf{(\%)}} & \makecell[r]{\textbf{Pick within}\\\textbf{5\% of best}\\\textbf{(\%)}} & \makecell[r]{\textbf{SBS-to-oracle}\\\textbf{gap closed}} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Selector (model | feature blocks)} & \textbf{Mean regret (\%)} & \makecell[r]{\textbf{Median}\\\textbf{regret}\\\textbf{(\%)}} & \makecell[r]{\textbf{Pick within}\\\textbf{5\% of best}\\\textbf{(\%)}} & \makecell[r]{\textbf{SBS-to-oracle}\\\textbf{gap closed}} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{5}{r@{}}{\itshape continued on next page}\\
+\endfoot
+\bottomrule
+\endlastfoot
+sbs & 3.310 & 0.031 & 84.091 & 0 \\
+knn|F0 & 3.760 & 0.159 & 79.545 & -\allowbreak{}0.136 \\
+ridge|F0 & 2.982 & 0 & 86.364 & 0.099 \\
+rf|F0 & 4.236 & 0.082 & 77.273 & -\allowbreak{}0.280 \\
+knn|F0+F1 & 3.629 & 0 & 81.818 & -\allowbreak{}0.096 \\
+ridge|F0+F1 & 3.403 & 0 & 81.818 & -\allowbreak{}0.028 \\
+rf|F0+F1 & 3.650 & 1.086 & 81.818 & -\allowbreak{}0.102 \\
+knn|F0+F2 & 3.728 & 0.159 & 81.818 & -\allowbreak{}0.126 \\
+ridge|F0+F2 & 3.323 & 0 & 84.091 & -\allowbreak{}0.004 \\
+rf|F0+F2 & 4.163 & 0.159 & 75 & -\allowbreak{}0.257 \\
+knn|F0+F3 & 2.739 & 0 & 88.636 & 0.173 \\
+ridge|F0+F3 & 3.133 & 0 & 84.091 & 0.054 \\
+rf|F0+F3 & 3.216 & 0 & 84.091 & 0.028 \\
+knn|F0-\allowbreak{}F3 & 3.375 & 0 & 81.818 & -\allowbreak{}0.020 \\
+ridge|F0-\allowbreak{}F3 & 4.525 & 0.031 & 81.818 & -\allowbreak{}0.367 \\
+rf|F0-\allowbreak{}F3 & 3.516 & 0.051 & 81.818 & -\allowbreak{}0.062 \\
+tree\_\allowbreak{}cls|F0 & 4.837 & 0 & 79.545 & -\allowbreak{}0.461 \\
+nested (headline) & 3.115 & 0 & 86.364 & 0.059 \\
+\end{xltabular}
+\endgroup

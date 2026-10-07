@@ -75,6 +75,13 @@ graph = [
     "huggingface-hub>=0.20",
 ]
 
+# Experimental feature-expansion arm (qsarena.feature_expansion): Mordred 2D, PubChem, Mol2Vec.
+features = [
+    "scikit-fingerprints>=1.10",
+    "mordredcommunity>=2.0",
+    "gensim>=4.3",
+]
+
 # Pretrained/foundation tabular and molecular models.
 foundation = [
     "tabpfn>=2.0",
@@ -149,7 +156,7 @@ qsarena-examples = "qsarena.examples:main"
 [tool.setuptools]
 # Explicit list: auto-discovery would otherwise try to package data/, hpc/,
 # js2/, tests/, benchmark_results/ and the manuscript directories.
-packages = ["qsarena", "qsarena.examples", "portable_colab_qsar_bundle"]
+packages = ["qsarena", "qsarena.examples", "qsarena.meta_analysis", "qsarena.feature_expansion", "portable_colab_qsar_bundle"]
 include-package-data = false
 
 [tool.setuptools.package-data]

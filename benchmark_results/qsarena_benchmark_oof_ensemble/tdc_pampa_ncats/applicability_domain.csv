@@ -1,409 +1,409 @@
 smiles,observed,selected_model,predicted,ad_standardization_s_new,ad_standardization_in_domain,ad_confidence,ad_confidence_in_domain,in_domain
-CCCCOc1ccc(CC(=O)NO)cc1,1.0,TabPFNClassifier,1.0,0.7232050430012995,True,1.0,True,True
-N[C@@H](Cc1cc(Br)c(O)c(Br)c1)C(=O)O,0.0,TabPFNClassifier,1.0,2.3375147381612367,True,1.0,True,True
-CCN(CC)C(=O)c1ccc(O)c(OC)c1,1.0,TabPFNClassifier,1.0,0.5563496711238599,True,1.0,True,True
-O=C1Nc2ccc(I)cc2C1=Cc1cc(Br)c(O)c(Br)c1,1.0,TabPFNClassifier,1.0,0.7420539968764329,True,1.0,True,True
-COc1cccc(CNc2ccc(S(=O)(=O)Nc3nccs3)cc2)c1O,1.0,TabPFNClassifier,1.0,2.316098811420966,True,1.0,True,True
-Cc1ccccc1OCC(O)CO,1.0,TabPFNClassifier,1.0,0.6821601349397342,True,1.0,True,True
-O=C(CCCCCCC(=O)Nc1ccccc1)NO,1.0,TabPFNClassifier,1.0,1.9716507853610308,True,1.0,True,True
-Cn1nnnc1Sc1ncnc2scc(-c3cccc(S(C)(=O)=O)c3)c12,1.0,TabPFNClassifier,1.0,1.3644487451816634,True,1.0,True,True
-CS(=O)(=O)c1ccccc1-c1csc(N2CCC(C(N)=O)CC2)n1,1.0,TabPFNClassifier,1.0,0.4666956145157622,True,1.0,True,True
-NC(=O)C1CCN(c2nc(-c3cccc(N)c3)cs2)CC1,1.0,TabPFNClassifier,1.0,1.0545576362379363,True,1.0,True,True
-CC(=O)Nc1ccc(-c2csc(N3CCC(C(N)=O)CC3)n2)cc1,0.0,TabPFNClassifier,1.0,0.9332716141880215,True,1.0,True,True
-CN(C)C(=O)c1cccc(-c2csc(N3CCC(C(N)=O)CC3)n2)c1,1.0,TabPFNClassifier,1.0,0.5359174451899156,True,1.0,True,True
-CS(=O)(=O)c1ccc(-c2csc(N3CCC(C(N)=O)CC3)n2)cc1,1.0,TabPFNClassifier,1.0,0.48771255660656,True,1.0,True,True
-CS(=O)(=O)c1cccc(-c2csc(N3CCC(C(N)=O)CC3)n2)c1,1.0,TabPFNClassifier,1.0,1.0299503354591182,True,1.0,True,True
-CN(C)C(=O)C1CCN(c2nc(-c3ccc(Br)cc3)cs2)CC1,1.0,TabPFNClassifier,1.0,0.7037540212002009,True,1.0,True,True
-NC(=O)C1CCN(c2nc(-c3ccc(N)cc3)cs2)CC1,1.0,TabPFNClassifier,1.0,1.0544592204522225,True,1.0,True,True
-COc1ccc(-c2csc(N3CCC(C(N)=O)CC3)n2)cc1OC,1.0,TabPFNClassifier,1.0,0.5349232553268861,True,1.0,True,True
-COc1cc(-c2csc(N3CCC(C(N)=O)CC3)n2)cc(OC)c1OC,1.0,TabPFNClassifier,1.0,0.5776493614782914,True,1.0,True,True
-CC(C)Oc1ccc(-c2csc(N3CCC(C(N)=O)CC3)n2)cc1,1.0,TabPFNClassifier,1.0,0.5148859697540128,True,1.0,True,True
-NC1CCN(c2nc(-c3ccc(Br)cc3)cs2)CC1,1.0,TabPFNClassifier,1.0,0.7403117722413881,True,1.0,True,True
-CC(=O)NC1CCN(c2nc(-c3ccc(Br)cc3)cs2)CC1,1.0,TabPFNClassifier,1.0,0.9068713966996691,True,1.0,True,True
-Cc1ccnc(NC(=S)N2CCN(c3ccc(C(F)(F)F)cc3)CC2)c1,1.0,TabPFNClassifier,1.0,0.8687707947006447,True,1.0,True,True
-COc1ccc(-c2cnc(N3CCC(C(N)=O)CC3)s2)cc1OC,1.0,TabPFNClassifier,1.0,0.5362955610834819,True,1.0,True,True
-Cc1ccnc(NC(=S)N2CCN(c3ccc(N)cc3)CC2)c1,1.0,TabPFNClassifier,1.0,0.9237821281628866,True,1.0,True,True
-CCCCCCCCc1ccc(CCC(N)(CO)CO)cc1,0.0,TabPFNClassifier,1.0,1.8681267639132368,True,1.0,True,True
-Cc1cc(C)nc(NC(=S)N2CCN(c3cccc(C(F)(F)F)c3)CC2)c1,1.0,TabPFNClassifier,1.0,0.8687424469500891,True,1.0,True,True
-FC(F)(F)c1ccc(N2CCN(C(=S)Nc3ccccn3)CC2)cc1,1.0,TabPFNClassifier,1.0,0.9782469004871093,True,1.0,True,True
-Cc1cc(C)nc(NC(=S)N2CCN(c3ccc(F)cc3F)CC2)c1,1.0,TabPFNClassifier,1.0,0.8797584127436342,True,1.0,True,True
-Cc1cc(NS(=O)(=O)c2ccc(N(C)C(=O)Cc3ccc(Cl)c(Cl)c3)cc2)no1,1.0,TabPFNClassifier,1.0,1.0851053765782135,True,1.0,True,True
-Cc1ccnc(NC(=S)N2CCN(c3ccc(Cl)cc3Cl)CC2)c1,1.0,TabPFNClassifier,1.0,0.9043896416829875,True,1.0,True,True
-Cc1ccnc(NC(=S)N2CCN(c3ccc(C(F)(F)F)cc3[N+](=O)[O-])CC2)c1,1.0,TabPFNClassifier,1.0,2.1824047713716377,True,1.0,True,True
-COc1ccnc(NC(=S)N2CCN(c3cc(C(F)(F)F)cc(C(F)(F)F)c3)CC2)c1,1.0,TabPFNClassifier,1.0,2.899697785704375,True,1.0,True,True
-Cc1cc(C)nc(NC(=S)N2CCN(c3ccc(Cl)cc3F)CC2)c1,1.0,TabPFNClassifier,1.0,0.8777090037716299,True,1.0,True,True
-O=C(Cc1ccc(Cl)c(Cl)c1)Nc1ccc(S(=O)(=O)Nc2ccon2)cc1,0.0,TabPFNClassifier,1.0,1.4366738264302432,True,1.0,True,True
-Cc1cc(NS(=O)(=O)c2ccc(NC(=O)Cc3ccc(Cl)c(F)c3)cc2)no1,1.0,TabPFNClassifier,1.0,1.427344386808908,True,1.0,True,True
-Cc1cc(NS(=O)(=O)c2ccc(NC(=O)Cc3ccc(F)c(Cl)c3)cc2)no1,1.0,TabPFNClassifier,1.0,1.4672956047879713,True,1.0,True,True
-COc1ccc(NC(=O)c2[nH]c(C)c(C(C)=O)c2C)cc1S(=O)(=O)N(C)C,1.0,TabPFNClassifier,1.0,0.7181433363652514,True,1.0,True,True
-COc1oc(-c2cccc3ccccc23)nc1C(=O)O,0.0,TabPFNClassifier,1.0,2.110191497762773,True,1.0,True,True
-O=S(=O)(Nc1nccs1)c1ccc(NCc2cccc(O)c2)cc1,0.0,TabPFNClassifier,0.0,3.4218884991237317,False,1.0,True,False
-COc1ccc(CNc2ccc(S(=O)(=O)Nc3nccs3)cc2)cc1O,1.0,TabPFNClassifier,0.0,3.5036877464965555,False,1.0,True,False
-CC(=O)Nc1ccc(C(=O)Nc2ccccc2N)cc1,0.0,TabPFNClassifier,1.0,1.0864343718549208,True,1.0,True,True
-Nc1ccccc1CNc1ccc(S(=O)(=O)Nc2nccs2)cc1,0.0,TabPFNClassifier,0.0,2.3382345079593523,True,1.0,True,True
-COc1ccc(O)c(CNc2ccc(S(=O)(=O)Nc3nccs3)cc2)c1,0.0,TabPFNClassifier,1.0,2.314723812900696,True,1.0,True,True
-O=[N+]([O-])c1cccc(CNc2ccc(S(=O)(=O)Nc3nccs3)cc2)c1O,1.0,TabPFNClassifier,0.0,2.7956995140928433,True,1.0,True,True
-Nc1cccc(CNc2ccc(S(=O)(=O)Nc3nccs3)cc2)c1O,0.0,TabPFNClassifier,0.0,3.405395034502261,False,1.0,True,False
-Nc1ccc(CNc2ccc([S+](=O)([O-])Nc3nccs3)cc2)c(O)c1,0.0,TabPFNClassifier,0.0,7.052989810185073,False,1.0,True,False
-O=[S+]([O-])(Nc1nccs1)c1ccc(NCc2cc(F)cc(Cl)c2O)cc1,1.0,TabPFNClassifier,0.0,3.2866118249333587,False,1.0,True,False
-COc1cccc(CNc2ccc(S(=O)(=O)Nc3nccs3)cc2)c1N,1.0,TabPFNClassifier,1.0,2.371568073747684,True,1.0,True,True
-COc1ccc(NC(=O)c2[nH]c(C)c(C(C)=O)c2C)cc1,1.0,TabPFNClassifier,1.0,1.3337573309620008,True,1.0,True,True
-CC(=O)c1c(C)[nH]c(C(=O)Nc2ccc(Cl)cc2)c1C,1.0,TabPFNClassifier,1.0,1.347774657925944,True,1.0,True,True
-Nc1nc2c(s1)C(c1cc(Cl)ccc1F)CC(=O)N2,1.0,TabPFNClassifier,1.0,0.8633818239748849,True,1.0,True,True
-COc1ccc(C2CC(=O)Nc3nc(N)sc32)cc1OC,1.0,TabPFNClassifier,1.0,1.770490836478209,True,1.0,True,True
-Cc1ccc(S(=O)(=O)Nc2cnccc2C(=O)Nc2nc(-c3cccc(Cl)c3)cs2)cc1,1.0,TabPFNClassifier,1.0,1.6039520388335684,True,1.0,True,True
-COc1cccc(CN(C)c2ccc([S+](=O)([O-])Nc3nccs3)cc2)c1O,1.0,TabPFNClassifier,1.0,3.5977167211051926,False,1.0,True,False
-Cc1ccc(S(=O)(=O)Nc2cnccc2C(=O)Nc2nc(-c3ccc(Cl)cc3)cs2)cc1,1.0,TabPFNClassifier,1.0,1.3284274215344247,True,1.0,True,True
-Cc1ccc(S(=O)(=O)Nc2cnccc2C(=O)Nc2nc(-c3ccc(Cl)c(Cl)c3)cs2)cc1,1.0,TabPFNClassifier,1.0,1.6044213472497018,True,1.0,True,True
-Cc1ccc(S(=O)(=O)Nc2cnccc2C(=O)Nc2nc(-c3ccc(F)cc3)cs2)cc1,1.0,TabPFNClassifier,1.0,1.804105719553455,True,1.0,True,True
-COc1cccc(CNc2ccc(S(=O)(=O)Nc3nc(C)cs3)cc2)c1O,1.0,TabPFNClassifier,1.0,1.7883456888170732,True,1.0,True,True
-COc1ccc(/C=C2/C(=O)Nc3ccccc32)cc1O,1.0,TabPFNClassifier,1.0,0.6969408121297918,True,1.0,True,True
-O=C1Nc2ccccc2/C1=C/c1cccc(C(=O)O)c1,0.0,TabPFNClassifier,1.0,2.216024632186493,True,1.0,True,True
-O=C1Nc2c(Cl)cccc2/C1=C\c1cc(Cl)c(O)c(Cl)c1,1.0,TabPFNClassifier,1.0,0.8951845381664343,True,1.0,True,True
-O=C1Nc2cc(Cl)ccc2/C1=C\c1cc(Cl)c(O)c(Cl)c1,1.0,TabPFNClassifier,1.0,1.118887602503404,True,1.0,True,True
-O=C1Nc2ccc(Cl)cc2/C1=C\c1cc(Cl)c(O)c(Cl)c1,1.0,TabPFNClassifier,1.0,0.8943969281653854,True,1.0,True,True
-O=C1Nc2cccc(Cl)c2/C1=C\c1cc(Cl)c(O)c(Cl)c1,1.0,TabPFNClassifier,1.0,0.8953506190305613,True,1.0,True,True
-COc1ccc(NC(=O)c2[nH]c(C)cc2C)cc1[S+](=O)([O-])Nc1ccc(Br)cc1,1.0,TabPFNClassifier,1.0,1.9099753049330852,True,1.0,True,True
-COc1ccc(NC(=O)c2c(C)cccc2C)cc1[S+](=O)([O-])N(C)C,1.0,TabPFNClassifier,1.0,1.3195907230892996,True,1.0,True,True
-N#Cc1ccc(S(=O)(=O)Nc2cnccc2C(=O)Nc2nc(-c3ccccc3)cs2)cc1,1.0,TabPFNClassifier,1.0,1.7783744107884876,True,1.0,True,True
-COc1cc(-c2nc(Nc3ccc(F)c(F)c3)c3ccccc3n2)cc(OC)n1,1.0,TabPFNClassifier,1.0,0.6217461073251025,True,1.0,True,True
-COc1cc(-c2nc(Nc3ccc(F)c(F)c3)c3ccccc3n2)ccn1,1.0,TabPFNClassifier,1.0,0.5543344918324074,True,1.0,True,True
-COc1nccc(-c2nc(Nc3ccc(F)c(F)c3)c3ccccc3n2)c1Cl,1.0,TabPFNClassifier,1.0,0.6911738533443081,True,1.0,True,True
-Fc1cc(-c2nc(Nc3ccc(F)c(F)c3)c3ccccc3n2)ccn1,1.0,TabPFNClassifier,1.0,0.7567547455903307,True,1.0,True,True
-O=C(Nc1nc(-c2ccc(F)cc2)cs1)c1ccncc1NS(=O)(=O)c1ccc(F)cc1,1.0,TabPFNClassifier,1.0,1.747193866380798,True,1.0,True,True
-O=C(Nc1nc(-c2ccc(F)cc2)cs1)c1ccncc1NS(=O)(=O)c1ccccc1Cl,1.0,TabPFNClassifier,1.0,2.05131768259932,True,1.0,True,True
-Fc1cc(Nc2nc(-c3ccncc3)nc3ccccc23)ccc1-c1cccc(OC(F)(F)F)c1,1.0,TabPFNClassifier,1.0,0.8687859634514996,True,1.0,True,True
-Fc1ccc(-c2ccc(Nc3nc(-c4ccncc4)nc4ccccc34)cc2F)cc1,1.0,TabPFNClassifier,1.0,0.8525052242686908,True,1.0,True,True
-Fc1cc(Nc2nc(-c3ccncc3)nc3ccccc23)ccc1-c1cccc(C(F)(F)F)c1,1.0,TabPFNClassifier,1.0,0.8687623649796348,True,1.0,True,True
-Fc1cccc(-c2ccc(Nc3nc(-c4ccncc4)nc4ccccc34)cc2F)c1,1.0,TabPFNClassifier,1.0,0.8529272340425995,True,1.0,True,True
-Fc1cc(Nc2nc(-c3ccncc3)nc3ccccc23)ccc1-c1cc(F)c(F)c(F)c1,1.0,TabPFNClassifier,1.0,1.234698707267988,True,1.0,True,True
-Fc1cc(Nc2nc(-c3ccncc3)nc3ccccc23)ccc1-c1cccc(OC(F)F)c1,1.0,TabPFNClassifier,1.0,0.8640232271923888,True,1.0,True,True
-Fc1cc(Nc2nc(-c3ccncc3)nc3ccccc23)ccc1OC(F)(F)F,1.0,TabPFNClassifier,1.0,0.920451545967766,True,1.0,True,True
-CC(=O)c1c(C)[nH]c(C(=O)Nc2cccc([S+](=O)([O-])Nc3ccc(C#N)cc3)c2)c1C,1.0,TabPFNClassifier,1.0,2.1890911198401017,True,1.0,True,True
-CC(=O)Nc1ccc(N[S+](=O)([O-])c2cccc(NC(=O)c3[nH]c(C)c(C(C)=O)c3C)c2)cc1,1.0,TabPFNClassifier,1.0,2.227227049613589,True,1.0,True,True
-CCc1ccc(NC(=O)c2[nH]c(C)c(C(C)=O)c2C)cc1[S+](=O)([O-])Nc1ccccc1C#N,1.0,TabPFNClassifier,1.0,1.8060049995932759,True,1.0,True,True
-COc1ccc(NC(=O)c2[nH]c(C)c(C(C)=O)c2C)cc1[S+](=O)([O-])Nc1ccccc1C#N,1.0,TabPFNClassifier,1.0,2.130932393496054,True,1.0,True,True
-COc1ccc(NC(=O)c2[nH]c(C)c(C(C)=O)c2C)cc1[S+](=O)([O-])Nc1ccc(C#N)cc1,1.0,TabPFNClassifier,1.0,2.450475314919231,True,1.0,True,True
-CC(=O)c1c(C)[nH]c(C(=O)Nc2ccc(OCCCN(C)C)c([S+](=O)([O-])Nc3ccc(Br)cc3)c2)c1C,1.0,TabPFNClassifier,1.0,2.223049931863912,True,1.0,True,True
-Nc1nc2c(s1)C(c1cccc(F)c1F)CC(=O)N2,0.0,TabPFNClassifier,1.0,1.0038699903361492,True,1.0,True,True
-Nc1nc2c(s1)C(c1ccccc1)CC(=O)N2,1.0,TabPFNClassifier,1.0,1.7510850318222726,True,1.0,True,True
-Nc1nc2c(s1)C(c1ccc(F)cc1F)CC(=O)N2,1.0,TabPFNClassifier,1.0,0.9377854481001318,True,1.0,True,True
-COc1ccc(NC(=O)c2cc(-c3ccc[nH]3)n[nH]2)cc1OC,1.0,TabPFNClassifier,1.0,1.182409993371946,True,1.0,True,True
-CCOP(=O)(Cc1ccc(C(=O)Nc2ccc(Br)cc2C#N)cc1)OCC,1.0,TabPFNClassifier,1.0,0.7360745388235079,True,1.0,True,True
-O=C1Nc2ccccc2/C1=C/c1cc(Cl)c(O)c(Cl)c1,1.0,TabPFNClassifier,1.0,0.9250822893977526,True,1.0,True,True
-COc1ccnc(NC(=S)N2CCN(c3cccc(C(F)(F)F)c3)CC2)c1,1.0,TabPFNClassifier,1.0,0.9199378629178807,True,1.0,True,True
-O=C1Nc2ccccc2/C1=C\c1ccc(C(=O)O)cc1,0.0,TabPFNClassifier,1.0,2.087238515468595,True,1.0,True,True
-Cc1cc(C)nc(NC(=S)N2CCN(c3cccc(OC(F)F)c3)CC2)c1,1.0,TabPFNClassifier,1.0,0.8728405592301635,True,1.0,True,True
-CNc1oc(-c2cccc3ccccc23)nc1C(=O)OC,1.0,TabPFNClassifier,1.0,1.7388501426447476,True,1.0,True,True
-COc1cnccc1-c1nc(Nc2ccc(F)c(F)c2)c2ccccc2n1,0.0,TabPFNClassifier,1.0,0.5826838756513548,True,1.0,True,True
-Nc1nc2c(s1)C(c1ccc(F)c(F)c1)CC(=O)N2,1.0,TabPFNClassifier,1.0,1.8176187770250327,True,1.0,True,True
-Fc1cccc(F)c1Nc1nc(-c2ccncc2)nc2ccccc12,1.0,TabPFNClassifier,1.0,0.8742002615558233,True,1.0,True,True
-Oc1ccc(Nc2nc(-c3ccncc3)nc3ccccc23)cc1F,1.0,TabPFNClassifier,1.0,0.7071777766534146,True,1.0,True,True
-Fc1cc(Nc2nc(-c3ccncc3)nc3ccccc23)ccc1OCC(F)(F)F,1.0,TabPFNClassifier,1.0,1.6945243887000059,True,1.0,True,True
-Cc1ccc(S(=O)(=O)Nc2cnccc2C(=O)Nc2nc(-c3cccc(F)c3)cs2)cc1,1.0,TabPFNClassifier,1.0,1.6951985433379133,True,1.0,True,True
-CNC(=O)C1CCN(c2nc(-c3ccc(Br)cc3)cs2)CC1,1.0,TabPFNClassifier,1.0,0.526098490118833,True,1.0,True,True
-O=C1Nc2ccccc2/C1=C\c1cc(Br)c(O)c(Br)c1,1.0,TabPFNClassifier,1.0,0.7420592641238681,True,1.0,True,True
-Cc1cccc2c1NC(=O)/C2=C/c1cc(Cl)c(O)c(Cl)c1,1.0,TabPFNClassifier,1.0,0.847625904029055,True,1.0,True,True
-COc1nccc(-c2nc(Nc3ccc(F)c(F)c3)c3ccccc3n2)c1OC,1.0,TabPFNClassifier,1.0,0.7091562303022031,True,1.0,True,True
-Nc1nc2c(s1)C(c1cccc(Cl)c1Cl)CC(=O)N2,1.0,TabPFNClassifier,1.0,0.828602354048342,True,1.0,True,True
-NC(=O)C1CCN(c2nc(-c3ccccc3N)cs2)CC1,1.0,TabPFNClassifier,1.0,1.9322549866157956,True,1.0,True,True
-Nc1ccc(S(=O)(=O)Nc2cnccc2C(=O)Nc2nc(-c3ccccc3)cs2)cc1,1.0,TabPFNClassifier,1.0,1.7644600917141848,True,1.0,True,True
-Fc1ccc(-c2ccc(Nc3nc(-c4ccncc4)nc4ccccc34)cc2F)c(Cl)c1,1.0,TabPFNClassifier,1.0,0.854094211613508,True,1.0,True,True
-CC(=O)c1c(C)[nH]c(C(=O)Nc2cccc([S+](=O)([O-])Nc3cccc(C#N)c3)c2)c1C,1.0,TabPFNClassifier,1.0,2.1364844083173393,True,1.0,True,True
-N#CC1CCN(c2nc(-c3ccc(Br)cc3)cs2)CC1,1.0,TabPFNClassifier,1.0,1.1861398589245138,True,1.0,True,True
-COc1ccc(C(=O)NC2CCCc3c2[nH]c2ccccc32)cc1OC,1.0,TabPFNClassifier,1.0,0.5987285231289148,True,1.0,True,True
-CC(C)Nc1oc(-c2cccc3ccccc23)nc1C#N,1.0,TabPFNClassifier,1.0,0.6311657707228358,True,1.0,True,True
-Cc1ccnc(NC(=S)N2CCN(c3cccc(C(F)(F)F)c3)CC2)c1,1.0,TabPFNClassifier,1.0,0.8685388990334599,True,1.0,True,True
-Cc1ccnc(NC(=S)N2CCN(c3ccc(Cl)c(Cl)c3)CC2)c1,1.0,TabPFNClassifier,1.0,2.1093023269848716,True,1.0,True,True
-Cc1ccc(S(=O)(=O)Nc2ccc(OC(F)(F)F)cc2C(=O)Nc2nc(-c3ccccc3)cs2)cc1,0.0,TabPFNClassifier,1.0,1.2935566263740568,True,1.0,True,True
-O=S(=O)(Nc1nccs1)c1ccc(NCc2ccccc2O)cc1,0.0,TabPFNClassifier,0.0,2.284824612332132,True,1.0,True,True
-Fc1cc(Nc2nc(-c3ccncc3)nc3ccccc23)ccc1-c1ccc(F)c(F)c1F,1.0,TabPFNClassifier,1.0,1.2555408269331922,True,1.0,True,True
-Nc1nc2c(s1)C(c1ccc(Br)cc1)CC(=O)N2,1.0,TabPFNClassifier,1.0,1.7505450449532913,True,1.0,True,True
-Nc1nc2c(s1)C(c1c(Cl)cccc1Cl)CC(=O)N2,0.0,TabPFNClassifier,1.0,0.829008705490115,True,1.0,True,True
-CC(C)Oc1cccc(-c2cnc(N3CCC(C(N)=O)CC3)s2)c1,1.0,TabPFNClassifier,1.0,0.5148410306502702,True,1.0,True,True
-O=C1Nc2ccccc2/C1=C\c1cc(F)c(O)c(F)c1,1.0,TabPFNClassifier,1.0,1.0494497020516191,True,1.0,True,True
-Fc1ccc(-c2ccc(Nc3nc(-c4ccncc4)nc4ccccc34)cc2F)c(F)c1,1.0,TabPFNClassifier,1.0,0.9076716269755561,True,1.0,True,True
-CCc1ccc(NC(=O)c2[nH]c(C)c(C(C)=O)c2C)cc1[S+](=O)([O-])Nc1ccc(Br)cc1,0.0,TabPFNClassifier,1.0,1.6493487703033063,True,1.0,True,True
-COc1ccc(C(=O)NC2CCCc3c2[nH]c2c(Cl)cccc32)cc1OC,1.0,TabPFNClassifier,1.0,0.6115969731640549,True,1.0,True,True
-CCc1ccc2oc(NC3=NC(c4[nH]ncc4Cl)C4=C(CCCC4=O)N3)nc2c1,1.0,TabPFNClassifier,1.0,1.0935587973877656,True,1.0,True,True
-Cc1ccc2c(c1)/C(=C\c1cc(Cl)c(O)c(Cl)c1)C(=O)N2,1.0,TabPFNClassifier,1.0,0.8477370612961997,True,1.0,True,True
-COc1cc(Nc2nc(-c3ccncc3)nc3ccccc23)ccc1NS(C)(=O)=O,1.0,TabPFNClassifier,1.0,1.046503634641386,True,1.0,True,True
-CCN1C(=O)c2ccccc2[S@](=O)c2ccc(C(=O)NCc3ccc(C#N)cc3)cc21,1.0,TabPFNClassifier,1.0,0.9585586951880669,True,1.0,True,True
-Fc1cnc(-c2ccccc2C(F)F)nc1NCc1ccc(-n2ccnn2)cc1,1.0,TabPFNClassifier,1.0,0.877040076954469,True,1.0,True,True
-Cc1cnc(-c2ccccc2C(F)F)nc1NCc1ccc(-n2ccnn2)cc1,1.0,TabPFNClassifier,1.0,0.7808010686368884,True,1.0,True,True
-Cc1cccc(CNc2ccc(S(=O)(=O)Nc3nccs3)cc2)c1O,0.0,TabPFNClassifier,1.0,2.252095986043839,True,1.0,True,True
-CC(=O)c1ccc(N[S+](=O)([O-])c2cccc(NC(=O)c3[nH]c(C)c(C(C)=O)c3C)c2)cc1,0.0,TabPFNClassifier,1.0,2.488930975856493,True,1.0,True,True
-O=C(Nc1cccc(OC(F)(F)F)c1)c1cc(-c2ccc[nH]2)n[nH]1,1.0,TabPFNClassifier,1.0,1.1141775924367414,True,1.0,True,True
-COc1ccc(-n2cnc3cc(C(=O)N4CCCCC4)ccc32)cc1,1.0,TabPFNClassifier,1.0,0.6751850209607744,True,1.0,True,True
-COc1ccnc(NC(=S)N2CCN(c3ccc(Cl)c(Cl)c3)CC2)c1,1.0,TabPFNClassifier,1.0,2.1380204602993333,True,1.0,True,True
-O=C1Nc2ccccc2/C1=C\c1ccc(O)c(F)c1,1.0,TabPFNClassifier,1.0,0.7762248732307638,True,1.0,True,True
-O=C(Nc1nc(-c2ccccc2)cs1)c1ccncc1NS(=O)(=O)c1ccc(F)cc1,1.0,TabPFNClassifier,1.0,1.3359688921785937,True,1.0,True,True
-Fc1ccc(Nc2nc(-c3ccncc3F)nc3ccccc23)cc1F,1.0,TabPFNClassifier,1.0,0.8119868403905808,True,1.0,True,True
-Cc1cc(F)ccc1S(=O)(=O)Nc1cnccc1C(=O)Nc1nc(-c2ccccc2)cs1,1.0,TabPFNClassifier,1.0,1.6043993601116835,True,1.0,True,True
-O=C(Nc1nc(-c2ccccc2)cs1)c1ccncc1NS(=O)(=O)c1ccc(C(F)(F)F)cc1,1.0,TabPFNClassifier,1.0,1.2993919919547996,True,1.0,True,True
-NC(=O)C1CCN(c2nccc(-c3ccc(Br)cc3)n2)CC1,1.0,TabPFNClassifier,1.0,0.659103734171538,True,1.0,True,True
-C=CCc1cccc(CNc2ccc(S(=O)(=O)Nc3nccs3)cc2)c1O,1.0,TabPFNClassifier,0.0,2.2846392608214683,True,1.0,True,True
-FC(F)(F)Oc1cccc(Nc2nc(-c3ccncc3)nc3ccccc23)c1,1.0,TabPFNClassifier,1.0,0.6626573033996491,True,1.0,True,True
-Fc1ccc(Nc2nc(-c3ccncc3Cl)nc3ccccc23)cc1F,1.0,TabPFNClassifier,1.0,0.7126006868843926,True,1.0,True,True
-O=C(Nc1nc(-c2ccccc2)cs1)c1ccncc1NS(=O)(=O)c1ccc(F)cc1Cl,1.0,TabPFNClassifier,1.0,1.6165011581075008,True,1.0,True,True
-CC(=O)c1c(C)[nH]c(C(=O)Nc2ccc(C)c([S+](=O)([O-])Nc3ccc(Br)cc3)c2)c1C,1.0,TabPFNClassifier,1.0,1.6495171745827293,True,1.0,True,True
-O=C(Nc1nc(-c2ccccc2)cs1)c1ccncc1NS(=O)(=O)c1ccc(Cl)cc1,1.0,TabPFNClassifier,1.0,1.4710278682702023,True,1.0,True,True
-COC(=O)c1cc(Cl)ccc1NC(=O)CSc1ncc(S(=O)(=O)c2ccc(Br)cc2)c(=O)[nH]1,1.0,TabPFNClassifier,1.0,1.2203001585847795,True,1.0,True,True
-CC(=O)c1c(C)[nH]c(C(=O)Nc2cccc([S+](=O)([O-])Nc3ccc(Br)cc3)c2)c1C,1.0,TabPFNClassifier,1.0,1.652870099696076,True,1.0,True,True
-CNc1oc(-c2cccc3ccccc23)nc1C#N,1.0,TabPFNClassifier,1.0,0.6302001016277605,True,1.0,True,True
-COc1cccc(NC(=S)N2CCN(c3cccc(C(F)(F)F)c3)CC2)n1,1.0,TabPFNClassifier,1.0,2.3389965086814803,True,1.0,True,True
-Cc1cc(C)nc(NC(=S)N2CCN(c3cccc([N+](=O)[O-])c3)CC2)c1,1.0,TabPFNClassifier,1.0,0.8752152087178555,True,1.0,True,True
-Fc1cc(Nc2nc(-c3ccncc3)nc3ccccc23)ccc1C(F)(F)F,1.0,TabPFNClassifier,1.0,0.72844371787758,True,1.0,True,True
-O=C1CCCC2=C1C(c1[nH]ncc1Cl)N=C(Nc1nc3cc(F)ccc3o1)N2,1.0,TabPFNClassifier,1.0,1.1710934125916252,True,1.0,True,True
-O=C(Nc1ccc(F)cc1F)c1cc(-c2ccc[nH]2)n[nH]1,1.0,TabPFNClassifier,1.0,1.1887729744040763,True,1.0,True,True
-N#Cc1ccc(-c2csc(N3CCC(C(N)=O)CC3)n2)cc1,1.0,TabPFNClassifier,1.0,0.6589037066109826,True,1.0,True,True
-O=C(c1ccc2c(c1)ncn2-c1ccccc1)N1CCCCC1,1.0,TabPFNClassifier,1.0,0.7697902969396659,True,1.0,True,True
-O=S(=O)(Nc1nccs1)c1ccc(NCc2cccc(F)c2O)cc1,0.0,TabPFNClassifier,0.0,2.344319929571376,True,1.0,True,True
-O=C1Nc2ccccc2/C1=C\c1ccc(O)c(Cl)c1,1.0,TabPFNClassifier,1.0,0.7148497125776999,True,1.0,True,True
-COc1ccccc1S(=O)(=O)Nc1cnccc1C(=O)Nc1nc(-c2ccccc2)cs1,1.0,TabPFNClassifier,1.0,1.7592318257295476,True,1.0,True,True
-Cc1ccc2nc(NC3=NC(c4[nH]ncc4Cl)C4=C(CCCC4=O)N3)oc2c1,1.0,TabPFNClassifier,1.0,1.1021467334337598,True,1.0,True,True
-FC(F)(F)c1cccc(N2CCN(C(=S)Nc3ccccn3)CC2)c1,1.0,TabPFNClassifier,1.0,0.9064122290594363,True,1.0,True,True
-COc1ccccc1-c1csc(N2CCC(C(N)=O)CC2)n1,1.0,TabPFNClassifier,1.0,0.5481721692045303,True,1.0,True,True
-Cc1cc(C)nc(NC(=S)N2CCN(c3ccc(Cl)cc3[N+](=O)[O-])CC2)c1,1.0,TabPFNClassifier,1.0,0.8634043937447696,True,1.0,True,True
-CN1C(=O)c2ccccc2[S@](=O)c2ccc(C(=O)NCc3ccc(Cl)cc3)cc21,1.0,TabPFNClassifier,1.0,0.9092634439873053,True,1.0,True,True
-COc1cccc(CNc2ccc(S(=O)(=O)Nc3nccs3)cc2)c1,1.0,TabPFNClassifier,1.0,2.9416863286395847,True,1.0,True,True
-Fc1cc(F)cc(Nc2nc(-c3ccncc3)nc3ccccc23)c1,1.0,TabPFNClassifier,1.0,0.6734322319675412,True,1.0,True,True
-Clc1ccc(Nc2nc(-c3ccncc3)nc3ccccc23)cc1Cl,1.0,TabPFNClassifier,1.0,0.903045382277792,True,1.0,True,True
-O=[S+]([O-])(Nc1nccs1)c1ccc(NCc2cccc(Cl)c2)cc1,1.0,TabPFNClassifier,1.0,3.4615637879585015,False,1.0,True,False
-CC(=O)c1c(C)c(C(=O)Nc2cccc([S+](=O)([O-])N(C)C)c2)n(C)c1C,1.0,TabPFNClassifier,1.0,1.2948685327126566,True,1.0,True,True
-Nc1cc(-c2nc(Nc3ccc(F)c(F)c3)c3ccccc3n2)ccn1,1.0,TabPFNClassifier,1.0,0.8256401509816478,True,1.0,True,True
-COc1ccc(NC(=O)c2[nH]c(C)c(C(C)=O)c2C)cc1[S+](=O)([O-])Nc1cccc(C#N)c1,1.0,TabPFNClassifier,1.0,2.392606465403781,True,1.0,True,True
-O=C(Nc1nc(-c2ccccc2)cs1)c1ccncc1NS(=O)(=O)c1ccccc1Cl,1.0,TabPFNClassifier,1.0,1.759677510970762,True,1.0,True,True
-CCc1ccc(NC(=O)c2[nH]c(C)c(C(C)=O)c2C)cc1[S+](=O)([O-])Nc1ccc(C#N)cc1,1.0,TabPFNClassifier,1.0,2.1361273251009556,True,1.0,True,True
-Cc1ccc(S(=O)(=O)Nc2cnccc2C(=O)Nc2nc(-c3ccccc3)cs2)cc1,1.0,TabPFNClassifier,1.0,1.3278916989655367,True,1.0,True,True
-COc1ccc2oc(NC3=NC(c4[nH]ncc4Cl)C4=C(CCCC4=O)N3)nc2c1,1.0,TabPFNClassifier,1.0,1.1674808025242287,True,1.0,True,True
-O=C1CCCC2=C1C(c1[nH]ncc1Br)N=C(Nc1nc3ccccc3o1)N2,1.0,TabPFNClassifier,1.0,1.4167463624250882,True,1.0,True,True
-COC(=O)c1nc(-c2cccc3ccccc23)oc1OC,1.0,TabPFNClassifier,1.0,0.6681318874325886,True,1.0,True,True
-O=S(=O)(Nc1nccs1)c1ccc(NCc2cccc(Cl)c2O)cc1,1.0,TabPFNClassifier,0.0,2.2863916018481314,True,1.0,True,True
-O=C1CCCC2=C1C(c1[nH]ncc1Cl)N=C(Nc1nc3ccc(F)cc3o1)N2,1.0,TabPFNClassifier,1.0,1.171254699006925,True,1.0,True,True
-O=S(=O)(Nc1nccs1)c1ccc(NCc2cccc(Br)c2O)cc1,1.0,TabPFNClassifier,0.0,2.2850906284345314,True,1.0,True,True
-O=C1Nc2ccccc2/C1=C\c1ccc(O)cc1,1.0,TabPFNClassifier,1.0,0.9158612726195109,True,1.0,True,True
-N#Cc1cccc(S(=O)(=O)Nc2cnccc2C(=O)Nc2nc(-c3ccccc3)cs2)c1,1.0,TabPFNClassifier,1.0,1.6347611723422255,True,1.0,True,True
-Cc1ccccc1S(=O)(=O)Nc1cnccc1C(=O)Nc1nc(-c2ccccc2)cs1,1.0,TabPFNClassifier,1.0,1.6710607925116054,True,1.0,True,True
-CC(C)(C)c1ccc(-c2csc(N3CCC(C(N)=O)CC3)n2)cc1,1.0,TabPFNClassifier,1.0,0.48649484367022733,True,1.0,True,True
-O=C1CCCC2=C1C(c1[nH]ncc1Cl)N=C(Nc1nc3ccccc3o1)N2,1.0,TabPFNClassifier,1.0,1.161731818190836,True,1.0,True,True
-NC[C@H](O)c1ccc(O)c(O)c1,0.0,TabPFNClassifier,1.0,2.480415869820729,True,1.0,True,True
-CCNc1oc(-c2cccc3ccccc23)nc1C#N,1.0,TabPFNClassifier,1.0,0.6312909716142039,True,1.0,True,True
-CN1C(=O)c2ccccc2[S@](=O)c2ccc(C(=O)NCc3ccc(Br)cc3)cc21,1.0,TabPFNClassifier,1.0,0.90810631744023,True,1.0,True,True
-CC(Nc1ccc([S+](=O)([O-])Nc2nccs2)cc1)c1ccccc1,1.0,TabPFNClassifier,1.0,3.5008443456878924,False,1.0,True,False
-Cc1ccc(S(=O)(=O)Nc2cc(Cl)c(Cl)cc2C(=O)Nc2nc(-c3ccccc3)cs2)cc1,0.0,TabPFNClassifier,1.0,1.2919980394840294,True,1.0,True,True
-O=[N+]([O-])c1ccc(CNc2ccc([S+](=O)([O-])Nc3nccs3)cc2)c(O)c1,0.0,TabPFNClassifier,0.0,3.6004414636678286,False,1.0,True,False
-Cc1ccc(S(=O)(=O)Nc2cnccc2C(=O)Nc2nc(-c3ccccc3Cl)cs2)cc1,1.0,TabPFNClassifier,1.0,1.7204918255942132,True,1.0,True,True
-O=C(Nc1nc(-c2ccccc2)cs1)c1ccncc1NS(=O)(=O)c1ccccc1,1.0,TabPFNClassifier,1.0,1.511357245945917,True,1.0,True,True
-CN(C)c1cc(-c2nc(Nc3ccc(F)c(F)c3)c3ccccc3n2)ccn1,1.0,TabPFNClassifier,1.0,0.5502002376341324,True,1.0,True,True
-[2H]C([2H])(Nc1nc(-c2ccccc2C([2H])(C([2H])([2H])[2H])C([2H])([2H])[2H])ncc1C)c1ccc(-n2ccnn2)cc1,1.0,TabPFNClassifier,1.0,2.169861739432073,True,1.0,True,True
-CCN1C(=O)c2ccccc2[S@](=O)c2ccc(C(=O)NCc3ccc(F)cc3)cc21,1.0,TabPFNClassifier,1.0,0.914726425871728,True,1.0,True,True
-O=S(=O)(Nc1nccs1)c1ccc(NCc2cc(F)ccc2O)cc1,0.0,TabPFNClassifier,0.0,2.356371390069637,True,1.0,True,True
-O=[S+]([O-])(Nc1nccs1)c1ccc(NCc2cc(Cl)cc(Br)c2O)cc1,1.0,TabPFNClassifier,1.0,3.265385975330141,False,1.0,True,False
-COc1cccc(CNc2ccc(S(=O)(=O)Nc3nc(C)c(C)s3)cc2)c1O,1.0,TabPFNClassifier,1.0,1.7883479213016966,True,1.0,True,True
-COc1cc(/C=C2\C(=O)Nc3ccccc32)ccc1O,1.0,TabPFNClassifier,1.0,0.6969447563939977,True,1.0,True,True
-COc1cc(Nc2nc(-c3ccncc3)nc3ccccc23)ccc1Cl,1.0,TabPFNClassifier,1.0,0.6669758128776369,True,1.0,True,True
-Cc1ccc(Nc2nc(-c3ccncc3)nc3ccccc23)cc1F,1.0,TabPFNClassifier,1.0,0.5616548023344902,True,1.0,True,True
-CC(=O)Nc1cc(-c2nc(Nc3ccc(F)c(F)c3)c3ccccc3n2)ccn1,1.0,TabPFNClassifier,1.0,0.6354587495392827,True,1.0,True,True
-COc1cc(C(=O)NC2CCCc3c2[nH]c2ccccc32)cc(OC)c1OC,1.0,TabPFNClassifier,1.0,0.6339803318733167,True,1.0,True,True
-CC(C)Oc1cccc(-c2ccnc(N3CCC(C(N)=O)CC3)n2)c1,1.0,TabPFNClassifier,1.0,0.5487842410573807,True,1.0,True,True
-COc1cccc(CNc2ccc(S(=O)(=O)Nc3nccs3)cc2)c1OC,1.0,TabPFNClassifier,1.0,2.1511288113576175,True,1.0,True,True
-Clc1ccccc1Nc1nc(-c2ccncc2)nc2ccccc12,1.0,TabPFNClassifier,1.0,0.8254675413673509,True,1.0,True,True
-Fc1cccc(Nc2nc(-c3ccncc3)nc3ccccc23)c1F,1.0,TabPFNClassifier,1.0,0.713246508254119,True,1.0,True,True
-O=S(=O)(Nc1nccs1)c1ccc(NCc2cc(Cl)ccc2O)cc1,1.0,TabPFNClassifier,0.0,2.30212321036357,True,1.0,True,True
-Cc1cc(/C=C2/C(=O)Nc3ccccc32)cc(C)c1O,1.0,TabPFNClassifier,1.0,1.5705052013500653,True,1.0,True,True
-O=C(Nc1nc(-c2ccccc2)cs1)c1ccncc1NS(=O)(=O)c1ccc(F)c(F)c1,1.0,TabPFNClassifier,1.0,1.4570941144131715,True,1.0,True,True
-COc1ccc(-c2ccc(Nc3nc(-c4ccncc4)nc4ccccc34)cc2F)cc1F,1.0,TabPFNClassifier,1.0,0.7869507684977862,True,1.0,True,True
-Cn1nnnc1Sc1ncnc2scc(-c3ccc(F)cc3)c12,1.0,TabPFNClassifier,1.0,1.1076566434974287,True,1.0,True,True
-Cc1ccc(S(=O)(=O)c2cnc(SC(C)C(=O)Nc3ccccc3)[nH]c2=O)cc1,0.0,TabPFNClassifier,1.0,1.0264126722479223,True,1.0,True,True
-CN(C)S(=O)(=O)c1cccc(NC(=O)c2ccc[nH]2)c1,1.0,TabPFNClassifier,1.0,0.8290749161014515,True,1.0,True,True
-Cc1cnc(-c2ccccc2C(C)C)nc1NCc1ccc(-n2ccnn2)cc1,1.0,TabPFNClassifier,1.0,0.639804966328479,True,1.0,True,True
-O=C(NC1CCCc2c1[nH]c1ccccc21)c1ccccc1,1.0,TabPFNClassifier,1.0,0.7348108016118149,True,1.0,True,True
-O=S(=O)(Nc1nccs1)c1ccc(NCc2ccccc2)cc1,1.0,TabPFNClassifier,0.0,2.961019038817482,True,1.0,True,True
-O=C1CCCC2=C1C(c1[nH]ncc1Cl)N=C(Nc1nc3ccc(Cl)cc3o1)N2,1.0,TabPFNClassifier,1.0,1.1615443597357755,True,1.0,True,True
-Fc1ccc(F)c(Nc2nc(-c3ccncc3)nc3ccccc23)c1,1.0,TabPFNClassifier,1.0,0.8930279477137185,True,1.0,True,True
-Cc1cnccc1-c1nc(Nc2ccc(F)c(F)c2)c2ccccc2n1,1.0,TabPFNClassifier,1.0,0.5970703412420953,True,1.0,True,True
-CN(C)c1ccccc1-c1csc(N2CCC(C(N)=O)CC2)n1,1.0,TabPFNClassifier,1.0,0.5557153466355271,True,1.0,True,True
-Cc1ccc(S(=O)(=O)Nc2cnccc2C(=O)Nc2nc(-c3ccccc3F)cs2)cc1,1.0,TabPFNClassifier,1.0,1.5911685726288625,True,1.0,True,True
-CC1=C(C(=O)Nc2ccc(Cl)cc2)C(c2ccccc2C)n2ncc(C(=O)Nc3ccc(C)cc3)c2N1,1.0,TabPFNClassifier,1.0,1.7837746425524568,True,1.0,True,True
-Fc1ccc(Nc2nc(-c3ccncc3)nc3ccccc23)cc1F,1.0,TabPFNClassifier,1.0,0.7095519247468159,True,1.0,True,True
-O=C(c1ccc2c(c1)ncn2-c1ccc(Cl)cc1)N1CCCCC1,1.0,TabPFNClassifier,1.0,0.7699637556467349,True,1.0,True,True
-Cc1cc(NS(=O)(=O)c2ccc(NC(=O)Cc3ccc(Cl)c(Cl)c3)cc2)no1,1.0,TabPFNClassifier,1.0,1.3541582993214145,True,1.0,True,True
-COc1ccc(Nc2nc(-c3ccncc3)nc3ccccc23)cc1F,1.0,TabPFNClassifier,1.0,0.5448715938045342,True,1.0,True,True
-Cc1ccc(S(=O)(=O)Nc2cc(Br)ccc2C(=O)Nc2nc(-c3ccccc3)cs2)cc1,0.0,TabPFNClassifier,1.0,1.2409731331715514,True,1.0,True,True
-COC(=O)c1ccc(Nc2nc(-c3ccncc3)nc3ccccc23)cc1OC,1.0,TabPFNClassifier,1.0,0.6725597492800717,True,1.0,True,True
-NC(=O)C1CCN(c2ncc(-c3cccc(F)c3)s2)CC1,1.0,TabPFNClassifier,1.0,0.6238044694974869,True,1.0,True,True
-O=C(Nc1cccc(F)c1)c1cc(-c2ccc[nH]2)n[nH]1,1.0,TabPFNClassifier,1.0,1.09887204567874,True,1.0,True,True
-CCOc1ccc(-c2csc(N3CCC(C(N)=O)CC3)n2)cc1,1.0,TabPFNClassifier,1.0,0.5149650966714509,True,1.0,True,True
-COc1cc(NS(=O)(=O)c2ccc(C)cc2)c(C(=O)Nc2nc(-c3ccccc3)cs2)cc1OC,1.0,TabPFNClassifier,1.0,1.4095416792228348,True,1.0,True,True
-Cc1ccc(S(=O)(=O)Nc2ccc(Br)cc2C(=O)Nc2nc(-c3ccccc3)cs2)cc1,0.0,TabPFNClassifier,1.0,1.2411291972500567,True,1.0,True,True
-COc1cccc(O)c1CNc1ccc(S(=O)(=O)Nc2nccs2)cc1,0.0,TabPFNClassifier,1.0,2.2707688116629505,True,1.0,True,True
-Cc1ccc(S(=O)(=O)Nc2ccccc2C(=O)Nc2nc(-c3ccc(Cl)cc3)cs2)cc1,1.0,TabPFNClassifier,1.0,1.2410700662459042,True,1.0,True,True
-Cc1cnc(N2CCC(C(N)=O)CC2)nc1-c1cccc(N(C)C)c1,1.0,TabPFNClassifier,1.0,1.5213679359736427,True,1.0,True,True
-COc1cc(C(=O)NC2CCCc3c2[nH]c2c(Cl)cccc32)cc(OC)c1OC,1.0,TabPFNClassifier,1.0,0.6411543818468901,True,1.0,True,True
-CNc1cc(-c2nc(Nc3ccc(F)c(F)c3)c3ccccc3n2)ccn1,1.0,TabPFNClassifier,1.0,0.9445953757624941,True,1.0,True,True
-CC(=O)Nc1ccc(NC(=O)C(NS(=O)(=O)c2ccc(Br)s2)c2ccccc2)cc1,1.0,TabPFNClassifier,1.0,1.0781594169075832,True,1.0,True,True
-CCN1C(=O)c2ccccc2S(=O)c2ccc(C(=O)NCc3ccccc3)cc21,1.0,TabPFNClassifier,1.0,0.9258480887306928,True,1.0,True,True
-Cc1cc(-c2nnc3n2CCCCC3)c(C)n1-c1cccc(C#N)c1,1.0,TabPFNClassifier,1.0,0.739310769345914,True,1.0,True,True
-Cc1cccc(C)c1C(=O)Nc1cccc([S+](=O)([O-])N(C)C)c1,1.0,TabPFNClassifier,1.0,1.1226535494357974,True,1.0,True,True
-Fc1ccccc1Nc1nc(-c2ccncc2)nc2ccccc12,1.0,TabPFNClassifier,1.0,0.863950348870149,True,1.0,True,True
-CCN1C(=O)c2ccccc2S(=O)c2ccc(C(=O)NCc3ccc(OC)cc3)cc21,1.0,TabPFNClassifier,1.0,0.9141772857355487,True,1.0,True,True
-Clc1cccc(Nc2nc(-c3ccncc3)nc3ccccc23)c1,1.0,TabPFNClassifier,1.0,0.9057178324490683,True,1.0,True,True
-Cc1cc(C)c(C(=O)Nc2cccc([S+](=O)([O-])Nc3ccc(Br)cc3)c2)[nH]1,1.0,TabPFNClassifier,1.0,1.6364700166918817,True,1.0,True,True
-NC(=O)C1CCN(c2nc(-c3ccc(OC(F)(F)F)cc3)cs2)CC1,1.0,TabPFNClassifier,1.0,0.6431420011202316,True,1.0,True,True
-Cc1ccc(S(=O)(=O)Nc2cc(Cl)ccc2C(=O)Nc2nc(-c3ccccc3)cs2)cc1,1.0,TabPFNClassifier,1.0,1.326520323789045,True,1.0,True,True
-O=C(c1ccc2c(c1)ncn2-c1ccc(C(F)(F)F)cc1)N1CCCCC1,1.0,TabPFNClassifier,1.0,0.7617872970778522,True,1.0,True,True
-COc1ccc(NC(=O)c2ccc[nH]2)cc1[S+](=O)([O-])Nc1ccc(Br)cc1,1.0,TabPFNClassifier,1.0,2.01043646026488,True,1.0,True,True
-COc1cc(Nc2nc(-c3ccncc3)nc3ccccc23)ccc1F,1.0,TabPFNClassifier,1.0,0.5465453034400756,True,1.0,True,True
-Cc1ccc(-c2csc(NC(=O)c3ccncc3NS(=O)(=O)c3ccc(C)cc3)n2)cc1,1.0,TabPFNClassifier,1.0,1.3278713280122816,True,1.0,True,True
-Cc1cc(Br)ccc1NC(=O)C(NS(=O)(=O)c1cccs1)c1ccccc1,0.0,TabPFNClassifier,1.0,1.2512163991768313,True,1.0,True,True
-Cc1cnc(-c2ccccc2C(C)(C)C)nc1NCc1ccc(-n2ccnn2)cc1,1.0,TabPFNClassifier,1.0,0.5988182936739624,True,1.0,True,True
-CC(C)COc1ccc(-c2csc(N3CCC(C(N)=O)CC3)n2)cc1,1.0,TabPFNClassifier,1.0,0.5358214724064783,True,1.0,True,True
-NC(=O)C1CCN(c2nc(-c3ccc(F)cc3)cs2)CC1,1.0,TabPFNClassifier,1.0,1.2553177559881548,True,1.0,True,True
-N#Cc1ccccc1S(=O)(=O)Nc1cnccc1C(=O)Nc1nc(-c2ccccc2)cs1,1.0,TabPFNClassifier,1.0,2.373730451445781,True,1.0,True,True
-O=C(Nc1nc(-c2ccccc2)cs1)c1ccncc1NS(=O)(=O)c1ccccc1F,1.0,TabPFNClassifier,1.0,1.7893813592208017,True,1.0,True,True
-COc1cccc(S(=O)(=O)Nc2cnccc2C(=O)Nc2nc(-c3ccccc3)cs2)c1,1.0,TabPFNClassifier,1.0,1.5158334107605445,True,1.0,True,True
-CCc1cccc(NC(=O)c2cc(-c3ccc[nH]3)n[nH]2)c1,1.0,TabPFNClassifier,1.0,1.024612438708139,True,1.0,True,True
-CCn1c(C)c(C(C)=O)c(C)c1C(=O)Nc1cccc([S+](=O)([O-])N(C)C)c1,1.0,TabPFNClassifier,1.0,1.2940648243327209,True,1.0,True,True
-O=C(Nc1nc(-c2ccccc2)cs1)c1ccncc1NS(=O)(=O)c1ccc(F)cc1F,1.0,TabPFNClassifier,1.0,1.6898414280087217,True,1.0,True,True
-Cc1cnc(-c2ccccc2OC(C)C)nc1NCc1ccc(-n2ccnn2)cc1,1.0,TabPFNClassifier,1.0,0.7465932882168345,True,1.0,True,True
-N#Cc1cnccc1-c1nc(Nc2ccc(F)c(F)c2)c2ccccc2n1,1.0,TabPFNClassifier,1.0,0.7198585278931346,True,1.0,True,True
-COc1cc(Cl)c(C)cc1NC(=O)CSc1ncc(S(=O)(=O)c2ccc(C(C)(C)C)cc2)c(=O)[nH]1,1.0,TabPFNClassifier,1.0,2.152387408138006,True,1.0,True,True
-Cc1ccc(S(=O)(=O)Nc2ccccc2C(=O)Nc2nc(-c3ccccc3)c(C)s2)cc1,1.0,TabPFNClassifier,1.0,1.2404151830226064,True,1.0,True,True
-Cc1ccc(NC(=O)c2cc(-c3ccc[nH]3)n[nH]2)cc1F,1.0,TabPFNClassifier,1.0,1.0404289836202762,True,1.0,True,True
-Fc1ccc(Nc2nc(C3=CCNCC3)nc3ccccc23)cc1F,1.0,TabPFNClassifier,1.0,0.9569338489290842,True,1.0,True,True
-CCc1ccc(NC(=O)c2[nH]c(C)c(C(C)=O)c2C)cc1[S+](=O)([O-])Nc1cccc(C#N)c1,1.0,TabPFNClassifier,1.0,2.187220312441939,True,1.0,True,True
-Cc1cccc(S(=O)(=O)Nc2cnccc2C(=O)Nc2nc(-c3ccccc3)cs2)c1,1.0,TabPFNClassifier,1.0,1.4087540427695413,True,1.0,True,True
-NC(=O)C1CCN(c2ncc(-c3ccc(Cl)cc3)s2)CC1,1.0,TabPFNClassifier,1.0,0.6579481683029353,True,1.0,True,True
-CC(C)(C)c1ccc(S(=O)(=O)c2cnc(SCC(=O)Nc3ccc(F)c(Cl)c3)[nH]c2=O)cc1,0.0,TabPFNClassifier,1.0,2.180675938760142,True,1.0,True,True
-COC(=O)c1ccc2nc(NC3=NC(c4[nH]ncc4Cl)C4=C(CCCC4=O)N3)oc2c1,1.0,TabPFNClassifier,1.0,1.2131075795348243,True,1.0,True,True
-COc1ccc(NC(=O)c2c(C)c(C(C)=O)c(C)n2C)cc1[S+](=O)([O-])Nc1ccc(Br)cc1,0.0,TabPFNClassifier,1.0,1.967234142456503,True,1.0,True,True
-Cc1cccc(-n2cnc3cc(C(=O)N4CCCCC4)ccc32)c1,1.0,TabPFNClassifier,1.0,0.6598341731826771,True,1.0,True,True
-O=C(c1ccc2c(c1)ncn2-c1cccc(Cl)c1)N1CCCCC1,1.0,TabPFNClassifier,1.0,0.7700012883643035,True,1.0,True,True
-Cc1ccc(S(=O)(=O)Nc2cnccc2C(=O)Nc2nc(-c3cccc(C)c3)cs2)cc1,1.0,TabPFNClassifier,1.0,1.6033641905871678,True,1.0,True,True
-CCCCNc1oc(-c2cccc3ccccc23)nc1C#N,1.0,TabPFNClassifier,1.0,0.6323997800848401,True,1.0,True,True
-O=C(Nc1nc(-c2ccccc2)cs1)c1ccncc1NS(=O)(=O)c1c(F)cc(F)cc1F,1.0,TabPFNClassifier,1.0,1.8881858197061776,True,1.0,True,True
-Cc1ccc(S(=O)(=O)Nc2cc(F)ccc2C(=O)Nc2nc(-c3ccccc3)cs2)cc1,1.0,TabPFNClassifier,1.0,1.4339428554364513,True,1.0,True,True
-NC(=O)C1CCN(c2nc(-c3ccccc3C(F)(F)F)cs2)CC1,1.0,TabPFNClassifier,1.0,0.5087567149231303,True,1.0,True,True
-NC(=O)C1CCN(c2nc(-c3ccc([N+](=O)[O-])cc3)cs2)CC1,1.0,TabPFNClassifier,1.0,0.8571459778548728,True,1.0,True,True
-Oc1ccc(CNc2ccc(C(F)(F)F)cc2F)c2cccnc12,1.0,TabPFNClassifier,1.0,0.8199738765806763,True,1.0,True,True
-NC(=O)C1CCN(c2nc(-c3ccc(C(F)(F)F)cc3)cs2)CC1,1.0,TabPFNClassifier,1.0,0.6371788958217623,True,1.0,True,True
-O=C(Nc1ccc(Cl)cc1)C(NS(=O)(=O)c1cccs1)c1ccccc1,0.0,TabPFNClassifier,1.0,1.031875201683776,True,1.0,True,True
-Cn1nnnc1Sc1ncnc2scc(-c3ccccc3F)c12,1.0,TabPFNClassifier,1.0,1.0635255460659028,True,1.0,True,True
-O=C(Nc1nc(-c2ccccc2)cs1)c1ccncc1NS(=O)(=O)c1cccc(Cl)c1,1.0,TabPFNClassifier,1.0,1.551293307697629,True,1.0,True,True
-CC(=O)c1c(C)[nH]c(C(=O)Nc2cccc([S+](=O)([O-])Nc3c(C)cccc3C)c2)c1C,1.0,TabPFNClassifier,1.0,1.6526332924958647,True,1.0,True,True
-Oc1ccc(CNc2ccccc2C(F)(F)F)c2cccnc12,1.0,TabPFNClassifier,1.0,0.7809950288637237,True,1.0,True,True
-Cc1ccc(NC(=O)CSc2ncc(S(=O)(=O)c3ccc(C(C)C)cc3)c(=O)[nH]2)cc1C,0.0,TabPFNClassifier,1.0,0.9889865080574928,True,1.0,True,True
-O=C1Nc2ccccc2/C1=C\c1ccc([N+](=O)[O-])cc1,1.0,TabPFNClassifier,1.0,0.8758939976040103,True,1.0,True,True
-COc1ccc(-c2csc(NC(=O)c3ccncc3NS(=O)(=O)c3ccc(C)cc3)n2)cc1,1.0,TabPFNClassifier,1.0,1.3418663904925792,True,1.0,True,True
-CCN(CC)[S+](=O)([O-])c1cc(NC(=O)c2[nH]c(C)c(C(C)=O)c2C)ccc1OC,1.0,TabPFNClassifier,1.0,1.3193451021159701,True,1.0,True,True
-COc1ccc(-c2csc(N3CCC(C(N)=O)CC3)n2)cc1,1.0,TabPFNClassifier,1.0,0.5144939594277508,True,1.0,True,True
-O=C1CCCC2=C1C(c1[nH]ncc1Cl)N=C(Nc1nc3cccc(Cl)c3o1)N2,1.0,TabPFNClassifier,1.0,1.1615063011713243,True,1.0,True,True
-Oc1ccc(CNc2ccccc2Br)c2cccnc12,0.0,TabPFNClassifier,1.0,0.8146437166822414,True,1.0,True,True
-CC(=O)c1ccc(-c2csc(N3CCC(C(N)=O)CC3)n2)cc1,1.0,TabPFNClassifier,1.0,0.5313310984055178,True,1.0,True,True
-O=C(c1ccc2c(c1)ncn2-c1cccc(C(F)(F)F)c1)N1CCCCC1,1.0,TabPFNClassifier,1.0,0.7621322401585751,True,1.0,True,True
-CC(C)c1ccccc1-c1ncc(F)c(NCc2ccc(-n3ccnn3)cc2)n1,1.0,TabPFNClassifier,1.0,0.5494333353436123,True,1.0,True,True
-CCc1ccc(S(=O)(=O)Nc2cnccc2C(=O)Nc2nc(-c3ccccc3)cs2)cc1,1.0,TabPFNClassifier,1.0,1.3278332516085207,True,1.0,True,True
-CC(=O)c1c(C)[nH]c(C(=O)Nc2cccc([S+](=O)([O-])Nc3ccccc3C)c2)c1C,1.0,TabPFNClassifier,1.0,1.652659115969247,True,1.0,True,True
-COc1cccc(Nc2nc(-c3ccncc3)nc3ccccc23)c1,1.0,TabPFNClassifier,1.0,0.693014875834365,True,1.0,True,True
-COc1ccc(CNC(=O)CCCn2nc(C)c3c(C)n(-c4ccc(C)cc4)nc3c2=O)cc1OC,1.0,TabPFNClassifier,1.0,0.5331581548473399,True,1.0,True,True
-CCOc1ccc(C2C(C(=O)Nc3ccccc3OC)=C(C)Nc3c(C(=O)Nc4cccc(C)c4)cnn32)cc1,1.0,TabPFNClassifier,1.0,1.3617028072097939,True,1.0,True,True
-CN(C)c1ccc(-c2csc(N3CCC(C(N)=O)CC3)n2)cc1,0.0,TabPFNClassifier,1.0,0.47563913766225085,True,1.0,True,True
-Oc1ccc(CNc2cccc(F)c2)c2cccnc12,0.0,TabPFNClassifier,1.0,0.7817019241873504,True,1.0,True,True
-CC(C=CC(=O)NO)=C[C@@H](C)C(=O)c1ccc(N(C)C)cc1,1.0,TabPFNClassifier,1.0,0.9807940447093392,True,1.0,True,True
-NC(=O)C1CCN(c2nc(-c3ccccc3Cl)cs2)CC1,1.0,TabPFNClassifier,1.0,0.65833179565544,True,1.0,True,True
-NC(=O)C1CCN(c2nc(-c3ccccc3[N+](=O)[O-])cs2)CC1,1.0,TabPFNClassifier,1.0,1.4078027068098908,True,1.0,True,True
-COc1ccc(CNc2ccc(S(=O)(=O)Nc3nccs3)cc2)c(O)c1,0.0,TabPFNClassifier,1.0,2.355445737069075,True,1.0,True,True
-NC(=O)C1CCN(c2nc(-c3ccccc3)cs2)CC1,1.0,TabPFNClassifier,1.0,0.6570577073545336,True,1.0,True,True
-CCN(CC)S(=O)(=O)c1cccc(C(=O)Nc2ccc(C#N)cc2)c1,1.0,TabPFNClassifier,1.0,1.469340701578551,True,1.0,True,True
-N#Cc1ccccc1-c1csc(N2CCC(C(N)=O)CC2)n1,1.0,TabPFNClassifier,1.0,0.6514313278140944,True,1.0,True,True
-Oc1ccc(CNc2ccccc2F)c2cccnc12,1.0,TabPFNClassifier,1.0,0.7930693535336016,True,1.0,True,True
-Cc1ccc(S(=O)(=O)Nc2ccc(C)cc2C(=O)Nc2nc(-c3ccccc3)cs2)cc1,0.0,TabPFNClassifier,1.0,1.2403246946092934,True,1.0,True,True
-NC(=O)C1CCN(c2ncc(-c3ccc(Br)cc3)s2)CC1,1.0,TabPFNClassifier,1.0,0.6248130707178574,True,1.0,True,True
-Cc1cc(-c2nnc3n2CCCCC3)c(C)n1-c1ccc(C#N)cc1,1.0,TabPFNClassifier,1.0,0.740967268343316,True,1.0,True,True
-CN1CC=C(c2nc(Nc3ccc(F)c(F)c3)c3ccccc3n2)CC1,1.0,TabPFNClassifier,1.0,0.5800536475247711,True,1.0,True,True
-CNc1nc2c(s1)C(c1ccccc1F)CC(=O)N2,1.0,TabPFNClassifier,1.0,0.6827637006422272,True,1.0,True,True
-COc1ccccc1CNC(=O)CCCn1nc(C)c2c(C)n(-c3ccc(C)cc3)nc2c1=O,1.0,TabPFNClassifier,1.0,0.48515683882578753,True,1.0,True,True
-Brc1ccc(-c2csc(N3CCCCC3)n2)cc1,1.0,TabPFNClassifier,1.0,0.853349955919793,True,1.0,True,True
-O=C1CCCC2=C1C(c1[nH]ncc1Cl)N=C(Nc1nc3c(Cl)cccc3o1)N2,1.0,TabPFNClassifier,1.0,1.1615063011713243,True,1.0,True,True
-COc1ccccc1NC(=O)C1=C(C)Nc2c(C(=O)Nc3ccc(F)cc3)cnn2C1c1ccc(Cl)cc1,1.0,TabPFNClassifier,1.0,1.7657017716481587,True,1.0,True,True
-CCCc1ccc(-c2csc(NC(=O)c3ccncc3NS(=O)(=O)c3ccc(C)cc3)n2)cc1,1.0,TabPFNClassifier,1.0,1.3683765273155117,True,1.0,True,True
-Cc1cc(-c2nnc3n2CCCCC3)c(C)n1-c1ccccc1,1.0,TabPFNClassifier,1.0,0.9006143631177516,True,1.0,True,True
-Cc1cc(-c2nnc3n2CCCCC3)c(C)n1-c1ccc(F)cc1,1.0,TabPFNClassifier,1.0,0.778389560083567,True,1.0,True,True
-COc1ccccc1-n1cnc2cc(C(=O)N3CCCCC3)ccc21,1.0,TabPFNClassifier,1.0,0.6741425248429508,True,1.0,True,True
-O=C1CCCC2=C1C(c1[nH]ncc1Cl)N=C(Nc1nc3c(Br)cccc3o1)N2,1.0,TabPFNClassifier,1.0,1.1616479955195997,True,1.0,True,True
-Oc1ccc(CNc2ccc(F)cc2F)c2cccnc12,1.0,TabPFNClassifier,1.0,0.8340305072770268,True,1.0,True,True
-NC(=O)C1CCN(c2nc(-c3ccc(Cl)cc3)cs2)CC1,1.0,TabPFNClassifier,1.0,0.6579481683029353,True,1.0,True,True
-CC(C)Oc1cccc(-c2csc(N3CCC(C(N)=O)CC3)n2)c1,1.0,TabPFNClassifier,1.0,0.5146481899064284,True,1.0,True,True
-CC(=O)c1cccc(-c2csc3ncnc(Sc4nnnn4C)c23)c1,1.0,TabPFNClassifier,1.0,1.332677240888957,True,1.0,True,True
-NC(=O)C1CCN(c2nc(-c3ccccc3F)cs2)CC1,1.0,TabPFNClassifier,1.0,0.6271363380634152,True,1.0,True,True
-CCOc1ccc(CNC(=O)CCCn2nc(C)c3c(C)n(-c4ccc(C)cc4)nc3c2=O)cc1,1.0,TabPFNClassifier,1.0,0.4985431243941211,True,1.0,True,True
-Cc1ccc(S(=O)(=O)Nc2ccc(F)cc2C(=O)Nc2nc(-c3ccccc3)cs2)cc1,1.0,TabPFNClassifier,1.0,1.2955186911273289,True,1.0,True,True
-COc1ccccc1NC(=O)C1=C(C)Nc2c(C(=O)Nc3cccc(C)c3)cnn2C1c1ccccc1Cl,1.0,TabPFNClassifier,1.0,1.6233701107487053,True,1.0,True,True
-COc1ccnc(NC(=S)N2CCN(c3ccccc3C(F)(F)F)CC2)c1,1.0,TabPFNClassifier,1.0,0.9186150510526361,True,1.0,True,True
-NC(=O)C1CCN(c2nc(-c3ccccc3Br)cs2)CC1,1.0,TabPFNClassifier,1.0,1.0306789539271657,True,1.0,True,True
-COc1ccccc1CNc1ccc(S(=O)(=O)Nc2nccs2)cc1,1.0,TabPFNClassifier,1.0,2.133415198793728,True,1.0,True,True
-COC(=O)c1ccccc1NC(=O)c1ccccc1OC(F)F,1.0,TabPFNClassifier,1.0,1.37163663645756,True,1.0,True,True
-Cc1ccc(-n2nc3c(=O)n(CCCC(=O)NCc4ccc(F)cc4)nc(C)c3c2C)cc1,1.0,TabPFNClassifier,1.0,0.4853331463042784,True,1.0,True,True
-CCc1ccc(C2C(C(=O)Nc3ccccc3OC)=C(C)Nc3c(C(=O)Nc4ccc(C)cc4)cnn32)cc1,1.0,TabPFNClassifier,1.0,1.7074899630957412,True,1.0,True,True
-CCOC(=O)c1ccc(-n2c(C)cc(-c3nnc4n3CCCCC4)c2C)cc1,1.0,TabPFNClassifier,1.0,0.7131059155032247,True,1.0,True,True
-CC(C)(C)c1ccc(-n2cnc3cc(C(=O)N4CCCCC4)ccc32)cc1,1.0,TabPFNClassifier,1.0,0.6598443176783617,True,1.0,True,True
-Cc1ccc(-n2nc3c(=O)n(CCCC(=O)NCc4ccccc4F)nc(C)c3c2C)cc1,1.0,TabPFNClassifier,1.0,0.4946394921611053,True,1.0,True,True
-Cc1ccc(-c2csc(NC(=O)c3ccccc3NS(=O)(=O)c3ccc(C)cc3)n2)cc1,1.0,TabPFNClassifier,1.0,1.2405024749124511,True,1.0,True,True
-CC(=O)C1CCN(c2ncc(-c3cccc(N(C)C)c3)s2)CC1,1.0,TabPFNClassifier,1.0,0.6590739101620007,True,1.0,True,True
-Cc1cc(-c2nnc3n2CCCCC3)c(C)n1-c1ccc([N+](=O)[O-])cc1,1.0,TabPFNClassifier,1.0,0.751384041995403,True,1.0,True,True
-Cc1cccc(-n2cnc3cc(C(=O)N4CCC(Br)CC4)ccc32)c1,1.0,TabPFNClassifier,1.0,0.8663905609856073,True,1.0,True,True
-Cc1cccc(-n2cnc3cc(C(=O)N4CCCC(C)C4)ccc32)c1,1.0,TabPFNClassifier,1.0,0.6600977517426869,True,1.0,True,True
-CCOc1ccc(C(C)CNC(=O)c2cc3sccc3n2Cc2ccccc2)cc1OCC,1.0,TabPFNClassifier,1.0,0.5419627531149491,True,1.0,True,True
-COc1ccc(-n2c(C)cc(-c3nnc4n3CCCCC4)c2C)cc1,1.0,TabPFNClassifier,1.0,0.9282487127997375,True,1.0,True,True
-Cc1ccc(S(=O)(=O)Nc2ccccc2C(=O)Nc2nc(-c3ccccc3)cs2)cc1,1.0,TabPFNClassifier,1.0,1.2405232552331762,True,1.0,True,True
-Cc1ccc(-c2ccnc(N3CCC(C(N)=O)CC3)n2)cc1,1.0,TabPFNClassifier,1.0,0.49015025131826295,True,1.0,True,True
-COc1ccc(-c2csc(NC(=O)c3ccccc3NS(=O)(=O)c3ccc(C)cc3)n2)cc1,0.0,TabPFNClassifier,1.0,1.2563536855968915,True,1.0,True,True
-NC(=O)C1CCN(c2nc(-c3cccc([N+](=O)[O-])c3)cs2)CC1,1.0,TabPFNClassifier,1.0,0.8577520903026405,True,1.0,True,True
-Cc1ccc(-n2nc3c(=O)n(CCCC(=O)NC(C)c4ccccc4)nc(C)c3c2C)cc1,1.0,TabPFNClassifier,1.0,1.5141970896529278,True,1.0,True,True
-Cc1ccc(-c2csc(N3CCC(C(N)=O)CC3)n2)cc1,1.0,TabPFNClassifier,1.0,0.4861808579257138,True,1.0,True,True
-CC(=O)c1cccc(-c2csc(N3CCC(C(N)=O)CC3)n2)c1,1.0,TabPFNClassifier,1.0,0.532175003793512,True,1.0,True,True
-Cc1cccc(NCc2ccc(O)c3ncccc23)c1,0.0,TabPFNClassifier,1.0,0.6946860693395847,True,1.0,True,True
-Cc1cc(-c2nnc3n2CCCCC3)c(C)n1-c1ccc(Br)cc1,1.0,TabPFNClassifier,1.0,0.8995450455340703,True,1.0,True,True
-CCOC(=O)C1CCN(c2nc(-c3ccc(Br)cc3)cs2)CC1,1.0,TabPFNClassifier,1.0,0.7060008496407295,True,1.0,True,True
-Cc1cc(-c2nnc3n2CCCCC3)c(C)n1-c1ccc(C(F)(F)F)cc1,1.0,TabPFNClassifier,1.0,0.7198855145955116,True,1.0,True,True
-Cc1ccc(S(=O)(=O)Nc2cnccc2C(=O)Nc2nc(-c3ccc(C)c(C)c3)cs2)cc1,1.0,TabPFNClassifier,1.0,1.6369147799667565,True,1.0,True,True
-COc1cc(OC)cc(-c2csc(N3CCC(C(N)=O)CC3)n2)c1,1.0,TabPFNClassifier,1.0,0.5401540001592209,True,1.0,True,True
-CNc1nc2c(s1)C(c1ccc(Cl)cc1)CC(=O)N2,1.0,TabPFNClassifier,1.0,1.7014897934241517,True,1.0,True,True
-NC(=O)C1CCN(c2nc(-c3ccc(Br)cc3)cs2)CC1,1.0,TabPFNClassifier,1.0,0.6573982486423149,True,1.0,True,True
-CCOc1ccc(OCC)c(NC(=O)C(NS(=O)(=O)c2ccc(Br)s2)c2ccccc2)c1,0.0,TabPFNClassifier,1.0,1.3778222860049458,True,1.0,True,True
-Cc1ccnc(NC(=S)N2CCN(c3ccccc3C(F)(F)F)CC2)c1,1.0,TabPFNClassifier,1.0,0.868263394423304,True,1.0,True,True
-CCOc1cc(CCNC(=O)c2cc3sccc3n2Cc2ccccc2)cc(F)c1OCC,0.0,TabPFNClassifier,1.0,0.4951448549546129,True,1.0,True,True
-NC(=O)C1CCN(c2nc(-c3cccc(C(F)(F)F)c3)cs2)CC1,1.0,TabPFNClassifier,1.0,0.6199597818202626,True,1.0,True,True
-NC(=O)C1CCN(c2nc(-c3cccc(F)c3)cs2)CC1,1.0,TabPFNClassifier,1.0,0.6246163692246038,True,1.0,True,True
-Cc1cc(-c2nnc3n2CCCCC3)c(C)n1-c1cccc(Cl)c1,1.0,TabPFNClassifier,1.0,0.796353170159193,True,1.0,True,True
-Cc1cc(-c2nnc3n2CCCCC3)c(C)n1-c1ccc(C(C)(C)C)cc1,1.0,TabPFNClassifier,1.0,0.9617847002086405,True,1.0,True,True
-Cc1cc(-c2nnc3n2CCCCC3)c(C)n1-c1ccc(Cl)cc1,1.0,TabPFNClassifier,1.0,0.8419758097409815,True,1.0,True,True
-Cc1cc(-c2nnc3n2CCCCC3)c(C)n1-c1ccc(Cl)c(Cl)c1,1.0,TabPFNClassifier,1.0,2.0524159914559537,True,1.0,True,True
-Cc1cc(-c2nnc3n2CCCCC3)c(C)n1-c1cccc(C(F)(F)F)c1,1.0,TabPFNClassifier,1.0,0.714545850272869,True,1.0,True,True
-O=C(NCCc1ccc(OCC(F)(F)F)c(OCC(F)(F)F)c1)c1cc2sccc2n1Cc1ccccc1,1.0,TabPFNClassifier,1.0,1.6174624077271884,True,1.0,True,True
-NC(=O)C1CCN(c2nc(-c3cccc(Cl)c3)cs2)CC1,1.0,TabPFNClassifier,1.0,0.6581141039061631,True,1.0,True,True
-COc1cccc(-c2csc(NC(=O)c3ccncc3NS(=O)(=O)c3ccc(C)cc3)n2)c1,1.0,TabPFNClassifier,1.0,1.61502632403407,True,1.0,True,True
-Cc1cccc(-n2cnc3cc(C(=O)N4CCCC(C(C)C)C4)ccc32)c1,1.0,TabPFNClassifier,1.0,0.8720916078442428,True,1.0,True,True
-CCOc1ccc(CCNC(=O)c2cc3sccc3n2Cc2ccccc2)c(F)c1OCC,0.0,TabPFNClassifier,1.0,0.5423652693396935,True,1.0,True,True
-NC(=O)C1CCN(c2nc(-c3cccc(Br)c3)cs2)CC1,1.0,TabPFNClassifier,1.0,0.6574589467212681,True,1.0,True,True
-N#Cc1cccc(-c2csc(N3CCC(C(N)=O)CC3)n2)c1,1.0,TabPFNClassifier,1.0,0.6592358045044328,True,1.0,True,True
-CCOC(=O)c1ccc(-n2cnc3cc(C(=O)N4CCCCC4)ccc32)cc1,1.0,TabPFNClassifier,1.0,0.9311889539947674,True,1.0,True,True
-CCOc1ccc(CCN(C)C(=O)c2cc3sccc3n2Cc2ccccc2)cc1OCC,1.0,TabPFNClassifier,1.0,0.7064862789737476,True,1.0,True,True
-Cc1ccc2oc(NC3=NC(c4[nH]ncc4Cl)C4=C(CCCC4=O)N3)nc2c1,1.0,TabPFNClassifier,1.0,1.1021467334337598,True,1.0,True,True
-CN(C)c1cccc(-c2ccnc(N3CCC(C(N)=O)CC3)n2)c1,1.0,TabPFNClassifier,1.0,0.5251477259277575,True,1.0,True,True
-Cc1cccc(-c2csc(N3CCC(C(N)=O)CC3)n2)c1,1.0,TabPFNClassifier,1.0,0.4861895634962275,True,1.0,True,True
-Cc1ccc(-n2c(C)cc(-c3nnc4n3CCCCC4)c2C)cc1,1.0,TabPFNClassifier,1.0,0.9618916218264679,True,1.0,True,True
-Cc1nc(Sc2nnnn2C)c2c(-c3ccccc3)csc2n1,1.0,TabPFNClassifier,1.0,0.9859368937169737,True,1.0,True,True
-Cc1cccc(-n2cnc3cc(C(=O)N4CCCC(C)(C)C4)ccc32)c1,1.0,TabPFNClassifier,1.0,0.6599559297193085,True,1.0,True,True
-Cc1cccc2nc(NC3=NC(c4[nH]ncc4Cl)C4=C(CCCC4=O)N3)oc12,1.0,TabPFNClassifier,1.0,1.1021519101037596,True,1.0,True,True
-CC(C)c1ccccc1-c1ncc(F)c(NC(C)(C)c2ccc(-n3ccnn3)cc2)n1,1.0,TabPFNClassifier,1.0,0.5495251982290261,True,1.0,True,True
-COc1ccc(S(=O)(=O)Nc2cnccc2C(=O)Nc2nc(-c3ccccc3)cs2)cc1,1.0,TabPFNClassifier,1.0,1.4904158384625794,True,1.0,True,True
-CSc1ccc(-c2cnc(N3CCC(C(N)=O)CC3)s2)cc1,1.0,TabPFNClassifier,1.0,0.4657369782477345,True,1.0,True,True
-CN(C)c1cccc(-c2nc(N3CCC(C(N)=O)CC3)ncc2F)c1,1.0,TabPFNClassifier,1.0,0.4944345639951968,True,1.0,True,True
-CCn1nnnc1Sc1ncnc2scc(-c3ccc(C)cc3)c12,1.0,TabPFNClassifier,1.0,0.7282583834839813,True,1.0,True,True
-COc1cccc(-c2csc(N3CCC(C(N)=O)CC3)n2)c1,1.0,TabPFNClassifier,1.0,0.5143088828367375,True,1.0,True,True
-Cc1cccc(-n2cnc3cc(C(=O)N4CCCC(C(F)(F)F)C4)ccc32)c1,1.0,TabPFNClassifier,1.0,1.6684464343865573,True,1.0,True,True
-COc1ccc(C(=O)CCN(C)C)cc1F,1.0,TabPFNClassifier,1.0,0.7297052165554189,True,1.0,True,True
-COc1cccc(CNC(=O)CCCn2nc(C)c3c(C)n(-c4ccc(C)cc4)nc3c2=O)c1OC,1.0,TabPFNClassifier,1.0,0.63624489098333,True,1.0,True,True
-CCN(C(=O)C(NS(=O)(=O)c1ccc(Br)s1)c1ccccc1)c1ccc(C)c(C)c1,1.0,TabPFNClassifier,1.0,0.6681055239638933,True,1.0,True,True
+CCCCOc1ccc(CC(=O)NO)cc1,1.0,XGBoost (ADMETboost features),0.8914295434951782,0.7232050430012995,True,0.7828590869903564,True,True
+N[C@@H](Cc1cc(Br)c(O)c(Br)c1)C(=O)O,0.0,XGBoost (ADMETboost features),0.4301374554634094,2.3375147381612367,True,0.13972508907318115,False,False
+CCN(CC)C(=O)c1ccc(O)c(OC)c1,1.0,XGBoost (ADMETboost features),0.9971317052841188,0.5563496711238599,True,0.9942634105682375,True,True
+O=C1Nc2ccc(I)cc2C1=Cc1cc(Br)c(O)c(Br)c1,1.0,XGBoost (ADMETboost features),0.96087247133255,0.7420539968764329,True,0.9217449426651001,True,True
+COc1cccc(CNc2ccc(S(=O)(=O)Nc3nccs3)cc2)c1O,1.0,XGBoost (ADMETboost features),0.9901249408721924,2.316098811420966,True,0.9802498817443848,True,True
+Cc1ccccc1OCC(O)CO,1.0,XGBoost (ADMETboost features),0.8679625391960144,0.6821601349397342,True,0.7359250783920288,True,True
+O=C(CCCCCCC(=O)Nc1ccccc1)NO,1.0,XGBoost (ADMETboost features),0.8912163972854614,1.9716507853610308,True,0.7824327945709229,True,True
+Cn1nnnc1Sc1ncnc2scc(-c3cccc(S(C)(=O)=O)c3)c12,1.0,XGBoost (ADMETboost features),0.9972245693206788,1.3644487451816634,True,0.9944491386413576,True,True
+CS(=O)(=O)c1ccccc1-c1csc(N2CCC(C(N)=O)CC2)n1,1.0,XGBoost (ADMETboost features),0.9970784187316896,0.4666956145157622,True,0.9941568374633791,True,True
+NC(=O)C1CCN(c2nc(-c3cccc(N)c3)cs2)CC1,1.0,XGBoost (ADMETboost features),0.9958361387252808,1.0545576362379363,True,0.9916722774505615,True,True
+CC(=O)Nc1ccc(-c2csc(N3CCC(C(N)=O)CC3)n2)cc1,0.0,XGBoost (ADMETboost features),0.9557373523712158,0.9332716141880215,True,0.9114747047424316,True,True
+CN(C)C(=O)c1cccc(-c2csc(N3CCC(C(N)=O)CC3)n2)c1,1.0,XGBoost (ADMETboost features),0.9995645880699158,0.5359174451899156,True,0.9991291761398315,True,True
+CS(=O)(=O)c1ccc(-c2csc(N3CCC(C(N)=O)CC3)n2)cc1,1.0,XGBoost (ADMETboost features),0.9978779554367064,0.48771255660656,True,0.9957559108734129,True,True
+CS(=O)(=O)c1cccc(-c2csc(N3CCC(C(N)=O)CC3)n2)c1,1.0,XGBoost (ADMETboost features),0.9958779811859132,1.0299503354591182,True,0.9917559623718264,True,True
+CN(C)C(=O)C1CCN(c2nc(-c3ccc(Br)cc3)cs2)CC1,1.0,XGBoost (ADMETboost features),0.9966979026794434,0.7037540212002009,True,0.9933958053588867,True,True
+NC(=O)C1CCN(c2nc(-c3ccc(N)cc3)cs2)CC1,1.0,XGBoost (ADMETboost features),0.9937852621078492,1.0544592204522225,True,0.9875705242156985,True,True
+COc1ccc(-c2csc(N3CCC(C(N)=O)CC3)n2)cc1OC,1.0,XGBoost (ADMETboost features),0.9991033673286438,0.5349232553268861,True,0.9982067346572876,True,True
+COc1cc(-c2csc(N3CCC(C(N)=O)CC3)n2)cc(OC)c1OC,1.0,XGBoost (ADMETboost features),0.9956249594688416,0.5776493614782914,True,0.9912499189376831,True,True
+CC(C)Oc1ccc(-c2csc(N3CCC(C(N)=O)CC3)n2)cc1,1.0,XGBoost (ADMETboost features),0.9985952973365784,0.5148859697540128,True,0.9971905946731567,True,True
+NC1CCN(c2nc(-c3ccc(Br)cc3)cs2)CC1,1.0,XGBoost (ADMETboost features),0.9961392283439636,0.7403117722413881,True,0.9922784566879272,True,True
+CC(=O)NC1CCN(c2nc(-c3ccc(Br)cc3)cs2)CC1,1.0,XGBoost (ADMETboost features),0.9827141165733336,0.9068713966996691,True,0.9654282331466673,True,True
+Cc1ccnc(NC(=S)N2CCN(c3ccc(C(F)(F)F)cc3)CC2)c1,1.0,XGBoost (ADMETboost features),0.9997933506965636,0.8687707947006447,True,0.9995867013931272,True,True
+COc1ccc(-c2cnc(N3CCC(C(N)=O)CC3)s2)cc1OC,1.0,XGBoost (ADMETboost features),0.9994990825653076,0.5362955610834819,True,0.9989981651306152,True,True
+Cc1ccnc(NC(=S)N2CCN(c3ccc(N)cc3)CC2)c1,1.0,XGBoost (ADMETboost features),0.9999328851699828,0.9237821281628866,True,0.9998657703399656,True,True
+CCCCCCCCc1ccc(CCC(N)(CO)CO)cc1,0.0,XGBoost (ADMETboost features),0.93929785490036,1.8681267639132368,True,0.87859570980072,True,True
+Cc1cc(C)nc(NC(=S)N2CCN(c3cccc(C(F)(F)F)c3)CC2)c1,1.0,XGBoost (ADMETboost features),0.9999173879623412,0.8687424469500891,True,0.9998347759246824,True,True
+FC(F)(F)c1ccc(N2CCN(C(=S)Nc3ccccn3)CC2)cc1,1.0,XGBoost (ADMETboost features),0.9997932314872742,0.9782469004871093,True,0.9995864629745483,True,True
+Cc1cc(C)nc(NC(=S)N2CCN(c3ccc(F)cc3F)CC2)c1,1.0,XGBoost (ADMETboost features),0.9998939037322998,0.8797584127436342,True,0.9997878074645996,True,True
+Cc1cc(NS(=O)(=O)c2ccc(N(C)C(=O)Cc3ccc(Cl)c(Cl)c3)cc2)no1,1.0,XGBoost (ADMETboost features),0.9984122514724731,1.0851053765782135,True,0.9968245029449463,True,True
+Cc1ccnc(NC(=S)N2CCN(c3ccc(Cl)cc3Cl)CC2)c1,1.0,XGBoost (ADMETboost features),0.9999783039093018,0.9043896416829875,True,0.9999566078186035,True,True
+Cc1ccnc(NC(=S)N2CCN(c3ccc(C(F)(F)F)cc3[N+](=O)[O-])CC2)c1,1.0,XGBoost (ADMETboost features),0.9996227025985718,2.1824047713716377,True,0.9992454051971436,True,True
+COc1ccnc(NC(=S)N2CCN(c3cc(C(F)(F)F)cc(C(F)(F)F)c3)CC2)c1,1.0,XGBoost (ADMETboost features),0.999359667301178,2.899697785704375,True,0.998719334602356,True,True
+Cc1cc(C)nc(NC(=S)N2CCN(c3ccc(Cl)cc3F)CC2)c1,1.0,XGBoost (ADMETboost features),0.9999395608901978,0.8777090037716299,True,0.9998791217803955,True,True
+O=C(Cc1ccc(Cl)c(Cl)c1)Nc1ccc(S(=O)(=O)Nc2ccon2)cc1,0.0,XGBoost (ADMETboost features),0.6451447606086731,1.4366738264302432,True,0.2902895212173462,False,False
+Cc1cc(NS(=O)(=O)c2ccc(NC(=O)Cc3ccc(Cl)c(F)c3)cc2)no1,1.0,XGBoost (ADMETboost features),0.694128155708313,1.427344386808908,True,0.388256311416626,False,False
+Cc1cc(NS(=O)(=O)c2ccc(NC(=O)Cc3ccc(F)c(Cl)c3)cc2)no1,1.0,XGBoost (ADMETboost features),0.6850495934486389,1.4672956047879713,True,0.37009918689727783,False,False
+COc1ccc(NC(=O)c2[nH]c(C)c(C(C)=O)c2C)cc1S(=O)(=O)N(C)C,1.0,XGBoost (ADMETboost features),0.9973911046981812,0.7181433363652514,True,0.9947822093963623,True,True
+COc1oc(-c2cccc3ccccc23)nc1C(=O)O,0.0,XGBoost (ADMETboost features),0.9858071804046632,2.110191497762773,True,0.9716143608093264,True,True
+O=S(=O)(Nc1nccs1)c1ccc(NCc2cccc(O)c2)cc1,0.0,XGBoost (ADMETboost features),0.84234619140625,3.4218884991237317,False,0.6846923828125,True,False
+COc1ccc(CNc2ccc(S(=O)(=O)Nc3nccs3)cc2)cc1O,1.0,XGBoost (ADMETboost features),0.9401581287384032,3.5036877464965555,False,0.8803162574768064,True,False
+CC(=O)Nc1ccc(C(=O)Nc2ccccc2N)cc1,0.0,XGBoost (ADMETboost features),0.8749181032180786,1.0864343718549208,True,0.7498362064361572,True,True
+Nc1ccccc1CNc1ccc(S(=O)(=O)Nc2nccs2)cc1,0.0,XGBoost (ADMETboost features),0.957456648349762,2.3382345079593523,True,0.9149132966995239,True,True
+COc1ccc(O)c(CNc2ccc(S(=O)(=O)Nc3nccs3)cc2)c1,0.0,XGBoost (ADMETboost features),0.9870403409004213,2.314723812900696,True,0.9740806818008425,True,True
+O=[N+]([O-])c1cccc(CNc2ccc(S(=O)(=O)Nc3nccs3)cc2)c1O,1.0,XGBoost (ADMETboost features),0.3006869256496429,2.7956995140928433,True,0.3986261487007142,False,False
+Nc1cccc(CNc2ccc(S(=O)(=O)Nc3nccs3)cc2)c1O,0.0,XGBoost (ADMETboost features),0.6429247260093689,3.405395034502261,False,0.2858494520187378,False,False
+Nc1ccc(CNc2ccc([S+](=O)([O-])Nc3nccs3)cc2)c(O)c1,0.0,XGBoost (ADMETboost features),0.6194810271263123,7.052989810185073,False,0.2389620542526245,False,False
+O=[S+]([O-])(Nc1nccs1)c1ccc(NCc2cc(F)cc(Cl)c2O)cc1,1.0,XGBoost (ADMETboost features),0.3645170629024505,3.2866118249333587,False,0.270965874195099,False,False
+COc1cccc(CNc2ccc(S(=O)(=O)Nc3nccs3)cc2)c1N,1.0,XGBoost (ADMETboost features),0.9923466444015504,2.371568073747684,True,0.9846932888031008,True,True
+COc1ccc(NC(=O)c2[nH]c(C)c(C(C)=O)c2C)cc1,1.0,XGBoost (ADMETboost features),0.9981698989868164,1.3337573309620008,True,0.9963397979736328,True,True
+CC(=O)c1c(C)[nH]c(C(=O)Nc2ccc(Cl)cc2)c1C,1.0,XGBoost (ADMETboost features),0.9970935583114624,1.347774657925944,True,0.9941871166229248,True,True
+Nc1nc2c(s1)C(c1cc(Cl)ccc1F)CC(=O)N2,1.0,XGBoost (ADMETboost features),0.986062228679657,0.8633818239748849,True,0.972124457359314,True,True
+COc1ccc(C2CC(=O)Nc3nc(N)sc32)cc1OC,1.0,XGBoost (ADMETboost features),0.9809941053390504,1.770490836478209,True,0.9619882106781008,True,True
+Cc1ccc(S(=O)(=O)Nc2cnccc2C(=O)Nc2nc(-c3cccc(Cl)c3)cs2)cc1,1.0,XGBoost (ADMETboost features),0.7679747939109802,1.6039520388335684,True,0.5359495878219604,True,True
+COc1cccc(CN(C)c2ccc([S+](=O)([O-])Nc3nccs3)cc2)c1O,1.0,XGBoost (ADMETboost features),0.9709362983703612,3.5977167211051926,False,0.9418725967407224,True,False
+Cc1ccc(S(=O)(=O)Nc2cnccc2C(=O)Nc2nc(-c3ccc(Cl)cc3)cs2)cc1,1.0,XGBoost (ADMETboost features),0.687853217124939,1.3284274215344247,True,0.37570643424987793,False,False
+Cc1ccc(S(=O)(=O)Nc2cnccc2C(=O)Nc2nc(-c3ccc(Cl)c(Cl)c3)cs2)cc1,1.0,XGBoost (ADMETboost features),0.7070501446723938,1.6044213472497018,True,0.4141002893447876,False,False
+Cc1ccc(S(=O)(=O)Nc2cnccc2C(=O)Nc2nc(-c3ccc(F)cc3)cs2)cc1,1.0,XGBoost (ADMETboost features),0.9355168342590332,1.804105719553455,True,0.8710336685180664,True,True
+COc1cccc(CNc2ccc(S(=O)(=O)Nc3nc(C)cs3)cc2)c1O,1.0,XGBoost (ADMETboost features),0.9988892674446106,1.7883456888170732,True,0.9977785348892212,True,True
+COc1ccc(/C=C2/C(=O)Nc3ccccc32)cc1O,1.0,XGBoost (ADMETboost features),0.9937127232551576,0.6969408121297918,True,0.9874254465103152,True,True
+O=C1Nc2ccccc2/C1=C/c1cccc(C(=O)O)c1,0.0,XGBoost (ADMETboost features),0.4516563415527344,2.216024632186493,True,0.09668731689453125,False,False
+O=C1Nc2c(Cl)cccc2/C1=C\c1cc(Cl)c(O)c(Cl)c1,1.0,XGBoost (ADMETboost features),0.9886228442192078,0.8951845381664343,True,0.9772456884384155,True,True
+O=C1Nc2cc(Cl)ccc2/C1=C\c1cc(Cl)c(O)c(Cl)c1,1.0,XGBoost (ADMETboost features),0.980388045310974,1.118887602503404,True,0.960776090621948,True,True
+O=C1Nc2ccc(Cl)cc2/C1=C\c1cc(Cl)c(O)c(Cl)c1,1.0,XGBoost (ADMETboost features),0.98504239320755,0.8943969281653854,True,0.9700847864151001,True,True
+O=C1Nc2cccc(Cl)c2/C1=C\c1cc(Cl)c(O)c(Cl)c1,1.0,XGBoost (ADMETboost features),0.9886596202850342,0.8953506190305613,True,0.9773192405700684,True,True
+COc1ccc(NC(=O)c2[nH]c(C)cc2C)cc1[S+](=O)([O-])Nc1ccc(Br)cc1,1.0,XGBoost (ADMETboost features),0.9954540729522704,1.9099753049330852,True,0.9909081459045408,True,True
+COc1ccc(NC(=O)c2c(C)cccc2C)cc1[S+](=O)([O-])N(C)C,1.0,XGBoost (ADMETboost features),0.99947589635849,1.3195907230892996,True,0.99895179271698,True,True
+N#Cc1ccc(S(=O)(=O)Nc2cnccc2C(=O)Nc2nc(-c3ccccc3)cs2)cc1,1.0,XGBoost (ADMETboost features),0.5575880408287048,1.7783744107884876,True,0.11517608165740967,False,False
+COc1cc(-c2nc(Nc3ccc(F)c(F)c3)c3ccccc3n2)cc(OC)n1,1.0,XGBoost (ADMETboost features),0.998542070388794,0.6217461073251025,True,0.9970841407775879,True,True
+COc1cc(-c2nc(Nc3ccc(F)c(F)c3)c3ccccc3n2)ccn1,1.0,XGBoost (ADMETboost features),0.9994316697120668,0.5543344918324074,True,0.9988633394241335,True,True
+COc1nccc(-c2nc(Nc3ccc(F)c(F)c3)c3ccccc3n2)c1Cl,1.0,XGBoost (ADMETboost features),0.9995656609535216,0.6911738533443081,True,0.9991313219070432,True,True
+Fc1cc(-c2nc(Nc3ccc(F)c(F)c3)c3ccccc3n2)ccn1,1.0,XGBoost (ADMETboost features),0.99675190448761,0.7567547455903307,True,0.99350380897522,True,True
+O=C(Nc1nc(-c2ccc(F)cc2)cs1)c1ccncc1NS(=O)(=O)c1ccc(F)cc1,1.0,XGBoost (ADMETboost features),0.6683844327926636,1.747193866380798,True,0.33676886558532715,False,False
+O=C(Nc1nc(-c2ccc(F)cc2)cs1)c1ccncc1NS(=O)(=O)c1ccccc1Cl,1.0,XGBoost (ADMETboost features),0.7804638147354126,2.05131768259932,True,0.5609276294708252,True,True
+Fc1cc(Nc2nc(-c3ccncc3)nc3ccccc23)ccc1-c1cccc(OC(F)(F)F)c1,1.0,XGBoost (ADMETboost features),0.9652500748634338,0.8687859634514996,True,0.9305001497268677,True,True
+Fc1ccc(-c2ccc(Nc3nc(-c4ccncc4)nc4ccccc34)cc2F)cc1,1.0,XGBoost (ADMETboost features),0.9228147864341736,0.8525052242686908,True,0.8456295728683472,True,True
+Fc1cc(Nc2nc(-c3ccncc3)nc3ccccc23)ccc1-c1cccc(C(F)(F)F)c1,1.0,XGBoost (ADMETboost features),0.9934263229370116,0.8687623649796348,True,0.9868526458740232,True,True
+Fc1cccc(-c2ccc(Nc3nc(-c4ccncc4)nc4ccccc34)cc2F)c1,1.0,XGBoost (ADMETboost features),0.884670615196228,0.8529272340425995,True,0.769341230392456,True,True
+Fc1cc(Nc2nc(-c3ccncc3)nc3ccccc23)ccc1-c1cc(F)c(F)c(F)c1,1.0,XGBoost (ADMETboost features),0.8655593395233154,1.234698707267988,True,0.7311186790466309,True,True
+Fc1cc(Nc2nc(-c3ccncc3)nc3ccccc23)ccc1-c1cccc(OC(F)F)c1,1.0,XGBoost (ADMETboost features),0.9836763739585876,0.8640232271923888,True,0.9673527479171753,True,True
+Fc1cc(Nc2nc(-c3ccncc3)nc3ccccc23)ccc1OC(F)(F)F,1.0,XGBoost (ADMETboost features),0.9949197173118592,0.920451545967766,True,0.9898394346237185,True,True
+CC(=O)c1c(C)[nH]c(C(=O)Nc2cccc([S+](=O)([O-])Nc3ccc(C#N)cc3)c2)c1C,1.0,XGBoost (ADMETboost features),0.8417602181434631,2.1890911198401017,True,0.6835204362869263,True,True
+CC(=O)Nc1ccc(N[S+](=O)([O-])c2cccc(NC(=O)c3[nH]c(C)c(C(C)=O)c3C)c2)cc1,1.0,XGBoost (ADMETboost features),0.8485856056213379,2.227227049613589,True,0.6971712112426758,True,True
+CCc1ccc(NC(=O)c2[nH]c(C)c(C(C)=O)c2C)cc1[S+](=O)([O-])Nc1ccccc1C#N,1.0,XGBoost (ADMETboost features),0.969742238521576,1.8060049995932759,True,0.9394844770431521,True,True
+COc1ccc(NC(=O)c2[nH]c(C)c(C(C)=O)c2C)cc1[S+](=O)([O-])Nc1ccccc1C#N,1.0,XGBoost (ADMETboost features),0.9443945288658142,2.130932393496054,True,0.8887890577316284,True,True
+COc1ccc(NC(=O)c2[nH]c(C)c(C(C)=O)c2C)cc1[S+](=O)([O-])Nc1ccc(C#N)cc1,1.0,XGBoost (ADMETboost features),0.8724119067192078,2.450475314919231,True,0.7448238134384155,True,True
+CC(=O)c1c(C)[nH]c(C(=O)Nc2ccc(OCCCN(C)C)c([S+](=O)([O-])Nc3ccc(Br)cc3)c2)c1C,1.0,XGBoost (ADMETboost features),0.8880904316902161,2.223049931863912,True,0.7761808633804321,True,True
+Nc1nc2c(s1)C(c1cccc(F)c1F)CC(=O)N2,0.0,XGBoost (ADMETboost features),0.9601365923881532,1.0038699903361492,True,0.9202731847763064,True,True
+Nc1nc2c(s1)C(c1ccccc1)CC(=O)N2,1.0,XGBoost (ADMETboost features),0.9966086149215698,1.7510850318222726,True,0.9932172298431396,True,True
+Nc1nc2c(s1)C(c1ccc(F)cc1F)CC(=O)N2,1.0,XGBoost (ADMETboost features),0.966597855091095,0.9377854481001318,True,0.9331957101821899,True,True
+COc1ccc(NC(=O)c2cc(-c3ccc[nH]3)n[nH]2)cc1OC,1.0,XGBoost (ADMETboost features),0.9867780208587646,1.182409993371946,True,0.9735560417175293,True,True
+CCOP(=O)(Cc1ccc(C(=O)Nc2ccc(Br)cc2C#N)cc1)OCC,1.0,XGBoost (ADMETboost features),0.9832987189292908,0.7360745388235079,True,0.9665974378585815,True,True
+O=C1Nc2ccccc2/C1=C/c1cc(Cl)c(O)c(Cl)c1,1.0,XGBoost (ADMETboost features),0.9812188744544984,0.9250822893977526,True,0.9624377489089968,True,True
+COc1ccnc(NC(=S)N2CCN(c3cccc(C(F)(F)F)c3)CC2)c1,1.0,XGBoost (ADMETboost features),0.9998650550842284,0.9199378629178807,True,0.9997301101684568,True,True
+O=C1Nc2ccccc2/C1=C\c1ccc(C(=O)O)cc1,0.0,XGBoost (ADMETboost features),0.3178143501281738,2.087238515468595,True,0.36437129974365245,False,False
+Cc1cc(C)nc(NC(=S)N2CCN(c3cccc(OC(F)F)c3)CC2)c1,1.0,XGBoost (ADMETboost features),0.9998302459716796,0.8728405592301635,True,0.9996604919433592,True,True
+CNc1oc(-c2cccc3ccccc23)nc1C(=O)OC,1.0,XGBoost (ADMETboost features),0.9997746348381042,1.7388501426447476,True,0.9995492696762085,True,True
+COc1cnccc1-c1nc(Nc2ccc(F)c(F)c2)c2ccccc2n1,0.0,XGBoost (ADMETboost features),0.9975812435150146,0.5826838756513548,True,0.9951624870300293,True,True
+Nc1nc2c(s1)C(c1ccc(F)c(F)c1)CC(=O)N2,1.0,XGBoost (ADMETboost features),0.9796685576438904,1.8176187770250327,True,0.9593371152877808,True,True
+Fc1cccc(F)c1Nc1nc(-c2ccncc2)nc2ccccc12,1.0,XGBoost (ADMETboost features),0.9993109703063964,0.8742002615558233,True,0.9986219406127927,True,True
+Oc1ccc(Nc2nc(-c3ccncc3)nc3ccccc23)cc1F,1.0,XGBoost (ADMETboost features),0.9849056601524352,0.7071777766534146,True,0.9698113203048704,True,True
+Fc1cc(Nc2nc(-c3ccncc3)nc3ccccc23)ccc1OCC(F)(F)F,1.0,XGBoost (ADMETboost features),0.997192680835724,1.6945243887000059,True,0.994385361671448,True,True
+Cc1ccc(S(=O)(=O)Nc2cnccc2C(=O)Nc2nc(-c3cccc(F)c3)cs2)cc1,1.0,XGBoost (ADMETboost features),0.8622400760650635,1.6951985433379133,True,0.724480152130127,True,True
+CNC(=O)C1CCN(c2nc(-c3ccc(Br)cc3)cs2)CC1,1.0,XGBoost (ADMETboost features),0.9933392405509948,0.526098490118833,True,0.9866784811019895,True,True
+O=C1Nc2ccccc2/C1=C\c1cc(Br)c(O)c(Br)c1,1.0,XGBoost (ADMETboost features),0.9581744074821472,0.7420592641238681,True,0.9163488149642944,True,True
+Cc1cccc2c1NC(=O)/C2=C/c1cc(Cl)c(O)c(Cl)c1,1.0,XGBoost (ADMETboost features),0.9964768290519714,0.847625904029055,True,0.9929536581039429,True,True
+COc1nccc(-c2nc(Nc3ccc(F)c(F)c3)c3ccccc3n2)c1OC,1.0,XGBoost (ADMETboost features),0.996309459209442,0.7091562303022031,True,0.992618918418884,True,True
+Nc1nc2c(s1)C(c1cccc(Cl)c1Cl)CC(=O)N2,1.0,XGBoost (ADMETboost features),0.9938172698020936,0.828602354048342,True,0.9876345396041872,True,True
+NC(=O)C1CCN(c2nc(-c3ccccc3N)cs2)CC1,1.0,XGBoost (ADMETboost features),0.997747242450714,1.9322549866157956,True,0.995494484901428,True,True
+Nc1ccc(S(=O)(=O)Nc2cnccc2C(=O)Nc2nc(-c3ccccc3)cs2)cc1,1.0,XGBoost (ADMETboost features),0.3344854712486267,1.7644600917141848,True,0.3310290575027466,False,False
+Fc1ccc(-c2ccc(Nc3nc(-c4ccncc4)nc4ccccc34)cc2F)c(Cl)c1,1.0,XGBoost (ADMETboost features),0.9828874468803406,0.854094211613508,True,0.9657748937606812,True,True
+CC(=O)c1c(C)[nH]c(C(=O)Nc2cccc([S+](=O)([O-])Nc3cccc(C#N)c3)c2)c1C,1.0,XGBoost (ADMETboost features),0.9640011787414552,2.1364844083173393,True,0.9280023574829104,True,True
+N#CC1CCN(c2nc(-c3ccc(Br)cc3)cs2)CC1,1.0,XGBoost (ADMETboost features),0.974207878112793,1.1861398589245138,True,0.9484157562255859,True,True
+COc1ccc(C(=O)NC2CCCc3c2[nH]c2ccccc32)cc1OC,1.0,XGBoost (ADMETboost features),0.9975948929786682,0.5987285231289148,True,0.9951897859573364,True,True
+CC(C)Nc1oc(-c2cccc3ccccc23)nc1C#N,1.0,XGBoost (ADMETboost features),0.9999115467071532,0.6311657707228358,True,0.9998230934143064,True,True
+Cc1ccnc(NC(=S)N2CCN(c3cccc(C(F)(F)F)c3)CC2)c1,1.0,XGBoost (ADMETboost features),0.9998927116394044,0.8685388990334599,True,0.9997854232788088,True,True
+Cc1ccnc(NC(=S)N2CCN(c3ccc(Cl)c(Cl)c3)CC2)c1,1.0,XGBoost (ADMETboost features),0.9999845027923584,2.1093023269848716,True,0.9999690055847168,True,True
+Cc1ccc(S(=O)(=O)Nc2ccc(OC(F)(F)F)cc2C(=O)Nc2nc(-c3ccccc3)cs2)cc1,0.0,XGBoost (ADMETboost features),0.4274929165840149,1.2935566263740568,True,0.14501416683197021,False,False
+O=S(=O)(Nc1nccs1)c1ccc(NCc2ccccc2O)cc1,0.0,XGBoost (ADMETboost features),0.9085395336151124,2.284824612332132,True,0.8170790672302248,True,True
+Fc1cc(Nc2nc(-c3ccncc3)nc3ccccc23)ccc1-c1ccc(F)c(F)c1F,1.0,XGBoost (ADMETboost features),0.9522817730903624,1.2555408269331922,True,0.9045635461807249,True,True
+Nc1nc2c(s1)C(c1ccc(Br)cc1)CC(=O)N2,1.0,XGBoost (ADMETboost features),0.972076177597046,1.7505450449532913,True,0.944152355194092,True,True
+Nc1nc2c(s1)C(c1c(Cl)cccc1Cl)CC(=O)N2,0.0,XGBoost (ADMETboost features),0.9831105470657348,0.829008705490115,True,0.9662210941314695,True,True
+CC(C)Oc1cccc(-c2cnc(N3CCC(C(N)=O)CC3)s2)c1,1.0,XGBoost (ADMETboost features),0.9996155500411988,0.5148410306502702,True,0.9992311000823977,True,True
+O=C1Nc2ccccc2/C1=C\c1cc(F)c(O)c(F)c1,1.0,XGBoost (ADMETboost features),0.9460045099258424,1.0494497020516191,True,0.8920090198516848,True,True
+Fc1ccc(-c2ccc(Nc3nc(-c4ccncc4)nc4ccccc34)cc2F)c(F)c1,1.0,XGBoost (ADMETboost features),0.9433789849281312,0.9076716269755561,True,0.8867579698562624,True,True
+CCc1ccc(NC(=O)c2[nH]c(C)c(C(C)=O)c2C)cc1[S+](=O)([O-])Nc1ccc(Br)cc1,0.0,XGBoost (ADMETboost features),0.9784981608390808,1.6493487703033063,True,0.9569963216781616,True,True
+COc1ccc(C(=O)NC2CCCc3c2[nH]c2c(Cl)cccc32)cc1OC,1.0,XGBoost (ADMETboost features),0.9985356330871582,0.6115969731640549,True,0.9970712661743164,True,True
+CCc1ccc2oc(NC3=NC(c4[nH]ncc4Cl)C4=C(CCCC4=O)N3)nc2c1,1.0,XGBoost (ADMETboost features),0.992121696472168,1.0935587973877656,True,0.9842433929443359,True,True
+Cc1ccc2c(c1)/C(=C\c1cc(Cl)c(O)c(Cl)c1)C(=O)N2,1.0,XGBoost (ADMETboost features),0.9969838261604308,0.8477370612961997,True,0.9939676523208616,True,True
+COc1cc(Nc2nc(-c3ccncc3)nc3ccccc23)ccc1NS(C)(=O)=O,1.0,XGBoost (ADMETboost features),0.9985334873199464,1.046503634641386,True,0.9970669746398928,True,True
+CCN1C(=O)c2ccccc2[S@](=O)c2ccc(C(=O)NCc3ccc(C#N)cc3)cc21,1.0,XGBoost (ADMETboost features),0.9992955923080444,0.9585586951880669,True,0.9985911846160889,True,True
+Fc1cnc(-c2ccccc2C(F)F)nc1NCc1ccc(-n2ccnn2)cc1,1.0,XGBoost (ADMETboost features),0.9980194568634032,0.877040076954469,True,0.9960389137268064,True,True
+Cc1cnc(-c2ccccc2C(F)F)nc1NCc1ccc(-n2ccnn2)cc1,1.0,XGBoost (ADMETboost features),0.9978870749473572,0.7808010686368884,True,0.9957741498947144,True,True
+Cc1cccc(CNc2ccc(S(=O)(=O)Nc3nccs3)cc2)c1O,0.0,XGBoost (ADMETboost features),0.9216131567955016,2.252095986043839,True,0.8432263135910032,True,True
+CC(=O)c1ccc(N[S+](=O)([O-])c2cccc(NC(=O)c3[nH]c(C)c(C(C)=O)c3C)c2)cc1,0.0,XGBoost (ADMETboost features),0.8121967911720276,2.488930975856493,True,0.6243935823440552,True,True
+O=C(Nc1cccc(OC(F)(F)F)c1)c1cc(-c2ccc[nH]2)n[nH]1,1.0,XGBoost (ADMETboost features),0.7805622220039368,1.1141775924367414,True,0.5611244440078735,True,True
+COc1ccc(-n2cnc3cc(C(=O)N4CCCCC4)ccc32)cc1,1.0,XGBoost (ADMETboost features),0.9995007514953612,0.6751850209607744,True,0.9990015029907224,True,True
+COc1ccnc(NC(=S)N2CCN(c3ccc(Cl)c(Cl)c3)CC2)c1,1.0,XGBoost (ADMETboost features),0.9999333620071412,2.1380204602993333,True,0.9998667240142824,True,True
+O=C1Nc2ccccc2/C1=C\c1ccc(O)c(F)c1,1.0,XGBoost (ADMETboost features),0.917275846004486,0.7762248732307638,True,0.834551692008972,True,True
+O=C(Nc1nc(-c2ccccc2)cs1)c1ccncc1NS(=O)(=O)c1ccc(F)cc1,1.0,XGBoost (ADMETboost features),0.7285378575325012,1.3359688921785937,True,0.45707571506500244,False,False
+Fc1ccc(Nc2nc(-c3ccncc3F)nc3ccccc23)cc1F,1.0,XGBoost (ADMETboost features),0.9956628680229188,0.8119868403905808,True,0.9913257360458376,True,True
+Cc1cc(F)ccc1S(=O)(=O)Nc1cnccc1C(=O)Nc1nc(-c2ccccc2)cs1,1.0,XGBoost (ADMETboost features),0.8675665855407715,1.6043993601116835,True,0.735133171081543,True,True
+O=C(Nc1nc(-c2ccccc2)cs1)c1ccncc1NS(=O)(=O)c1ccc(C(F)(F)F)cc1,1.0,XGBoost (ADMETboost features),0.377395749092102,1.2993919919547996,True,0.245208501815796,False,False
+NC(=O)C1CCN(c2nccc(-c3ccc(Br)cc3)n2)CC1,1.0,XGBoost (ADMETboost features),0.9965879917144777,0.659103734171538,True,0.9931759834289553,True,True
+C=CCc1cccc(CNc2ccc(S(=O)(=O)Nc3nccs3)cc2)c1O,1.0,XGBoost (ADMETboost features),0.9074537754058838,2.2846392608214683,True,0.8149075508117676,True,True
+FC(F)(F)Oc1cccc(Nc2nc(-c3ccncc3)nc3ccccc23)c1,1.0,XGBoost (ADMETboost features),0.99883633852005,0.6626573033996491,True,0.9976726770401001,True,True
+Fc1ccc(Nc2nc(-c3ccncc3Cl)nc3ccccc23)cc1F,1.0,XGBoost (ADMETboost features),0.9940317273139954,0.7126006868843926,True,0.9880634546279907,True,True
+O=C(Nc1nc(-c2ccccc2)cs1)c1ccncc1NS(=O)(=O)c1ccc(F)cc1Cl,1.0,XGBoost (ADMETboost features),0.5089812278747559,1.6165011581075008,True,0.01796245574951172,False,False
+CC(=O)c1c(C)[nH]c(C(=O)Nc2ccc(C)c([S+](=O)([O-])Nc3ccc(Br)cc3)c2)c1C,1.0,XGBoost (ADMETboost features),0.9496734738349916,1.6495171745827293,True,0.8993469476699831,True,True
+O=C(Nc1nc(-c2ccccc2)cs1)c1ccncc1NS(=O)(=O)c1ccc(Cl)cc1,1.0,XGBoost (ADMETboost features),0.5149644017219543,1.4710278682702023,True,0.02992880344390869,False,False
+COC(=O)c1cc(Cl)ccc1NC(=O)CSc1ncc(S(=O)(=O)c2ccc(Br)cc2)c(=O)[nH]1,1.0,XGBoost (ADMETboost features),0.5195704698562622,1.2203001585847795,True,0.039140939712524414,False,False
+CC(=O)c1c(C)[nH]c(C(=O)Nc2cccc([S+](=O)([O-])Nc3ccc(Br)cc3)c2)c1C,1.0,XGBoost (ADMETboost features),0.9615200757980348,1.652870099696076,True,0.9230401515960696,True,True
+CNc1oc(-c2cccc3ccccc23)nc1C#N,1.0,XGBoost (ADMETboost features),0.9999147653579712,0.6302001016277605,True,0.9998295307159424,True,True
+COc1cccc(NC(=S)N2CCN(c3cccc(C(F)(F)F)c3)CC2)n1,1.0,XGBoost (ADMETboost features),0.9997648596763612,2.3389965086814803,True,0.9995297193527224,True,True
+Cc1cc(C)nc(NC(=S)N2CCN(c3cccc([N+](=O)[O-])c3)CC2)c1,1.0,XGBoost (ADMETboost features),0.9999719858169556,0.8752152087178555,True,0.9999439716339111,True,True
+Fc1cc(Nc2nc(-c3ccncc3)nc3ccccc23)ccc1C(F)(F)F,1.0,XGBoost (ADMETboost features),0.9945143461227416,0.72844371787758,True,0.9890286922454832,True,True
+O=C1CCCC2=C1C(c1[nH]ncc1Cl)N=C(Nc1nc3cc(F)ccc3o1)N2,1.0,XGBoost (ADMETboost features),0.9924806356430054,1.1710934125916252,True,0.9849612712860107,True,True
+O=C(Nc1ccc(F)cc1F)c1cc(-c2ccc[nH]2)n[nH]1,1.0,XGBoost (ADMETboost features),0.7863497734069824,1.1887729744040763,True,0.5726995468139648,True,True
+N#Cc1ccc(-c2csc(N3CCC(C(N)=O)CC3)n2)cc1,1.0,XGBoost (ADMETboost features),0.9990410208702089,0.6589037066109826,True,0.9980820417404177,True,True
+O=C(c1ccc2c(c1)ncn2-c1ccccc1)N1CCCCC1,1.0,XGBoost (ADMETboost features),0.9994875192642212,0.7697902969396659,True,0.9989750385284424,True,True
+O=S(=O)(Nc1nccs1)c1ccc(NCc2cccc(F)c2O)cc1,0.0,XGBoost (ADMETboost features),0.798728883266449,2.344319929571376,True,0.597457766532898,True,True
+O=C1Nc2ccccc2/C1=C\c1ccc(O)c(Cl)c1,1.0,XGBoost (ADMETboost features),0.9767385721206664,0.7148497125776999,True,0.9534771442413328,True,True
+COc1ccccc1S(=O)(=O)Nc1cnccc1C(=O)Nc1nc(-c2ccccc2)cs1,1.0,XGBoost (ADMETboost features),0.9725915789604188,1.7592318257295476,True,0.9451831579208376,True,True
+Cc1ccc2nc(NC3=NC(c4[nH]ncc4Cl)C4=C(CCCC4=O)N3)oc2c1,1.0,XGBoost (ADMETboost features),0.996298372745514,1.1021467334337598,True,0.992596745491028,True,True
+FC(F)(F)c1cccc(N2CCN(C(=S)Nc3ccccn3)CC2)c1,1.0,XGBoost (ADMETboost features),0.9998788833618164,0.9064122290594363,True,0.9997577667236328,True,True
+COc1ccccc1-c1csc(N2CCC(C(N)=O)CC2)n1,1.0,XGBoost (ADMETboost features),0.998852014541626,0.5481721692045303,True,0.997704029083252,True,True
+Cc1cc(C)nc(NC(=S)N2CCN(c3ccc(Cl)cc3[N+](=O)[O-])CC2)c1,1.0,XGBoost (ADMETboost features),0.9999730587005616,0.8634043937447696,True,0.9999461174011233,True,True
+CN1C(=O)c2ccccc2[S@](=O)c2ccc(C(=O)NCc3ccc(Cl)cc3)cc21,1.0,XGBoost (ADMETboost features),0.99973326921463,0.9092634439873053,True,0.99946653842926,True,True
+COc1cccc(CNc2ccc(S(=O)(=O)Nc3nccs3)cc2)c1,1.0,XGBoost (ADMETboost features),0.9895115494728088,2.9416863286395847,True,0.9790230989456177,True,True
+Fc1cc(F)cc(Nc2nc(-c3ccncc3)nc3ccccc23)c1,1.0,XGBoost (ADMETboost features),0.9976383447647096,0.6734322319675412,True,0.9952766895294192,True,True
+Clc1ccc(Nc2nc(-c3ccncc3)nc3ccccc23)cc1Cl,1.0,XGBoost (ADMETboost features),0.9993880987167358,0.903045382277792,True,0.9987761974334717,True,True
+O=[S+]([O-])(Nc1nccs1)c1ccc(NCc2cccc(Cl)c2)cc1,1.0,XGBoost (ADMETboost features),0.9601365923881532,3.4615637879585015,False,0.9202731847763064,True,False
+CC(=O)c1c(C)c(C(=O)Nc2cccc([S+](=O)([O-])N(C)C)c2)n(C)c1C,1.0,XGBoost (ADMETboost features),0.9995875954627992,1.2948685327126566,True,0.9991751909255984,True,True
+Nc1cc(-c2nc(Nc3ccc(F)c(F)c3)c3ccccc3n2)ccn1,1.0,XGBoost (ADMETboost features),0.9952104687690736,0.8256401509816478,True,0.9904209375381472,True,True
+COc1ccc(NC(=O)c2[nH]c(C)c(C(C)=O)c2C)cc1[S+](=O)([O-])Nc1cccc(C#N)c1,1.0,XGBoost (ADMETboost features),0.9576671719551086,2.392606465403781,True,0.9153343439102173,True,True
+O=C(Nc1nc(-c2ccccc2)cs1)c1ccncc1NS(=O)(=O)c1ccccc1Cl,1.0,XGBoost (ADMETboost features),0.9127028584480286,1.759677510970762,True,0.8254057168960571,True,True
+CCc1ccc(NC(=O)c2[nH]c(C)c(C(C)=O)c2C)cc1[S+](=O)([O-])Nc1ccc(C#N)cc1,1.0,XGBoost (ADMETboost features),0.9452703595161438,2.1361273251009556,True,0.8905407190322876,True,True
+Cc1ccc(S(=O)(=O)Nc2cnccc2C(=O)Nc2nc(-c3ccccc3)cs2)cc1,1.0,XGBoost (ADMETboost features),0.5744320154190063,1.3278916989655367,True,0.1488640308380127,False,False
+COc1ccc2oc(NC3=NC(c4[nH]ncc4Cl)C4=C(CCCC4=O)N3)nc2c1,1.0,XGBoost (ADMETboost features),0.9964371919631958,1.1674808025242287,True,0.9928743839263916,True,True
+O=C1CCCC2=C1C(c1[nH]ncc1Br)N=C(Nc1nc3ccccc3o1)N2,1.0,XGBoost (ADMETboost features),0.9976050853729248,1.4167463624250882,True,0.9952101707458496,True,True
+COC(=O)c1nc(-c2cccc3ccccc23)oc1OC,1.0,XGBoost (ADMETboost features),0.9993925094604492,0.6681318874325886,True,0.9987850189208984,True,True
+O=S(=O)(Nc1nccs1)c1ccc(NCc2cccc(Cl)c2O)cc1,1.0,XGBoost (ADMETboost features),0.8955563306808472,2.2863916018481314,True,0.7911126613616943,True,True
+O=C1CCCC2=C1C(c1[nH]ncc1Cl)N=C(Nc1nc3ccc(F)cc3o1)N2,1.0,XGBoost (ADMETboost features),0.9908159971237184,1.171254699006925,True,0.9816319942474367,True,True
+O=S(=O)(Nc1nccs1)c1ccc(NCc2cccc(Br)c2O)cc1,1.0,XGBoost (ADMETboost features),0.8688783049583435,2.2850906284345314,True,0.737756609916687,True,True
+O=C1Nc2ccccc2/C1=C\c1ccc(O)cc1,1.0,XGBoost (ADMETboost features),0.9588053226470948,0.9158612726195109,True,0.9176106452941897,True,True
+N#Cc1cccc(S(=O)(=O)Nc2cnccc2C(=O)Nc2nc(-c3ccccc3)cs2)c1,1.0,XGBoost (ADMETboost features),0.4095050692558288,1.6347611723422255,True,0.1809898614883424,False,False
+Cc1ccccc1S(=O)(=O)Nc1cnccc1C(=O)Nc1nc(-c2ccccc2)cs1,1.0,XGBoost (ADMETboost features),0.9511893391609192,1.6710607925116054,True,0.9023786783218384,True,True
+CC(C)(C)c1ccc(-c2csc(N3CCC(C(N)=O)CC3)n2)cc1,1.0,XGBoost (ADMETboost features),0.9986560344696044,0.48649484367022733,True,0.9973120689392088,True,True
+O=C1CCCC2=C1C(c1[nH]ncc1Cl)N=C(Nc1nc3ccccc3o1)N2,1.0,XGBoost (ADMETboost features),0.9980342984199524,1.161731818190836,True,0.9960685968399048,True,True
+NC[C@H](O)c1ccc(O)c(O)c1,0.0,XGBoost (ADMETboost features),0.5257290005683899,2.480415869820729,True,0.051458001136779785,False,False
+CCNc1oc(-c2cccc3ccccc23)nc1C#N,1.0,XGBoost (ADMETboost features),0.9998809099197388,0.6312909716142039,True,0.9997618198394775,True,True
+CN1C(=O)c2ccccc2[S@](=O)c2ccc(C(=O)NCc3ccc(Br)cc3)cc21,1.0,XGBoost (ADMETboost features),0.9983213543891908,0.90810631744023,True,0.9966427087783816,True,True
+CC(Nc1ccc([S+](=O)([O-])Nc2nccs2)cc1)c1ccccc1,1.0,XGBoost (ADMETboost features),0.9517821073532104,3.5008443456878924,False,0.9035642147064209,True,False
+Cc1ccc(S(=O)(=O)Nc2cc(Cl)c(Cl)cc2C(=O)Nc2nc(-c3ccccc3)cs2)cc1,0.0,XGBoost (ADMETboost features),0.6837193965911865,1.2919980394840294,True,0.36743879318237305,False,False
+O=[N+]([O-])c1ccc(CNc2ccc([S+](=O)([O-])Nc3nccs3)cc2)c(O)c1,0.0,XGBoost (ADMETboost features),0.8332662582397461,3.6004414636678286,False,0.6665325164794922,True,False
+Cc1ccc(S(=O)(=O)Nc2cnccc2C(=O)Nc2nc(-c3ccccc3Cl)cs2)cc1,1.0,XGBoost (ADMETboost features),0.7854634523391724,1.7204918255942132,True,0.5709269046783447,True,True
+O=C(Nc1nc(-c2ccccc2)cs1)c1ccncc1NS(=O)(=O)c1ccccc1,1.0,XGBoost (ADMETboost features),0.908366858959198,1.511357245945917,True,0.816733717918396,True,True
+CN(C)c1cc(-c2nc(Nc3ccc(F)c(F)c3)c3ccccc3n2)ccn1,1.0,XGBoost (ADMETboost features),0.9993197917938232,0.5502002376341324,True,0.9986395835876465,True,True
+[2H]C([2H])(Nc1nc(-c2ccccc2C([2H])(C([2H])([2H])[2H])C([2H])([2H])[2H])ncc1C)c1ccc(-n2ccnn2)cc1,1.0,XGBoost (ADMETboost features),0.997373342514038,2.169861739432073,True,0.994746685028076,True,True
+CCN1C(=O)c2ccccc2[S@](=O)c2ccc(C(=O)NCc3ccc(F)cc3)cc21,1.0,XGBoost (ADMETboost features),0.9992401599884032,0.914726425871728,True,0.9984803199768064,True,True
+O=S(=O)(Nc1nccs1)c1ccc(NCc2cc(F)ccc2O)cc1,0.0,XGBoost (ADMETboost features),0.5795301795005798,2.356371390069637,True,0.15906035900115967,False,False
+O=[S+]([O-])(Nc1nccs1)c1ccc(NCc2cc(Cl)cc(Br)c2O)cc1,1.0,XGBoost (ADMETboost features),0.8688277006149292,3.265385975330141,False,0.7376554012298584,True,False
+COc1cccc(CNc2ccc(S(=O)(=O)Nc3nc(C)c(C)s3)cc2)c1O,1.0,XGBoost (ADMETboost features),0.9991194605827332,1.7883479213016966,True,0.9982389211654663,True,True
+COc1cc(/C=C2\C(=O)Nc3ccccc32)ccc1O,1.0,XGBoost (ADMETboost features),0.9938740134239196,0.6969447563939977,True,0.9877480268478391,True,True
+COc1cc(Nc2nc(-c3ccncc3)nc3ccccc23)ccc1Cl,1.0,XGBoost (ADMETboost features),0.9995239973068236,0.6669758128776369,True,0.9990479946136472,True,True
+Cc1ccc(Nc2nc(-c3ccncc3)nc3ccccc23)cc1F,1.0,XGBoost (ADMETboost features),0.9998014569282532,0.5616548023344902,True,0.9996029138565063,True,True
+CC(=O)Nc1cc(-c2nc(Nc3ccc(F)c(F)c3)c3ccccc3n2)ccn1,1.0,XGBoost (ADMETboost features),0.9982878565788268,0.6354587495392827,True,0.9965757131576536,True,True
+COc1cc(C(=O)NC2CCCc3c2[nH]c2ccccc32)cc(OC)c1OC,1.0,XGBoost (ADMETboost features),0.9934089183807372,0.6339803318733167,True,0.9868178367614744,True,True
+CC(C)Oc1cccc(-c2ccnc(N3CCC(C(N)=O)CC3)n2)c1,1.0,XGBoost (ADMETboost features),0.9994415640830994,0.5487842410573807,True,0.9988831281661987,True,True
+COc1cccc(CNc2ccc(S(=O)(=O)Nc3nccs3)cc2)c1OC,1.0,XGBoost (ADMETboost features),0.998507797718048,2.1511288113576175,True,0.997015595436096,True,True
+Clc1ccccc1Nc1nc(-c2ccncc2)nc2ccccc12,1.0,XGBoost (ADMETboost features),0.999778926372528,0.8254675413673509,True,0.9995578527450559,True,True
+Fc1cccc(Nc2nc(-c3ccncc3)nc3ccccc23)c1F,1.0,XGBoost (ADMETboost features),0.9993282556533812,0.713246508254119,True,0.9986565113067625,True,True
+O=S(=O)(Nc1nccs1)c1ccc(NCc2cc(Cl)ccc2O)cc1,1.0,XGBoost (ADMETboost features),0.8102261424064636,2.30212321036357,True,0.6204522848129272,True,True
+Cc1cc(/C=C2/C(=O)Nc3ccccc32)cc(C)c1O,1.0,XGBoost (ADMETboost features),0.997863233089447,1.5705052013500653,True,0.995726466178894,True,True
+O=C(Nc1nc(-c2ccccc2)cs1)c1ccncc1NS(=O)(=O)c1ccc(F)c(F)c1,1.0,XGBoost (ADMETboost features),0.4524849653244018,1.4570941144131715,True,0.0950300693511964,False,False
+COc1ccc(-c2ccc(Nc3nc(-c4ccncc4)nc4ccccc34)cc2F)cc1F,1.0,XGBoost (ADMETboost features),0.990714192390442,0.7869507684977862,True,0.981428384780884,True,True
+Cn1nnnc1Sc1ncnc2scc(-c3ccc(F)cc3)c12,1.0,XGBoost (ADMETboost features),0.9995728135108948,1.1076566434974287,True,0.9991456270217896,True,True
+Cc1ccc(S(=O)(=O)c2cnc(SC(C)C(=O)Nc3ccccc3)[nH]c2=O)cc1,0.0,XGBoost (ADMETboost features),0.9949193596839904,1.0264126722479223,True,0.9898387193679807,True,True
+CN(C)S(=O)(=O)c1cccc(NC(=O)c2ccc[nH]2)c1,1.0,XGBoost (ADMETboost features),0.9978637099266052,0.8290749161014515,True,0.9957274198532104,True,True
+Cc1cnc(-c2ccccc2C(C)C)nc1NCc1ccc(-n2ccnn2)cc1,1.0,XGBoost (ADMETboost features),0.9995458722114564,0.639804966328479,True,0.9990917444229128,True,True
+O=C(NC1CCCc2c1[nH]c1ccccc21)c1ccccc1,1.0,XGBoost (ADMETboost features),0.9979630708694458,0.7348108016118149,True,0.9959261417388916,True,True
+O=S(=O)(Nc1nccs1)c1ccc(NCc2ccccc2)cc1,1.0,XGBoost (ADMETboost features),0.9731038808822632,2.961019038817482,True,0.9462077617645264,True,True
+O=C1CCCC2=C1C(c1[nH]ncc1Cl)N=C(Nc1nc3ccc(Cl)cc3o1)N2,1.0,XGBoost (ADMETboost features),0.9972203969955444,1.1615443597357755,True,0.9944407939910889,True,True
+Fc1ccc(F)c(Nc2nc(-c3ccncc3)nc3ccccc23)c1,1.0,XGBoost (ADMETboost features),0.9993077516555786,0.8930279477137185,True,0.9986155033111572,True,True
+Cc1cnccc1-c1nc(Nc2ccc(F)c(F)c2)c2ccccc2n1,1.0,XGBoost (ADMETboost features),0.9972820281982422,0.5970703412420953,True,0.9945640563964844,True,True
+CN(C)c1ccccc1-c1csc(N2CCC(C(N)=O)CC2)n1,1.0,XGBoost (ADMETboost features),0.9996393918991088,0.5557153466355271,True,0.9992787837982176,True,True
+Cc1ccc(S(=O)(=O)Nc2cnccc2C(=O)Nc2nc(-c3ccccc3F)cs2)cc1,1.0,XGBoost (ADMETboost features),0.7938569188117981,1.5911685726288625,True,0.5877138376235962,True,True
+CC1=C(C(=O)Nc2ccc(Cl)cc2)C(c2ccccc2C)n2ncc(C(=O)Nc3ccc(C)cc3)c2N1,1.0,XGBoost (ADMETboost features),0.9940306544303894,1.7837746425524568,True,0.9880613088607788,True,True
+Fc1ccc(Nc2nc(-c3ccncc3)nc3ccccc23)cc1F,1.0,XGBoost (ADMETboost features),0.994629204273224,0.7095519247468159,True,0.989258408546448,True,True
+O=C(c1ccc2c(c1)ncn2-c1ccc(Cl)cc1)N1CCCCC1,1.0,XGBoost (ADMETboost features),0.9997233748435974,0.7699637556467349,True,0.9994467496871948,True,True
+Cc1cc(NS(=O)(=O)c2ccc(NC(=O)Cc3ccc(Cl)c(Cl)c3)cc2)no1,1.0,XGBoost (ADMETboost features),0.969142198562622,1.3541582993214145,True,0.9382843971252439,True,True
+COc1ccc(Nc2nc(-c3ccncc3)nc3ccccc23)cc1F,1.0,XGBoost (ADMETboost features),0.9989232420921326,0.5448715938045342,True,0.9978464841842651,True,True
+Cc1ccc(S(=O)(=O)Nc2cc(Br)ccc2C(=O)Nc2nc(-c3ccccc3)cs2)cc1,0.0,XGBoost (ADMETboost features),0.5790190696716309,1.2409731331715514,True,0.15803813934326172,False,False
+COC(=O)c1ccc(Nc2nc(-c3ccncc3)nc3ccccc23)cc1OC,1.0,XGBoost (ADMETboost features),0.999442994594574,0.6725597492800717,True,0.998885989189148,True,True
+NC(=O)C1CCN(c2ncc(-c3cccc(F)c3)s2)CC1,1.0,XGBoost (ADMETboost features),0.998989760875702,0.6238044694974869,True,0.997979521751404,True,True
+O=C(Nc1cccc(F)c1)c1cc(-c2ccc[nH]2)n[nH]1,1.0,XGBoost (ADMETboost features),0.9519292712211608,1.09887204567874,True,0.9038585424423216,True,True
+CCOc1ccc(-c2csc(N3CCC(C(N)=O)CC3)n2)cc1,1.0,XGBoost (ADMETboost features),0.9981847405433656,0.5149650966714509,True,0.9963694810867312,True,True
+COc1cc(NS(=O)(=O)c2ccc(C)cc2)c(C(=O)Nc2nc(-c3ccccc3)cs2)cc1OC,1.0,XGBoost (ADMETboost features),0.970439612865448,1.4095416792228348,True,0.940879225730896,True,True
+Cc1ccc(S(=O)(=O)Nc2ccc(Br)cc2C(=O)Nc2nc(-c3ccccc3)cs2)cc1,0.0,XGBoost (ADMETboost features),0.5994696021080017,1.2411291972500567,True,0.19893920421600342,False,False
+COc1cccc(O)c1CNc1ccc(S(=O)(=O)Nc2nccs2)cc1,0.0,XGBoost (ADMETboost features),0.9543634057044984,2.2707688116629505,True,0.9087268114089968,True,True
+Cc1ccc(S(=O)(=O)Nc2ccccc2C(=O)Nc2nc(-c3ccc(Cl)cc3)cs2)cc1,1.0,XGBoost (ADMETboost features),0.933308243751526,1.2410700662459042,True,0.866616487503052,True,True
+Cc1cnc(N2CCC(C(N)=O)CC2)nc1-c1cccc(N(C)C)c1,1.0,XGBoost (ADMETboost features),0.9998503923416138,1.5213679359736427,True,0.9997007846832275,True,True
+COc1cc(C(=O)NC2CCCc3c2[nH]c2c(Cl)cccc32)cc(OC)c1OC,1.0,XGBoost (ADMETboost features),0.9892954230308532,0.6411543818468901,True,0.9785908460617063,True,True
+CNc1cc(-c2nc(Nc3ccc(F)c(F)c3)c3ccccc3n2)ccn1,1.0,XGBoost (ADMETboost features),0.9995549321174622,0.9445953757624941,True,0.9991098642349243,True,True
+CC(=O)Nc1ccc(NC(=O)C(NS(=O)(=O)c2ccc(Br)s2)c2ccccc2)cc1,1.0,XGBoost (ADMETboost features),0.9829826951026917,1.0781594169075832,True,0.9659653902053833,True,True
+CCN1C(=O)c2ccccc2S(=O)c2ccc(C(=O)NCc3ccccc3)cc21,1.0,XGBoost (ADMETboost features),0.9991456270217896,0.9258480887306928,True,0.9982912540435791,True,True
+Cc1cc(-c2nnc3n2CCCCC3)c(C)n1-c1cccc(C#N)c1,1.0,XGBoost (ADMETboost features),0.9998569488525392,0.739310769345914,True,0.9997138977050783,True,True
+Cc1cccc(C)c1C(=O)Nc1cccc([S+](=O)([O-])N(C)C)c1,1.0,XGBoost (ADMETboost features),0.999865174293518,1.1226535494357974,True,0.9997303485870359,True,True
+Fc1ccccc1Nc1nc(-c2ccncc2)nc2ccccc12,1.0,XGBoost (ADMETboost features),0.9993392825126648,0.863950348870149,True,0.9986785650253296,True,True
+CCN1C(=O)c2ccccc2S(=O)c2ccc(C(=O)NCc3ccc(OC)cc3)cc21,1.0,XGBoost (ADMETboost features),0.9993324875831604,0.9141772857355487,True,0.9986649751663208,True,True
+Clc1cccc(Nc2nc(-c3ccncc3)nc3ccccc23)c1,1.0,XGBoost (ADMETboost features),0.9993688464164734,0.9057178324490683,True,0.9987376928329468,True,True
+Cc1cc(C)c(C(=O)Nc2cccc([S+](=O)([O-])Nc3ccc(Br)cc3)c2)[nH]1,1.0,XGBoost (ADMETboost features),0.9966752529144288,1.6364700166918817,True,0.9933505058288576,True,True
+NC(=O)C1CCN(c2nc(-c3ccc(OC(F)(F)F)cc3)cs2)CC1,1.0,XGBoost (ADMETboost features),0.9919371604919434,0.6431420011202316,True,0.9838743209838867,True,True
+Cc1ccc(S(=O)(=O)Nc2cc(Cl)ccc2C(=O)Nc2nc(-c3ccccc3)cs2)cc1,1.0,XGBoost (ADMETboost features),0.738172173500061,1.326520323789045,True,0.47634434700012207,False,False
+O=C(c1ccc2c(c1)ncn2-c1ccc(C(F)(F)F)cc1)N1CCCCC1,1.0,XGBoost (ADMETboost features),0.9991470575332642,0.7617872970778522,True,0.9982941150665283,True,True
+COc1ccc(NC(=O)c2ccc[nH]2)cc1[S+](=O)([O-])Nc1ccc(Br)cc1,1.0,XGBoost (ADMETboost features),0.9905569553375244,2.01043646026488,True,0.9811139106750488,True,True
+COc1cc(Nc2nc(-c3ccncc3)nc3ccccc23)ccc1F,1.0,XGBoost (ADMETboost features),0.9989659786224364,0.5465453034400756,True,0.9979319572448728,True,True
+Cc1ccc(-c2csc(NC(=O)c3ccncc3NS(=O)(=O)c3ccc(C)cc3)n2)cc1,1.0,XGBoost (ADMETboost features),0.946340799331665,1.3278713280122816,True,0.8926815986633301,True,True
+Cc1cc(Br)ccc1NC(=O)C(NS(=O)(=O)c1cccs1)c1ccccc1,0.0,XGBoost (ADMETboost features),0.9994555115699768,1.2512163991768313,True,0.9989110231399536,True,True
+Cc1cnc(-c2ccccc2C(C)(C)C)nc1NCc1ccc(-n2ccnn2)cc1,1.0,XGBoost (ADMETboost features),0.9997499585151672,0.5988182936739624,True,0.9994999170303345,True,True
+CC(C)COc1ccc(-c2csc(N3CCC(C(N)=O)CC3)n2)cc1,1.0,XGBoost (ADMETboost features),0.9982191920280457,0.5358214724064783,True,0.9964383840560913,True,True
+NC(=O)C1CCN(c2nc(-c3ccc(F)cc3)cs2)CC1,1.0,XGBoost (ADMETboost features),0.9995997548103333,1.2553177559881548,True,0.9991995096206665,True,True
+N#Cc1ccccc1S(=O)(=O)Nc1cnccc1C(=O)Nc1nc(-c2ccccc2)cs1,1.0,XGBoost (ADMETboost features),0.7980478405952454,2.373730451445781,True,0.5960956811904907,True,True
+O=C(Nc1nc(-c2ccccc2)cs1)c1ccncc1NS(=O)(=O)c1ccccc1F,1.0,XGBoost (ADMETboost features),0.899406909942627,1.7893813592208017,True,0.7988138198852539,True,True
+COc1cccc(S(=O)(=O)Nc2cnccc2C(=O)Nc2nc(-c3ccccc3)cs2)c1,1.0,XGBoost (ADMETboost features),0.9924167394638062,1.5158334107605445,True,0.9848334789276123,True,True
+CCc1cccc(NC(=O)c2cc(-c3ccc[nH]3)n[nH]2)c1,1.0,XGBoost (ADMETboost features),0.9866641759872437,1.024612438708139,True,0.9733283519744873,True,True
+CCn1c(C)c(C(C)=O)c(C)c1C(=O)Nc1cccc([S+](=O)([O-])N(C)C)c1,1.0,XGBoost (ADMETboost features),0.9994710087776184,1.2940648243327209,True,0.9989420175552368,True,True
+O=C(Nc1nc(-c2ccccc2)cs1)c1ccncc1NS(=O)(=O)c1ccc(F)cc1F,1.0,XGBoost (ADMETboost features),0.6893292665481567,1.6898414280087217,True,0.3786585330963135,False,False
+Cc1cnc(-c2ccccc2OC(C)C)nc1NCc1ccc(-n2ccnn2)cc1,1.0,XGBoost (ADMETboost features),0.9980353713035583,0.7465932882168345,True,0.9960707426071167,True,True
+N#Cc1cnccc1-c1nc(Nc2ccc(F)c(F)c2)c2ccccc2n1,1.0,XGBoost (ADMETboost features),0.9825491905212402,0.7198585278931346,True,0.9650983810424805,True,True
+COc1cc(Cl)c(C)cc1NC(=O)CSc1ncc(S(=O)(=O)c2ccc(C(C)(C)C)cc2)c(=O)[nH]1,1.0,XGBoost (ADMETboost features),0.8594465851783752,2.152387408138006,True,0.7188931703567505,True,True
+Cc1ccc(S(=O)(=O)Nc2ccccc2C(=O)Nc2nc(-c3ccccc3)c(C)s2)cc1,1.0,XGBoost (ADMETboost features),0.969087779521942,1.2404151830226064,True,0.938175559043884,True,True
+Cc1ccc(NC(=O)c2cc(-c3ccc[nH]3)n[nH]2)cc1F,1.0,XGBoost (ADMETboost features),0.9923972487449646,1.0404289836202762,True,0.9847944974899292,True,True
+Fc1ccc(Nc2nc(C3=CCNCC3)nc3ccccc23)cc1F,1.0,XGBoost (ADMETboost features),0.9984334111213684,0.9569338489290842,True,0.9968668222427368,True,True
+CCc1ccc(NC(=O)c2[nH]c(C)c(C(C)=O)c2C)cc1[S+](=O)([O-])Nc1cccc(C#N)c1,1.0,XGBoost (ADMETboost features),0.9321887493133544,2.187220312441939,True,0.8643774986267088,True,True
+Cc1cccc(S(=O)(=O)Nc2cnccc2C(=O)Nc2nc(-c3ccccc3)cs2)c1,1.0,XGBoost (ADMETboost features),0.942021667957306,1.4087540427695413,True,0.884043335914612,True,True
+NC(=O)C1CCN(c2ncc(-c3ccc(Cl)cc3)s2)CC1,1.0,XGBoost (ADMETboost features),0.9995272159576416,0.6579481683029353,True,0.9990544319152832,True,True
+CC(C)(C)c1ccc(S(=O)(=O)c2cnc(SCC(=O)Nc3ccc(F)c(Cl)c3)[nH]c2=O)cc1,0.0,XGBoost (ADMETboost features),0.8894167542457581,2.180675938760142,True,0.7788335084915161,True,True
+COC(=O)c1ccc2nc(NC3=NC(c4[nH]ncc4Cl)C4=C(CCCC4=O)N3)oc2c1,1.0,XGBoost (ADMETboost features),0.9267773032188416,1.2131075795348243,True,0.8535546064376831,True,True
+COc1ccc(NC(=O)c2c(C)c(C(C)=O)c(C)n2C)cc1[S+](=O)([O-])Nc1ccc(Br)cc1,0.0,XGBoost (ADMETboost features),0.9826107621192932,1.967234142456503,True,0.9652215242385864,True,True
+Cc1cccc(-n2cnc3cc(C(=O)N4CCCCC4)ccc32)c1,1.0,XGBoost (ADMETboost features),0.9995736479759216,0.6598341731826771,True,0.9991472959518433,True,True
+O=C(c1ccc2c(c1)ncn2-c1cccc(Cl)c1)N1CCCCC1,1.0,XGBoost (ADMETboost features),0.9993916749954224,0.7700012883643035,True,0.9987833499908447,True,True
+Cc1ccc(S(=O)(=O)Nc2cnccc2C(=O)Nc2nc(-c3cccc(C)c3)cs2)cc1,1.0,XGBoost (ADMETboost features),0.943726122379303,1.6033641905871678,True,0.887452244758606,True,True
+CCCCNc1oc(-c2cccc3ccccc23)nc1C#N,1.0,XGBoost (ADMETboost features),0.999698281288147,0.6323997800848401,True,0.999396562576294,True,True
+O=C(Nc1nc(-c2ccccc2)cs1)c1ccncc1NS(=O)(=O)c1c(F)cc(F)cc1F,1.0,XGBoost (ADMETboost features),0.78369140625,1.8881858197061776,True,0.5673828125,True,True
+Cc1ccc(S(=O)(=O)Nc2cc(F)ccc2C(=O)Nc2nc(-c3ccccc3)cs2)cc1,1.0,XGBoost (ADMETboost features),0.5849283337593079,1.4339428554364513,True,0.16985666751861572,False,False
+NC(=O)C1CCN(c2nc(-c3ccccc3C(F)(F)F)cs2)CC1,1.0,XGBoost (ADMETboost features),0.9963243007659912,0.5087567149231303,True,0.9926486015319824,True,True
+NC(=O)C1CCN(c2nc(-c3ccc([N+](=O)[O-])cc3)cs2)CC1,1.0,XGBoost (ADMETboost features),0.9947683811187744,0.8571459778548728,True,0.9895367622375488,True,True
+Oc1ccc(CNc2ccc(C(F)(F)F)cc2F)c2cccnc12,1.0,XGBoost (ADMETboost features),0.995153546333313,0.8199738765806763,True,0.990307092666626,True,True
+NC(=O)C1CCN(c2nc(-c3ccc(C(F)(F)F)cc3)cs2)CC1,1.0,XGBoost (ADMETboost features),0.9977208971977234,0.6371788958217623,True,0.9954417943954468,True,True
+O=C(Nc1ccc(Cl)cc1)C(NS(=O)(=O)c1cccs1)c1ccccc1,0.0,XGBoost (ADMETboost features),0.9993226528167723,1.031875201683776,True,0.9986453056335447,True,True
+Cn1nnnc1Sc1ncnc2scc(-c3ccccc3F)c12,1.0,XGBoost (ADMETboost features),0.9995498061180116,1.0635255460659028,True,0.9990996122360232,True,True
+O=C(Nc1nc(-c2ccccc2)cs1)c1ccncc1NS(=O)(=O)c1cccc(Cl)c1,1.0,XGBoost (ADMETboost features),0.5778314471244812,1.551293307697629,True,0.1556628942489624,False,False
+CC(=O)c1c(C)[nH]c(C(=O)Nc2cccc([S+](=O)([O-])Nc3c(C)cccc3C)c2)c1C,1.0,XGBoost (ADMETboost features),0.9982265830039978,1.6526332924958647,True,0.9964531660079956,True,True
+Oc1ccc(CNc2ccccc2C(F)(F)F)c2cccnc12,1.0,XGBoost (ADMETboost features),0.9957155585289,0.7809950288637237,True,0.9914311170578001,True,True
+Cc1ccc(NC(=O)CSc2ncc(S(=O)(=O)c3ccc(C(C)C)cc3)c(=O)[nH]2)cc1C,0.0,XGBoost (ADMETboost features),0.9074236154556274,0.9889865080574928,True,0.8148472309112549,True,True
+O=C1Nc2ccccc2/C1=C\c1ccc([N+](=O)[O-])cc1,1.0,XGBoost (ADMETboost features),0.9933627843856812,0.8758939976040103,True,0.9867255687713623,True,True
+COc1ccc(-c2csc(NC(=O)c3ccncc3NS(=O)(=O)c3ccc(C)cc3)n2)cc1,1.0,XGBoost (ADMETboost features),0.9281357526779176,1.3418663904925792,True,0.8562715053558352,True,True
+CCN(CC)[S+](=O)([O-])c1cc(NC(=O)c2[nH]c(C)c(C(C)=O)c2C)ccc1OC,1.0,XGBoost (ADMETboost features),0.9979618787765504,1.3193451021159701,True,0.9959237575531008,True,True
+COc1ccc(-c2csc(N3CCC(C(N)=O)CC3)n2)cc1,1.0,XGBoost (ADMETboost features),0.9987553358078004,0.5144939594277508,True,0.9975106716156008,True,True
+O=C1CCCC2=C1C(c1[nH]ncc1Cl)N=C(Nc1nc3cccc(Cl)c3o1)N2,1.0,XGBoost (ADMETboost features),0.9979830980300904,1.1615063011713243,True,0.9959661960601809,True,True
+Oc1ccc(CNc2ccccc2Br)c2cccnc12,0.0,XGBoost (ADMETboost features),0.9944539666175842,0.8146437166822414,True,0.9889079332351685,True,True
+CC(=O)c1ccc(-c2csc(N3CCC(C(N)=O)CC3)n2)cc1,1.0,XGBoost (ADMETboost features),0.9977265000343324,0.5313310984055178,True,0.9954530000686648,True,True
+O=C(c1ccc2c(c1)ncn2-c1cccc(C(F)(F)F)c1)N1CCCCC1,1.0,XGBoost (ADMETboost features),0.9991894364356996,0.7621322401585751,True,0.9983788728713991,True,True
+CC(C)c1ccccc1-c1ncc(F)c(NCc2ccc(-n3ccnn3)cc2)n1,1.0,XGBoost (ADMETboost features),0.99909508228302,0.5494333353436123,True,0.99819016456604,True,True
+CCc1ccc(S(=O)(=O)Nc2cnccc2C(=O)Nc2nc(-c3ccccc3)cs2)cc1,1.0,XGBoost (ADMETboost features),0.830815851688385,1.3278332516085207,True,0.66163170337677,True,True
+CC(=O)c1c(C)[nH]c(C(=O)Nc2cccc([S+](=O)([O-])Nc3ccccc3C)c2)c1C,1.0,XGBoost (ADMETboost features),0.9953681230545044,1.652659115969247,True,0.9907362461090088,True,True
+COc1cccc(Nc2nc(-c3ccncc3)nc3ccccc23)c1,1.0,XGBoost (ADMETboost features),0.9996742010116576,0.693014875834365,True,0.9993484020233152,True,True
+COc1ccc(CNC(=O)CCCn2nc(C)c3c(C)n(-c4ccc(C)cc4)nc3c2=O)cc1OC,1.0,XGBoost (ADMETboost features),0.996407687664032,0.5331581548473399,True,0.992815375328064,True,True
+CCOc1ccc(C2C(C(=O)Nc3ccccc3OC)=C(C)Nc3c(C(=O)Nc4cccc(C)c4)cnn32)cc1,1.0,XGBoost (ADMETboost features),0.904425859451294,1.3617028072097939,True,0.8088517189025879,True,True
+CN(C)c1ccc(-c2csc(N3CCC(C(N)=O)CC3)n2)cc1,0.0,XGBoost (ADMETboost features),0.9994176626205444,0.47563913766225085,True,0.9988353252410889,True,True
+Oc1ccc(CNc2cccc(F)c2)c2cccnc12,0.0,XGBoost (ADMETboost features),0.9962335228919984,0.7817019241873504,True,0.9924670457839968,True,True
+CC(C=CC(=O)NO)=C[C@@H](C)C(=O)c1ccc(N(C)C)cc1,1.0,XGBoost (ADMETboost features),0.9909828305244446,0.9807940447093392,True,0.9819656610488892,True,True
+NC(=O)C1CCN(c2nc(-c3ccccc3Cl)cs2)CC1,1.0,XGBoost (ADMETboost features),0.9996315240859984,0.65833179565544,True,0.9992630481719968,True,True
+NC(=O)C1CCN(c2nc(-c3ccccc3[N+](=O)[O-])cs2)CC1,1.0,XGBoost (ADMETboost features),0.9900195598602296,1.4078027068098908,True,0.9800391197204592,True,True
+COc1ccc(CNc2ccc(S(=O)(=O)Nc3nccs3)cc2)c(O)c1,0.0,XGBoost (ADMETboost features),0.9779470562934875,2.355445737069075,True,0.9558941125869751,True,True
+NC(=O)C1CCN(c2nc(-c3ccccc3)cs2)CC1,1.0,XGBoost (ADMETboost features),0.9993425011634828,0.6570577073545336,True,0.9986850023269656,True,True
+CCN(CC)S(=O)(=O)c1cccc(C(=O)Nc2ccc(C#N)cc2)c1,1.0,XGBoost (ADMETboost features),0.9989305138587952,1.469340701578551,True,0.9978610277175903,True,True
+N#Cc1ccccc1-c1csc(N2CCC(C(N)=O)CC2)n1,1.0,XGBoost (ADMETboost features),0.9983524084091188,0.6514313278140944,True,0.9967048168182375,True,True
+Oc1ccc(CNc2ccccc2F)c2cccnc12,1.0,XGBoost (ADMETboost features),0.9968516230583192,0.7930693535336016,True,0.9937032461166384,True,True
+Cc1ccc(S(=O)(=O)Nc2ccc(C)cc2C(=O)Nc2nc(-c3ccccc3)cs2)cc1,0.0,XGBoost (ADMETboost features),0.9667100310325624,1.2403246946092934,True,0.9334200620651247,True,True
+NC(=O)C1CCN(c2ncc(-c3ccc(Br)cc3)s2)CC1,1.0,XGBoost (ADMETboost features),0.9918909072875975,0.6248130707178574,True,0.9837818145751951,True,True
+Cc1cc(-c2nnc3n2CCCCC3)c(C)n1-c1ccc(C#N)cc1,1.0,XGBoost (ADMETboost features),0.9998264908790588,0.740967268343316,True,0.9996529817581177,True,True
+CN1CC=C(c2nc(Nc3ccc(F)c(F)c3)c3ccccc3n2)CC1,1.0,XGBoost (ADMETboost features),0.9993926286697388,0.5800536475247711,True,0.9987852573394775,True,True
+CNc1nc2c(s1)C(c1ccccc1F)CC(=O)N2,1.0,XGBoost (ADMETboost features),0.9984210729599,0.6827637006422272,True,0.9968421459198,True,True
+COc1ccccc1CNC(=O)CCCn1nc(C)c2c(C)n(-c3ccc(C)cc3)nc2c1=O,1.0,XGBoost (ADMETboost features),0.9992583394050598,0.48515683882578753,True,0.9985166788101196,True,True
+Brc1ccc(-c2csc(N3CCCCC3)n2)cc1,1.0,XGBoost (ADMETboost features),0.9974034428596495,0.853349955919793,True,0.9948068857192991,True,True
+O=C1CCCC2=C1C(c1[nH]ncc1Cl)N=C(Nc1nc3c(Cl)cccc3o1)N2,1.0,XGBoost (ADMETboost features),0.9980009198188782,1.1615063011713243,True,0.9960018396377563,True,True
+COc1ccccc1NC(=O)C1=C(C)Nc2c(C(=O)Nc3ccc(F)cc3)cnn2C1c1ccc(Cl)cc1,1.0,XGBoost (ADMETboost features),0.9626166224479676,1.7657017716481587,True,0.9252332448959353,True,True
+CCCc1ccc(-c2csc(NC(=O)c3ccncc3NS(=O)(=O)c3ccc(C)cc3)n2)cc1,1.0,XGBoost (ADMETboost features),0.7622606158256531,1.3683765273155117,True,0.5245212316513062,True,True
+Cc1cc(-c2nnc3n2CCCCC3)c(C)n1-c1ccccc1,1.0,XGBoost (ADMETboost features),0.9998342990875244,0.9006143631177516,True,0.9996685981750488,True,True
+Cc1cc(-c2nnc3n2CCCCC3)c(C)n1-c1ccc(F)cc1,1.0,XGBoost (ADMETboost features),0.9998877048492432,0.778389560083567,True,0.9997754096984863,True,True
+COc1ccccc1-n1cnc2cc(C(=O)N3CCCCC3)ccc21,1.0,XGBoost (ADMETboost features),0.9990436434745787,0.6741425248429508,True,0.9980872869491575,True,True
+O=C1CCCC2=C1C(c1[nH]ncc1Cl)N=C(Nc1nc3c(Br)cccc3o1)N2,1.0,XGBoost (ADMETboost features),0.9979979395866394,1.1616479955195997,True,0.9959958791732788,True,True
+Oc1ccc(CNc2ccc(F)cc2F)c2cccnc12,1.0,XGBoost (ADMETboost features),0.9920458793640136,0.8340305072770268,True,0.9840917587280271,True,True
+NC(=O)C1CCN(c2nc(-c3ccc(Cl)cc3)cs2)CC1,1.0,XGBoost (ADMETboost features),0.9993888139724731,0.6579481683029353,True,0.9987776279449463,True,True
+CC(C)Oc1cccc(-c2csc(N3CCC(C(N)=O)CC3)n2)c1,1.0,XGBoost (ADMETboost features),0.9995346069335938,0.5146481899064284,True,0.9990692138671875,True,True
+CC(=O)c1cccc(-c2csc3ncnc(Sc4nnnn4C)c23)c1,1.0,XGBoost (ADMETboost features),0.999198853969574,1.332677240888957,True,0.998397707939148,True,True
+NC(=O)C1CCN(c2nc(-c3ccccc3F)cs2)CC1,1.0,XGBoost (ADMETboost features),0.9994879961013794,0.6271363380634152,True,0.9989759922027588,True,True
+CCOc1ccc(CNC(=O)CCCn2nc(C)c3c(C)n(-c4ccc(C)cc4)nc3c2=O)cc1,1.0,XGBoost (ADMETboost features),0.9929399490356444,0.4985431243941211,True,0.9858798980712888,True,True
+Cc1ccc(S(=O)(=O)Nc2ccc(F)cc2C(=O)Nc2nc(-c3ccccc3)cs2)cc1,1.0,XGBoost (ADMETboost features),0.5857077836990356,1.2955186911273289,True,0.1714155673980713,False,False
+COc1ccccc1NC(=O)C1=C(C)Nc2c(C(=O)Nc3cccc(C)c3)cnn2C1c1ccccc1Cl,1.0,XGBoost (ADMETboost features),0.9861429333686828,1.6233701107487053,True,0.9722858667373655,True,True
+COc1ccnc(NC(=S)N2CCN(c3ccccc3C(F)(F)F)CC2)c1,1.0,XGBoost (ADMETboost features),0.9999195337295532,0.9186150510526361,True,0.9998390674591064,True,True
+NC(=O)C1CCN(c2nc(-c3ccccc3Br)cs2)CC1,1.0,XGBoost (ADMETboost features),0.9983306527137756,1.0306789539271657,True,0.9966613054275513,True,True
+COc1ccccc1CNc1ccc(S(=O)(=O)Nc2nccs2)cc1,1.0,XGBoost (ADMETboost features),0.9701087474822998,2.133415198793728,True,0.9402174949645996,True,True
+COC(=O)c1ccccc1NC(=O)c1ccccc1OC(F)F,1.0,XGBoost (ADMETboost features),0.9455074071884156,1.37163663645756,True,0.8910148143768313,True,True
+Cc1ccc(-n2nc3c(=O)n(CCCC(=O)NCc4ccc(F)cc4)nc(C)c3c2C)cc1,1.0,XGBoost (ADMETboost features),0.9966461062431335,0.4853331463042784,True,0.9932922124862671,True,True
+CCc1ccc(C2C(C(=O)Nc3ccccc3OC)=C(C)Nc3c(C(=O)Nc4ccc(C)cc4)cnn32)cc1,1.0,XGBoost (ADMETboost features),0.9540488123893738,1.7074899630957412,True,0.9080976247787476,True,True
+CCOC(=O)c1ccc(-n2c(C)cc(-c3nnc4n3CCCCC4)c2C)cc1,1.0,XGBoost (ADMETboost features),0.9992709755897522,0.7131059155032247,True,0.9985419511795044,True,True
+CC(C)(C)c1ccc(-n2cnc3cc(C(=O)N4CCCCC4)ccc32)cc1,1.0,XGBoost (ADMETboost features),0.9995036125183104,0.6598443176783617,True,0.9990072250366209,True,True
+Cc1ccc(-n2nc3c(=O)n(CCCC(=O)NCc4ccccc4F)nc(C)c3c2C)cc1,1.0,XGBoost (ADMETboost features),0.9987879395484924,0.4946394921611053,True,0.9975758790969849,True,True
+Cc1ccc(-c2csc(NC(=O)c3ccccc3NS(=O)(=O)c3ccc(C)cc3)n2)cc1,1.0,XGBoost (ADMETboost features),0.9762271642684937,1.2405024749124511,True,0.9524543285369873,True,True
+CC(=O)C1CCN(c2ncc(-c3cccc(N(C)C)c3)s2)CC1,1.0,XGBoost (ADMETboost features),0.9997740387916564,0.6590739101620007,True,0.9995480775833128,True,True
+Cc1cc(-c2nnc3n2CCCCC3)c(C)n1-c1ccc([N+](=O)[O-])cc1,1.0,XGBoost (ADMETboost features),0.9993913173675536,0.751384041995403,True,0.9987826347351072,True,True
+Cc1cccc(-n2cnc3cc(C(=O)N4CCC(Br)CC4)ccc32)c1,1.0,XGBoost (ADMETboost features),0.9963600039482116,0.8663905609856073,True,0.9927200078964231,True,True
+Cc1cccc(-n2cnc3cc(C(=O)N4CCCC(C)C4)ccc32)c1,1.0,XGBoost (ADMETboost features),0.9991970658302308,0.6600977517426869,True,0.9983941316604616,True,True
+CCOc1ccc(C(C)CNC(=O)c2cc3sccc3n2Cc2ccccc2)cc1OCC,1.0,XGBoost (ADMETboost features),0.9993749260902404,0.5419627531149491,True,0.9987498521804807,True,True
+COc1ccc(-n2c(C)cc(-c3nnc4n3CCCCC4)c2C)cc1,1.0,XGBoost (ADMETboost features),0.99985933303833,0.9282487127997375,True,0.9997186660766599,True,True
+Cc1ccc(S(=O)(=O)Nc2ccccc2C(=O)Nc2nc(-c3ccccc3)cs2)cc1,1.0,XGBoost (ADMETboost features),0.9787156581878662,1.2405232552331762,True,0.9574313163757324,True,True
+Cc1ccc(-c2ccnc(N3CCC(C(N)=O)CC3)n2)cc1,1.0,XGBoost (ADMETboost features),0.9986629486083984,0.49015025131826295,True,0.9973258972167969,True,True
+COc1ccc(-c2csc(NC(=O)c3ccccc3NS(=O)(=O)c3ccc(C)cc3)n2)cc1,0.0,XGBoost (ADMETboost features),0.9915426969528198,1.2563536855968915,True,0.9830853939056396,True,True
+NC(=O)C1CCN(c2nc(-c3cccc([N+](=O)[O-])c3)cs2)CC1,1.0,XGBoost (ADMETboost features),0.9950331449508668,0.8577520903026405,True,0.9900662899017336,True,True
+Cc1ccc(-n2nc3c(=O)n(CCCC(=O)NC(C)c4ccccc4)nc(C)c3c2C)cc1,1.0,XGBoost (ADMETboost features),0.9986982345581056,1.5141970896529278,True,0.9973964691162112,True,True
+Cc1ccc(-c2csc(N3CCC(C(N)=O)CC3)n2)cc1,1.0,XGBoost (ADMETboost features),0.9986063838005066,0.4861808579257138,True,0.9972127676010132,True,True
+CC(=O)c1cccc(-c2csc(N3CCC(C(N)=O)CC3)n2)c1,1.0,XGBoost (ADMETboost features),0.9984831213951112,0.532175003793512,True,0.9969662427902224,True,True
+Cc1cccc(NCc2ccc(O)c3ncccc23)c1,0.0,XGBoost (ADMETboost features),0.9979783892631532,0.6946860693395847,True,0.9959567785263064,True,True
+Cc1cc(-c2nnc3n2CCCCC3)c(C)n1-c1ccc(Br)cc1,1.0,XGBoost (ADMETboost features),0.999591052532196,0.8995450455340703,True,0.9991821050643921,True,True
+CCOC(=O)C1CCN(c2nc(-c3ccc(Br)cc3)cs2)CC1,1.0,XGBoost (ADMETboost features),0.9947585463523864,0.7060008496407295,True,0.9895170927047727,True,True
+Cc1cc(-c2nnc3n2CCCCC3)c(C)n1-c1ccc(C(F)(F)F)cc1,1.0,XGBoost (ADMETboost features),0.999563992023468,0.7198855145955116,True,0.999127984046936,True,True
+Cc1ccc(S(=O)(=O)Nc2cnccc2C(=O)Nc2nc(-c3ccc(C)c(C)c3)cs2)cc1,1.0,XGBoost (ADMETboost features),0.9385269284248352,1.6369147799667565,True,0.8770538568496704,True,True
+COc1cc(OC)cc(-c2csc(N3CCC(C(N)=O)CC3)n2)c1,1.0,XGBoost (ADMETboost features),0.9991225600242616,0.5401540001592209,True,0.9982451200485232,True,True
+CNc1nc2c(s1)C(c1ccc(Cl)cc1)CC(=O)N2,1.0,XGBoost (ADMETboost features),0.9992826581001282,1.7014897934241517,True,0.9985653162002563,True,True
+NC(=O)C1CCN(c2nc(-c3ccc(Br)cc3)cs2)CC1,1.0,XGBoost (ADMETboost features),0.9908735752105712,0.6573982486423149,True,0.9817471504211424,True,True
+CCOc1ccc(OCC)c(NC(=O)C(NS(=O)(=O)c2ccc(Br)s2)c2ccccc2)c1,0.0,XGBoost (ADMETboost features),0.9966088533401488,1.3778222860049458,True,0.9932177066802976,True,True
+Cc1ccnc(NC(=S)N2CCN(c3ccccc3C(F)(F)F)CC2)c1,1.0,XGBoost (ADMETboost features),0.999935269355774,0.868263394423304,True,0.9998705387115481,True,True
+CCOc1cc(CCNC(=O)c2cc3sccc3n2Cc2ccccc2)cc(F)c1OCC,0.0,XGBoost (ADMETboost features),0.9992715716362,0.4951448549546129,True,0.9985431432723999,True,True
+NC(=O)C1CCN(c2nc(-c3cccc(C(F)(F)F)c3)cs2)CC1,1.0,XGBoost (ADMETboost features),0.9983123540878296,0.6199597818202626,True,0.9966247081756592,True,True
+NC(=O)C1CCN(c2nc(-c3cccc(F)c3)cs2)CC1,1.0,XGBoost (ADMETboost features),0.9989256262779236,0.6246163692246038,True,0.9978512525558472,True,True
+Cc1cc(-c2nnc3n2CCCCC3)c(C)n1-c1cccc(Cl)c1,1.0,XGBoost (ADMETboost features),0.9998019337654114,0.796353170159193,True,0.9996038675308228,True,True
+Cc1cc(-c2nnc3n2CCCCC3)c(C)n1-c1ccc(C(C)(C)C)cc1,1.0,XGBoost (ADMETboost features),0.9997043013572692,0.9617847002086405,True,0.9994086027145384,True,True
+Cc1cc(-c2nnc3n2CCCCC3)c(C)n1-c1ccc(Cl)cc1,1.0,XGBoost (ADMETboost features),0.9997043013572692,0.8419758097409815,True,0.9994086027145384,True,True
+Cc1cc(-c2nnc3n2CCCCC3)c(C)n1-c1ccc(Cl)c(Cl)c1,1.0,XGBoost (ADMETboost features),0.9998063445091248,2.0524159914559537,True,0.9996126890182495,True,True
+Cc1cc(-c2nnc3n2CCCCC3)c(C)n1-c1cccc(C(F)(F)F)c1,1.0,XGBoost (ADMETboost features),0.9997629523277284,0.714545850272869,True,0.9995259046554568,True,True
+O=C(NCCc1ccc(OCC(F)(F)F)c(OCC(F)(F)F)c1)c1cc2sccc2n1Cc1ccccc1,1.0,XGBoost (ADMETboost features),0.940747857093811,1.6174624077271884,True,0.8814957141876221,True,True
+NC(=O)C1CCN(c2nc(-c3cccc(Cl)c3)cs2)CC1,1.0,XGBoost (ADMETboost features),0.9988009929656982,0.6581141039061631,True,0.9976019859313965,True,True
+COc1cccc(-c2csc(NC(=O)c3ccncc3NS(=O)(=O)c3ccc(C)cc3)n2)c1,1.0,XGBoost (ADMETboost features),0.9121006727218628,1.61502632403407,True,0.8242013454437256,True,True
+Cc1cccc(-n2cnc3cc(C(=O)N4CCCC(C(C)C)C4)ccc32)c1,1.0,XGBoost (ADMETboost features),0.9993485808372498,0.8720916078442428,True,0.9986971616744995,True,True
+CCOc1ccc(CCNC(=O)c2cc3sccc3n2Cc2ccccc2)c(F)c1OCC,0.0,XGBoost (ADMETboost features),0.9995774626731871,0.5423652693396935,True,0.9991549253463743,True,True
+NC(=O)C1CCN(c2nc(-c3cccc(Br)c3)cs2)CC1,1.0,XGBoost (ADMETboost features),0.9961434602737428,0.6574589467212681,True,0.9922869205474856,True,True
+N#Cc1cccc(-c2csc(N3CCC(C(N)=O)CC3)n2)c1,1.0,XGBoost (ADMETboost features),0.9982897639274596,0.6592358045044328,True,0.9965795278549192,True,True
+CCOC(=O)c1ccc(-n2cnc3cc(C(=O)N4CCCCC4)ccc32)cc1,1.0,XGBoost (ADMETboost features),0.999404788017273,0.9311889539947674,True,0.9988095760345459,True,True
+CCOc1ccc(CCN(C)C(=O)c2cc3sccc3n2Cc2ccccc2)cc1OCC,1.0,XGBoost (ADMETboost features),0.9989655017852784,0.7064862789737476,True,0.9979310035705569,True,True
+Cc1ccc2oc(NC3=NC(c4[nH]ncc4Cl)C4=C(CCCC4=O)N3)nc2c1,1.0,XGBoost (ADMETboost features),0.9964197874069214,1.1021467334337598,True,0.9928395748138428,True,True
+CN(C)c1cccc(-c2ccnc(N3CCC(C(N)=O)CC3)n2)c1,1.0,XGBoost (ADMETboost features),0.9997108578681946,0.5251477259277575,True,0.9994217157363892,True,True
+Cc1cccc(-c2csc(N3CCC(C(N)=O)CC3)n2)c1,1.0,XGBoost (ADMETboost features),0.9991140961647034,0.4861895634962275,True,0.9982281923294067,True,True
+Cc1ccc(-n2c(C)cc(-c3nnc4n3CCCCC4)c2C)cc1,1.0,XGBoost (ADMETboost features),0.9998581409454346,0.9618916218264679,True,0.9997162818908691,True,True
+Cc1nc(Sc2nnnn2C)c2c(-c3ccccc3)csc2n1,1.0,XGBoost (ADMETboost features),0.9994723200798036,0.9859368937169737,True,0.9989446401596072,True,True
+Cc1cccc(-n2cnc3cc(C(=O)N4CCCC(C)(C)C4)ccc32)c1,1.0,XGBoost (ADMETboost features),0.9997171759605408,0.6599559297193085,True,0.9994343519210815,True,True
+Cc1cccc2nc(NC3=NC(c4[nH]ncc4Cl)C4=C(CCCC4=O)N3)oc12,1.0,XGBoost (ADMETboost features),0.9962350726127625,1.1021519101037596,True,0.9924701452255249,True,True
+CC(C)c1ccccc1-c1ncc(F)c(NC(C)(C)c2ccc(-n3ccnn3)cc2)n1,1.0,XGBoost (ADMETboost features),0.9993784427642822,0.5495251982290261,True,0.9987568855285645,True,True
+COc1ccc(S(=O)(=O)Nc2cnccc2C(=O)Nc2nc(-c3ccccc3)cs2)cc1,1.0,XGBoost (ADMETboost features),0.9505478739738464,1.4904158384625794,True,0.9010957479476929,True,True
+CSc1ccc(-c2cnc(N3CCC(C(N)=O)CC3)s2)cc1,1.0,XGBoost (ADMETboost features),0.999691128730774,0.4657369782477345,True,0.9993822574615481,True,True
+CN(C)c1cccc(-c2nc(N3CCC(C(N)=O)CC3)ncc2F)c1,1.0,XGBoost (ADMETboost features),0.9992722868919371,0.4944345639951968,True,0.9985445737838743,True,True
+CCn1nnnc1Sc1ncnc2scc(-c3ccc(C)cc3)c12,1.0,XGBoost (ADMETboost features),0.99935382604599,0.7282583834839813,True,0.99870765209198,True,True
+COc1cccc(-c2csc(N3CCC(C(N)=O)CC3)n2)c1,1.0,XGBoost (ADMETboost features),0.9996975660324096,0.5143088828367375,True,0.9993951320648191,True,True
+Cc1cccc(-n2cnc3cc(C(=O)N4CCCC(C(F)(F)F)C4)ccc32)c1,1.0,XGBoost (ADMETboost features),0.9973315000534058,1.6684464343865573,True,0.9946630001068115,True,True
+COc1ccc(C(=O)CCN(C)C)cc1F,1.0,XGBoost (ADMETboost features),0.9988093376159668,0.7297052165554189,True,0.9976186752319336,True,True
+COc1cccc(CNC(=O)CCCn2nc(C)c3c(C)n(-c4ccc(C)cc4)nc3c2=O)c1OC,1.0,XGBoost (ADMETboost features),0.9980639815330504,0.63624489098333,True,0.9961279630661009,True,True
+CCN(C(=O)C(NS(=O)(=O)c1ccc(Br)s1)c1ccccc1)c1ccc(C)c(C)c1,1.0,XGBoost (ADMETboost features),0.9992407560348512,0.6681055239638933,True,0.9984815120697024,True,True

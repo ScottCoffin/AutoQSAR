@@ -2,9 +2,9 @@
   "status": "completed",
   "dataset": "lipophilicity",
   "source": "MoleculeNet PhysChem benchmark: Lipophilicity",
-  "completed_at": "2026-09-28 08:35:07",
-  "elapsed_seconds": 62.603,
-  "n_metrics_rows": 42,
+  "completed_at": "2026-10-05 22:41:42",
+  "elapsed_seconds": 52.837,
+  "n_metrics_rows": 45,
   "n_stage_records": 4,
   "n_rows": 4200,
   "task_type": "regression",
@@ -53,11 +53,11 @@
       "standardization": 0.9988137603795967,
       "knn_similarity": 0.9762752075919335
     },
-    "selected_model": "ElasticNetCV",
+    "selected_model": "TabPFNRegressor",
     "notes": [],
-    "mae_in_domain": 0.5001224427443641,
-    "mae_out_of_domain": 0.9690247660591487
+    "mae_in_domain": 0.4418163031505516,
+    "mae_out_of_domain": 0.7946882350104196
   },
-  "stage23_signature": "fa759f2a58908011c34bf2831167437f0e5c22630ff77a7b398a5bbc64b214bd",
-  "resume_fingerprint": "d76a360d6b67c9a4b4eb3027"
+  "stage23_signature": "fcabe4855a0d777d6b91424a7b18a0fe80f9803d89bed1f27e6ed729852cf395",
+  "resume_fingerprint": "8edc2c86755263ff92bbb362"
 }

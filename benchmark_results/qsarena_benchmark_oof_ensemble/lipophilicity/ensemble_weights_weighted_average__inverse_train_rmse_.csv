@@ -1,16 +1,23 @@
 Model,Weight,Workflow
-ElasticNetCV,0.08234531692012773,conventional
-SVR,0.07265450897328737,conventional
-Random forest,0.0632784093956802,conventional
-Extra trees,0.06398097423160853,conventional
-HistGradientBoosting,0.07257151887669579,conventional
-"Voting Regressor (KNN, SVM)",0.0625454901665779,conventional
-AdaBoost,0.04960423618097958,conventional
-Tabular MLP,0.06964055617095478,conventional
-Tabular CNN,0.04250214309128239,conventional
-XGBoost,0.07075565439101743,conventional
-CatBoost,0.06877718306357926,conventional
-MapLight CatBoost (Strict Parity),0.06448775885035042,conventional
-ChemML MLP (PyTorch),0.07865633143408933,ChemML deep learning
-ChemML MLP (TensorFlow),0.07295399087657631,ChemML deep learning
-"MapLight + GNN (CatBoost, Strict Parity)",0.06524592737719291,MapLight + GNN
+ElasticNetCV,0.04287598864647878,conventional
+SVR,0.045206927217710656,conventional
+Random forest,0.045697185522793955,conventional
+Extra trees,0.04572755207531844,conventional
+HistGradientBoosting,0.0484856799357894,conventional
+"Voting Regressor (KNN, SVM)",0.04209534674516617,conventional
+AdaBoost,0.03679002235256984,conventional
+Tabular MLP,0.04204649744293723,conventional
+Tabular CNN,0.031267233444155294,conventional
+XGBoost,0.0487672478870324,conventional
+CatBoost,0.04753609058996063,conventional
+MapLight CatBoost (Strict Parity),0.047117904172296624,conventional
+ChemML MLP (PyTorch),0.04499086782627128,ChemML deep learning
+ChemML MLP (TensorFlow),0.04217829083027873,ChemML deep learning
+Uni-Mol V1,0.051130805007108676,Uni-Mol
+"MapLight + GNN (CatBoost, Strict Parity)",0.048200438417819215,MapLight + GNN
+"Chemprop v2 (D-MPNN, ensemble=3)",0.05364397697033309,Chemprop v2
+"Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)",0.0464465448712069,Chemprop v2
+"Chemprop v2 (CMPNN, ensemble=3)",0.04958245302047314,Chemprop v2
+"Chemprop v2 (AttentiveFP, ensemble=3)",0.04743113011945621,Chemprop v2
+"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",0.04391337629694699,Chemprop v2
+XGBoost (ADMETboost features),0.04886844060789618,conventional

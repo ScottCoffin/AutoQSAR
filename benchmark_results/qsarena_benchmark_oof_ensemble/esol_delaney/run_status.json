@@ -2,9 +2,9 @@
   "status": "completed",
   "dataset": "esol_delaney",
   "source": "MoleculeNet PhysChem benchmark: ESOL (Delaney)",
-  "completed_at": "2026-09-28 08:23:51",
-  "elapsed_seconds": 31.839,
-  "n_metrics_rows": 44,
+  "completed_at": "2026-10-05 22:36:44",
+  "elapsed_seconds": 6.436,
+  "n_metrics_rows": 47,
   "n_stage_records": 4,
   "n_rows": 1128,
   "task_type": "regression",
@@ -59,6 +59,6 @@
     "mae_in_domain": 0.48839636220662824,
     "mae_out_of_domain": 0.9670225626627603
   },
-  "stage23_signature": "a3beda9c5dd2156f6b4e8280f91e1385bcef1e98b6d886fcb221b7af52e6a62c",
-  "resume_fingerprint": "ceef51059c142c557a06cb2f"
+  "stage23_signature": "caa3c036bedc74b4ee1a00054330d172d5fafe4375c399afb3e95f12f08f6ad2",
+  "resume_fingerprint": "78e89c2e928d338331c4d09b"
 }

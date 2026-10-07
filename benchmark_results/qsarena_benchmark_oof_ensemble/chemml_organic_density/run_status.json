@@ -2,9 +2,9 @@
   "status": "completed",
   "dataset": "chemml_organic_density",
   "source": "ChemML bundled dataset: organic_density",
-  "completed_at": "2026-09-28 08:16:49",
-  "elapsed_seconds": 56.985,
-  "n_metrics_rows": 53,
+  "completed_at": "2026-10-05 22:35:46",
+  "elapsed_seconds": 4.7,
+  "n_metrics_rows": 56,
   "n_stage_records": 4,
   "n_rows": 500,
   "task_type": "regression",
@@ -65,9 +65,9 @@
     },
     "selected_model": "TabPFNRegressor",
     "notes": [],
-    "mae_in_domain": 0.003443349975150283,
+    "mae_in_domain": 0.0034433499751502783,
     "mae_out_of_domain": 0.007239226179296621
   },
-  "stage23_signature": "0703336bae3b561bb23d90ff0621712b8eae775ec7362bf896188089193246b6",
-  "resume_fingerprint": "fe2f834c0754fb0502853b23"
+  "stage23_signature": "1159ed6b1d85644a5e51633271e8122e2c118bcec0f1bb6ba8fa5aa677199520",
+  "resume_fingerprint": "007d0f162c1ba0b08d100681"
 }

@@ -1,16 +1,23 @@
 Model,Weight,Workflow
-ElasticNetCV,0.0653056028945219,conventional
-SVR,0.06275652424676835,conventional
-Random forest,0.07980639006961235,conventional
-Extra trees,0.07987509587706458,conventional
-HistGradientBoosting,0.08270383277699497,conventional
-"Voting Regressor (KNN, SVM)",0.06499469061794515,conventional
-AdaBoost,0.05975204782884555,conventional
-Tabular MLP,0.026302349932521514,conventional
-Tabular CNN,0.0412557888608361,conventional
-XGBoost,0.08276076644337406,conventional
-CatBoost,0.0860515589249647,conventional
-MapLight CatBoost (Strict Parity),0.08019682080867749,conventional
-ChemML MLP (PyTorch),0.05963900448525647,ChemML deep learning
-ChemML MLP (TensorFlow),0.05385578022650054,ChemML deep learning
-"MapLight + GNN (CatBoost, Strict Parity)",0.07474374600611648,MapLight + GNN
+ElasticNetCV,0.04194873173994109,conventional
+SVR,0.03866202632132196,conventional
+Random forest,0.0432961791690111,conventional
+Extra trees,0.040836681057765,conventional
+HistGradientBoosting,0.0409236792789125,conventional
+"Voting Regressor (KNN, SVM)",0.038869188617102333,conventional
+AdaBoost,0.0359707471159376,conventional
+Tabular MLP,0.04231895316287613,conventional
+Tabular CNN,0.03371953896714193,conventional
+XGBoost,0.04363407187068256,conventional
+CatBoost,0.045716174177896564,conventional
+MapLight CatBoost (Strict Parity),0.05954524800997378,conventional
+ChemML MLP (PyTorch),0.045304306452389094,ChemML deep learning
+ChemML MLP (TensorFlow),0.04348662799833597,ChemML deep learning
+Uni-Mol V1,0.04587469706307198,Uni-Mol
+"MapLight + GNN (CatBoost, Strict Parity)",0.05549640058358926,MapLight + GNN
+Uni-Mol V2 (84m),0.02959206886051827,Uni-Mol
+"Chemprop v2 (D-MPNN, ensemble=3)",0.0487835869737339,Chemprop v2
+"Chemprop v2 (CMPNN, ensemble=3)",0.0468236115601811,Chemprop v2
+"Chemprop v2 (AttentiveFP, ensemble=3)",0.06275073338495223,Chemprop v2
+"Chemprop v2 (D-MPNN + Selected descriptors, ensemble=3)",0.053423382178149986,Chemprop v2
+XGBoost (ADMETboost features),0.0630233654565157,conventional

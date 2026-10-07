@@ -2,9 +2,9 @@
   "status": "completed",
   "dataset": "tdc_skin_reaction",
   "source": "PyTDC Tox benchmark: skin_reaction",
-  "completed_at": "2026-09-28 08:14:45",
-  "elapsed_seconds": 33.269,
-  "n_metrics_rows": 42,
+  "completed_at": "2026-10-05 22:35:33",
+  "elapsed_seconds": 2.173,
+  "n_metrics_rows": 45,
   "n_stage_records": 4,
   "n_rows": 404,
   "task_type": "classification",
@@ -49,14 +49,14 @@
   "applicability_domain": {
     "method": "both",
     "n_test": 115,
-    "in_domain_fraction": 0.6521739130434783,
+    "in_domain_fraction": 0.8,
     "methods": {
       "standardization": 0.991304347826087,
-      "confidence": 0.6608695652173913
+      "confidence": 0.8
     },
-    "selected_model": "TabPFNClassifier",
+    "selected_model": "XGBoost (ADMETboost features)",
     "notes": []
   },
-  "stage23_signature": "c1baa4be623765cf1c0a12b19945db8d06c194884d556d286a02363e5eeeda39",
-  "resume_fingerprint": "4701f1a0e32dea240c48f6f2"
+  "stage23_signature": "93598adaee9b4c74de6e77d64e00a2de95ecadb522ec1a687fd32aa481db1d27",
+  "resume_fingerprint": "12002c2753e149281c3648f9"
 }

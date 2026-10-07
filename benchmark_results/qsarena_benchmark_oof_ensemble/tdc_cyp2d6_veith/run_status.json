@@ -2,9 +2,9 @@
   "status": "completed",
   "dataset": "tdc_cyp2d6_veith",
   "source": "PyTDC ADME benchmark group: cyp2d6_veith (official train_val/test split)",
-  "completed_at": "2026-09-27 20:28:27",
-  "elapsed_seconds": 12.836,
-  "n_metrics_rows": 34,
+  "completed_at": "2026-10-06 03:53:55",
+  "elapsed_seconds": 5892.028,
+  "n_metrics_rows": 36,
   "n_stage_records": 4,
   "n_rows": 13130,
   "task_type": "classification",
@@ -49,6 +49,6 @@
     "selected_model": "XGBoost",
     "notes": []
   },
-  "stage23_signature": "893a44562d473749cc0491d4f78e290d3256674f7f96b5090399cbd871d78c3e",
-  "resume_fingerprint": "5a5be8eb33485b1e01d26875"
+  "stage23_signature": "be048e442e8695d555dbcc2714412f777efc5dce482901901803d3253d144313",
+  "resume_fingerprint": "1bdc623600d8eac22362815a"
 }

@@ -5,8 +5,13 @@ The *Journal of Cheminformatics* reproducibility criteria ask for an external ar
 "the likelihood that Zenodo or FigShare disappears is much less" than for a Git host.
 This file records how that archive is created and kept current.
 
-**Status: not yet deposited.** The steps below must be run once by the repository owner;
-they require a Zenodo login and cannot be automated from this repository alone.
+**Status: not yet deposited; everything that can be prepared without a Zenodo login is ready (2026-10-02).**
+The checklist in the README banner is the short version of this file.
+
+> **Repository name.** GitHub still serves this repository under its pre-rename name, but the paper,
+> `.zenodo.json` and `CITATION.cff` use `ScottCoffin/QSARena`. Rename the repository on GitHub first
+> (Settings → General → Repository name; GitHub redirects the old URL), then enable the webhook, so the
+> archived record and its citation carry the final name.
 
 ---
 
@@ -17,7 +22,7 @@ This is the standard route and produces a DOI for every future GitHub release au
 1. Sign in at <https://zenodo.org> with the **ScottCoffin** GitHub account
    (*Log in* → *Log in with GitHub*) and authorise the Zenodo application.
 2. Go to <https://zenodo.org/account/settings/github/>.
-3. Find **ScottCoffin/QSARena** in the repository list and switch the toggle **On**.
+3. Find **ScottCoffin/QSARena** (after the rename) in the repository list and switch the toggle **On**.
    Zenodo now watches the repository for releases.
 4. Create a release on GitHub — see below. Zenodo archives the tagged source tree and
    mints a DOI within a few minutes.
@@ -42,10 +47,10 @@ git push origin v1.0.0
 
 gh release create v1.0.0 \
   --title "QSARena v1.0.0" \
-  --notes "Release accompanying the Journal of Cheminformatics submission. Includes the
-complete benchmark artifacts for the NSF ACCESS Jetstream2 A100 run
-(benchmark_results/autoqsar_benchmark_20260623_153839) and the scripts that regenerate
-every figure, table and quoted number in the paper."
+  --notes "Release accompanying the Journal of Cheminformatics submission. Every reported result is
+computed from benchmark_results/qsarena_benchmark_oof_ensemble (base models from the NSF ACCESS
+Jetstream2 A100 runs, ensembles rebuilt from out-of-fold predictions). Includes the benchmark
+artifacts and the scripts that regenerate every figure, table and quoted number in the paper."
 ```
 
 `.zenodo.json` in the repository root controls the archive's title, description, authors,
@@ -57,20 +62,16 @@ license and keywords, so the Zenodo record is correct without editing it by hand
 *Availability of data and materials* section promises them in the archive. The GitHub
 webhook only archives what is in the tagged tree, so these must be uploaded separately:
 
-1. Build the supplementary bundle:
+1. Build the supplementary bundles (already built once on 2026-10-02; rebuild if any run changed):
    ```bash
-   python - <<'PY'
-   import tarfile, pathlib
-   run = pathlib.Path("benchmark_results/autoqsar_benchmark_20260623_153839")
-   out = pathlib.Path("qsarena_predictions_a100.tar.gz")
-   with tarfile.open(out, "w:gz") as tar:
-       for p in sorted(run.glob("*/predictions.csv")):
-           tar.add(p, arcname=str(p.relative_to(run.parent)))
-   print("wrote", out, f"{out.stat().st_size/1e6:.1f} MB")
-   PY
+   python tools/build_zenodo_bundle.py        # -> dist/zenodo/<run>_predictions.tar.gz + <run>_predictions_manifest.csv
    ```
-2. Open the Zenodo record created by the webhook, choose **New version**, upload the
-   tarball alongside the auto-archived source, and publish. Zenodo's default file limit is
+   Default runs: `qsarena_benchmark_oof_ensemble` (every reported result; its files hold all base models'
+   train/test predictions plus the out-of-fold rows, so the A100 source runs' predictions are not needed)
+   and `benchmark_name_date` (the consumer-GPU comparison of §3.10). The tool checks each file's sha256
+   against the committed `artifact_manifest.csv`; a mismatch means the local files are not the committed run.
+2. Open the Zenodo record created by the webhook, choose **New version**, upload both
+   tarballs and both manifests alongside the auto-archived source, and publish. Zenodo's default file limit is
    50 GB per record, so size is not a constraint here.
 
 > If the predictions are not present in the local tree (they are gitignored and may have

@@ -1,0 +1,7 @@
+dataset,dataset_source,benchmark_suite,benchmark_id,leaderboard_url,leaderboard_dataset_split,leaderboard_metric_name,rank,rank_numeric,model,metric_value,metric_value_numeric,is_top10_entry,reference_source,captured_at
+tdc_tox21,PyTDC Tox benchmark: tox21 [label=NR-AR],tdc,tox21,,scaffold (MoleculeNet),AUROC,1,1,PrismNet,0.867 +/- 0.014,0.867,True,literature_static,2026-10-06 08:15:30
+tdc_tox21,PyTDC Tox benchmark: tox21 [label=NR-AR],tdc,tox21,,scaffold (MoleculeNet),AUROC,2,2,MolGraph-xLSTM,0.851 +/- 0.006,0.851,True,literature_static,2026-10-06 08:15:30
+tdc_tox21,PyTDC Tox benchmark: tox21 [label=NR-AR],tdc,tox21,,scaffold (MoleculeNet),AUROC,3,3,DMPNN,0.849 +/- 0.006,0.849,True,literature_static,2026-10-06 08:15:30
+tdc_tox21,PyTDC Tox benchmark: tox21 [label=NR-AR],tdc,tox21,,scaffold (MoleculeNet),AUROC,4,4,HiGNN,0.844 +/- 0.006,0.844,True,literature_static,2026-10-06 08:15:30
+tdc_tox21,PyTDC Tox benchmark: tox21 [label=NR-AR],tdc,tox21,,scaffold (MoleculeNet),AUROC,5,5,DeeperGCN,0.840 +/- 0.010,0.84,True,literature_static,2026-10-06 08:15:30
+tdc_tox21,PyTDC Tox benchmark: tox21 [label=NR-AR],tdc,tox21,,scaffold (MoleculeNet),AUROC,6,6,FP-GNN,0.833 +/- 0.004,0.833,True,literature_static,2026-10-06 08:15:30

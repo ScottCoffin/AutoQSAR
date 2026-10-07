@@ -452,6 +452,9 @@ for models that do their own selection, but slower and noisier).
 | `feature_selection.max_selected_features` | `0` | int (>= 0) | `--max-selected-features` | CLI / run.yaml only |
 | `feature_selection.auto_rf_by_dataset_size` | `null` (profile default (on for cost_optimized/quick, off for full)) | true / false | `--selector-auto-rf-by-dataset-size / --no-selector-auto-rf-by-dataset-size` | CLI / run.yaml only |
 | `feature_selection.elasticnet_timeout_seconds` | `7200.0` | float (>= 1.0) | `--selector-elasticnet-timeout-seconds` | CLI / run.yaml only |
+| `feature_selection.deterministic` | `false` | true / false | `--deterministic-selection / --no-deterministic-selection` | CLI / run.yaml only |
+| `feature_selection.load_from` | `null` | text | `--selected-features-from` | CLI / run.yaml only |
+| `feature_selection.cv_selection` | `null` (profile default (nested; quick: outer)) | `outer`, `nested` | `--cv-selection` | CLI / run.yaml only |
 <!-- END GENERATED -->
 
 ### 4.6 Model library
@@ -470,6 +473,7 @@ look or a smoke test, `full` for a final comparison; switch whole families off w
 | `models.enable_families` | all `true` | mapping of `conventional_ml`, `gradient_boosting`, `deep_tabular`, `graph_nn`, `pretrained_3d`, `maplight_gnn`, `fusion`, `ensemble` to true/false | `--disable-model-families` | `run_maplight_gnn` |
 | `models.disable_models` | `[]` | text | `--disable-model` | CLI / run.yaml only |
 | `models.only_models` | `[]` | text | `--only-model-names` | CLI / run.yaml only |
+| `models.admetboost_xgboost` | `false` | true / false | `--run-admetboost-xgboost / --no-run-admetboost-xgboost` | CLI / run.yaml only |
 <!-- END GENERATED -->
 
 ### 4.7 GA tuning
@@ -502,7 +506,7 @@ extra from Section 2b; preflight lists what is missing and how to install it.
 | Key | Default | Allowed values | CLI flag | Notebook widget |
 |------------------------|----------------|------------------------|--------------------|----------------|
 | `deep.use_gpu` | `auto` | auto / true / false | `--use-gpu` | CLI / run.yaml only |
-| `deep.chemprop.variants` | `null` (profile default (cost_optimized: attentivefp + selected_features; full: all five)) | list of `dmpnn`, `dmpnn_rdkit2d`, `selected_features`, `cmpnn`, `attentivefp` | `--run-chemprop-*` | CLI / run.yaml only |
+| `deep.chemprop.variants` | `null` (profile default (cost_optimized: attentivefp + selected_features; full: all five except chemeleon)) | list of `dmpnn`, `dmpnn_rdkit2d`, `selected_features`, `cmpnn`, `attentivefp`, `chemeleon` | `--run-chemprop-*` | CLI / run.yaml only |
 | `deep.chemprop.epochs` | `null` (profile default (15; full: 40)) | int (>= 1) | `--chemprop-epochs` | CLI / run.yaml only |
 | `deep.chemprop.ensemble_size` | `null` (profile default (1; full: 3)) | int (>= 1) | `--chemprop-ensemble-size` | CLI / run.yaml only |
 | `deep.chemprop.batch_size` | `32` | int (>= 1) | `--chemprop-batch-size` | CLI / run.yaml only |
@@ -834,6 +838,21 @@ feature_selection:
   # Wall-clock limit for the ElasticNetCV selector before falling back to random forest.
   # CLI: --selector-elasticnet-timeout-seconds.
   elasticnet_timeout_seconds: 7200.0
+  # Make the selection independent of machine speed: no ElasticNetCV wall-clock limit (so
+  # no timeout-triggered random-forest fallback) and a single-threaded selector. CLI:
+  # --deterministic-selection / --no-deterministic-selection.
+  deterministic: false
+  # Run directory whose <dataset>/selected_features.csv is used instead of refitting the
+  # selector (for example the deposited benchmark run). A dataset without a deposited
+  # selection is an error. CLI: --selected-features-from.
+  load_from: null
+  # Where feature selection happens for cross-validation and the out-of-fold predictions
+  # that ensembles use. nested refits the selector inside every CV fold, so CV scores are
+  # not optimistic; outer reuses the selection fitted on all training rows (faster, but
+  # every validation fold helped choose its features). Test predictions are identical
+  # either way. Choices: outer, nested. null = profile default (nested; quick: outer).
+  # CLI: --cv-selection.
+  cv_selection: null
 
 # ---------- 6. Model library ----------
 models:
@@ -867,6 +886,11 @@ models:
   # If non-empty, run only these model labels (plus the ensemble when 'Ensemble' is
   # listed). CLI: --only-model-names.
   only_models: []
+  # Opt-in model XGBoost (ADMETboost features): fixed XGBoost on the full, unselected
+  # ADMETboost feature set (MACCS, ECFP4, Mol2Vec, PubChem, Mordred 2D, RDKit 2D). Needs
+  # qsarena[features] and the Mol2Vec model. CLI: --run-admetboost-xgboost / --no-run-
+  # admetboost-xgboost.
+  admetboost_xgboost: false
 
 # ---------- 7. GA tuning ----------
 ga_tuning:
@@ -894,10 +918,11 @@ deep:
   # and warns if none is detected. CLI: --use-gpu.
   use_gpu: auto
   chemprop:
-    # Chemprop v2 variants. An empty list switches Chemprop off. Choices: dmpnn,
-    # dmpnn_rdkit2d, selected_features, cmpnn, attentivefp. null = profile default
-    # (cost_optimized: attentivefp + selected_features; full: all five). CLI: --run-
-    # chemprop-*.
+    # Chemprop v2 variants. An empty list switches Chemprop off. chemeleon (opt-in, never
+    # a profile default) fine-tunes from the CheMeleon foundation model. Choices: dmpnn,
+    # dmpnn_rdkit2d, selected_features, cmpnn, attentivefp, chemeleon. null = profile
+    # default (cost_optimized: attentivefp + selected_features; full: all five except
+    # chemeleon). CLI: --run-chemprop-*.
     variants: null
     # Training epochs. null = profile default (15; full: 40). CLI: --chemprop-epochs.
     epochs: null
@@ -1239,7 +1264,7 @@ qsarena-benchmark --dataset solubility.csv --target-col logS --id-col compound_i
 ```text
 [resume] solubility: configuration or input changed since this dataset completed; re-validating each cached stage against the new config signature.
 ...
-[resume] solubility: config signature changed for 2 cached model stage(s) (Ensemble (OOF Stacking (RidgeCV, 5-fold)), Ensemble (Weighted average (inverse train RMSE))); recomputing them.
+[resume] solubility: config signature changed for 2 cached model stage(s) (Ensemble (OOF Stacking (RidgeCV, 5-fold)), Ensemble (Weighted average (inverse OOF error))); recomputing them.
 ...
 [resume] solubility: stage 2/3 cache hit (signature match); reusing split + selected feature matrices.
 ...

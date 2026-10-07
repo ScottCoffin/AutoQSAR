@@ -3,19 +3,30 @@
 > ### ⚠️ Outstanding: deposit the Zenodo archive
 >
 > **This is the last item blocking the *Journal of Cheminformatics* submission, and it needs a
-> Zenodo login so it cannot be automated.** The journal's reproducibility criteria require an
-> external archive (Zenodo/FigShare) referenced from this README — a GitHub link alone is not
-> accepted — and the manuscript's *Availability of data and materials* section currently carries a
-> DOI placeholder.
+> Zenodo login, so it cannot be automated.** The journal's reproducibility criteria require an
+> external archive (Zenodo/FigShare) referenced from this README; a GitHub link alone is not
+> accepted. The manuscript's *Availability of data and materials* section carries a DOI placeholder.
+> Full procedure: **[ZENODO.md](ZENODO.md)**.
 >
-> **→ Step-by-step instructions: [ZENODO.md](ZENODO.md)**
+> **Prepared (2026-10-02):**
+> - [x] `.zenodo.json` metadata (title, description, ORCID, keywords, license) and `CITATION.cff` (with ORCID)
+> - [x] Prediction bundles built by `python tools/build_zenodo_bundle.py` into `dist/zenodo/` (gitignored):
+>   `qsarena_benchmark_oof_ensemble_predictions.tar.gz` (44 files, 138 MB; sha256 identical to the committed
+>   `artifact_manifest.csv`) and `benchmark_name_date_predictions.tar.gz` (45 files, 55 MB), each with a
+>   sha256/row-count manifest
 >
-> In short: (1) log in to Zenodo with the GitHub account and enable the webhook for this repository
-> at <https://zenodo.org/account/settings/github/>; (2) tag and push a release (`v1.0.0`) from a
-> clean tree; (3) upload the per-molecule `predictions.csv` bundle as a second file, since the
-> webhook only archives the tagged source tree; (4) paste the resulting DOIs into `README.md`,
-> `CITATION.cff`, the manuscript and `submission/README.md`. `.zenodo.json` and `CITATION.cff` are
-> already staged, so the record's metadata will be correct without editing it by hand.
+> **Needs you (in order):**
+> 1. [ ] **Decide the repository name first.** The GitHub repo still carries its pre-rename name, while the paper,
+>    `.zenodo.json` and `CITATION.cff` say `ScottCoffin/QSARena`. Rename it on GitHub (Settings → General;
+>    GitHub redirects the old URL) **before** enabling the webhook, so the Zenodo record carries the final name.
+> 2. [ ] Log in to Zenodo with GitHub and switch the repository **On** at <https://zenodo.org/account/settings/github/>.
+> 3. [ ] Commit everything, then tag and push `v1.0.0` from a clean tree and create the GitHub release (ZENODO.md has
+>    the commands). Zenodo archives the tagged tree and mints a concept DOI plus a version DOI.
+> 4. [ ] Open the new Zenodo record → **New version** → upload the two `dist/zenodo/*.tar.gz` bundles and their
+>    `*_manifest.csv` files → publish. (The webhook never includes gitignored files.)
+> 5. [ ] Paste the DOIs: concept DOI into this README (badge + "Citation" section) and `CITATION.cff`;
+>    **version** DOI into the `[AUTHOR]` placeholders in `manuscript.md` and `submission/declarations.tex`;
+>    then tick the archive items in `submission/README.md` and TODO.md, rebuild the PDFs, and commit.
 >
 > Everything else outstanding is tracked in **[TODO.md](TODO.md)**.
 
@@ -60,6 +71,12 @@ then runs a complete modeling workflow:
     restart point.
 13. Predict new molecules and optionally apply UMAP and applicability-domain
     diagnostics in the notebook.
+
+Both the notebooks and the runner handle regression and binary classification: a target with exactly two
+distinct values is treated as classification (probability outputs; AUROC, AUPRC, balanced accuracy, MCC). In the
+notebooks, classification covers data preparation, conventional models with nested-selection CV, ensembles,
+prediction and the report; the GA, ChemML, Uni-Mol, Chemprop, explanation and applicability-domain blocks are
+regression-only there and are skipped with a message (the runner covers those models for classification).
 
 ## Models This Repo Runs
 
@@ -176,7 +193,12 @@ an interactive session. OOF predictions come from, in order:
 `--ensemble-oof-scope all` also refits Chemprop per fold on the GPU. `cpu` does
 not, and Chemprop is then left out of the ensemble. Members that call a metered API
 (TabPFN via the Prior Labs client) are refitted only with
-`--ensemble-oof-allow-api-refits`. Fold results are cached
+`--ensemble-oof-allow-api-refits`. `--ensemble-exclude-model LABEL` (repeatable, exact
+label) keeps a model out of every ensemble while it is still trained and cross-validated;
+the manuscript run uses it for TabPFN, whose full-fit predictions mostly came from the API
+while its fold refits use the local package. `--tabpfn-local-max-cells` (default 1.5M training
+rows x selected features) skips local TabPFN fold refits that would not fit the GPU; with
+`--cv-selection nested` its CV metrics are then withdrawn rather than left leaky. Fold results are cached
 under `<dataset>/ensemble_oof/` and saved as `split="oof"` rows in
 `predictions.csv`, so the stage resumes after an interruption. To rebuild
 ensembles for an existing run without retraining any full model, see
@@ -1183,6 +1205,61 @@ the benchmark's per-dataset winner, because the canonical run's per-molecule pre
 in the repository.
 
 Tests: `pip install -e .[dev]` then `pytest -q -m "not gpu and not slow"`.
+
+## Project Status (2026-10-02)
+
+- **Manuscript run:** `benchmark_results/qsarena_benchmark_oof_ensemble`. It has the same base models as
+  `qsarena_benchmark_chemprop_fixed`, with every ensemble rebuilt from out-of-fold predictions (Chemprop
+  included). Manuscript figures, tables and numbers are regenerated from it and checked by
+  `verify_manuscript_numbers.py` (119 checks). It now has 31 models: `XGBoost (ADMETboost features)` was
+  folded in on 2026-10-04/05 and is an ensemble member.
+- **Feature-selection CV leak: fixed.** The benchmark used to fit feature selection once on the whole training
+  split, so model cross-validation scores were optimistic; a controlled test
+  (`qsarena/feature_expansion/selection_leak.py`) confirmed that the selection causes it. `--cv-selection nested`
+  (the default for the `full` and `cost_optimized` profiles) refits the selector inside every CV fold. Applied to
+  the manuscript run on 2026-10-05/06: the median CV-vs-test overstatement fell from 15.9% to 3.4%, and honest
+  out-of-fold predictions raised ensemble wins from 12 to 22 of 44 (`docs/NESTED_SELECTION_CV_PLAN.md`).
+- **Feature-expansion arm (below): complete.** It added two opt-in models to the runner (see below).
+  Agents and contributors: start with the status section of `AGENTS.md`.
+
+## Dataset-Property Meta-Analysis And Feature-Expansion Arm
+
+Two analysis packages sit on top of the benchmark and never modify it:
+
+| Package | What it does | Docs |
+|---|---|---|
+| `qsarena.meta_analysis` | Which dataset properties predict which model family wins (manuscript §3.14, Figs 7-9, Tables S9-S11), including a regret-based family selector | `docs/meta_analysis/METHODS.md`, `docs/meta_analysis/SELECTOR_V2_PLAN.md` |
+| `qsarena.feature_expansion` | Experimental arm: the ADMETboost feature set (Mordred 2D, Mol2Vec, PubChem, MACCS, ECFP4, RDKit descriptors) and label-free pretrained embeddings (Uni-Mol, CheMeleon), with fixed-configuration XGBoost / random forest on the **full, unselected** features | `docs/FEATURE_EXPANSION_PLAN.md` (design, compute and a status checklist) |
+
+Both use the committed, hash-verified train/test partitions
+(`data/meta_analysis/dataset_partitions.csv.gz`), so their results are directly comparable with the
+benchmark and the leaderboards.
+
+```bash
+python -m qsarena.meta_analysis --sync-manuscript            # ~4 min CPU (+~1 h once, for the cached permutation test)
+pip install scikit-fingerprints mordredcommunity gensim      # feature-expansion extras
+python -m qsarena.feature_expansion.featurize --workers 2    # CPU families -> .model_cache/feature_expansion/
+python -m qsarena.feature_expansion.train --feature-set admetboost
+# GPU embeddings (benchmark env): featurize, then train XGBoost on CUDA and compare against the TDC references
+python -m qsarena.feature_expansion.featurize --families chemeleon unimol_repr --workers 1
+python -m qsarena.feature_expansion.train --feature-set admetboost+chemeleon --models xgboost --device cuda --n-jobs 2
+python -m qsarena.feature_expansion.evaluate
+```
+
+**Opt-in models from the arm** (off by default, never enabled by a profile):
+
+| Flag | Model | Needs |
+|---|---|---|
+| `--run-admetboost-xgboost` | `XGBoost (ADMETboost features)`: fixed XGBoost on the full, unselected ADMETboost feature set; its CV has no feature-selection leak | `pip install qsarena[features]` and the Mol2Vec model (URL in `qsarena/feature_expansion/featurize.py`); the quick profile disables gradient boosting, so pass `--disable-model-families` explicitly |
+| `--run-chemprop-chemeleon` | `Chemprop v2 (CheMeleon fine-tuned, ensemble=N)`: Chemprop initialised from the CheMeleon foundation model | Chemprop >= 2.2 and a GPU (~7x slower than D-MPNN) |
+
+Findings, on the 22 official TDC splits:
+- A fixed XGBoost on the unselected ADMETboost features is the best honest QSARena entry (mean rank 3.91; it
+  beats ADMETboost and the NIST meta-model 13-9). Only MaxQsaring ranks higher (1.96).
+- Cross-validation selection rarely picked that model, because the benchmark's CV scores were inflated by the
+  feature-selection leak above (being fixed by nested selection).
+- Frozen, label-free embeddings (CheMeleon, Uni-Mol) add nothing measurable to those features, and on their own
+  are significantly worse. Details and the recommendation: `docs/FEATURE_EXPANSION_PLAN.md`.
 
 ## Development Notes
 

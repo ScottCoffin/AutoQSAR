@@ -3,16 +3,16 @@
     "dataset": "poduam_pod_nc_std",
     "stage_index": 1,
     "total_stages": 4,
-    "stage_label": "loading PODUAM benchmark: POD non-cancer standardized set (Aurisano et al., Nature Communications 2025)",
+    "stage_label": "loading PODUAM benchmark: POD non-cancer standardized set (von Borries et al., Nature Communications 2026)",
     "step_type": "load_dataset",
     "model": "",
     "workflow": "",
-    "started_at": "2026-09-28 08:28:29 Pacific Daylight Time",
-    "started_epoch": 1790609309.5472977,
+    "started_at": "2026-10-05 22:37:53 Pacific Daylight Time",
+    "started_epoch": 1791265073.2106853,
     "status": "completed",
-    "ended_at": "2026-09-28 08:28:29 Pacific Daylight Time",
-    "ended_epoch": 1790609309.9551816,
-    "duration_seconds": 0.408
+    "ended_at": "2026-10-05 22:37:53 Pacific Daylight Time",
+    "ended_epoch": 1791265073.6415954,
+    "duration_seconds": 0.431
   },
   {
     "dataset": "poduam_pod_nc_std",
@@ -22,12 +22,12 @@
     "step_type": "feature_generation",
     "model": "",
     "workflow": "",
-    "started_at": "2026-09-28 08:28:29 Pacific Daylight Time",
-    "started_epoch": 1790609309.9551816,
+    "started_at": "2026-10-05 22:37:53 Pacific Daylight Time",
+    "started_epoch": 1791265073.6415954,
     "status": "resumed_cache",
-    "ended_at": "2026-09-28 08:28:29 Pacific Daylight Time",
-    "ended_epoch": 1790609309.9762294,
-    "duration_seconds": 0.021
+    "ended_at": "2026-10-05 22:37:53 Pacific Daylight Time",
+    "ended_epoch": 1791265073.6616144,
+    "duration_seconds": 0.02
   },
   {
     "dataset": "poduam_pod_nc_std",
@@ -37,26 +37,26 @@
     "step_type": "feature_selection",
     "model": "",
     "workflow": "",
-    "started_at": "2026-09-28 08:28:29 Pacific Daylight Time",
-    "started_epoch": 1790609309.9762294,
+    "started_at": "2026-10-05 22:37:53 Pacific Daylight Time",
+    "started_epoch": 1791265073.662616,
     "status": "resumed_cache",
-    "ended_at": "2026-09-28 08:28:30 Pacific Daylight Time",
-    "ended_epoch": 1790609310.0082505,
-    "duration_seconds": 0.032
+    "ended_at": "2026-10-05 22:37:53 Pacific Daylight Time",
+    "ended_epoch": 1791265073.6976154,
+    "duration_seconds": 0.035
   },
   {
     "dataset": "poduam_pod_nc_std",
     "stage_index": 4,
     "total_stages": 4,
-    "stage_label": "conventional model TabPFNRegressor (repairing missing OOF)",
+    "stage_label": "ensemble (2 method(s))",
     "step_type": "model",
-    "model": "TabPFNRegressor",
-    "workflow": "conventional",
-    "started_at": "2026-09-28 08:28:30 Pacific Daylight Time",
-    "started_epoch": 1790609310.0082505,
+    "model": "Ensemble",
+    "workflow": "ensemble",
+    "started_at": "2026-10-05 22:37:53 Pacific Daylight Time",
+    "started_epoch": 1791265073.6976154,
     "status": "completed",
-    "ended_at": "2026-09-28 08:29:01 Pacific Daylight Time",
-    "ended_epoch": 1790609341.9712403,
-    "duration_seconds": 31.963
+    "ended_at": "2026-10-05 22:38:10 Pacific Daylight Time",
+    "ended_epoch": 1791265090.7179828,
+    "duration_seconds": 17.02
   }
 ]

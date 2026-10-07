@@ -1,0 +1,45 @@
+dataset,task,metric,best_ensemble_outer,best_ensemble_nested,winner_family_outer,winner_model_outer
+chemml_cep_homo,regression,test_rmse,0.0938934715499376,0.0897117760629473,Ensemble (stacking / averaging),"Ensemble (OOF Stacking (RidgeCV, 5-fold))"
+chemml_organic_density,regression,test_rmse,0.005220788616806,0.0053456899795103,TabPFN (tabular foundation),TabPFNRegressor
+esol_delaney,regression,test_rmse,0.6242312325009619,0.621864157650947,Ensemble (stacking / averaging),Ensemble (Weighted average (inverse OOF error))
+freesolv_sampl,regression,test_rmse,1.475489207001235,1.3763000122468465,TabPFN (tabular foundation),TabPFNRegressor
+lipophilicity,regression,test_rmse,0.5476563677263883,0.5073870020076687,Ensemble (stacking / averaging),"Ensemble (OOF Stacking (RidgeCV, 5-fold))"
+poduam_pod_nc_std,regression,test_rmse,0.729642650495722,0.6941484746091139,Conventional ML,Random forest
+poduam_pod_rd_std,regression,test_rmse,0.5674104654786677,0.5564431827135264,CFA combinatorial fusion,CFA (Combinatorial Fusion)
+polaris_adme_fang_hppb_1,regression,test_rmse,0.4546437908680176,0.4220528246542971,Chemprop v2 GNN,"Chemprop v2 (D-MPNN, ensemble=3)"
+polaris_adme_fang_perm_1,regression,test_rmse,0.4231289181664387,0.3788294219737544,Uni-Mol (3D pretrained),Uni-Mol V1
+polaris_adme_fang_rclint_1,regression,test_rmse,0.5237561721922493,0.4839324088689234,Chemprop v2 GNN,"Chemprop v2 (D-MPNN, ensemble=3)"
+polaris_adme_fang_rppb_1,regression,test_rmse,0.5215393755206557,0.4778525005758511,MapLight + GNN,"MapLight + GNN (CatBoost, Strict Parity)"
+polaris_adme_fang_solu_1,regression,test_rmse,0.5890775485023957,0.5521227323772397,Uni-Mol (3D pretrained),Uni-Mol V2 (84m)
+tdc_ames,classification,test_roc_auc,0.8765219604848341,0.8830817129765614,CFA combinatorial fusion,CFA (Combinatorial Fusion)
+tdc_bbb_martins,classification,test_roc_auc,0.9084388680425266,0.9245035959974984,Conventional ML,Random forest
+tdc_bioavailability_ma,classification,test_roc_auc,0.749584303292318,0.7286331892251413,Conventional ML,CatBoost
+tdc_caco2_wang,regression,test_rmse,0.3436753227785845,0.3375247698601132,Ensemble (stacking / averaging),Ensemble (Weighted average (inverse OOF error))
+tdc_carcinogens_lagunin,classification,test_roc_auc,0.9016620498614958,0.9141274238227146,Chemprop v2 GNN,"Chemprop v2 (AttentiveFP, ensemble=3)"
+tdc_clearance_hepatocyte_az,regression,test_rmse,46.56850995281849,44.15813437889088,MapLight + GNN,"MapLight + GNN (CatBoost, Strict Parity)"
+tdc_clearance_microsome_az,regression,test_rmse,36.82800835949452,35.01272310435542,Uni-Mol (3D pretrained),Uni-Mol V2 (84m)
+tdc_clintox,classification,test_roc_auc,0.9502012072434608,0.9572434607645876,CFA combinatorial fusion,CFA (Combinatorial Fusion)
+tdc_cyp1a2_veith,classification,test_roc_auc,0.974313816581116,0.9741227869759695,Ensemble (stacking / averaging),"Ensemble (OOF Stacking (RidgeCV, 5-fold))"
+tdc_cyp2c19_veith,classification,test_roc_auc,0.9369910952496447,0.9381446126837832,Ensemble (stacking / averaging),"Ensemble (OOF Stacking (RidgeCV, 5-fold))"
+tdc_cyp2c9_substrate_carbonmangels,classification,test_roc_auc,0.6117742810634835,0.6535539880629408,Chemprop v2 GNN,"Chemprop v2 (AttentiveFP, ensemble=3)"
+tdc_cyp2c9_veith,classification,test_roc_auc,0.9127066384191914,0.9137611933245652,Ensemble (stacking / averaging),"Ensemble (OOF Stacking (RidgeCV, 5-fold))"
+tdc_cyp2d6_substrate_carbonmangels,classification,test_roc_auc,0.7348331648129424,0.8094034378159758,Chemprop v2 GNN,"Chemprop v2 (D-MPNN + RDKit2D, ensemble=3)"
+tdc_cyp2d6_veith,classification,test_roc_auc,0.9047689461661992,0.9054007521697004,Ensemble (stacking / averaging),"Ensemble (OOF Stacking (RidgeCV, 5-fold))"
+tdc_cyp3a4_substrate_carbonmangels,classification,test_roc_auc,0.6304249547920434,0.6645569620253166,Conventional ML,XGBoost (ADMETboost features)
+tdc_cyp3a4_veith,classification,test_roc_auc,0.9206530225481626,0.9240295748613678,Ensemble (stacking / averaging),"Ensemble (OOF Stacking (RidgeCV, 5-fold))"
+tdc_dili,classification,test_roc_auc,0.8421739130434782,0.932608695652174,Conventional ML,XGBoost (ADMETboost features)
+tdc_half_life_obach,regression,test_rmse,21.167196742577755,21.246389678768203,Uni-Mol (3D pretrained),Uni-Mol V1
+tdc_herg,classification,test_roc_auc,0.8240058910162004,0.8419734904270987,Chemprop v2 GNN,"Chemprop v2 (AttentiveFP, ensemble=3)"
+tdc_herg_karim,classification,test_roc_auc,0.9068599582570922,0.906871051243496,Ensemble (stacking / averaging),Ensemble (Weighted average (inverse OOF error))
+tdc_hia_hou,classification,test_roc_auc,0.9860082304526748,0.9897119341563786,Conventional ML,XGBoost (ADMETboost features)
+tdc_hydrationfreeenergy_freesolv,regression,test_rmse,1.0853199540579597,1.0751538904646432,Ensemble (stacking / averaging),Ensemble (Weighted average (inverse OOF error))
+tdc_ld50_zhu,regression,test_rmse,0.8273306082522394,0.8271911087826693,TabPFN (tabular foundation),TabPFNRegressor
+tdc_lipophilicity_astrazeneca,regression,test_rmse,0.6150389601319652,0.551462524155335,Chemprop v2 GNN,"Chemprop v2 (D-MPNN, ensemble=3)"
+tdc_pampa_ncats,classification,test_roc_auc,0.7482093663911845,0.7501071319253138,Uni-Mol (3D pretrained),Uni-Mol V1
+tdc_pgp_broccatelli,classification,test_roc_auc,0.9029592108770994,0.9226206344974672,Uni-Mol (3D pretrained),Uni-Mol V2 (84m)
+tdc_ppbr_az,regression,test_rmse,12.010255906735196,10.768165220359377,MapLight + GNN,"MapLight + GNN (CatBoost, Strict Parity)"
+tdc_skin_reaction,classification,test_roc_auc,0.5560993975903614,0.557605421686747,Conventional ML,XGBoost (ADMETboost features)
+tdc_solubility_aqsoldb,regression,test_rmse,0.9560951336589424,0.9549509200207074,Ensemble (stacking / averaging),"Ensemble (OOF Stacking (RidgeCV, 5-fold))"
+tdc_tox21,classification,test_roc_auc,0.5151356993736952,0.524327302250058,Chemprop v2 GNN,"Chemprop v2 (AttentiveFP, ensemble=3)"
+tdc_toxcast,classification,test_roc_auc,0.6743161520285154,0.6829668789298731,Conventional ML,HistGradientBoosting
+tdc_vdss_lombardo,regression,test_rmse,5.392127637355462,5.406134645284669,MapLight + GNN,"MapLight + GNN (CatBoost, Strict Parity)"

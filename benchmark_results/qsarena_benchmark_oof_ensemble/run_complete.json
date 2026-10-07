@@ -1,34 +1,42 @@
 {
-  "started_at": "2026-09-28 08:14:11 Pacific Daylight Time",
-  "completed_at": "2026-09-28 08:39:09",
-  "elapsed_seconds": 1498.389,
-  "dataset_count": 37,
+  "started_at": "2026-10-06 08:42:36 Pacific Daylight Time",
+  "completed_at": "2026-10-06 08:44:07",
+  "elapsed_seconds": 91.149,
+  "dataset_count": 2,
   "dataset_status_counts": {
-    "completed": 37
+    "completed": 2
   },
   "resource_config": {
-    "detected_cpu_count": 12,
-    "n_jobs": 12,
-    "gpu_available": false,
-    "gpu_inventory": [],
-    "chemprop_num_workers": 3,
-    "unimol_num_workers": 3,
+    "detected_cpu_count": 16,
+    "n_jobs": 16,
+    "gpu_available": true,
+    "gpu_inventory": [
+      {
+        "index": 0,
+        "name": "NVIDIA GeForce RTX 4060 Laptop GPU",
+        "total_memory_gb": 7.996,
+        "multi_processor_count": 24,
+        "compute_capability": "8.9"
+      }
+    ],
+    "chemprop_num_workers": 0,
+    "unimol_num_workers": 4,
     "chemprop_batch_size": 32,
     "unimol_batch_size": 32,
     "precision_mode": "fp32"
   },
   "ga_models_resolved": [],
   "run_vs_run_attribution": {
-    "generated_at": "2026-09-28 08:39:06 Pacific Daylight Time",
+    "generated_at": "2026-10-06 08:44:07 Pacific Daylight Time",
     "current_run_dir": "benchmark_results\\qsarena_benchmark_oof_ensemble",
-    "reference_run_dir": "C:\\Users\\Scott.Coffin\\OneDrive - California OEHHA\\R_new\\AutoQSAR\\benchmark_results\\qsarena_benchmark_chemprop_fixed",
+    "reference_run_dir": "C:\\Users\\scott\\AutoQSAR\\benchmark_results\\_nested_pilot_backup_20261005",
     "has_reference_run": true,
     "split_datasets_compared": 44,
-    "split_all_match_count": 44,
-    "config_diff_count": 81,
-    "new_error_count": 0,
-    "resolved_error_count": 6,
-    "leaderboard_comparable_dataset_count": 8
+    "split_all_match_count": 0,
+    "config_diff_count": 199,
+    "new_error_count": 266,
+    "resolved_error_count": 0,
+    "leaderboard_comparable_dataset_count": 4
   },
   "tdc22_best_model_multiseed": {}
 }

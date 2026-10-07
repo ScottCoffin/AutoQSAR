@@ -2,9 +2,9 @@
   "status": "completed",
   "dataset": "tdc_bbb_martins",
   "source": "PyTDC ADME benchmark group: bbb_martins (official train_val/test split)",
-  "completed_at": "2026-09-28 08:29:34",
-  "elapsed_seconds": 32.335,
-  "n_metrics_rows": 47,
+  "completed_at": "2026-10-05 22:38:14",
+  "elapsed_seconds": 3.638,
+  "n_metrics_rows": 50,
   "n_stage_records": 4,
   "n_rows": 2030,
   "task_type": "classification",
@@ -57,14 +57,14 @@
   "applicability_domain": {
     "method": "both",
     "n_test": 406,
-    "in_domain_fraction": 0.8423645320197044,
+    "in_domain_fraction": 0.9334975369458128,
     "methods": {
       "standardization": 0.9852216748768473,
-      "confidence": 0.8571428571428571
+      "confidence": 0.9482758620689655
     },
-    "selected_model": "TabPFNClassifier",
+    "selected_model": "XGBoost (ADMETboost features)",
     "notes": []
   },
-  "stage23_signature": "bb37f46a975a569a5f109c140bf5c57fd0f1f6c3afc6937578808e0b9185bb88",
-  "resume_fingerprint": "bd2b668bb1a5f675322ede4b"
+  "stage23_signature": "1b2d9089b47448607140054409e5a2ec60810ccfc3068d80f75e5185d8b8ccad",
+  "resume_fingerprint": "078debca902b248a1b0f61c7"
 }

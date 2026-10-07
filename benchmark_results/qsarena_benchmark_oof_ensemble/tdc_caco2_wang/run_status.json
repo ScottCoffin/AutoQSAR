@@ -2,9 +2,9 @@
   "status": "completed",
   "dataset": "tdc_caco2_wang",
   "source": "PyTDC ADME benchmark group: caco2_wang (official train_val/test split)",
-  "completed_at": "2026-09-28 08:22:46",
-  "elapsed_seconds": 31.387,
-  "n_metrics_rows": 44,
+  "completed_at": "2026-10-05 22:36:27",
+  "elapsed_seconds": 9.186,
+  "n_metrics_rows": 47,
   "n_stage_records": 4,
   "n_rows": 910,
   "task_type": "regression",
@@ -54,11 +54,11 @@
       "standardization": 1.0,
       "knn_similarity": 0.7197802197802198
     },
-    "selected_model": "TabPFNRegressor",
+    "selected_model": "XGBoost (ADMETboost features)",
     "notes": [],
-    "mae_in_domain": 0.3059108261085103,
-    "mae_out_of_domain": 0.29041578209419994
+    "mae_in_domain": 0.2961085018989855,
+    "mae_out_of_domain": 0.2855173775156058
   },
-  "stage23_signature": "17fa64ce5788b7c4bafeeddf6073b0caa7904adaec583417b019160279def0dc",
-  "resume_fingerprint": "a8d839d3d0e59bf9ec0cfae1"
+  "stage23_signature": "0ad87d52f2647a3975313fa3ab4bef549d6d2afa8614dad0178ec1fbca449c52",
+  "resume_fingerprint": "58b141e86bd705cc546aff03"
 }

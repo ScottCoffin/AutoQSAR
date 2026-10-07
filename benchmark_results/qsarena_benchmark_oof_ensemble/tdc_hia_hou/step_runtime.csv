@@ -1,5 +1,5 @@
 dataset,stage_index,total_stages,stage_label,step_type,model,workflow,started_at,started_epoch,status,ended_at,ended_epoch,duration_seconds
-tdc_hia_hou,1,4,loading PyTDC ADME benchmark group: hia_hou (official train_val/test split),load_dataset,,,2026-09-28 08:16:49 Pacific Daylight Time,1790608609.8897407,completed,2026-09-28 08:16:50 Pacific Daylight Time,1790608610.0121925,0.122
-tdc_hia_hou,2,4,building molecular features (cached),feature_generation,,,2026-09-28 08:16:50 Pacific Daylight Time,1790608610.0121925,resumed_cache,2026-09-28 08:16:50 Pacific Daylight Time,1790608610.0191278,0.007
-tdc_hia_hou,3,4,splitting data and selecting features (cached),feature_selection,,,2026-09-28 08:16:50 Pacific Daylight Time,1790608610.020129,resumed_cache,2026-09-28 08:16:50 Pacific Daylight Time,1790608610.0429673,0.023
-tdc_hia_hou,4,4,conventional model TabPFNClassifier (repairing missing OOF),model,TabPFNClassifier,conventional,2026-09-28 08:16:50 Pacific Daylight Time,1790608610.0429673,completed,2026-09-28 08:17:25 Pacific Daylight Time,1790608645.165817,35.123
+tdc_hia_hou,1,4,loading PyTDC ADME benchmark group: hia_hou (official train_val/test split),load_dataset,,,2026-10-05 22:35:46 Pacific Daylight Time,1791264946.3850565,completed,2026-10-05 22:35:46 Pacific Daylight Time,1791264946.524053,0.139
+tdc_hia_hou,2,4,building molecular features (cached),feature_generation,,,2026-10-05 22:35:46 Pacific Daylight Time,1791264946.524053,resumed_cache,2026-10-05 22:35:46 Pacific Daylight Time,1791264946.5310526,0.007
+tdc_hia_hou,3,4,splitting data and selecting features (cached),feature_selection,,,2026-10-05 22:35:46 Pacific Daylight Time,1791264946.5310526,resumed_cache,2026-10-05 22:35:46 Pacific Daylight Time,1791264946.5510542,0.02
+tdc_hia_hou,4,4,ensemble (2 method(s)),model,Ensemble,ensemble,2026-10-05 22:35:46 Pacific Daylight Time,1791264946.5510542,completed,2026-10-05 22:35:47 Pacific Daylight Time,1791264947.7755644,1.225

@@ -36,9 +36,6 @@ ALLOWED_PATHS = (
     "environment/requirements-lock.txt",
     "manuscript_assets/",
     "manuscript.html",
-    # Stale pre-rename mirrors (see AGENTS.md: never read these as source).
-    "portable_colab_qsar_bundle/run_autoqsar_ga_benchmarks.txt",
-    "portable_colab_qsar_bundle/qsar_workflow_core.txt",
     # Executed notebooks carry historical outputs; the Colab notebook is checked via its builder.
     "portable_colab_qsar_bundle/benchmark_results_summary.ipynb",
     "portable_colab_qsar_bundle/pfas_aux_qsar_results_summary.ipynb",
@@ -78,6 +75,11 @@ ALLOWED_LINE_PATTERNS = [
         r"autoqsar(?:\\?_)benchmark(?:\\?_)20260623(?:\\?_)153839",
         r"https://raw\.githubusercontent\.com/ScottCoffin/AutoQSAR/main/portable_colab_qsar_bundle/qsar_workflow_core\.py",
         r"^.*# clone made before the rename.*$",
+        # The GitHub repository still carries the old name; tutorials try both raw URLs as fallbacks.
+        r"https://raw\.githubusercontent\.com/ScottCoffin/AutoQSAR/main\b",
+        r"repository is being renamed AutoQSAR -> QSARena",
+        # Drops our own entries, recorded under the pre-rename name in frozen leaderboard snapshots.
+        r"\"autoqsar\|qsarena\"",
     )
 ]
 

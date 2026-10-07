@@ -48,7 +48,7 @@ if not hasattr(np, "product"):
     # Compatibility for older graph/descriptor dependencies under NumPy 2.x.
     np.product = np.prod  # type: ignore[attr-defined]
 
-from sklearn.base import clone
+from sklearn.base import BaseEstimator, ClassifierMixin, RegressorMixin, clone
 from sklearn.ensemble import (
     AdaBoostClassifier,
     AdaBoostRegressor,
@@ -338,6 +338,7 @@ try:
         resolve_cfa_max_models_for_budget,
         run_cfa_regression_fusion,
         resolve_chemprop_architecture_specs,
+        chemeleon_variant_spec,
         scaffold_train_test_split,
         target_quartile_labels,
     )
@@ -371,6 +372,7 @@ except ModuleNotFoundError:
         resolve_cfa_max_models_for_budget,
         run_cfa_regression_fusion,
         resolve_chemprop_architecture_specs,
+        chemeleon_variant_spec,
         scaffold_train_test_split,
         target_quartile_labels,
     )
@@ -1490,6 +1492,17 @@ def auxiliary_feature_content_signature(frame: pd.DataFrame, columns: Sequence[s
     return hasher.hexdigest()
 
 
+# Corrected display labels that must hash like the label each signature was first computed with:
+# the stage 2/3 signature also keys cached feature selections (not reproducible across machines) and
+# every metrics.csv row's stage_config_signature, so a citation fix must not invalidate them.
+SIGNATURE_SOURCE_LABEL_ALIASES = {
+    "PODUAM benchmark: POD non-cancer standardized set (von Borries et al., Nature Communications 2026)":
+        "PODUAM benchmark: POD non-cancer standardized set (Aurisano et al., Nature Communications 2025)",
+    "PODUAM benchmark: POD reproductive/developmental standardized set (von Borries et al., Nature Communications 2026)":
+        "PODUAM benchmark: POD reproductive/developmental standardized set (Aurisano et al., Nature Communications 2025)",
+}
+
+
 def stage23_resume_signature(
     *,
     args: argparse.Namespace,
@@ -1501,7 +1514,7 @@ def stage23_resume_signature(
     payload = {
         "cache_version": int(STAGE23_RESUME_CACHE_VERSION),
         "dataset_name": str(spec.name),
-        "dataset_source": str(spec.source),
+        "dataset_source": SIGNATURE_SOURCE_LABEL_ALIASES.get(str(spec.source), str(spec.source)),
         "dataset_rows": int(len(canonical_df)),
         "dataset_content_hash": dataset_content_signature(
             canonical_df["canonical_smiles"],
@@ -1560,6 +1573,11 @@ def stage23_args_payload(args: argparse.Namespace, spec: "DatasetSpec") -> dict[
     # behaviour, so caches written before they existed keep matching.
     if not bool(getattr(args, "drop_duplicate_feature_columns", True)):
         payload["drop_duplicate_feature_columns"] = False
+    if bool(getattr(args, "deterministic_selection", False)):
+        payload["deterministic_selection"] = True
+    loaded_selection = deposited_selection_path(args, getattr(spec, "name", ""))
+    if loaded_selection is not None:
+        payload["selected_features_from"] = _file_sha256(loaded_selection)
     standardization = _standardization_options(args)
     if standardization != _standardization_options(None):
         payload["standardization"] = standardization
@@ -1568,6 +1586,61 @@ def stage23_args_payload(args: argparse.Namespace, spec: "DatasetSpec") -> dict[
     if str(getattr(spec, "task_type", "") or "").strip():
         payload["task_type"] = str(spec.task_type)
     return payload
+
+
+def deposited_selection_path(args: argparse.Namespace, dataset_name: str) -> Path | None:
+    """``<--selected-features-from>/<dataset>/selected_features.csv`` when that option is set, else None.
+
+    Raises if the option is set but the file is missing: silently refitting would defeat its purpose."""
+    root = str(getattr(args, "selected_features_from", "") or "").strip()
+    if not root or not str(dataset_name or "").strip():
+        return None
+    path = Path(root).expanduser() / slugify(str(dataset_name)) / "selected_features.csv"
+    if not path.exists():
+        raise FileNotFoundError(
+            f"--selected-features-from {root}: no selected_features.csv for dataset {dataset_name!r} ({path})"
+        )
+    return path
+
+
+def _file_sha256(path: Path) -> str:
+    return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+
+
+def load_deposited_selection(
+    X_train: pd.DataFrame, X_test: pd.DataFrame, path: Path
+) -> tuple[pd.DataFrame, pd.DataFrame, dict[str, Any]]:
+    """Apply a deposited feature selection instead of refitting the selector.
+
+    The recorded selector method (from the deposited dataset's ``metrics.csv``, when present) is kept in the
+    metadata, so nested cross-validation refits the same method inside each fold."""
+    columns = [str(c) for c in pd.read_csv(path)["feature"].astype(str)]
+    missing = [c for c in columns if c not in X_train.columns]
+    if missing:
+        raise ValueError(
+            f"{path}: {len(missing)} deposited feature(s) are absent from this run's feature matrix "
+            f"(first: {missing[:3]}); the feature configuration differs from the deposited run"
+        )
+    method = "elasticnet_cv"
+    metrics_path = path.parent / "metrics.csv"
+    if metrics_path.exists():
+        try:
+            recorded = pd.read_csv(metrics_path, usecols=["selector_method"], low_memory=False)["selector_method"].dropna()
+            if len(recorded):
+                method = str(recorded.iloc[0])
+        except (ValueError, KeyError):
+            pass
+    print(f"[selector] loaded deposited selection: {len(columns):,} features ({method}) from {path}", flush=True)
+    return X_train[columns].copy(), X_test[columns].copy(), {
+        "selector_method": method,
+        "selector_timed_out": False,
+        "selector_auto_rf_large_dataset_triggered": False,
+        "selected_feature_count": int(len(columns)),
+        "original_feature_count": int(X_train.shape[1]),
+        "selected_features": columns,
+        "selector_selection_source": str(path),
+        "selector_selection_sha256": _file_sha256(path),
+    }
 
 
 def stage23_resume_cache_path(dataset_dir: Path) -> Path:
@@ -1606,6 +1679,7 @@ def _stage23_payload_matches_ignoring_cache_location(
         "enable_persistent_feature_store",
         "reuse_persistent_feature_store",
         "persistent_feature_store_path",
+        "dataset_source",  # display label only; data identity is dataset_content_hash
     }
     stored_clean = {key: value for key, value in stored_payload.items() if key not in ignored_keys}
     expected_clean = {key: value for key, value in expected_payload.items() if key not in ignored_keys}
@@ -4601,9 +4675,13 @@ def run_timed_elasticnet_selector_fit(
     cv_splits: list[tuple[np.ndarray, np.ndarray]],
     max_iter: int,
     random_seed: int,
-    timeout_seconds: float,
+    timeout_seconds: float | None,
     n_jobs: int,
+    single_thread: bool = False,
 ) -> dict[str, Any]:
+    """Fit ElasticNetCV in a subprocess. ``timeout_seconds=None`` waits for completion (deterministic selection);
+    ``single_thread`` pins the worker's BLAS/OpenMP pools to one thread so the coefficients do not depend on the
+    machine's core count."""
     payload = {
         "X_scaled": np.asarray(X_scaled, dtype=float),
         "y_train": np.asarray(y_train, dtype=float),
@@ -4617,9 +4695,16 @@ def run_timed_elasticnet_selector_fit(
         "random_seed": int(random_seed),
         "n_jobs": int(max(1, n_jobs)),
     }
-    timeout_seconds = float(timeout_seconds)
-    if timeout_seconds <= 0:
-        timeout_seconds = 1.0
+    if timeout_seconds is not None:
+        timeout_seconds = float(timeout_seconds)
+        if timeout_seconds <= 0:
+            timeout_seconds = 1.0
+    worker_env = None
+    if single_thread:
+        worker_env = dict(os.environ)
+        for name in ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS", "VECLIB_MAXIMUM_THREADS",
+                     "NUMEXPR_NUM_THREADS"):
+            worker_env[name] = "1"
 
     worker_code = """
 import json
@@ -4686,13 +4771,14 @@ if __name__ == "__main__":
                 stderr=subprocess.PIPE,
                 timeout=timeout_seconds,
                 check=False,
+                env=worker_env,
                 **_SUBPROCESS_TEXT_KWARGS,
             )
         except subprocess.TimeoutExpired:
             return {
                 "ok": False,
                 "timed_out": True,
-                "error": f"ElasticNetCV selector exceeded timeout ({timeout_seconds:.1f} seconds)",
+                "error": f"ElasticNetCV selector exceeded timeout ({float(timeout_seconds or 0):.1f} seconds)",
             }
 
         if completed.returncode != 0:
@@ -4738,6 +4824,19 @@ if __name__ == "__main__":
         "l1_ratio": float(message["l1_ratio"]),
         "n_iter": int(message["n_iter"]),
     }
+
+
+def selector_run_limits(args: argparse.Namespace) -> dict[str, Any]:
+    """Wall-clock limit and threading for the ElasticNetCV selector.
+
+    By default the selector falls back to random-forest importance when it exceeds
+    ``--selector-elasticnet-timeout-seconds``, so which datasets fall back depends on the machine's speed.
+    ``--deterministic-selection`` removes the limit (the fit runs to completion) and runs the worker on one thread,
+    so the same data and settings give the same selection on any machine. The dataset-size pre-check
+    (``--selector-auto-rf-by-dataset-size``) depends only on the training-set size and is left as configured."""
+    if bool(getattr(args, "deterministic_selection", False)):
+        return {"timeout_seconds": None, "n_jobs": 1, "single_thread": True}
+    return {"timeout_seconds": float(args.selector_elasticnet_timeout_seconds), "n_jobs": benchmark_n_jobs(args)}
 
 
 def select_features(
@@ -4826,8 +4925,7 @@ def select_features(
                 cv_splits=cv_splits,
                 max_iter=args.selector_max_iter,
                 random_seed=args.random_seed,
-                timeout_seconds=float(args.selector_elasticnet_timeout_seconds),
-                n_jobs=benchmark_n_jobs(args),
+                **selector_run_limits(args),
             )
     else:
         selector_fit = run_timed_elasticnet_selector_fit(
@@ -4838,8 +4936,7 @@ def select_features(
             cv_splits=cv_splits,
             max_iter=args.selector_max_iter,
             random_seed=args.random_seed,
-            timeout_seconds=float(args.selector_elasticnet_timeout_seconds),
-            n_jobs=benchmark_n_jobs(args),
+            **selector_run_limits(args),
         )
 
     if bool(selector_fit.get("ok")):
@@ -5028,6 +5125,137 @@ def add_leaderboard_reference_columns(
     return row
 
 
+#: Opt-in (``--run-admetboost-xgboost``): fixed-configuration XGBoost on the full, UNSELECTED ADMETboost feature
+#: set, ported from the feature-expansion arm (docs/FEATURE_EXPANSION_PLAN.md), where it was the strongest honest
+#: entry on the 22 official TDC splits. It bypasses stage-3 selection, so its CV scores carry no selection leak.
+ADMETBOOST_XGB_LABEL = "XGBoost (ADMETboost features)"
+
+
+TABPFN_LOCAL_PREDICT_CHUNK_ROWS = 2048
+
+
+class _ChunkedPredictMixin:
+    """Predict in row chunks. The local tabpfn package attends every test row to the whole training context at
+    once, so predicting ~10k rows against a ~10k-row, ~1,000-feature context asks for >30 GB of GPU memory. Each
+    call recomputes the context, so chunks start large and halve only on a CUDA out-of-memory error (2,048 rows fit
+    an 8 GB GPU against an ~8k-row context but not a 10k-row one). The last result is reused when the same input
+    comes back: the CV scorers are custom callables, so sklearn would otherwise predict once per metric (5x)."""
+
+    def fit(self, X, y):
+        self.estimator_ = clone(self.estimator)
+        self._last_prediction = None
+        self.estimator_.fit(X, y)
+        if hasattr(self.estimator_, "classes_"):
+            self.classes_ = self.estimator_.classes_
+        return self
+
+    def _chunked(self, method: str, X):
+        # Keyed by content: the Pipeline's imputer/scaler hand over a fresh array on every call.
+        values = np.ascontiguousarray(np.asarray(X, dtype=float))
+        key = (method, values.shape, hashlib.blake2b(values.tobytes(), digest_size=16).hexdigest())
+        cached = getattr(self, "_last_prediction", None)
+        if cached is not None and cached[0] == key:
+            return cached[1].copy()
+        out = self._chunked_uncached(method, X)
+        self._last_prediction = (key, out)
+        return out.copy()
+
+    def _chunked_uncached(self, method: str, X):
+        n_rows = int(X.shape[0])
+        size = max(1, int(self.chunk_rows))
+        take = (lambda a, b: X.iloc[a:b]) if hasattr(X, "iloc") else (lambda a, b: X[a:b])
+        parts: list[np.ndarray] = []
+        start = 0
+        while start < n_rows:
+            try:
+                parts.append(np.asarray(getattr(self.estimator_, method)(take(start, start + size))))
+            except Exception as exc:
+                if "out of memory" not in str(exc).lower() or size <= 1:
+                    raise
+                size = max(1, size // 2)
+                try:
+                    import torch
+
+                    torch.cuda.empty_cache()
+                except Exception:
+                    pass
+                continue
+            start += size
+        return np.concatenate(parts, axis=0)
+
+    def predict(self, X):
+        return self._chunked("predict", X)
+
+
+class ChunkedTabPFNClassifier(_ChunkedPredictMixin, ClassifierMixin, BaseEstimator):
+    def __init__(self, estimator: Any = None, chunk_rows: int = TABPFN_LOCAL_PREDICT_CHUNK_ROWS):
+        self.estimator = estimator
+        self.chunk_rows = chunk_rows
+
+    def predict_proba(self, X):
+        return self._chunked("predict_proba", X)
+
+
+class ChunkedTabPFNRegressor(_ChunkedPredictMixin, RegressorMixin, BaseEstimator):
+    def __init__(self, estimator: Any = None, chunk_rows: int = TABPFN_LOCAL_PREDICT_CHUNK_ROWS):
+        self.estimator = estimator
+        self.chunk_rows = chunk_rows
+
+
+_TORCH_GPU_MEMORY_CAPPED = False
+
+
+def _cap_torch_gpu_memory_once(fraction: float = 0.9) -> None:
+    """Make PyTorch raise out-of-memory instead of letting the Windows driver spill GPU memory into system RAM,
+    which kept local TabPFN 'running' at a fraction of its speed. The OOM is what triggers the chunk halving."""
+    global _TORCH_GPU_MEMORY_CAPPED
+    if _TORCH_GPU_MEMORY_CAPPED:
+        return
+    _TORCH_GPU_MEMORY_CAPPED = True
+    try:
+        import torch
+
+        if torch.cuda.is_available():
+            torch.cuda.set_per_process_memory_fraction(float(fraction))
+    except Exception:
+        pass
+
+
+def tabpfn_estimator(classification: bool) -> Any:
+    """TabPFN model step: chunked prediction on the local backend; the API client batches server-side."""
+    base = TabPFNClassifier() if classification else TabPFNRegressor()
+    if str(TABPFN_REGRESSOR_SOURCE).strip().lower() != "tabpfn":
+        return base
+    _cap_torch_gpu_memory_once()
+    return ChunkedTabPFNClassifier(base) if classification else ChunkedTabPFNRegressor(base)
+
+
+def admetboost_xgboost_estimator(args: argparse.Namespace, n_jobs: int) -> Any:
+    from qsarena.feature_expansion.train import XGB_PARAMS  # single source of truth for the arm's settings
+
+    if current_dataset_task_type() == "classification":
+        return XGBClassifier(**XGB_PARAMS, objective="binary:logistic", eval_metric="auc",
+                             random_state=args.random_seed, n_jobs=n_jobs)
+    return XGBRegressor(**XGB_PARAMS, objective="reg:squarederror", random_state=args.random_seed, n_jobs=n_jobs)
+
+
+def build_admetboost_feature_frames(smiles_train: pd.Series, smiles_test: pd.Series) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """MACCS, ECFP4, Mol2Vec, PubChem, Mordred 2D and RDKit 2D for the train and test SMILES (label-free)."""
+    try:
+        from qsarena.feature_expansion import featurize as fe_featurize
+
+        train = [str(s) for s in smiles_train]
+        test = [str(s) for s in smiles_test]
+        X = fe_featurize.admetboost_matrix(train + test)
+    except (ImportError, FileNotFoundError) as exc:
+        raise RuntimeError(
+            f"{exc}. The ADMETboost feature set needs `pip install qsarena[features]` (scikit-fingerprints, "
+            "mordredcommunity, gensim) and the Mol2Vec model (URL in qsarena/feature_expansion/featurize.py)."
+        ) from exc
+    columns = [f"admetboost_{i}" for i in range(X.shape[1])]
+    return (pd.DataFrame(X[: len(train)], columns=columns), pd.DataFrame(X[len(train):], columns=columns))
+
+
 def adaptive_knn_neighbors(n_train: int, cv_folds: int, default_neighbors: int = 15) -> int:
     train_count = max(1, int(n_train))
     folds = max(2, min(int(cv_folds or 2), train_count))
@@ -5181,9 +5409,11 @@ def conventional_models(
                 [
                     ("imputer", SimpleImputer(strategy="median")),
                     ("scaler", StandardScaler()),
-                    ("model", TabPFNClassifier()),
+                    ("model", tabpfn_estimator(classification=True)),
                 ]
             )
+        if bool(getattr(args, "run_admetboost_xgboost", False)) and XGBClassifier is not None:
+            models[ADMETBOOST_XGB_LABEL] = admetboost_xgboost_estimator(args, n_jobs)
         models["_elasticnet_cv_meta"] = {}
         return models
 
@@ -5363,9 +5593,11 @@ def conventional_models(
             [
                 ("imputer", SimpleImputer(strategy="median")),
                 ("scaler", StandardScaler()),
-                ("model", TabPFNRegressor()),
+                ("model", tabpfn_estimator(classification=False)),
             ]
         )
+    if bool(getattr(args, "run_admetboost_xgboost", False)) and XGBRegressor is not None:
+        models[ADMETBOOST_XGB_LABEL] = admetboost_xgboost_estimator(args, n_jobs)
     models["_elasticnet_cv_meta"] = {
         "elasticnet_cv_folds": int(elasticnet_cv_folds),
         "elasticnet_cv_split_strategy": elasticnet_cv_strategy,
@@ -5384,6 +5616,12 @@ def _suppress_console_noise(enabled: bool):
 
 def predict_values_for_metric(estimator: Any, X, metric_name: str) -> np.ndarray:
     metric = normalize_benchmark_metric(metric_name, fallback=str(metric_name).strip().lower())
+    # A binary task can arrive with a regression primary metric: the catalog lists e.g. tdc_cyp1a2_veith,
+    # tdc_cyp2c19_veith, tdc_herg_karim and tdc_pampa_ncats as "rmse". Returning .predict() then saved hard 0/1
+    # labels, so test AUROC/AUPRC were computed on labels and ensembles were built from labels (found 2026-10-04).
+    # For a classification task, always return the positive-class score.
+    if metric not in {"roc_auc", "auprc", "accuracy", "balanced_accuracy", "mcc"} and current_dataset_task_type() == "classification":
+        metric = "roc_auc"
     if metric in {"roc_auc", "auprc", "accuracy", "balanced_accuracy", "mcc"}:
         try:
             if hasattr(estimator, "predict_proba"):
@@ -7273,11 +7511,123 @@ def ensemble_oof_fold_signature(folds: list[tuple[np.ndarray, np.ndarray]]) -> s
     return core_oof_fold_signature(folds)
 
 
+# ---- Nested feature selection (--cv-selection nested; docs/NESTED_SELECTION_CV_PLAN.md) -------------------
+# Stage 3 fits the supervised selector on ALL training rows, so CV and OOF predictions computed on the selected
+# matrix are optimistic: every validation fold helped choose its features (measured causally in
+# qsarena/feature_expansion/selection_leak.py). Nested mode refits the selector on each fold's training rows.
+# Test predictions are untouched: the deployed model legitimately uses the selection fitted on all training rows.
+
+
+def nested_selection_columns(
+    *,
+    split: dict[str, Any],
+    selector_meta: dict[str, Any],
+    args: argparse.Namespace,
+    folds: list[tuple[np.ndarray, np.ndarray]],
+    cv_strategy: str,
+    cache_dir: Path,
+    signature: str,
+    log: Callable[..., None] = print,
+) -> list[list[str]]:
+    """Selected columns per fold, from the full (deduplicated, unselected) training matrix.
+
+    The selector METHOD is pinned to the one the deployed selection used (recorded in ``selector_meta``), so the
+    folds repeat exactly that pipeline; a random-forest fallback that happened on another machine cannot switch
+    methods mid-run. Each fold's selection is cached as ``fold_<k>.json`` under ``cache_dir``, keyed by
+    ``signature`` (stage 2/3 signature + fold signature), so the stage resumes.
+    """
+    method = str(selector_meta.get("selector_method", "elasticnet_cv") or "elasticnet_cv")
+    pinned = argparse.Namespace(**vars(args))
+    if method.startswith("random_forest") or method == "rf_importance":
+        pinned.selector_method = "rf_importance"
+    elif method == "elasticnet_cv":
+        pinned.selector_method = "elasticnet_cv"
+        pinned.selector_auto_rf_by_dataset_size = False
+    X_full = pd.DataFrame(split["X_train"]).reset_index(drop=True)
+    y_full = pd.Series(split["y_train"], dtype=float).reset_index(drop=True)
+    smiles_full = pd.Series(split["smiles_train"], dtype=str).reset_index(drop=True)
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    columns: list[list[str]] = []
+    for fold_index, (fit_idx, val_idx) in enumerate(folds):
+        path = cache_dir / f"fold_{fold_index}.json"
+        cached = qsarena_artifacts.read_json(path, default=None) if path.exists() else None
+        if isinstance(cached, dict) and cached.get("signature") == signature and cached.get("method") == method:
+            columns.append([str(c) for c in cached.get("selected", [])])
+            continue
+        started = time.time()
+        fit_idx = np.asarray(fit_idx, dtype=int)
+        val_idx = np.asarray(val_idx, dtype=int)
+        _, _, fold_meta = select_features(
+            X_full.iloc[fit_idx].reset_index(drop=True),
+            X_full.iloc[val_idx].reset_index(drop=True),
+            y_full.iloc[fit_idx].reset_index(drop=True),
+            smiles_full.iloc[fit_idx].reset_index(drop=True),
+            pinned,
+            split_strategy_for_cv=cv_strategy,
+        )
+        selected = [str(c) for c in fold_meta.get("selected_features", [])]
+        used = str(fold_meta.get("selector_method", method))
+        qsarena_artifacts.atomic_write_json(path, {
+            "signature": signature, "method": method, "fold": fold_index, "selected": selected,
+            "selector_method_used": used, "selector_timed_out": bool(fold_meta.get("selector_timed_out", False)),
+            "seconds": round(time.time() - started, 1),
+        })
+        log(f"[nested-selection] fold {fold_index + 1}/{len(folds)}: {len(selected)} features ({used}, "
+            f"{time.time() - started:.0f}s)", flush=True)
+        columns.append(selected)
+    return columns
+
+
+NESTED_CV_METRIC_COLUMNS = ("cv_primary", "cv_roc_auc", "cv_auprc", "cv_balanced_accuracy", "cv_mcc",
+                            "cv_r2", "cv_rmse", "cv_mae")
+
+
+def withdraw_outer_cv_metrics(row: dict[str, Any], signature: str, reason: str) -> None:
+    """A selected-feature member whose CV cannot be redone with nested selection: keep its leaky outer CV value as
+    ``cv_primary_outer`` and blank the CV metrics, so it is never CV-eligible on a leaked score."""
+    if "cv_primary_outer" not in row or pd.isna(row.get("cv_primary_outer")):
+        row["cv_primary_outer"] = row.get("cv_primary", np.nan)
+    for column in NESTED_CV_METRIC_COLUMNS:
+        if column in row:
+            row[column] = np.nan
+    row["cv_selection"] = "outer_withdrawn"
+    row["cv_selection_signature"] = signature
+    row["cv_selection_note"] = reason
+
+
+def nested_cv_metric_columns(
+    y_train: np.ndarray,
+    oof: np.ndarray,
+    folds: list[tuple[np.ndarray, np.ndarray]],
+    primary_metric: str,
+    classification: bool,
+) -> dict[str, float]:
+    """CV metrics from nested out-of-fold predictions, averaged over folds like ``evaluate_model``'s CV."""
+    names = ["roc_auc", "auprc", "balanced_accuracy", "mcc"] if classification else ["r2", "rmse", "mae"]
+    per_fold: dict[str, list[float]] = {name: [] for name in [*names, "primary"]}
+    y = np.asarray(y_train, dtype=float).reshape(-1)
+    pred = np.asarray(oof, dtype=float).reshape(-1)
+    for _, val_idx in folds:
+        val_idx = np.asarray(val_idx, dtype=int)
+        for name in [*names, "primary"]:
+            try:
+                value = compute_primary_metric(primary_metric if name == "primary" else name, y[val_idx], pred[val_idx])
+            except Exception:
+                value = np.nan
+            per_fold[name].append(float(value))
+    out = {f"cv_{name}": float(np.nanmean(values)) if np.isfinite(values).any() else np.nan
+           for name, values in per_fold.items() if name != "primary"}
+    primary_values = per_fold["primary"]
+    out["cv_primary"] = float(np.nanmean(primary_values)) if np.isfinite(primary_values).any() else np.nan
+    return out
+
+
 def load_unimol_saved_oof(
     model_dir: Path,
     *,
     n_train: int,
     reference_train_pred: np.ndarray | None = None,
+    train_targets: np.ndarray | None = None,
 ) -> tuple[np.ndarray | None, str]:
     """Out-of-fold training predictions that unimol_tools already saved, or ``(None, reason)``.
 
@@ -7295,6 +7645,7 @@ def load_unimol_saved_oof(
         model_dir,
         n_train=n_train,
         reference_train_pred=reference_train_pred,
+        train_targets=train_targets,
     )
 
 
@@ -7726,6 +8077,12 @@ def family_arg_signature(args: argparse.Namespace, family: str) -> str:
         "args": {key: getattr(args, key, None) for key in keys},
         "primary_metric_override": getattr(args, "primary_metric_override", None) or None,
     }
+    # Nested selection changes the OOF predictions ensembles are built from. The key enters only when it is not
+    # the old behaviour, so ensembles of runs that keep outer selection resume unchanged.
+    if family == "ensemble" and str(getattr(args, "cv_selection", "outer") or "outer") != "outer":
+        payload["cv_selection"] = str(args.cv_selection)
+    if family == "ensemble" and ensemble_excluded_models(args):
+        payload["ensemble_exclude_model"] = sorted(ensemble_excluded_models(args))
     return hashlib.sha256(json.dumps(payload, sort_keys=True, default=str).encode("utf-8")).hexdigest()[:16]
 
 
@@ -7774,6 +8131,11 @@ def completed_dataset_is_current(dataset_dir: Path, spec: "DatasetSpec", args: a
     return (stored == current), ("config fingerprint matches" if stored == current else "configuration or input changed")
 
 
+def ensemble_excluded_models(args: argparse.Namespace) -> set[str]:
+    """Exact model labels kept out of every ensemble (``--ensemble-exclude-model``)."""
+    return {str(name).strip() for name in (getattr(args, "ensemble_exclude_model", None) or []) if str(name).strip()}
+
+
 def split_stale_metric_rows(
     metrics_rows: list[dict[str, Any]],
     args: argparse.Namespace,
@@ -7806,6 +8168,27 @@ def split_stale_metric_rows(
             for row in metrics_rows
             if _signature_family(row.get("model", "")) in _DERIVED_FAMILIES
         )
+    filters = model_filter_values(args)
+    if filters:
+        # --only-model-names: a stale model the filter excludes will NOT be recomputed in this invocation, so
+        # dropping its row would only delete results (found 2026-10-04: a filtered fold-in run would have dropped
+        # TabPFN and both ensembles on one dataset). Keep such rows; they are revalidated by an unfiltered run.
+        ensemble_requested = any(is_ensemble_result_row(name, "") for name in filters)
+
+        def recomputed(name: str) -> bool:
+            if is_ensemble_result_row(name, ""):
+                return ensemble_requested
+            return model_filter_allows(args, name)
+
+        protected = {name for name in stale if not recomputed(name)}
+        if protected:
+            print(
+                f"[resume] keeping {len(protected)} row(s) whose config signature changed but which "
+                f"--only-model-names excludes (not recomputed here): {', '.join(sorted(protected)[:6])}"
+                f"{' ...' if len(protected) > 6 else ''}",
+                flush=True,
+            )
+            stale -= protected
     kept = [row for row in metrics_rows if str(row.get("model", "")).strip() not in stale]
     return kept, stale, legacy
 
@@ -7981,6 +8364,8 @@ def selected_conventional_model_names(args: argparse.Namespace) -> list[str]:
         names.append(maplight_catboost_model_label(args))
     if bool(getattr(args, "run_tabpfn", False)) and TabPFNRegressor is not None:
         names.append("TabPFNRegressor")
+    if bool(getattr(args, "run_admetboost_xgboost", False)) and XGBRegressor is not None:
+        names.append(ADMETBOOST_XGB_LABEL)
     return [name for name in names if model_filter_allows(args, name)]
 
 
@@ -8192,15 +8577,18 @@ def chemprop_variant_specs(args: argparse.Namespace) -> list[dict[str, Any]]:
         architecture_keys.append("cmpnn")
     if bool(getattr(args, "run_chemprop_attentivefp", True)):
         architecture_keys.append("attentivefp")
-    if not architecture_keys:
-        return []
-    include_selected_feature_variant = bool(getattr(args, "run_chemprop_selected_features", False))
-    return resolve_chemprop_architecture_specs(
-        architecture_keys,
-        ensemble_size=int(args.chemprop_ensemble_size),
-        include_rdkit2d_extra=bool(getattr(args, "run_chemprop_rdkit2d", False)),
-        include_selected_feature_variant=include_selected_feature_variant,
-    )
+    specs: list[dict[str, Any]] = []
+    if architecture_keys:
+        include_selected_feature_variant = bool(getattr(args, "run_chemprop_selected_features", False))
+        specs = resolve_chemprop_architecture_specs(
+            architecture_keys,
+            ensemble_size=int(args.chemprop_ensemble_size),
+            include_rdkit2d_extra=bool(getattr(args, "run_chemprop_rdkit2d", False)),
+            include_selected_feature_variant=include_selected_feature_variant,
+        )
+    if bool(getattr(args, "run_chemprop_chemeleon", False)):
+        specs.append(chemeleon_variant_spec(ensemble_size=int(args.chemprop_ensemble_size)))
+    return specs
 
 
 def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, dataset_position: int | None = None, dataset_total: int | None = None) -> DatasetRunResult:
@@ -8676,6 +9064,8 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
     maplight_seed_values = maplight_parity_seed_values(args)
     maplight_direct_X_train = pd.DataFrame()
     maplight_direct_X_test = pd.DataFrame()
+    admetboost_X_train: pd.DataFrame | None = None
+    admetboost_X_test: pd.DataFrame | None = None
     shared_feature_cache_enabled = bool(getattr(args, "enable_shared_feature_matrix_cache", True))
     shared_feature_cache_reuse = bool(getattr(args, "reuse_shared_feature_matrix_cache", True))
     shared_feature_cache_path = resolve_shared_feature_matrix_cache_path(
@@ -8819,14 +9209,18 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
                 flush=True,
             )
         cv_strategy_for_workflows = effective_cv_split_strategy(split["split_strategy_used"])
-        X_train, X_test, selector_meta = select_features(
-            split["X_train"],
-            split["X_test"],
-            split["y_train"],
-            split["smiles_train"],
-            selector_args,
-            split_strategy_for_cv=cv_strategy_for_workflows,
-        )
+        deposited = deposited_selection_path(selector_args, spec.name)
+        if deposited is not None:
+            X_train, X_test, selector_meta = load_deposited_selection(split["X_train"], split["X_test"], deposited)
+        else:
+            X_train, X_test, selector_meta = select_features(
+                split["X_train"],
+                split["X_test"],
+                split["y_train"],
+                split["smiles_train"],
+                selector_args,
+                split_strategy_for_cv=cv_strategy_for_workflows,
+            )
         write_selector_outputs(dataset_dir, selector_meta)
         write_feature_dedup_outputs(dataset_dir, feature_dedup_meta)
         maplight_feature_cols = [
@@ -9110,6 +9504,24 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
                     continue
                 model_X_train = split["X_train"].loc[:, maplight_feature_cols].reset_index(drop=True)
                 model_X_test = split["X_test"].loc[:, maplight_feature_cols].reset_index(drop=True)
+        elif model_name == ADMETBOOST_XGB_LABEL:
+            try:
+                if admetboost_X_train is None:
+                    admetboost_X_train, admetboost_X_test = build_admetboost_feature_frames(
+                        split["smiles_train"], split["smiles_test"]
+                    )
+            except Exception as exc:
+                error_text = f"ADMETboost features unavailable: {exc}"
+                print(f"[warn] {dataset_id} {model_name}: {error_text}", flush=True)
+                # No "skipped" status: a later resume retries once the dependencies are installed.
+                row = add_cost_columns({**base_meta, "model": model_name, "workflow": "conventional", "error": error_text})
+                metrics_rows.append(row)
+                completed_model_names.add(str(model_name))
+                persist_partial(f"conventional:{model_name}")
+                stage_index += 1
+                continue
+            model_X_train = admetboost_X_train
+            model_X_test = admetboost_X_test
         else:
             model_X_train = X_train
             model_X_test = X_test
@@ -9974,6 +10386,194 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
             persist_partial("cfa")
             stage_index += 1
 
+    def run_nested_selection(rows, persist_oof, folds, fold_signature, oof_metric, chemml_args, scope) -> list[str]:
+        """--cv-selection nested: replace the OOF predictions and CV metrics of every member trained on the
+        stage-3 selected matrix with ones from per-fold selections (docs/NESTED_SELECTION_CV_PLAN.md).
+
+        Runs before the regular OOF pass. The members it handles end up with OOF vectors carrying the regular
+        fold signature, so that pass reuses them; each one's metrics row is marked ``cv_selection=nested`` (with
+        the outer CV value kept as ``cv_primary_outer``), which is also how a resume knows it is done.
+        """
+        signature = f"{stage23_signature_value}|{fold_signature}"
+        y_tr = split["y_train"].reset_index(drop=True)
+        classification = current_dataset_task_type() == "classification"
+        tabpfn_via_api = str(TABPFN_REGRESSOR_SOURCE).strip().lower() == "tabpfn_client"
+        allow_api_refits = bool(getattr(args, "ensemble_oof_allow_api_refits", False))
+
+        def latest_row(name: str) -> dict[str, Any] | None:
+            for row in reversed(metrics_rows):
+                if str(row.get("model", "")) == name and not _row_has_error_text(row):
+                    return row
+            return None
+
+        # Members trained on the selected matrix. MapLight CatBoost, MapLight + GNN, Uni-Mol, XGBoost (ADMETboost
+        # features) and the other Chemprop variants never see it.
+        candidates: dict[str, str] = {}
+        withdrawn: dict[str, str] = {}
+        tabpfn_cells = int(len(y_tr)) * int(pd.DataFrame(X_train).shape[1])
+        tabpfn_cell_limit = int(getattr(args, "tabpfn_local_max_cells", 1_500_000) or 0)
+        for name in model_bundle:
+            name = str(name)
+            if name.startswith("_") or name in {maplight_catboost_label, ADMETBOOST_XGB_LABEL}:
+                continue
+            if name in {"TabPFNRegressor", "TabPFNClassifier"}:
+                if tabpfn_via_api and not allow_api_refits:
+                    withdrawn[name] = "TabPFN via the metered API: no nested fold refits"
+                    continue
+                if not tabpfn_via_api and tabpfn_cell_limit > 0 and tabpfn_cells > tabpfn_cell_limit:
+                    withdrawn[name] = (
+                        f"local TabPFN fold refits skipped: {tabpfn_cells:,} training cells exceed "
+                        f"--tabpfn-local-max-cells {tabpfn_cell_limit:,}"
+                    )
+                    continue
+            candidates[name] = "estimator"
+        for chemml_label in ("ChemML MLP (PyTorch)", "ChemML MLP (TensorFlow)"):
+            candidates[chemml_label] = "chemml"
+        if scope == "all":
+            for variant in chemprop_variant_specs(args):
+                if bool(variant.get("use_selected_descriptors", False)):
+                    candidates[str(variant.get("label", ""))] = "chemprop"
+        todo = {}
+        metrics_only = {}  # a metrics row but no saved predictions (so not an ensemble member): nested CV only
+        for name, kind in candidates.items():
+            payload = prediction_payloads.get(name)
+            row = latest_row(name)
+            if row is None:
+                continue
+            if not payload:
+                if kind != "chemprop" and not (
+                    str(row.get("cv_selection", "")) == "nested"
+                    and str(row.get("cv_selection_signature", "")) == signature
+                ):
+                    metrics_only[name] = kind
+                continue
+            done = (
+                str(row.get("cv_selection", "")) == "nested"
+                and str(row.get("cv_selection_signature", "")) == signature
+                and payload.get("oof") is not None
+                and str(payload.get("oof_signature", "")) == fold_signature
+            )
+            if not done:
+                payload.pop("oof", None)
+                payload.pop("oof_signature", None)
+                todo[name] = kind
+        withdrawn_notes = []
+        for name, reason in withdrawn.items():
+            row = latest_row(name)
+            if row is None:
+                continue
+            withdrawn_notes.append(f"{name}: CV withdrawn ({reason})")
+            if str(row.get("cv_selection", "")) == "outer_withdrawn" and str(row.get("cv_selection_signature", "")) == signature:
+                continue
+            withdraw_outer_cv_metrics(row, signature, reason)
+            persist_partial(f"nested-cv-withdrawn:{name}", event_model_name=name)
+        if not todo and not metrics_only:
+            return [f"Nested feature selection: every selected-feature member with a metrics row is already nested "
+                    f"({len(candidates)} candidate(s))", *withdrawn_notes]
+
+        fold_columns = nested_selection_columns(
+            split=split, selector_meta=selector_meta, args=args, folds=folds,
+            cv_strategy=effective_split_strategy_for_dataset(
+                str(cv_strategy_for_workflows or args.split_strategy), allow_predefined=False
+            ),
+            cache_dir=dataset_dir / "nested_selection", signature=signature,
+        )
+        fold_of = {np.asarray(val, dtype=int).tobytes(): k for k, (_fit, val) in enumerate(folds)}
+        full_X = pd.DataFrame(split["X_train"]).reset_index(drop=True)
+        smi_tr = split["smiles_train"].reset_index(drop=True)
+
+        def fold_frame(fit_idx, val_idx):
+            cols = fold_columns[fold_of[np.asarray(val_idx, dtype=int).tobytes()]]
+            return rows(full_X[cols], fit_idx), rows(full_X[cols], val_idx)
+
+        nested_refitters: dict[str, Callable[[np.ndarray, np.ndarray, Path], np.ndarray]] = {}
+        for name, kind in {**todo, **metrics_only}.items():
+            if kind == "estimator":
+                def refit(fit_idx, val_idx, fold_dir, _est=model_bundle[name]):
+                    X_fit, X_val = fold_frame(fit_idx, val_idx)
+                    fitted = clone(_est)
+                    fitted.fit(X_fit, rows(y_tr, fit_idx))
+                    return predict_values_for_metric(fitted, X_val, oof_metric)
+            elif kind == "chemml":
+                def refit(fit_idx, val_idx, fold_dir, _label=name):
+                    X_fit, X_val = fold_frame(fit_idx, val_idx)
+                    engine = "pytorch" if "PyTorch" in _label else "tensorflow"
+                    _row, _pred_fit, pred_val = train_chemml_model(
+                        label=_label, engine_name=engine, X_train=X_fit, X_test=X_val,
+                        y_train=rows(y_tr, fit_idx), y_test=rows(y_tr, val_idx),
+                        smiles_train=rows(smi_tr, fit_idx), args=chemml_args,
+                        split_strategy_for_cv=cv_strategy_for_workflows,
+                    )
+                    return pred_val
+            else:  # Chemprop "D-MPNN + Selected descriptors": each fold gets its own descriptor selection
+                variant = next(v for v in chemprop_variant_specs(args) if str(v.get("label", "")) == name)
+
+                def refit(fit_idx, val_idx, fold_dir, _variant=variant, _label=name):
+                    X_fit, X_val = fold_frame(fit_idx, val_idx)
+                    _row, _pred_fit, pred_val = train_chemprop_model(
+                        label=_label, X_train=X_fit, X_test=X_val,
+                        y_train=rows(y_tr, fit_idx), y_test=rows(y_tr, val_idx),
+                        smiles_train=rows(smi_tr, fit_idx), smiles_test=rows(smi_tr, val_idx),
+                        args=args, dataset_dir=Path(fold_dir), split_strategy_for_cv=cv_strategy_for_workflows,
+                        featurizers=[], variant_tag=str(_variant.get("variant_tag", "base")),
+                        architecture_key=str(_variant.get("architecture_key", "dmpnn")),
+                        workflow_label=str(_variant.get("workflow", "Chemprop v2")),
+                        extra_train_args=[str(i).strip() for i in _variant.get("train_args", []) if str(i).strip()],
+                        use_selected_descriptors=True,
+                    )
+                    return pred_val
+            nested_refitters[name] = refit
+
+        primary_metric = str(current_dataset_primary_metric("rmse"))
+
+        def nested_done(model_name: str, oof_full: np.ndarray) -> None:
+            persist_oof(model_name, oof_full)
+            row = latest_row(model_name)
+            if row is None:
+                return
+            if "cv_primary_outer" not in row or pd.isna(row.get("cv_primary_outer")):
+                row["cv_primary_outer"] = row.get("cv_primary", np.nan)
+            if todo.get(model_name) != "chemprop":  # Chemprop rows carry no CV metrics
+                row.update(nested_cv_metric_columns(y_tr.to_numpy(), oof_full, folds, primary_metric, classification))
+            row["cv_selection"] = "nested"
+            row["cv_selection_signature"] = signature
+            persist_partial(f"nested-cv:{model_name}", event_model_name=model_name)
+
+        for name in metrics_only:
+            oof_only = np.full(len(y_tr), np.nan, dtype=float)
+            for k, (fit_idx, val_idx) in enumerate(folds):
+                fold_dir = dataset_dir / "nested_selection" / "metrics_only" / re.sub(r"[^A-Za-z0-9]+", "_", name) / f"fold_{k}"
+                oof_only[np.asarray(val_idx, dtype=int)] = np.asarray(
+                    nested_refitters[name](fit_idx, val_idx, fold_dir), dtype=float
+                ).reshape(-1)
+            row = latest_row(name)
+            if "cv_primary_outer" not in row or pd.isna(row.get("cv_primary_outer")):
+                row["cv_primary_outer"] = row.get("cv_primary", np.nan)
+            row.update(nested_cv_metric_columns(y_tr.to_numpy(), oof_only, folds, primary_metric, classification))
+            row["cv_selection"] = "nested"
+            row["cv_selection_signature"] = signature
+            row["cv_selection_note"] = "nested CV only: no saved predictions, so not an ensemble member"
+            persist_partial(f"nested-cv-metrics-only:{name}", event_model_name=name)
+        metrics_only_notes = (
+            [f"Nested feature selection: CV metrics only for {len(metrics_only)} model(s) without saved predictions"]
+            if metrics_only else []
+        )
+        if not todo:
+            return metrics_only_notes + withdrawn_notes
+
+        notes = ensure_ensemble_oof_predictions(
+            payloads={name: prediction_payloads[name] for name in todo},
+            refitters=nested_refitters,
+            folds=folds,
+            fold_signature=fold_signature,
+            cache_root=dataset_dir / "nested_selection" / "oof_folds",
+            n_train=len(y_tr),
+            dataset_id=dataset_id,
+            on_model_done=nested_done,
+        )
+        return [f"Nested feature selection: refitted {len(todo)} member(s) on per-fold selections", *metrics_only_notes,
+                *withdrawn_notes] + notes
+
     def run_ensemble_oof_stage() -> list[str]:
         """Give every candidate ensemble member out-of-fold training predictions (see
         ensure_ensemble_oof_predictions). Each refitter repeats that model's own training call on a
@@ -9981,6 +10581,8 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
         reported model."""
         nonlocal maplight_direct_X_train
         nonlocal maplight_direct_X_test
+        nonlocal admetboost_X_train
+        nonlocal admetboost_X_test
         X_tr = X_train.reset_index(drop=True)
         y_tr = split["y_train"].reset_index(drop=True)
         smi_tr = split["smiles_train"].reset_index(drop=True)
@@ -10012,6 +10614,8 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
             if bundle_name.startswith("_"):
                 continue
             if bundle_name in {"TabPFNRegressor", "TabPFNClassifier"} and tabpfn_via_api and not allow_api_refits:
+                continue
+            if bundle_name in ensemble_excluded_models(args):
                 continue
             if bundle_name == maplight_catboost_label and maplight_parity_mode:
                 if maplight_direct_X_train.empty:
@@ -10048,7 +10652,16 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
 
                 refitters[bundle_name] = refit_parity
                 continue
-            if bundle_name == maplight_catboost_label:
+            if bundle_name == ADMETBOOST_XGB_LABEL:
+                if admetboost_X_train is None:
+                    try:
+                        admetboost_X_train, admetboost_X_test = build_admetboost_feature_frames(
+                            split["smiles_train"], split["smiles_test"]
+                        )
+                    except Exception:
+                        continue
+                base_X = admetboost_X_train.reset_index(drop=True)
+            elif bundle_name == maplight_catboost_label:
                 if not maplight_feature_cols:
                     continue
                 base_X = split["X_train"].loc[:, maplight_feature_cols].reset_index(drop=True)
@@ -10105,7 +10718,14 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
                 reference = prediction_payloads.get(_label, {}).get("train")
                 reasons = []
                 for candidate in _candidates:
-                    oof, reason = load_unimol_saved_oof(candidate, n_train=len(y_tr), reference_train_pred=reference)
+                    # Regression cv.data is on Uni-Mol's normalised scale; the targets let the scaler be
+                    # rebuilt when target_scaler.ss is absent (it is gitignored, so absent after a transfer).
+                    oof, reason = load_unimol_saved_oof(
+                        candidate,
+                        n_train=len(y_tr),
+                        reference_train_pred=reference,
+                        train_targets=None if current_dataset_task_type() == "classification" else y_tr,
+                    )
                     if oof is not None:
                         return oof, reason
                     reasons.append(reason)
@@ -10250,7 +10870,12 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
             prediction_tables.append(frame)
             persist_partial(f"ensemble-oof:{model_name}", event_model_name=model_name)
 
-        notes = ensure_ensemble_oof_predictions(
+        nested_notes: list[str] = []
+        selector_method_used = str(selector_meta.get("selector_method", "") or "")
+        if str(getattr(args, "cv_selection", "outer")) == "nested" and selector_method_used not in {"", "none"}:
+            nested_notes = run_nested_selection(rows, persist_oof, folds, fold_signature, oof_metric, chemml_args, scope)
+
+        notes = nested_notes + ensure_ensemble_oof_predictions(
             payloads=prediction_payloads,
             refitters=refitters,
             folds=folds,
@@ -10329,7 +10954,11 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
                             member_filter_notes,
                             _meta_model,
                         ) = build_ensemble_result(
-                            payloads=prediction_payloads,
+                            payloads={
+                                name: payload
+                                for name, payload in prediction_payloads.items()
+                                if name not in ensemble_excluded_models(args)
+                            },
                             method=str(method_name),
                             stacking_cv_folds=int(args.ensemble_stacking_cv_folds),
                             random_seed=int(args.random_seed),
@@ -10349,7 +10978,14 @@ def run_dataset(spec: DatasetSpec, output_dir: Path, args: argparse.Namespace, d
                         final_ensemble_row["ensemble_member_count"] = int(len(ensemble_members))
                         final_ensemble_row["ensemble_members"] = ", ".join(ensemble_members)
                         final_ensemble_row["ensemble_member_filter_notes"] = " | ".join(
-                            [*member_filter_notes, *ensemble_oof_notes]
+                            [
+                                *member_filter_notes,
+                                *ensemble_oof_notes,
+                                *(
+                                    f"{name}: excluded by --ensemble-exclude-model"
+                                    for name in sorted(ensemble_excluded_models(args) & set(prediction_payloads))
+                                ),
+                            ]
                         )
                         metrics_rows.append(
                             add_cost_columns({**base_meta, **final_ensemble_row})
@@ -11611,6 +12247,24 @@ def build_arg_parser() -> argparse.ArgumentParser:
         help="Maximum wall-clock time for ElasticNetCV feature selection. If exceeded, fallback to RF importance.",
     )
     parser.add_argument(
+        "--deterministic-selection",
+        action=argparse.BooleanOptionalAction,
+        default=False,
+        help=(
+            "Make feature selection independent of machine speed: no ElasticNetCV wall-clock limit (so no "
+            "timeout-triggered random-forest fallback) and a single-threaded selector. The dataset-size pre-check "
+            "still applies if enabled."
+        ),
+    )
+    parser.add_argument(
+        "--selected-features-from",
+        default=None,
+        help=(
+            "Run directory whose <dataset>/selected_features.csv is used instead of refitting the selector, e.g. "
+            "the deposited benchmark run. Fails if a dataset has no deposited selection."
+        ),
+    )
+    parser.add_argument(
         "--selector-rf-fallback-n-estimators",
         type=int,
         default=400,
@@ -11869,6 +12523,25 @@ def build_arg_parser() -> argparse.ArgumentParser:
         help="Echo full Chemprop CLI commands to the console (verbose mode).",
     )
     parser.add_argument("--run-chemprop-rdkit2d", action=argparse.BooleanOptionalAction, default=False)
+    parser.add_argument(
+        "--cv-selection",
+        choices=["outer", "nested"],
+        default="outer",
+        help="nested: refit feature selection inside every CV fold (CV metrics and ensemble OOF predictions are then "
+        "not optimistic). Profile default: nested (quick: outer).",
+    )
+    parser.add_argument(
+        "--run-chemprop-chemeleon",
+        action=argparse.BooleanOptionalAction,
+        default=False,
+        help="Opt-in Chemprop v2 variant fine-tuned from the CheMeleon foundation model (chemprop train --from-foundation CHEMELEON).",
+    )
+    parser.add_argument(
+        "--run-admetboost-xgboost",
+        action=argparse.BooleanOptionalAction,
+        default=False,
+        help="Opt-in fixed XGBoost on the full, unselected ADMETboost feature set (needs qsarena[features] and the Mol2Vec model).",
+    )
     parser.add_argument("--maplight-gnn-kind", default="gin_supervised_masking")
     parser.add_argument("--run-ensemble", action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument(
@@ -11942,6 +12615,27 @@ def build_arg_parser() -> argparse.ArgumentParser:
             "Allow out-of-fold refits of members that call a metered remote API (TabPFN via the "
             "Prior Labs client): K extra fits per dataset, billed as credits. Off by default; the "
             "member is then left out of the ensemble unless it already has OOF predictions."
+        ),
+    )
+    parser.add_argument(
+        "--tabpfn-local-max-cells",
+        type=int,
+        default=1_500_000,
+        help=(
+            "With --cv-selection nested and the local tabpfn backend: skip TabPFN's nested fold refits when "
+            "training rows x selected features exceeds this (0 = no limit). Its CV metrics are then withdrawn "
+            "(kept as cv_primary_outer) rather than left leaky. ~10M cells did not fit an 8 GB GPU."
+        ),
+    )
+    parser.add_argument(
+        "--ensemble-exclude-model",
+        action="append",
+        default=[],
+        metavar="MODEL",
+        help=(
+            "Exact model label to keep out of every ensemble (repeatable; labels can contain commas). The model "
+            "is still trained and, with --cv-selection nested, still gets nested CV metrics. Used to keep "
+            "TabPFN out when its full-fit predictions came from a different backend than its fold refits."
         ),
     )
     parser.add_argument(
@@ -12056,6 +12750,11 @@ def _cli_option_provided(argv_tokens: list[str], option_name: str) -> bool:
 QUICK_PROFILE_DISABLED_FAMILIES = ["gradient_boosting", "deep_tabular", "graph_nn", "pretrained_3d", "maplight_gnn"]
 
 
+#: Profile defaults whose CLI flag is not the dest name. Without this, an explicit
+#: `--disable-model-families` was silently overwritten by the profile (found 2026-10-03).
+_PROFILE_FLAG_ALIASES = {"disabled_model_families": "disable_model_families"}
+
+
 def apply_benchmark_profile_defaults(args: argparse.Namespace, argv_tokens: list[str]) -> None:
     profile = str(getattr(args, "benchmark_profile", "cost_optimized")).strip().lower()
     if profile not in {"cost_optimized", "full", "quick"}:
@@ -12072,6 +12771,7 @@ def apply_benchmark_profile_defaults(args: argparse.Namespace, argv_tokens: list
             "chemprop_epochs": 40,
             "chemprop_ensemble_size": 3,
             "selector_auto_rf_by_dataset_size": False,
+            "cv_selection": "nested",
         }
     elif profile == "quick":
         profile_defaults = {
@@ -12084,6 +12784,7 @@ def apply_benchmark_profile_defaults(args: argparse.Namespace, argv_tokens: list
             "selector_auto_rf_by_dataset_size": True,
             "run_tdc22_multiseed_best": False,
             "disabled_model_families": list(QUICK_PROFILE_DISABLED_FAMILIES),
+            "cv_selection": "outer",
         }
     else:
         profile_defaults = {
@@ -12093,10 +12794,12 @@ def apply_benchmark_profile_defaults(args: argparse.Namespace, argv_tokens: list
             "run_chemprop_cmpnn": False,
             "run_chemprop_rdkit2d": False,
             "selector_auto_rf_by_dataset_size": True,
+            "cv_selection": "nested",
         }
 
     for arg_name, value in profile_defaults.items():
-        if not _cli_option_provided(argv_tokens, arg_name):
+        flag_name = _PROFILE_FLAG_ALIASES.get(arg_name, arg_name)
+        if not (_cli_option_provided(argv_tokens, arg_name) or _cli_option_provided(argv_tokens, flag_name)):
             setattr(args, arg_name, value)
 
 

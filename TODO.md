@@ -12,18 +12,18 @@ Last updated: 2026-09-25.
 
 - [x] Runner: `--ensemble-member-selection-split oof` (default) builds ensembles from out-of-fold
       member predictions; `train` mode rewarded memorisation (chemprop_fixed ensembles invalid).
-- [ ] **Run the OOF ensemble repair on the A100** → `benchmark_results/qsarena_benchmark_oof_ensemble`
+- [x] **Run the OOF ensemble repair on the A100** (DONE 2026-10-01/02 on the RTX 4060 instead, with Chemprop OOF (`--ensemble-oof-scope all`) and both 2026-09-29 ensemble fixes) → `benchmark_results/qsarena_benchmark_oof_ensemble`
       ([submission/chemprop_rerun_command.md](submission/chemprop_rerun_command.md) §7). No full model
       is retrained: Uni-Mol reads its saved `cv.data` OOF predictions, and CPU members refit on 5 folds
       (~10 h in total). **Decide on Chemprop**: `--ensemble-oof-scope all` refits it per fold (~65 h,
       or ~40 h with `--ensemble-oof-folds 3`); `cpu` leaves it out of the ensembles, and the paper
       must say so. TabPFN (metered API, credits capped until 2026-10-01) is left out of the
       ensembles unless `--ensemble-oof-allow-api-refits` is passed or local `tabpfn` is installed.
-- [ ] Then regenerate every asset from that run, move `verify_manuscript_numbers.py` to it, and
+- [x] Then regenerate every asset from that run (DONE 2026-10-02; verifier 96/96), move `verify_manuscript_numbers.py` to it, and
       update the prose (both formats), abstract, graphical abstract and AGENTS.md framing. Take
       selector scaling and dataset wall-clock from the canonical run, not the repair runs.
-- [ ] Disclose the ensemble history in the paper: held-out selection (canonical), then in-sample
-      selection (rejected, memorisation), then OOF. Report how much the leak was worth.
+- [x] Disclose the ensemble history in the paper (done 2026-10-03: Methods §2.13 "Benchmark runs and ensemble
+      reconstruction"; the leak was worth at least three ensemble wins, 16 -> 13, despite a larger honest pool).
 - [x] **Colab notebook ensemble leak fixed** (block 7A in `build_colab_qsar_tutorial.py`). Members were
       "best per workflow by test RMSE"; the filters, CFA best-per-workflow and the downstream strategy
       used test metrics; weights and stacking used in-sample predictions. Everything now runs on OOF
@@ -49,10 +49,10 @@ Source: `Peer_Review_Report_QSARena_No_Single_Model_Family_Dominates.docx`; item
       conclusions, graphical abstract, Limitations and cover letter.
 - [x] 45/43/44 dataset reconciliation; data-availability wording with per-dataset identifiers;
       duplicated-sentence artifact; style pass.
-- [ ] **Decide the article type**: Research (benchmarking) article, recommended by the reviewer, or
-      Software article, which then needs a real head-to-head vs QSPRpred/DeepChem/ADMET-AI on the
-      TDC-22 splits. Switching changes the section structure. The cover letter has an [AUTHOR] flag.
-- [ ] **Confirm the generative-AI statement** (tools and scope) in `declarations.tex` / `manuscript.md`.
+- [x] **Article type: Research article** (decided by the author 2026-10-02). Structure converted: Introduction /
+      Methods / Results and discussion / Conclusions; the software fields moved into Availability of data and
+      materials; LLM use documented in Methods §2.14 as the journal requires. The cover letter still needs updating.
+- [x] **Confirm the generative-AI statement** (rewritten 2026-10-02 per the J. Cheminform./Springer Nature policy and moved to Methods §2.14; one [AUTHOR] flag remains: add any assistants other than Claude) (tools and scope) in `declarations.tex` / `manuscript.md`.
 - [ ] Zenodo deposit must include the per-molecule `predictions.csv` files (reviewer 5.3).
 - [ ] Rebuild `submission/cover_letter.pdf` from the updated `cover_letter.md` (it is stale).
 
@@ -102,23 +102,45 @@ Source: `Peer_Review_Report_QSARena_No_Single_Model_Family_Dominates.docx`; item
       TDC-22 subset, rather than only estimated ranks. The positioning review asks for this to
       substantiate "match pretrained models" in the title. It needs competitor per-dataset values,
       which are available for MapLight and MaxQsaring but not for DeepAutoQSAR.
-- [ ] **Reconsider the title.** It leads with "Ensembles and Conventional Machine Learning Match
-      Pretrained Molecular Models", which is a performance framing; the paper's defensible core is
-      now the framework plus the selection-effect finding. A title foregrounding the benchmark or the
-      honest-selection result may survive review better.
+- [x] **Final title (revision R2, `docs/remaining_work.md`, 2026-10-06): "Ensembles Across Model Families Outperform Any
+      Single Family: A Single-Configuration, Leakage-Controlled Benchmark of 31 Molecular Property Models Across 44
+      Datasets".** Applied everywhere the earlier title was (below); the commented alternatives were removed.
+- [x] **Title chosen by the author (2026-10-06, superseded by R2): option 2, "Ensembles Across Model Families Outperform Any Single
+      Architecture: A Single-Configuration, Leakage-Controlled Benchmark of 31 Molecular Property Models Across 44 Datasets".**
+      Applied to manuscript.md, manuscript.tex (short title "Ensembles Across Model Families"), proof.tex, Additional files 1
+      and 2, the cover letter and CITATION.cff. Options considered (2026-10-06): The
+      journal asks for a title that names the research design where appropriate. The current title says ensembles and
+      conventional ML "perform comparably" to pretrained models; now ensembles win 22 of 44 datasets and are the most
+      consistent, while no single family wins more than 6 (conventional ML 6, Chemprop 5, Uni-Mol 5).
+      1. (recommended) No Single Model Family Dominates, but Ensembles Across Families Win Half: A Leakage-Controlled
+         Benchmark of 31 Molecular Property Models on 44 Datasets
+         - Leads with the two strongest results (max 6/44 for any family; ensembles 22/44, most consistent).
+      2. Ensembles Across Model Families Outperform Any Single Architecture: A Single-Configuration, Leakage-Controlled
+         Benchmark of 31 Molecular Property Models Across 44 Datasets
+         - Most direct; "outperform" rests on win counts and consistency, not on significance tests (single seed).
+      3. Feature-Selection Leakage Distorts Both Model Choice and Ensembles: A Nested Cross-Validation Benchmark of 31
+         Molecular Property Models Across 44 Datasets
+         - Leads with the methodological finding (CV optimism 15.9% -> 3.4%; ensemble wins 12 -> 22 once honest).
+      4. How Much of a Leaderboard Rank Is Model Selection? Test- Versus Cross-Validation-Selected Performance of 31
+         Models Across 44 Molecular Property Benchmarks
+         - Leads with the decomposition (7 placements from library breadth, 1 from held-out selection).
+      5. QSARena: An Open, Leakage-Controlled Benchmark of 31 Molecular Property Models Across Five Suites Under One Fixed
+         Configuration
+         - Software-forward; safest, least informative.
+      If it changes: update `manuscript.md` line 1, `submission/manuscript.tex` (`\title[...]` short title too) and the cover
+      letter.
 
 ## Chemprop backend failure — root-caused 2026-09-25
 
-- [ ] **Fix the Chemprop harness encoding bug (highest open engineering item).** The A100 run's 86%
+- [x] **Fix the Chemprop harness encoding bug (DONE: `_SUBPROCESS_TEXT_KWARGS`; Chemprop valid on 38-42/44 per variant in the chemprop_fixed run) (highest open engineering item).** The A100 run's 86%
       Chemprop failure rate is **not** a model failure: `subprocess.run(..., text=True)` without an
       explicit encoding decoded Chemprop's UTF-8 output as ASCII under the instance's C/POSIX locale,
       raising `UnicodeDecodeError` before any result was read. Windows (cp1252) cannot hit this, which
       is why the RTX run failed differently (genuine `exit=1` training failures, ~50%). Full analysis
       and agent scope in **[CHEMPROP_FIX_PLAN.md](CHEMPROP_FIX_PLAN.md)**.
-- [ ] **Then re-establish ADMET-AI parity.** The `Chemprop v2 (D-MPNN + RDKit2D)` variant is our
-      ADMET-AI-equivalent architecture; restoring it across all 44 datasets is the cleanest way to earn
-      the title's "match pretrained molecular models" claim, which is currently scoped to Uni-Mol only.
-- [ ] **Diagnose the Windows Chemprop failures separately** (136 `exit=1`, plus prediction-length
+- [ ] **ADMET-AI parity (partly addressed).** The ADMET-AI-like `Chemprop v2 (D-MPNN + RDKit2D)` variant now runs
+      on 38/44 datasets, but there is still no head-to-head reproduction of ADMET-AI; §3.12 says parity is untested.
+- [x] **Diagnose the Windows Chemprop failures separately** (DONE 2026-09-28: num-workers 0, the CLI launcher with warn-only determinism, and `cmd /c` redirection; see AGENTS.md) (136 `exit=1`, plus prediction-length
       mismatches that look like a row-alignment bug independent of platform).
 
 ## Blocking submission to *Journal of Cheminformatics*
@@ -129,9 +151,9 @@ Source: `Peer_Review_Report_QSARena_No_Single_Model_Family_Dominates.docx`; item
       referenced from the README, not a bare GitHub link, and the paper's *Availability of data and
       materials* section currently carries a placeholder. Needs a Zenodo login, so it cannot be
       automated.
-- [ ] **Add your ORCID** to `submission/manuscript.tex`, `CITATION.cff` and the submission system.
+- [x] **Add your ORCID** (DONE 2026-10-02: 0000-0002-7035-1282 in manuscript.tex, proof.tex, manuscript.md, CITATION.cff and .zenodo.json; still enter it in the submission system) to `submission/manuscript.tex`, `CITATION.cff` and the submission system.
 - [ ] **Confirm the OEHHA disclaimer wording** in the Acknowledgements.
-- [ ] **Verify four references** flagged `[VERIFY]` in `submission/references.bib`: the ADDME 2009
+- [x] **Verify four references** (DONE 2026-10-02 against Crossref: all four match; added the ADDME group author, the Alzheimer's Drug Discovery Foundation) flagged `[VERIFY]` in `submission/references.bib`: the ADDME 2009
       byline, the MolE article number, the ChemXploreML venue, and the CFA chapter pagination.
 - [ ] **Suggest 3–5 reviewers** (the journal invites them); see the note in `submission/cover_letter.md`.
 - [ ] **Decide on the arXiv preprint.** Permitted — Springer Nature does not treat preprints as prior
@@ -171,27 +193,70 @@ Source: `Peer_Review_Report_QSARena_No_Single_Model_Family_Dominates.docx`; item
       (`--tdc22-multiseed`) that reads selected models from an existing source run and writes
       `results/tdc22_multiseed.csv`. Re-running the TDC-22 subset would let us report mean ± SD and
       drop most of the hedging in §4.
-- [ ] **Fix the Chemprop backend.** Four of five configured variants failed, leaving Chemprop valid
+- [x] **Fix the Chemprop backend.** (DONE: valid on 38-42/44 per variant) Four of five configured variants failed, leaving Chemprop valid
       on only 6 of 44 datasets. This is the largest known threat to the completeness of Figure 2.
-- [ ] **Restore TabPFN** (disabled in the canonical run) and **diagnose Uni-Mol V2 164M/310M**, which
+- [x] **Restore TabPFN** (TabPFN restored on 31/44 (API daily limit hit the rest); Uni-Mol V2 164M/310M not re-diagnosed) (disabled in the canonical run) and **diagnose Uni-Mol V2 164M/310M**, which
       produced no valid results.
-- [ ] **Emit cross-validated metrics from the deep backends.** Chemprop, Uni-Mol, MapLight + GNN and
-      the fusion methods currently do not, which makes the cross-validation-selected protocol in §3.4
-      a conservative lower bound rather than a like-for-like comparison.
-- [ ] **Blind the ensemble member filter.** `exclude_negative_test_r2_members` and the
+- [ ] **Emit cross-validated metrics from the deep backends.** TabPFN now does. Chemprop, Uni-Mol, MapLight + GNN
+      and the fusion methods still do not, so the cross-validation-selected protocol in §3.4 remains a conservative
+      lower bound rather than a like-for-like comparison.
+- [x] **Blind the ensemble member filter.** (DONE: under the default `--ensemble-member-selection-split oof`, member filters and tie-breaks read out-of-fold predictions only) `exclude_negative_test_r2_members` and the
       correlated-member tie-break consult held-out data; disclosed in §4, but it should be changed.
+
+## Feature-expansion arm (in progress, see docs/FEATURE_EXPANSION_PLAN.md)
+
+- [x] Finish GPU XGBoost on `admetboost+chemeleon` and `chemeleon`; evaluate. (null / worse; see the plan)
+- [x] Finish `unimol_repr` featurization; train `admetboost+emb` and `emb`; evaluate. (null / worse; see the plan)
+- [x] **Recommendations implemented (2026-10-03):** opt-in `--run-admetboost-xgboost` and `--run-chemprop-chemeleon`;
+      §3.12 post-hoc paragraph. See "Implementation of the recommendations" in `docs/FEATURE_EXPANSION_PLAN.md`.
+- [x] **Full CheMeleon run: DECLINED by the author (2026-10-03).** The opt-in variant stays in the code; the
+      single-dataset pilot (Caco-2 MAE 0.382 vs 0.380 for D-MPNN, ~7x slower) is the only CheMeleon fine-tuning result.
+- [x] **Fold `XGBoost (ADMETboost features)` into the benchmark** (approved 2026-10-03; done 2026-10-04/05). Base
+      model on 44/44 datasets with nothing else retrained; ensembles and CFA rebuilt once (outer selection); paper
+      updated (31 models, Table 1, §2.7, §2.13, §3.12 as a member); verifier 112/112; pushed 980e3c4.
+- [x] **Fix the feature-selection CV leak throughout (go-ahead 2026-10-05; DONE 2026-10-06, paper updated).** Confirmed causally:
+      `qsarena/feature_expansion/selection_leak.py`. Code done 2026-10-04 (`--cv-selection nested`, runner and
+      notebooks; notebook executed end to end on 2026-10-06). Run: `logs/run_nested_selection.ps1`; the pilot on
+      `tdc_caco2_wang` passed; the full run started 2026-10-05 03:16 PDT; PAUSED by the author at 20:00 PDT with 39/44 done (CYP3A4,
+      CYP1A2, CYP2C19, CYP2D6, hERG-Karim remain, ~9 h); resumed 22:50 PDT on the five remaining datasets (`-Tag rest`). TabPFN gets nested CV from local fold refits but is kept out of
+      the ensembles (`--ensemble-exclude-model`). After it: checks, render, verifier values, paper (§2.13, the CV-leak
+      caveat becomes a Methods statement, all CV-dependent numbers) -- all done 2026-10-06. Details:
+      `docs/NESTED_SELECTION_CV_PLAN.md`.
+- [x] Notebook nested-selection path executed end to end (2026-10-06, `tools/notebook_nested_check.py`, headless, local
+      notebook blocks 4A.5/4B/4C/7A): FreeSolv and Caco-2 pass. The selector is refitted on 5 folds; test metrics are
+      identical to the outer run; CV RMSE rises for the 9 selected-feature models and is unchanged for MapLight CatBoost
+      (Caco-2 ElasticNetCV: outer CV 0.321 vs test 0.390 -> nested 0.460); 7A's OOF predictions use the nested folds.
+- [x] **Binary classification in the notebooks** (2026-10-06). The notebook only mentioned classification in its
+      guidance text; the code was regression-only. Now 1C detects the task (`task_type` AUTO/regression/classification;
+      a target with two distinct values is binary, as in the runner), 4A stratifies by class, 4C runs the runner's
+      classifier set with AUROC/AUPRC/balanced-accuracy/MCC CV (class-stratified, nested selection), 4D/7B draw ROC
+      curves, 7A builds OOF ensembles chosen by OOF AUROC (CFA skipped: regression-only), 9A reports class-1 probabilities
+      plus a predicted class, and 9F writes the report. GA (4E-4G), ChemML/Uni-Mol/Chemprop (5B-6H), explanations (8A-8C)
+      and AD (9D) are skipped with a message for classification (IPython input transformer set up in step 0). Tested
+      headless with `tools/notebook_nested_check.py` on HIA (578) and BBB-Martins (2,030); FreeSolv rerun for regression.
+- [ ] Classification for the notebook's Uni-Mol, Chemprop, ChemML, GA, explanation and AD blocks (the runner has it).
+- [x] **Hard-label predictions on 4 binary datasets catalogued as rmse** (fixed 2026-10-04). 11 models retrained and
+      validated (§2.13 discloses it). TabPFN (2026-10-05): pampa retrained with the local `tabpfn` package; on
+      cyp1a2/cyp2c19/herg_karim its rows are withdrawn (local TabPFN does not fit 8 GB at 10k x 1,000; the API rerun
+      is ~110M tokens per dataset). Enters the paper with the nested-run render: replace the §2.13 "TabPFN ... still
+      carries label outputs" sentence with the withdrawal, and say pampa's TabPFN is the local v2.6 model.
+- [x] ~~**Author decision (optional): TabPFN on cyp1a2/cyp2c19/herg_karim via the Prior Labs API** (~110M estimated
+      tokens each, vs the runner's 5M/day guard) to restore those three results.~~ Not pursued; the paper explains the
+      API limitation in §2.13 (111-127 M estimated tokens each vs a 5 M daily allowance; verifier-checked), 2026-10-06.
+- [ ] CFA ranks fusion candidates by in-sample training error; move it to OOF predictions (needs the CFA stage
+      after the OOF stage).
 
 ## Repository hygiene
 
-- [ ] **Fix the PODUAM attribution** in `data/benchmark_dataset_catalog.csv` and the cached
+- [x] **Fix the PODUAM attribution** (done 2026-10-02; registry, catalog, latest leaderboard cache; signature-preserving alias in the runner) in `data/benchmark_dataset_catalog.csv` and the cached
       `data/benchmark_leaderboards/leaderboard_top10_reference_*.csv`, which credit "Aurisano et al.,
       Nature Communications 2025". The correct citation is von Borries K, Beckwith KV, Goodman JM,
       Chiu WA, Jolliet O, Fantke P, *Nat Commun* 2026;17:647, doi:10.1038/s41467-025-67374-4.
       The manuscript already cites the correct one.
-- [ ] **Delete or regenerate the stale `.txt` mirrors** of `run_qsarena_benchmarks.py` and
+- [x] **Delete or regenerate the stale `.txt` mirrors** (deleted 2026-10-02) of `run_qsarena_benchmarks.py` and
       `qsar_workflow_core.py`; they have diverged from the `.py` sources and are a trap for readers
       and agents alike.
-- [ ] **Add a linter to CI** (`ruff` or `black`) — the last unmet item on the journal's seven-point
+- [x] **Add a linter to CI** (already present: `ruff check qsarena tests`; CI's pytest step, red since 2026-09-30 from a pandas 3 MergeError, fixed 2026-10-02) (`ruff` or `black`) — the last unmet item on the journal's seven-point
       repository checklist.
 - [x] **Keep the two manuscript formats in sync.** `manuscript.md` and `submission/body.tex` carry the
       same prose for the OECD reliability section, and `verify_manuscript_numbers.py` now checks the

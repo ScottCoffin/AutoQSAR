@@ -2,9 +2,9 @@
   "status": "completed",
   "dataset": "polaris_adme_fang_rclint_1",
   "source": "Polaris ADME benchmark mirror: adme-fang-rclint-1",
-  "completed_at": "2026-09-28 08:34:04",
-  "elapsed_seconds": 34.279,
-  "n_metrics_rows": 42,
+  "completed_at": "2026-10-05 22:40:49",
+  "elapsed_seconds": 33.16,
+  "n_metrics_rows": 45,
   "n_stage_records": 4,
   "n_rows": 3054,
   "task_type": "regression",
@@ -53,11 +53,11 @@
       "standardization": 0.9934533551554828,
       "knn_similarity": 0.9443535188216039
     },
-    "selected_model": "TabPFNRegressor",
+    "selected_model": "XGBoost",
     "notes": [],
-    "mae_in_domain": 0.4104921394222586,
-    "mae_out_of_domain": 0.4574734078431381
+    "mae_in_domain": 0.41674068633815503,
+    "mae_out_of_domain": 0.4850888274066321
   },
-  "stage23_signature": "6905528e9720244a69b7ffaab866d51f6ad968e742d0f23d882d3cacfda0b8b8",
-  "resume_fingerprint": "7b75b831f04dcdb023853a1b"
+  "stage23_signature": "8ebb68becd51ae5e6498036d07d1ddd1d8e1daffa6d6bc3d43d1a8526f9bce6c",
+  "resume_fingerprint": "f33652902b2e68d1c52ad91d"
 }

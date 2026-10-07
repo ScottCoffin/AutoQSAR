@@ -119,6 +119,7 @@ def _non_default_value(spec: qc.OptionSpec):
         "applicability_domain.method": "off",
         "ensemble.member_selection_metric": "test",
         "ensemble.simple_average": True,
+        "feature_selection.load_from": "benchmark_results/deposited_run",
     }
     if spec.key in special:
         return special[spec.key]

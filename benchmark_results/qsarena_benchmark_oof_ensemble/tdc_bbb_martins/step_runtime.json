@@ -7,12 +7,12 @@
     "step_type": "load_dataset",
     "model": "",
     "workflow": "",
-    "started_at": "2026-09-28 08:29:02 Pacific Daylight Time",
-    "started_epoch": 1790609342.4919684,
+    "started_at": "2026-10-05 22:38:11 Pacific Daylight Time",
+    "started_epoch": 1791265091.3376255,
     "status": "completed",
-    "ended_at": "2026-09-28 08:29:03 Pacific Daylight Time",
-    "ended_epoch": 1790609343.0156415,
-    "duration_seconds": 0.524
+    "ended_at": "2026-10-05 22:38:11 Pacific Daylight Time",
+    "ended_epoch": 1791265091.85964,
+    "duration_seconds": 0.522
   },
   {
     "dataset": "tdc_bbb_martins",
@@ -22,12 +22,12 @@
     "step_type": "feature_generation",
     "model": "",
     "workflow": "",
-    "started_at": "2026-09-28 08:29:03 Pacific Daylight Time",
-    "started_epoch": 1790609343.0156415,
+    "started_at": "2026-10-05 22:38:11 Pacific Daylight Time",
+    "started_epoch": 1791265091.85964,
     "status": "resumed_cache",
-    "ended_at": "2026-09-28 08:29:03 Pacific Daylight Time",
-    "ended_epoch": 1790609343.03412,
-    "duration_seconds": 0.018
+    "ended_at": "2026-10-05 22:38:11 Pacific Daylight Time",
+    "ended_epoch": 1791265091.8826408,
+    "duration_seconds": 0.023
   },
   {
     "dataset": "tdc_bbb_martins",
@@ -37,26 +37,26 @@
     "step_type": "feature_selection",
     "model": "",
     "workflow": "",
-    "started_at": "2026-09-28 08:29:03 Pacific Daylight Time",
-    "started_epoch": 1790609343.03412,
+    "started_at": "2026-10-05 22:38:11 Pacific Daylight Time",
+    "started_epoch": 1791265091.8826408,
     "status": "resumed_cache",
-    "ended_at": "2026-09-28 08:29:03 Pacific Daylight Time",
-    "ended_epoch": 1790609343.069096,
-    "duration_seconds": 0.035
+    "ended_at": "2026-10-05 22:38:11 Pacific Daylight Time",
+    "ended_epoch": 1791265091.9222445,
+    "duration_seconds": 0.04
   },
   {
     "dataset": "tdc_bbb_martins",
     "stage_index": 4,
     "total_stages": 4,
-    "stage_label": "conventional model TabPFNClassifier (repairing missing OOF)",
+    "stage_label": "ensemble (2 method(s))",
     "step_type": "model",
-    "model": "TabPFNClassifier",
-    "workflow": "conventional",
-    "started_at": "2026-09-28 08:29:03 Pacific Daylight Time",
-    "started_epoch": 1790609343.069096,
+    "model": "Ensemble",
+    "workflow": "ensemble",
+    "started_at": "2026-10-05 22:38:11 Pacific Daylight Time",
+    "started_epoch": 1791265091.9222445,
     "status": "completed",
-    "ended_at": "2026-09-28 08:29:34 Pacific Daylight Time",
-    "ended_epoch": 1790609374.3258562,
-    "duration_seconds": 31.257
+    "ended_at": "2026-10-05 22:38:14 Pacific Daylight Time",
+    "ended_epoch": 1791265094.382258,
+    "duration_seconds": 2.46
   }
 ]

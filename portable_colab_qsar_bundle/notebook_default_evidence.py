@@ -88,6 +88,7 @@ EVIDENCE: dict[str, dict[str, tuple[str, str, str]]] = {
     "1C. Assess missingness and preprocess the selected columns": {
         "missing_value_strategy": (NA, UNTESTED, "No default on purpose: you must choose. `ignore_row` is the safe choice for a missing target, because `zero` and `interpolate` invent measurements."),
         "custom_missing_tokens": (NA, UNTESTED, "Common spreadsheet spellings of a missing value. Add your lab's own codes."),
+        "task_type": ("auto", BENCH, "Same rule as the benchmark runner: a target with exactly two distinct values is a binary classification task."),
         "target_transform_strategy": ("auto", BENCH, "Same rule as the benchmark: log-transform only clearly skewed, positive targets."),
         "shifted_log10_epsilon": (NA, UNTESTED, "Used only by `shifted_log10`."),
         "collapse_duplicate_canonical_smiles": (NA, UNTESTED, "Not varied in the benchmark (which used curated sets). Keep it on: a molecule repeated in train and test inflates the test score."),
@@ -165,6 +166,7 @@ EVIDENCE: dict[str, dict[str, tuple[str, str, str]]] = {
     },
     "4C. Train conventional ML models and show an interactive metrics table": {
         "use_cross_validation": ("on", BENCH, "5-fold CV on the training split, as in the benchmark. CV scores are what you should choose a model by; the test set is for the final check."),
+        "nested_selection_cv": ("on", EVID, "Refits the feature selector inside every CV fold. Selecting features once on all training rows and then cross-validating overstates CV scores (by 22.7 points for ElasticNetCV and 6.1 for random forest in a controlled test on 9 datasets); test scores are unaffected. Off is faster on large feature matrices."),
         "cv_folds": ("5", BENCH, "As in the benchmark."),
         "model_random_seed": ("13", NOEFFECT, "Seed."),
         "enable_conventional_model_cache": (NA, NOEFFECT, "Caching only."),

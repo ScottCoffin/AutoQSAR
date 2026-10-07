@@ -83,6 +83,21 @@ or any full `predictions.csv` corpus.
 Run this only if the user explicitly approves the optional learning-curve
 experiment from the meta-analysis spec.
 
+**Revised 2026-09-29 (supersedes the details below where they differ):**
+
+- The wrapper no longer uses `--row-limit`, which subsamples before the split and would change the
+  test set at every point. `python -m qsarena.meta_analysis.phase7` writes one CSV per point from
+  the committed partitions: a nested, seed-0 training subset plus the dataset's full benchmark test
+  set. The unchanged runner reads each CSV with `--split-strategy predefined --predefined-split-col split`.
+- The plan has **15** points. The full-size points were dropped because the benchmark already
+  trained the same four models on the identical split, and `phase7.curve_table` reads them from
+  the run.
+- Runner dry-run estimate: ~18 h for the 15 points on the RTX 4060. The estimator scales A100
+  timings, so the laptop may be slower. This is above the 12-hour threshold, so it needs the
+  user's go-ahead.
+- Afterwards: `python -m qsarena.meta_analysis --include-phase7` adds Figure S2 and
+  `meta_numbers.json["phase7"]`.
+
 Plan file:
 
 ```text

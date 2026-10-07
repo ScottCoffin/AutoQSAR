@@ -1,5 +1,5 @@
 dataset,stage_index,total_stages,stage_label,step_type,model,workflow,started_at,started_epoch,status,ended_at,ended_epoch,duration_seconds
-tdc_pampa_ncats,1,4,loading PyTDC ADME benchmark: pampa_ncats,load_dataset,,,2026-09-28 08:29:34 Pacific Daylight Time,1790609374.8297756,completed,2026-09-28 08:29:35 Pacific Daylight Time,1790609375.5117772,0.682
-tdc_pampa_ncats,2,4,building molecular features (cached),feature_generation,,,2026-09-28 08:29:35 Pacific Daylight Time,1790609375.5117772,resumed_cache,2026-09-28 08:29:35 Pacific Daylight Time,1790609375.5286956,0.017
-tdc_pampa_ncats,3,4,splitting data and selecting features (cached),feature_selection,,,2026-09-28 08:29:35 Pacific Daylight Time,1790609375.5286956,resumed_cache,2026-09-28 08:29:35 Pacific Daylight Time,1790609375.553733,0.025
-tdc_pampa_ncats,4,4,conventional model TabPFNClassifier (repairing missing OOF),model,TabPFNClassifier,conventional,2026-09-28 08:29:35 Pacific Daylight Time,1790609375.553733,completed,2026-09-28 08:30:05 Pacific Daylight Time,1790609405.467019,29.913
+tdc_pampa_ncats,1,4,loading PyTDC ADME benchmark: pampa_ncats,load_dataset,,,2026-10-05 22:38:15 Pacific Daylight Time,1791265095.157093,completed,2026-10-05 22:38:15 Pacific Daylight Time,1791265095.7524257,0.595
+tdc_pampa_ncats,2,4,building molecular features (cached),feature_generation,,,2026-10-05 22:38:15 Pacific Daylight Time,1791265095.7524257,resumed_cache,2026-10-05 22:38:15 Pacific Daylight Time,1791265095.7764368,0.024
+tdc_pampa_ncats,3,4,splitting data and selecting features (cached),feature_selection,,,2026-10-05 22:38:15 Pacific Daylight Time,1791265095.7764368,resumed_cache,2026-10-05 22:38:15 Pacific Daylight Time,1791265095.8024256,0.026
+tdc_pampa_ncats,4,4,ensemble (2 method(s)),model,Ensemble,ensemble,2026-10-05 22:38:15 Pacific Daylight Time,1791265095.8024256,completed,2026-10-05 22:38:20 Pacific Daylight Time,1791265100.012137,4.21

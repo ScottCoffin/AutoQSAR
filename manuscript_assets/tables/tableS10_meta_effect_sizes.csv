@@ -1,0 +1,49 @@
+Model family,Meta-feature,Datasets,Spearman rho,95% CI,Permutation p,BH q
+Conventional ML,log10_n_train,44,0.03443533365,-0.29 to 0.35,0.8182181782,0.8727660567
+Conventional ML,internal_diversity,44,-0.3294410696,-0.59 to -0.01,0.02779722028,0.2379190652
+Conventional ML,mean_snn,44,0.3252075155,0.01 to 0.58,0.03409659034,0.2379190652
+Conventional ML,ood_fraction,44,-0.326265904,-0.59 to -0.01,0.03469653035,0.2379190652
+Conventional ML,scaffolds_per_molecule,44,0.1387900158,-0.20 to 0.43,0.3670632937,0.7097472071
+Conventional ML,label_asymmetry,44,0.2043395454,-0.10 to 0.46,0.1785821418,0.4607539246
+Ensemble (stacking / averaging),log10_n_train,44,-0.4671892537,-0.70 to -0.19,0.001199880012,0.05759424058
+Ensemble (stacking / averaging),internal_diversity,44,0.2070809881,-0.14 to 0.52,0.1797820218,0.4607539246
+Ensemble (stacking / averaging),mean_snn,44,-0.3925423896,-0.66 to -0.09,0.008399160084,0.201579842
+Ensemble (stacking / averaging),ood_fraction,44,0.2876082985,-0.03 to 0.59,0.06179382062,0.296610339
+Ensemble (stacking / averaging),scaffolds_per_molecule,44,0.1468926616,-0.14 to 0.43,0.3357664234,0.7097472071
+Ensemble (stacking / averaging),label_asymmetry,44,0.2746516124,-0.03 to 0.54,0.0704929507,0.3076056031
+CFA combinatorial fusion,log10_n_train,44,-0.2201705552,-0.47 to 0.07,0.1563843616,0.4607539246
+CFA combinatorial fusion,internal_diversity,44,-0.3247357294,-0.59 to -0.01,0.03339666033,0.2379190652
+CFA combinatorial fusion,mean_snn,44,0.1248766737,-0.21 to 0.43,0.4214578542,0.7097472071
+CFA combinatorial fusion,ood_fraction,44,-0.081465821,-0.39 to 0.24,0.601839816,0.743433349
+CFA combinatorial fusion,scaffolds_per_molecule,44,0.215503876,-0.10 to 0.50,0.1593840616,0.4607539246
+CFA combinatorial fusion,label_asymmetry,44,0.1081042988,-0.19 to 0.40,0.4863513649,0.7097472071
+Uni-Mol (3D pretrained),log10_n_train,44,-0.1075534457,-0.41 to 0.20,0.4879512049,0.7097472071
+Uni-Mol (3D pretrained),internal_diversity,44,0.1461213339,-0.21 to 0.49,0.3481651835,0.7097472071
+Uni-Mol (3D pretrained),mean_snn,44,0.08095911745,-0.25 to 0.40,0.604039596,0.743433349
+Uni-Mol (3D pretrained),ood_fraction,44,-0.1183357135,-0.46 to 0.22,0.4422557744,0.7097472071
+Uni-Mol (3D pretrained),scaffolds_per_molecule,44,0.1018335937,-0.23 to 0.41,0.5163483652,0.7289623979
+Uni-Mol (3D pretrained),label_asymmetry,44,0.07475319207,-0.26 to 0.41,0.6282371763,0.7525881558
+TabPFN (tabular foundation),log10_n_train,41,0.1492550324,-0.24 to 0.50,0.3455654435,0.7097472071
+TabPFN (tabular foundation),internal_diversity,41,-0.2415054924,-0.54 to 0.10,0.1295870413,0.4607539246
+TabPFN (tabular foundation),mean_snn,41,0.0981007159,-0.21 to 0.40,0.5398460154,0.7297864808
+TabPFN (tabular foundation),ood_fraction,41,-0.004007666902,-0.34 to 0.33,0.9826017398,0.9826017398
+TabPFN (tabular foundation),scaffolds_per_molecule,41,0.07074403314,-0.28 to 0.41,0.6610338966,0.7554673104
+TabPFN (tabular foundation),label_asymmetry,41,-0.1258058914,-0.42 to 0.18,0.4279572043,0.7097472071
+Chemprop v2 GNN,log10_n_train,42,-0.007866993174,-0.31 to 0.30,0.9646035396,0.9826017398
+Chemprop v2 GNN,internal_diversity,42,-0.04954993114,-0.37 to 0.28,0.7524247575,0.8399160084
+Chemprop v2 GNN,mean_snn,42,0.131457346,-0.19 to 0.43,0.4051594841,0.7097472071
+Chemprop v2 GNN,ood_fraction,42,-0.1186441068,-0.44 to 0.21,0.4543545645,0.7097472071
+Chemprop v2 GNN,scaffolds_per_molecule,42,0.1408645342,-0.16 to 0.42,0.3698630137,0.7097472071
+Chemprop v2 GNN,label_asymmetry,42,0.3254400551,-0.03 to 0.62,0.03149685031,0.2379190652
+MapLight + GNN,log10_n_train,44,-0.204954717,-0.47 to 0.10,0.1823817618,0.4607539246
+MapLight + GNN,internal_diversity,44,0.09105324365,-0.23 to 0.40,0.5587441256,0.7297864808
+MapLight + GNN,mean_snn,44,-0.07096796932,-0.38 to 0.24,0.6428357164,0.7525881558
+MapLight + GNN,ood_fraction,44,-0.1127594349,-0.42 to 0.22,0.4672532747,0.7097472071
+MapLight + GNN,scaffolds_per_molecule,44,0.2908488673,0.01 to 0.54,0.05219478052,0.2783721628
+MapLight + GNN,label_asymmetry,44,-0.08971422536,-0.39 to 0.25,0.5625437456,0.7297864808
+Deep tabular NN (ChemML MLP),log10_n_train,44,-0.3145394327,-0.57 to 0.00,0.04159584042,0.2495750425
+Deep tabular NN (ChemML MLP),internal_diversity,44,-0.2507399577,-0.51 to 0.04,0.100189981,0.400759924
+Deep tabular NN (ChemML MLP),mean_snn,44,-0.01733615222,-0.33 to 0.31,0.9120087991,0.9516613556
+Deep tabular NN (ChemML MLP),ood_fraction,44,0.0386187456,-0.31 to 0.36,0.8065193481,0.8727660567
+Deep tabular NN (ChemML MLP),scaffolds_per_molecule,44,0.2238195913,-0.10 to 0.51,0.1406859314,0.4607539246
+Deep tabular NN (ChemML MLP),label_asymmetry,44,0.1812544045,-0.14 to 0.47,0.2421757824,0.5812218778

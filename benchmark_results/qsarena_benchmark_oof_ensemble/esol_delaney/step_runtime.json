@@ -7,12 +7,12 @@
     "step_type": "load_dataset",
     "model": "",
     "workflow": "",
-    "started_at": "2026-09-28 08:23:19 Pacific Daylight Time",
-    "started_epoch": 1790608999.4628065,
+    "started_at": "2026-10-05 22:36:38 Pacific Daylight Time",
+    "started_epoch": 1791264998.7242205,
     "status": "completed",
-    "ended_at": "2026-09-28 08:23:19 Pacific Daylight Time",
-    "ended_epoch": 1790608999.604465,
-    "duration_seconds": 0.142
+    "ended_at": "2026-10-05 22:36:38 Pacific Daylight Time",
+    "ended_epoch": 1791264998.8625698,
+    "duration_seconds": 0.138
   },
   {
     "dataset": "esol_delaney",
@@ -22,12 +22,12 @@
     "step_type": "feature_generation",
     "model": "",
     "workflow": "",
-    "started_at": "2026-09-28 08:23:19 Pacific Daylight Time",
-    "started_epoch": 1790608999.604465,
+    "started_at": "2026-10-05 22:36:38 Pacific Daylight Time",
+    "started_epoch": 1791264998.8635702,
     "status": "resumed_cache",
-    "ended_at": "2026-09-28 08:23:19 Pacific Daylight Time",
-    "ended_epoch": 1790608999.6164427,
-    "duration_seconds": 0.012
+    "ended_at": "2026-10-05 22:36:38 Pacific Daylight Time",
+    "ended_epoch": 1791264998.8746812,
+    "duration_seconds": 0.011
   },
   {
     "dataset": "esol_delaney",
@@ -37,26 +37,26 @@
     "step_type": "feature_selection",
     "model": "",
     "workflow": "",
-    "started_at": "2026-09-28 08:23:19 Pacific Daylight Time",
-    "started_epoch": 1790608999.6164427,
+    "started_at": "2026-10-05 22:36:38 Pacific Daylight Time",
+    "started_epoch": 1791264998.8746812,
     "status": "resumed_cache",
-    "ended_at": "2026-09-28 08:23:19 Pacific Daylight Time",
-    "ended_epoch": 1790608999.6392634,
-    "duration_seconds": 0.023
+    "ended_at": "2026-10-05 22:36:38 Pacific Daylight Time",
+    "ended_epoch": 1791264998.8936877,
+    "duration_seconds": 0.019
   },
   {
     "dataset": "esol_delaney",
     "stage_index": 4,
     "total_stages": 4,
-    "stage_label": "conventional model TabPFNRegressor (repairing missing OOF)",
+    "stage_label": "ensemble (2 method(s))",
     "step_type": "model",
-    "model": "TabPFNRegressor",
-    "workflow": "conventional",
-    "started_at": "2026-09-28 08:23:19 Pacific Daylight Time",
-    "started_epoch": 1790608999.6392634,
+    "model": "Ensemble",
+    "workflow": "ensemble",
+    "started_at": "2026-10-05 22:36:38 Pacific Daylight Time",
+    "started_epoch": 1791264998.8936877,
     "status": "completed",
-    "ended_at": "2026-09-28 08:23:51 Pacific Daylight Time",
-    "ended_epoch": 1790609031.080538,
-    "duration_seconds": 31.441
+    "ended_at": "2026-10-05 22:36:44 Pacific Daylight Time",
+    "ended_epoch": 1791265004.7959018,
+    "duration_seconds": 5.902
   }
 ]

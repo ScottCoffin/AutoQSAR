@@ -45,7 +45,7 @@ TABLE_SPEC = {
         "tab:models", False, 3,
         "Model inventory. ``Valid'' datasets are those on which the model produced a metric without an error; "
         "differences from 44 reflect task-type applicability (regression-only or classification-only estimators), "
-        "dataset-size guardrails, or backend failures (Section~\\ref{sec:coverage}).",
+        "dataset-size guardrails, or backend failures (main-text Section 3.9).",
     ),
     "table2_dataset_catalog": (
         "tab:datasets", True, 3,
@@ -83,8 +83,16 @@ TABLE_SPEC = {
         "Ensemble and fusion value-add against the best single base model available on the same dataset, under each "
         "dataset's primary metric.",
     ),
-    "table6_cost": (
+    # Revision R2: the main text carries the core cost columns; the full table with the published comparators and
+    # the notes column is Additional file 1, Table S16.
+    "table6_cost_core": (
         "tab:cost", False, 1,
+        "Per-family computational cost and model size in this benchmark. Wall-clock times are each model's own "
+        "incremental time per dataset on the A100 run hardware; fusion and ensemble methods are also given with the "
+        "summed cost of the base-model pool they consume. Published comparators are in Additional file~1, Table~S16.",
+    ),
+    "table6_cost": (
+        "tab:s16", False, 1,
         "Per-family computational cost and model size in this benchmark, with published comparators. Wall-clock times "
         "are per model per dataset on the run hardware.",
     ),
@@ -115,6 +123,63 @@ TABLE_SPEC = {
         "tab:s4", False, 3,
         "Model coverage: datasets attempted and datasets yielding a valid metric, per model.",
     ),
+    # Written by qsarena.meta_analysis (render_manuscript_assets.py runs it after the notebook).
+    "tableS9_meta_feature_catalog": (
+        "tab:s9", True, 3,
+        "Dataset meta-feature catalog computed on each benchmark train/test partition (verified against the "
+        "recorded split hashes). Diversity and similarity use Morgan radius-2, 2,048-bit fingerprints; SNN is "
+        "the maximum Tanimoto similarity of a test molecule to any training molecule, and OOD fraction is the "
+        "share of test molecules with SNN below 0.40.",
+    ),
+    "tableS10_meta_effect_sizes": (
+        "tab:s10", False, 3,
+        "Exploratory family $\\times$ meta-feature associations: Spearman correlation between each meta-feature "
+        "and the relative gap of the family's best model to the per-dataset best, with a dataset-bootstrap 95\\% "
+        "CI (10,000 resamples), a two-sided label-permutation p-value and a Benjamini--Hochberg q-value over the "
+        "whole grid. Positive $\\rho$ means the family falls further behind as the meta-feature increases.",
+    ),
+    "tableS11_meta_selector_regret": (
+        "tab:s11", False, 3,
+        "Family selector (v2), leave-one-dataset-out regret: the relative gap (\\%) of the recommended family to the "
+        "per-dataset best. Rows are pre-specified variants (model $|$ feature blocks: F0 size, similarity, label "
+        "asymmetry and task; F1 chemistry; F2 label landscape; F3 training-set CV landmarks); ``sbs'' always picks "
+        "the family with the best record on the other datasets. The nested row chooses the variant inside an inner "
+        "leave-one-dataset-out loop and is the only unbiased estimate; single variants are exploratory.",
+    ),
+    # Written by reanalysis_coverage_posthoc.py (render_manuscript_assets.py runs it after the meta-analysis).
+    "tableS13_common_subset": (
+        "tab:s13", False, 1,
+        "Common-subset sensitivity of the family comparison: wins, median relative gap of each family's best model "
+        "to the per-dataset best, and share of datasets within 5\\% of the best, on all datasets, on the datasets on "
+        "which all eight families produced a valid result, and on the datasets on which Uni-Mol V2 produced one. "
+        "Winners are chosen over all models on each dataset, so restricting the dataset set changes which datasets "
+        "are counted, not any dataset's winner. Single split and single seed.",
+    ),
+    "tableS14_posthoc_descriptor": (
+        "tab:s14", False, 0,
+        "Datasets won by each family with and without the post-hoc descriptor model (XGBoost on the full, unselected "
+        "ADMETboost feature set) as a candidate. The ensemble rows are unchanged models that still contain it as a "
+        "member; removing it there would need an ensemble rebuild, so the table bounds only its direct effect.",
+    ),
+}
+
+
+# Main-text tables that are narrow enough for a portrait page once their long headers are abbreviated (revision R2).
+# Without this, the seven-or-more-column rule below rotated each onto a landscape page of its own. Only the LaTeX
+# headers change; the cells are the same as in the CSV and the Markdown table, and the captions define the columns.
+PORTRAIT_HEADERS = {
+    "table3_architecture_families": [
+        "Model family", "Models", "Valid data sets", "Wins, reg.", "Wins, cls.", "Median gap, reg. (%)",
+        "Median gap, cls. (%)", "Within 5% of best (%)", "Median rank of family best",
+    ],
+    "table6_cost_core": [
+        "Model family", "Fits timed", "Median own wall-clock (s)", "IQR own wall-clock (s)",
+        "Median incl. base pool (s)", "Median trainable parameters",
+    ],
+    "table5_ensemble_value_add": [
+        "Fusion method", "Task", "n", "Overall wins", "Top-3", "Beats best base", "Loses to best base",
+        "Median rank", "Median rel. change vs best base",
+    ],
 }
 
 
@@ -174,7 +239,8 @@ def format_cell(value: str, digits: int) -> str:
 LONG_TABLE_ROWS = 16  # beyond this, use a page-breaking xltabular instead of a float
 
 
-def build_table(rows: list[list[str]], landscape: bool, label: str, digits: int, caption: str) -> str:
+def build_table(rows: list[list[str]], landscape: bool, label: str, digits: int, caption: str,
+                portrait: bool = False) -> str:
     """Emit a width-constrained table.
 
     Long text columns become tabularx `X` columns so the table is always exactly \\textwidth and the
@@ -223,12 +289,13 @@ def build_table(rows: list[list[str]], landscape: bool, label: str, digits: int,
         """Wrap long headers. A narrow numeric column cannot wrap its own header, and an unwrapped
         long header is what actually pushes these tables past \\textwidth."""
         escaped = tex_escape(text)
-        if index in wrap_idx or len(text) <= 16:
+        # Portrait-forced tables wrap every numeric header, or the numeric columns starve the text column.
+        if index in wrap_idx or (len(text) <= 16 and not portrait) or len(text) <= 6:
             return f"\\textbf{{{escaped}}}"
         words, lines_out, current = escaped.split(" "), [], ""
         # More columns means less room per header, so wrap into more, shorter lines.
         divisor = 4 if len(header) >= 8 else (3 if len(escaped) >= 40 else 2)
-        target = max(9, len(escaped) // divisor)
+        target = 7 if portrait else max(9, len(escaped) // divisor)
         for word in words:
             if current and len(current) + 1 + len(word) > target:
                 lines_out.append(current)
@@ -253,7 +320,7 @@ def build_table(rows: list[list[str]], landscape: bool, label: str, digits: int,
     # the article-class proof and overflowed the real Springer class by exactly 150pt
     # (702.8pt requested against 552.7pt available in sn-jnl). The proof could never reveal it:
     # sn-jnl's text block is 372.0pt against the proof's 472.3pt.
-    landscape = landscape or len(header) >= 7
+    landscape = (landscape or len(header) >= 7) and not portrait
     width = "\\linewidth" if landscape else "\\textwidth"
 
     lines = []
@@ -287,6 +354,8 @@ def build_table(rows: list[list[str]], landscape: bool, label: str, digits: int,
         lines.append("\\begin{table}[htbp]")
         lines.append("\\centering")
         lines.append(size)
+        if portrait:
+            lines.append("\\setlength{\\tabcolsep}{3pt}")  # nine columns on a portrait page: narrow the gutters
         lines.append(f"\\caption{{{caption}}}")
         lines.append(f"\\label{{{label}}}")
         lines.append(f"\\begin{{tabularx}}{{{width}}}{{@{{}}{colspec}@{{}}}}")
@@ -317,7 +386,11 @@ def main() -> int:
             rows = [r for r in csv.reader(handle) if any(str(c).strip() for c in r)]
         if not rows:
             continue
-        (OUT_DIR / f"{stem}.tex").write_text(build_table(rows, landscape, label, digits, caption), encoding="utf-8")
+        portrait = stem in PORTRAIT_HEADERS
+        if portrait:
+            assert len(PORTRAIT_HEADERS[stem]) == len(rows[0]), f"{stem}: header count changed"
+            rows[0] = PORTRAIT_HEADERS[stem]
+        (OUT_DIR / f"{stem}.tex").write_text(build_table(rows, landscape, label, digits, caption, portrait), encoding="utf-8")
         written += 1
     print(f"Wrote {written} LaTeX tables to {OUT_DIR}")
     return 0

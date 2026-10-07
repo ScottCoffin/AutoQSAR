@@ -1,5 +1,5 @@
 Comparison class,n,Top-10 test,Median rank test,Top-10 CV,Median rank CV
-TDC ADMET Group (official),22,22,3.0,16,7.0
-Polaris ADME (official),5,5,4.0,4,9.0
-Local splits (not leaderboard-equivalent),10,8,2.5,7,6.0
+TDC ADMET Group (official),22,22,2.5,16,7.0
+Polaris ADME (official),5,5,4.0,4,6.0
+Local splits (not leaderboard-equivalent),10,8,2.5,7,8.5
 All comparable datasets,37,35,3.0,27,7.0
