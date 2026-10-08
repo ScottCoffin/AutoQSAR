@@ -1,0 +1,21 @@
+# RTX rerun outputs are intentionally local/regenerable.
+rtx_output/
+*_rtx_output/
+
+# Extra guardrails if a benchmark output directory is copied here.
+**/stage23_resume_cache.pkl
+**/predictions.csv
+**/chemprop_v2/
+**/chemml_deep_learning/
+**/conventional_ml/
+**/tuned_conventional_ml/
+**/ensemble_oof/
+**/*.pkl
+**/*.ckpt
+**/*.pth
+**/*.pt
+**/*.joblib
+**/*.npy
+**/*.npz
+**/__pycache__/
+**/*.pyc

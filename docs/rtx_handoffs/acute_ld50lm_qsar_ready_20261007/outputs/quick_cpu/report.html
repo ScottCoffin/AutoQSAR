@@ -1,0 +1,185 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>QSARena run report</title><style>
+body{font-family:Helvetica,Arial,sans-serif;margin:24px auto;max-width:1100px;padding:0 16px;color:#1d1d1d;background:#fff;line-height:1.45}
+h1{font-size:1.6em;margin-bottom:.2em}h2{font-size:1.2em;margin-top:1.6em;border-bottom:1px solid #ddd;padding-bottom:.2em}
+table{border-collapse:collapse;margin:.6em 0;font-size:.9em;display:block;overflow-x:auto}
+th,td{border:1px solid #d6d6d6;padding:4px 8px;text-align:left;vertical-align:top}th{background:#f3f5f7}
+code,pre{background:#f5f5f5;border-radius:3px}pre{padding:10px;overflow-x:auto;font-size:.85em}
+.warn{border-left:4px solid #D55E00;background:#fff6f0;padding:6px 10px;margin:4px 0}
+.note{color:#555;font-size:.92em}.plot{margin:12px 0 20px}.plot svg{max-width:100%;height:auto}
+</style></head><body>
+<h1>QSARena run report</h1>
+<ul>
+<li>Output directory: <code>benchmark_results\acute_ld50lm_qsar_ready_quick_20261007</code></li>
+<li>Generated: 2026-10-07 17:32:10 with qsarena 0.1.0</li>
+<li>Mode: single; profile: quick; GPU: no</li>
+<li>1 dataset(s): 1 completed</li>
+<li>Config signature: <code>584af2c2e526de93c98f09b06aa74b5edf99f8a74472f436abdaadfed6b716f6</code></li>
+</ul>
+<h2>Warnings</h2>
+<div class="warn"><strong>full_dataset_qsar_ready_ld50lm</strong>: 1 SMILES (0.0%) cannot be parsed by RDKit and will be dropped. <em>Remedy:</em> Fix them in the CSV, or pass --no-drop-unparseable to stop instead of dropping.</div>
+<div class="warn"><strong>full_dataset_qsar_ready_ld50lm</strong>: 6.9% of parsed rows repeat a structure already present. <em>Remedy:</em> Merge them with --deduplicate canonical_smiles so one molecule cannot sit in both train and test.</div>
+<h2>Datasets</h2>
+<table><thead><tr><th>Dataset</th><th>Status</th><th>Task</th><th>Rows used</th><th>Unparseable SMILES dropped</th><th>Primary metric</th><th>Error / remedy</th></tr></thead><tbody><tr><td>full_dataset_qsar_ready_ld50lm</td><td>completed</td><td>regression</td><td>6954</td><td>1</td><td>RMSE</td><td></td></tr></tbody></table>
+<h2>Best model per dataset</h2>
+<p class="note">Selection protocol: <strong>both</strong>. <em>Test-selected</em> picks the best held-out score, which is optimistic because the test set chooses. <em>CV-selected</em> picks the best cross-validated training score (only models that report one) and then shows its untouched test score: the honest estimate.</p>
+<p class="note">CV scores are computed on the training split after train-only feature selection on that same split, so they are optimistic in absolute terms: use them to rank models, and quote the test score of the CV-selected model.</p>
+<table><thead><tr><th>Dataset</th><th>Selected by</th><th>Best model</th><th>Family</th><th>Primary metric</th><th>CV score</th><th>Test score</th><th>Test RMSE</th><th>Test MAE</th><th>Test R2</th><th>Test Spearman</th></tr></thead><tbody><tr><td>full_dataset_qsar_ready_ld50lm</td><td>test (optimistic)</td><td>Ensemble (OOF Stacking (RidgeCV, 5-fold))</td><td>ensemble</td><td>RMSE</td><td>–</td><td>0.579</td><td>0.579</td><td>0.417</td><td>0.580</td><td>0.724</td></tr><tr><td>full_dataset_qsar_ready_ld50lm</td><td>CV (honest)</td><td>Extra trees</td><td>conventional_ml</td><td>RMSE</td><td>0.564</td><td>0.594</td><td>0.594</td><td>0.429</td><td>0.559</td><td>0.705</td></tr></tbody></table>
+<h2>Leaderboard / rank table</h2>
+<p>No dataset in this run has a leaderboard reference (ranks exist only for the curated benchmark datasets).</p>
+<h2>Plots</h2>
+<div class="plot" id="won_by_family"><svg xmlns="http://www.w3.org/2000/svg" role="img" viewBox="0 0 640 94" width="640" height="94" font-family="Helvetica, Arial, sans-serif" font-size="12"><title>Datasets won by model family (test-selected)</title><rect x="0" y="0" width="640" height="94" fill="#ffffff"/><text x="190" y="20" font-size="14" font-weight="bold" fill="#222">Datasets won by model family (test-selected)</text><text x="182" y="49.4" text-anchor="end" fill="#222">ensemble</text><rect x="190" y="34" width="380.0" height="22" fill="#0072B2"><title>ensemble: 1</title></rect><text x="576.0" y="49.4" fill="#222">1</text><text x="190" y="86" fill="#555">number of datasets on which the family produced the best model</text></svg><p class="note">Which model family produced each dataset&#x27;s best model.</p></div>
+<div class="plot" id="cost_vs_gap"><svg xmlns="http://www.w3.org/2000/svg" role="img" viewBox="0 0 640 380" width="640" height="380" font-family="Helvetica, Arial, sans-serif" font-size="12"><title>Cost versus gap to the best model</title><rect x="0" y="0" width="640" height="380" fill="#ffffff"/><text x="70" y="22" font-size="14" font-weight="bold" fill="#222">Cost versus gap to the best model</text><line x1="70" y1="330" x2="610" y2="330" stroke="#888"/><line x1="70" y1="36" x2="70" y2="330" stroke="#888"/><text x="340" y="368" text-anchor="middle" fill="#444">median wall-clock per fit (s, log scale)</text><text x="16" y="183" text-anchor="middle" fill="#444" transform="rotate(-90 16 183)">median relative gap to best test score</text><line x1="70" y1="309.7" x2="610" y2="309.7" stroke="#ccc" stroke-dasharray="4 3"/><line x1="302.7" y1="330" x2="302.7" y2="334" stroke="#888"/><text x="302.7" y="346" text-anchor="middle" fill="#555">500 s</text><text x="64" y="313.7" text-anchor="end" fill="#555">0%</text><text x="64" y="187.0" text-anchor="end" fill="#555">2%</text><text x="64" y="60.3" text-anchor="end" fill="#555">5%</text><circle cx="107.2" cy="88.6" r="6" fill="#0072B2"><title>conventional_ml: 374.3 s, gap 4.4%</title></circle><text x="116.2" y="92.6" fill="#222">conventional_ml</text><circle cx="572.8" cy="261.2" r="6" fill="#E69F00"><title>ensemble: 745.9 s, gap 1.0%</title></circle><text x="563.8" y="265.2" text-anchor="end" fill="#222">ensemble</text></svg><p class="note">Each point is a model family: its median fitting time against its median relative gap to the best test score of the same dataset (0% = it was the best). Lower-left is cheap and competitive.</p></div>
+<div class="plot" id="ad_coverage"><svg xmlns="http://www.w3.org/2000/svg" role="img" viewBox="0 0 640 94" width="640" height="94" font-family="Helvetica, Arial, sans-serif" font-size="12"><title>Applicability-domain coverage of the test set</title><rect x="0" y="0" width="640" height="94" fill="#ffffff"/><text x="190" y="20" font-size="14" font-weight="bold" fill="#222">Applicability-domain coverage of the test set</text><text x="182" y="49.4" text-anchor="end" fill="#222">full_dataset_qsar_ready_ld50lm</text><rect x="190" y="34" width="353.8" height="22" fill="#0072B2"><title>full_dataset_qsar_ready_ld50lm: 93%</title></rect><text x="549.8" y="49.4" fill="#222">93%</text><text x="190" y="86" fill="#555">fraction of test molecules inside the applicability domain (all enabled methods agree)</text></svg><p class="note">Share of each dataset&#x27;s test molecules that every enabled applicability-domain method places inside the domain.</p></div>
+<h2>Model failures and skipped stages</h2>
+<p>No model failed.</p>
+<p>Skipped by design:</p><ul><li>full_dataset_qsar_ready_ld50lm / CFA (Combinatorial Fusion): skipped_insufficient_models</li></ul>
+<h2>What to do next</h2><ul>
+<li>On 1 dataset(s) the test-selected winner differs from the CV-selected one (full_dataset_qsar_ready_ld50lm). Choosing on the test set is optimistic; report the CV-selected model and its test score as the honest estimate.</li>
+<li>All scores come from one train/test split and one seed. Estimate split-to-split variance by repeating the run with other seeds.<pre><code>qsarena-benchmark --config &quot;benchmark_results\acute_ld50lm_qsar_ready_quick_20261007/run_config.yaml&quot; --random-seed 1 --output-dir &quot;benchmark_results\acute_ld50lm_qsar_ready_quick_20261007_seed1&quot;</code></pre></li>
+<li>This was a quick-profile run (scikit-learn models only). Run the full model library once the data look right.<pre><code>qsarena-benchmark --config &quot;benchmark_results\acute_ld50lm_qsar_ready_quick_20261007/run_config.yaml&quot; --benchmark-profile cost_optimized --output-dir &quot;benchmark_results\acute_ld50lm_qsar_ready_quick_20261007_full&quot;</code></pre></li>
+<li>Check new molecules against the training set&#x27;s applicability domain before trusting their predictions.<pre><code>qsarena-applicability-domain --train_csv TRAIN.csv --smiles_col smiles --target_col target --query_smiles &quot;CCO&quot;</code></pre></li>
+</ul>
+<h2>Resolved configuration</h2>
+<p>Rerun exactly this configuration with <code>qsarena-benchmark --config run_config.yaml</code> (in this directory).</p>
+<pre><code>run:
+  mode: auto
+  output_dir: &quot;C:\\Users\\Scott.Coffin\\OneDrive - California OEHHA\\R_new\\AutoQSAR\\benchmark_results\\acute_ld50lm_qsar_ready_quick_20261007&quot;
+  resume: true
+  overwrite: false
+  verbosity: normal
+  dry_run: false
+  n_jobs: 12
+  parallel_datasets: 1
+  dataset_names: []
+input:
+  path: &quot;C:\\Users\\Scott.Coffin\\Downloads\\full_dataset_qsar_ready_ld50lm.csv&quot;
+  smiles_col: QSAR_READY_SMILES
+  target_col: LD50_LM
+  id_col: null
+  task: regression
+  classification_threshold: null
+  target_transform: raw
+  minimum_rows: 20
+  row_limit: 0
+standardize:
+  drop_unparseable: true
+  strip_salts: false
+  normalize_charges: false
+  normalize_tautomers: false
+  deduplicate: &quot;none&quot;
+features:
+  families: [morgan, ecfp6, fcfp6, layered, atom_pair, topological_torsion, rdk_path, maccs, rdkit]
+  maplight_classic: true
+  fingerprint_bits: 1024
+  cache: true
+  persistent_store: true
+split:
+  strategy: target_quartile
+  test_fraction: 0.2
+  seed: 13
+  cv_folds: 5
+  predefined_split_col: null
+feature_selection:
+  method: elasticnetcv
+  variance_threshold: 1e-08
+  binary_prevalence_range: [0.005, 0.995]
+  drop_duplicate_columns: true
+  max_selected_features: 0
+  auto_rf_by_dataset_size: true
+  elasticnet_timeout_seconds: 7200.0
+  deterministic: false
+  load_from: null
+  cv_selection: outer
+models:
+  profile: quick
+  enable_families:
+    conventional_ml: true
+    gradient_boosting: false
+    deep_tabular: false
+    graph_nn: false
+    pretrained_3d: false
+    maplight_gnn: false
+    fusion: true
+    ensemble: true
+  disable_models: []
+  only_models: []
+  admetboost_xgboost: false
+ga_tuning:
+  mode: &quot;off&quot;
+  estimators: [elastic_net, catboost]
+  generations: 12
+  population_size: 16
+  time_budget_min: null
+  max_configs: null
+deep:
+  use_gpu: auto
+  chemprop:
+    variants: []
+    epochs: 15
+    ensemble_size: 1
+    batch_size: 32
+    seed: 42
+  unimol:
+    v1: &quot;false&quot;
+    v2: &quot;false&quot;
+    v2_size: 84m
+    epochs: 10
+    lr: 0.0001
+    batch_size: 32
+    early_stopping_patience: 5
+  chemml:
+    pytorch: false
+    tensorflow: false
+    epochs: 80
+  tabpfn: false
+  tabpfn_max_features: 0
+  cnn: false
+fusion:
+  cfa_score: true
+  cfa_rank: true
+  optimize_metric: mae
+ensemble:
+  oof_stacking: true
+  inverse_rmse_average: true
+  simple_average: false
+  member_selection_metric: oof
+  oof_folds: 5
+  oof_scope: all
+  oof_allow_api_refits: false
+  oof_source_run: null
+  exclude_negative_test_r2_members: true
+  drop_correlated_members: true
+  max_member_correlation: 0.995
+  stacking_cv_folds: 5
+applicability_domain:
+  method: both
+  confidence_threshold: 0.5
+  knn_quantile: 0.95
+evaluation:
+  regression_metrics: [rmse, mae, r2, spearman]
+  classification_metrics: [roc_auc, auprc, balanced_accuracy, mcc]
+  primary_metric: auto
+selection:
+  protocol: both
+report:
+  formats: [html, md]
+  include_plots: true
+  what_next: true
+  machine_readable_manifest: true
+batch:
+  source: null
+  mode: auto
+  continue_on_error: true
+  aggregate_summary: true
+multiseed:
+  enabled: false
+  seeds: 5
+caching:
+  granularity: [dataset, stage]
+  validate_against_config_signature: true
+  atomic_writes: true
+</code></pre>
+<h2>Files</h2><ul><li><code>run_config.json</code></li><li><code>run_config.yaml</code></li><li><code>environment_manifest.json</code></li><li><code>dataset_summary.csv</code></li><li><code>summary_metrics.csv</code></li><li><code>predictions.csv</code></li><li><code>run.log</code></li><li><code>events.jsonl</code></li><li><code>preflight.json</code></li></ul>
+</body></html>

@@ -1,0 +1,138 @@
+# Resolved configuration of this run (qsarena-benchmark --config run_config.yaml reproduces it).
+run:
+  mode: auto
+  output_dir: "C:\\Users\\Scott.Coffin\\OneDrive - California OEHHA\\R_new\\AutoQSAR\\benchmark_results\\acute_ld50lm_qsar_ready_quick_20261007"
+  resume: true
+  overwrite: false
+  verbosity: normal
+  dry_run: false
+  n_jobs: 12
+  parallel_datasets: 1
+  dataset_names: []
+input:
+  path: "C:\\Users\\Scott.Coffin\\Downloads\\full_dataset_qsar_ready_ld50lm.csv"
+  smiles_col: QSAR_READY_SMILES
+  target_col: LD50_LM
+  id_col: null
+  task: regression
+  classification_threshold: null
+  target_transform: raw
+  minimum_rows: 20
+  row_limit: 0
+standardize:
+  drop_unparseable: true
+  strip_salts: false
+  normalize_charges: false
+  normalize_tautomers: false
+  deduplicate: "none"
+features:
+  families: [morgan, ecfp6, fcfp6, layered, atom_pair, topological_torsion, rdk_path, maccs, rdkit]
+  maplight_classic: true
+  fingerprint_bits: 1024
+  cache: true
+  persistent_store: true
+split:
+  strategy: target_quartile
+  test_fraction: 0.2
+  seed: 13
+  cv_folds: 5
+  predefined_split_col: null
+feature_selection:
+  method: elasticnetcv
+  variance_threshold: 1e-08
+  binary_prevalence_range: [0.005, 0.995]
+  drop_duplicate_columns: true
+  max_selected_features: 0
+  auto_rf_by_dataset_size: true
+  elasticnet_timeout_seconds: 7200.0
+  deterministic: false
+  load_from: null
+  cv_selection: outer
+models:
+  profile: quick
+  enable_families:
+    conventional_ml: true
+    gradient_boosting: false
+    deep_tabular: false
+    graph_nn: false
+    pretrained_3d: false
+    maplight_gnn: false
+    fusion: true
+    ensemble: true
+  disable_models: []
+  only_models: []
+  admetboost_xgboost: false
+ga_tuning:
+  mode: "off"
+  estimators: [elastic_net, catboost]
+  generations: 12
+  population_size: 16
+  time_budget_min: null
+  max_configs: null
+deep:
+  use_gpu: auto
+  chemprop:
+    variants: []
+    epochs: 15
+    ensemble_size: 1
+    batch_size: 32
+    seed: 42
+  unimol:
+    v1: "false"
+    v2: "false"
+    v2_size: 84m
+    epochs: 10
+    lr: 0.0001
+    batch_size: 32
+    early_stopping_patience: 5
+  chemml:
+    pytorch: false
+    tensorflow: false
+    epochs: 80
+  tabpfn: false
+  tabpfn_max_features: 0
+  cnn: false
+fusion:
+  cfa_score: true
+  cfa_rank: true
+  optimize_metric: mae
+ensemble:
+  oof_stacking: true
+  inverse_rmse_average: true
+  simple_average: false
+  member_selection_metric: oof
+  oof_folds: 5
+  oof_scope: all
+  oof_allow_api_refits: false
+  oof_source_run: null
+  exclude_negative_test_r2_members: true
+  drop_correlated_members: true
+  max_member_correlation: 0.995
+  stacking_cv_folds: 5
+applicability_domain:
+  method: both
+  confidence_threshold: 0.5
+  knn_quantile: 0.95
+evaluation:
+  regression_metrics: [rmse, mae, r2, spearman]
+  classification_metrics: [roc_auc, auprc, balanced_accuracy, mcc]
+  primary_metric: auto
+selection:
+  protocol: both
+report:
+  formats: [html, md]
+  include_plots: true
+  what_next: true
+  machine_readable_manifest: true
+batch:
+  source: null
+  mode: auto
+  continue_on_error: true
+  aggregate_summary: true
+multiseed:
+  enabled: false
+  seeds: 5
+caching:
+  granularity: [dataset, stage]
+  validate_against_config_signature: true
+  atomic_writes: true

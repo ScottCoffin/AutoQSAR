@@ -1,0 +1,2 @@
+dataset,AdaBoost,ElasticNetCV,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",Ensemble (Weighted average (inverse OOF error)),Extra trees,HistGradientBoosting,Random forest,SVR,Tabular MLP,"Voting Regressor (KNN, SVM)"
+full_dataset_qsar_ready_ld50lm,0.7760649419212472,0.6988727629310564,0.5792945730298205,0.590386767907226,0.5935883033801873,0.5939685090734765,0.5995480449953976,0.6062256637079293,0.6202913281932395,0.6029016571573632

@@ -1,0 +1,34 @@
+{
+  "started_at": "2026-10-07 15:39:02 Pacific Daylight Time",
+  "completed_at": "2026-10-07 17:32:10",
+  "elapsed_seconds": 6788.184,
+  "dataset_count": 1,
+  "dataset_status_counts": {
+    "completed": 1
+  },
+  "resource_config": {
+    "detected_cpu_count": 12,
+    "n_jobs": 12,
+    "gpu_available": false,
+    "gpu_inventory": [],
+    "chemprop_num_workers": 3,
+    "unimol_num_workers": 3,
+    "chemprop_batch_size": 32,
+    "unimol_batch_size": 32,
+    "precision_mode": "fp32"
+  },
+  "ga_models_resolved": [],
+  "run_vs_run_attribution": {
+    "generated_at": "2026-10-07 17:32:09 Pacific Daylight Time",
+    "current_run_dir": "benchmark_results\\acute_ld50lm_qsar_ready_quick_20261007",
+    "reference_run_dir": "C:\\Users\\Scott.Coffin\\OneDrive - California OEHHA\\R_new\\AutoQSAR\\benchmark_results\\qsarena_feature_expansion",
+    "has_reference_run": true,
+    "split_datasets_compared": 1,
+    "split_all_match_count": 0,
+    "config_diff_count": 201,
+    "new_error_count": 0,
+    "resolved_error_count": 0,
+    "leaderboard_comparable_dataset_count": 0
+  },
+  "tdc22_best_model_multiseed": {}
+}

@@ -1,0 +1,9 @@
+Model,Weight,Workflow
+ElasticNetCV,0.11346856597180292,Conventional ML
+SVR,0.1306712488811695,Conventional ML
+Random forest,0.1317699342268105,Conventional ML
+Extra trees,0.13233473376321236,Conventional ML
+HistGradientBoosting,0.13121503235966409,Conventional ML
+"Voting Regressor (KNN, SVM)",0.13193874526619032,Conventional ML
+AdaBoost,0.10111028878459548,Conventional ML
+Tabular MLP,0.12749145074655482,Conventional ML

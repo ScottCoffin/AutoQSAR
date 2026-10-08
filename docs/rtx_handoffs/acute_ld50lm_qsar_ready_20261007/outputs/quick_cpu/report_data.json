@@ -1,0 +1,611 @@
+{
+  "title": "QSARena run report",
+  "generated_at": "2026-10-07 17:32:10",
+  "output_dir": "benchmark_results\\acute_ld50lm_qsar_ready_quick_20261007",
+  "run": {
+    "mode": "single",
+    "profile": "quick",
+    "gpu_available": false,
+    "qsarena_version": "0.1.0",
+    "config_signature": "584af2c2e526de93c98f09b06aa74b5edf99f8a74472f436abdaadfed6b716f6",
+    "tdc22_datasets": [],
+    "tdc22_multiseed_done": false,
+    "deep_skipped_without_gpu": false,
+    "elapsed_seconds": 6787.7,
+    "single_seed": true
+  },
+  "protocol": "both",
+  "counts": {
+    "completed": 1
+  },
+  "datasets": [
+    {
+      "dataset": "full_dataset_qsar_ready_ld50lm",
+      "status": "completed",
+      "task": "regression",
+      "n_rows": 6954,
+      "primary_metric": "rmse",
+      "error": "",
+      "remedy": "",
+      "cleanup": {
+        "input_rows": 6955,
+        "missing_smiles_or_target": 0,
+        "unparseable_smiles": 1,
+        "changed_by_standardization": 0,
+        "duplicates_removed": 0,
+        "final_rows": 6954
+      }
+    }
+  ],
+  "best_models": [
+    {
+      "dataset": "full_dataset_qsar_ready_ld50lm",
+      "task": "regression",
+      "protocol": "test",
+      "model": "Ensemble (OOF Stacking (RidgeCV, 5-fold))",
+      "family": "ensemble",
+      "metric": "rmse",
+      "test_value": 0.5792945730298205,
+      "cv_value": null,
+      "test_rmse": 0.5792945730298205,
+      "test_mae": 0.4166780354705878,
+      "test_r2": 0.5804271292707223,
+      "test_spearman": 0.7236936886204113
+    },
+    {
+      "dataset": "full_dataset_qsar_ready_ld50lm",
+      "task": "regression",
+      "protocol": "cv",
+      "model": "Extra trees",
+      "family": "conventional_ml",
+      "metric": "rmse",
+      "test_value": 0.5935883033801873,
+      "cv_value": 0.5642810657027606,
+      "test_rmse": 0.5935883033801873,
+      "test_mae": 0.4293632893349993,
+      "test_r2": 0.5594662879564525,
+      "test_spearman": 0.7050997498678396
+    }
+  ],
+  "leaderboard": [],
+  "families_won": {
+    "test": {
+      "ensemble": 1
+    },
+    "cv": {
+      "conventional_ml": 1
+    }
+  },
+  "cost_vs_gap": [
+    {
+      "family": "conventional_ml",
+      "median_seconds": 374.3465,
+      "median_relative_gap": 0.04362044558895775,
+      "n_fits": 8
+    },
+    {
+      "family": "ensemble",
+      "median_seconds": 745.9415,
+      "median_relative_gap": 0.009573881228846367,
+      "n_fits": 2
+    }
+  ],
+  "ad_coverage": [
+    {
+      "dataset": "full_dataset_qsar_ready_ld50lm",
+      "method": "both",
+      "n_test": 1391,
+      "in_domain_fraction": 0.9309849029475198,
+      "methods": {
+        "standardization": 0.9669302659956865,
+        "knn_similarity": 0.9590222861250899
+      },
+      "selected_model": "Extra trees",
+      "notes": [],
+      "mae_in_domain": 0.41454866929283224,
+      "mae_out_of_domain": 0.6292063409454823
+    }
+  ],
+  "model_failures": [],
+  "skipped_stages": [
+    {
+      "dataset": "full_dataset_qsar_ready_ld50lm",
+      "model": "CFA (Combinatorial Fusion)",
+      "reason": "skipped_insufficient_models"
+    }
+  ],
+  "warnings": [
+    {
+      "code": "preflight_unparseable_smiles",
+      "message": "1 SMILES (0.0%) cannot be parsed by RDKit and will be dropped.",
+      "remedy": "Fix them in the CSV, or pass --no-drop-unparseable to stop instead of dropping.",
+      "dataset": "full_dataset_qsar_ready_ld50lm"
+    },
+    {
+      "code": "preflight_duplicates",
+      "message": "6.9% of parsed rows repeat a structure already present.",
+      "remedy": "Merge them with --deduplicate canonical_smiles so one molecule cannot sit in both train and test.",
+      "dataset": "full_dataset_qsar_ready_ld50lm"
+    }
+  ],
+  "preflight": {
+    "datasets": [
+      {
+        "dataset": "full_dataset_qsar_ready_ld50lm",
+        "n_rows": 6955,
+        "n_missing": 0,
+        "n_parsed": 6954,
+        "n_unparseable": 1,
+        "parse_rate": 0.9998562185478074,
+        "n_valid": 6954,
+        "duplicate_fraction": 0.06859361518550477,
+        "task": "regression",
+        "task_source": "set by input.task",
+        "class_balance": {},
+        "sampled": false,
+        "messages": [
+          {
+            "level": "warning",
+            "code": "unparseable_smiles",
+            "message": "1 SMILES (0.0%) cannot be parsed by RDKit and will be dropped.",
+            "remedy": "Fix them in the CSV, or pass --no-drop-unparseable to stop instead of dropping.",
+            "dataset": "full_dataset_qsar_ready_ld50lm"
+          },
+          {
+            "level": "warning",
+            "code": "duplicates",
+            "message": "6.9% of parsed rows repeat a structure already present.",
+            "remedy": "Merge them with --deduplicate canonical_smiles so one molecule cannot sit in both train and test.",
+            "dataset": "full_dataset_qsar_ready_ld50lm"
+          },
+          {
+            "level": "info",
+            "code": "task",
+            "message": "task = regression (set by input.task).",
+            "remedy": "",
+            "dataset": "full_dataset_qsar_ready_ld50lm"
+          }
+        ]
+      }
+    ],
+    "backends": {
+      "xgboost": {
+        "available": true,
+        "remedy": "pip install 'qsarena[boosting]'"
+      },
+      "lightgbm": {
+        "available": true,
+        "remedy": "pip install 'qsarena[boosting]'"
+      },
+      "catboost": {
+        "available": true,
+        "remedy": "pip install 'qsarena[boosting]'"
+      },
+      "torch": {
+        "available": true,
+        "remedy": "pip install 'qsarena[deep]'"
+      },
+      "tensorflow": {
+        "available": true,
+        "remedy": "pip install 'qsarena[deep]' (Python < 3.13)"
+      },
+      "chemprop": {
+        "available": true,
+        "remedy": "pip install 'qsarena[graph]'"
+      },
+      "unimol_tools": {
+        "available": true,
+        "remedy": "pip install 'qsarena[foundation]'"
+      },
+      "tabpfn": {
+        "available": true,
+        "remedy": "pip install 'qsarena[foundation]'"
+      },
+      "dgl": {
+        "available": true,
+        "remedy": "install dgl and dgllife from the DGL wheel index (see README, 'Installation via pip')"
+      },
+      "gpu": {
+        "available": false,
+        "remedy": "run on a machine with an NVIDIA GPU and a CUDA build of PyTorch (pip install 'qsarena[foundation]')"
+      }
+    },
+    "backend_messages": [],
+    "plans": [
+      {
+        "dataset": "full_dataset_qsar_ready_ld50lm",
+        "n_rows": 6954,
+        "task": "regression",
+        "models": [
+          {
+            "model": "ElasticNetCV",
+            "family": "conventional_ml",
+            "status": "planned",
+            "reason": ""
+          },
+          {
+            "model": "SVR",
+            "family": "conventional_ml",
+            "status": "planned",
+            "reason": ""
+          },
+          {
+            "model": "Random forest",
+            "family": "conventional_ml",
+            "status": "planned",
+            "reason": ""
+          },
+          {
+            "model": "Extra trees",
+            "family": "conventional_ml",
+            "status": "planned",
+            "reason": ""
+          },
+          {
+            "model": "HistGradientBoosting",
+            "family": "conventional_ml",
+            "status": "planned",
+            "reason": ""
+          },
+          {
+            "model": "Voting Regressor (KNN, SVM)",
+            "family": "conventional_ml",
+            "status": "planned",
+            "reason": ""
+          },
+          {
+            "model": "AdaBoost",
+            "family": "conventional_ml",
+            "status": "planned",
+            "reason": ""
+          },
+          {
+            "model": "Tabular MLP",
+            "family": "conventional_ml",
+            "status": "planned",
+            "reason": ""
+          },
+          {
+            "model": "Tabular CNN",
+            "family": "deep_tabular",
+            "status": "skipped",
+            "reason": "family deep_tabular switched off by the quick profile"
+          },
+          {
+            "model": "XGBoost",
+            "family": "gradient_boosting",
+            "status": "skipped",
+            "reason": "family gradient_boosting switched off by the quick profile"
+          },
+          {
+            "model": "LightGBM",
+            "family": "gradient_boosting",
+            "status": "skipped",
+            "reason": "family gradient_boosting switched off by the quick profile"
+          },
+          {
+            "model": "CatBoost",
+            "family": "gradient_boosting",
+            "status": "skipped",
+            "reason": "family gradient_boosting switched off by the quick profile"
+          },
+          {
+            "model": "MapLight CatBoost (Strict Parity)",
+            "family": "gradient_boosting",
+            "status": "skipped",
+            "reason": "family gradient_boosting switched off by the quick profile"
+          },
+          {
+            "model": "TabPFNRegressor",
+            "family": "deep_tabular",
+            "status": "skipped",
+            "reason": "family deep_tabular switched off by the quick profile"
+          },
+          {
+            "model": "ChemML MLP (PyTorch)",
+            "family": "deep_tabular",
+            "status": "skipped",
+            "reason": "family deep_tabular switched off by the quick profile"
+          },
+          {
+            "model": "ChemML MLP (TensorFlow)",
+            "family": "deep_tabular",
+            "status": "skipped",
+            "reason": "family deep_tabular switched off by the quick profile"
+          },
+          {
+            "model": "Chemprop v2 (all variants)",
+            "family": "graph_nn",
+            "status": "skipped",
+            "reason": "family graph_nn switched off by the quick profile"
+          },
+          {
+            "model": "Uni-Mol V1",
+            "family": "pretrained_3d",
+            "status": "skipped",
+            "reason": "family pretrained_3d switched off by the quick profile"
+          },
+          {
+            "model": "Uni-Mol V2 (84m)",
+            "family": "pretrained_3d",
+            "status": "skipped",
+            "reason": "family pretrained_3d switched off by the quick profile"
+          },
+          {
+            "model": "MapLight + GNN (CatBoost, Strict Parity)",
+            "family": "maplight_gnn",
+            "status": "skipped",
+            "reason": "family maplight_gnn switched off by the quick profile"
+          },
+          {
+            "model": "CFA (Combinatorial Fusion)",
+            "family": "fusion",
+            "status": "planned",
+            "reason": ""
+          },
+          {
+            "model": "Ensemble (OOF Stacking (RidgeCV))",
+            "family": "ensemble",
+            "status": "planned",
+            "reason": ""
+          },
+          {
+            "model": "Ensemble (Weighted average (inverse train RMSE))",
+            "family": "ensemble",
+            "status": "planned",
+            "reason": ""
+          }
+        ],
+        "estimated_seconds": {
+          "features": 144.08,
+          "feature_selection": 7200.0,
+          "conventional_ml": 235.6994392523365,
+          "fusion": 1.2998130841121496,
+          "ensemble": 5.199252336448598
+        },
+        "estimated_total_seconds": 7586.278504672898
+      }
+    ],
+    "estimated_total_seconds": 7586.278504672898,
+    "estimate_note": "Order-of-magnitude estimate: median per-fit wall-clock by model family from the paper's A100 run (Table 6) scaled linearly with dataset size; GPU-accelerated families are assumed 2-8x slower without a GPU."
+  },
+  "shown_metrics": {
+    "regression": [
+      "rmse",
+      "mae",
+      "r2",
+      "spearman"
+    ],
+    "classification": [
+      "roc_auc",
+      "auprc",
+      "balanced_accuracy",
+      "mcc"
+    ]
+  },
+  "config": {
+    "run": {
+      "mode": "auto",
+      "output_dir": "C:\\Users\\Scott.Coffin\\OneDrive - California OEHHA\\R_new\\AutoQSAR\\benchmark_results\\acute_ld50lm_qsar_ready_quick_20261007",
+      "resume": true,
+      "overwrite": false,
+      "verbosity": "normal",
+      "dry_run": false,
+      "n_jobs": 12,
+      "parallel_datasets": 1,
+      "dataset_names": []
+    },
+    "input": {
+      "path": "C:\\Users\\Scott.Coffin\\Downloads\\full_dataset_qsar_ready_ld50lm.csv",
+      "smiles_col": "QSAR_READY_SMILES",
+      "target_col": "LD50_LM",
+      "id_col": null,
+      "task": "regression",
+      "classification_threshold": null,
+      "target_transform": "raw",
+      "minimum_rows": 20,
+      "row_limit": 0
+    },
+    "standardize": {
+      "drop_unparseable": true,
+      "strip_salts": false,
+      "normalize_charges": false,
+      "normalize_tautomers": false,
+      "deduplicate": "none"
+    },
+    "features": {
+      "families": [
+        "morgan",
+        "ecfp6",
+        "fcfp6",
+        "layered",
+        "atom_pair",
+        "topological_torsion",
+        "rdk_path",
+        "maccs",
+        "rdkit"
+      ],
+      "maplight_classic": true,
+      "fingerprint_bits": 1024,
+      "cache": true,
+      "persistent_store": true
+    },
+    "split": {
+      "strategy": "target_quartile",
+      "test_fraction": 0.2,
+      "seed": 13,
+      "cv_folds": 5,
+      "predefined_split_col": null
+    },
+    "feature_selection": {
+      "method": "elasticnetcv",
+      "variance_threshold": 1e-08,
+      "binary_prevalence_range": [
+        0.005,
+        0.995
+      ],
+      "drop_duplicate_columns": true,
+      "max_selected_features": 0,
+      "auto_rf_by_dataset_size": true,
+      "elasticnet_timeout_seconds": 7200.0,
+      "deterministic": false,
+      "load_from": null,
+      "cv_selection": "outer"
+    },
+    "models": {
+      "profile": "quick",
+      "enable_families": {
+        "conventional_ml": true,
+        "gradient_boosting": false,
+        "deep_tabular": false,
+        "graph_nn": false,
+        "pretrained_3d": false,
+        "maplight_gnn": false,
+        "fusion": true,
+        "ensemble": true
+      },
+      "disable_models": [],
+      "only_models": [],
+      "admetboost_xgboost": false
+    },
+    "ga_tuning": {
+      "mode": "off",
+      "estimators": [
+        "elastic_net",
+        "catboost"
+      ],
+      "generations": 12,
+      "population_size": 16,
+      "time_budget_min": null,
+      "max_configs": null
+    },
+    "deep": {
+      "use_gpu": "auto",
+      "chemprop": {
+        "variants": [],
+        "epochs": 15,
+        "ensemble_size": 1,
+        "batch_size": 32,
+        "seed": 42
+      },
+      "unimol": {
+        "v1": "false",
+        "v2": "false",
+        "v2_size": "84m",
+        "epochs": 10,
+        "lr": 0.0001,
+        "batch_size": 32,
+        "early_stopping_patience": 5
+      },
+      "chemml": {
+        "pytorch": false,
+        "tensorflow": false,
+        "epochs": 80
+      },
+      "tabpfn": false,
+      "tabpfn_max_features": 0,
+      "cnn": false
+    },
+    "fusion": {
+      "cfa_score": true,
+      "cfa_rank": true,
+      "optimize_metric": "mae"
+    },
+    "ensemble": {
+      "oof_stacking": true,
+      "inverse_rmse_average": true,
+      "simple_average": false,
+      "member_selection_metric": "oof",
+      "oof_folds": 5,
+      "oof_scope": "all",
+      "oof_allow_api_refits": false,
+      "oof_source_run": null,
+      "exclude_negative_test_r2_members": true,
+      "drop_correlated_members": true,
+      "max_member_correlation": 0.995,
+      "stacking_cv_folds": 5
+    },
+    "applicability_domain": {
+      "method": "both",
+      "confidence_threshold": 0.5,
+      "knn_quantile": 0.95
+    },
+    "evaluation": {
+      "regression_metrics": [
+        "rmse",
+        "mae",
+        "r2",
+        "spearman"
+      ],
+      "classification_metrics": [
+        "roc_auc",
+        "auprc",
+        "balanced_accuracy",
+        "mcc"
+      ],
+      "primary_metric": "auto"
+    },
+    "selection": {
+      "protocol": "both"
+    },
+    "report": {
+      "formats": [
+        "html",
+        "md"
+      ],
+      "include_plots": true,
+      "what_next": true,
+      "machine_readable_manifest": true
+    },
+    "batch": {
+      "source": null,
+      "mode": "auto",
+      "continue_on_error": true,
+      "aggregate_summary": true
+    },
+    "multiseed": {
+      "enabled": false,
+      "seeds": 5
+    },
+    "caching": {
+      "granularity": [
+        "dataset",
+        "stage"
+      ],
+      "validate_against_config_signature": true,
+      "atomic_writes": true
+    }
+  },
+  "config_yaml": "run:\n  mode: auto\n  output_dir: \"C:\\\\Users\\\\Scott.Coffin\\\\OneDrive - California OEHHA\\\\R_new\\\\AutoQSAR\\\\benchmark_results\\\\acute_ld50lm_qsar_ready_quick_20261007\"\n  resume: true\n  overwrite: false\n  verbosity: normal\n  dry_run: false\n  n_jobs: 12\n  parallel_datasets: 1\n  dataset_names: []\ninput:\n  path: \"C:\\\\Users\\\\Scott.Coffin\\\\Downloads\\\\full_dataset_qsar_ready_ld50lm.csv\"\n  smiles_col: QSAR_READY_SMILES\n  target_col: LD50_LM\n  id_col: null\n  task: regression\n  classification_threshold: null\n  target_transform: raw\n  minimum_rows: 20\n  row_limit: 0\nstandardize:\n  drop_unparseable: true\n  strip_salts: false\n  normalize_charges: false\n  normalize_tautomers: false\n  deduplicate: \"none\"\nfeatures:\n  families: [morgan, ecfp6, fcfp6, layered, atom_pair, topological_torsion, rdk_path, maccs, rdkit]\n  maplight_classic: true\n  fingerprint_bits: 1024\n  cache: true\n  persistent_store: true\nsplit:\n  strategy: target_quartile\n  test_fraction: 0.2\n  seed: 13\n  cv_folds: 5\n  predefined_split_col: null\nfeature_selection:\n  method: elasticnetcv\n  variance_threshold: 1e-08\n  binary_prevalence_range: [0.005, 0.995]\n  drop_duplicate_columns: true\n  max_selected_features: 0\n  auto_rf_by_dataset_size: true\n  elasticnet_timeout_seconds: 7200.0\n  deterministic: false\n  load_from: null\n  cv_selection: outer\nmodels:\n  profile: quick\n  enable_families:\n    conventional_ml: true\n    gradient_boosting: false\n    deep_tabular: false\n    graph_nn: false\n    pretrained_3d: false\n    maplight_gnn: false\n    fusion: true\n    ensemble: true\n  disable_models: []\n  only_models: []\n  admetboost_xgboost: false\nga_tuning:\n  mode: \"off\"\n  estimators: [elastic_net, catboost]\n  generations: 12\n  population_size: 16\n  time_budget_min: null\n  max_configs: null\ndeep:\n  use_gpu: auto\n  chemprop:\n    variants: []\n    epochs: 15\n    ensemble_size: 1\n    batch_size: 32\n    seed: 42\n  unimol:\n    v1: \"false\"\n    v2: \"false\"\n    v2_size: 84m\n    epochs: 10\n    lr: 0.0001\n    batch_size: 32\n    early_stopping_patience: 5\n  chemml:\n    pytorch: false\n    tensorflow: false\n    epochs: 80\n  tabpfn: false\n  tabpfn_max_features: 0\n  cnn: false\nfusion:\n  cfa_score: true\n  cfa_rank: true\n  optimize_metric: mae\nensemble:\n  oof_stacking: true\n  inverse_rmse_average: true\n  simple_average: false\n  member_selection_metric: oof\n  oof_folds: 5\n  oof_scope: all\n  oof_allow_api_refits: false\n  oof_source_run: null\n  exclude_negative_test_r2_members: true\n  drop_correlated_members: true\n  max_member_correlation: 0.995\n  stacking_cv_folds: 5\napplicability_domain:\n  method: both\n  confidence_threshold: 0.5\n  knn_quantile: 0.95\nevaluation:\n  regression_metrics: [rmse, mae, r2, spearman]\n  classification_metrics: [roc_auc, auprc, balanced_accuracy, mcc]\n  primary_metric: auto\nselection:\n  protocol: both\nreport:\n  formats: [html, md]\n  include_plots: true\n  what_next: true\n  machine_readable_manifest: true\nbatch:\n  source: null\n  mode: auto\n  continue_on_error: true\n  aggregate_summary: true\nmultiseed:\n  enabled: false\n  seeds: 5\ncaching:\n  granularity: [dataset, stage]\n  validate_against_config_signature: true\n  atomic_writes: true\n",
+  "files": {
+    "run_config.json": "run_config.json",
+    "run_config.yaml": "run_config.yaml",
+    "environment_manifest.json": "environment_manifest.json",
+    "dataset_summary.csv": "dataset_summary.csv",
+    "summary_metrics.csv": "summary_metrics.csv",
+    "predictions.csv": "predictions.csv",
+    "run.log": "run.log",
+    "events.jsonl": "events.jsonl",
+    "preflight.json": "preflight.json"
+  },
+  "what_next": [
+    {
+      "text": "On 1 dataset(s) the test-selected winner differs from the CV-selected one (full_dataset_qsar_ready_ld50lm). Choosing on the test set is optimistic; report the CV-selected model and its test score as the honest estimate.",
+      "command": ""
+    },
+    {
+      "text": "All scores come from one train/test split and one seed. Estimate split-to-split variance by repeating the run with other seeds.",
+      "command": "qsarena-benchmark --config \"benchmark_results\\acute_ld50lm_qsar_ready_quick_20261007/run_config.yaml\" --random-seed 1 --output-dir \"benchmark_results\\acute_ld50lm_qsar_ready_quick_20261007_seed1\""
+    },
+    {
+      "text": "This was a quick-profile run (scikit-learn models only). Run the full model library once the data look right.",
+      "command": "qsarena-benchmark --config \"benchmark_results\\acute_ld50lm_qsar_ready_quick_20261007/run_config.yaml\" --benchmark-profile cost_optimized --output-dir \"benchmark_results\\acute_ld50lm_qsar_ready_quick_20261007_full\""
+    },
+    {
+      "text": "Check new molecules against the training set's applicability domain before trusting their predictions.",
+      "command": "qsarena-applicability-domain --train_csv TRAIN.csv --smiles_col smiles --target_col target --query_smiles \"CCO\""
+    }
+  ],
+  "include_plots": true,
+  "what_next_enabled": true
+}

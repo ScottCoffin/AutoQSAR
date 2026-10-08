@@ -1,0 +1,2 @@
+dataset,status,task,n_rows,primary_metric,best_by_test,best_by_test_test_value,best_by_cv,best_by_cv_test_value,best_by_cv_cv_value,n_models_ok,n_models_failed,ad_in_domain_fraction,elapsed_seconds,error,remedy,source
+full_dataset_qsar_ready_ld50lm,completed,regression,6954,rmse,"Ensemble (OOF Stacking (RidgeCV, 5-fold))",0.5792945730298205,Extra trees,0.5935883033801873,0.5642810657027606,11,0,0.9309849029475198,6743.57,,,C:\Users\Scott.Coffin\Downloads\full_dataset_qsar_ready_ld50lm.csv

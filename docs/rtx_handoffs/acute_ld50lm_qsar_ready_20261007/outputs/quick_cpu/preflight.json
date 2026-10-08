@@ -1,0 +1,241 @@
+{
+  "datasets": [
+    {
+      "dataset": "full_dataset_qsar_ready_ld50lm",
+      "n_rows": 6955,
+      "n_missing": 0,
+      "n_parsed": 6954,
+      "n_unparseable": 1,
+      "parse_rate": 0.9998562185478074,
+      "n_valid": 6954,
+      "duplicate_fraction": 0.06859361518550477,
+      "task": "regression",
+      "task_source": "set by input.task",
+      "class_balance": {},
+      "sampled": false,
+      "messages": [
+        {
+          "level": "warning",
+          "code": "unparseable_smiles",
+          "message": "1 SMILES (0.0%) cannot be parsed by RDKit and will be dropped.",
+          "remedy": "Fix them in the CSV, or pass --no-drop-unparseable to stop instead of dropping.",
+          "dataset": "full_dataset_qsar_ready_ld50lm"
+        },
+        {
+          "level": "warning",
+          "code": "duplicates",
+          "message": "6.9% of parsed rows repeat a structure already present.",
+          "remedy": "Merge them with --deduplicate canonical_smiles so one molecule cannot sit in both train and test.",
+          "dataset": "full_dataset_qsar_ready_ld50lm"
+        },
+        {
+          "level": "info",
+          "code": "task",
+          "message": "task = regression (set by input.task).",
+          "remedy": "",
+          "dataset": "full_dataset_qsar_ready_ld50lm"
+        }
+      ]
+    }
+  ],
+  "backends": {
+    "xgboost": {
+      "available": true,
+      "remedy": "pip install 'qsarena[boosting]'"
+    },
+    "lightgbm": {
+      "available": true,
+      "remedy": "pip install 'qsarena[boosting]'"
+    },
+    "catboost": {
+      "available": true,
+      "remedy": "pip install 'qsarena[boosting]'"
+    },
+    "torch": {
+      "available": true,
+      "remedy": "pip install 'qsarena[deep]'"
+    },
+    "tensorflow": {
+      "available": true,
+      "remedy": "pip install 'qsarena[deep]' (Python < 3.13)"
+    },
+    "chemprop": {
+      "available": true,
+      "remedy": "pip install 'qsarena[graph]'"
+    },
+    "unimol_tools": {
+      "available": true,
+      "remedy": "pip install 'qsarena[foundation]'"
+    },
+    "tabpfn": {
+      "available": true,
+      "remedy": "pip install 'qsarena[foundation]'"
+    },
+    "dgl": {
+      "available": true,
+      "remedy": "install dgl and dgllife from the DGL wheel index (see README, 'Installation via pip')"
+    },
+    "gpu": {
+      "available": false,
+      "remedy": "run on a machine with an NVIDIA GPU and a CUDA build of PyTorch (pip install 'qsarena[foundation]')"
+    }
+  },
+  "backend_messages": [],
+  "plans": [
+    {
+      "dataset": "full_dataset_qsar_ready_ld50lm",
+      "n_rows": 6954,
+      "task": "regression",
+      "models": [
+        {
+          "model": "ElasticNetCV",
+          "family": "conventional_ml",
+          "status": "planned",
+          "reason": ""
+        },
+        {
+          "model": "SVR",
+          "family": "conventional_ml",
+          "status": "planned",
+          "reason": ""
+        },
+        {
+          "model": "Random forest",
+          "family": "conventional_ml",
+          "status": "planned",
+          "reason": ""
+        },
+        {
+          "model": "Extra trees",
+          "family": "conventional_ml",
+          "status": "planned",
+          "reason": ""
+        },
+        {
+          "model": "HistGradientBoosting",
+          "family": "conventional_ml",
+          "status": "planned",
+          "reason": ""
+        },
+        {
+          "model": "Voting Regressor (KNN, SVM)",
+          "family": "conventional_ml",
+          "status": "planned",
+          "reason": ""
+        },
+        {
+          "model": "AdaBoost",
+          "family": "conventional_ml",
+          "status": "planned",
+          "reason": ""
+        },
+        {
+          "model": "Tabular MLP",
+          "family": "conventional_ml",
+          "status": "planned",
+          "reason": ""
+        },
+        {
+          "model": "Tabular CNN",
+          "family": "deep_tabular",
+          "status": "skipped",
+          "reason": "family deep_tabular switched off by the quick profile"
+        },
+        {
+          "model": "XGBoost",
+          "family": "gradient_boosting",
+          "status": "skipped",
+          "reason": "family gradient_boosting switched off by the quick profile"
+        },
+        {
+          "model": "LightGBM",
+          "family": "gradient_boosting",
+          "status": "skipped",
+          "reason": "family gradient_boosting switched off by the quick profile"
+        },
+        {
+          "model": "CatBoost",
+          "family": "gradient_boosting",
+          "status": "skipped",
+          "reason": "family gradient_boosting switched off by the quick profile"
+        },
+        {
+          "model": "MapLight CatBoost (Strict Parity)",
+          "family": "gradient_boosting",
+          "status": "skipped",
+          "reason": "family gradient_boosting switched off by the quick profile"
+        },
+        {
+          "model": "TabPFNRegressor",
+          "family": "deep_tabular",
+          "status": "skipped",
+          "reason": "family deep_tabular switched off by the quick profile"
+        },
+        {
+          "model": "ChemML MLP (PyTorch)",
+          "family": "deep_tabular",
+          "status": "skipped",
+          "reason": "family deep_tabular switched off by the quick profile"
+        },
+        {
+          "model": "ChemML MLP (TensorFlow)",
+          "family": "deep_tabular",
+          "status": "skipped",
+          "reason": "family deep_tabular switched off by the quick profile"
+        },
+        {
+          "model": "Chemprop v2 (all variants)",
+          "family": "graph_nn",
+          "status": "skipped",
+          "reason": "family graph_nn switched off by the quick profile"
+        },
+        {
+          "model": "Uni-Mol V1",
+          "family": "pretrained_3d",
+          "status": "skipped",
+          "reason": "family pretrained_3d switched off by the quick profile"
+        },
+        {
+          "model": "Uni-Mol V2 (84m)",
+          "family": "pretrained_3d",
+          "status": "skipped",
+          "reason": "family pretrained_3d switched off by the quick profile"
+        },
+        {
+          "model": "MapLight + GNN (CatBoost, Strict Parity)",
+          "family": "maplight_gnn",
+          "status": "skipped",
+          "reason": "family maplight_gnn switched off by the quick profile"
+        },
+        {
+          "model": "CFA (Combinatorial Fusion)",
+          "family": "fusion",
+          "status": "planned",
+          "reason": ""
+        },
+        {
+          "model": "Ensemble (OOF Stacking (RidgeCV))",
+          "family": "ensemble",
+          "status": "planned",
+          "reason": ""
+        },
+        {
+          "model": "Ensemble (Weighted average (inverse train RMSE))",
+          "family": "ensemble",
+          "status": "planned",
+          "reason": ""
+        }
+      ],
+      "estimated_seconds": {
+        "features": 144.08,
+        "feature_selection": 7200.0,
+        "conventional_ml": 235.6994392523365,
+        "fusion": 1.2998130841121496,
+        "ensemble": 5.199252336448598
+      },
+      "estimated_total_seconds": 7586.278504672898
+    }
+  ],
+  "estimated_total_seconds": 7586.278504672898,
+  "estimate_note": "Order-of-magnitude estimate: median per-fit wall-clock by model family from the paper's A100 run (Table 6) scaled linearly with dataset size; GPU-accelerated families are assumed 2-8x slower without a GPU."
+}

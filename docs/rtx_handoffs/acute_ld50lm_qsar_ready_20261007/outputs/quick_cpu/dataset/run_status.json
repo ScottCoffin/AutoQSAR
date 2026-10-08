@@ -1,0 +1,43 @@
+{
+  "status": "completed",
+  "dataset": "full_dataset_qsar_ready_ld50lm",
+  "source": "C:\\Users\\Scott.Coffin\\Downloads\\full_dataset_qsar_ready_ld50lm.csv",
+  "completed_at": "2026-10-07 17:32:05",
+  "elapsed_seconds": 6743.57,
+  "n_metrics_rows": 11,
+  "n_stage_records": 13,
+  "n_rows": 6954,
+  "task_type": "regression",
+  "primary_metric": "rmse",
+  "cleanup_counts": {
+    "input_rows": 6955,
+    "missing_smiles_or_target": 0,
+    "unparseable_smiles": 1,
+    "changed_by_standardization": 0,
+    "duplicates_removed": 0,
+    "final_rows": 6954
+  },
+  "standardization": {
+    "drop_unparseable": true,
+    "strip_salts": false,
+    "normalize_charges": false,
+    "normalize_tautomers": false,
+    "deduplicate": "none"
+  },
+  "failed_models": [],
+  "applicability_domain": {
+    "method": "both",
+    "n_test": 1391,
+    "in_domain_fraction": 0.9309849029475198,
+    "methods": {
+      "standardization": 0.9669302659956865,
+      "knn_similarity": 0.9590222861250899
+    },
+    "selected_model": "Extra trees",
+    "notes": [],
+    "mae_in_domain": 0.41454866929283224,
+    "mae_out_of_domain": 0.6292063409454823
+  },
+  "stage23_signature": "f64fe3ffc05a9d1dc0df9216c35ba7206f7a0375443fb3570632083782a88600",
+  "resume_fingerprint": "738750e4027c99b1d7b13d84"
+}
